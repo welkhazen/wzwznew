@@ -8,6 +8,7 @@ import { AvatarPhoneHomeScreen } from "@/components/ui/avatar-phone-home-screen"
 import { PhoneMockup } from "@/components/ui/phone-mockup";
 
 import { SwipeablePollCard } from "./SwipeablePollCard";
+import { EnterRawModal } from "./EnterRawModal";
 import type { OnboardingStep, Poll, User } from "@/store/useRawStore";
 import type { Comment } from "./PollComments";
 import { track } from "@/lib/analytics";
@@ -124,12 +125,7 @@ function toOnboardingPolls(polls: Poll[]): OnboardingPoll[] {
     options: poll.options.slice(0, 2),
   }));
 
-  const extra = EXTRA_ONBOARDING_POLLS.map((poll) => ({
-    ...poll,
-    options: poll.options.slice(0, 2),
-  }));
-
-  return [...core, ...fallback, ...extra];
+  return [...core, ...fallback];
 }
 
 function getNextStep(step: OnboardingStep): OnboardingStep {
@@ -176,6 +172,8 @@ export function OnboardingJourney({
   const [pollComments, setPollComments] = useState<Record<string, Comment[]>>({});
   const [pollStats, setPollStats] = useState<Record<string, Record<string, number>>>({});
   const [currentPollIndex, setCurrentPollIndex] = useState(0);
+  const [enterRawOpen, setEnterRawOpen] = useState(false);
+  const [enterRawDismissed, setEnterRawDismissed] = useState(false);
   const answeredCount = onboardingPolls.filter((poll) => onboardingAnsweredPollIds.has(poll.id)).length;
   const startedFiredRef = useRef(false);
   const stepStartTimeRef = useRef(Date.now());
@@ -196,6 +194,18 @@ export function OnboardingJourney({
     track("onboarding_step_viewed", { step: onboardingStep as "avatar" | "polls" | "communities" | "ready", step_index: stepIndex });
     stepStartTimeRef.current = Date.now();
   }, [onboardingStep]);
+
+  // Open the "Enter raW" modal once all polls are answered (once per dismissal)
+  useEffect(() => {
+    if (
+      onboardingStep === "polls" &&
+      onboardingPolls.length > 0 &&
+      answeredCount >= onboardingPolls.length &&
+      !enterRawDismissed
+    ) {
+      setEnterRawOpen(true);
+    }
+  }, [answeredCount, onboardingPolls.length, onboardingStep, enterRawDismissed]);
 
   const canContinueFromAvatar = avatarIndex >= 1;
   const canContinueFromPolls = answeredCount >= onboardingPolls.length;
@@ -224,23 +234,23 @@ export function OnboardingJourney({
   const currentStepIndex = STEP_ORDER.indexOf(onboardingStep);
   return (
     <div className="min-h-screen overflow-x-hidden bg-raw-black">
-      <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-4 py-6 sm:px-6 sm:py-8 md:py-10">
-        <div className="mb-8">
+      <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-3 py-4 sm:px-6 sm:py-8 md:py-10">
+        <div className="mb-5 sm:mb-8">
           <div className="flex items-center justify-between gap-2">
-            <p className="font-display text-xs uppercase tracking-[0.35em] text-raw-gold/60">Welcome to raW</p>
+            <p className="font-display text-[10px] uppercase tracking-[0.3em] text-raw-gold/60 sm:text-xs sm:tracking-[0.35em]">Welcome to raW</p>
             <button
               onClick={onLogout}
-              className="shrink-0 rounded-xl border border-raw-border/50 px-3 py-1.5 text-[10px] uppercase tracking-[0.14em] text-raw-silver/55 transition-colors hover:border-raw-border hover:text-raw-silver"
+              className="shrink-0 rounded-xl border border-raw-border/50 px-2.5 py-1.5 text-[10px] uppercase tracking-[0.14em] text-raw-silver/55 transition-colors hover:border-raw-border hover:text-raw-silver sm:px-3"
             >
               Log out
             </button>
           </div>
-          <h1 className="mt-3 font-display text-2xl tracking-wide text-raw-text sm:text-3xl">
+          <h1 className="mt-2 font-display text-xl tracking-wide text-raw-text sm:mt-3 sm:text-3xl">
             Complete your identity path, {user.username}
           </h1>
         </div>
 
-        <div className="mb-6 flex flex-wrap gap-2">
+        <div className="mb-4 flex flex-wrap gap-1.5 sm:mb-6 sm:gap-2">
           {STEP_ORDER.map((step, index) => (
             <StepPill
               key={step}
@@ -251,7 +261,7 @@ export function OnboardingJourney({
           ))}
         </div>
 
-        <div className="rounded-2xl border border-raw-border/40 bg-gradient-to-b from-raw-surface/40 to-raw-black/90 p-4 sm:rounded-3xl sm:p-6 md:p-8">
+        <div className="rounded-2xl border border-raw-border/40 bg-gradient-to-b from-raw-surface/40 to-raw-black/90 p-3 sm:rounded-3xl sm:p-6 md:p-8">
           {onboardingStep === "avatar" && (
             <section>
               <h2 className="font-display text-lg tracking-wide text-raw-text sm:text-xl">1. Choose your avatar</h2>
@@ -319,24 +329,24 @@ export function OnboardingJourney({
 
           {onboardingStep === "polls" && (
             <section>
-              <div className="flex flex-wrap items-start justify-between gap-3 sm:items-end sm:gap-4">
+              <div className="flex flex-wrap items-center justify-between gap-2 sm:items-end sm:gap-4">
                 <div className="min-w-0 flex-1">
-                  <h2 className="font-display text-lg tracking-wide text-raw-text sm:text-xl">2. Answer 5 launch polls</h2>
+                  <h2 className="font-display text-base tracking-wide text-raw-text sm:text-xl">2. Answer 3 launch polls</h2>
                 </div>
-                <p className="shrink-0 rounded-full border border-raw-border/40 px-3 py-1 text-xs text-raw-gold/75">
+                <p className="shrink-0 rounded-full border border-raw-border/40 px-2.5 py-1 text-[10px] text-raw-gold/75 sm:px-3 sm:text-xs">
                   {answeredCount}/{onboardingPolls.length} completed
                 </p>
               </div>
 
               {/* Single Poll Card */}
-              <div className="mt-4 sm:mt-6 flex flex-col items-center justify-center min-h-[55vh]">
+              <div className="mt-3 flex flex-col items-center justify-center sm:mt-6 sm:min-h-[55vh]">
                 {onboardingPolls.length > 0 && currentPoll && (
                   <div className="w-full">
-                    <div className="mx-auto mb-3 flex w-full max-w-md items-center justify-between sm:max-w-xl lg:max-w-2xl">
+                    <div className="mx-auto mb-2.5 flex w-full max-w-[22rem] items-center justify-between sm:mb-3 sm:max-w-xl lg:max-w-2xl">
                       <button
                         onClick={() => setCurrentPollIndex(Math.max(0, currentPollIndex - 1))}
                         disabled={currentPollIndex === 0}
-                        className="flex h-9 w-9 items-center justify-center rounded-full border border-raw-border/35 bg-raw-black/45 text-lg text-raw-silver/70 transition-all hover:border-raw-gold/35 hover:text-raw-gold/75 disabled:cursor-not-allowed disabled:opacity-35"
+                        className="flex h-10 w-10 items-center justify-center rounded-full border border-raw-border/35 bg-raw-black/45 text-base text-raw-silver/70 transition-all hover:border-raw-gold/35 hover:text-raw-gold/75 disabled:cursor-not-allowed disabled:opacity-35 sm:h-9 sm:w-9 sm:text-lg"
                         aria-label="Previous poll"
                       >
                         ←
@@ -353,7 +363,7 @@ export function OnboardingJourney({
                           goToNextStep();
                         }}
                         disabled={currentPollIndex === onboardingPolls.length - 1 && !canContinueFromPolls}
-                        className={`flex h-9 w-9 items-center justify-center rounded-full border text-lg transition-all disabled:cursor-not-allowed disabled:opacity-35 ${
+                        className={`flex h-10 w-10 items-center justify-center rounded-full border text-base transition-all disabled:cursor-not-allowed disabled:opacity-35 sm:h-9 sm:w-9 sm:text-lg ${
                           currentPollIndex < onboardingPolls.length - 1
                             ? "border-raw-border/35 bg-raw-black/45 text-raw-silver/70 hover:border-raw-gold/35 hover:text-raw-gold/75"
                             : "border-raw-gold/40 bg-raw-gold/15 text-raw-gold hover:bg-raw-gold/25"
@@ -364,8 +374,23 @@ export function OnboardingJourney({
                       </button>
                     </div>
 
-                    <div className="mx-auto w-full max-w-md sm:max-w-xl lg:max-w-2xl lg:px-12">
-                      <div>
+                    <div className="mx-auto w-full max-w-[22rem] sm:max-w-xl lg:max-w-2xl lg:px-12">
+                      <div className="poll-deck relative">
+                        {/* Tinder-style stacked cards behind the active one */}
+                        {onboardingPolls.slice(currentPollIndex + 1, currentPollIndex + 3).map((peek, i) => (
+                          <div
+                            key={peek.id}
+                            aria-hidden="true"
+                            className="poll-deck__peek pointer-events-none absolute left-1/2 top-0 h-[22rem] w-full max-w-[22rem] -translate-x-1/2 border border-raw-gold/25 bg-gradient-to-br from-[#111] to-[#050505] shadow-[0_18px_40px_rgba(0,0,0,0.55)] sm:h-[25.5rem] sm:max-w-[20rem]"
+                            style={{
+                              transform: `translate(-50%, ${(i + 1) * 10}px) scale(${1 - (i + 1) * 0.04})`,
+                              opacity: 0.55 - i * 0.2,
+                              zIndex: -1 - i,
+                              clipPath:
+                                "polygon(0 7%, 5.5% 0, 28% 0, 31% 1.4%, 69% 1.4%, 72% 0, 94.5% 0, 100% 7%, 100% 93%, 94.5% 100%, 5.5% 100%, 0 93%)",
+                            }}
+                          />
+                        ))}
                         <SwipeablePollCard
                           id={currentPoll.id}
                           question={currentPoll.question}
@@ -413,11 +438,11 @@ export function OnboardingJourney({
                   </div>
                 )}
               </div>
-              <div className="mt-6 flex justify-end">
+              <div className="mt-5 flex justify-end sm:mt-6">
                 <button
                   onClick={goToNextStep}
                   disabled={!canContinueFromPolls}
-                  className="rounded-xl border border-raw-gold/40 bg-raw-gold/15 px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-raw-gold transition-all hover:bg-raw-gold/25 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="w-full rounded-xl border border-raw-gold/40 bg-raw-gold/15 px-5 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-raw-gold transition-all hover:bg-raw-gold/25 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:py-2.5"
                 >
                   Continue to communities →
                 </button>
@@ -546,6 +571,24 @@ export function OnboardingJourney({
           )}
         </div>
       </div>
+
+      <EnterRawModal
+        open={enterRawOpen}
+        onEnter={() => {
+          track("onboarding_completed", {
+            total_duration_ms: Date.now() - stepStartTimeRef.current,
+            polls_answered: answeredCount,
+            communities_selected: selectedCommunityIds.length,
+            source: "enter_raw_modal",
+          });
+          setEnterRawOpen(false);
+          onCompleteOnboarding();
+        }}
+        onDismiss={() => {
+          setEnterRawOpen(false);
+          setEnterRawDismissed(true);
+        }}
+      />
     </div>
   );
 }

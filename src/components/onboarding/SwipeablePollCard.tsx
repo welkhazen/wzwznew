@@ -111,8 +111,8 @@ export function SwipeablePollCard({
   const { yesOption, noOption } = resolvedOptions;
 
   return (
-    <div className="flex flex-col gap-5" data-poll-id={id}>
-      <div className="flex items-center justify-between border border-raw-gold/20 bg-black/35 px-4 py-3">
+    <div className="flex flex-col gap-4 sm:gap-5" data-poll-id={id}>
+      <div className="flex items-center justify-between border border-raw-gold/20 bg-black/35 px-3 py-2 sm:px-4 sm:py-3">
         <span className="font-display text-[10px] uppercase tracking-[0.18em] text-raw-silver/45">
           {currentIndex + 1} / {totalPolls}
         </span>
@@ -130,12 +130,12 @@ export function SwipeablePollCard({
       />
 
       {isAnswered && (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2 sm:gap-3">
           <button
             type="button"
             onClick={() => onNavigate?.("left")}
             disabled={pollIndex === 0}
-            className="flex items-center justify-center gap-1.5 border border-raw-border/40 bg-raw-black/40 py-2.5 text-[11px] font-medium text-raw-silver/65 transition hover:border-raw-border/70 hover:text-raw-text disabled:cursor-not-allowed disabled:opacity-30"
+            className="flex min-h-[40px] items-center justify-center gap-1.5 border border-raw-border/40 bg-raw-black/40 py-2.5 text-[11px] font-medium text-raw-silver/65 transition hover:border-raw-border/70 hover:text-raw-text disabled:cursor-not-allowed disabled:opacity-30"
             aria-label="Previous poll"
           >
             <ChevronLeft className="size-3.5" /> Previous
@@ -144,7 +144,7 @@ export function SwipeablePollCard({
             type="button"
             onClick={() => onNavigate?.("right")}
             disabled={pollIndex >= totalPolls - 1}
-            className="flex items-center justify-center gap-1.5 border border-raw-border/40 bg-raw-black/40 py-2.5 text-[11px] font-medium text-raw-silver/65 transition hover:border-raw-border/70 hover:text-raw-text disabled:cursor-not-allowed disabled:opacity-30"
+            className="flex min-h-[40px] items-center justify-center gap-1.5 border border-raw-border/40 bg-raw-black/40 py-2.5 text-[11px] font-medium text-raw-silver/65 transition hover:border-raw-border/70 hover:text-raw-text disabled:cursor-not-allowed disabled:opacity-30"
             aria-label="Next poll"
           >
             Next <ChevronRight className="size-3.5" />
@@ -153,7 +153,7 @@ export function SwipeablePollCard({
       )}
 
       {isAnswered && (
-        <div className="border border-raw-border/35 bg-raw-black/45 p-4">
+        <div className="border border-raw-border/35 bg-raw-black/45 p-3 sm:p-4">
           <div className="mb-2 flex items-center justify-between">
             <p className="text-[11px] uppercase tracking-[0.12em] text-raw-silver/55">
               Comments
@@ -183,7 +183,7 @@ export function SwipeablePollCard({
             </button>
           </form>
 
-          <div className="mt-4 max-h-64 overflow-y-auto pr-1">
+          <div className="mt-3 max-h-[50vh] overflow-y-auto pr-1 sm:mt-4 sm:max-h-64">
             <div className="flex flex-col gap-2.5">
               {updatedComments.length === 0 ? (
                 <p className="text-center text-xs text-raw-silver/45">No comments yet. Be the first.</p>

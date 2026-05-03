@@ -116,7 +116,7 @@ export function PremiumPollCard({
 
   return (
     <motion.article
-      className={cn("relative mx-auto w-full max-w-[20rem] touch-pan-y select-none", className)}
+      className={cn("relative mx-auto w-full max-w-[22rem] touch-pan-y select-none", className)}
       drag={disabled || isAnswered ? false : "x"}
       dragConstraints={{ left: 0, right: 0 }}
       dragElastic={0.72}
@@ -126,18 +126,18 @@ export function PremiumPollCard({
       aria-label={question}
     >
       <motion.div
-        className="pointer-events-none absolute -left-5 top-10 z-20 rounded-full border border-raw-gold/35 bg-[#111]/90 p-3 text-raw-gold shadow-[0_0_22px_rgba(241,196,45,0.18)]"
+        className="pointer-events-none absolute left-1 top-8 z-20 rounded-full border border-raw-gold/35 bg-[#111]/90 p-2.5 text-raw-gold shadow-[0_0_22px_rgba(241,196,45,0.18)] sm:-left-5 sm:top-10 sm:p-3"
         style={{ opacity: secondaryGlow }}
         aria-hidden="true"
       >
-        <span className="block text-sm leading-none">No</span>
+        <span className="block text-xs leading-none sm:text-sm">No</span>
       </motion.div>
       <motion.div
-        className="pointer-events-none absolute -right-5 top-10 z-20 rounded-full border border-raw-gold/55 bg-[#151006]/95 p-3 text-raw-gold shadow-[0_0_24px_rgba(241,196,45,0.28)]"
+        className="pointer-events-none absolute right-1 top-8 z-20 rounded-full border border-raw-gold/55 bg-[#151006]/95 p-2.5 text-raw-gold shadow-[0_0_24px_rgba(241,196,45,0.28)] sm:-right-5 sm:top-10 sm:p-3"
         style={{ opacity: primaryGlow }}
         aria-hidden="true"
       >
-        <span className="block text-sm leading-none">Yes</span>
+        <span className="block text-xs leading-none sm:text-sm">Yes</span>
       </motion.div>
 
       <div
@@ -149,7 +149,7 @@ export function PremiumPollCard({
         }}
       >
         <div
-          className="relative min-h-[25.5rem] overflow-hidden bg-[#070707]"
+          className="relative min-h-[22rem] overflow-hidden bg-[#070707] sm:min-h-[25.5rem]"
           style={{
             clipPath: CARD_CLIP,
             background:
@@ -166,14 +166,14 @@ export function PremiumPollCard({
           />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_0%,rgba(0,0,0,0.34)_65%,rgba(0,0,0,0.84)_100%)]" />
 
-          <div className="relative flex min-h-[25.5rem] flex-col items-center px-5 pb-6 pt-9 sm:px-6">
+          <div className="relative flex min-h-[22rem] flex-col items-center px-4 pb-5 pt-7 sm:min-h-[25.5rem] sm:px-6 sm:pb-6 sm:pt-9">
             <div className="flex w-full items-center gap-3">
               <span className="h-px flex-1 bg-gradient-to-r from-transparent via-raw-gold/55 to-raw-gold/20" />
               <span className="h-1 w-1 bg-raw-gold shadow-[0_0_10px_rgba(241,196,45,0.9)]" />
               <span className="h-px flex-1 bg-gradient-to-l from-transparent via-raw-gold/55 to-raw-gold/20" />
             </div>
 
-            <div className="relative mt-5 h-20 w-20 overflow-hidden">
+            <div className="relative mt-4 h-14 w-14 overflow-hidden sm:mt-5 sm:h-20 sm:w-20">
               <img
                 src="/assets/cumulative-mind.png"
                 alt="Cumulative Mind"
@@ -188,19 +188,18 @@ export function PremiumPollCard({
               </p>
             )}
 
-            <h2 className="mt-5 flex min-h-[7.75rem] items-center text-center font-display text-[clamp(1.12rem,4.8vw,1.46rem)] leading-[1.42] text-[#dedede] [text-wrap:balance]">
+            <h2 className="mt-4 flex min-h-[5.5rem] items-center text-center font-display text-[clamp(1rem,4.6vw,1.46rem)] leading-[1.4] text-[#dedede] [text-wrap:balance] sm:mt-5 sm:min-h-[7.75rem]">
               {question}
             </h2>
 
-            <div className="mt-auto w-full pt-5">
-              <div className="grid grid-cols-2 gap-3">
+            <div className="mt-auto w-full pt-4 sm:pt-5">
+              <div className="grid grid-cols-2 gap-2 sm:gap-3">
                 <button
                   type="button"
                   disabled={disabled || isAnswered}
-                  onPointerDown={(event) => event.stopPropagation()}
                   onClick={() => submitVote(primaryOption.id)}
                   className={cn(
-                    "relative min-h-[4.8rem] cursor-pointer overflow-hidden px-3 py-3 text-center font-display text-lg tracking-wide transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/80 disabled:cursor-not-allowed",
+                    "relative min-h-[4rem] cursor-pointer overflow-hidden px-2 py-2.5 text-center font-display text-base tracking-wide transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/80 disabled:cursor-not-allowed sm:min-h-[4.8rem] sm:px-3 sm:py-3 sm:text-lg",
                     primarySelected ? "text-black" : "text-raw-gold hover:text-[#ffe07a]",
                     !primarySelected && isAnswered && "text-raw-gold/75"
                   )}
@@ -223,10 +222,9 @@ export function PremiumPollCard({
                 <button
                   type="button"
                   disabled={disabled || isAnswered}
-                  onPointerDown={(event) => event.stopPropagation()}
                   onClick={() => submitVote(secondaryOption.id)}
                   className={cn(
-                    "group relative min-h-[4.8rem] overflow-hidden px-3 py-3 text-center font-display text-lg tracking-wide transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/70 disabled:cursor-not-allowed",
+                    "group relative min-h-[4rem] overflow-hidden px-2 py-2.5 text-center font-display text-base tracking-wide transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/70 disabled:cursor-not-allowed sm:min-h-[4.8rem] sm:px-3 sm:py-3 sm:text-lg",
                     secondarySelected ? "text-black" : "text-[#d9d9d9] hover:border-raw-gold/50 hover:text-white",
                     !secondarySelected && isAnswered && "text-raw-silver/72"
                   )}
