@@ -226,9 +226,6 @@ export function PremiumPollCard({
                   onPointerDown={(event) => event.stopPropagation()}
                   onClick={() => submitVote(secondaryOption.id)}
                   className={cn(
-                    onPointerDown={(event) => event.stopPropagation()}
-                  onClick={() => submitVote(secondaryOption.id)}
-                  className={cn(
                     "group relative min-h-[4.8rem] overflow-hidden px-3 py-3 text-center font-display text-lg tracking-wide transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/70 disabled:cursor-not-allowed",
                     secondarySelected ? "text-black" : "text-[#d9d9d9] hover:border-raw-gold/50 hover:text-white",
                     !secondarySelected && isAnswered && "text-raw-silver/72"
