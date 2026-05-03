@@ -46,11 +46,11 @@ drop policy if exists avatar_inventory_write_all on public.user_avatar_inventory
 drop policy if exists avatar_selection_read_all on public.user_avatar_selection;
 drop policy if exists avatar_selection_write_all on public.user_avatar_selection;
 
-create policy if not exists avatar_catalog_read_all on public.avatar_catalog
+create policy avatar_catalog_read_all on public.avatar_catalog
 for select to anon, authenticated
 using (is_active = true);
 
-create policy if not exists avatar_catalog_write_admin_only on public.avatar_catalog
+create policy avatar_catalog_write_admin_only on public.avatar_catalog
 for all to authenticated
 using (
   exists (
@@ -69,23 +69,23 @@ with check (
   )
 );
 
-create policy if not exists avatar_inventory_read_own on public.user_avatar_inventory
+create policy avatar_inventory_read_own on public.user_avatar_inventory
 for select to authenticated
 using (user_id = auth.uid()::text);
 
-create policy if not exists avatar_inventory_insert_own on public.user_avatar_inventory
+create policy avatar_inventory_insert_own on public.user_avatar_inventory
 for insert to authenticated
 with check (user_id = auth.uid()::text);
 
-create policy if not exists avatar_inventory_delete_own on public.user_avatar_inventory
+create policy avatar_inventory_delete_own on public.user_avatar_inventory
 for delete to authenticated
 using (user_id = auth.uid()::text);
 
-create policy if not exists avatar_selection_read_own on public.user_avatar_selection
+create policy avatar_selection_read_own on public.user_avatar_selection
 for select to authenticated
 using (user_id = auth.uid()::text);
 
-create policy if not exists avatar_selection_upsert_own on public.user_avatar_selection
+create policy avatar_selection_upsert_own on public.user_avatar_selection
 for all to authenticated
 using (user_id = auth.uid()::text)
 with check (user_id = auth.uid()::text);

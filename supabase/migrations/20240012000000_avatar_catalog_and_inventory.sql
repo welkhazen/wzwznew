@@ -32,29 +32,35 @@ alter table public.avatar_catalog enable row level security;
 alter table public.user_avatar_inventory enable row level security;
 alter table public.user_avatar_selection enable row level security;
 
-create policy if not exists avatar_catalog_read_all on public.avatar_catalog
+drop policy if exists avatar_catalog_read_all on public.avatar_catalog;
+create policy avatar_catalog_read_all on public.avatar_catalog
 for select to anon, authenticated
 using (is_active = true);
 
-create policy if not exists avatar_catalog_write_all on public.avatar_catalog
+drop policy if exists avatar_catalog_write_all on public.avatar_catalog;
+create policy avatar_catalog_write_all on public.avatar_catalog
 for all to anon, authenticated
 using (true)
 with check (true);
 
-create policy if not exists avatar_inventory_read_all on public.user_avatar_inventory
+drop policy if exists avatar_inventory_read_all on public.user_avatar_inventory;
+create policy avatar_inventory_read_all on public.user_avatar_inventory
 for select to anon, authenticated
 using (true);
 
-create policy if not exists avatar_inventory_write_all on public.user_avatar_inventory
+drop policy if exists avatar_inventory_write_all on public.user_avatar_inventory;
+create policy avatar_inventory_write_all on public.user_avatar_inventory
 for all to anon, authenticated
 using (true)
 with check (true);
 
-create policy if not exists avatar_selection_read_all on public.user_avatar_selection
+drop policy if exists avatar_selection_read_all on public.user_avatar_selection;
+create policy avatar_selection_read_all on public.user_avatar_selection
 for select to anon, authenticated
 using (true);
 
-create policy if not exists avatar_selection_write_all on public.user_avatar_selection
+drop policy if exists avatar_selection_write_all on public.user_avatar_selection;
+create policy avatar_selection_write_all on public.user_avatar_selection
 for all to anon, authenticated
 using (true)
 with check (true);
