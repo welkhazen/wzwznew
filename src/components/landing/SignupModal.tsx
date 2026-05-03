@@ -11,12 +11,9 @@ import { track } from "@/lib/analytics";
 
 interface SignupModalProps {
   open: boolean;
-  onOpenChange?: (open: boolean) => void;
-  onClose?: () => void;
-  onRequestOtp?: (username: string, password: string, phone: string) => Promise<AuthResult>;
-  onRequestSignupOtp?: (username: string, password: string, phone: string) => Promise<AuthResult>;
-  onVerifyOtp?: (code: string) => Promise<AuthResult>;
-  onVerifySignupOtp?: (code: string) => Promise<AuthResult>;
+  onClose: () => void;
+  onRequestSignupOtp: (username: string, password: string, phone: string) => Promise<AuthResult>;
+  onVerifySignupOtp: (code: string) => Promise<AuthResult>;
   onLogin: (username: string, password: string) => Promise<AuthResult>;
   source?: string;
 }
@@ -61,17 +58,7 @@ function getPasswordStrength(password: string) {
   return { label: "Strong", tone: "text-emerald-300", checks };
 }
 
-export function SignupModal({
-  open,
-  onOpenChange,
-  onClose,
-  onRequestOtp,
-  onRequestSignupOtp,
-  onVerifyOtp,
-  onVerifySignupOtp,
-  onLogin,
-  source,
-}: SignupModalProps) {
+export function SignupModal({ open, onClose, onRequestSignupOtp, onVerifySignupOtp, onLogin, source }: SignupModalProps) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -86,12 +73,6 @@ export function SignupModal({
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const openedFiredRef = useRef(false);
-  const handleClose = () => {
-    onOpenChange?.(false);
-    onClose?.();
-  };
-  const requestOtp = onRequestOtp ?? onRequestSignupOtp;
-  const verifyOtp = onVerifyOtp ?? onVerifySignupOtp;
 
   useEffect(() => {
     if (open && !openedFiredRef.current) {
@@ -155,13 +136,7 @@ export function SignupModal({
 
     track("signup_started", { method: "username_password" });
 
-    if (!requestOtp) {
-      setError("Signup is temporarily unavailable.");
-      setIsSubmitting(false);
-      return;
-    }
-
-    const result = await requestOtp(normalizedUsername, normalizedPassword, "");
+    const result = await onRequestSignupOtp(normalizedUsername, normalizedPassword, "");
     if (!result.ok) {
       track("signup_failed", { reason: result.error ?? "unknown", step: "details" });
       setError(result.error ?? "Unable to create account.");
@@ -183,13 +158,7 @@ export function SignupModal({
     setIsSubmitting(true);
     setError("");
 
-    if (!verifyOtp) {
-      setError("Verification is temporarily unavailable.");
-      setIsSubmitting(false);
-      return;
-    }
-
-    const result = await verifyOtp(verificationCode);
+    const result = await onVerifySignupOtp(verificationCode);
     if (!result.ok) {
       track("signup_failed", { reason: result.error ?? "otp_invalid", step: "otp" });
       setError(result.error ?? "Verification failed.");
@@ -236,11 +205,11 @@ export function SignupModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={handleClose} />
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
 
       <div className="relative z-10 flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-2xl border border-raw-border/50 bg-raw-surface shadow-2xl mx-4 max-w-sm">
         <button
-          onClick={handleClose}
+          onClick={onClose}
           className="absolute right-3 top-3 z-10 flex h-10 w-10 items-center justify-center rounded-full text-raw-silver/60 transition-colors hover:bg-raw-black/30 hover:text-raw-silver sm:right-4 sm:top-4"
           aria-label="Close"
         >

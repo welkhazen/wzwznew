@@ -1,0 +1,277 @@
+import { supabase } from "@/lib/supabase";
+
+export type AvatarCatalogItem = {
+  id: string;
+  level: number;
+  name: string;
+  price: string;
+  imageSrc?: string;
+  bg: string;
+  figure: string;
+  ring: string;
+  glow: string;
+  isActive?: boolean;
+};
+
+const CATALOG_STORAGE_KEY = "raw.avatar.catalog.v1";
+const INVENTORY_STORAGE_PREFIX = "raw.avatar.inventory.v1.";
+const SELECTED_STORAGE_PREFIX = "raw.avatar.selected.v1.";
+
+const DEFAULT_AVATAR_CATALOG: AvatarCatalogItem[] = [
+  { id: "avatar-1", level: 1, name: "Avatar 1", price: "Free", imageSrc: "/avatars/avatar-1.svg", bg: "#1a1a1a", figure: "#c8c8c8", ring: "#8a8a8a", glow: "none", isActive: true },
+  { id: "avatar-2", level: 2, name: "Avatar 2", price: "Free", imageSrc: "/avatars/avatar-2.svg", bg: "#0c1a24", figure: "#5ed6ff", ring: "#2ea6d6", glow: "#5ed6ff80", isActive: true },
+  { id: "avatar-3", level: 3, name: "Avatar 3", price: "0", imageSrc: "/avatars/avatar-3.svg", bg: "#0a1124", figure: "#3f8bff", ring: "#2557c4", glow: "#3f8bff80", isActive: true },
+  { id: "avatar-4", level: 4, name: "Avatar 4", price: "0", imageSrc: "/avatars/avatar-4.svg", bg: "#0f1f12", figure: "#4ade80", ring: "#22a84a", glow: "#4ade8080", isActive: true },
+  { id: "avatar-5", level: 5, name: "Avatar 5", price: "0", imageSrc: "/avatars/avatar-5.svg", bg: "#0b1a0e", figure: "#16a34a", ring: "#0f7a36", glow: "#16a34a80", isActive: true },
+  { id: "avatar-6", level: 6, name: "Avatar 6", price: "0", imageSrc: "/avatars/avatar-6.svg", bg: "#1f0d18", figure: "#ec4899", ring: "#a6235f", glow: "#ec489980", isActive: true },
+  { id: "avatar-7", level: 7, name: "Avatar 7", price: "0", imageSrc: "/avatars/avatar-7.svg", bg: "#150a22", figure: "#8b5cf6", ring: "#5b2aa8", glow: "#8b5cf680", isActive: true },
+  { id: "avatar-8", level: 8, name: "Avatar 8", price: "0", imageSrc: "/avatars/avatar-8.svg", bg: "#1f1208", figure: "#f97316", ring: "#b0550f", glow: "#f9731680", isActive: true },
+  { id: "avatar-9", level: 9, name: "Avatar 9", price: "0", imageSrc: "/avatars/avatar-9.svg", bg: "#1f0a0a", figure: "#dc2626", ring: "#8a1515", glow: "#dc262680", isActive: true },
+  { id: "avatar-10", level: 10, name: "Avatar 10", price: "0", imageSrc: "/avatars/avatar-10.svg", bg: "#1f1705", figure: "#facc15", ring: "#b8900b", glow: "#facc1590", isActive: true },
+];
+
+function cloneCatalog(items: AvatarCatalogItem[]): AvatarCatalogItem[] {
+  return items.map((item) => ({ ...item }));
+}
+
+function sanitizeCatalog(items: AvatarCatalogItem[]): AvatarCatalogItem[] {
+  const unique = new Map<string, AvatarCatalogItem>();
+
+  items.forEach((item, idx) => {
+    const id = (item.id || `avatar-${idx + 1}`).trim();
+    if (!id) return;
+
+    unique.set(id, {
+      id,
+      level: idx + 1,
+      name: item.name?.trim() || `Avatar ${idx + 1}`,
+      price: item.price?.trim() || "0",
+      imageSrc: item.imageSrc || undefined,
+      bg: item.bg || DEFAULT_AVATAR_CATALOG[Math.min(idx, DEFAULT_AVATAR_CATALOG.length - 1)].bg,
+      figure: item.figure || DEFAULT_AVATAR_CATALOG[Math.min(idx, DEFAULT_AVATAR_CATALOG.length - 1)].figure,
+      ring: item.ring || DEFAULT_AVATAR_CATALOG[Math.min(idx, DEFAULT_AVATAR_CATALOG.length - 1)].ring,
+      glow: item.glow || DEFAULT_AVATAR_CATALOG[Math.min(idx, DEFAULT_AVATAR_CATALOG.length - 1)].glow,
+      isActive: item.isActive !== false,
+    });
+  });
+
+  const ordered = Array.from(unique.values()).filter((item) => item.isActive !== false);
+  return ordered.length > 0 ? ordered : cloneCatalog(DEFAULT_AVATAR_CATALOG);
+}
+
+function isBrowser(): boolean {
+  return typeof window !== "undefined";
+}
+
+function dispatchCatalogUpdated(): void {
+  if (!isBrowser()) return;
+  window.dispatchEvent(new CustomEvent("raw:avatar-catalog-updated"));
+}
+
+export function getDefaultAvatarCatalog(): AvatarCatalogItem[] {
+  return cloneCatalog(DEFAULT_AVATAR_CATALOG);
+}
+
+export function readAvatarCatalogLocal(): AvatarCatalogItem[] {
+  if (!isBrowser()) return cloneCatalog(DEFAULT_AVATAR_CATALOG);
+
+  try {
+    const raw = window.localStorage.getItem(CATALOG_STORAGE_KEY);
+    if (!raw) return cloneCatalog(DEFAULT_AVATAR_CATALOG);
+    const parsed = JSON.parse(raw) as AvatarCatalogItem[];
+    return sanitizeCatalog(parsed);
+  } catch {
+    return cloneCatalog(DEFAULT_AVATAR_CATALOG);
+  }
+}
+
+export function writeAvatarCatalogLocal(items: AvatarCatalogItem[]): AvatarCatalogItem[] {
+  const next = sanitizeCatalog(items);
+  if (isBrowser()) {
+    window.localStorage.setItem(CATALOG_STORAGE_KEY, JSON.stringify(next));
+    dispatchCatalogUpdated();
+  }
+  return next;
+}
+
+export function readAvatarThemesFromCache(): AvatarCatalogItem[] {
+  return readAvatarCatalogLocal();
+}
+
+export async function loadAvatarCatalog(): Promise<AvatarCatalogItem[]> {
+  try {
+    const { data, error } = await supabase
+      .from("avatar_catalog")
+      .select("id, level, name, price, image_src, bg, figure, ring, glow, is_active")
+      .eq("is_active", true)
+      .order("level", { ascending: true });
+
+    if (error) {
+      return readAvatarCatalogLocal();
+    }
+
+    const mapped = (data ?? []).map((row) => ({
+      id: row.id,
+      level: row.level,
+      name: row.name,
+      price: row.price,
+      imageSrc: row.image_src ?? undefined,
+      bg: row.bg,
+      figure: row.figure,
+      ring: row.ring,
+      glow: row.glow,
+      isActive: row.is_active,
+    }));
+
+    if (mapped.length === 0) return readAvatarCatalogLocal();
+    return writeAvatarCatalogLocal(mapped);
+  } catch {
+    return readAvatarCatalogLocal();
+  }
+}
+
+export async function saveAvatarCatalog(items: AvatarCatalogItem[]): Promise<AvatarCatalogItem[]> {
+  const next = writeAvatarCatalogLocal(items);
+
+  try {
+    const rows = next.map((item) => ({
+      id: item.id,
+      level: item.level,
+      name: item.name,
+      price: item.price,
+      image_src: item.imageSrc ?? null,
+      bg: item.bg,
+      figure: item.figure,
+      ring: item.ring,
+      glow: item.glow,
+      is_active: true,
+    }));
+
+    const { error: upsertError } = await supabase.from("avatar_catalog").upsert(rows, { onConflict: "id" });
+    if (upsertError) return next;
+
+    const currentIds = new Set(next.map((item) => item.id));
+    const { data: existingRows, error: existingError } = await supabase.from("avatar_catalog").select("id");
+    if (existingError || !existingRows) return next;
+
+    const retiredIds = existingRows.map((row) => row.id).filter((id) => !currentIds.has(id));
+    if (retiredIds.length > 0) {
+      await supabase.from("avatar_catalog").update({ is_active: false }).in("id", retiredIds);
+    }
+  } catch {
+    // Local cache remains the source of truth if Supabase write is unavailable.
+  }
+
+  return next;
+}
+
+function inventoryKey(userId: string): string {
+  return `${INVENTORY_STORAGE_PREFIX}${userId}`;
+}
+
+function selectedKey(userId: string): string {
+  return `${SELECTED_STORAGE_PREFIX}${userId}`;
+}
+
+function defaultOwnedIds(catalog: AvatarCatalogItem[]): string[] {
+  return catalog.length > 0 ? [catalog[0].id] : [];
+}
+
+export function readOwnedAvatarIdsLocal(userId: string, catalog: AvatarCatalogItem[]): string[] {
+  if (!isBrowser()) return defaultOwnedIds(catalog);
+
+  try {
+    const raw = window.localStorage.getItem(inventoryKey(userId));
+    if (!raw) return defaultOwnedIds(catalog);
+    const parsed = JSON.parse(raw) as string[];
+    const allowed = new Set(catalog.map((item) => item.id));
+    const filtered = parsed.filter((id) => allowed.has(id));
+    return filtered.length > 0 ? filtered : defaultOwnedIds(catalog);
+  } catch {
+    return defaultOwnedIds(catalog);
+  }
+}
+
+export function writeOwnedAvatarIdsLocal(userId: string, ownedAvatarIds: string[]): void {
+  if (!isBrowser()) return;
+  window.localStorage.setItem(inventoryKey(userId), JSON.stringify(Array.from(new Set(ownedAvatarIds))));
+}
+
+export function readSelectedAvatarIdLocal(userId: string, catalog: AvatarCatalogItem[], ownedAvatarIds: string[]): string {
+  if (!isBrowser()) return ownedAvatarIds[0] ?? catalog[0]?.id ?? "avatar-1";
+
+  const fallback = ownedAvatarIds[0] ?? catalog[0]?.id ?? "avatar-1";
+  try {
+    const raw = window.localStorage.getItem(selectedKey(userId));
+    if (!raw) return fallback;
+    if (ownedAvatarIds.includes(raw)) return raw;
+    return fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+export function writeSelectedAvatarIdLocal(userId: string, avatarId: string): void {
+  if (!isBrowser()) return;
+  window.localStorage.setItem(selectedKey(userId), avatarId);
+}
+
+export async function loadUserAvatarState(
+  userId: string,
+  catalog: AvatarCatalogItem[],
+): Promise<{ ownedAvatarIds: string[]; selectedAvatarId: string }> {
+  const localOwned = readOwnedAvatarIdsLocal(userId, catalog);
+  const localSelected = readSelectedAvatarIdLocal(userId, catalog, localOwned);
+
+  try {
+    const [{ data: inventoryRows, error: inventoryError }, { data: selectedRow, error: selectedError }] = await Promise.all([
+      supabase.from("user_avatar_inventory").select("avatar_id").eq("user_id", userId),
+      supabase.from("user_avatar_selection").select("avatar_id").eq("user_id", userId).maybeSingle(),
+    ]);
+
+    if (inventoryError || selectedError) {
+      return { ownedAvatarIds: localOwned, selectedAvatarId: localSelected };
+    }
+
+    const allowed = new Set(catalog.map((item) => item.id));
+    const serverOwned = (inventoryRows ?? []).map((row) => row.avatar_id).filter((id) => allowed.has(id));
+    const ownedAvatarIds = serverOwned.length > 0 ? Array.from(new Set(serverOwned)) : localOwned;
+    const selectedCandidate = selectedRow?.avatar_id ?? localSelected;
+    const selectedAvatarId = ownedAvatarIds.includes(selectedCandidate) ? selectedCandidate : ownedAvatarIds[0] ?? localSelected;
+
+    writeOwnedAvatarIdsLocal(userId, ownedAvatarIds);
+    writeSelectedAvatarIdLocal(userId, selectedAvatarId);
+
+    return { ownedAvatarIds, selectedAvatarId };
+  } catch {
+    return { ownedAvatarIds: localOwned, selectedAvatarId: localSelected };
+  }
+}
+
+export async function purchaseAvatarForUser(userId: string, avatarId: string): Promise<void> {
+  const catalog = readAvatarCatalogLocal();
+  if (!catalog.some((item) => item.id === avatarId)) {
+    throw new Error(`Unknown avatar id: ${avatarId}`);
+  }
+
+  const localInventory = readOwnedAvatarIdsLocal(userId, catalog);
+  if (!localInventory.includes(avatarId)) {
+    writeOwnedAvatarIdsLocal(userId, [...localInventory, avatarId]);
+  }
+
+  try {
+    await supabase.from("user_avatar_inventory").upsert({ user_id: userId, avatar_id: avatarId }, { onConflict: "user_id,avatar_id" });
+  } catch {
+    // Local save already completed.
+  }
+}
+
+export async function equipAvatarForUser(userId: string, avatarId: string): Promise<void> {
+  writeSelectedAvatarIdLocal(userId, avatarId);
+
+  try {
+    await supabase.from("user_avatar_selection").upsert({ user_id: userId, avatar_id: avatarId }, { onConflict: "user_id" });
+  } catch {
+    // Local save already completed.
+  }
+}

@@ -16,6 +16,9 @@ interface DashboardProfileProps {
   username: string;
   avatarLevel: number;
   onAvatarChange: (level: number) => void;
+  ownedAvatarLevels: Set<number>;
+  onUnlockAvatar: (level: number) => Promise<boolean>;
+  avatarPricesByLevel: Record<number, string>;
   pollsAnswered: number;
   xp?: number;
 }
@@ -41,10 +44,14 @@ export function DashboardProfile({
   username,
   avatarLevel,
   onAvatarChange,
+  ownedAvatarLevels,
+  onUnlockAvatar,
+  avatarPricesByLevel,
   pollsAnswered,
   xp = 0,
 }: DashboardProfileProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [unlockingLevel, setUnlockingLevel] = useState<number | null>(null);
   const displayIndex = hoveredIndex ?? avatarLevel;
   const theme = getAvatar(displayIndex);
   const xpForNext = displayIndex * 500;
@@ -101,12 +108,28 @@ export function DashboardProfile({
               <button
                 key={lvl}
                 type="button"
-                onClick={() => onAvatarChange(lvl)}
+                onClick={() => {
+                  if (ownedAvatarLevels.has(lvl)) {
+                    onAvatarChange(lvl);
+                    return;
+                  }
+
+                  setUnlockingLevel(lvl);
+                  void onUnlockAvatar(lvl).then((ok) => {
+                    if (ok) onAvatarChange(lvl);
+                  }).catch(() => {
+                    // Keep current selection if unlock fails.
+                  }).finally(() => {
+                    setUnlockingLevel((previous) => (previous === lvl ? null : previous));
+                  });
+                }}
                 onMouseEnter={() => setHoveredIndex(lvl)}
                 onMouseLeave={() => setHoveredIndex(null)}
                 onFocus={() => setHoveredIndex(lvl)}
                 onBlur={() => setHoveredIndex(null)}
-                className="flex h-10 w-10 items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/40"
+                className={`relative flex h-10 w-10 items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/40 ${
+                  ownedAvatarLevels.has(lvl) ? "" : "opacity-75"
+                }`}
                 aria-label={`Preview level ${lvl}`}
                 aria-pressed={lvl === avatarLevel}
               >
@@ -115,6 +138,11 @@ export function DashboardProfile({
                   size="sm"
                   selected={lvl === avatarLevel}
                 />
+                {!ownedAvatarLevels.has(lvl) && (
+                  <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap text-[9px] text-raw-silver/40">
+                    {unlockingLevel === lvl ? "Unlocking..." : (avatarPricesByLevel[lvl] || "Locked")}
+                  </span>
+                )}
               </button>
             )
           )}

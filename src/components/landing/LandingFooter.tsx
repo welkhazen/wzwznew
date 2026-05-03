@@ -16,20 +16,20 @@ export function LandingFooter() {
           <a href="/" className="inline-block font-display text-3xl tracking-[0.25em] text-raw-text/90 sm:text-4xl">
             ra<span className="text-raw-gold">W</span>
           </a>
-          <p className="mt-2 text-xs uppercase tracking-[0.22em] text-raw-silver/35">Where Discovery Becomes Transformation.</p>
+          <p className="mt-2 text-xs uppercase tracking-[0.22em] text-raw-silver/35">Speak Your Truth.</p>
         </div>
 
         {/* Links — 3 cols on mobile, inline on desktop */}
         <div className="mb-10 grid grid-cols-3 gap-6 sm:flex sm:justify-center sm:gap-16">
           <div>
-            <p className="landing-section-eyebrow mb-3 text-[10px] font-semibold uppercase tracking-[0.18em]">Product</p>
+            <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-raw-gold/60">Product</p>
             <ul className="space-y-2.5">
               <li><a href="/#polls" className="text-xs text-raw-silver/55 transition hover:text-raw-gold">Polls</a></li>
             </ul>
           </div>
 
           <div>
-            <p className="landing-section-eyebrow mb-3 text-[10px] font-semibold uppercase tracking-[0.18em]">Legal</p>
+            <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-raw-gold/60">Legal</p>
             <ul className="space-y-2.5">
               <li><a href="/terms" className="text-xs text-raw-silver/55 transition hover:text-raw-gold">Terms</a></li>
               <li><a href="/privacy" className="text-xs text-raw-silver/55 transition hover:text-raw-gold">Privacy</a></li>
@@ -38,7 +38,7 @@ export function LandingFooter() {
           </div>
 
           <div>
-            <p className="landing-section-eyebrow mb-3 text-[10px] font-semibold uppercase tracking-[0.18em]">Contact</p>
+            <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-raw-gold/60">Contact</p>
             <ul className="space-y-2.5">
               <li><a href={`mailto:${supportEmail}`} className="text-xs text-raw-silver/55 transition hover:text-raw-gold">Email</a></li>
               <li><a href={whatsAppHref} target="_blank" rel="noreferrer" className="text-xs text-raw-silver/55 transition hover:text-raw-gold">WhatsApp</a></li>

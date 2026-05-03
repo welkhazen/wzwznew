@@ -3,11 +3,10 @@
 import React from "react";
 import { motion } from "motion/react";
 import { DotGlobeHero } from "@/components/ui/globe-hero";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Zap } from "lucide-react";
 import { track } from "@/lib/analytics";
 
 import { GlobeHeroTypewriterSequence } from "@/components/landing/GlobeHeroTypewriterSequence";
-import { HeroWorldTagline } from "@/components/landing/HeroWorldTagline";
 import { TypewriterStack } from "@/components/ui/typewriter-stack";
 import { Canvas } from "@react-three/fiber";
 import { PerspectiveCamera } from "@react-three/drei";
@@ -35,7 +34,7 @@ export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
   const handleSecondaryClick = () => {
     track("landing_cta_clicked", {
       cta_id: "globe_hero_learn_more",
-      cta_text: "Claim Reward",
+      cta_text: "Learn More",
       source_section: "globe_hero",
     });
   };
@@ -117,9 +116,13 @@ export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.8 }}
-            className="mx-auto max-w-4xl space-y-4 pt-20 sm:pt-24 lg:pt-28"
+            className="mx-auto max-w-3xl space-y-4 pt-6 sm:pt-8"
           >
-            <HeroWorldTagline />
+            <p
+              className="font-display text-lg font-medium leading-relaxed text-foreground sm:text-xl md:text-2xl"
+            >
+              Your new 24/7 living and ever-growing new world
+            </p>
             <p
               className="text-base font-semibold leading-relaxed text-primary sm:text-lg"
               style={{
@@ -147,7 +150,7 @@ export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
               y: -2,
             }}
             whileTap={{ scale: 0.98 }}
-            className="group relative inline-flex min-h-11 w-full items-center justify-center gap-3 overflow-hidden rounded-xl border border-primary/20 bg-gradient-to-r from-primary via-primary to-primary/90 px-6 py-3.5 text-base font-semibold text-primary-foreground shadow-xl transition-all duration-500 hover:shadow-primary/30 sm:w-72 sm:px-8 sm:py-4 sm:text-lg"
+            className="group relative inline-flex min-h-11 w-full items-center justify-center gap-3 overflow-hidden rounded-xl border border-primary/20 bg-gradient-to-r from-primary via-primary to-primary/90 px-6 py-3.5 text-base font-semibold text-primary-foreground shadow-xl transition-all duration-500 hover:shadow-primary/30 sm:w-auto sm:px-8 sm:py-4 sm:text-lg"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-white/20 via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <motion.div
@@ -171,11 +174,11 @@ export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
               y: -2,
             }}
             whileTap={{ scale: 0.98 }}
-            className="group relative inline-flex min-h-11 w-full items-center justify-center gap-3 overflow-hidden rounded-xl border-2 border-border/40 bg-background/60 px-6 py-3.5 text-base font-semibold shadow-lg backdrop-blur-xl transition-all duration-500 hover:border-primary/40 hover:bg-background/90 sm:w-72 sm:px-8 sm:py-4 sm:text-lg"
+            className="group relative inline-flex min-h-11 w-full items-center justify-center gap-3 overflow-hidden rounded-xl border-2 border-border/40 bg-background/60 px-6 py-3.5 text-base font-semibold shadow-lg backdrop-blur-xl transition-all duration-500 hover:border-primary/40 hover:bg-background/90 sm:w-auto sm:px-8 sm:py-4 sm:text-lg"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <ArrowRight className="relative z-10 h-5 w-5 rotate-90 transition-transform duration-300 group-hover:translate-y-1" />
-            <span className="relative z-10 tracking-wide">Claim Reward</span>
+            <Zap className="relative z-10 w-5 h-5 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300" />
+            <span className="relative z-10 tracking-wide">Learn More</span>
           </motion.a>
         </motion.div>
       </div>

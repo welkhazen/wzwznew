@@ -136,7 +136,7 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
   };
 
   return (
-    <div className="h-screen w-full overflow-hidden bg-background text-foreground" ref={containerRef} onClick={handleContainerClick}>
+    <div className="h-[540px] w-full overflow-hidden bg-background text-foreground" ref={containerRef} onClick={handleContainerClick}>
       <div className="relative mx-auto flex h-full w-full max-w-4xl items-center justify-center">
         <div
           className="absolute flex h-full w-full items-center justify-center"
