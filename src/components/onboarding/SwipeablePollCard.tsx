@@ -40,6 +40,9 @@ export function SwipeablePollCard({
   const [swipeOffsetX, setSwipeOffsetX] = useState(0);
   const [commentText, setCommentText] = useState("");
   const [updatedComments, setUpdatedComments] = useState<Comment[]>(comments);
+  const [hasSeenSwipeGuide, setHasSeenSwipeGuide] = useState(false);
+  const [replyText, setReplyText] = useState("");
+  const [replyingToId, setReplyingToId] = useState<string | null>(null);
   const pointerStartXRef = useRef<number | null>(null);
   const guideStorageKey = "raw.onboarding.swipe-guide-seen";
 

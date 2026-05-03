@@ -10,7 +10,7 @@ export type { AuthResult, OnboardingStep, Poll, PollOption, User } from "@/store
 export function useRawStore() {
   const auth = useAuth();
   const polls = usePolls(auth.isLoggedIn);
-  const rewards = useRewards();
+  const rewards = useRewards(auth.user);
   const onboarding = useOnboarding(auth.isLoggedIn, auth.user?.username);
   const communities = useCommunities();
 
@@ -27,6 +27,10 @@ export function useRawStore() {
     avatarLevel: rewards.avatarLevel,
     setAvatarLevel: rewards.setAvatarLevel,
     changeAvatarLevel: rewards.changeAvatarLevel,
+    avatarCatalog: rewards.avatarCatalog,
+    ownedAvatarLevels: rewards.ownedAvatarLevels,
+    unlockAvatarLevel: rewards.unlockAvatarLevel,
+    avatarPricesByLevel: rewards.avatarPricesByLevel,
     onboardingStep: onboarding.onboardingStep,
     setOnboardingStep: onboarding.setOnboardingStep,
     onboardingAnsweredPollIds: onboarding.onboardingAnsweredPollIds,

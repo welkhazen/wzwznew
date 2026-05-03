@@ -40,6 +40,9 @@ const Index = () => {
     setShowSignup,
     avatarLevel,
     setAvatarLevel,
+    ownedAvatarLevels,
+    unlockAvatarLevel,
+    avatarPricesByLevel,
     onboardingStep,
     setOnboardingStep,
     onboardingAnsweredPollIds,
@@ -138,6 +141,9 @@ const Index = () => {
         votedPolls={votedPolls}
         avatarLevel={avatarLevel}
         setAvatarLevel={setAvatarLevel}
+        ownedAvatarLevels={ownedAvatarLevels}
+        unlockAvatarLevel={unlockAvatarLevel}
+        avatarPricesByLevel={avatarPricesByLevel}
         dailyAnsweredCount={dailyAnsweredCount}
         dailyPollLimit={dailyPollLimit}
         isDailyPollLimitReached={isDailyPollLimitReached}

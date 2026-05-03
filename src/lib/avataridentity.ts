@@ -7,7 +7,9 @@ export interface AvatarTheme {
   imageSrc?: string;
 }
 
-export const LEVEL_THEMES: AvatarTheme[] = [
+import { readAvatarThemesFromCache } from "@/lib/avatarCatalog";
+
+const DEFAULT_LEVEL_THEMES: AvatarTheme[] = [
   { bg: "#1a1a1a", figure: "#c8c8c8", ring: "#8a8a8a", glow: "none",       name: "Avatar", imageSrc: "/avatars/avatar-1.svg"  },
   { bg: "#0c1a24", figure: "#5ed6ff", ring: "#2ea6d6", glow: "#5ed6ff80",  name: "Avatar", imageSrc: "/avatars/avatar-2.svg"  },
   { bg: "#0a1124", figure: "#3f8bff", ring: "#2557c4", glow: "#3f8bff80",  name: "Avatar", imageSrc: "/avatars/avatar-3.svg"  },
@@ -20,9 +22,31 @@ export const LEVEL_THEMES: AvatarTheme[] = [
   { bg: "#1f1705", figure: "#facc15", ring: "#b8900b", glow: "#facc1590",  name: "Avatar", imageSrc: "/avatars/avatar-10.svg" },
 ];
 
+function loadInitialThemes(): AvatarTheme[] {
+  const fromCache = readAvatarThemesFromCache().map((item) => ({
+    bg: item.bg,
+    figure: item.figure,
+    ring: item.ring,
+    glow: item.glow,
+    name: item.name,
+    imageSrc: item.imageSrc,
+  }));
+
+  return fromCache.length > 0 ? fromCache : [...DEFAULT_LEVEL_THEMES];
+}
+
+export const LEVEL_THEMES: AvatarTheme[] = loadInitialThemes();
+
+export let MAX_LEVEL = LEVEL_THEMES.length;
+
+export function setAvatarThemes(themes: AvatarTheme[]): void {
+  const next = themes.length > 0 ? themes : [DEFAULT_LEVEL_THEMES[0]];
+  LEVEL_THEMES.splice(0, LEVEL_THEMES.length, ...next);
+  MAX_LEVEL = LEVEL_THEMES.length;
+}
+
 /** Get avatar by 1-based index (matches stored avatarLevel values). */
 export const AVATARS = LEVEL_THEMES;
-export const MAX_LEVEL = LEVEL_THEMES.length;
 
 export function getAvatar(index: number): AvatarTheme {
   return LEVEL_THEMES[index - 1] || LEVEL_THEMES[0];

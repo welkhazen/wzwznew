@@ -21,6 +21,9 @@ interface DashboardProps {
   votedPolls: Set<string>;
   avatarLevel: number;
   setAvatarLevel: (level: number) => void;
+  ownedAvatarLevels: Set<number>;
+  unlockAvatarLevel: (level: number) => Promise<boolean>;
+  avatarPricesByLevel: Record<number, string>;
   dailyAnsweredCount: number;
   dailyPollLimit: number;
   isDailyPollLimitReached: boolean;
@@ -34,6 +37,9 @@ export default function Dashboard({
   votedPolls,
   avatarLevel,
   setAvatarLevel,
+  ownedAvatarLevels,
+  unlockAvatarLevel,
+  avatarPricesByLevel,
   dailyAnsweredCount,
   dailyPollLimit,
   isDailyPollLimitReached,
@@ -168,6 +174,9 @@ export default function Dashboard({
               username={user.username}
               avatarLevel={avatarLevel}
               onAvatarChange={setAvatarLevel}
+              ownedAvatarLevels={ownedAvatarLevels}
+              onUnlockAvatar={unlockAvatarLevel}
+              avatarPricesByLevel={avatarPricesByLevel}
               pollsAnswered={votedPolls.size}
             />
           </DashboardSectionShell>
