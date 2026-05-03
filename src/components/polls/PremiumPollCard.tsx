@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
-import { animate, motion, useMotionValue, useReducedMotion, useTransform, type PanInfo } from "motion/react";
+import { animate, motion, useMotionValue, useTransform, type PanInfo } from "motion/react";
 import { cn } from "@/lib/utils";
 
 export interface PremiumPollOption {
@@ -23,15 +23,25 @@ interface PremiumPollCardProps {
 const CARD_CLIP =
   "polygon(0 7%, 5.5% 0, 28% 0, 31% 1.4%, 69% 1.4%, 72% 0, 94.5% 0, 100% 7%, 100% 93%, 94.5% 100%, 5.5% 100%, 0 93%)";
 const BUTTON_CLIP = "polygon(10% 0, 90% 0, 100% 22%, 100% 78%, 90% 100%, 10% 100%, 0 78%, 0 22%)";
-const DISTANCE_THRESHOLD = 84;
-const FLING_VELOCITY_THRESHOLD = 560;
-const MIN_FLING_DISTANCE = 18;
+const SWIPE_THRESHOLD = 90;
+const VELOCITY_THRESHOLD = 500;
 
 function getPercent(optionVotes: number, totalVotes: number, selected: boolean) {
   if (totalVotes <= 0) return selected ? 100 : 0;
   return Math.round((optionVotes / totalVotes) * 100);
 }
 
+/**
+ * Tinder-style swipeable poll card.
+ *
+ * Drag right or tap the gold button → primary option (yes-ish).
+ * Drag left or tap the silver button → secondary option (no-ish).
+ *
+ * Implementation mirrors the landing-page DraggablePollCard that is known to
+ * work: a single motion.div with drag="x", dragConstraints, dragElastic,
+ * onDragEnd computing offset/velocity thresholds. Buttons use an isDragging
+ * ref to avoid firing onClick after a drag.
+ */
 export function PremiumPollCard({
   question,
   primaryOption,
@@ -43,101 +53,107 @@ export function PremiumPollCard({
   onVote,
   onHintSeen,
 }: PremiumPollCardProps) {
-  const reduceMotion = useReducedMotion();
-  const x = useMotionValue(0);
-  const rotate = useTransform(x, [-180, 0, 180], [-8, 0, 8]);
-  const primaryGlow = useTransform(x, [14, 112], [0, 1]);
-  const secondaryGlow = useTransform(x, [-112, -14], [1, 0]);
-  const voteLockedRef = useRef(false);
+  const isAnswered = Boolean(selectedOptionId);
+  const primarySelected = selectedOptionId === primaryOption.id;
+  const secondarySelected = selectedOptionId === secondaryOption.id;
 
   const primaryVotes = primaryOption.votes ?? 0;
   const secondaryVotes = secondaryOption.votes ?? 0;
   const totalVotes = primaryVotes + secondaryVotes;
-  const isAnswered = Boolean(selectedOptionId);
-  const primarySelected = selectedOptionId === primaryOption.id;
-  const secondarySelected = selectedOptionId === secondaryOption.id;
   const primaryPercent = getPercent(primaryVotes, totalVotes, primarySelected);
   const secondaryPercent = getPercent(secondaryVotes, totalVotes, secondarySelected);
 
+  const x = useMotionValue(0);
+  const rotate = useTransform(x, [-200, 0, 200], [-14, 0, 14]);
+  const primaryGlow = useTransform(x, [20, 110], [0, 1]);
+  const secondaryGlow = useTransform(x, [-110, -20], [1, 0]);
+
+  const isDragging = useRef(false);
+  const voteLocked = useRef(false);
+
   useEffect(() => {
-    voteLockedRef.current = false;
-    animate(x, 0, { type: "spring", stiffness: 420, damping: 32 });
+    voteLocked.current = false;
+    animate(x, 0, { type: "spring", stiffness: 400, damping: 30 });
   }, [question, selectedOptionId, x]);
 
   const submitVote = useCallback(
     (optionId: string) => {
-      if (disabled || isAnswered || voteLockedRef.current) return;
-      voteLockedRef.current = true;
+      if (disabled || isAnswered || voteLocked.current) return;
+      voteLocked.current = true;
       onHintSeen?.();
       onVote(optionId);
     },
     [disabled, isAnswered, onHintSeen, onVote]
   );
 
-  const finishSwipe = useCallback(
+  const flingAndVote = useCallback(
     (optionId: string, targetX: number) => {
-      if (reduceMotion) {
-        submitVote(optionId);
-        return;
-      }
-
-      const controls = animate(x, targetX, { type: "spring", stiffness: 180, damping: 24 });
-      void controls.finished.then(() => submitVote(optionId));
+      animate(x, targetX, { type: "spring", stiffness: 180, damping: 22 }).then(() =>
+        submitVote(optionId)
+      );
     },
-    [reduceMotion, submitVote, x]
+    [submitVote, x]
   );
 
   const handleDragEnd = useCallback(
     (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+      // Release drag flag after a microtask so click on button that triggered
+      // drag still fires but click handlers see isDragging=true and bail.
+      setTimeout(() => {
+        isDragging.current = false;
+      }, 50);
+
       if (disabled || isAnswered) {
-        animate(x, 0, { type: "spring", stiffness: 420, damping: 32 });
+        animate(x, 0, { type: "spring", stiffness: 400, damping: 30 });
         return;
       }
 
-      const offsetX = info.offset.x;
-      const velocityX = info.velocity.x;
-      const hasDistance = Math.abs(offsetX) >= DISTANCE_THRESHOLD;
-      const hasFling = Math.abs(velocityX) >= FLING_VELOCITY_THRESHOLD && Math.abs(offsetX) >= MIN_FLING_DISTANCE;
-
-      if (!hasDistance && !hasFling) {
-        animate(x, 0, { type: "spring", stiffness: 420, damping: 32 });
-        return;
-      }
-
-      const direction = hasFling ? Math.sign(velocityX) : Math.sign(offsetX);
-      if (direction > 0) {
-        finishSwipe(primaryOption.id, 520);
+      const { offset, velocity } = info;
+      if (offset.x > SWIPE_THRESHOLD || velocity.x > VELOCITY_THRESHOLD) {
+        flingAndVote(primaryOption.id, 600);
+      } else if (offset.x < -SWIPE_THRESHOLD || velocity.x < -VELOCITY_THRESHOLD) {
+        flingAndVote(secondaryOption.id, -600);
       } else {
-        finishSwipe(secondaryOption.id, -520);
+        animate(x, 0, { type: "spring", stiffness: 400, damping: 28 });
       }
     },
-    [disabled, finishSwipe, isAnswered, primaryOption.id, secondaryOption.id, x]
+    [disabled, isAnswered, flingAndVote, primaryOption.id, secondaryOption.id, x]
   );
+
+  const canDrag = !disabled && !isAnswered;
 
   return (
     <motion.article
-      className={cn("relative mx-auto w-full max-w-[22rem] touch-pan-y select-none", className)}
-      drag={disabled || isAnswered ? false : "x"}
+      className={cn(
+        "relative mx-auto w-full max-w-[22rem] select-none",
+        canDrag ? "touch-pan-y cursor-grab active:cursor-grabbing" : "touch-auto",
+        className
+      )}
+      drag={canDrag ? "x" : false}
       dragConstraints={{ left: 0, right: 0 }}
-      dragElastic={0.72}
+      dragElastic={0.85}
+      onDragStart={() => {
+        isDragging.current = true;
+      }}
       onDragEnd={handleDragEnd}
       style={{ x, rotate }}
-      whileTap={disabled || isAnswered ? undefined : { cursor: "grabbing" }}
       aria-label={question}
     >
+      {/* NO indicator */}
       <motion.div
-        className="pointer-events-none absolute left-1 top-8 z-20 rounded-full border border-raw-gold/35 bg-[#111]/90 p-2.5 text-raw-gold shadow-[0_0_22px_rgba(241,196,45,0.18)] sm:-left-5 sm:top-10 sm:p-3"
+        className="pointer-events-none absolute left-1 top-8 z-20 rounded-full border border-raw-silver/45 bg-[#111]/90 p-2.5 text-raw-silver shadow-[0_0_22px_rgba(180,180,180,0.22)] sm:-left-5 sm:top-10 sm:p-3"
         style={{ opacity: secondaryGlow }}
         aria-hidden="true"
       >
-        <span className="block text-xs leading-none sm:text-sm">No</span>
+        <span className="block text-xs font-bold uppercase leading-none tracking-widest sm:text-sm">No</span>
       </motion.div>
+      {/* YES indicator */}
       <motion.div
-        className="pointer-events-none absolute right-1 top-8 z-20 rounded-full border border-raw-gold/55 bg-[#151006]/95 p-2.5 text-raw-gold shadow-[0_0_24px_rgba(241,196,45,0.28)] sm:-right-5 sm:top-10 sm:p-3"
+        className="pointer-events-none absolute right-1 top-8 z-20 rounded-full border border-raw-gold/65 bg-[#151006]/95 p-2.5 text-raw-gold shadow-[0_0_24px_rgba(241,196,45,0.35)] sm:-right-5 sm:top-10 sm:p-3"
         style={{ opacity: primaryGlow }}
         aria-hidden="true"
       >
-        <span className="block text-xs leading-none sm:text-sm">Yes</span>
+        <span className="block text-xs font-bold uppercase leading-none tracking-widest sm:text-sm">Yes</span>
       </motion.div>
 
       <div
@@ -184,7 +200,7 @@ export function PremiumPollCard({
 
             {showHint && !isAnswered && (
               <p className="mt-4 text-center text-[10px] uppercase tracking-[0.2em] text-raw-gold/75">
-                (swipe or click to vote)
+                swipe or tap to vote
               </p>
             )}
 
@@ -197,7 +213,14 @@ export function PremiumPollCard({
                 <button
                   type="button"
                   disabled={disabled || isAnswered}
-                  onClick={() => submitVote(primaryOption.id)}
+                  onClick={() => {
+                    // Short-circuit if the click came at the end of a drag
+                    if (isDragging.current) {
+                      isDragging.current = false;
+                      return;
+                    }
+                    submitVote(primaryOption.id);
+                  }}
                   className={cn(
                     "relative min-h-[4rem] cursor-pointer overflow-hidden px-2 py-2.5 text-center font-display text-base tracking-wide transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/80 disabled:cursor-not-allowed sm:min-h-[4.8rem] sm:px-3 sm:py-3 sm:text-lg",
                     primarySelected ? "text-black" : "text-raw-gold hover:text-[#ffe07a]",
@@ -222,7 +245,13 @@ export function PremiumPollCard({
                 <button
                   type="button"
                   disabled={disabled || isAnswered}
-                  onClick={() => submitVote(secondaryOption.id)}
+                  onClick={() => {
+                    if (isDragging.current) {
+                      isDragging.current = false;
+                      return;
+                    }
+                    submitVote(secondaryOption.id);
+                  }}
                   className={cn(
                     "group relative min-h-[4rem] overflow-hidden px-2 py-2.5 text-center font-display text-base tracking-wide transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/70 disabled:cursor-not-allowed sm:min-h-[4.8rem] sm:px-3 sm:py-3 sm:text-lg",
                     secondarySelected ? "text-black" : "text-[#d9d9d9] hover:border-raw-gold/50 hover:text-white",

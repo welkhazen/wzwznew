@@ -16,6 +16,9 @@ const AskAI = lazy(() => import("./pages/AskAI"));
 const Security = lazy(() => import("./pages/Security"));
 const Terms = lazy(() => import("./pages/Terms"));
 const Privacy = lazy(() => import("./pages/Privacy"));
+const TestPollOnboarding = import.meta.env.DEV
+  ? lazy(() => import("./pages/_TestPollOnboarding"))
+  : null;
 
 const routeFallback = <div className="sr-only">Loading page…</div>;
 
@@ -38,6 +41,9 @@ const App = () => (
                 <Route path="/security" element={<Security />} />
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/privacy" element={<Privacy />} />
+                {TestPollOnboarding && (
+                  <Route path="/__test/poll-onboarding" element={<TestPollOnboarding />} />
+                )}
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

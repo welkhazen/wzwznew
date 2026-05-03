@@ -406,6 +406,18 @@ export function OnboardingJourney({
                             track("onboarding_poll_answered", { poll_id: currentPoll.id, option_id: option, step_index: currentPollIndex });
                             setPollSelections((prev) => ({ ...prev, [currentPoll.id]: option }));
                             onMarkPollAnswered(currentPoll.id);
+                            // Tinder-style: advance to next un-answered poll, or trigger Enter raW.
+                            const nextUnanswered = onboardingPolls.findIndex(
+                              (p, idx) => idx !== currentPollIndex && !onboardingAnsweredPollIds.has(p.id) && p.id !== currentPoll.id
+                            );
+                            if (nextUnanswered !== -1) {
+                              setCurrentPollIndex(nextUnanswered);
+                            } else if (currentPollIndex < onboardingPolls.length - 1) {
+                              setCurrentPollIndex(currentPollIndex + 1);
+                            } else {
+                              // last poll just answered: open Enter raW now
+                              setEnterRawOpen(true);
+                            }
                           }}
                           onNavigate={(direction) => {
                             if (direction === "left") {

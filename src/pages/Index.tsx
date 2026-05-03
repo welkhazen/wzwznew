@@ -1,34 +1,26 @@
 import { Suspense, lazy, useEffect, useState } from "react";
-import { Navbar } from "@/components/landing/Navbar";
-import { ProblemSection } from "@/components/landing/ProblemSection";
-import { GlobeHero } from "@/components/landing/GlobeHero";
-import { HowItWorks } from "@/components/landing/HowItWorks";
-import { PollSection } from "@/components/landing/PollSection";
-import { PollShowcase } from "@/components/landing/PollShowcase";
-import { AvatarShowcaseSection } from "@/components/landing/AvatarShowcaseSection";
-import { Communities } from "@/components/landing/Communities";
-import { PersonalityInsightsSection } from "@/components/landing/PersonalityInsightsSection";
-import { WheelReward } from "@/components/landing/WheelReward";
-import { WhyAnonymity } from "@/components/landing/WhyAnonymity";
-import { AnonQuestionSection } from "@/components/landing/AnonQuestionSection";
-import { EarnedWarUpgradesSection } from "@/components/landing/EarnedWarUpgradesSection";
-import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
-import { LandingFooter } from "@/components/landing/LandingFooter";
 import { OnboardingJourney } from "@/components/onboarding/OnboardingJourney";
 import MatrixBackgroundIntro from "@/components/ui/matrix-background-intro";
-import PerforatedBackground from "@/components/ui/perforated-background";
-import MatrixBackground from "@/components/ui/matrix-background";
+import { EnterRawGate } from "@/components/landing/EnterRawGate";
 import { useHostMode } from "@/hooks/use-host-mode";
 import Dashboard from "@/pages/Dashboard";
 import { useRawStore } from "@/store/useRawStore";
 import { joinCommunityChat } from "@/lib/communityChat";
 
-const SignupModalLazy = lazy(() =>
-  import("@/components/landing/SignupModal").then((module) => ({ default: module.SignupModal }))
-);
+const LandingShellLazy = lazy(() => import("@/components/landing/LandingShell"));
+
+const LANDING_GATE_DISMISSED_KEY = "raw:landing-gate-dismissed";
 
 const Index = () => {
   const [showMatrixIntro, setShowMatrixIntro] = useState(true);
+  const [landingGateDismissed, setLandingGateDismissed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return window.sessionStorage.getItem(LANDING_GATE_DISMISSED_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
 
   const {
     user,
@@ -153,53 +145,47 @@ const Index = () => {
     );
   }
 
-  return (
-    <div className="landing-page-shell min-h-screen overflow-x-hidden bg-raw-black">
-      <div className="relative overflow-x-hidden">
-        <PerforatedBackground />
-        <MatrixBackground />
+  // First-time visitors: show the matrix intro on top of the gate.
+  if (!landingGateDismissed) {
+    return (
+      <>
         {showMatrixIntro ? <MatrixBackgroundIntro onComplete={() => setShowMatrixIntro(false)} /> : null}
-
-        <Navbar
-          isLoggedIn={isLoggedIn}
-          username={user?.username}
-          onSignupClick={() => setShowSignup(true)}
+        <EnterRawGate
+          onEnter={() => {
+            try {
+              window.sessionStorage.setItem(LANDING_GATE_DISMISSED_KEY, "1");
+            } catch {
+              /* sessionStorage may be unavailable; still proceed */
+            }
+            setLandingGateDismissed(true);
+          }}
         />
+      </>
+    );
+  }
 
-        <GlobeHero onSignupClick={() => setShowSignup(true)} />
-        <ProblemSection />
-        <HowItWorks />
-        <AvatarShowcaseSection />
-        <PollSection
-          polls={polls}
-          votedPolls={votedPolls}
-          isLoggedIn={isLoggedIn}
-          freeVotesUsed={freeVotesUsed}
-          onVote={vote}
-          onSignupClick={() => setShowSignup(true)}
-        />
-        <Communities onSignupClick={() => setShowSignup(true)} />
-        <PersonalityInsightsSection />
-        <EarnedWarUpgradesSection />
-        <PollShowcase />
-        <AvatarShowcaseSection />
-        <WheelReward onSignupClick={() => setShowSignup(true)} />
-        <WhyAnonymity />
-        <AnonQuestionSection />
-        <TestimonialsSection />
-        <LandingFooter />
-      </div>
-
-      <Suspense fallback={null}>
-        <SignupModalLazy
-          open={showSignup}
-          onClose={() => setShowSignup(false)}
-          onRequestSignupOtp={requestSignupOtp}
-          onVerifySignupOtp={verifySignupOtp}
-          onLogin={login}
-        />
-      </Suspense>
-    </div>
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-raw-black">
+          <div className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-raw-border border-t-raw-gold" />
+        </div>
+      }
+    >
+      <LandingShellLazy
+        user={user}
+        isLoggedIn={isLoggedIn}
+        polls={polls}
+        votedPolls={votedPolls}
+        freeVotesUsed={freeVotesUsed}
+        showSignup={showSignup}
+        setShowSignup={setShowSignup}
+        vote={vote}
+        requestSignupOtp={requestSignupOtp}
+        verifySignupOtp={verifySignupOtp}
+        login={login}
+      />
+    </Suspense>
   );
 };
 
