@@ -219,3 +219,12 @@ export function applyVote(user: UserRecord | null, sessionData: AuthSessionData,
 
   return true;
 }
+
+export function recordPollVote(user: UserRecord | null, sessionData: AuthSessionData, pollId: string): void {
+  if (user) {
+    user.votedPollIds.add(pollId);
+    return;
+  }
+
+  getAnonymousVotes(sessionData).push(pollId);
+}

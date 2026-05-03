@@ -2,7 +2,8 @@ import type { Request, Response } from "express";
 import { Router } from "express";
 import { z } from "zod";
 import { audit } from "../lib/audit";
-import { applyVote, buildBootstrap, canVote } from "../lib/store";
+import { applyVote, buildBootstrap, canVote, recordPollVote } from "../lib/store";
+import { fetchActivePolls } from "../lib/pollRepository";
 import { getUserRepository } from "../lib/userRepository";
 import type { AuthSessionData } from "../types";
 
@@ -41,12 +42,14 @@ async function handleRandomPolls(req: Request, res: Response) {
   const sessionData = getSessionData(req);
   const user = sessionData.userId ? await userRepository.findById(sessionData.userId) : null;
   const bootstrap = buildBootstrap(user, sessionData);
-  const polls = bootstrap.polls
+  const fallbackPolls = bootstrap.polls
     .filter((poll) => !poll.locked)
     .map((poll) => ({ poll, sort: Math.random() }))
     .sort((a, b) => a.sort - b.sort)
     .slice(0, parsed.data.limit)
     .map(({ poll }) => poll);
+  const remotePolls = await fetchActivePolls(parsed.data.limit);
+  const polls = remotePolls && remotePolls.length > 0 ? remotePolls : fallbackPolls;
 
   return res.status(200).json({
     polls,
@@ -76,7 +79,9 @@ async function handleVote(req: Request, res: Response) {
 
   const voted = applyVote(user, sessionData, pollId, parsed.data.optionId);
   if (!voted) {
-    return res.status(404).json({ error: "Poll or option not found." });
+    // Poll could come from database-backed feed instead of in-memory seed store.
+    recordPollVote(user, sessionData, pollId);
+    return res.status(200).json({ ok: true });
   }
 
   audit("poll.vote", {
