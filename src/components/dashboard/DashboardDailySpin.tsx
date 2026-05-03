@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { getTodayKey } from "@/store/useRawStore.storage";
+import { readDailySpinAvatarPool, type DailySpinAvatarPoolItem } from "@/lib/dailySpinAvatarPool";
 
 interface DashboardDailySpinProps {
   userId: string;
@@ -103,6 +104,7 @@ export function DashboardDailySpin({ userId, isAdmin = false }: DashboardDailySp
   const [hasSpunToday, setHasSpunToday] = useState(false);
   const [prizeModal, setPrizeModal] = useState<WheelPrize | null>(null);
   const [adminSelectedRewardId, setAdminSelectedRewardId] = useState<string>("random");
+  const [themeRewardAvatar, setThemeRewardAvatar] = useState<DailySpinAvatarPoolItem | null>(null);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -121,6 +123,18 @@ export function DashboardDailySpin({ userId, isAdmin = false }: DashboardDailySp
   const selectedPrize = prizes.find((prize) => prize.id === selectedRewardId) ?? null;
 
   const handleSpinEnd = (prize: WheelPrize) => {
+    if (prize.id === "theme") {
+      const pool = readDailySpinAvatarPool();
+      if (pool.length > 0) {
+        const randomIndex = Math.floor(Math.random() * pool.length);
+        setThemeRewardAvatar(pool[randomIndex]);
+      } else {
+        setThemeRewardAvatar(null);
+      }
+    } else {
+      setThemeRewardAvatar(null);
+    }
+
     setSelectedRewardId(prize.id);
     setHasSpunToday(true);
     setPrizeModal(prize);
@@ -238,6 +252,24 @@ export function DashboardDailySpin({ userId, isAdmin = false }: DashboardDailySp
             <DialogDescription className="pt-2 text-sm text-raw-silver/40">
               {modalMessage?.desc}
             </DialogDescription>
+            {prizeModal?.id === "theme" && themeRewardAvatar && (
+              <div className="mt-3 rounded-xl border border-raw-gold/25 bg-raw-gold/10 px-3 py-2">
+                <p className="text-[10px] uppercase tracking-[0.12em] text-raw-gold/85">Pulled from daily spin pool</p>
+                <div className="mt-2 flex items-center justify-center gap-2">
+                  <img
+                    src={themeRewardAvatar.imageSrc}
+                    alt={themeRewardAvatar.name}
+                    className="h-10 w-10 rounded-lg border border-raw-gold/35 object-cover"
+                  />
+                  <p className="text-xs text-raw-text">{themeRewardAvatar.name}</p>
+                </div>
+              </div>
+            )}
+            {prizeModal?.id === "theme" && !themeRewardAvatar && (
+              <p className="mt-2 text-xs text-raw-silver/45">
+                No daily spin avatars in pool yet. Add some from Admin by setting target to Daily spin.
+              </p>
+            )}
           </DialogHeader>
           <button
             onClick={() => setPrizeModal(null)}

@@ -11,11 +11,27 @@ export type AvatarCatalogItem = {
   ring: string;
   glow: string;
   isActive?: boolean;
+  showIn?: "landing" | "app" | "both";
 };
 
 const CATALOG_STORAGE_KEY = "raw.avatar.catalog.v1";
 const INVENTORY_STORAGE_PREFIX = "raw.avatar.inventory.v1.";
 const SELECTED_STORAGE_PREFIX = "raw.avatar.selected.v1.";
+let avatarBackendMissingTables = false;
+
+function isMissingAvatarTableError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const maybe = error as { code?: string; message?: string; details?: string; hint?: string };
+  if (maybe.code === "PGRST205" || maybe.code === "42P01") return true;
+  const haystack = `${maybe.message ?? ""} ${maybe.details ?? ""} ${maybe.hint ?? ""}`.toLowerCase();
+  return haystack.includes("could not find the table") || haystack.includes("does not exist");
+}
+
+function markBackendMissingIfNeeded(error: unknown): void {
+  if (isMissingAvatarTableError(error)) {
+    avatarBackendMissingTables = true;
+  }
+}
 
 const DEFAULT_AVATAR_CATALOG: AvatarCatalogItem[] = [
   { id: "avatar-1", level: 1, name: "Avatar 1", price: "Free", imageSrc: "/avatars/avatar-1.svg", bg: "#1a1a1a", figure: "#c8c8c8", ring: "#8a8a8a", glow: "none", isActive: true },
@@ -99,6 +115,10 @@ export function readAvatarThemesFromCache(): AvatarCatalogItem[] {
 }
 
 export async function loadAvatarCatalog(): Promise<AvatarCatalogItem[]> {
+  if (avatarBackendMissingTables) {
+    return readAvatarCatalogLocal();
+  }
+
   try {
     const { data, error } = await supabase
       .from("avatar_catalog")
@@ -107,6 +127,7 @@ export async function loadAvatarCatalog(): Promise<AvatarCatalogItem[]> {
       .order("level", { ascending: true });
 
     if (error) {
+      markBackendMissingIfNeeded(error);
       return readAvatarCatalogLocal();
     }
 
@@ -133,6 +154,10 @@ export async function loadAvatarCatalog(): Promise<AvatarCatalogItem[]> {
 export async function saveAvatarCatalog(items: AvatarCatalogItem[]): Promise<AvatarCatalogItem[]> {
   const next = writeAvatarCatalogLocal(items);
 
+  if (avatarBackendMissingTables) {
+    return next;
+  }
+
   try {
     const rows = next.map((item) => ({
       id: item.id,
@@ -148,11 +173,17 @@ export async function saveAvatarCatalog(items: AvatarCatalogItem[]): Promise<Ava
     }));
 
     const { error: upsertError } = await supabase.from("avatar_catalog").upsert(rows, { onConflict: "id" });
-    if (upsertError) return next;
+    if (upsertError) {
+      markBackendMissingIfNeeded(upsertError);
+      return next;
+    }
 
     const currentIds = new Set(next.map((item) => item.id));
     const { data: existingRows, error: existingError } = await supabase.from("avatar_catalog").select("id");
-    if (existingError || !existingRows) return next;
+    if (existingError || !existingRows) {
+      markBackendMissingIfNeeded(existingError);
+      return next;
+    }
 
     const retiredIds = existingRows.map((row) => row.id).filter((id) => !currentIds.has(id));
     if (retiredIds.length > 0) {
@@ -223,6 +254,10 @@ export async function loadUserAvatarState(
   const localOwned = readOwnedAvatarIdsLocal(userId, catalog);
   const localSelected = readSelectedAvatarIdLocal(userId, catalog, localOwned);
 
+  if (avatarBackendMissingTables) {
+    return { ownedAvatarIds: localOwned, selectedAvatarId: localSelected };
+  }
+
   try {
     const [{ data: inventoryRows, error: inventoryError }, { data: selectedRow, error: selectedError }] = await Promise.all([
       supabase.from("user_avatar_inventory").select("avatar_id").eq("user_id", userId),
@@ -230,6 +265,7 @@ export async function loadUserAvatarState(
     ]);
 
     if (inventoryError || selectedError) {
+      markBackendMissingIfNeeded(inventoryError ?? selectedError);
       return { ownedAvatarIds: localOwned, selectedAvatarId: localSelected };
     }
 
@@ -259,8 +295,15 @@ export async function purchaseAvatarForUser(userId: string, avatarId: string): P
     writeOwnedAvatarIdsLocal(userId, [...localInventory, avatarId]);
   }
 
+  if (avatarBackendMissingTables) {
+    return;
+  }
+
   try {
-    await supabase.from("user_avatar_inventory").upsert({ user_id: userId, avatar_id: avatarId }, { onConflict: "user_id,avatar_id" });
+    const { error } = await supabase.from("user_avatar_inventory").upsert({ user_id: userId, avatar_id: avatarId }, { onConflict: "user_id,avatar_id" });
+    if (error) {
+      markBackendMissingIfNeeded(error);
+    }
   } catch {
     // Local save already completed.
   }
@@ -269,8 +312,15 @@ export async function purchaseAvatarForUser(userId: string, avatarId: string): P
 export async function equipAvatarForUser(userId: string, avatarId: string): Promise<void> {
   writeSelectedAvatarIdLocal(userId, avatarId);
 
+  if (avatarBackendMissingTables) {
+    return;
+  }
+
   try {
-    await supabase.from("user_avatar_selection").upsert({ user_id: userId, avatar_id: avatarId }, { onConflict: "user_id" });
+    const { error } = await supabase.from("user_avatar_selection").upsert({ user_id: userId, avatar_id: avatarId }, { onConflict: "user_id" });
+    if (error) {
+      markBackendMissingIfNeeded(error);
+    }
   } catch {
     // Local save already completed.
   }

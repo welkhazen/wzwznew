@@ -9,6 +9,7 @@ import { toast } from "@/components/ui/use-toast";
 import { useRawStore } from "@/store/useRawStore";
 import { track } from "@/lib/analytics";
 import { type AvatarCatalogItem, loadAvatarCatalog, saveAvatarCatalog } from "@/lib/avatarCatalog";
+import { upsertDailySpinAvatarPool } from "@/lib/dailySpinAvatarPool";
 import {
   createAdminPoll,
   deleteAdminPoll,
@@ -47,7 +48,17 @@ type SlicedAvatarItem = {
   price: string;
   imageUrl: string;
   blob: Blob;
+  manualOffsetX: number;
+  manualOffsetY: number;
+  manualZoom: number;
+  sheetSx: number;
+  sheetSy: number;
+  sheetCellWidth: number;
+  sheetCellHeight: number;
+  publishTarget: "level" | "daily-spin";
 };
+
+type CutDecision = "pending" | "accepted" | "rejected";
 
 const MAX_SHEET_FILE_BYTES = 10 * 1024 * 1024;
 const MAX_SLICE_CELLS = 100;
@@ -81,10 +92,22 @@ export default function Admin() {
   const [assetsFolderName, setAssetsFolderName] = useState<string | null>(null);
   const [avatarCatalogDraft, setAvatarCatalogDraft] = useState<AvatarCatalogItem[]>([]);
   const [isSavingAvatarCatalog, setIsSavingAvatarCatalog] = useState(false);
+  const [publishInsertAt, setPublishInsertAt] = useState(1);
+  const [cutDecisions, setCutDecisions] = useState<Record<string, CutDecision>>({});
+  const [reviewCursor, setReviewCursor] = useState(0);
+  const [reviewPreviewUrl, setReviewPreviewUrl] = useState<string | null>(null);
   const sheetPreviewUrlRef = useRef<string | null>(null);
   const slicedAvatarsRef = useRef<SlicedAvatarItem[]>([]);
   const assetsDirHandleRef = useRef<FileSystemDirectoryHandle | null>(null);
   const gapMeasureRequestIdRef = useRef(0);
+  const cropDragRef = useRef<{
+    active: boolean;
+    id: string;
+    startClientX: number;
+    startClientY: number;
+    startOffsetX: number;
+    startOffsetY: number;
+  } | null>(null);
 
   const revokeSlicedAvatarUrls = useCallback((items: SlicedAvatarItem[]) => {
     items.forEach((item) => URL.revokeObjectURL(item.imageUrl));
@@ -132,6 +155,7 @@ export default function Admin() {
     void (async () => {
       const catalog = await loadAvatarCatalog();
       setAvatarCatalogDraft(catalog);
+      setPublishInsertAt(catalog.length + 1);
     })();
   }, []);
 
@@ -166,6 +190,82 @@ export default function Admin() {
     [communityJoinRequests]
   );
   const bannedUsers = useMemo(() => users.filter((entry) => entry.moderationStatus === "banned"), [users]);
+  const clampedPublishInsertAt = useMemo(
+    () => Math.min(Math.max(1, publishInsertAt), avatarCatalogDraft.length + 1),
+    [publishInsertAt, avatarCatalogDraft.length]
+  );
+  const acceptedSlicedAvatars = useMemo(
+    () => slicedAvatars.filter((item) => cutDecisions[item.id] === "accepted"),
+    [slicedAvatars, cutDecisions]
+  );
+  const acceptedLevelAvatars = useMemo(
+    () => acceptedSlicedAvatars.filter((item) => item.publishTarget === "level"),
+    [acceptedSlicedAvatars]
+  );
+  const acceptedDailySpinAvatars = useMemo(
+    () => acceptedSlicedAvatars.filter((item) => item.publishTarget === "daily-spin"),
+    [acceptedSlicedAvatars]
+  );
+  const pendingReviewCount = useMemo(
+    () => slicedAvatars.filter((item) => (cutDecisions[item.id] ?? "pending") === "pending").length,
+    [slicedAvatars, cutDecisions]
+  );
+  const reviewedCount = useMemo(
+    () => slicedAvatars.length - pendingReviewCount,
+    [slicedAvatars.length, pendingReviewCount]
+  );
+  const currentReviewItem = slicedAvatars[reviewCursor] ?? null;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!currentReviewItem) {
+      setReviewPreviewUrl(null);
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        try {
+          const previewCanvas = document.createElement("canvas");
+          previewCanvas.width = currentReviewItem.sheetCellWidth;
+          previewCanvas.height = currentReviewItem.sheetCellHeight;
+          await drawManualCropToCanvas(currentReviewItem, previewCanvas);
+          const previewBlob = await canvasToBlob(previewCanvas);
+          const nextUrl = URL.createObjectURL(previewBlob);
+
+          if (cancelled) {
+            URL.revokeObjectURL(nextUrl);
+            return;
+          }
+
+          setReviewPreviewUrl((previous) => {
+            if (previous) URL.revokeObjectURL(previous);
+            return nextUrl;
+          });
+        } catch {
+          setReviewPreviewUrl((previous) => {
+            if (previous) URL.revokeObjectURL(previous);
+            return null;
+          });
+        }
+      })();
+    }, 40);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [currentReviewItem, sheetFile, slicedAvatars]);
+
+  useEffect(() => {
+    return () => {
+      setReviewPreviewUrl((previous) => {
+        if (previous) URL.revokeObjectURL(previous);
+        return null;
+      });
+    };
+  }, []);
 
   useEffect(() => {
     if (!autoColsFromNames) return;
@@ -360,6 +460,8 @@ export default function Admin() {
       revokeSlicedAvatarUrls(previous);
       return [];
     });
+    setCutDecisions({});
+    setReviewCursor(0);
 
     setSheetFile(nextFile);
 
@@ -715,6 +817,14 @@ export default function Admin() {
             price: "0",
             imageUrl,
             blob,
+            manualOffsetX: 0,
+            manualOffsetY: 0,
+            manualZoom: 1,
+            sheetSx: sx,
+            sheetSy: sy,
+            sheetCellWidth: cellWidth,
+            sheetCellHeight: cellHeight,
+            publishTarget: "level",
           });
         }
       }
@@ -724,6 +834,13 @@ export default function Admin() {
         revokeSlicedAvatarUrls(previous);
         return output;
       });
+      setCutDecisions(
+        output.reduce<Record<string, CutDecision>>((acc, item) => {
+          acc[item.id] = "pending";
+          return acc;
+        }, {})
+      );
+      setReviewCursor(0);
       toast({
         title: "Sheet sliced",
         description: `${output.length} avatars generated`,
@@ -745,6 +862,132 @@ export default function Admin() {
 
   const updateSlicedPrice = (id: string, price: string) => {
     setSlicedAvatars((previous) => previous.map((item) => (item.id === id ? { ...item, price } : item)));
+  };
+
+  const updateSlicedPublishTarget = (id: string, publishTarget: "level" | "daily-spin") => {
+    setSlicedAvatars((previous) => previous.map((item) => (item.id === id ? { ...item, publishTarget } : item)));
+  };
+
+  const clampManualZoom = (value: number) => Math.min(2.5, Math.max(0.45, value));
+
+  const updateSlicedManualAdjust = (
+    id: string,
+    patch: Partial<Pick<SlicedAvatarItem, "manualOffsetX" | "manualOffsetY" | "manualZoom">>
+  ) => {
+    setSlicedAvatars((previous) => previous.map((item) => {
+      if (item.id !== id) return item;
+      return {
+        ...item,
+        manualOffsetX: patch.manualOffsetX ?? item.manualOffsetX,
+        manualOffsetY: patch.manualOffsetY ?? item.manualOffsetY,
+        manualZoom: patch.manualZoom !== undefined ? clampManualZoom(patch.manualZoom) : item.manualZoom,
+      };
+    }));
+  };
+
+  const loadImageFromUrl = (url: string): Promise<HTMLImageElement> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error("Could not load image for manual crop"));
+      img.src = url;
+    });
+  };
+
+  const drawManualCropToCanvas = async (item: SlicedAvatarItem, canvas: HTMLCanvasElement) => {
+    const outW = canvas.width;
+    const outH = canvas.height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Could not open canvas context");
+
+    if (sheetFile) {
+      try {
+        const sheetImg = await loadImageFromFile(sheetFile);
+        const centerX = item.sheetSx + item.sheetCellWidth / 2 + item.manualOffsetX;
+        const centerY = item.sheetSy + item.sheetCellHeight / 2 + item.manualOffsetY;
+        const sourceW = item.sheetCellWidth / item.manualZoom;
+        const sourceH = item.sheetCellHeight / item.manualZoom;
+        const sourceX = Math.max(0, Math.min(sheetImg.width - sourceW, centerX - sourceW / 2));
+        const sourceY = Math.max(0, Math.min(sheetImg.height - sourceH, centerY - sourceH / 2));
+        ctx.clearRect(0, 0, outW, outH);
+        ctx.drawImage(sheetImg, sourceX, sourceY, sourceW, sourceH, 0, 0, outW, outH);
+        return;
+      } catch {
+        // Fallback below if sheet cannot be loaded.
+      }
+    }
+
+    const currentImg = await loadImageFromUrl(item.imageUrl);
+    const sourceW = currentImg.width / item.manualZoom;
+    const sourceH = currentImg.height / item.manualZoom;
+    const maxX = Math.max(0, currentImg.width - sourceW);
+    const maxY = Math.max(0, currentImg.height - sourceH);
+    const sourceX = Math.min(maxX, Math.max(0, (currentImg.width - sourceW) / 2 + item.manualOffsetX));
+    const sourceY = Math.min(maxY, Math.max(0, (currentImg.height - sourceH) / 2 + item.manualOffsetY));
+    ctx.clearRect(0, 0, outW, outH);
+    ctx.drawImage(currentImg, sourceX, sourceY, sourceW, sourceH, 0, 0, outW, outH);
+  };
+
+  const applyManualCrop = async (itemId: string) => {
+    const item = slicedAvatars.find((entry) => entry.id === itemId);
+    if (!item) return;
+
+    try {
+      const outW = item.sheetCellWidth;
+      const outH = item.sheetCellHeight;
+
+      const canvas = document.createElement("canvas");
+      canvas.width = outW;
+      canvas.height = outH;
+      await drawManualCropToCanvas(item, canvas);
+      const blob = await canvasToBlob(canvas);
+      const imageUrl = URL.createObjectURL(blob);
+
+      setSlicedAvatars((previous) => previous.map((entry) => {
+        if (entry.id !== itemId) return entry;
+        URL.revokeObjectURL(entry.imageUrl);
+        return {
+          ...entry,
+          blob,
+          imageUrl,
+          manualOffsetX: 0,
+          manualOffsetY: 0,
+          manualZoom: 1,
+        };
+      }));
+
+      toast({ title: "Manual crop applied" });
+    } catch {
+      toast({ title: "Could not apply manual crop", description: "Try adjusting less and retry." });
+    }
+  };
+
+  const startManualDrag = (item: SlicedAvatarItem, clientX: number, clientY: number) => {
+    cropDragRef.current = {
+      active: true,
+      id: item.id,
+      startClientX: clientX,
+      startClientY: clientY,
+      startOffsetX: item.manualOffsetX,
+      startOffsetY: item.manualOffsetY,
+    };
+  };
+
+  const moveManualDrag = (clientX: number, clientY: number) => {
+    const drag = cropDragRef.current;
+    if (!drag || !drag.active) return;
+    const deltaX = clientX - drag.startClientX;
+    const deltaY = clientY - drag.startClientY;
+    updateSlicedManualAdjust(drag.id, {
+      manualOffsetX: drag.startOffsetX - deltaX,
+      manualOffsetY: drag.startOffsetY - deltaY,
+    });
+  };
+
+  const stopManualDrag = () => {
+    if (!cropDragRef.current) return;
+    cropDragRef.current.active = false;
+    cropDragRef.current = null;
   };
 
   const chooseAssetsFolder = async () => {
@@ -902,30 +1145,106 @@ export default function Admin() {
     });
   };
 
+  const stepReviewCursor = (direction: -1 | 1) => {
+    if (slicedAvatars.length === 0) return;
+    setReviewCursor((previous) => {
+      const next = previous + direction;
+      if (next < 0) return 0;
+      if (next >= slicedAvatars.length) return slicedAvatars.length - 1;
+      return next;
+    });
+  };
+
+  const setCurrentCutDecision = (decision: Exclude<CutDecision, "pending">) => {
+    const current = slicedAvatars[reviewCursor];
+    if (!current) return;
+
+    setCutDecisions((previous) => {
+      const next = { ...previous, [current.id]: decision };
+      const nextPendingIndex = slicedAvatars.findIndex((item, index) => index > reviewCursor && (next[item.id] ?? "pending") === "pending");
+      if (nextPendingIndex >= 0) {
+        setReviewCursor(nextPendingIndex);
+        return next;
+      }
+
+      const firstPendingIndex = slicedAvatars.findIndex((item) => (next[item.id] ?? "pending") === "pending");
+      if (firstPendingIndex >= 0) {
+        setReviewCursor(firstPendingIndex);
+      }
+
+      return next;
+    });
+  };
+
+  const slugify = (value: string): string => {
+    return value
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+  };
+
+  const getUniqueAvatarId = (base: string, usedIds: Set<string>): string => {
+    const normalizedBase = slugify(base) || "avatar";
+    if (!usedIds.has(normalizedBase)) {
+      usedIds.add(normalizedBase);
+      return normalizedBase;
+    }
+
+    let counter = 2;
+    while (usedIds.has(`${normalizedBase}-${counter}`)) {
+      counter += 1;
+    }
+    const next = `${normalizedBase}-${counter}`;
+    usedIds.add(next);
+    return next;
+  };
+
   const publishSlicedAvatarsToCatalog = async () => {
     if (slicedAvatars.length === 0) {
       toast({ title: "Slice avatars first" });
       return;
     }
 
+    if (pendingReviewCount > 0) {
+      toast({ title: "Finish cut review", description: "Accept or reject each cut first." });
+      return;
+    }
+
+    if (acceptedSlicedAvatars.length === 0) {
+      toast({ title: "No accepted cuts", description: "Accept at least one avatar to publish." });
+      return;
+    }
+
     setIsSavingAvatarCatalog(true);
     try {
-      const next: AvatarCatalogItem[] = [];
+      const latestCatalog = await loadAvatarCatalog();
+      const existing = latestCatalog.map((item) => ({ ...item }));
+      const usedIds = new Set(existing.map((item) => item.id));
+      const nextFromSlice: AvatarCatalogItem[] = [];
+      const nextForDailySpin: Array<{ id: string; name: string; imageSrc: string }> = [];
 
-      for (let index = 0; index < slicedAvatars.length; index += 1) {
-        const item = slicedAvatars[index];
-        const theme = getAvatar(index + 1);
+      for (let index = 0; index < acceptedSlicedAvatars.length; index += 1) {
+        const item = acceptedSlicedAvatars[index];
+        if (item.publishTarget === "daily-spin") {
+          const imageSrc = await blobToDataUrl(item.blob);
+          const safeId = getUniqueAvatarId(item.name || item.id || `daily-spin-${index + 1}`, usedIds);
+          nextForDailySpin.push({
+            id: safeId,
+            name: item.name.trim() || `Daily Spin ${index + 1}`,
+            imageSrc,
+          });
+          continue;
+        }
+
+        const theme = getAvatar(existing.length + index + 1);
         const imageSrc = await blobToDataUrl(item.blob);
-        const safeId = (item.name || item.id)
-          .toLowerCase()
-          .trim()
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/(^-|-$)/g, "") || `avatar-${index + 1}`;
+        const safeId = getUniqueAvatarId(item.name || item.id || `avatar-${existing.length + index + 1}`, usedIds);
 
-        next.push({
+        nextFromSlice.push({
           id: safeId,
-          level: index + 1,
-          name: item.name.trim() || `Avatar ${index + 1}`,
+          level: 0,
+          name: item.name.trim() || `Avatar ${existing.length + index + 1}`,
           price: item.price.trim() || "0",
           imageSrc,
           bg: theme.bg,
@@ -936,14 +1255,50 @@ export default function Admin() {
         });
       }
 
-      const saved = await saveAvatarCatalog(next);
+      const clampedInsertAt = Math.min(Math.max(1, publishInsertAt), existing.length + 1);
+      const insertIndex = clampedInsertAt - 1;
+      const merged = [
+        ...existing.slice(0, insertIndex),
+        ...nextFromSlice,
+        ...existing.slice(insertIndex),
+      ].map((item, idx) => ({ ...item, level: idx + 1 }));
+
+      const saved = await saveAvatarCatalog(merged);
+      if (nextForDailySpin.length > 0) {
+        upsertDailySpinAvatarPool(nextForDailySpin);
+      }
       setAvatarCatalogDraft(saved);
-      toast({ title: "Avatars published", description: `${saved.length} avatars are now in catalog.` });
+      setPublishInsertAt(Math.min(saved.length + 1, clampedInsertAt + nextFromSlice.length));
+      toast({
+        title: "Publish complete",
+        description: `${nextFromSlice.length} to levels, ${nextForDailySpin.length} to daily spin pool.`,
+      });
     } catch {
       toast({ title: "Could not publish avatars", description: "Try again after slicing." });
     } finally {
       setIsSavingAvatarCatalog(false);
     }
+  };
+
+  const renderInsertPeek = (position: number) => {
+    if (acceptedLevelAvatars.length === 0) return null;
+    if (clampedPublishInsertAt !== position) return null;
+
+    return (
+      <div className="rounded-xl border border-raw-gold/35 bg-raw-gold/[0.08] p-2">
+        <p className="text-[10px] uppercase tracking-[0.12em] text-raw-gold/80">
+          Preview: accepted level avatars will be inserted here (before #{position})
+        </p>
+        <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
+          {acceptedLevelAvatars.slice(0, 8).map((item, index) => (
+            <div key={`peek-${item.id}-${index}`} className="min-w-[64px] rounded-lg border border-raw-gold/35 bg-raw-black/35 p-1">
+              <img src={item.imageUrl} alt={item.name} className="h-10 w-full rounded-md object-contain" />
+              <p className="mt-1 truncate text-center text-[9px] text-raw-gold/80">{item.name || `Avatar ${index + 1}`}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -1403,13 +1758,218 @@ export default function Admin() {
                   <button
                     type="button"
                     onClick={() => void publishSlicedAvatarsToCatalog()}
-                    disabled={slicedAvatars.length === 0 || isSavingAvatarCatalog}
+                    disabled={slicedAvatars.length === 0 || isSavingAvatarCatalog || pendingReviewCount > 0 || acceptedSlicedAvatars.length === 0}
                     className="inline-flex items-center gap-2 rounded-lg border border-raw-border/25 px-2.5 py-1.5 text-[11px] text-raw-silver/65 hover:border-raw-gold/40 hover:text-raw-text disabled:opacity-40"
                   >
                     <Database className="h-3.5 w-3.5" /> {isSavingAvatarCatalog ? "Publishing..." : "Publish to live catalog"}
                   </button>
                 </div>
               </div>
+              {pendingReviewCount > 0 && (
+                <p className="mt-1 text-[11px] text-raw-silver/45">
+                  Finish review first: {pendingReviewCount} cut{pendingReviewCount === 1 ? "" : "s"} still pending.
+                </p>
+              )}
+              {pendingReviewCount === 0 && acceptedSlicedAvatars.length > 0 && acceptedLevelAvatars.length === 0 && (
+                <p className="mt-1 text-[11px] text-raw-silver/45">
+                  No cuts are targeted to levels right now. Set target to Level avatars if you want insertion into levels.
+                </p>
+              )}
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-raw-silver/55">
+                <span>Add mode:</span>
+                <span className="rounded-md border border-raw-border/20 px-2 py-1">Keep existing + add new</span>
+                <span>Insert at position</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={Math.max(1, avatarCatalogDraft.length + 1)}
+                  value={publishInsertAt}
+                  onChange={(event) => setPublishInsertAt(Math.max(1, Number(event.target.value) || 1))}
+                  className="w-20 rounded-lg border border-raw-border/25 bg-raw-surface/20 px-2 py-1.5 text-xs text-raw-text outline-none focus:border-raw-gold/40"
+                />
+                <button
+                  type="button"
+                  onClick={() => setPublishInsertAt(Math.max(1, avatarCatalogDraft.length + 1))}
+                  className="rounded-lg border border-raw-border/25 px-2 py-1.5 text-[11px] text-raw-silver/65 hover:border-raw-gold/40 hover:text-raw-text"
+                >
+                  Place at end
+                </button>
+              </div>
+              {slicedAvatars.length > 0 && (
+                <div className="mt-3 rounded-xl border border-raw-border/20 bg-raw-black/30 p-3">
+                  <p className="text-[11px] uppercase tracking-[0.15em] text-raw-silver/35">Cut review (one by one)</p>
+                  <p className="mt-1 text-xs text-raw-silver/45">
+                    Review each cut: Yes to keep it, No to reject it. Then publish accepted cuts only.
+                  </p>
+
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-raw-silver/55">
+                    <span className="rounded-md border border-raw-border/20 px-2 py-1">Total: {slicedAvatars.length}</span>
+                    <span className="rounded-md border border-emerald-400/25 bg-emerald-500/10 px-2 py-1 text-emerald-200">Accepted: {acceptedSlicedAvatars.length}</span>
+                    <span className="rounded-md border border-raw-gold/25 bg-raw-gold/10 px-2 py-1 text-raw-gold/90">To levels: {acceptedLevelAvatars.length}</span>
+                    <span className="rounded-md border border-sky-400/25 bg-sky-500/10 px-2 py-1 text-sky-200">To daily spin: {acceptedDailySpinAvatars.length}</span>
+                    <span className="rounded-md border border-raw-border/20 px-2 py-1">Pending: {pendingReviewCount}</span>
+                    <span className="rounded-md border border-raw-border/20 px-2 py-1">Reviewed: {reviewedCount}</span>
+                  </div>
+
+                  {currentReviewItem && (
+                    <div className="mt-3 rounded-xl border border-raw-border/20 bg-raw-black/40 p-3">
+                      <p className="text-xs text-raw-silver/55">Now reviewing {reviewCursor + 1}/{slicedAvatars.length}</p>
+                      <div
+                        className="mt-2 h-44 w-full cursor-move overflow-hidden rounded-xl border border-raw-border/20 bg-raw-black/50"
+                        onMouseDown={(event) => startManualDrag(currentReviewItem, event.clientX, event.clientY)}
+                        onMouseMove={(event) => moveManualDrag(event.clientX, event.clientY)}
+                        onMouseUp={stopManualDrag}
+                        onMouseLeave={stopManualDrag}
+                        onTouchStart={(event) => {
+                          const touch = event.touches[0];
+                          if (!touch) return;
+                          startManualDrag(currentReviewItem, touch.clientX, touch.clientY);
+                        }}
+                        onTouchMove={(event) => {
+                          const touch = event.touches[0];
+                          if (!touch) return;
+                          moveManualDrag(touch.clientX, touch.clientY);
+                        }}
+                        onTouchEnd={stopManualDrag}
+                      >
+                        <img
+                          src={reviewPreviewUrl || currentReviewItem.imageUrl}
+                          alt={currentReviewItem.name}
+                          className="h-full w-full object-contain"
+                          draggable={false}
+                        />
+                      </div>
+
+                      <div className="mt-2 rounded-lg border border-raw-border/20 bg-raw-black/30 p-2">
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-raw-silver/55">
+                          <span>Adjust by hand:</span>
+                          <button
+                            type="button"
+                            onClick={() => updateSlicedManualAdjust(currentReviewItem.id, { manualOffsetY: currentReviewItem.manualOffsetY - 8 })}
+                            className="rounded-md border border-raw-border/25 px-2 py-1 hover:border-raw-gold/40 hover:text-raw-text"
+                          >
+                            Up
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => updateSlicedManualAdjust(currentReviewItem.id, { manualOffsetY: currentReviewItem.manualOffsetY + 8 })}
+                            className="rounded-md border border-raw-border/25 px-2 py-1 hover:border-raw-gold/40 hover:text-raw-text"
+                          >
+                            Down
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => updateSlicedManualAdjust(currentReviewItem.id, { manualOffsetX: currentReviewItem.manualOffsetX - 8 })}
+                            className="rounded-md border border-raw-border/25 px-2 py-1 hover:border-raw-gold/40 hover:text-raw-text"
+                          >
+                            Left
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => updateSlicedManualAdjust(currentReviewItem.id, { manualOffsetX: currentReviewItem.manualOffsetX + 8 })}
+                            className="rounded-md border border-raw-border/25 px-2 py-1 hover:border-raw-gold/40 hover:text-raw-text"
+                          >
+                            Right
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => updateSlicedManualAdjust(currentReviewItem.id, { manualZoom: currentReviewItem.manualZoom - 0.12 })}
+                            className="rounded-md border border-raw-border/25 px-2 py-1 hover:border-raw-gold/40 hover:text-raw-text"
+                          >
+                            Zoom -
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => updateSlicedManualAdjust(currentReviewItem.id, { manualZoom: currentReviewItem.manualZoom + 0.12 })}
+                            className="rounded-md border border-raw-border/25 px-2 py-1 hover:border-raw-gold/40 hover:text-raw-text"
+                          >
+                            Zoom +
+                          </button>
+                          <span className="rounded-md border border-raw-border/25 px-2 py-1 text-raw-silver/65">
+                            {Math.round(currentReviewItem.manualZoom * 100)}%
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => updateSlicedManualAdjust(currentReviewItem.id, { manualOffsetX: 0, manualOffsetY: 0, manualZoom: 1 })}
+                            className="rounded-md border border-raw-border/25 px-2 py-1 hover:border-raw-gold/40 hover:text-raw-text"
+                          >
+                            Reset
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void applyManualCrop(currentReviewItem.id)}
+                            className="rounded-md border border-raw-gold/35 bg-raw-gold/10 px-2 py-1 text-raw-gold hover:bg-raw-gold/20"
+                          >
+                            Apply crop
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                        <input
+                          type="text"
+                          value={currentReviewItem.name}
+                          onChange={(event) => updateSlicedName(currentReviewItem.id, event.target.value)}
+                          className="w-full rounded-lg border border-raw-border/25 bg-raw-surface/20 px-2.5 py-2 text-sm text-raw-text outline-none focus:border-raw-gold/40"
+                          placeholder="Avatar name"
+                        />
+                        <input
+                          type="text"
+                          value={currentReviewItem.price}
+                          onChange={(event) => updateSlicedPrice(currentReviewItem.id, event.target.value)}
+                          className="w-full rounded-lg border border-raw-border/25 bg-raw-surface/20 px-2.5 py-2 text-sm text-raw-text outline-none focus:border-raw-gold/40"
+                          placeholder="Price"
+                        />
+                      </div>
+
+                      <div className="mt-2 flex items-center gap-2">
+                        <label className="text-xs text-raw-silver/55">Publish target:</label>
+                        <select
+                          value={currentReviewItem.publishTarget}
+                          onChange={(event) => updateSlicedPublishTarget(currentReviewItem.id, event.target.value as "level" | "daily-spin")}
+                          className="rounded-lg border border-raw-border/25 bg-raw-surface/20 px-2.5 py-1.5 text-xs text-raw-text outline-none focus:border-raw-gold/40"
+                        >
+                          <option value="level">Level avatars</option>
+                          <option value="daily-spin">Daily spin pool</option>
+                        </select>
+                      </div>
+
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => stepReviewCursor(-1)}
+                          disabled={reviewCursor <= 0}
+                          className="rounded-lg border border-raw-border/25 px-3 py-1.5 text-xs text-raw-silver/60 hover:border-raw-gold/40 hover:text-raw-text disabled:opacity-40"
+                        >
+                          Prev
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setCurrentCutDecision("rejected")}
+                          className="rounded-lg border border-red-400/35 bg-red-500/10 px-3 py-1.5 text-xs text-red-200 hover:bg-red-500/20"
+                        >
+                          No - reject cut
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setCurrentCutDecision("accepted")}
+                          className="rounded-lg border border-emerald-400/35 bg-emerald-500/10 px-3 py-1.5 text-xs text-emerald-200 hover:bg-emerald-500/20"
+                        >
+                          Yes - accept cut
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => stepReviewCursor(1)}
+                          disabled={reviewCursor >= slicedAvatars.length - 1}
+                          className="rounded-lg border border-raw-border/25 px-3 py-1.5 text-xs text-raw-silver/60 hover:border-raw-gold/40 hover:text-raw-text disabled:opacity-40"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
               {slicedAvatars.length === 0 ? (
                 <div className="mt-3 rounded-2xl border border-raw-border/20 bg-raw-black/35 p-5 text-sm text-raw-silver/45">
                   No avatars sliced yet. Upload a sheet, set rows/cols, then click Slice image.
@@ -1420,6 +1980,22 @@ export default function Admin() {
                     <div key={item.id} className="rounded-2xl border border-raw-border/20 bg-raw-black/35 p-3">
                       <img src={item.imageUrl} alt={item.name} className="h-36 w-full rounded-xl border border-raw-border/20 bg-raw-black/50 object-contain" />
                       <p className="mt-2 text-center text-xs font-semibold tracking-[0.12em] uppercase text-raw-gold/80">{item.name}</p>
+                      <p className={`mt-1 text-center text-[10px] ${
+                        cutDecisions[item.id] === "accepted"
+                          ? "text-emerald-200"
+                          : cutDecisions[item.id] === "rejected"
+                            ? "text-red-200"
+                            : "text-raw-silver/45"
+                      }`}>
+                        {cutDecisions[item.id] === "accepted"
+                          ? "Accepted"
+                          : cutDecisions[item.id] === "rejected"
+                            ? "Rejected"
+                            : "Pending review"}
+                      </p>
+                      <p className="mt-1 text-center text-[10px] text-raw-silver/45">
+                        Target: {item.publishTarget === "daily-spin" ? "Daily spin" : "Levels"}
+                      </p>
                       <input
                         type="text"
                         value={item.name}
@@ -1471,48 +2047,62 @@ export default function Admin() {
                 ) : (
                   <div className="mt-3 space-y-2">
                     {avatarCatalogDraft.map((item, index) => (
-                      <div key={item.id} className="grid gap-2 rounded-xl border border-raw-border/20 bg-raw-black/30 p-2 sm:grid-cols-[72px_1fr_120px_120px_40px]">
-                        <img src={item.imageSrc || ""} alt={item.name} className="h-16 w-16 rounded-lg border border-raw-border/20 bg-raw-black/45 object-contain" />
-                        <div className="grid gap-2 sm:grid-cols-2">
+                      <div key={item.id} className="space-y-2">
+                        {renderInsertPeek(index + 1)}
+                        <div className={`grid gap-2 rounded-xl border bg-raw-black/30 p-2 sm:grid-cols-[72px_1fr_120px_120px_92px] ${clampedPublishInsertAt === index + 1 ? "border-raw-gold/35" : "border-raw-border/20"}`}>
+                          <img src={item.imageSrc || ""} alt={item.name} className="h-16 w-16 rounded-lg border border-raw-border/20 bg-raw-black/45 object-contain" />
+                          <div className="grid gap-2 sm:grid-cols-2">
+                            <input
+                              type="text"
+                              value={item.name}
+                              onChange={(event) => updateAvatarCatalogDraftItem(item.id, { name: event.target.value })}
+                              className="w-full rounded-lg border border-raw-border/25 bg-raw-surface/20 px-2.5 py-2 text-sm text-raw-text outline-none focus:border-raw-gold/40"
+                              placeholder="Avatar name"
+                            />
+                            <input
+                              type="text"
+                              value={item.imageSrc || ""}
+                              onChange={(event) => updateAvatarCatalogDraftItem(item.id, { imageSrc: event.target.value })}
+                              className="w-full rounded-lg border border-raw-border/25 bg-raw-surface/20 px-2.5 py-2 text-xs text-raw-text outline-none focus:border-raw-gold/40"
+                              placeholder="Image URL or data URL"
+                            />
+                          </div>
                           <input
                             type="text"
-                            value={item.name}
-                            onChange={(event) => updateAvatarCatalogDraftItem(item.id, { name: event.target.value })}
-                            className="w-full rounded-lg border border-raw-border/25 bg-raw-surface/20 px-2.5 py-2 text-sm text-raw-text outline-none focus:border-raw-gold/40"
-                            placeholder="Avatar name"
+                            value={item.price}
+                            onChange={(event) => updateAvatarCatalogDraftItem(item.id, { price: event.target.value })}
+                            className="rounded-lg border border-raw-border/25 bg-raw-surface/20 px-2.5 py-2 text-sm text-raw-text outline-none focus:border-raw-gold/40"
+                            placeholder="Price"
                           />
                           <input
                             type="text"
-                            value={item.imageSrc || ""}
-                            onChange={(event) => updateAvatarCatalogDraftItem(item.id, { imageSrc: event.target.value })}
-                            className="w-full rounded-lg border border-raw-border/25 bg-raw-surface/20 px-2.5 py-2 text-xs text-raw-text outline-none focus:border-raw-gold/40"
-                            placeholder="Image URL or data URL"
+                            value={item.id}
+                            onChange={(event) => updateAvatarCatalogDraftItem(item.id, { id: event.target.value || `avatar-${index + 1}` })}
+                            className="rounded-lg border border-raw-border/25 bg-raw-surface/20 px-2.5 py-2 text-xs text-raw-text outline-none focus:border-raw-gold/40"
+                            placeholder="avatar-id"
                           />
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              type="button"
+                              onClick={() => setPublishInsertAt(index + 1)}
+                              className="inline-flex h-9 items-center justify-center rounded-lg border border-raw-border/25 px-2 text-[10px] text-raw-silver/60 hover:border-raw-gold/40 hover:text-raw-text"
+                              title="Insert new sliced avatars before this row"
+                            >
+                              Insert here
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => removeAvatarCatalogDraftItem(item.id)}
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-raw-border/25 text-raw-silver/55 hover:border-red-400/40 hover:text-red-300"
+                              aria-label={`Remove ${item.name}`}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
                         </div>
-                        <input
-                          type="text"
-                          value={item.price}
-                          onChange={(event) => updateAvatarCatalogDraftItem(item.id, { price: event.target.value })}
-                          className="rounded-lg border border-raw-border/25 bg-raw-surface/20 px-2.5 py-2 text-sm text-raw-text outline-none focus:border-raw-gold/40"
-                          placeholder="Price"
-                        />
-                        <input
-                          type="text"
-                          value={item.id}
-                          onChange={(event) => updateAvatarCatalogDraftItem(item.id, { id: event.target.value || `avatar-${index + 1}` })}
-                          className="rounded-lg border border-raw-border/25 bg-raw-surface/20 px-2.5 py-2 text-xs text-raw-text outline-none focus:border-raw-gold/40"
-                          placeholder="avatar-id"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeAvatarCatalogDraftItem(item.id)}
-                          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-raw-border/25 text-raw-silver/55 hover:border-red-400/40 hover:text-red-300"
-                          aria-label={`Remove ${item.name}`}
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
                       </div>
                     ))}
+                    {renderInsertPeek(avatarCatalogDraft.length + 1)}
                   </div>
                 )}
               </div>
