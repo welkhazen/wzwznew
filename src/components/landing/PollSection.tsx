@@ -560,10 +560,8 @@ export function PollSection({
     return () => obs.disconnect();
   }, []);
 
-  if (polls.length === 0) return null;
-
-  const currentPoll = polls[currentIndex];
-  const currentHasVoted = votedPolls.has(currentPoll.id);
+  const currentPoll = polls[currentIndex] ?? null;
+  const currentHasVoted = currentPoll ? votedPolls.has(currentPoll.id) : false;
   const showSignupGate = !isLoggedIn && freeVotesUsed >= 3;
 
   const advance = useCallback(
@@ -585,6 +583,8 @@ export function PollSection({
 
   const handleVote = useCallback(
     (answer: "yes" | "no") => {
+      if (!currentPoll) return;
+
       const yesOption = currentPoll.options.find((o) => o.text === "Yes");
       const noOption = currentPoll.options.find((o) => o.text === "No");
       const optionId = answer === "yes" ? yesOption?.id : noOption?.id;
@@ -616,6 +616,8 @@ export function PollSection({
 
   const goldAccent = isLight ? "rgba(160,120,10,0.85)" : GOLD;
   const sectionBg = isLight ? "transparent" : "transparent";
+
+  if (!currentPoll) return null;
 
   return (
     <LandingSectionShell

@@ -180,6 +180,8 @@ export default function Admin() {
       void autoMeasureGapForFile(sheetFile, sliceRows, sliceCols);
     }, 250);
     return () => window.clearTimeout(timer);
+    // autoMeasureGapForFile is a local helper that already reads trimThreshold.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoMeasureGap, sheetFile, sliceRows, sliceCols, trimThreshold]);
 
   if (!sessionLoaded) {
