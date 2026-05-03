@@ -6,10 +6,13 @@ import { HowItWorks } from "@/components/landing/HowItWorks";
 import { PollSection } from "@/components/landing/PollSection";
 import { PollShowcase } from "@/components/landing/PollShowcase";
 import { AvatarShowcaseSection } from "@/components/landing/AvatarShowcaseSection";
+import { Communities } from "@/components/landing/Communities";
+import { PersonalityInsightsSection } from "@/components/landing/PersonalityInsightsSection";
 import { WheelReward } from "@/components/landing/WheelReward";
 import { WhyAnonymity } from "@/components/landing/WhyAnonymity";
 import { AnonQuestionSection } from "@/components/landing/AnonQuestionSection";
 import { EarnedWarUpgradesSection } from "@/components/landing/EarnedWarUpgradesSection";
+import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { OnboardingJourney } from "@/components/onboarding/OnboardingJourney";
 import MatrixBackgroundIntro from "@/components/ui/matrix-background-intro";
@@ -160,6 +163,7 @@ const Index = () => {
         <GlobeHero onSignupClick={() => setShowSignup(true)} />
         <ProblemSection />
         <HowItWorks />
+        <AvatarShowcaseSection />
         <PollSection
           polls={polls}
           votedPolls={votedPolls}
@@ -168,21 +172,24 @@ const Index = () => {
           onVote={vote}
           onSignupClick={() => setShowSignup(true)}
         />
+        <Communities onSignupClick={() => setShowSignup(true)} />
+        <PersonalityInsightsSection />
+        <EarnedWarUpgradesSection />
         <PollShowcase />
         <AvatarShowcaseSection />
         <WheelReward onSignupClick={() => setShowSignup(true)} />
         <WhyAnonymity />
         <AnonQuestionSection />
-        <EarnedWarUpgradesSection />
+        <TestimonialsSection />
         <LandingFooter />
       </div>
 
       <Suspense fallback={null}>
         <SignupModalLazy
           open={showSignup}
-          onOpenChange={setShowSignup}
-          onRequestOtp={requestSignupOtp}
-          onVerifyOtp={verifySignupOtp}
+          onClose={() => setShowSignup(false)}
+          onRequestSignupOtp={requestSignupOtp}
+          onVerifySignupOtp={verifySignupOtp}
           onLogin={login}
         />
       </Suspense>

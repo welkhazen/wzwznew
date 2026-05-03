@@ -21,17 +21,25 @@ async function getPollsMockResponse(): Promise<unknown> {
       `)
       .order('created_at', { ascending: false });
     if (!error && data && data.length > 0) {
-      const polls = data.map((row) => {
-        const opts = [...((row.poll_options as { id: string; label: string; position: number }[]) ?? [])]
-          .sort((a, b) => a.position - b.position);
-        return {
-          id: row.id,
-          question: row.question,
-          options: opts.map((o) => ({ id: o.id, text: o.label, votes: 0 })),
-          locked: row.status === 'locked',
-        };
-      });
-      return { polls, votedPolls: [] };
+      const polls = data
+        .map((row) => {
+          const opts = [...((row.poll_options as { id: string; label: string; position: number }[]) ?? [])]
+            .sort((a, b) => a.position - b.position);
+          return {
+            id: row.id,
+            question: row.question as string,
+            options: opts.map((o) => ({ id: o.id, text: o.label, votes: 0 })),
+            locked: row.status === 'locked',
+          };
+        })
+        .filter(
+          (p) =>
+            p.question &&
+            p.question.trim().length > 5 &&
+            p.options.length >= 2 &&
+            !p.locked
+        );
+      if (polls.length > 0) return { polls, votedPolls: [] };
     }
   } catch {
     // fall through to localStorage

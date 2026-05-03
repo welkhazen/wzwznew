@@ -229,9 +229,7 @@ export function OnboardingJourney({
       <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-4 py-6 sm:px-6 sm:py-8 md:py-10">
         <div className="mb-8">
           <div className="flex items-center justify-between gap-2">
-            <p className="font-display text-xs tracking-[0.35em] text-raw-gold/60">
-              WELCOME TO <span className="text-raw-text">ra</span><span className="text-raw-gold">W</span>
-            </p>
+            <p className="font-display text-xs uppercase tracking-[0.35em] text-raw-gold/60">Welcome to raW</p>
             <button
               onClick={onLogout}
               className="shrink-0 rounded-xl border border-raw-border/50 px-3 py-1.5 text-[10px] uppercase tracking-[0.14em] text-raw-silver/55 transition-colors hover:border-raw-border hover:text-raw-silver"
@@ -239,6 +237,9 @@ export function OnboardingJourney({
               Log out
             </button>
           </div>
+          <h1 className="mt-3 font-display text-2xl tracking-wide text-raw-text sm:text-3xl">
+            Complete your identity path, {user.username}
+          </h1>
         </div>
 
         <div className="mb-6 flex flex-wrap gap-2">

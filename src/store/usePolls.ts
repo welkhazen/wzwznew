@@ -28,7 +28,7 @@ export function usePolls(isLoggedIn: boolean) {
 
   const pollsQuery = useQuery({
     queryKey: ["polls", "randomized"],
-    enabled: isLoggedIn,
+    enabled: true,
     retry: false,
     queryFn: async (): Promise<Poll[]> => {
       const response = await apiRequest<{ polls: Poll[] }>("/api/v2/polls/random?limit=10");
@@ -96,7 +96,11 @@ export function usePolls(isLoggedIn: boolean) {
     setFreeVotesUsed((previous) => previous + 1);
   }, [dailyAnsweredPollIds, dailyPollDate, guestVotedPolls, isLoggedIn, sessionVotedPolls, voteMutation]);
 
-  const polls = useMemo(() => (isLoggedIn ? pollsQuery.data ?? [] : INITIAL_POLLS), [isLoggedIn, pollsQuery.data]);
+  const polls = useMemo(() => {
+    const fetched = pollsQuery.data;
+    if (fetched && fetched.length > 0) return fetched;
+    return INITIAL_POLLS;
+  }, [pollsQuery.data]);
   const votedPolls = isLoggedIn ? sessionVotedPolls : guestVotedPolls;
 
   return useMemo(() => ({

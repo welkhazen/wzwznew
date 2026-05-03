@@ -41,7 +41,7 @@ export function AnonQuestionSection() {
     <section className="landing-section relative px-4 py-14 sm:px-6 sm:py-20">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(241,196,45,0.04),transparent_65%)]" />
       <div className="relative mx-auto max-w-xl text-center">
-        <p className="landing-section-eyebrow text-[11px] uppercase tracking-[0.25em]">Your Voice</p>
+        <p className="text-[11px] uppercase tracking-[0.25em] text-raw-gold/70">Your Voice</p>
         <h2 className="mt-3 font-display text-2xl tracking-wide text-raw-text sm:text-3xl">
           Want to ask your own anonymous question?
         </h2>

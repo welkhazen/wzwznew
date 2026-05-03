@@ -34,11 +34,11 @@ export function LandingSectionShell({
           <header className="mb-6 text-center sm:mb-10">
             {eyebrow && (
               <div className="mb-2 flex items-center justify-center gap-2 sm:mb-3">
-                <div className="landing-section-rule h-px w-6 sm:w-8" />
-                <p className="landing-section-eyebrow font-display text-[10px] uppercase tracking-[0.28em] sm:tracking-[0.3em]">
+                <div className="h-px w-6 bg-raw-gold/30 sm:w-8" />
+                <p className="font-display text-[10px] uppercase tracking-[0.28em] text-raw-gold/60 sm:tracking-[0.3em]">
                   {eyebrow}
                 </p>
-                <div className="landing-section-rule h-px w-6 sm:w-8" />
+                <div className="h-px w-6 bg-raw-gold/30 sm:w-8" />
               </div>
             )}
             {title && (
