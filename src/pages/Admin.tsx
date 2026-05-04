@@ -1036,8 +1036,7 @@ export default function Admin() {
         title: "Sheet sliced",
         description: `${output.length} avatars generated`,
       });
-    } catch (error) {
-      console.error("Image slicing failed", error);
+    } catch {
       toast({
         title: "Could not slice image",
         description: "Try another image or adjust rows/cols/gap",

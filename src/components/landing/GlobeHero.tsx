@@ -2,11 +2,9 @@
 
 import React from "react";
 import { motion } from "motion/react";
-import { DotGlobeHero } from "@/components/ui/globe-hero";
 import { ArrowRight, Zap } from "lucide-react";
 import { track } from "@/lib/analytics";
 
-import { GlobeHeroTypewriterSequence } from "@/components/landing/GlobeHeroTypewriterSequence";
 import { TypewriterStack } from "@/components/ui/typewriter-stack";
 import { Canvas } from "@react-three/fiber";
 import { PerspectiveCamera } from "@react-three/drei";

@@ -37,7 +37,7 @@ export async function sendOtp(phone: string): Promise<OtpSendResult> {
   // NOTE: Twilio has been fully removed from the codebase.
   // For safety, we do not return the code in API responses.
   // In local/dev, operators can retrieve it from server logs.
-  audit("otp.local.sent", { phone, code }, "info");
+  audit("otp.local.sent", { phone }, "info");
 
   return { ok: true, channels: ["sms"] };
 }

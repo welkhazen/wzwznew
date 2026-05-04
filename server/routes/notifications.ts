@@ -1,10 +1,10 @@
 import type { Request } from "express";
 import { Router } from "express";
 import { z } from "zod";
-// import { requireAuth } from "../middleware/requireAuth";
+import { requireAuth } from "../middleware/requireAuth";
 import type { AuthSessionData } from "../types";
 import { sendTransactionalEmail } from "../lib/email";
-// import { isUserAdmin } from "../lib/admin";
+import { isUserAdmin } from "../lib/admin";
 
 const inviteSchema = z.object({
   to: z.string().email(),
@@ -30,15 +30,13 @@ function getUserId(req: Request): string | undefined {
 
 export const notificationsRouter = Router();
 
-// TODO: Re-enable requireAuth middleware for production
-// notificationsRouter.use(requireAuth);
+notificationsRouter.use(requireAuth);
 
 notificationsRouter.post("/community-invite", async (req, res) => {
-  // Development mode: skip auth check
-  // const userId = getUserId(req);
-  // if (!userId || !(await isUserAdmin(userId))) {
-  //   return res.status(403).json({ error: "Admin permissions required." });
-  // }
+  const userId = getUserId(req);
+  if (!userId || !(await isUserAdmin(userId))) {
+    return res.status(403).json({ error: "Admin permissions required." });
+  }
 
   const parsed = inviteSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -55,11 +53,10 @@ notificationsRouter.post("/community-invite", async (req, res) => {
 });
 
 notificationsRouter.post("/weekly-digest", async (req, res) => {
-  // Development mode: skip auth check
-  // const userId = getUserId(req);
-  // if (!userId || !(await isUserAdmin(userId))) {
-  //   return res.status(403).json({ error: "Admin permissions required." });
-  // }
+  const userId = getUserId(req);
+  if (!userId || !(await isUserAdmin(userId))) {
+    return res.status(403).json({ error: "Admin permissions required." });
+  }
 
   const parsed = digestSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -74,11 +71,10 @@ notificationsRouter.post("/weekly-digest", async (req, res) => {
 });
 
 notificationsRouter.post("/streak-at-risk", async (req, res) => {
-  // Development mode: skip auth check
-  // const userId = getUserId(req);
-  // if (!userId || !(await isUserAdmin(userId))) {
-  //   return res.status(403).json({ error: "Admin permissions required." });
-  // }
+  const userId = getUserId(req);
+  if (!userId || !(await isUserAdmin(userId))) {
+    return res.status(403).json({ error: "Admin permissions required." });
+  }
 
   const parsed = atRiskSchema.safeParse(req.body);
   if (!parsed.success) {
