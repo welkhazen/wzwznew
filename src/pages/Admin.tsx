@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { Link, Navigate } from "react-router-dom";
-import { ArrowLeft, Ban, BellRing, CheckCircle2, Copy, Database, Download, Flag, Lock, Plus, Scissors, Shield, Trash2, Upload, Users, XCircle } from "lucide-react";
+import { ArrowLeft, Ban, BellRing, CheckCircle2, Copy, Database, Download, Flag, GripVertical, Lock, Plus, Scissors, Shield, Trash2, Upload, Users, XCircle } from "lucide-react";
 import { fetchPollsFromSupabase, insertPollToSupabase, deletePollFromSupabase, testSupabaseConnection } from "@/lib/supabasePolls";
 import { fetchCommunityRequests, updateCommunityRequestStatus } from "@/backend/supabase/controllers/communityRequestController";
 import { createCommunityFromRequest } from "@/backend/supabase/controllers/communityController";
@@ -13,8 +13,16 @@ import {
   loadAvatarCatalogSupabaseOnly,
   saveAvatarCatalogSupabaseOnly,
 } from "@/lib/avatarCatalog";
-import { upsertDailySpinAvatarPool } from "@/lib/dailySpinAvatarPool";
+import {
+  readDailySpinAvatarPool,
+  upsertDailySpinAvatarPool,
+  writeDailySpinAvatarPool,
+  loadDailySpinPoolFromSupabase,
+  saveDailySpinPoolToSupabase,
+  type DailySpinAvatarPoolItem,
+} from "@/lib/dailySpinAvatarPool";
 import { supabase } from "@/lib/supabase";
+import { WheelOfFortune, type WheelPrize } from "@/components/wheel/WheelOfFortune";
 import {
   createAdminPoll,
   deleteAdminPoll,
@@ -68,6 +76,9 @@ type CutDecision = "pending" | "accepted" | "rejected";
 const MAX_SHEET_FILE_BYTES = 10 * 1024 * 1024;
 const MAX_SLICE_CELLS = 100;
 const AVATAR_STORAGE_BUCKET = (import.meta.env.VITE_SUPABASE_AVATAR_BUCKET as string | undefined) ?? "avatars";
+const AVATAR_STORAGE_BUCKET_CANDIDATES = Array.from(
+  new Set([AVATAR_STORAGE_BUCKET, "avatars", "avatar", "avatar-catalog"])
+);
 
 export default function Admin() {
   const { user, isLoggedIn, isAdmin, sessionLoaded, logout } = useRawStore();
@@ -80,6 +91,7 @@ export default function Admin() {
   const [pollOptions, setPollOptions] = useState(["", ""]);
   const [supabaseStatus, setSupabaseStatus] = useState<"idle" | "ok" | "error">("idle");
   const [supabaseMessage, setSupabaseMessage] = useState("");
+  const [isTestingStorage, setIsTestingStorage] = useState(false);
   const [sheetFile, setSheetFile] = useState<File | null>(null);
   const [sheetPreviewUrl, setSheetPreviewUrl] = useState<string | null>(null);
   const [sliceRows, setSliceRows] = useState(2);
@@ -98,6 +110,12 @@ export default function Admin() {
   const [assetsFolderName, setAssetsFolderName] = useState<string | null>(null);
   const [avatarCatalogDraft, setAvatarCatalogDraft] = useState<AvatarCatalogItem[]>([]);
   const [isSavingAvatarCatalog, setIsSavingAvatarCatalog] = useState(false);
+  const [dailySpinPoolDraft, setDailySpinPoolDraft] = useState<DailySpinAvatarPoolItem[]>(() => readDailySpinAvatarPool());
+  const [newSpinName, setNewSpinName] = useState("");
+  const [newSpinImageSrc, setNewSpinImageSrc] = useState("");
+  const [isSavingSpinPool, setIsSavingSpinPool] = useState(false);
+  const [spinPreviewPrize, setSpinPreviewPrize] = useState<WheelPrize | null>(null);
+  const [spinDropIndex, setSpinDropIndex] = useState<number | null>(null);
   const [publishInsertAt, setPublishInsertAt] = useState(1);
   const [cutDecisions, setCutDecisions] = useState<Record<string, CutDecision>>({});
   const [reviewCursor, setReviewCursor] = useState(0);
@@ -170,6 +188,14 @@ export default function Admin() {
   }, []);
 
   useEffect(() => {
+    void loadDailySpinPoolFromSupabase()
+      .then((items) => setDailySpinPoolDraft(items))
+      .catch(() => {
+        // Keep localStorage draft as fallback - no toast needed
+      });
+  }, []);
+
+  useEffect(() => {
     sheetPreviewUrlRef.current = sheetPreviewUrl;
   }, [sheetPreviewUrl]);
 
@@ -224,7 +250,160 @@ export default function Admin() {
     () => slicedAvatars.length - pendingReviewCount,
     [slicedAvatars.length, pendingReviewCount]
   );
+  const spinPoolPrizes = useMemo<WheelPrize[]>(
+    () =>
+      dailySpinPoolDraft.map((entry, index) => ({
+        id: entry.id,
+        label: entry.name,
+        shortLabel: entry.name.split(" ")[0]?.toUpperCase() || "AVATAR",
+        imageSrc: entry.imageSrc,
+        color: index % 2 === 0 ? "#121212" : "#0e0e0e",
+        textColor: "#F1C42D",
+      })),
+    [dailySpinPoolDraft]
+  );
   const currentReviewItem = slicedAvatars[reviewCursor] ?? null;
+
+  const saveDailySpinPoolDraft = () => {
+    setIsSavingSpinPool(true);
+    const normalized = dailySpinPoolDraft
+      .map((item, index) => ({
+        id: (item.id || `daily-spin-${index + 1}`).trim(),
+        name: (item.name || `Spin ${index + 1}`).trim(),
+        imageSrc: (item.imageSrc || "").trim(),
+      }))
+      .filter((item) => item.id && item.name && item.imageSrc);
+    void saveDailySpinPoolToSupabase(normalized)
+      .then((saved) => {
+        setDailySpinPoolDraft(saved);
+        toast({ title: "Daily spin pool saved", description: `${saved.length} entries are now active.` });
+      })
+      .catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : "Please try again.";
+        toast({ title: "Could not save spin pool", description: msg });
+      })
+      .finally(() => setIsSavingSpinPool(false));
+  };
+
+  const addDailySpinEntry = () => {
+    const name = newSpinName.trim();
+    const imageSrc = newSpinImageSrc.trim();
+    if (!name || !imageSrc) {
+      toast({ title: "Missing entry data", description: "Provide both name and image URL." });
+      return;
+    }
+
+    const baseId = slugify(name) || `daily-spin-${dailySpinPoolDraft.length + 1}`;
+    const existingIds = new Set(dailySpinPoolDraft.map((item) => item.id));
+    let candidateId = baseId;
+    let counter = 2;
+    while (existingIds.has(candidateId)) {
+      candidateId = `${baseId}-${counter}`;
+      counter += 1;
+    }
+
+    setDailySpinPoolDraft((previous) => [
+      ...previous,
+      { id: candidateId, name, imageSrc },
+    ]);
+    setNewSpinName("");
+    setNewSpinImageSrc("");
+  };
+
+  const addEntryToSpinPoolAt = (
+    entry: { id?: string; name: string; imageSrc: string },
+    insertIndex?: number
+  ) => {
+    const name = entry.name.trim();
+    const imageSrc = entry.imageSrc.trim();
+    if (!name || !imageSrc) return;
+
+    setDailySpinPoolDraft((previous) => {
+      const existingIds = new Set(previous.map((item) => item.id));
+      const baseId = slugify(entry.id || name) || `daily-spin-${previous.length + 1}`;
+      let candidateId = baseId;
+      let counter = 2;
+      while (existingIds.has(candidateId)) {
+        candidateId = `${baseId}-${counter}`;
+        counter += 1;
+      }
+
+      const next = [...previous];
+      const safeIndex =
+        insertIndex === undefined
+          ? next.length
+          : Math.max(0, Math.min(insertIndex, next.length));
+      next.splice(safeIndex, 0, { id: candidateId, name, imageSrc });
+      return next;
+    });
+  };
+
+  const reorderSpinPool = (draggedId: string, targetIndex: number) => {
+    setDailySpinPoolDraft((previous) => {
+      const currentIndex = previous.findIndex((item) => item.id === draggedId);
+      if (currentIndex < 0) return previous;
+      const boundedIndex = Math.max(0, Math.min(targetIndex, previous.length - 1));
+      if (currentIndex === boundedIndex) return previous;
+      const next = [...previous];
+      const [moved] = next.splice(currentIndex, 1);
+      next.splice(boundedIndex, 0, moved);
+      return next;
+    });
+  };
+
+  const handleSpinPoolDrop = async (rawPayload: string, targetIndex?: number) => {
+    try {
+      const payload = JSON.parse(rawPayload) as
+        | { kind: "spin-item"; id: string }
+        | { kind: "catalog-avatar"; id: string }
+        | { kind: "cropped-avatar"; id: string };
+
+      if (payload.kind === "spin-item") {
+        if (targetIndex === undefined) return;
+        reorderSpinPool(payload.id, targetIndex);
+        return;
+      }
+
+      if (payload.kind === "catalog-avatar") {
+        const source = avatarCatalogDraft.find((item) => item.id === payload.id);
+        if (!source || !source.imageSrc) return;
+        addEntryToSpinPoolAt(
+          { id: source.id, name: source.name || source.id, imageSrc: source.imageSrc },
+          targetIndex
+        );
+        return;
+      }
+
+      if (payload.kind === "cropped-avatar") {
+        const source = slicedAvatars.find((item) => item.id === payload.id);
+        if (!source) return;
+        const imageSrc = await blobToDataUrl(source.blob);
+        addEntryToSpinPoolAt(
+          { id: source.id, name: source.name || source.id, imageSrc },
+          targetIndex
+        );
+      }
+    } catch {
+      toast({ title: "Drop failed", description: "Could not read dragged avatar data." });
+    }
+  };
+
+  const updateDailySpinEntry = (id: string, patch: Partial<DailySpinAvatarPoolItem>) => {
+    setDailySpinPoolDraft((previous) =>
+      previous.map((item) => (item.id === id ? { ...item, ...patch } : item))
+    );
+  };
+
+  const removeDailySpinEntry = (id: string) => {
+    const next = dailySpinPoolDraft.filter((item) => item.id !== id);
+    setDailySpinPoolDraft(next);
+    void saveDailySpinPoolToSupabase(next).catch((err: unknown) => {
+      const msg = err instanceof Error ? err.message : "Please try again.";
+      toast({ title: "Could not delete spin entry", description: msg });
+      // revert on failure
+      setDailySpinPoolDraft(dailySpinPoolDraft);
+    });
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -1100,11 +1279,33 @@ export default function Admin() {
     setAvatarCatalogDraft((previous) => previous.map((item) => (item.id === id ? { ...item, ...patch } : item)));
   };
 
-  const removeAvatarCatalogDraftItem = (id: string) => {
-    setAvatarCatalogDraft((previous) => {
-      const filtered = previous.filter((item) => item.id !== id);
-      return filtered.map((item, index) => ({ ...item, level: index + 1 }));
-    });
+  const removeAvatarCatalogDraftItem = async (id: string) => {
+    const previous = avatarCatalogDraft;
+    const next = previous
+      .filter((item) => item.id !== id)
+      .map((item, index) => ({ ...item, level: index + 1 }));
+
+    setAvatarCatalogDraft(next);
+    setIsSavingAvatarCatalog(true);
+    try {
+      const normalized = next.map((item, index) => ({
+        ...item,
+        id: item.id.trim() || `avatar-${index + 1}`,
+        name: item.name.trim() || `Avatar ${index + 1}`,
+        price: item.price.trim() || "0",
+        level: index + 1,
+        isActive: true,
+      }));
+      const saved = await saveAvatarCatalogSupabaseOnly(normalized);
+      setAvatarCatalogDraft(saved);
+      toast({ title: "Avatar removed", description: "Catalog update saved." });
+    } catch (error) {
+      setAvatarCatalogDraft(previous);
+      const message = error instanceof Error ? error.message : "Please try again.";
+      toast({ title: "Could not delete avatar", description: message });
+    } finally {
+      setIsSavingAvatarCatalog(false);
+    }
   };
 
   const addAvatarCatalogDraftItem = () => {
@@ -1211,6 +1412,58 @@ export default function Admin() {
     return next;
   };
 
+  const blobToDataUrl = (blob: Blob): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(new Error("Could not encode image as data URL"));
+      reader.readAsDataURL(blob);
+    });
+  };
+
+  const testSupabaseStorage = async () => {
+    setIsTestingStorage(true);
+    try {
+      const probeBlob = new Blob(["raw-storage-probe"], { type: "text/plain" });
+      let successBucket: string | null = null;
+      let lastErrorMessage = "Storage probe failed";
+
+      for (const bucket of AVATAR_STORAGE_BUCKET_CANDIDATES) {
+        const probePath = `health/probe-${Date.now()}.txt`;
+        const { error: uploadError } = await supabase.storage
+          .from(bucket)
+          .upload(probePath, probeBlob, { upsert: false, contentType: "text/plain" });
+
+        if (uploadError) {
+          lastErrorMessage = uploadError.message || lastErrorMessage;
+          continue;
+        }
+
+        const { data } = supabase.storage.from(bucket).getPublicUrl(probePath);
+        await supabase.storage.from(bucket).remove([probePath]);
+
+        successBucket = bucket;
+        toast({
+          title: "Storage test passed",
+          description: `Upload/read/delete works in bucket: ${bucket}${data.publicUrl ? " (public URL available)" : ""}.`,
+        });
+        break;
+      }
+
+      if (!successBucket) {
+        toast({
+          title: "Storage test failed",
+          description: `${lastErrorMessage}. Create bucket '${AVATAR_STORAGE_BUCKET}' and allow upload/read/delete for your admin flow.`,
+        });
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown storage error";
+      toast({ title: "Storage test failed", description: message });
+    } finally {
+      setIsTestingStorage(false);
+    }
+  };
+
   const uploadAvatarBlobToSupabase = async (
     blob: Blob,
     safeId: string,
@@ -1218,21 +1471,35 @@ export default function Admin() {
   ): Promise<string> => {
     const folder = target === "daily-spin" ? "daily-spin" : "catalog";
     const filePath = `${folder}/${safeId}-${Date.now()}.png`;
-    const { error: uploadError } = await supabase.storage
-      .from(AVATAR_STORAGE_BUCKET)
-      .upload(filePath, blob, {
-        cacheControl: "31536000",
-        contentType: "image/png",
-        upsert: true,
-      });
-    if (uploadError) {
-      throw new Error(uploadError.message || "Storage upload failed");
+    let lastErrorMessage = "Storage upload failed";
+
+    for (const bucket of AVATAR_STORAGE_BUCKET_CANDIDATES) {
+      const { error: uploadError } = await supabase.storage
+        .from(bucket)
+        .upload(filePath, blob, {
+          cacheControl: "31536000",
+          contentType: "image/png",
+          upsert: false,
+        });
+
+      if (uploadError) {
+        const details = [uploadError.message, uploadError.name].filter(Boolean).join(" | ");
+        lastErrorMessage = details || lastErrorMessage;
+        continue;
+      }
+
+      const { data } = supabase.storage.from(bucket).getPublicUrl(filePath);
+      if (!data.publicUrl) {
+        lastErrorMessage = "Storage public URL could not be created";
+        continue;
+      }
+
+      return data.publicUrl;
     }
-    const { data } = supabase.storage.from(AVATAR_STORAGE_BUCKET).getPublicUrl(filePath);
-    if (!data.publicUrl) {
-      throw new Error("Storage public URL could not be created");
-    }
-    return data.publicUrl;
+
+    throw new Error(
+      `${lastErrorMessage}. Check Supabase Storage: create a bucket (recommended name: ${AVATAR_STORAGE_BUCKET}) and allow upload/read for your admin flow.`
+    );
   };
 
   const publishSlicedAvatarsToCatalog = async () => {
@@ -1258,6 +1525,7 @@ export default function Admin() {
       const usedIds = new Set(existing.map((item) => item.id));
       const nextFromSlice: AvatarCatalogItem[] = [];
       const nextForDailySpin: Array<{ id: string; name: string; imageSrc: string }> = [];
+      let usedDbImageFallback = false;
 
       for (let index = 0; index < acceptedSlicedAvatars.length; index += 1) {
         const item = acceptedSlicedAvatars[index];
@@ -1266,7 +1534,18 @@ export default function Admin() {
           usedIds
         );
         if (item.publishTarget === "daily-spin") {
-          const imageSrc = await uploadAvatarBlobToSupabase(item.blob, safeId, "daily-spin");
+          let imageSrc: string;
+          try {
+            imageSrc = await uploadAvatarBlobToSupabase(item.blob, safeId, "daily-spin");
+          } catch (error) {
+            const message = error instanceof Error ? error.message.toLowerCase() : "";
+            if (message.includes("bucket not found")) {
+              imageSrc = await blobToDataUrl(item.blob);
+              usedDbImageFallback = true;
+            } else {
+              throw error;
+            }
+          }
           nextForDailySpin.push({
             id: safeId,
             name: item.name.trim() || `Daily Spin ${index + 1}`,
@@ -1276,7 +1555,18 @@ export default function Admin() {
         }
 
         const theme = getAvatar(existing.length + index + 1);
-        const imageSrc = await uploadAvatarBlobToSupabase(item.blob, safeId, "level");
+        let imageSrc: string;
+        try {
+          imageSrc = await uploadAvatarBlobToSupabase(item.blob, safeId, "level");
+        } catch (error) {
+          const message = error instanceof Error ? error.message.toLowerCase() : "";
+          if (message.includes("bucket not found")) {
+            imageSrc = await blobToDataUrl(item.blob);
+            usedDbImageFallback = true;
+          } else {
+            throw error;
+          }
+        }
 
         nextFromSlice.push({
           id: safeId,
@@ -1310,6 +1600,12 @@ export default function Admin() {
         title: "Publish complete",
         description: `${nextFromSlice.length} to levels, ${nextForDailySpin.length} to daily spin pool.`,
       });
+      if (usedDbImageFallback) {
+        toast({
+          title: "Storage bucket missing",
+          description: "Saved images in Supabase DB as a fallback. Create bucket 'avatars' to store files in Supabase Storage.",
+        });
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Try again after slicing.";
       toast({ title: "Could not publish avatars", description: message });
@@ -1405,6 +1701,244 @@ export default function Admin() {
                 </div>
               ))
             )}
+          </div>
+        </section>
+
+        <section className="rounded-2xl border border-raw-border/30 bg-raw-surface/20 p-4 sm:rounded-3xl sm:p-6">
+          <div className="flex items-center gap-3">
+            <Database className="h-5 w-5 text-raw-gold/70" />
+            <div>
+              <h2 className="font-display text-xl tracking-wide">Daily spin pool manager</h2>
+              <p className="mt-1 text-sm text-raw-silver/45">
+                Use the same wheel on Admin to curate entries: keep, remove, and add items.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-5 lg:grid-cols-[380px_1fr]">
+            <div className="rounded-2xl border border-raw-border/25 bg-raw-black/35 p-3 sm:p-4">
+              {spinPoolPrizes.length > 0 ? (
+                <>
+                  <WheelOfFortune
+                    prizes={spinPoolPrizes}
+                    onSpinEnd={(prize) => setSpinPreviewPrize(prize)}
+                  />
+                  {spinPreviewPrize && (
+                    <p className="mt-2 text-center text-xs text-raw-silver/55">
+                      Last landed: <span className="text-raw-gold/90">{spinPreviewPrize.label}</span>
+                    </p>
+                  )}
+                </>
+              ) : (
+                <div className="rounded-xl border border-raw-border/20 bg-raw-black/40 p-4 text-sm text-raw-silver/45">
+                  No items in daily spin pool yet.
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-3">
+              <div className="rounded-xl border border-raw-border/20 bg-raw-black/30 p-3">
+                <p className="text-[11px] uppercase tracking-[0.15em] text-raw-silver/35">Add new entry</p>
+                <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_1.5fr_auto]">
+                  <input
+                    type="text"
+                    value={newSpinName}
+                    onChange={(event) => setNewSpinName(event.target.value)}
+                    className="rounded-lg border border-raw-border/25 bg-raw-surface/20 px-2.5 py-2 text-sm text-raw-text outline-none focus:border-raw-gold/40"
+                    placeholder="Name"
+                  />
+                  <input
+                    type="text"
+                    value={newSpinImageSrc}
+                    onChange={(event) => setNewSpinImageSrc(event.target.value)}
+                    className="rounded-lg border border-raw-border/25 bg-raw-surface/20 px-2.5 py-2 text-sm text-raw-text outline-none focus:border-raw-gold/40"
+                    placeholder="Image URL"
+                  />
+                  <button
+                    type="button"
+                    onClick={addDailySpinEntry}
+                    className="rounded-lg border border-raw-border/25 px-3 py-2 text-xs text-raw-silver/65 hover:border-raw-gold/40 hover:text-raw-text"
+                  >
+                    Add
+                  </button>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-raw-border/20 bg-raw-black/30 p-3">
+                <p className="text-[11px] uppercase tracking-[0.15em] text-raw-silver/35">Drag from cropped avatars</p>
+                {slicedAvatars.length === 0 ? (
+                  <p className="mt-2 text-xs text-raw-silver/45">Slice avatars first to drag them here.</p>
+                ) : (
+                  <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                    {slicedAvatars.map((item) => (
+                      <button
+                        key={`drag-crop-${item.id}`}
+                        type="button"
+                        draggable
+                        onDragStart={(event) => {
+                          event.dataTransfer.setData("text/plain", JSON.stringify({ kind: "cropped-avatar", id: item.id }));
+                          event.dataTransfer.effectAllowed = "copyMove";
+                        }}
+                        className="rounded-lg border border-raw-border/25 bg-raw-black/35 p-2 text-left hover:border-raw-gold/40"
+                        title="Drag into spin pool"
+                      >
+                        <img src={item.imageUrl} alt={item.name} className="h-12 w-full rounded-md object-cover" />
+                        <p className="mt-1 truncate text-[10px] text-raw-silver/70">{item.name}</p>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-xl border border-raw-border/20 bg-raw-black/30 p-3">
+                <p className="text-[11px] uppercase tracking-[0.15em] text-raw-silver/35">Drag from website avatars</p>
+                {avatarCatalogDraft.length === 0 ? (
+                  <p className="mt-2 text-xs text-raw-silver/45">No website avatars in catalog.</p>
+                ) : (
+                  <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                    {avatarCatalogDraft.map((item) => (
+                      <div
+                        key={`drag-catalog-${item.id}`}
+                        className="rounded-lg border border-raw-border/25 bg-raw-black/35 p-2 hover:border-raw-gold/40"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => addEntryToSpinPoolAt({ id: item.id, name: item.name || item.id, imageSrc: item.imageSrc || "" })}
+                          className="mb-1 inline-flex h-5 w-5 items-center justify-center rounded-full border border-raw-gold/45 text-raw-gold hover:bg-raw-gold/15"
+                          title="Add to spin pool"
+                          aria-label={`Add ${item.name} to spin pool`}
+                        >
+                          <Plus className="h-3 w-3" />
+                        </button>
+                        <button
+                          type="button"
+                          draggable
+                          onDragStart={(event) => {
+                            event.dataTransfer.setData("text/plain", JSON.stringify({ kind: "catalog-avatar", id: item.id }));
+                            event.dataTransfer.effectAllowed = "copyMove";
+                          }}
+                          className="w-full text-left"
+                          title="Drag into spin pool"
+                        >
+                          <img src={item.imageSrc || ""} alt={item.name} className="h-12 w-full rounded-md object-cover" />
+                          <p className="mt-1 truncate text-[10px] text-raw-silver/70">{item.name}</p>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {dailySpinPoolDraft.length === 0 ? (
+                <p className="text-sm text-raw-silver/45">No spin entries yet.</p>
+              ) : (
+                <div className="space-y-2">
+                  {dailySpinPoolDraft.map((item, index) => (
+                    <div
+                      key={item.id}
+                      onDragOver={(event) => {
+                        event.preventDefault();
+                        event.dataTransfer.dropEffect = "move";
+                        setSpinDropIndex(index);
+                      }}
+                      onDragLeave={() => setSpinDropIndex((previous) => (previous === index ? null : previous))}
+                      onDrop={(event) => {
+                        event.preventDefault();
+                        const payload = event.dataTransfer.getData("text/plain");
+                        void handleSpinPoolDrop(payload, index);
+                        setSpinDropIndex(null);
+                      }}
+                      className={`grid gap-2 rounded-xl border bg-raw-black/30 p-2 sm:grid-cols-[28px_52px_1fr_1.4fr_auto] sm:items-center ${
+                        spinDropIndex === index ? "border-raw-gold/45" : "border-raw-border/20"
+                      }`}
+                    >
+                      <button
+                        type="button"
+                        draggable
+                        onDragStart={(event) => {
+                          event.dataTransfer.setData("text/plain", JSON.stringify({ kind: "spin-item", id: item.id }));
+                          event.dataTransfer.effectAllowed = "move";
+                        }}
+                        className="inline-flex h-12 w-6 items-center justify-center rounded-md border border-raw-border/25 text-raw-silver/55 hover:border-raw-gold/40 hover:text-raw-gold"
+                        title="Drag to reorder"
+                        aria-label={`Drag ${item.name} to reorder`}
+                      >
+                        <GripVertical className="h-3.5 w-3.5" />
+                      </button>
+                      <img
+                        src={item.imageSrc}
+                        alt={item.name}
+                        className="h-12 w-12 rounded-lg border border-raw-border/20 bg-raw-black/50 object-cover"
+                      />
+                      <input
+                        type="text"
+                        value={item.name}
+                        onChange={(event) => updateDailySpinEntry(item.id, { name: event.target.value })}
+                        className="rounded-lg border border-raw-border/25 bg-raw-surface/20 px-2.5 py-2 text-sm text-raw-text outline-none focus:border-raw-gold/40"
+                        placeholder="Name"
+                      />
+                      <input
+                        type="text"
+                        value={item.imageSrc}
+                        onChange={(event) => updateDailySpinEntry(item.id, { imageSrc: event.target.value })}
+                        className="rounded-lg border border-raw-border/25 bg-raw-surface/20 px-2.5 py-2 text-xs text-raw-text outline-none focus:border-raw-gold/40"
+                        placeholder="Image URL"
+                      />
+                      <button
+                        type="button"
+                        onMouseDown={(event) => event.stopPropagation()}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          removeDailySpinEntry(item.id);
+                        }}
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-raw-border/25 text-raw-silver/55 hover:border-red-400/40 hover:text-red-300"
+                        aria-label={`Remove ${item.name}`}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+
+                  <div
+                    onDragOver={(event) => {
+                      event.preventDefault();
+                      event.dataTransfer.dropEffect = "copyMove";
+                      setSpinDropIndex(dailySpinPoolDraft.length);
+                    }}
+                    onDragLeave={() => setSpinDropIndex((previous) => (previous === dailySpinPoolDraft.length ? null : previous))}
+                    onDrop={(event) => {
+                      event.preventDefault();
+                      const payload = event.dataTransfer.getData("text/plain");
+                      void handleSpinPoolDrop(payload, dailySpinPoolDraft.length);
+                      setSpinDropIndex(null);
+                    }}
+                    className={`rounded-lg border border-dashed px-3 py-2 text-xs text-raw-silver/55 ${
+                      spinDropIndex === dailySpinPoolDraft.length ? "border-raw-gold/45 text-raw-gold/85" : "border-raw-border/25"
+                    }`}
+                  >
+                    Drop here to add at end
+                  </div>
+                </div>
+              )}
+
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={saveDailySpinPoolDraft}
+                  disabled={isSavingSpinPool}
+                  className="rounded-lg border border-raw-border/25 px-2.5 py-1.5 text-[11px] text-raw-silver/65 hover:border-raw-gold/40 hover:text-raw-text disabled:opacity-40"
+                >
+                  {isSavingSpinPool ? "Saving..." : "Save spin pool"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void loadDailySpinPoolFromSupabase().then(setDailySpinPoolDraft).catch(() => setDailySpinPoolDraft(readDailySpinAvatarPool()))}
+                  className="rounded-lg border border-raw-border/25 px-2.5 py-1.5 text-[11px] text-raw-silver/65 hover:border-raw-gold/40 hover:text-raw-text"
+                >
+                  Reload from storage
+                </button>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -1546,6 +2080,15 @@ export default function Admin() {
                   <Database className="h-3 w-3" />
                   {supabaseStatus === "ok" ? "Supabase connected" : supabaseStatus === "error" ? `Supabase: ${supabaseMessage}` : "Connecting…"}
                 </span>
+                <button
+                  type="button"
+                  onClick={() => void testSupabaseStorage()}
+                  disabled={isTestingStorage}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-raw-border/30 px-2.5 py-0.5 text-[10px] text-raw-silver/65 hover:border-raw-gold/40 hover:text-raw-text disabled:opacity-40"
+                >
+                  <Database className="h-3 w-3" />
+                  {isTestingStorage ? "Testing storage..." : "Test storage"}
+                </button>
               </div>
               <p className="mt-1 text-sm text-raw-silver/45">Add a new poll with its answer options. It will show up in the daily feed.</p>
             </div>
@@ -2153,8 +2696,9 @@ export default function Admin() {
                             </button>
                             <button
                               type="button"
-                              onClick={() => removeAvatarCatalogDraftItem(item.id)}
-                              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-raw-border/25 text-raw-silver/55 hover:border-red-400/40 hover:text-red-300"
+                              onClick={() => void removeAvatarCatalogDraftItem(item.id)}
+                              disabled={isSavingAvatarCatalog}
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-raw-border/25 text-raw-silver/55 hover:border-red-400/40 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-40"
                               aria-label={`Remove ${item.name}`}
                             >
                               <Trash2 className="h-3.5 w-3.5" />
