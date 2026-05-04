@@ -22,9 +22,10 @@ export function LandingFooter() {
         {/* Links — 3 cols on mobile, inline on desktop */}
         <div className="mb-10 grid grid-cols-3 gap-6 sm:flex sm:justify-center sm:gap-16">
           <div>
-            <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-raw-gold/60">Product</p>
+            <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-raw-gold/60">Insights</p>
             <ul className="space-y-2.5">
-              <li><a href="/#polls" className="text-xs text-raw-silver/55 transition hover:text-raw-gold">Polls</a></li>
+              <li><a href="/#polls" className="text-xs text-raw-silver/55 transition hover:text-raw-gold">AI Character</a></li>
+              <li><a href="/#polls" className="text-xs text-raw-silver/55 transition hover:text-raw-gold">Communities</a></li>
             </ul>
           </div>
 

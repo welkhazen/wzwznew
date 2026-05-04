@@ -31,7 +31,7 @@ export function AvatarFigure({ avatarIndex, size = "md", selected = false, class
           className="relative h-full w-full overflow-hidden rounded-full"
           style={{
             background: `radial-gradient(circle at 50% 40%, ${theme.bg} 0%, #050505 70%)`,
-            boxShadow: selected ? `0 0 0 2px ${theme.ring}` : "inset 0 0 10px rgba(0,0,0,0.4)",
+            boxShadow: "inset 0 0 10px rgba(0,0,0,0.4)",
           }}
         >
           <img
@@ -60,19 +60,6 @@ export function AvatarFigure({ avatarIndex, size = "md", selected = false, class
   return (
     <div className={`relative inline-flex items-center justify-center ${className}`}>
       <svg width={s.outer} height={s.outer} viewBox={`0 0 ${s.outer} ${s.outer}`}>
-        {/* Ring for selected/high level */}
-        {(selected || theme.glow !== "none") && (
-          <circle
-            cx={cx}
-            cy={cy}
-            r={r + 3}
-            fill="none"
-            stroke={theme.ring}
-            strokeWidth={selected ? 2 : 1}
-            opacity={selected ? 0.9 : 0.4}
-          />
-        )}
-
         <circle cx={cx} cy={cy} r={r} fill={theme.bg} />
 
         <circle

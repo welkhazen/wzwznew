@@ -1,7 +1,6 @@
-import { Check, MonitorCog, Moon, Sun } from "lucide-react";
+import { Check, MonitorCog } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/providers/useTheme";
 
@@ -12,8 +11,7 @@ interface ThemeCustomizerProps {
 }
 
 export function ThemeCustomizer({ placement = "floating", triggerStyle = "icon", className }: ThemeCustomizerProps) {
-  const { mode, accent, accentPresets, setMode, setAccent } = useTheme();
-  const isLightMode = mode === "light";
+  const { accent, accentPresets, setAccent } = useTheme();
   const isFloating = placement === "floating";
   const selectedAccent = accentPresets.find((preset) => preset.id === accent);
 
@@ -34,7 +32,6 @@ export function ThemeCustomizer({ placement = "floating", triggerStyle = "icon",
                 isFloating && "pointer-events-auto shadow-[0_18px_45px_rgb(var(--raw-black)/0.22)]",
               )}
             >
-              <span>Theme</span>
               <span
                 className="h-3.5 w-3.5 rounded-full border border-white/40"
                 style={{ backgroundColor: selectedAccent ? `rgb(${selectedAccent.rgb})` : "rgb(var(--raw-accent))" }}
@@ -64,20 +61,6 @@ export function ThemeCustomizer({ placement = "floating", triggerStyle = "icon",
           </div>
 
           <div className="space-y-5 px-5 py-5">
-            <div className="rounded-2xl border border-raw-border/25 bg-raw-black/25 p-4">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.18em] text-raw-silver/45">Mode</p>
-                  <p className="mt-1 text-sm text-raw-text">{isLightMode ? "Light mode" : "Dark mode"}</p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Moon className={cn("h-4 w-4", !isLightMode ? "text-raw-gold" : "text-raw-silver/35")} />
-                  <Switch checked={isLightMode} onCheckedChange={(checked) => setMode(checked ? "light" : "dark")} />
-                  <Sun className={cn("h-4 w-4", isLightMode ? "text-raw-gold" : "text-raw-silver/35")} />
-                </div>
-              </div>
-            </div>
-
             <div>
               <div className="flex items-center justify-between gap-3">
                 <div>

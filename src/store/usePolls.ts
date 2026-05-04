@@ -18,6 +18,43 @@ const INITIAL_POLLS: Poll[] = POLL_QUESTION_SEEDS.map((poll, index) => ({
   locked: false,
 }));
 
+async function fetchPollsWithFallback(): Promise<Poll[]> {
+  try {
+    const response = await apiRequest<{ polls: Poll[] }>("/api/polls/random?limit=10");
+    if (response.polls && response.polls.length > 0) return response.polls;
+  } catch {
+    // fall through to Supabase direct
+  }
+  // Supabase direct fallback
+  try {
+    const { supabase } = await import("@/backend/supabase/client");
+    const { data, error } = await supabase
+      .from("polls")
+      .select("id, question, status, poll_options(id, label, position)")
+      .order("created_at", { ascending: false })
+      .limit(10);
+    if (!error && data && data.length > 0) {
+      const polls: Poll[] = data
+        .map((row) => {
+          const opts = [...((row.poll_options as { id: string; label: string; position: number }[]) ?? [])].sort(
+            (a, b) => a.position - b.position
+          );
+          return {
+            id: row.id as string,
+            question: row.question as string,
+            options: opts.map((o) => ({ id: o.id, text: o.label, votes: 0 })),
+            locked: row.status === "locked",
+          };
+        })
+        .filter((p) => p.question && p.question.trim().length > 5 && p.options.length >= 2 && !p.locked);
+      if (polls.length > 0) return polls;
+    }
+  } catch {
+    // fall through to seeds
+  }
+  return INITIAL_POLLS;
+}
+
 export function usePolls(isLoggedIn: boolean) {
   const queryClient = useQueryClient();
   const [freeVotesUsed, setFreeVotesUsed] = useState(0);
@@ -30,10 +67,7 @@ export function usePolls(isLoggedIn: boolean) {
     queryKey: ["polls", "randomized"],
     enabled: true,
     retry: false,
-    queryFn: async (): Promise<Poll[]> => {
-      const response = await apiRequest<{ polls: Poll[] }>("/api/polls/random?limit=10");
-      return response.polls;
-    },
+    queryFn: fetchPollsWithFallback,
   });
 
   const voteMutation = useMutation({
@@ -96,11 +130,7 @@ export function usePolls(isLoggedIn: boolean) {
     setFreeVotesUsed((previous) => previous + 1);
   }, [dailyAnsweredPollIds, dailyPollDate, guestVotedPolls, isLoggedIn, sessionVotedPolls, voteMutation]);
 
-  const polls = useMemo(() => {
-    const fetched = pollsQuery.data;
-    if (fetched && fetched.length > 0) return fetched;
-    return INITIAL_POLLS;
-  }, [pollsQuery.data]);
+  const polls = useMemo(() => pollsQuery.data ?? INITIAL_POLLS, [pollsQuery.data]);
   const votedPolls = isLoggedIn ? sessionVotedPolls : guestVotedPolls;
 
   return useMemo(() => ({

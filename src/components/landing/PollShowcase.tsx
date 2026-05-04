@@ -1,46 +1,45 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight, X, Send } from "lucide-react";
+import {
+  motion,
+  useMotionValue,
+  useTransform,
+  animate,
+  AnimatePresence,
+} from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/api/client";
+import { POLL_QUESTION_SEEDS } from "@/features/polls/pollQuestions";
+import type { Poll } from "@/store/types";
 
 interface PollData {
+  id?: string;
   question: string;
   yesPercent: number;
   noPercent: number;
-  comments: string[];
 }
 
-const POLLS: PollData[] = [
-  {
-    question: "Have you ever cheated on someone?",
-    yesPercent: 40,
-    noPercent: 60,
-    comments: [
-      "Once, years ago. Still regret it.",
-      "Never. Couldn't live with myself.",
-      "Emotional cheating counts too and more people do it than admit.",
-    ],
-  },
-  {
-    question: "Do you think social media does more harm than good?",
-    yesPercent: 67,
-    noPercent: 33,
-    comments: [
-      "It's a tool. The harm is in how we use it.",
-      "Absolutely — anxiety and comparison culture are real.",
-      "Depends on the platform honestly.",
-    ],
-  },
-  {
-    question: "Would you sacrifice comfort for personal growth?",
-    yesPercent: 82,
-    noPercent: 18,
-    comments: [
-      "Growth lives outside the comfort zone. Always.",
-      "Easier said than done when bills are due.",
-      "Done it twice. Worth it both times.",
-    ],
-  },
-];
+const FALLBACK_POLLS: PollData[] = POLL_QUESTION_SEEDS.map((s) => ({
+  question: s.question,
+  yesPercent: Math.round((s.yesVotes / (s.yesVotes + s.noVotes)) * 100),
+  noPercent: Math.round((s.noVotes / (s.yesVotes + s.noVotes)) * 100),
+}));
+
+function apiPollsToPollData(polls: Poll[]): PollData[] {
+  return polls.slice(0, 3).map((p) => {
+    const yes = p.options.find((o) => o.text.toLowerCase() === "yes");
+    const no = p.options.find((o) => o.text.toLowerCase() === "no");
+    const total = (yes?.votes ?? 0) + (no?.votes ?? 0);
+    const yesPercent = total > 0 ? Math.round(((yes?.votes ?? 0) / total) * 100) : 50;
+    return {
+      id: p.id,
+      question: p.question,
+      yesPercent,
+      noPercent: 100 - yesPercent,
+    };
+  });
+}
 
 function GoldIcosahedron({ className = "" }: { className?: string }) {
   return (
@@ -110,6 +109,9 @@ const BUTTON_CLIP =
 const COMMENT_CLIP =
   "polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px)";
 
+const SWIPE_THRESHOLD = 80;
+const VELOCITY_THRESHOLD = 400;
+
 export function PollShowcase() {
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, "yes" | "no">>({});
@@ -117,10 +119,82 @@ export function PollShowcase() {
   const [mounted, setMounted] = useState(false);
   const [commentInputs, setCommentInputs] = useState<Record<number, string>>({});
   const [extraComments, setExtraComments] = useState<Record<number, string[]>>({});
+  const isDragging = useRef(false);
+  const x = useMotionValue(0);
+  const rotate = useTransform(x, [-200, 0, 200], [-14, 0, 14]);
+  const yesOpacity = useTransform(x, [20, 90], [0, 1]);
+  const noOpacity = useTransform(x, [-90, -20], [1, 0]);
+  const yesBg = useTransform(
+    x,
+    [0, 120],
+    ["rgba(16,185,129,0)", "rgba(16,185,129,0.18)"]
+  );
+  const noBg = useTransform(
+    x,
+    [-120, 0],
+    ["rgba(239,68,68,0.18)", "rgba(239,68,68,0)"]
+  );
+
+  const pollsQuery = useQuery({
+    queryKey: ["polls", "showcase"],
+    retry: false,
+    queryFn: async (): Promise<Poll[]> => {
+      const res = await apiRequest<{ polls: Poll[] }>("/api/polls/random?limit=3");
+      return res.polls;
+    },
+  });
+
+  const POLLS: PollData[] =
+    pollsQuery.data && pollsQuery.data.length > 0
+      ? apiPollsToPollData(pollsQuery.data)
+      : FALLBACK_POLLS;
+
+  const poll = POLLS[index] as PollData | undefined;
+
+  const commentsQuery = useQuery({
+    queryKey: ["poll-comments", poll?.id],
+    enabled: !!poll?.id,
+    retry: false,
+    queryFn: async () => {
+      const res = await apiRequest<{ comments: string[] }>(`/api/polls/${poll!.id}/comments`);
+      return res.comments;
+    },
+  });
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Reset card position whenever the poll changes
+  useEffect(() => {
+    x.set(0);
+  }, [index, x]);
+
+  const handleAnswer = useCallback(
+    (choice: "yes" | "no") => {
+      setAnswers((prev) => ({ ...prev, [index]: choice }));
+    },
+    [index]
+  );
+
+  const handleDragEnd = useCallback(
+    (_: unknown, info: { offset: { x: number }; velocity: { x: number } }) => {
+      const { offset, velocity } = info;
+      if (offset.x > SWIPE_THRESHOLD || velocity.x > VELOCITY_THRESHOLD) {
+        animate(x, 600, { type: "spring", stiffness: 180, damping: 22 }).then(
+          () => { handleAnswer("yes"); x.set(0); }
+        );
+      } else if (offset.x < -SWIPE_THRESHOLD || velocity.x < -VELOCITY_THRESHOLD) {
+        animate(x, -600, { type: "spring", stiffness: 180, damping: 22 }).then(
+          () => { handleAnswer("no"); x.set(0); }
+        );
+      } else {
+        animate(x, 0, { type: "spring", stiffness: 400, damping: 28 });
+      }
+      isDragging.current = false;
+    },
+    [handleAnswer, x]
+  );
 
   if (!mounted || !open) return null;
 
@@ -128,13 +202,10 @@ export function PollShowcase() {
   const canPrev = index > 0;
   const canNext = index < total - 1;
   const selected = answers[index];
-  const poll = POLLS[index];
+  const currentPoll = POLLS[index];
   const showComments = !!selected;
-  const allComments = [...poll.comments, ...(extraComments[index] ?? [])];
-
-  const handleAnswer = (choice: "yes" | "no") => {
-    setAnswers((prev) => ({ ...prev, [index]: choice }));
-  };
+  const backendComments = commentsQuery.data ?? [];
+  const allComments = [...backendComments, ...(extraComments[index] ?? [])];
 
   const handleSubmitComment = () => {
     const text = (commentInputs[index] ?? "").trim();
@@ -144,6 +215,12 @@ export function PollShowcase() {
       [index]: [...(prev[index] ?? []), text],
     }));
     setCommentInputs((prev) => ({ ...prev, [index]: "" }));
+    if (currentPoll?.id) {
+      apiRequest(`/api/polls/${currentPoll.id}/comments`, {
+        method: "POST",
+        body: JSON.stringify({ text }),
+      }).catch(() => {/* optimistic — already added locally */});
+    }
   };
 
   const overlay = (
@@ -200,6 +277,21 @@ export function PollShowcase() {
           </button>
 
           {/* Card */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.94 }}
+              transition={{ duration: 0.18 }}
+              style={{ x, rotate, position: "relative", width: "100%" }}
+              drag={selected ? false : "x"}
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.18}
+              onDragStart={() => { isDragging.current = true; }}
+              onDragEnd={handleDragEnd}
+              className="w-full max-w-[330px] mx-auto"
+            >
           <div
             className="relative w-full max-w-[330px] p-[1.5px]"
             style={{
@@ -210,6 +302,52 @@ export function PollShowcase() {
                 "0 0 60px rgba(241,196,45,0.18), 0 0 24px rgba(241,196,45,0.22)",
             }}
           >
+            {/* Swipe bg tints */}
+            <motion.div
+              className="absolute inset-0 rounded-[1px] pointer-events-none z-10"
+              style={{ background: yesBg, clipPath: CARD_CLIP }}
+            />
+            <motion.div
+              className="absolute inset-0 rounded-[1px] pointer-events-none z-10"
+              style={{ background: noBg, clipPath: CARD_CLIP }}
+            />
+
+            {/* YES indicator */}
+            <motion.div
+              className="absolute top-5 right-5 z-20 pointer-events-none"
+              style={{ opacity: yesOpacity }}
+            >
+              <div
+                className="rounded-md px-2.5 py-1 font-bold text-xs tracking-widest uppercase"
+                style={{
+                  border: "2px solid rgba(16,185,129,0.8)",
+                  color: "rgba(16,185,129,0.95)",
+                  background: "rgba(16,185,129,0.1)",
+                  textShadow: "0 0 10px rgba(16,185,129,0.55)",
+                }}
+              >
+                YES ✓
+              </div>
+            </motion.div>
+
+            {/* NO indicator */}
+            <motion.div
+              className="absolute top-5 left-5 z-20 pointer-events-none"
+              style={{ opacity: noOpacity }}
+            >
+              <div
+                className="rounded-md px-2.5 py-1 font-bold text-xs tracking-widest uppercase"
+                style={{
+                  border: "2px solid rgba(239,68,68,0.8)",
+                  color: "rgba(239,68,68,0.95)",
+                  background: "rgba(239,68,68,0.1)",
+                  textShadow: "0 0 10px rgba(239,68,68,0.55)",
+                }}
+              >
+                NO ✗
+              </div>
+            </motion.div>
+
             <div
               className="relative px-7 pt-7 pb-7"
               style={{
@@ -240,53 +378,20 @@ export function PollShowcase() {
                       'var(--font-display, "Orbitron", "Inter", system-ui, sans-serif)',
                   }}
                 >
-                  {poll.question}
+                  {currentPoll?.question}
                 </p>
 
                 <div className="mt-6 h-px w-16 bg-white/20" />
 
                 <p className="mt-4 text-[11px] tracking-[0.05em] text-white/45">
-                  {selected ? `You answered: ${selected.toUpperCase()}` : "Cast your vote"}
+                  {selected ? `You answered: ${selected.toUpperCase()}` : "Swipe right for Yes · left for No"}
                 </p>
 
                 <div className="mt-5 grid w-full grid-cols-2 gap-3">
-                  {/* Yes button */}
-                  <button
-                    type="button"
-                    onClick={() => handleAnswer("yes")}
-                    aria-label="Vote yes"
-                    className="group relative h-12 transition active:scale-95"
-                    style={{ clipPath: BUTTON_CLIP }}
-                  >
-                    <span
-                      className="absolute inset-0"
-                      style={{
-                        clipPath: BUTTON_CLIP,
-                        background: "rgba(241,196,45,0.85)",
-                      }}
-                    />
-                    <span
-                      className="absolute inset-[1.5px]"
-                      style={{
-                        clipPath: BUTTON_CLIP,
-                        background:
-                          selected === "yes"
-                            ? "linear-gradient(155deg, rgba(241,196,45,0.45), rgba(40,28,4,0.95))"
-                            : "linear-gradient(155deg, rgba(241,196,45,0.18), rgba(20,14,2,0.95))",
-                      }}
-                    />
-                    <span className="relative z-10 flex h-full w-full items-center justify-center gap-1.5 text-base font-semibold tracking-wide text-[#F1C42D]">
-                      Yes
-                      {selected && (
-                        <span className="text-sm font-bold opacity-90">{poll.yesPercent}%</span>
-                      )}
-                    </span>
-                  </button>
-
                   {/* No button */}
                   <button
                     type="button"
-                    onClick={() => handleAnswer("no")}
+                    onClick={() => { if (isDragging.current) { isDragging.current = false; return; } handleAnswer("no"); }}
                     aria-label="Vote no"
                     className="group relative h-12 transition active:scale-95"
                     style={{ clipPath: BUTTON_CLIP }}
@@ -311,7 +416,40 @@ export function PollShowcase() {
                     <span className="relative z-10 flex h-full w-full items-center justify-center gap-1.5 text-base font-semibold tracking-wide text-[#EBEBEB]">
                       No
                       {selected && (
-                        <span className="text-sm font-bold opacity-90">{poll.noPercent}%</span>
+                        <span className="text-sm font-bold opacity-90">{currentPoll?.noPercent}%</span>
+                      )}
+                    </span>
+                  </button>
+
+                  {/* Yes button */}
+                  <button
+                    type="button"
+                    onClick={() => { if (isDragging.current) { isDragging.current = false; return; } handleAnswer("yes"); }}
+                    aria-label="Vote yes"
+                    className="group relative h-12 transition active:scale-95"
+                    style={{ clipPath: BUTTON_CLIP }}
+                  >
+                    <span
+                      className="absolute inset-0"
+                      style={{
+                        clipPath: BUTTON_CLIP,
+                        background: "rgba(241,196,45,0.85)",
+                      }}
+                    />
+                    <span
+                      className="absolute inset-[1.5px]"
+                      style={{
+                        clipPath: BUTTON_CLIP,
+                        background:
+                          selected === "yes"
+                            ? "linear-gradient(155deg, rgba(241,196,45,0.45), rgba(40,28,4,0.95))"
+                            : "linear-gradient(155deg, rgba(241,196,45,0.18), rgba(20,14,2,0.95))",
+                      }}
+                    />
+                    <span className="relative z-10 flex h-full w-full items-center justify-center gap-1.5 text-base font-semibold tracking-wide text-[#F1C42D]">
+                      Yes
+                      {selected && (
+                        <span className="text-sm font-bold opacity-90">{currentPoll?.yesPercent}%</span>
                       )}
                     </span>
                   </button>
@@ -340,6 +478,8 @@ export function PollShowcase() {
               </div>
             </div>
           </div>
+            </motion.div>
+          </AnimatePresence>
 
           <button
             type="button"

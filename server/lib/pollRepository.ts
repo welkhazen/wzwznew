@@ -81,7 +81,12 @@ export async function fetchActivePolls(limit: number): Promise<Poll[] | null> {
     .order("created_at", { ascending: false })
     .limit(Math.max(limit * 3, 30));
 
-  if (pollError || !pollRows || pollRows.length === 0) {
+  if (pollError) {
+    console.error("[pollRepository] Failed to fetch polls", pollError);
+    return null;
+  }
+
+  if (!pollRows || pollRows.length === 0) {
     return null;
   }
 
@@ -93,6 +98,10 @@ export async function fetchActivePolls(limit: number): Promise<Poll[] | null> {
     .from("poll_options")
     .select("id, poll_id, label, position")
     .in("poll_id", pollIds);
+
+  if (optionError) {
+    console.error("[pollRepository] Failed to fetch poll options", optionError);
+  }
 
   if (!optionError && optionRows) {
     optionRowsByPollId = (optionRows as PollOptionRow[]).reduce((acc, row) => {
@@ -131,4 +140,30 @@ export async function fetchActivePolls(limit: number): Promise<Poll[] | null> {
   }
 
   return randomize(normalized).slice(0, limit);
+}
+
+export async function fetchPollComments(pollId: string): Promise<string[]> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from("poll_comments")
+    .select("body")
+    .eq("poll_id", pollId)
+    .order("created_at", { ascending: false })
+    .limit(50);
+
+  if (error || !data) return [];
+  return data.map((row) => (row as { body: string }).body);
+}
+
+export async function savePollComment(pollId: string, text: string): Promise<boolean> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return false;
+
+  const { error } = await supabase
+    .from("poll_comments")
+    .insert({ poll_id: pollId, body: text });
+
+  return !error;
 }

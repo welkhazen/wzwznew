@@ -3,29 +3,29 @@ import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 
 const howItWorksSteps = [
   "01 Sign up anonymously and enter your raW app",
-  "02 Build your identity - choose your avatar and change it if earned",
-  "03 Answer deep questions anonymously and see vote results instantly",
-  "04 Enter your personalized ecosystem",
+  "02 Build your identity — choose your avatar and change it if earned",
+  "03 Answer honest questions — AI reads your patterns in real time",
+  "04 Your character takes shape from every answer you give",
   "05 Find your People. Find your Place. Find your Purpose.",
 ];
 
 const howItWorksOutputs = {
   0: ["Create a username and step into raW without using your real-world identity."],
   1: ["Build your identity through the avatar you choose and the upgrades you earn."],
-  2: ["Start with a few honest questions - if you can...."],
+  2: [
+    "Every poll you answer feeds the AI with a data point about who you are.",
+    "Honest answers only — the algorithm knows the difference.",
+  ],
   3: [
-    "Join communities available for now.",
-    "Answer questions consistently and honestly so you can unlock:",
-    "The Cumulative Mind - The Brain",
+    "The AI maps your answers into a personality profile unique to you.",
+    "It finds the people who think like you — same patterns, same mind.",
+    "Then it tells you exactly which community you belong in.",
   ],
   4: [
-    "And, for now, as we build your real application...",
-    "enjoy your 24/7 online world. always living, always growing, always accepting.",
-    "join the communities and speak freely.",
+    "Join your recommended community and speak freely.",
     "Express yourself, say what you think, be heard,",
-    "and feel like you belong.",
-    "you will figure out the rest.",
-    "Join now. surprises are waiting for you...",
+    "and feel like you belong — because you actually do.",
+    "Join now. Your people are already waiting.",
   ],
 } satisfies Record<number, string[]>;
 

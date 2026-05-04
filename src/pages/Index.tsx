@@ -175,12 +175,8 @@ const Index = () => {
       <LandingShellLazy
         user={user}
         isLoggedIn={isLoggedIn}
-        polls={polls}
-        votedPolls={votedPolls}
-        freeVotesUsed={freeVotesUsed}
         showSignup={showSignup}
         setShowSignup={setShowSignup}
-        vote={vote}
         requestSignupOtp={requestSignupOtp}
         verifySignupOtp={verifySignupOtp}
         login={login}

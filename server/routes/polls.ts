@@ -3,12 +3,16 @@ import { Router } from "express";
 import { z } from "zod";
 import { audit } from "../lib/audit";
 import { applyVote, buildBootstrap, canVote, recordPollVote } from "../lib/store";
-import { fetchActivePolls } from "../lib/pollRepository";
+import { fetchActivePolls, fetchPollComments, savePollComment } from "../lib/pollRepository";
 import { getUserRepository } from "../lib/userRepository";
 import type { AuthSessionData } from "../types";
 
 const voteBodySchema = z.object({
   optionId: z.string().min(1).max(64),
+});
+
+const commentBodySchema = z.object({
+  text: z.string().min(1).max(500),
 });
 
 const randomPollsQuerySchema = z.object({
@@ -80,7 +84,24 @@ async function handleVote(req: Request, res: Response) {
   const voted = applyVote(user, sessionData, pollId, parsed.data.optionId);
   if (!voted) {
     // Poll could come from database-backed feed instead of in-memory seed store.
+    const recheck = canVote(user, sessionData, pollId);
+    if (!recheck.ok) {
+      if (recheck.reason === "auth_required") {
+        return res.status(403).json({ error: "Sign up or log in to continue voting." });
+      }
+
+      return res.status(409).json({ error: "You already voted on this poll." });
+    }
+
     recordPollVote(user, sessionData, pollId);
+
+    audit("poll.vote", {
+      pollId,
+      optionId: parsed.data.optionId,
+      userId: user?.id ?? null,
+      ip: req.ip,
+    });
+
     return res.status(200).json({ ok: true });
   }
 
@@ -98,3 +119,22 @@ pollsRouter.get("/polls/random", handleRandomPolls);
 pollsRouter.get("/v2/polls/random", handleRandomPolls);
 pollsRouter.post("/polls/:pollId/vote", handleVote);
 pollsRouter.post("/v2/polls/:pollId/vote", handleVote);
+
+pollsRouter.get("/polls/:pollId/comments", async (req, res) => {
+  const { pollId } = req.params;
+  const comments = await fetchPollComments(pollId);
+  return res.status(200).json({ comments });
+});
+
+pollsRouter.post("/polls/:pollId/comments", async (req, res) => {
+  const parsed = commentBodySchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: "Comment must be 1–500 characters." });
+  }
+  const { pollId } = req.params;
+  const saved = await savePollComment(pollId, parsed.data.text);
+  if (!saved) {
+    return res.status(500).json({ error: "Failed to save comment." });
+  }
+  return res.status(201).json({ ok: true });
+});

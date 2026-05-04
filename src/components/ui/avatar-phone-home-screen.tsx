@@ -9,17 +9,9 @@ export function AvatarPhoneHomeScreen({ avatarIndex }: AvatarPhoneHomeScreenProp
   const theme = getAvatar(avatarIndex);
 
   return (
-    <div className="relative h-full overflow-hidden bg-gradient-to-b from-[#f2f2f2] via-[#e6e6e8] to-[#d7d7da] px-4 pt-3 pb-4">
-      <div className="mb-2 flex items-center justify-between px-1">
-        <span className="text-[10px] font-semibold text-[#1a1a1a]">Avatar Preview</span>
-        <span className="rounded-full bg-white/70 px-2 py-0.5 text-[9px] font-medium text-[#333]">Choice only</span>
-      </div>
-
-      <div className="mb-3 rounded-2xl border border-black/10 bg-white/50 p-3 text-center backdrop-blur-sm">
-        <p className="font-display text-[11px] tracking-[0.12em] text-[#111]">{theme.name}</p>
-      </div>
-
-      <div className="grid grid-cols-4 grid-rows-3 gap-x-3 gap-y-3">
+    <div className="relative flex h-full flex-col overflow-hidden bg-gradient-to-b from-[#f2f2f2] via-[#e6e6e8] to-[#d7d7da] px-4 pt-5 pb-4">
+      <div className="flex-1">
+      <div className="grid grid-cols-4 gap-x-3 gap-y-5">
         <AppIcon kind="facetime" label="FaceTime" />
         <AppIcon kind="calendar" label="Calendar" />
         <AppIcon kind="photos" label="Photos" />
@@ -36,7 +28,7 @@ export function AvatarPhoneHomeScreen({ avatarIndex }: AvatarPhoneHomeScreenProp
         <div className="col-span-2 row-span-2 flex flex-col items-center gap-2">
           <div
             key={avatarIndex}
-            className="relative flex h-full min-h-[120px] w-full animate-[iconPop_420ms_ease-out] items-center justify-center overflow-hidden rounded-[20px] shadow-lg"
+            className="relative flex h-full min-h-[150px] w-full animate-[iconPop_420ms_ease-out] items-center justify-center overflow-hidden rounded-[20px] shadow-lg"
             style={{
               background: `linear-gradient(135deg, ${theme.bg} 0%, #050505 70%)`,
               boxShadow: theme.glow !== "none" ? `0 0 22px ${theme.glow}` : "0 6px 16px rgba(0,0,0,0.35)",
@@ -52,16 +44,23 @@ export function AvatarPhoneHomeScreen({ avatarIndex }: AvatarPhoneHomeScreenProp
 
         <AppIcon kind="podcasts" label="Podcasts" />
         <AppIcon kind="tv" label="TV" />
+
+        <AppIcon kind="reminders" label="Health" />
+        <AppIcon kind="stocks" label="Wallet" />
+        <AppIcon kind="maps" label="Find My" />
+        <AppIcon kind="notes" label="Files" />
       </div>
 
-      <div className="mt-3 flex items-center justify-center gap-1.5">
+      </div>
+
+      <div className="py-3 flex items-center justify-center gap-1.5">
         <div className="h-[3px] w-[3px] rounded-full bg-[#1a1a1a]/60" />
         <div className="h-[3px] w-[3px] rounded-full bg-[#1a1a1a]/25" />
         <div className="h-[3px] w-[3px] rounded-full bg-[#1a1a1a]/25" />
         <div className="h-[3px] w-[3px] rounded-full bg-[#1a1a1a]/25" />
       </div>
 
-      <div className="mt-2 flex items-center justify-between rounded-[22px] bg-white/40 px-3 py-2 backdrop-blur-sm">
+      <div className="flex items-center justify-between rounded-[22px] bg-white/40 px-3 py-2 backdrop-blur-sm">
         <DockIcon kind="phone" />
         <DockIcon kind="siri" />
         <DockIcon kind="messages" />

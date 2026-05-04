@@ -3,7 +3,6 @@ import { Navbar } from "@/components/landing/Navbar";
 import { ProblemSection } from "@/components/landing/ProblemSection";
 import { GlobeHero } from "@/components/landing/GlobeHero";
 import { HowItWorks } from "@/components/landing/HowItWorks";
-import { PollSection } from "@/components/landing/PollSection";
 import { PollShowcase } from "@/components/landing/PollShowcase";
 import { AvatarShowcaseSection } from "@/components/landing/AvatarShowcaseSection";
 import { Communities } from "@/components/landing/Communities";
@@ -16,7 +15,7 @@ import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import PerforatedBackground from "@/components/ui/perforated-background";
 import MatrixBackground from "@/components/ui/matrix-background";
-import type { Poll, AuthResult, User } from "@/store/types";
+import type { AuthResult, User } from "@/store/types";
 
 const SignupModalLazy = lazy(() =>
   import("@/components/landing/SignupModal").then((module) => ({ default: module.SignupModal }))
@@ -25,12 +24,8 @@ const SignupModalLazy = lazy(() =>
 export interface LandingShellProps {
   user: User | null;
   isLoggedIn: boolean;
-  polls: Poll[];
-  votedPolls: Record<string, string>;
-  freeVotesUsed: number;
   showSignup: boolean;
   setShowSignup: (open: boolean) => void;
-  vote: (pollId: string, optionId: string) => void;
   requestSignupOtp: (email: string) => Promise<AuthResult>;
   verifySignupOtp: (email: string, otp: string, username: string) => Promise<AuthResult>;
   login: (email: string, otp: string) => Promise<AuthResult>;
@@ -39,12 +34,8 @@ export interface LandingShellProps {
 export default function LandingShell({
   user,
   isLoggedIn,
-  polls,
-  votedPolls,
-  freeVotesUsed,
   showSignup,
   setShowSignup,
-  vote,
   requestSignupOtp,
   verifySignupOtp,
   login,
@@ -65,14 +56,6 @@ export default function LandingShell({
         <ProblemSection />
         <HowItWorks />
         <AvatarShowcaseSection />
-        <PollSection
-          polls={polls}
-          votedPolls={votedPolls}
-          isLoggedIn={isLoggedIn}
-          freeVotesUsed={freeVotesUsed}
-          onVote={vote}
-          onSignupClick={() => setShowSignup(true)}
-        />
         <Communities onSignupClick={() => setShowSignup(true)} />
         <PersonalityInsightsSection />
         <EarnedWarUpgradesSection />

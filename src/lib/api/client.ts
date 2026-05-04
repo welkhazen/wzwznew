@@ -21,17 +21,12 @@ async function getSeedPollsResponse(): Promise<unknown> {
 }
 
 function shouldUseSeedPolls(polls: unknown[]): boolean {
-  return (
-    polls.length < 3 ||
-    polls.some((poll) => {
-      if (!poll || typeof poll !== "object" || !("question" in poll)) {
-        return true;
-      }
-
-      const question = String((poll as { question: unknown }).question).trim().toLowerCase();
-      return question === "supabase";
-    })
-  );
+  if (polls.length === 0) return true;
+  return polls.every((poll) => {
+    if (!poll || typeof poll !== "object" || !("question" in poll)) return true;
+    const question = String((poll as { question: unknown }).question).trim().toLowerCase();
+    return question === "supabase" || question.length <= 5;
+  });
 }
 
 async function getPollsMockResponse(): Promise<unknown> {
@@ -88,7 +83,32 @@ async function getPollsMockResponse(): Promise<unknown> {
   }
 }
 
-async function getMockResponse(input: string): Promise<unknown> {
+async function getCommentsMockResponse(input: string, init?: RequestInit): Promise<unknown> {
+  const match = input.match(/\/polls\/([^/?]+)\/comments/);
+  const pollId = match?.[1];
+  if (!pollId) return { comments: [], ok: true };
+
+  try {
+    const { supabase } = await import('@/backend/supabase/client');
+    if (init?.method === "POST" && init.body) {
+      const { text } = JSON.parse(init.body as string) as { text: string };
+      await supabase.from('poll_comments').insert({ poll_id: pollId, body: text });
+      return { ok: true };
+    }
+    // GET
+    const { data } = await supabase
+      .from('poll_comments')
+      .select('body')
+      .eq('poll_id', pollId)
+      .order('created_at', { ascending: false })
+      .limit(50);
+    return { comments: (data ?? []).map((r) => (r as { body: string }).body) };
+  } catch {
+    return { comments: [], ok: true };
+  }
+}
+
+async function getMockResponse(input: string, init?: RequestInit): Promise<unknown> {
   if (input.includes("/api/users/me")) {
     return {
       user: {
@@ -105,6 +125,9 @@ async function getMockResponse(input: string): Promise<unknown> {
   }
   if ((input.includes("/api/polls") || input.includes("/api/v2/polls")) && input.includes("/vote")) {
     return { ok: true };
+  }
+  if ((input.includes("/api/polls") || input.includes("/api/v2/polls")) && input.includes("/comments")) {
+    return getCommentsMockResponse(input, init);
   }
   if (input.includes("/api/polls") || input.includes("/api/v2/polls")) {
     return getPollsMockResponse();
@@ -132,7 +155,7 @@ export async function apiRequest<T>(input: string, init?: RequestInit): Promise<
     });
   } catch (error) {
     if (typeof window !== "undefined") {
-      return getMockResponse(input) as Promise<T>;
+      return getMockResponse(input, init) as Promise<T>;
     }
     throw error;
   }
@@ -145,6 +168,10 @@ export async function apiRequest<T>(input: string, init?: RequestInit): Promise<
   }
 
   if (!response.ok) {
+    // Gateway errors mean the backend is not running — use mock data in dev
+    if ([502, 503, 504].includes(response.status) && typeof window !== "undefined") {
+      return getMockResponse(input, init) as Promise<T>;
+    }
     const message =
       payload && typeof payload === "object" && "error" in payload && typeof (payload as { error: unknown }).error === "string"
         ? (payload as { error: string }).error

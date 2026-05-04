@@ -7,6 +7,7 @@ export interface WheelPrize {
   shortLabel: string;
   color: string;
   textColor: string;
+  imageSrc?: string;
 }
 
 interface WheelOfFortuneProps {
@@ -41,7 +42,7 @@ function getTextPosition(index: number, total: number, radius: number): { x: num
   const angle = 360 / total;
   const center = index * angle + angle / 2 - 90;
   const rad = (center * Math.PI) / 180;
-  const textRadius = radius * 0.62;
+  const textRadius = radius * 0.68;
 
   return {
     x: radius + textRadius * Math.cos(rad),
@@ -191,32 +192,35 @@ export function WheelOfFortune({ prizes, onSpinEnd, disabled = false, prizeWeigh
         >
           {prizes.map((prize, index) => {
             const textPosition = getTextPosition(index, total, radius);
-            const labelLines = getLabelLines(prize.shortLabel);
-            const fontSize = prize.shortLabel.length > 7 ? 12 : 14;
+            const imgSize = 50;
             return (
               <g key={prize.id}>
                 <path d={getSegmentPath(index, total, radius)} fill={prize.color} stroke={isLight ? "#9ca9bb" : "#1f1f1f"} strokeWidth="1" />
-                <text
-                  x={textPosition.x}
-                  y={textPosition.y}
-                  fill={prize.textColor}
-                  fontSize={fontSize}
-                  fontWeight="700"
-                  textAnchor="middle"
-                  dominantBaseline="middle"
-                  letterSpacing="0.6"
-                  transform={`rotate(${textPosition.rotation} ${textPosition.x} ${textPosition.y})`}
-                >
-                  {labelLines.map((line, lineIndex) => (
-                    <tspan
-                      key={`${prize.id}-${line}`}
-                      x={textPosition.x}
-                      dy={lineIndex === 0 ? (labelLines.length === 1 ? 0 : -6) : 12}
-                    >
-                      {line}
-                    </tspan>
-                  ))}
-                </text>
+                {prize.imageSrc ? (
+                  <image
+                    href={prize.imageSrc}
+                    x={textPosition.x - imgSize / 2}
+                    y={textPosition.y - imgSize / 2}
+                    width={imgSize}
+                    height={imgSize}
+                    transform={`rotate(${textPosition.rotation} ${textPosition.x} ${textPosition.y})`}
+                    style={{ borderRadius: "50%" }}
+                  />
+                ) : (
+                  <text
+                    x={textPosition.x}
+                    y={textPosition.y}
+                    fill={prize.textColor}
+                    fontSize={prize.shortLabel.length > 7 ? 12 : 14}
+                    fontWeight="700"
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    letterSpacing="0.6"
+                    transform={`rotate(${textPosition.rotation} ${textPosition.x} ${textPosition.y})`}
+                  >
+                    {prize.shortLabel}
+                  </text>
+                )}
               </g>
             );
           })}
