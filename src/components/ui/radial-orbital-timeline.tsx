@@ -25,9 +25,18 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
   const [autoRotate, setAutoRotate] = useState<boolean>(true);
   const [pulseEffect, setPulseEffect] = useState<Record<number, boolean>>({});
   const [activeNodeId, setActiveNodeId] = useState<number | null>(null);
+  const [isCompact, setIsCompact] = useState<boolean>(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const orbitRef = useRef<HTMLDivElement>(null);
   const nodeRefs = useRef<Record<number, HTMLDivElement | null>>({});
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 640px)");
+    const syncCompact = () => setIsCompact(mediaQuery.matches);
+    syncCompact();
+    mediaQuery.addEventListener("change", syncCompact);
+    return () => mediaQuery.removeEventListener("change", syncCompact);
+  }, []);
 
   const getRelatedItems = (itemId: number): number[] => {
     const currentItem = timelineData.find((item) => item.id === itemId);
@@ -89,7 +98,7 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
 
   const calculateNodePosition = (index: number, total: number) => {
     const angle = ((index / total) * 360 + rotationAngle) % 360;
-    const radius = 190;
+    const radius = isCompact ? 132 : 190;
     const radian = (angle * Math.PI) / 180;
     const x = radius * Math.cos(radian);
     const y = radius * Math.sin(radian);
@@ -103,17 +112,23 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
     return getRelatedItems(activeNodeId).includes(itemId);
   };
 
+  const glowSize = isCompact ? 340 : 420;
+  const outerRingSize = isCompact ? 300 : 380;
+  const innerRingSize = isCompact ? 220 : 280;
+
   return (
     <div
-      className="relative h-[560px] w-full overflow-hidden"
+      className={`relative w-full overflow-hidden ${isCompact ? "h-[470px]" : "h-[560px]"}`}
       ref={containerRef}
       onClick={handleContainerClick}
     >
       {/* Radial backdrop glow */}
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
         <div
-          className="h-[420px] w-[420px] rounded-full opacity-25"
+          className="rounded-full opacity-25"
           style={{
+            width: glowSize,
+            height: glowSize,
             background:
               "radial-gradient(circle at center, rgba(241,196,45,0.18) 0%, rgba(241,196,45,0.06) 40%, transparent 70%)",
           }}
@@ -128,8 +143,10 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
         >
           {/* Outer orbit ring */}
           <div
-            className="absolute h-[380px] w-[380px] rounded-full"
+            className="absolute rounded-full"
             style={{
+              width: outerRingSize,
+              height: outerRingSize,
               border: "1px solid rgba(241,196,45,0.2)",
               boxShadow: "0 0 30px rgba(241,196,45,0.06), inset 0 0 30px rgba(241,196,45,0.03)",
             }}
@@ -137,8 +154,10 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
 
           {/* Dashed inner accent ring */}
           <div
-            className="absolute h-[280px] w-[280px] rounded-full"
+            className="absolute rounded-full"
             style={{
+              width: innerRingSize,
+              height: innerRingSize,
               border: "1px dashed rgba(241,196,45,0.1)",
             }}
           />
@@ -218,8 +237,11 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
 
                 {/* Label */}
                 <div
-                  className="absolute top-12 whitespace-nowrap font-display text-[0.62rem] uppercase tracking-[0.1em] transition-all duration-300"
+                  className="absolute left-1/2 top-12 -translate-x-1/2 text-center font-display text-[0.62rem] uppercase tracking-[0.1em] transition-all duration-300"
                   style={{
+                    maxWidth: isCompact ? 110 : 180,
+                    whiteSpace: isCompact ? "normal" : "nowrap",
+                    lineHeight: isCompact ? 1.15 : 1.2,
                     color: isExpanded ? "#F1C42D" : "rgba(241,196,45,0.75)",
                     textShadow: isExpanded
                       ? "0 0 10px rgba(241,196,45,0.6), 0 0 22px rgba(241,196,45,0.3)"

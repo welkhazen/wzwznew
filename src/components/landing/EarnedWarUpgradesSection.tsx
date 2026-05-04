@@ -5,9 +5,9 @@ function LevelSlot({ item }: { item: AvatarCatalogItem }) {
   const hasImage = !!item.imageSrc;
 
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div className="flex flex-col items-center gap-1.5 sm:gap-2">
       <div
-        className="relative flex h-16 w-16 items-center justify-center rounded-full sm:h-20 sm:w-20"
+        className="relative flex h-12 w-12 items-center justify-center rounded-full sm:h-20 sm:w-20"
         style={{
           background: hasImage ? "transparent" : item.bg,
           boxShadow: hasImage
@@ -25,14 +25,14 @@ function LevelSlot({ item }: { item: AvatarCatalogItem }) {
           <>
             {/* Placeholder badge circle */}
             <div
-              className="h-10 w-10 rounded-full sm:h-14 sm:w-14"
+              className="h-7 w-7 rounded-full sm:h-14 sm:w-14"
               style={{
                 background: `radial-gradient(circle at 35% 35%, ${item.figure}33, ${item.bg})`,
                 border: `2px solid ${item.ring}60`,
               }}
             />
             <span
-              className="absolute inset-0 flex items-center justify-center font-display text-[9px] font-bold tracking-widest sm:text-[10px]"
+              className="absolute inset-0 flex items-center justify-center font-display text-[8px] font-bold tracking-widest sm:text-[10px]"
               style={{ color: item.figure, opacity: 0.6 }}
             >
               ?
@@ -42,7 +42,7 @@ function LevelSlot({ item }: { item: AvatarCatalogItem }) {
       </div>
 
       <span
-        className="font-display text-[10px] font-bold tracking-[0.15em] sm:text-xs"
+        className="font-display text-[9px] font-bold tracking-[0.1em] sm:text-xs"
         style={{
           color: hasImage
             ? item.glow !== "none"
@@ -110,7 +110,7 @@ export function EarnedWarUpgradesSection() {
 
         <div className="mt-12 space-y-8">
           {/* Row 1: LVL 1–5 */}
-          <div className="flex items-end justify-center gap-6 sm:gap-10">
+          <div className="mx-auto flex max-w-[320px] items-end justify-center gap-3 sm:max-w-none sm:gap-10">
             {topRow.map((item) => (
               <LevelSlot key={item.id} item={item} />
             ))}
@@ -120,7 +120,7 @@ export function EarnedWarUpgradesSection() {
           <div className="mx-auto h-px w-48 bg-gradient-to-r from-transparent via-raw-gold/20 to-transparent" />
 
           {/* Row 2: LVL 6–10 */}
-          <div className="flex items-end justify-center gap-6 sm:gap-10">
+          <div className="mx-auto flex max-w-[320px] items-end justify-center gap-3 sm:max-w-none sm:gap-10">
             {bottomRow.map((item) => (
               <LevelSlot key={item.id} item={item} />
             ))}
