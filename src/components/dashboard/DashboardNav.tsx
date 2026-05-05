@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { track } from "@/lib/analytics";
 import { readCommunityChats } from "@/lib/communityChat";
+import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
 import {
   ArrowLeft,
   Bell,
@@ -36,9 +37,10 @@ interface DashboardNavProps {
   onLogout: () => void;
   communityTitle?: string;
   onBack?: () => void;
+  communities?: PersistedCommunityRecord[];
 }
 
-export function DashboardNav({ username, avatarLevel, showAdminLink = false, onProfileClick, onLogout, communityTitle, onBack }: DashboardNavProps) {
+export function DashboardNav({ username, avatarLevel, showAdminLink = false, onProfileClick, onLogout, communityTitle, onBack, communities: propCommunities }: DashboardNavProps) {
   const { mode, accent, accentPresets, setMode, setAccent } = useTheme();
   const [hoveredMode, setHoveredMode] = useState<ThemeMode | null>(null);
   const [hoveredAccent, setHoveredAccent] = useState<AccentPresetId | null>(null);
@@ -47,7 +49,7 @@ export function DashboardNav({ username, avatarLevel, showAdminLink = false, onP
   const notifRef = useRef<HTMLDivElement>(null);
 
   const notifications = useMemo(() => {
-    const communities = readCommunityChats();
+    const communities = propCommunities ?? readCommunityChats();
     const tag = `@${username}`.toLowerCase();
     const results: { type: "mention" | "like"; communityTitle: string; senderName: string; text: string; createdAt: string; likeCount?: number }[] = [];
     for (const community of communities) {
@@ -61,7 +63,7 @@ export function DashboardNav({ username, avatarLevel, showAdminLink = false, onP
       }
     }
     return results.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  }, [username]);
+  }, [username, propCommunities]);
 
   useEffect(() => {
     if (!notifOpen) return;

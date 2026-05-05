@@ -1,6 +1,7 @@
 import { FloatingDock } from "@/components/ui/floating-dock";
 import { useEffect, useMemo, useState } from "react";
 import { readCommunityChats } from "@/lib/communityChat";
+import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
 import { Home as HomeIcon, MessageCircle, Target, User as UserIcon, Wallet, LogOut, Shield, Trophy, Sparkles } from "lucide-react";
 import { matchPath, useLocation, useNavigate } from "react-router-dom";
 import { DashboardNav, type DashboardTab } from "@/components/dashboard/DashboardNav";
@@ -49,6 +50,7 @@ export default function Dashboard({
   const navigate = useNavigate();
   const location = useLocation();
   const [activeTab, setActiveTab] = useState<DashboardTab>("home");
+  const [dashboardCommunities, setDashboardCommunities] = useState<PersistedCommunityRecord[]>([]);
   const [isHome, setIsHome] = useState(true);
   const communityRouteMatch = matchPath("/dashboard/communities/:communityId", location.pathname);
   const activeCommunityId = communityRouteMatch?.params.communityId ?? null;
@@ -90,8 +92,9 @@ export default function Dashboard({
 
   const activeCommunityTitle = useMemo(() => {
     if (!activeCommunityId) return undefined;
-    return readCommunityChats().find((c) => c.id === activeCommunityId)?.title;
-  }, [activeCommunityId]);
+    return (dashboardCommunities.length > 0 ? dashboardCommunities : readCommunityChats())
+      .find((c) => c.id === activeCommunityId)?.title;
+  }, [activeCommunityId, dashboardCommunities]);
 
   const handleProfileClick = () => {
     setActiveTab("profile");
@@ -139,6 +142,7 @@ export default function Dashboard({
               activeCommunityId={activeCommunityId}
               onOpenCommunity={handleOpenCommunity}
               onBackToCommunities={handleBackToCommunities}
+              onCommunitiesChange={setDashboardCommunities}
             />
           </DashboardSectionShell>
         );
