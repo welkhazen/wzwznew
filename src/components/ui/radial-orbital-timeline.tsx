@@ -163,20 +163,18 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
           />
 
           {/* Center orb */}
-          <div className="absolute z-10 flex h-[72px] w-[72px] items-center justify-center rounded-full"
-            style={{
-              background: "radial-gradient(circle at 35% 35%, #6366f1, #3b82f6 50%, #0ea5e9 100%)",
-              boxShadow: "0 0 0 1px rgba(241,196,45,0.3), 0 0 40px rgba(99,102,241,0.5), 0 0 80px rgba(99,102,241,0.2)",
-            }}
-          >
+          <div className="absolute z-10 flex h-[120px] w-[120px] items-center justify-center">
             {/* Ping rings */}
-            <div className="absolute h-[88px] w-[88px] animate-ping rounded-full"
+            <div className="absolute h-[140px] w-[140px] animate-ping rounded-full"
               style={{ border: "1px solid rgba(241,196,45,0.2)", animationDuration: "2.5s" }} />
-            <div className="absolute h-[110px] w-[110px] animate-ping rounded-full"
+            <div className="absolute h-[165px] w-[165px] animate-ping rounded-full"
               style={{ border: "1px solid rgba(241,196,45,0.1)", animationDuration: "2.5s", animationDelay: "0.8s" }} />
-            {/* Inner white dot */}
-            <div className="h-7 w-7 rounded-full bg-white/90 backdrop-blur-sm"
-              style={{ boxShadow: "0 0 12px rgba(255,255,255,0.8)" }} />
+            <img
+              src="/raw-logo-96.png"
+              alt="raW"
+              className="h-[120px] w-[120px] object-contain drop-shadow-[0_0_20px_rgba(241,196,45,0.4)]"
+              style={{ animation: "logoFlip 3s ease-in-out infinite" }}
+            />
           </div>
 
           {/* Orbit nodes */}

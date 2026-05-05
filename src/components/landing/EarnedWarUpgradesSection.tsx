@@ -4,20 +4,16 @@ export function EarnedWarUpgradesSection() {
   return (
     <section className="landing-section relative px-4 py-14 sm:px-6 sm:py-20">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(241,196,45,0.06),transparent_65%)]" />
-      <div className="relative mx-auto max-w-3xl text-center">
+      <div
+        className="relative mx-auto max-w-3xl overflow-hidden rounded-2xl border border-raw-border/40 bg-raw-surface/20 px-6 py-10 text-center sm:px-10 sm:py-14"
+        style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 0 40px rgba(0,0,0,0.3)" }}
+      >
+        {/* top shimmer line */}
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/30 to-transparent" />
+
         <p className="text-[11px] uppercase tracking-[0.25em] text-raw-gold/70">War Rewards</p>
 
-        <h2
-          className="mt-3 font-display text-3xl tracking-wide sm:text-5xl"
-          style={{
-            background: "linear-gradient(135deg, #F6D454 0%, #F1C42D 40%, #B8941E 65%, #F1C42D 100%)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundClip: "text",
-            filter:
-              "drop-shadow(0 0 18px rgba(241,196,45,0.45)) drop-shadow(0 0 32px rgba(241,196,45,0.2))",
-          }}
-        >
+        <h2 className="mt-3 landing-heading">
           Earned War Upgrades
         </h2>
 
@@ -36,7 +32,7 @@ export function EarnedWarUpgradesSection() {
           <img
             src={warLevelBadgesImage}
             alt="War level badges"
-            className="mx-auto w-full max-w-[700px] rounded-xl border border-raw-gold/15 bg-black/20"
+            className="mx-auto w-full max-w-[660px]"
           />
         </div>
 

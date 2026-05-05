@@ -115,7 +115,7 @@ const VELOCITY_THRESHOLD = 400;
 export function PollShowcase() {
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, "yes" | "no">>({});
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [commentInputs, setCommentInputs] = useState<Record<number, string>>({});
   const [extraComments, setExtraComments] = useState<Record<number, string[]>>({});
@@ -234,8 +234,9 @@ export function PollShowcase() {
           "radial-gradient(circle at 1px 1px, rgba(217,217,217,0.06) 1px, transparent 0)",
         backgroundSize: "14px 14px",
       }}
+      onClick={() => setOpen(false)}
     >
-      <div className="relative w-full max-w-md">
+      <div className="relative w-full max-w-md" onClick={(event) => event.stopPropagation()}>
         <button
           type="button"
           onClick={() => setOpen(false)}
@@ -495,9 +496,9 @@ export function PollShowcase() {
           </button>
         </div>
 
-        {/* Comments panel */}
-        {showComments && (
-          <div className="mt-4 w-full max-w-[330px] mx-auto">
+        {/* Comments panel — always reserves space so card doesn't shift when comments appear */}
+        <div className="mt-4 w-full max-w-[330px] mx-auto" style={{ minHeight: 130 }}>
+          {showComments && (
             <div
               className="p-[1px]"
               style={{
@@ -549,8 +550,8 @@ export function PollShowcase() {
                 </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

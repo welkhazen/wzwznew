@@ -31,7 +31,12 @@ const testimonials = [
 export function TestimonialsSection() {
   return (
     <section className="landing-section relative py-14 px-4 sm:py-20 sm:px-6">
-      <div className="w-full">
+      <div
+        className="relative w-full overflow-hidden rounded-2xl border border-raw-border/40 bg-raw-surface/20 px-6 py-10 sm:px-10 sm:py-14"
+        style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 0 40px rgba(0,0,0,0.3)" }}
+      >
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/30 to-transparent" />
+
         <p className="mb-5 text-center font-display text-[10px] tracking-[0.3em] uppercase text-raw-silver/40 sm:mb-6">
           From the community
         </p>

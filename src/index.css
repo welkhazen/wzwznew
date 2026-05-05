@@ -196,26 +196,37 @@
   filter: drop-shadow(0 0 18px rgba(241, 196, 45, 0.4));
 }
 
+.raw-filled {
+  color: rgb(var(--raw-accent));
+  -webkit-text-fill-color: currentColor;
+  background: none !important;
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
+  -webkit-text-stroke: 0;
+  text-shadow:
+    0 0 12px rgba(var(--raw-accent) / 0.6),
+    0 0 24px rgba(var(--raw-accent) / 0.35);
+}
+
+.landing-heading {
+  font-family: Michroma, sans-serif;
+  font-size: 1.875rem;
+  line-height: 1.05;
+  letter-spacing: 0.08em;
+  color: rgb(var(--raw-accent));
+  text-transform: none;
+}
+
 @media (min-width: 640px) {
-  .raw-chrome-w-3d {
-    -webkit-text-stroke: 14px rgb(var(--raw-accent));
+  .landing-heading {
+    font-size: 2.25rem;
   }
 }
 
-html.theme-light .raw-chrome-metallic {
-  background: linear-gradient(
-    160deg,
-    #606060  0%,
-    #181818 18%,
-    #585858 34%,
-    #080808 52%,
-    #3c3c3c 68%,
-    #1c1c1c 84%,
-    #505050 100%
-  );
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+@media (min-width: 768px) {
+  .landing-heading {
+    font-size: 3rem;
+  }
 }
 
 /* Subtle animated gradient border */
@@ -243,6 +254,80 @@ html.theme-light .raw-chrome-metallic {
 
 .animate-fade-in-up {
   animation: fade-in-up 0.6s ease-out forwards;
+}
+
+/* Chat popup theme-adaptive styles */
+.chat-popup-interior {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(241,196,45,0.10), transparent 36%),
+    rgb(var(--raw-surface));
+}
+.chat-popup-dots {
+  background-image: radial-gradient(circle at 1px 1px, rgba(235,235,235,0.38) 1px, transparent 0);
+  background-size: 18px 18px;
+}
+html.theme-light .chat-popup-dots {
+  background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.10) 1px, transparent 0);
+}
+.chat-popup-vignette {
+  background: radial-gradient(circle at 50% 50%, transparent 0%, rgba(0,0,0,0.28) 65%, rgba(0,0,0,0.72) 100%);
+}
+html.theme-light .chat-popup-vignette {
+  display: none;
+}
+.chat-popup-bubble {
+  background: rgb(var(--raw-black) / 0.55);
+}
+html.theme-light .chat-popup-bubble {
+  background: rgb(var(--raw-black) / 0.07);
+}
+.chat-popup-reply {
+  background: rgb(var(--raw-black) / 0.4);
+}
+html.theme-light .chat-popup-reply {
+  background: rgb(var(--raw-black) / 0.05);
+}
+.chat-popup-input {
+  background: rgb(var(--raw-black) / 0.65);
+}
+html.theme-light .chat-popup-input {
+  background: rgb(var(--raw-black) / 0.06);
+}
+
+@keyframes logoFlip {
+  0%   { transform: perspective(600px) rotateY(0deg); }
+  45%  { transform: perspective(600px) rotateY(180deg); }
+  50%  { transform: perspective(600px) rotateY(180deg); }
+  95%  { transform: perspective(600px) rotateY(360deg); }
+  100% { transform: perspective(600px) rotateY(360deg); }
+}
+
+/* Popup pop-in animation — must preserve any existing translate on the element */
+@keyframes popIn {
+  from {
+    opacity: 0;
+    scale: 0.92;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+/* Chat message fade-in-up (used in Communities popup) */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeInUp {
+  animation: fadeInUp 0.35s ease-out forwards;
 }
 
 /* Poll bar animation */

@@ -1,3 +1,4 @@
+import type React from "react";
 import { Terminal } from "@/components/ui/terminal";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 
@@ -37,8 +38,13 @@ export function HowItWorks() {
       ref={sectionRef as React.RefObject<HTMLElement>}
       className="landing-section relative px-4 py-14 sm:px-6 sm:py-20 md:py-28"
     >
-      <div className="w-full">
-        <h2 className="mb-3 text-center font-display text-xl tracking-wide text-raw-text sm:mb-4 sm:text-2xl md:text-3xl">
+      <div
+        className="relative mx-auto w-full max-w-6xl overflow-hidden rounded-2xl border border-raw-border/40 bg-raw-surface/20 px-6 py-10 sm:px-10 sm:py-14"
+        style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 0 40px rgba(0,0,0,0.3)" }}
+      >
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/30 to-transparent" />
+
+        <h2 className="mb-3 text-center landing-heading sm:mb-4">
           How it works
         </h2>
         <p className="mx-auto mb-10 max-w-2xl px-1 text-center text-sm leading-relaxed text-raw-silver/60 sm:mb-14 sm:text-base">
