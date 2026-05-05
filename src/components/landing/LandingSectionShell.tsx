@@ -42,7 +42,7 @@ export function LandingSectionShell({
               </div>
             )}
             {title && (
-              <h2 className="font-display text-2xl tracking-wide text-raw-text sm:text-3xl md:text-4xl">
+              <h2 className="landing-heading mx-auto max-w-3xl">
                 {title}
               </h2>
             )}

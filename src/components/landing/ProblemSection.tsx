@@ -6,13 +6,13 @@ export function ProblemSection() {
 
   return (
     <section ref={sectionRef} className="landing-section relative px-4 py-14 sm:px-6 sm:py-20 md:py-28">
-      <div className="mx-auto max-w-6xl">
-        <h2
-          className="text-center font-display text-3xl tracking-[0.04em] text-[#F1C42D] sm:text-4xl md:text-5xl"
-          style={{
-            textShadow: "0 0 10px rgba(241,196,45,0.35), 0 0 22px rgba(241,196,45,0.18)",
-          }}
-        >
+      <div
+        className="relative mx-auto w-full max-w-6xl overflow-hidden rounded-2xl border border-raw-border/40 bg-raw-surface/20 px-6 py-10 sm:px-10 sm:py-14"
+        style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 0 40px rgba(0,0,0,0.3)" }}
+      >
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/30 to-transparent" />
+
+        <h2 className="text-center landing-heading">
           THE PROBLEM
         </h2>
         <div className="mx-auto mt-3 h-px w-40 bg-gradient-to-r from-transparent via-[#F1C42D]/90 to-transparent sm:w-56" aria-hidden />

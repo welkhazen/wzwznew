@@ -1,8 +1,10 @@
 import { Suspense, lazy } from "react";
+import MatrixBackground from "@/components/ui/matrix-background";
 import { Navbar } from "@/components/landing/Navbar";
 import { ProblemSection } from "@/components/landing/ProblemSection";
 import { GlobeHero } from "@/components/landing/GlobeHero";
 import { HowItWorks } from "@/components/landing/HowItWorks";
+import { PollBenefitsSection } from "@/components/landing/PollBenefitsSection";
 import { PollShowcase } from "@/components/landing/PollShowcase";
 import { Communities } from "@/components/landing/Communities";
 import { PersonalityInsightsSection } from "@/components/landing/PersonalityInsightsSection";
@@ -14,7 +16,6 @@ import { EarnedWarUpgradesSection } from "@/components/landing/EarnedWarUpgrades
 import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import PerforatedBackground from "@/components/ui/perforated-background";
-import MatrixBackground from "@/components/ui/matrix-background";
 import type { AuthResult, User } from "@/store/types";
 
 const SignupModalLazy = lazy(() =>
@@ -55,6 +56,7 @@ export default function LandingShell({
         <GlobeHero onSignupClick={() => setShowSignup(true)} />
         <ProblemSection />
         <HowItWorks />
+        <PollBenefitsSection />
         <Communities onSignupClick={() => setShowSignup(true)} />
         <PersonalityInsightsSection />
         <EarnedWarUpgradesSection />

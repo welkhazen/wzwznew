@@ -22,8 +22,13 @@ export function WhyAnonymity() {
 
   return (
     <section ref={sectionRef as React.RefObject<HTMLElement>} className="landing-section relative py-14 px-4 sm:py-20 sm:px-6 md:py-28">
-      <div className="w-full">
-        <h2 className="mb-8 text-center font-display text-xl tracking-wide text-raw-text sm:mb-12 sm:text-2xl md:text-3xl">
+      <div
+        className="relative mx-auto w-full max-w-6xl overflow-hidden rounded-2xl border border-raw-border/40 bg-raw-surface/20 px-6 py-10 sm:px-10 sm:py-14"
+        style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 0 40px rgba(0,0,0,0.3)" }}
+      >
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/30 to-transparent" />
+
+        <h2 className="mb-8 text-center landing-heading sm:mb-12">
           No real names. Better honesty. Better matching.
         </h2>
 

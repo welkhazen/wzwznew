@@ -1,7 +1,5 @@
-import { Suspense, lazy, useEffect, useState } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import { OnboardingJourney } from "@/components/onboarding/OnboardingJourney";
-import MatrixBackgroundIntro from "@/components/ui/matrix-background-intro";
-import { EnterRawGate } from "@/components/landing/EnterRawGate";
 import { useHostMode } from "@/hooks/use-host-mode";
 import Dashboard from "@/pages/Dashboard";
 import { useRawStore } from "@/store/useRawStore";
@@ -9,18 +7,7 @@ import { joinCommunityChat } from "@/lib/communityChat";
 
 const LandingShellLazy = lazy(() => import("@/components/landing/LandingShell"));
 
-const LANDING_GATE_DISMISSED_KEY = "raw:landing-gate-dismissed";
-
 const Index = () => {
-  const [showMatrixIntro, setShowMatrixIntro] = useState(true);
-  const [landingGateDismissed, setLandingGateDismissed] = useState(() => {
-    if (typeof window === "undefined") return false;
-    try {
-      return window.sessionStorage.getItem(LANDING_GATE_DISMISSED_KEY) === "1";
-    } catch {
-      return false;
-    }
-  });
 
   const {
     user,
@@ -142,25 +129,6 @@ const Index = () => {
         vote={vote}
         onLogout={logout}
       />
-    );
-  }
-
-  // First-time visitors: show the matrix intro on top of the gate.
-  if (!landingGateDismissed) {
-    return (
-      <>
-        {showMatrixIntro ? <MatrixBackgroundIntro onComplete={() => setShowMatrixIntro(false)} /> : null}
-        <EnterRawGate
-          onEnter={() => {
-            try {
-              window.sessionStorage.setItem(LANDING_GATE_DISMISSED_KEY, "1");
-            } catch {
-              /* sessionStorage may be unavailable; still proceed */
-            }
-            setLandingGateDismissed(true);
-          }}
-        />
-      </>
     );
   }
 

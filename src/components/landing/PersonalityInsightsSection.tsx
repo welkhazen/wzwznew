@@ -46,10 +46,16 @@ export function PersonalityInsightsSection() {
       className="landing-section relative py-14 px-4 sm:py-20 sm:px-6 md:py-28"
     >
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(139,92,246,0.06),transparent_65%)]" />
-      <div className="relative mx-auto w-full max-w-6xl">
+      <div
+        className="relative mx-auto w-full max-w-6xl overflow-hidden rounded-2xl border border-raw-border/40 bg-raw-surface/20 px-6 py-10 sm:px-10 sm:py-14"
+        style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 0 40px rgba(0,0,0,0.3)" }}
+      >
+        {/* top shimmer line */}
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/30 to-transparent" />
+
         <div className="mb-8 text-center sm:mb-14">
           <p className="text-[11px] uppercase tracking-[0.25em] text-raw-gold/70">Premium Feature</p>
-          <h2 className="mt-3 font-display text-3xl tracking-wide text-raw-text sm:text-4xl">
+          <h2 className="mt-3 landing-heading">
             Personality Insights
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-raw-silver/50 sm:text-base">

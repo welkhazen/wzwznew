@@ -42,7 +42,7 @@ export function AnonQuestionSection() {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(241,196,45,0.04),transparent_65%)]" />
       <div className="relative mx-auto max-w-xl rounded-2xl border border-raw-gold/20 bg-raw-surface/10 px-8 py-10 text-center shadow-[0_0_60px_rgba(241,196,45,0.06),inset_0_0_40px_rgba(241,196,45,0.03)]" style={{ boxShadow: "0 0 0 1px rgba(241,196,45,0.12), 0 0 60px rgba(241,196,45,0.06)" }}>
         <p className="text-[11px] uppercase tracking-[0.25em] text-raw-gold/70">Your Voice</p>
-        <h2 className="mt-3 font-display text-2xl tracking-wide text-raw-text sm:text-3xl">
+        <h2 className="mt-3 landing-heading">
           Want to ask your own anonymous question?
         </h2>
         <p className="mt-3 text-sm text-raw-silver/50">
