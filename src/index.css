@@ -294,6 +294,14 @@ html.theme-light .chat-popup-input {
   background: rgb(var(--raw-black) / 0.06);
 }
 
+@keyframes logoFlip {
+  0%   { transform: perspective(600px) rotateY(0deg); }
+  45%  { transform: perspective(600px) rotateY(180deg); }
+  50%  { transform: perspective(600px) rotateY(180deg); }
+  95%  { transform: perspective(600px) rotateY(360deg); }
+  100% { transform: perspective(600px) rotateY(360deg); }
+}
+
 /* Popup pop-in animation — must preserve any existing translate on the element */
 @keyframes popIn {
   from {

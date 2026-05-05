@@ -496,9 +496,9 @@ export function PollShowcase() {
           </button>
         </div>
 
-        {/* Comments panel */}
-        {showComments && (
-          <div className="mt-4 w-full max-w-[330px] mx-auto">
+        {/* Comments panel — always reserves space so card doesn't shift when comments appear */}
+        <div className="mt-4 w-full max-w-[330px] mx-auto" style={{ minHeight: 130 }}>
+          {showComments && (
             <div
               className="p-[1px]"
               style={{
@@ -550,8 +550,8 @@ export function PollShowcase() {
                 </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
