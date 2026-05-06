@@ -87,6 +87,7 @@ export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
                 >
                   <TypewriterStack
                     words={["Your Place", "Your People", "Your Self", "raW"]}
+                    lastWordDurationMs={1500}
                     prefix="Your"
                     prefixClassName="text-foreground font-black"
                     startScale={0.6}
