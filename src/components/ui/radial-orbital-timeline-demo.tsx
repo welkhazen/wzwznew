@@ -30,7 +30,7 @@ const timelineData = [
   },
   {
     id: 3,
-    title: "Say it without the mask.",
+    title: "No Mask. Say it.",
     date: "Judgment",
     content:
       "Some things are easier to say when your name is not attached. raW lets you be honest without turning your real identity into the price of speaking.",

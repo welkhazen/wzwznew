@@ -209,7 +209,7 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
                 }}
                 onClick={(e) => { e.stopPropagation(); toggleItem(item.id); }}
               >
-                {/* Energy aura */}
+                {/* Importance aura */}
                 {(isExpanded || isRelated) && (
                   <div
                     className="absolute -inset-4 rounded-full animate-pulse"
@@ -249,10 +249,10 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
                 <div
                   className="absolute left-1/2 top-12 -translate-x-1/2 text-center font-display uppercase tracking-[0.1em] transition-all duration-300"
                   style={{
-                    maxWidth: isTinyPhone ? 86 : isCompact ? 110 : 180,
-                    whiteSpace: isCompact ? "normal" : "nowrap",
-                    fontSize: isTinyPhone ? "0.56rem" : isCompact ? "0.496rem" : "0.62rem",
-                    lineHeight: isTinyPhone ? 1.2 : isCompact ? 1.1 : 1.2,
+                    maxWidth: isTinyPhone ? 82 : isCompact ? 100 : 150,
+                    whiteSpace: "normal",
+                    fontSize: isTinyPhone ? "0.448rem" : isCompact ? "0.397rem" : "0.496rem",
+                    lineHeight: isTinyPhone ? 1.15 : isCompact ? 1.05 : 1.12,
                     fontWeight: isTinyPhone ? 800 : 700,
                     color: isExpanded ? "#F1C42D" : "rgba(241,196,45,0.88)",
                     textShadow: isExpanded
@@ -289,12 +289,12 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
 
                     <p className="text-[11px] leading-relaxed text-foreground/65">{item.content}</p>
 
-                    {/* Energy bar */}
+                    {/* Importance bar */}
                     <div className="mt-3 border-t border-raw-gold/10 pt-3">
                       <div className="mb-1 flex items-center justify-between text-[10px] text-foreground/40">
                         <span className="flex items-center gap-1">
                           <Zap size={9} className="text-raw-gold/60" />
-                          Energy
+                          Importance
                         </span>
                         <span className="font-mono text-raw-gold/60">{item.energy}%</span>
                       </div>
