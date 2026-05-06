@@ -10,7 +10,6 @@ import { PersonalityInsightsSection } from "@/components/landing/PersonalityInsi
 import { AvatarShowcaseSection } from "@/components/landing/AvatarShowcaseSection";
 import { WheelReward } from "@/components/landing/WheelReward";
 import { WhyAnonymity } from "@/components/landing/WhyAnonymity";
-import { AnonQuestionSection } from "@/components/landing/AnonQuestionSection";
 import { EarnedWarUpgradesSection } from "@/components/landing/EarnedWarUpgradesSection";
 import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
 import { LandingFooter } from "@/components/landing/LandingFooter";
@@ -18,9 +17,7 @@ import PerforatedBackground from "@/components/ui/perforated-background";
 import type { AuthResult, User } from "@/store/types";
 
 const SignupModalLazy = lazy(() =>
-  import("@/components/landing/SignupModal").then((module) => ({
-    default: module.SignupModal,
-  })),
+  import("@/components/landing/SignupModal").then((module) => ({ default: module.SignupModal }))
 );
 
 export interface LandingShellProps {
@@ -29,11 +26,7 @@ export interface LandingShellProps {
   showSignup: boolean;
   setShowSignup: (open: boolean) => void;
   requestSignupOtp: (email: string) => Promise<AuthResult>;
-  verifySignupOtp: (
-    email: string,
-    otp: string,
-    username: string,
-  ) => Promise<AuthResult>;
+  verifySignupOtp: (email: string, otp: string, username: string) => Promise<AuthResult>;
   login: (email: string, otp: string) => Promise<AuthResult>;
 }
 
@@ -76,7 +69,6 @@ export default function LandingShell({
             <EarnedWarUpgradesSection />
             <WheelReward onSignupClick={() => setShowSignup(true)} />
             <WhyAnonymity />
-            <AnonQuestionSection />
             <TestimonialsSection />
             <LandingFooter />
           </>

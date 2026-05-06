@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, Send } from "lucide-react";
 import {
   motion,
   useMotionValue,
@@ -93,6 +93,9 @@ const CARD_INNER_CLIP =
   "polygon(17px 0, calc(100% - 17px) 0, 100% 17px, 100% calc(100% - 17px), calc(100% - 17px) 100%, 17px 100%, 0 calc(100% - 17px), 0 17px)";
 const BUTTON_CLIP =
   "polygon(12px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 12px), 0 12px)";
+const COMMENT_CLIP =
+  "polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px)";
+
 const SWIPE_THRESHOLD = 80;
 const VELOCITY_THRESHOLD = 400;
 
@@ -101,6 +104,8 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
   const [answers, setAnswers] = useState<Record<number, "yes" | "no">>({});
   const [open, setOpen] = useState(initialOpen);
   const [mounted, setMounted] = useState(false);
+  const [commentInputs, setCommentInputs] = useState<Record<number, string>>({});
+  const [extraComments, setExtraComments] = useState<Record<number, string[]>>({});
   const isDragging = useRef(false);
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 0, 200], [-14, 0, 14]);
@@ -117,9 +122,31 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
     ["rgba(239,68,68,0.18)", "rgba(239,68,68,0)"]
   );
 
-  const POLLS = FALLBACK_POLLS;
+  const pollsQuery = useQuery({
+    queryKey: ["polls", "showcase"],
+    retry: false,
+    queryFn: async (): Promise<Poll[]> => {
+      const res = await apiRequest<{ polls: Poll[] }>("/api/polls/random?limit=3");
+      return res.polls;
+    },
+  });
+
+  const POLLS: PollData[] =
+    pollsQuery.data && pollsQuery.data.length > 0
+      ? apiPollsToPollData(pollsQuery.data)
+      : FALLBACK_POLLS;
 
   const poll = POLLS[index] as PollData | undefined;
+
+  const commentsQuery = useQuery({
+    queryKey: ["poll-comments", poll?.id],
+    enabled: !!poll?.id,
+    retry: false,
+    queryFn: async () => {
+      const res = await apiRequest<{ comments: string[] }>(`/api/polls/${poll!.id}/comments`);
+      return res.comments;
+    },
+  });
 
   useEffect(() => {
     setMounted(true);
