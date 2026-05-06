@@ -4,7 +4,7 @@ import type { Poll } from "@/store/types";
 export interface PollCommentRow {
   id: string;
   poll_id: string;
-  text: string;
+  body: string;
   created_at: string;
 }
 
@@ -65,7 +65,7 @@ export async function submitPollVote(pollId: string, optionId: string): Promise<
 export async function fetchPollComments(pollId: string): Promise<PollCommentRow[]> {
   const { data, error } = await supabase
     .from("poll_comments")
-    .select("id, text, created_at")
+    .select("id, body, created_at")
     .eq("poll_id", pollId)
     .order("created_at", { ascending: false })
     .limit(50);
@@ -76,8 +76,8 @@ export async function fetchPollComments(pollId: string): Promise<PollCommentRow[
 export async function addPollComment(pollId: string, text: string): Promise<PollCommentRow> {
   const { data, error } = await supabase
     .from("poll_comments")
-    .insert({ poll_id: pollId, text })
-    .select("id, text, created_at")
+    .insert({ poll_id: pollId, body: text })
+    .select("id, body, created_at")
     .single();
   if (error || !data) throw error ?? new Error("Failed to create comment");
   return data as PollCommentRow;

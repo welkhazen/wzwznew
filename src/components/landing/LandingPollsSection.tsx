@@ -155,7 +155,7 @@ export function LandingPollsSection() {
     if (!currentPoll?.id) { setDbComments([]); return; }
     let alive = true;
     fetchPollComments(currentPoll.id)
-      .then((rows) => { if (alive) setDbComments(rows.map((r) => r.text)); })
+      .then((rows) => { if (alive) setDbComments(rows.map((r) => r.body)); })
       .catch(() => { if (alive) setDbComments([]); });
     return () => { alive = false; };
   }, [currentPoll?.id]);
@@ -168,7 +168,7 @@ export function LandingPollsSection() {
     if (!currentPoll?.id) return;
     try {
       const saved = await addPollComment(currentPoll.id, text);
-      setDbComments((prev) => [saved.text, ...prev]);
+      setDbComments((prev) => [saved.body, ...prev]);
     } catch {
       // comment still shown locally
     }
