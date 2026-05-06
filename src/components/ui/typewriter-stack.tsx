@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 interface TypewriterStackProps {
   words: string[];
   typeSpeed?: number;
+  lastWordDurationMs?: number;
   pauseAfterWord?: number;
   nextWordDelay?: number;
   className?: string;
@@ -35,6 +36,7 @@ type Phase = "typing" | "pausing" | "done";
 export function TypewriterStack({
   words,
   typeSpeed = 85,
+  lastWordDurationMs,
   pauseAfterWord = 450,
   nextWordDelay = 220,
   className,
@@ -60,11 +62,17 @@ export function TypewriterStack({
     const current = words[wordIndex];
     let timer: ReturnType<typeof setTimeout>;
 
+    const isLastWord = wordIndex === words.length - 1;
+    const effectiveSpeed =
+      isLastWord && lastWordDurationMs && current.length > 0
+        ? Math.max(1, Math.round(lastWordDurationMs / current.length))
+        : typeSpeed;
+
     if (phase === "typing") {
       if (text.length < current.length) {
         timer = setTimeout(
           () => setText(current.slice(0, text.length + 1)),
-          typeSpeed
+          effectiveSpeed
         );
       } else if (wordIndex + 1 < words.length) {
         timer = setTimeout(() => setPhase("pausing"), pauseAfterWord);
@@ -80,7 +88,7 @@ export function TypewriterStack({
     }
 
     return () => clearTimeout(timer);
-  }, [text, phase, wordIndex, words, typeSpeed, pauseAfterWord, nextWordDelay]);
+  }, [text, phase, wordIndex, words, typeSpeed, lastWordDurationMs, pauseAfterWord, nextWordDelay]);
 
   const prefixMatch = prefix ? `${prefix} ` : null;
   const splitWord = (full: string, typed: string) => {

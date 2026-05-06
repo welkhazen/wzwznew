@@ -21,8 +21,8 @@ export function Navbar({ isLoggedIn, username, onSignupClick }: NavbarProps) {
 
   const handleSignupClick = () => {
     track("landing_cta_clicked", {
-      cta_id: "navbar_join_free",
-      cta_text: "Join Free",
+      cta_id: "navbar_join",
+      cta_text: "Join",
       source_section: "navbar",
     });
     setMenuOpen(false);
@@ -95,7 +95,7 @@ export function Navbar({ isLoggedIn, username, onSignupClick }: NavbarProps) {
                 onClick={handleSignupClick}
                 className="min-h-11 rounded-full bg-raw-gold px-3 py-2.5 text-xs font-semibold text-raw-black transition-all hover:bg-raw-gold/90 hover:shadow-lg hover:shadow-raw-gold/20 sm:px-5 sm:text-sm"
               >
-                Join Free
+                Join
               </button>
             </>
           )}

@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, X, Send } from "lucide-react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import {
   motion,
   useMotionValue,
@@ -10,8 +9,6 @@ import {
   AnimatePresence,
 } from "framer-motion";
 import { POLL_QUESTION_SEEDS } from "@/features/polls/pollQuestions";
-import { addPollComment, fetchPollComments, fetchSupabasePolls } from "@/utils/supabasePolls";
-import type { Poll } from "@/store/types";
 
 interface PollData {
   id?: string;
@@ -110,8 +107,6 @@ const CARD_INNER_CLIP =
   "polygon(17px 0, calc(100% - 17px) 0, 100% 17px, 100% calc(100% - 17px), calc(100% - 17px) 100%, 17px 100%, 0 calc(100% - 17px), 0 17px)";
 const BUTTON_CLIP =
   "polygon(12px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 12px), 0 12px)";
-const COMMENT_CLIP =
-  "polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px)";
 
 const SWIPE_THRESHOLD = 80;
 const VELOCITY_THRESHOLD = 400;
@@ -121,9 +116,6 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
   const [answers, setAnswers] = useState<Record<number, "yes" | "no">>({});
   const [open, setOpen] = useState(initialOpen);
   const [mounted, setMounted] = useState(false);
-  const [commentInputs, setCommentInputs] = useState<Record<number, string>>({});
-  const [extraComments, setExtraComments] = useState<Record<number, string[]>>({});
-  const [dbComments, setDbComments] = useState<string[]>([]);
   const isDragging = useRef(false);
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 0, 200], [-14, 0, 14]);
@@ -225,33 +217,11 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
   if (!mounted || !open) return null;
 
   const total = POLLS.length;
+  const isLastPoll = index === total - 1;
   const canPrev = index > 0;
   const canNext = index < total - 1;
   const selected = answers[index];
-  const showComments = !!selected;
-  const allComments = currentPoll?.id ? [...dbComments, ...(extraComments[index] ?? [])] : extraComments[index] ?? [];
-
-  const handleSubmitComment = async () => {
-    const text = (commentInputs[index] ?? "").trim();
-    if (!text) return;
-
-    const commentsForIndex = extraComments[index] ?? [];
-    setExtraComments((prev) => ({
-      ...prev,
-      [index]: [...commentsForIndex, text],
-    }));
-    setCommentInputs((prev) => ({ ...prev, [index]: "" }));
-
-    const currentPoll = POLLS[index];
-    if (!currentPoll?.id) return;
-
-    try {
-      const comment = await addPollComment(currentPoll.id, text);
-      setDbComments((prev) => [comment.text, ...prev]);
-    } catch (error) {
-      console.error("Failed to save comment to Supabase", error);
-    }
-  };
+  const currentPoll = POLLS[index];
 
   const overlay = (
     <div
@@ -399,7 +369,7 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
                 <GoldIcosahedron className="mb-5 h-20 w-20" />
 
                 <p className="text-[11px] font-bold uppercase tracking-[0.36em] text-[#F1C42D] [text-shadow:0_0_8px_rgba(241,196,45,0.45)]">
-                  Poll Question
+                  Instantly See What Others Think.
                 </p>
 
                 <p
@@ -415,7 +385,7 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
                 <div className="mt-6 h-px w-16 bg-white/20" />
 
                 <p className="mt-4 text-[11px] tracking-[0.05em] text-white/45">
-                  {selected ? `You answered: ${selected.toUpperCase()}` : "Swipe right for Yes · left for No"}
+                  {selected ? `You answered: ${selected.toUpperCase()}` : "Swipe/Click To Answer"}
                 </p>
 
                 <div className="mt-5 grid w-full grid-cols-2 gap-3">
@@ -486,7 +456,7 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
                   </button>
                 </div>
 
-                {/* Next button */}
+                {/* Next / Enter raW button */}
                 {selected && canNext && (
                   <button
                     type="button"
@@ -506,77 +476,41 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
                     </span>
                   </button>
                 )}
+                {selected && isLastPoll && (
+                  <button
+                    type="button"
+                    onClick={closeShowcase}
+                    className="mt-4 w-full h-10 relative transition active:scale-95"
+                    style={{ clipPath: BUTTON_CLIP }}
+                  >
+                    <span
+                      className="absolute inset-0"
+                      style={{
+                        clipPath: BUTTON_CLIP,
+                        background: "rgba(241,196,45,0.85)",
+                      }}
+                    />
+                    <span className="relative z-10 flex h-full w-full items-center justify-center text-sm font-bold tracking-widest text-black uppercase">
+                      Enter raW
+                    </span>
+                  </button>
+                )}
               </div>
             </div>
           </div>
             </motion.div>
           </AnimatePresence>
 
-          <button
-            type="button"
-            onClick={() => canNext && setIndex((i) => i + 1)}
-            disabled={!canNext}
-            aria-label="Next question"
-            className="absolute right-0 z-10 flex h-11 w-11 translate-x-3 items-center justify-center rounded-full border border-[#F1C42D]/55 bg-black/75 text-[#F1C42D] shadow-[0_0_18px_rgba(241,196,45,0.25)] transition hover:bg-[#F1C42D]/10 disabled:cursor-not-allowed disabled:opacity-25 sm:translate-x-7"
-          >
-            <ChevronRight className="h-5 w-5" strokeWidth={2.5} />
-          </button>
-        </div>
-
-        {/* Comments panel — always reserves space so card doesn't shift when comments appear */}
-        <div className="mt-4 w-full max-w-[330px] mx-auto" style={{ minHeight: 130 }}>
-          {showComments && (
-            <div
-              className="p-[1px]"
-              style={{
-                clipPath: COMMENT_CLIP,
-                background:
-                  "linear-gradient(160deg, rgba(241,196,45,0.4) 0%, rgba(241,196,45,0.1) 50%, rgba(241,196,45,0.3) 100%)",
-              }}
+          {!isLastPoll && (
+            <button
+              type="button"
+              onClick={() => canNext && setIndex((i) => i + 1)}
+              disabled={!canNext}
+              aria-label="Next question"
+              className="absolute right-0 z-10 flex h-11 w-11 translate-x-3 items-center justify-center rounded-full border border-[#F1C42D]/55 bg-black/75 text-[#F1C42D] shadow-[0_0_18px_rgba(241,196,45,0.25)] transition hover:bg-[#F1C42D]/10 disabled:cursor-not-allowed disabled:opacity-25 sm:translate-x-7"
             >
-              <div
-                className="px-4 py-4"
-                style={{
-                  clipPath: COMMENT_CLIP,
-                  background: "linear-gradient(165deg, #131313 0%, #080808 100%)",
-                }}
-              >
-                <p className="text-[10px] font-bold uppercase tracking-[0.32em] text-[#F1C42D]/70 mb-3">
-                  Anonymous Comments
-                </p>
-
-                <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
-                  {allComments.map((c, i) => (
-                    <div key={i} className="flex items-start gap-2">
-                      <span className="mt-0.5 h-5 w-5 flex-shrink-0 rounded-full bg-[#F1C42D]/15 flex items-center justify-center text-[9px] text-[#F1C42D]/60 font-bold">
-                        ?
-                      </span>
-                      <p className="text-[12px] text-white/60 leading-[1.4]">{c}</p>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mt-3 flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Add anonymous comment…"
-                    value={commentInputs[index] ?? ""}
-                    onChange={(e) =>
-                      setCommentInputs((prev) => ({ ...prev, [index]: e.target.value }))
-                    }
-                    onKeyDown={(e) => e.key === "Enter" && handleSubmitComment()}
-                    className="flex-1 bg-white/5 border border-white/10 rounded px-3 py-1.5 text-[12px] text-white/70 placeholder:text-white/25 outline-none focus:border-[#F1C42D]/40 transition"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleSubmitComment}
-                    className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded border border-[#F1C42D]/30 bg-[#F1C42D]/10 text-[#F1C42D]/70 transition hover:bg-[#F1C42D]/20"
-                  >
-                    <Send className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              </div>
-            </div>
+              <ChevronRight className="h-5 w-5" strokeWidth={2.5} />
+            </button>
           )}
         </div>
       </div>
