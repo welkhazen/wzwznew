@@ -13,7 +13,7 @@ export function ProblemSection() {
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/30 to-transparent" />
 
         <h2 className="text-center landing-heading">
-          THE PROBLEM
+          THE PROBLEMS raW SOLVES
         </h2>
         <div className="mx-auto mt-3 h-px w-40 bg-gradient-to-r from-transparent via-[#F1C42D]/90 to-transparent sm:w-56" aria-hidden />
         <h3 className="mt-3 text-center font-display text-lg tracking-wide text-raw-text/80 sm:text-xl md:text-2xl">
