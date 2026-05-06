@@ -12,7 +12,6 @@ import {
 import { POLL_QUESTION_SEEDS } from "@/features/polls/pollQuestions";
 import { apiRequest } from "@/lib/api/client";
 import type { Poll } from "@/store/types";
-import { isNoPollOption, isYesPollOption } from "@/lib/polls/normalizePollOptionText";
 
 interface PollData {
   id?: string;
@@ -34,8 +33,8 @@ const FALLBACK_POLLS: PollData[] = POLL_QUESTION_SEEDS.map((s) => ({
 
 const apiPollsToPollData = (polls: Poll[]): PollData[] =>
   polls.map((poll) => {
-    const yesVotes = poll.options.find((option) => isYesPollOption(option.text))?.votes ?? 0;
-    const noVotes = poll.options.find((option) => isNoPollOption(option.text))?.votes ?? 0;
+    const yesVotes = poll.options.find((option) => option.label.toLowerCase() === "yes")?.votes ?? 0;
+    const noVotes = poll.options.find((option) => option.label.toLowerCase() === "no")?.votes ?? 0;
     const totalVotes = yesVotes + noVotes;
 
     return {
