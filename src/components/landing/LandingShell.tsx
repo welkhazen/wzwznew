@@ -1,4 +1,4 @@
-import { Suspense, lazy, useState } from "react";
+import { Suspense, lazy } from "react";
 import MatrixBackground from "@/components/ui/matrix-background";
 import { Navbar } from "@/components/landing/Navbar";
 import { ProblemSection } from "@/components/landing/ProblemSection";
@@ -40,41 +40,32 @@ export default function LandingShell({
   verifySignupOtp,
   login,
 }: LandingShellProps) {
-  const [initialPollResolved, setInitialPollResolved] = useState(false);
-
   return (
     <div className="landing-page-shell min-h-screen overflow-x-hidden bg-raw-black">
       <div className="relative overflow-x-hidden">
         <PerforatedBackground />
         <MatrixBackground />
 
-        <PollShowcase
-          initialOpen={!initialPollResolved}
-          onResolved={() => setInitialPollResolved(true)}
+        <PollShowcase />
+
+        <Navbar
+          isLoggedIn={isLoggedIn}
+          username={user?.username}
+          onSignupClick={() => setShowSignup(true)}
         />
 
-        {initialPollResolved ? (
-          <>
-            <Navbar
-              isLoggedIn={isLoggedIn}
-              username={user?.username}
-              onSignupClick={() => setShowSignup(true)}
-            />
-
-            <GlobeHero onSignupClick={() => setShowSignup(true)} />
-            <ProblemSection />
-            <HowItWorks />
-            <AvatarShowcaseSection />
-            <LandingPollsSection />
-            <Communities onSignupClick={() => setShowSignup(true)} />
-            <PersonalityInsightsSection />
-            <EarnedWarUpgradesSection />
-            <WheelReward onSignupClick={() => setShowSignup(true)} />
-            <WhyAnonymity />
-            <TestimonialsSection />
-            <LandingFooter />
-          </>
-        ) : null}
+        <GlobeHero onSignupClick={() => setShowSignup(true)} />
+        <ProblemSection />
+        <HowItWorks />
+        <AvatarShowcaseSection />
+        <LandingPollsSection />
+        <Communities onSignupClick={() => setShowSignup(true)} />
+        <PersonalityInsightsSection />
+        <EarnedWarUpgradesSection />
+        <WheelReward onSignupClick={() => setShowSignup(true)} />
+        <WhyAnonymity />
+        <TestimonialsSection />
+        <LandingFooter />
       </div>
 
       <Suspense fallback={null}>
