@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { AnalyticsProvider } from "@/components/analytics/AnalyticsProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { SpeedInsights } from "@vercel/speed-insights/react";
 
 const Index = lazy(() => import("./pages/Index"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -56,7 +55,6 @@ const App = () => (
             </Suspense>
           </AnalyticsProvider>
         </BrowserRouter>
-        <SpeedInsights />
       </TooltipProvider>
     </ThemeProvider>
   </ErrorBoundary>

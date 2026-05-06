@@ -12,6 +12,22 @@ const queryClient = new QueryClient();
 
 initSentry();
 
+if (typeof window !== "undefined") {
+  const originalWarn = console.warn;
+  console.warn = (...args: unknown[]) => {
+    const message = typeof args[0] === "string" ? args[0] : "";
+    if (message.includes("THREE.THREE.Clock: This module has been deprecated")) {
+      return;
+    }
+    originalWarn(...args);
+  };
+}
+
+const shouldEnableSpeedInsights =
+  import.meta.env.PROD &&
+  (import.meta.env.VITE_ENABLE_SPEED_INSIGHTS === "true" ||
+    window.location.hostname.endsWith(".vercel.app"));
+
 if (typeof window !== "undefined" && import.meta.env.DEV) {
   const params = new URLSearchParams(window.location.search);
   if (params.get("analytics_test") === "1") {
@@ -36,7 +52,7 @@ createRoot(document.getElementById("root")!).render(
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <App />
-        <SpeedInsights />
+        {shouldEnableSpeedInsights ? <SpeedInsights /> : null}
       </QueryClientProvider>
     </ErrorBoundary>
   </StrictMode>
