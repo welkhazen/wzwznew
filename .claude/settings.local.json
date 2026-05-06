@@ -19,7 +19,8 @@
       "Bash(CLAUDE_CODE_PLUGIN_GIT_TIMEOUT_MS=600000 claude plugin install everything-claude-code@everything-claude-code)",
       "Bash(curl -o CLAUDE.md https://raw.githubusercontent.com/forrestchang/andrej-karpathy-skills/main/CLAUDE.md)",
       "Bash(xargs grep *)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(findstr /i \"SUPABASE VITE_\")"
     ]
   }
 }

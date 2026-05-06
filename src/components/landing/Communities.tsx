@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
-import LNTLogo from "@/assets/LNT.png";
 import isItJustMeVideo from "@/assets/itisjustme.webm";
 import speakYourTruthVideo from "@/assets/speakyourheart.webm";
 import lateNightTalksVideo from "@/assets/2026-04-18 10_10_00.webm";
@@ -127,26 +126,12 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
               <div
                 className={
                   `rounded-2xl p-5 sm:p-6 relative overflow-visible transition-colors duration-200 ` +
-                  (c.waitlist || c.title === "Late Night Talks"
-                    ? "bg-transparent border-0 shadow-none"
-                    : c.video
+                  (c.waitlist || c.video
                     ? "bg-transparent border-0 shadow-none"
                     : "border border-raw-border/50 bg-raw-surface/50 overflow-hidden")
                 }
               >
-                {c.title === "Late Night Talks" ? (
-                  <div className="flex h-full flex-col items-center justify-center py-8 gap-4 text-center">
-                    <img src={LNTLogo} alt="LNT Logo" className="h-16 w-auto" />
-                    <div>
-                      <h3 className="font-display text-sm tracking-wide text-raw-text">
-                        Late Night Talks
-                      </h3>
-                      <p className="mt-2 text-xs leading-relaxed text-raw-silver/50">
-                        Founding community for deep, late-night conversations and real connection.
-                      </p>
-                    </div>
-                  </div>
-                ) : c.waitlist ? (
+                {c.waitlist ? (
                   <div className="flex h-full flex-col items-center justify-center py-8 gap-3 text-center">
                     {waitlistConfirmed ? (
                       <>

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import isItJustMeVideo from "@/assets/itisjustme.webm";
 import speakYourTruthVideo from "@/assets/speakyourheart.webm";
 import lntVideo from "@/assets/2026-04-18 10_10_00.webm";
@@ -6,6 +7,7 @@ import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { AVATARS } from "@/lib/avataridentity";
 import { AvatarPhoneHomeScreen } from "@/components/ui/avatar-phone-home-screen";
 import { PhoneMockup } from "@/components/ui/phone-mockup";
+import { fetchSupabasePolls, addPollComment } from "@/utils/supabasePolls";
 
 import { SwipeablePollCard } from "./SwipeablePollCard";
 import { EnterRawModal } from "./EnterRawModal";
@@ -167,7 +169,25 @@ export function OnboardingJourney({
   onCompleteOnboarding,
   onLogout,
 }: OnboardingJourneyProps) {
-  const onboardingPolls = useMemo(() => toOnboardingPolls(polls), [polls]);
+  const { data: supabasePolls } = useQuery({
+    queryKey: ["onboarding-landing-polls"],
+    queryFn: async () => {
+      const fetched = await fetchSupabasePolls(5);
+      if (fetched.length === 0) return null;
+      return fetched.map((poll) => ({
+        id: poll.id,
+        question: poll.question,
+        options: poll.options.slice(0, 2).map((opt) => opt.text),
+      })) as OnboardingPoll[];
+    },
+    retry: 1,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const onboardingPolls = useMemo(() => {
+    if (supabasePolls && supabasePolls.length > 0) return supabasePolls;
+    return toOnboardingPolls(polls);
+  }, [supabasePolls, polls]);
   const [pollSelections, setPollSelections] = useState<Record<string, string>>({});
   const [pollComments, setPollComments] = useState<Record<string, Comment[]>>({});
   const [pollStats, setPollStats] = useState<Record<string, Record<string, number>>>({});

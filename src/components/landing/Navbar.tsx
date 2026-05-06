@@ -46,7 +46,7 @@ export function Navbar({ isLoggedIn, username, onSignupClick }: NavbarProps) {
             width={36}
             height={36}
             decoding="async"
-            fetchPriority="high"
+            fetchpriority="high"
             className="h-8 w-8 shrink-0 sm:h-9 sm:w-9"
           />
           <span>
@@ -67,7 +67,7 @@ export function Navbar({ isLoggedIn, username, onSignupClick }: NavbarProps) {
           ))}
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3">
           {isLoggedIn ? (
             <div className="flex items-center gap-2">
               <div className="h-8 w-8 rounded-full bg-gradient-to-br from-raw-gold/30 to-raw-gold/10 flex items-center justify-center">
@@ -77,7 +77,7 @@ export function Navbar({ isLoggedIn, username, onSignupClick }: NavbarProps) {
             </div>
           ) : (
             <>
-              <div className="flex min-h-11 items-center gap-1.5 rounded-full border border-raw-border/45 bg-raw-surface/85 px-2.5 backdrop-blur-xl sm:gap-2 sm:px-3">
+              <div className="flex min-h-11 items-center gap-1 rounded-full border border-raw-border/45 bg-raw-surface/85 px-2 backdrop-blur-xl sm:gap-2 sm:px-3">
                 <span className={`hidden text-[10px] uppercase tracking-[0.12em] sm:inline ${isLightMode ? "text-raw-silver/45" : "text-raw-gold"}`}>
                   Dark
                 </span>
@@ -90,10 +90,10 @@ export function Navbar({ isLoggedIn, username, onSignupClick }: NavbarProps) {
                   Light
                 </span>
               </div>
-              <ThemeCustomizer placement="inline" triggerStyle="compact" className="hidden sm:flex shrink-0" />
+              <ThemeCustomizer placement="inline" triggerStyle="compact" className="flex shrink-0" />
               <button
                 onClick={handleSignupClick}
-                className="min-h-11 rounded-full bg-raw-gold px-3.5 py-2.5 text-sm font-semibold text-raw-black transition-all hover:bg-raw-gold/90 hover:shadow-lg hover:shadow-raw-gold/20 sm:px-5"
+                className="min-h-11 rounded-full bg-raw-gold px-3 py-2.5 text-xs font-semibold text-raw-black transition-all hover:bg-raw-gold/90 hover:shadow-lg hover:shadow-raw-gold/20 sm:px-5 sm:text-sm"
               >
                 Join Free
               </button>

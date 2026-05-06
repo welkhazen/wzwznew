@@ -33,8 +33,8 @@ const FALLBACK_POLLS: PollData[] = POLL_QUESTION_SEEDS.map((s) => ({
 
 const apiPollsToPollData = (polls: Poll[]): PollData[] =>
   polls.map((poll) => {
-    const yesVotes = poll.options.find((option) => option.label.toLowerCase() === "yes")?.votes ?? 0;
-    const noVotes = poll.options.find((option) => option.label.toLowerCase() === "no")?.votes ?? 0;
+    const yesVotes = poll.options.find((option) => option.text.toLowerCase() === "yes")?.votes ?? 0;
+    const noVotes = poll.options.find((option) => option.text.toLowerCase() === "no")?.votes ?? 0;
     const totalVotes = yesVotes + noVotes;
 
     return {
@@ -144,9 +144,10 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
     queryKey: ["landing-poll-showcase", "polls"],
     queryFn: async () => {
       const polls = await fetchSupabasePolls(5);
+      if (polls.length === 0) return null;
       return apiPollsToPollData(polls);
     },
-    retry: false,
+    retry: 1,
     staleTime: 1000 * 60 * 5,
   });
 
@@ -171,15 +172,9 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
 
   const handleAnswer = useCallback(
     (choice: "yes" | "no") => {
-      setAnswers((prev) => {
-        const next = { ...prev, [index]: choice };
-        if (Object.keys(next).length >= POLLS.length) {
-          window.setTimeout(closeShowcase, 350);
-        }
-        return next;
-      });
+      setAnswers((prev) => ({ ...prev, [index]: choice }));
     },
-    [POLLS.length, closeShowcase, index]
+    [index]
   );
 
   const handleDragEnd = useCallback(
@@ -201,15 +196,7 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
     [handleAnswer, x]
   );
 
-  if (!mounted || !open) return null;
-
-  const total = POLLS.length;
-  const canPrev = index > 0;
-  const canNext = index < total - 1;
-  const selected = answers[index];
   const currentPoll = POLLS[index];
-  const showComments = !!selected;
-  const allComments = currentPoll?.id ? [...dbComments, ...(extraComments[index] ?? [])] : extraComments[index] ?? [];
 
   useEffect(() => {
     if (!currentPoll?.id) {
@@ -234,6 +221,15 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
       isMounted = false;
     };
   }, [currentPoll?.id]);
+
+  if (!mounted || !open) return null;
+
+  const total = POLLS.length;
+  const canPrev = index > 0;
+  const canNext = index < total - 1;
+  const selected = answers[index];
+  const showComments = !!selected;
+  const allComments = currentPoll?.id ? [...dbComments, ...(extraComments[index] ?? [])] : extraComments[index] ?? [];
 
   const handleSubmitComment = async () => {
     const text = (commentInputs[index] ?? "").trim();

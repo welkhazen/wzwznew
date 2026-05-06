@@ -1,5 +1,4 @@
 import { Suspense, useMemo } from "react";
-import { GlareCard } from "@/components/ui/glare-card";
 import { ContainerTextFlipLazy } from "@/components/ui/container-text-flip.lazy";
 import {
   Target,
@@ -119,7 +118,6 @@ export function DashboardHome({
             const isActive = community.status === "active";
             return (
               <button key={community.id} onClick={() => onOpenCommunity(community.id)} className="text-left w-full">
-              <GlareCard>
                 <div className="flex flex-col rounded-2xl border border-raw-border/40 bg-raw-surface/40 h-full overflow-hidden">
                   <div className="relative h-32 shrink-0 overflow-hidden">
                     {coverVideo ? (
@@ -143,7 +141,6 @@ export function DashboardHome({
                     <p className="mt-2 text-xs text-raw-silver/40 leading-relaxed line-clamp-2">{community.description}</p>
                   </div>
                 </div>
-              </GlareCard>
               </button>
             );
           })}
