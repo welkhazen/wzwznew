@@ -26,16 +26,28 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
   const [pulseEffect, setPulseEffect] = useState<Record<number, boolean>>({});
   const [activeNodeId, setActiveNodeId] = useState<number | null>(null);
   const [isCompact, setIsCompact] = useState<boolean>(false);
+  const [isTinyPhone, setIsTinyPhone] = useState<boolean>(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const orbitRef = useRef<HTMLDivElement>(null);
   const nodeRefs = useRef<Record<number, HTMLDivElement | null>>({});
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia("(max-width: 640px)");
-    const syncCompact = () => setIsCompact(mediaQuery.matches);
+    const compactQuery = window.matchMedia("(max-width: 640px)");
+    const tinyPhoneQuery = window.matchMedia("(max-width: 380px)");
+
+    const syncCompact = () => setIsCompact(compactQuery.matches);
+    const syncTinyPhone = () => setIsTinyPhone(tinyPhoneQuery.matches);
+
     syncCompact();
-    mediaQuery.addEventListener("change", syncCompact);
-    return () => mediaQuery.removeEventListener("change", syncCompact);
+    syncTinyPhone();
+
+    compactQuery.addEventListener("change", syncCompact);
+    tinyPhoneQuery.addEventListener("change", syncTinyPhone);
+
+    return () => {
+      compactQuery.removeEventListener("change", syncCompact);
+      tinyPhoneQuery.removeEventListener("change", syncTinyPhone);
+    };
   }, []);
 
   const getRelatedItems = (itemId: number): number[] => {
@@ -98,7 +110,7 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
 
   const calculateNodePosition = (index: number, total: number) => {
     const angle = ((index / total) * 360 + rotationAngle) % 360;
-    const radius = isCompact ? 132 : 190;
+    const radius = isTinyPhone ? 106 : isCompact ? 132 : 190;
     const radian = (angle * Math.PI) / 180;
     const x = radius * Math.cos(radian);
     const y = radius * Math.sin(radian);
@@ -112,13 +124,13 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
     return getRelatedItems(activeNodeId).includes(itemId);
   };
 
-  const glowSize = isCompact ? 306 : 420;
-  const outerRingSize = isCompact ? 270 : 380;
-  const innerRingSize = isCompact ? 198 : 280;
+  const glowSize = isTinyPhone ? 252 : isCompact ? 306 : 420;
+  const outerRingSize = isTinyPhone ? 220 : isCompact ? 270 : 380;
+  const innerRingSize = isTinyPhone ? 160 : isCompact ? 198 : 280;
 
   return (
     <div
-      className={`relative w-full overflow-hidden ${isCompact ? "h-[470px]" : "h-[560px]"}`}
+      className={`relative w-full overflow-hidden ${isTinyPhone ? "h-[420px]" : isCompact ? "h-[470px]" : "h-[560px]"}`}
       ref={containerRef}
       onClick={handleContainerClick}
     >
@@ -209,7 +221,7 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
 
                 {/* Node icon circle */}
                 <div
-                  className={`h-10 w-10 rounded-full flex items-center justify-center transition-all duration-300 ${isPulsing ? "animate-pulse" : ""}`}
+                  className={`${isTinyPhone ? "h-9 w-9" : "h-10 w-10"} rounded-full flex items-center justify-center transition-all duration-300 ${isPulsing ? "animate-pulse" : ""}`}
                   style={{
                     background: isExpanded
                       ? "linear-gradient(135deg, #F1C42D, #d4a017)"
@@ -230,18 +242,19 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
                     color: isExpanded ? "#0a0a0a" : "rgba(241,196,45,0.8)",
                   }}
                 >
-                  <Icon size={16} />
+                  <Icon size={isTinyPhone ? 14 : 16} />
                 </div>
 
                 {/* Label */}
                 <div
                   className="absolute left-1/2 top-12 -translate-x-1/2 text-center font-display uppercase tracking-[0.1em] transition-all duration-300"
                   style={{
-                    maxWidth: isCompact ? 110 : 180,
+                    maxWidth: isTinyPhone ? 86 : isCompact ? 110 : 180,
                     whiteSpace: isCompact ? "normal" : "nowrap",
-                    fontSize: isCompact ? "0.496rem" : "0.62rem",
-                    lineHeight: isCompact ? 1.1 : 1.2,
-                    color: isExpanded ? "#F1C42D" : "rgba(241,196,45,0.75)",
+                    fontSize: isTinyPhone ? "0.56rem" : isCompact ? "0.496rem" : "0.62rem",
+                    lineHeight: isTinyPhone ? 1.2 : isCompact ? 1.1 : 1.2,
+                    fontWeight: isTinyPhone ? 800 : 700,
+                    color: isExpanded ? "#F1C42D" : "rgba(241,196,45,0.88)",
                     textShadow: isExpanded
                       ? "0 0 10px rgba(241,196,45,0.6), 0 0 22px rgba(241,196,45,0.3)"
                       : "0 0 8px rgba(241,196,45,0.25)",
