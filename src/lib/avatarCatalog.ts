@@ -208,7 +208,7 @@ export async function saveAvatarCatalog(items: AvatarCatalogItem[]): Promise<Ava
       level: item.level,
       name: item.name,
       price: item.price,
-      image_src: item.imageSrc ?? null,
+      image_src: item.imageSrc?.startsWith("data:") ? undefined : (item.imageSrc ?? null),
       bg: item.bg,
       figure: item.figure,
       ring: item.ring,
@@ -247,7 +247,9 @@ export async function saveAvatarCatalogSupabaseOnly(items: AvatarCatalogItem[]):
     level: item.level,
     name: item.name,
     price: item.price,
-    image_src: item.imageSrc ?? null,
+    // Skip base64 data URLs — they exceed Supabase statement timeout limits.
+    // undefined is omitted from JSON so existing DB value is preserved for existing rows.
+    image_src: item.imageSrc?.startsWith("data:") ? undefined : (item.imageSrc ?? null),
     bg: item.bg,
     figure: item.figure,
     ring: item.ring,

@@ -1524,8 +1524,6 @@ export default function Admin() {
       const usedIds = new Set(existing.map((item) => item.id));
       const nextFromSlice: AvatarCatalogItem[] = [];
       const nextForDailySpin: Array<{ id: string; name: string; imageSrc: string }> = [];
-      let usedDbImageFallback = false;
-
       for (let index = 0; index < acceptedSlicedAvatars.length; index += 1) {
         const item = acceptedSlicedAvatars[index];
         const safeId = getUniqueAvatarId(
@@ -1533,18 +1531,7 @@ export default function Admin() {
           usedIds
         );
         if (item.publishTarget === "daily-spin") {
-          let imageSrc: string;
-          try {
-            imageSrc = await uploadAvatarBlobToSupabase(item.blob, safeId, "daily-spin");
-          } catch (error) {
-            const message = error instanceof Error ? error.message.toLowerCase() : "";
-            if (message.includes("bucket not found")) {
-              imageSrc = await blobToDataUrl(item.blob);
-              usedDbImageFallback = true;
-            } else {
-              throw error;
-            }
-          }
+          const imageSrc = await uploadAvatarBlobToSupabase(item.blob, safeId, "daily-spin");
           nextForDailySpin.push({
             id: safeId,
             name: item.name.trim() || `Daily Spin ${index + 1}`,
@@ -1554,18 +1541,7 @@ export default function Admin() {
         }
 
         const theme = getAvatar(existing.length + index + 1);
-        let imageSrc: string;
-        try {
-          imageSrc = await uploadAvatarBlobToSupabase(item.blob, safeId, "level");
-        } catch (error) {
-          const message = error instanceof Error ? error.message.toLowerCase() : "";
-          if (message.includes("bucket not found")) {
-            imageSrc = await blobToDataUrl(item.blob);
-            usedDbImageFallback = true;
-          } else {
-            throw error;
-          }
-        }
+        const imageSrc = await uploadAvatarBlobToSupabase(item.blob, safeId, "level");
 
         nextFromSlice.push({
           id: safeId,
@@ -1599,12 +1575,6 @@ export default function Admin() {
         title: "Publish complete",
         description: `${nextFromSlice.length} to levels, ${nextForDailySpin.length} to daily spin pool.`,
       });
-      if (usedDbImageFallback) {
-        toast({
-          title: "Storage bucket missing",
-          description: "Saved images in Supabase DB as a fallback. Create bucket 'avatars' to store files in Supabase Storage.",
-        });
-      }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Try again after slicing.";
       toast({ title: "Could not publish avatars", description: message });
