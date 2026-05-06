@@ -203,23 +203,22 @@ export async function saveAvatarCatalog(items: AvatarCatalogItem[]): Promise<Ava
   }
 
   try {
-    const rows = next.map((item) => ({
-      id: item.id,
-      level: item.level,
-      name: item.name,
-      price: item.price,
-      image_src: item.imageSrc?.startsWith("data:") ? undefined : (item.imageSrc ?? null),
-      bg: item.bg,
-      figure: item.figure,
-      ring: item.ring,
-      glow: item.glow,
-      is_active: true,
-    }));
+    const baseRow = (item: AvatarCatalogItem) => ({
+      id: item.id, level: item.level, name: item.name, price: item.price,
+      bg: item.bg, figure: item.figure, ring: item.ring, glow: item.glow, is_active: true,
+    });
+    const withImage = next.filter((i) => i.imageSrc && !i.imageSrc.startsWith("data:"))
+      .map((i) => ({ ...baseRow(i), image_src: i.imageSrc! }));
+    const withoutImage = next.filter((i) => !i.imageSrc || i.imageSrc.startsWith("data:"))
+      .map((i) => baseRow(i));
 
-    const { error: upsertError } = await supabase.from("avatar_catalog").upsert(rows, { onConflict: "id" });
-    if (upsertError) {
-      markBackendMissingIfNeeded(upsertError);
-      return next;
+    if (withImage.length > 0) {
+      const { error } = await supabase.from("avatar_catalog").upsert(withImage, { onConflict: "id" });
+      if (error) { markBackendMissingIfNeeded(error); return next; }
+    }
+    if (withoutImage.length > 0) {
+      const { error } = await supabase.from("avatar_catalog").upsert(withoutImage, { onConflict: "id" });
+      if (error) { markBackendMissingIfNeeded(error); return next; }
     }
 
     const currentIds = new Set(next.map((item) => item.id));
@@ -242,24 +241,26 @@ export async function saveAvatarCatalog(items: AvatarCatalogItem[]): Promise<Ava
 
 export async function saveAvatarCatalogSupabaseOnly(items: AvatarCatalogItem[]): Promise<AvatarCatalogItem[]> {
   const next = sanitizeCatalog(items);
-  const rows = next.map((item) => ({
-    id: item.id,
-    level: item.level,
-    name: item.name,
-    price: item.price,
-    // Skip base64 data URLs — they exceed Supabase statement timeout limits.
-    // undefined is omitted from JSON so existing DB value is preserved for existing rows.
-    image_src: item.imageSrc?.startsWith("data:") ? undefined : (item.imageSrc ?? null),
-    bg: item.bg,
-    figure: item.figure,
-    ring: item.ring,
-    glow: item.glow,
-    is_active: true,
-  }));
+  const baseRow = (item: AvatarCatalogItem) => ({
+    id: item.id, level: item.level, name: item.name, price: item.price,
+    bg: item.bg, figure: item.figure, ring: item.ring, glow: item.glow, is_active: true,
+  });
+  // Split into two batches: rows with a real image URL vs rows without (or with legacy base64).
+  // PostgREST requires all rows in a batch to share the same column set, and base64 data URLs
+  // would exceed the statement timeout, so we keep image_src out of the second batch entirely
+  // (PostgREST then leaves the existing DB value untouched on conflict).
+  const withImage = next.filter((i) => i.imageSrc && !i.imageSrc.startsWith("data:"))
+    .map((i) => ({ ...baseRow(i), image_src: i.imageSrc! }));
+  const withoutImage = next.filter((i) => !i.imageSrc || i.imageSrc.startsWith("data:"))
+    .map((i) => baseRow(i));
 
-  const { error: upsertError } = await supabase.from("avatar_catalog").upsert(rows, { onConflict: "id" });
-  if (upsertError) {
-    throw new Error(upsertError.message || "Could not save avatar catalog to Supabase.");
+  if (withImage.length > 0) {
+    const { error } = await supabase.from("avatar_catalog").upsert(withImage, { onConflict: "id" });
+    if (error) throw new Error(error.message || "Could not save avatar catalog to Supabase.");
+  }
+  if (withoutImage.length > 0) {
+    const { error } = await supabase.from("avatar_catalog").upsert(withoutImage, { onConflict: "id" });
+    if (error) throw new Error(error.message || "Could not save avatar catalog to Supabase.");
   }
 
   const currentIds = new Set(next.map((item) => item.id));
