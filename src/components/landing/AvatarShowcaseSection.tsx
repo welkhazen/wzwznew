@@ -176,7 +176,11 @@ export function AvatarShowcaseSection() {
       id="avatar"
       sectionRef={sectionRef as React.Ref<HTMLElement>}
       title="Your avatar is your identity"
-      description="Tap any avatar to preview how it appears on the phone."
+      description="On raW, your username is your constant identity.
+
+Your avatar is your evolving identity.
+
+Just like in real life, every person is born with a name, an appearance, and an inner personality. On raW, your username is your name, your avatar is your appearance, and your answers, choices, and interactions reveal the deeper personality behind it."
     >
       <div className="mx-auto flex w-full max-w-4xl flex-col items-center gap-8">
         <PhoneMockup className="w-full max-w-[360px]" showStatusBar={false}>
