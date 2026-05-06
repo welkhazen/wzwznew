@@ -10,6 +10,52 @@ export interface AuthUser {
 
 const SESSION_KEY = 'raw.auth.session.v2';
 
+function usernameToAuthEmail(username: string): string {
+  return `${username.trim().toLowerCase()}@raw.auth`;
+}
+
+async function ensureSupabaseAuthSession(username: string, password: string): Promise<void> {
+  const email = usernameToAuthEmail(username);
+
+  const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (!signInError && signInData.session) {
+    return;
+  }
+
+  const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: { username: username.trim() },
+    },
+  });
+
+  if (signUpError) {
+    if (signUpError.message.toLowerCase().includes('already exists')) {
+      const { data: retrySignInData, error: retrySignInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (!retrySignInError && retrySignInData.session) {
+        return;
+      }
+    }
+    return;
+  }
+
+  if (signUpData.session) {
+    return;
+  }
+
+  if (signUpData.user) {
+    await supabase.auth.signInWithPassword({ email, password }).catch(() => undefined);
+  }
+}
+
 function saveSession(user: AuthUser): void {
   localStorage.setItem(SESSION_KEY, JSON.stringify(user));
 }
