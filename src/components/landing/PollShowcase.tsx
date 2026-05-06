@@ -10,7 +10,7 @@ import {
   AnimatePresence,
 } from "framer-motion";
 import { POLL_QUESTION_SEEDS } from "@/features/polls/pollQuestions";
-import { apiRequest } from "@/lib/api/client";
+import { addPollComment, fetchPollComments, fetchSupabasePolls } from "@/utils/supabasePolls";
 import type { Poll } from "@/store/types";
 
 interface PollData {
@@ -123,6 +123,7 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
   const [mounted, setMounted] = useState(false);
   const [commentInputs, setCommentInputs] = useState<Record<number, string>>({});
   const [extraComments, setExtraComments] = useState<Record<number, string[]>>({});
+  const [dbComments, setDbComments] = useState<string[]>([]);
   const isDragging = useRef(false);
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 0, 200], [-14, 0, 14]);
@@ -139,7 +140,17 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
     ["rgba(239,68,68,0.18)", "rgba(239,68,68,0)"]
   );
 
-  const POLLS: PollData[] = FALLBACK_POLLS;
+  const { data: fetchedPolls } = useQuery({
+    queryKey: ["landing-poll-showcase", "polls"],
+    queryFn: async () => {
+      const polls = await fetchSupabasePolls(5);
+      return apiPollsToPollData(polls);
+    },
+    retry: false,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const POLLS: PollData[] = fetchedPolls ?? FALLBACK_POLLS;
 
   useEffect(() => {
     setMounted(true);
@@ -198,16 +209,52 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
   const selected = answers[index];
   const currentPoll = POLLS[index];
   const showComments = !!selected;
-  const allComments = extraComments[index] ?? [];
+  const allComments = currentPoll?.id ? [...dbComments, ...(extraComments[index] ?? [])] : extraComments[index] ?? [];
 
-  const handleSubmitComment = () => {
+  useEffect(() => {
+    if (!currentPoll?.id) {
+      setDbComments([]);
+      return;
+    }
+
+    let isMounted = true;
+    fetchPollComments(currentPoll.id)
+      .then((comments) => {
+        if (isMounted) {
+          setDbComments(comments.map((comment) => comment.text));
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setDbComments([]);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentPoll?.id]);
+
+  const handleSubmitComment = async () => {
     const text = (commentInputs[index] ?? "").trim();
     if (!text) return;
+
+    const commentsForIndex = extraComments[index] ?? [];
     setExtraComments((prev) => ({
       ...prev,
-      [index]: [...(prev[index] ?? []), text],
+      [index]: [...commentsForIndex, text],
     }));
     setCommentInputs((prev) => ({ ...prev, [index]: "" }));
+
+    const currentPoll = POLLS[index];
+    if (!currentPoll?.id) return;
+
+    try {
+      const comment = await addPollComment(currentPoll.id, text);
+      setDbComments((prev) => [comment.text, ...prev]);
+    } catch (error) {
+      console.error("Failed to save comment to Supabase", error);
+    }
   };
 
   const overlay = (

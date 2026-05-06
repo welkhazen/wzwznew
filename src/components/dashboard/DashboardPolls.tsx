@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { Poll } from "@/store/useRawStore";
 import { useTheme } from "@/providers/useTheme";
 import { PremiumPollCard } from "@/components/polls/PremiumPollCard";
+import { addPollComment, fetchPollComments } from "@/utils/supabasePolls";
 import { isNoPollOption, isYesPollOption } from "@/lib/polls/normalizePollOptionText";
 import {
   BarChart3,
@@ -175,6 +176,38 @@ export function DashboardPolls({
         options: polls[currentPollIndex].options.slice(0, 2),
       }
     : undefined;
+
+  useEffect(() => {
+    if (!currentPoll?.id) {
+      return;
+    }
+
+    let isMounted = true;
+    fetchPollComments(currentPoll.id)
+      .then((comments) => {
+        if (!isMounted) return;
+        setHistoryComments((previous) => ({
+          ...previous,
+          [currentPoll.id]: comments.map((comment) => ({
+            id: comment.id,
+            author: "Anonymous",
+            content: comment.text,
+            createdAt: new Date(comment.created_at).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+          })),
+        }));
+      })
+      .catch(() => {
+        // leave existing comments in place if fetch fails
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentPoll?.id, username]);
+
   const selectedOptionId = currentPoll ? answerHistory[currentPoll.id] : undefined;
   const hasVotedCurrent = Boolean(selectedOptionId);
   const currentComments = currentPoll ? historyComments[currentPoll.id] ?? [] : [];
@@ -270,7 +303,7 @@ export function DashboardPolls({
     }
   };
 
-  const handleCommentAdd = () => {
+  const handleCommentAdd = async () => {
     if (!currentPoll) return;
 
     const content = commentDraft.trim();
@@ -289,6 +322,12 @@ export function DashboardPolls({
     }));
 
     setCommentDraft("");
+
+    try {
+      await addPollComment(currentPoll.id, content);
+    } catch (error) {
+      console.error("Failed to save dashboard comment to Supabase", error);
+    }
   };
 
   const handleCommentKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {

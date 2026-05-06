@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/api/client";
+import { fetchSupabasePolls, submitPollVote } from "@/utils/supabasePolls";
 import { track } from "@/lib/analytics";
 import type { Poll } from "@/store/types";
 import { getTodayKey } from "@/store/useRawStore.storage";
@@ -20,38 +20,14 @@ const INITIAL_POLLS: Poll[] = POLL_QUESTION_SEEDS.map((poll, index) => ({
 
 async function fetchPollsWithFallback(): Promise<Poll[]> {
   try {
-    const response = await apiRequest<{ polls: Poll[] }>("/api/polls/random?limit=10");
-    if (response.polls && response.polls.length > 0) return response.polls;
-  } catch {
-    // fall through to Supabase direct
-  }
-  // Supabase direct fallback
-  try {
-    const { supabase } = await import("@/backend/supabase/client");
-    const { data, error } = await supabase
-      .from("polls")
-      .select("id, question, status, poll_options(id, label, position)")
-      .order("created_at", { ascending: false })
-      .limit(10);
-    if (!error && data && data.length > 0) {
-      const polls: Poll[] = data
-        .map((row) => {
-          const opts = [...((row.poll_options as { id: string; label: string; position: number }[]) ?? [])].sort(
-            (a, b) => a.position - b.position
-          );
-          return {
-            id: row.id as string,
-            question: row.question as string,
-            options: opts.map((o) => ({ id: o.id, text: o.label, votes: 0 })),
-            locked: row.status === "locked",
-          };
-        })
-        .filter((p) => p.question && p.question.trim().length > 5 && p.options.length >= 2 && !p.locked);
-      if (polls.length > 0) return polls;
+    const polls = await fetchSupabasePolls(10);
+    if (polls.length > 0) {
+      return polls;
     }
   } catch {
     // fall through to seeds
   }
+
   return INITIAL_POLLS;
 }
 
@@ -72,10 +48,7 @@ export function usePolls(isLoggedIn: boolean) {
 
   const voteMutation = useMutation({
     mutationFn: async ({ pollId, optionId }: { pollId: string; optionId: string }) => {
-      await apiRequest<{ ok: boolean }>(`/api/polls/${pollId}/vote`, {
-        method: "POST",
-        body: JSON.stringify({ optionId }),
-      });
+      await submitPollVote(pollId, optionId);
       return { pollId, optionId };
     },
     onSuccess: ({ pollId, optionId }) => {

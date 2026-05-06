@@ -443,6 +443,10 @@ export function OnboardingJourney({
                               ...prev,
                               [currentPoll.id]: [...(prev[currentPoll.id] || []), newComment],
                             }));
+
+                            addPollComment(currentPoll.id, content).catch((error) => {
+                              console.error("Failed to save onboarding comment to Supabase", error);
+                            });
                           }}
                         />
                       </div>
