@@ -8,10 +8,7 @@ import {
   animate,
   AnimatePresence,
 } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/api/client";
 import { POLL_QUESTION_SEEDS } from "@/features/polls/pollQuestions";
-import type { Poll } from "@/store/types";
 
 interface PollData {
   id?: string;
@@ -20,26 +17,16 @@ interface PollData {
   noPercent: number;
 }
 
+interface PollShowcaseProps {
+  initialOpen?: boolean;
+  onResolved?: () => void;
+}
+
 const FALLBACK_POLLS: PollData[] = POLL_QUESTION_SEEDS.map((s) => ({
   question: s.question,
   yesPercent: Math.round((s.yesVotes / (s.yesVotes + s.noVotes)) * 100),
   noPercent: Math.round((s.noVotes / (s.yesVotes + s.noVotes)) * 100),
 }));
-
-function apiPollsToPollData(polls: Poll[]): PollData[] {
-  return polls.slice(0, 3).map((p) => {
-    const yes = p.options.find((o) => o.text.toLowerCase() === "yes");
-    const no = p.options.find((o) => o.text.toLowerCase() === "no");
-    const total = (yes?.votes ?? 0) + (no?.votes ?? 0);
-    const yesPercent = total > 0 ? Math.round(((yes?.votes ?? 0) / total) * 100) : 50;
-    return {
-      id: p.id,
-      question: p.question,
-      yesPercent,
-      noPercent: 100 - yesPercent,
-    };
-  });
-}
 
 function GoldIcosahedron({ className = "" }: { className?: string }) {
   return (
@@ -112,10 +99,10 @@ const COMMENT_CLIP =
 const SWIPE_THRESHOLD = 80;
 const VELOCITY_THRESHOLD = 400;
 
-export function PollShowcase() {
+export function PollShowcase({ initialOpen = true, onResolved }: PollShowcaseProps) {
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, "yes" | "no">>({});
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(initialOpen);
   const [mounted, setMounted] = useState(false);
   const [commentInputs, setCommentInputs] = useState<Record<number, string>>({});
   const [extraComments, setExtraComments] = useState<Record<number, string[]>>({});
@@ -168,6 +155,11 @@ export function PollShowcase() {
     return () => window.removeEventListener("open-poll-showcase", handler);
   }, []);
 
+  const closeShowcase = useCallback(() => {
+    setOpen(false);
+    onResolved?.();
+  }, [onResolved]);
+
   // Reset card position whenever the poll changes
   useEffect(() => {
     x.set(0);
@@ -175,9 +167,15 @@ export function PollShowcase() {
 
   const handleAnswer = useCallback(
     (choice: "yes" | "no") => {
-      setAnswers((prev) => ({ ...prev, [index]: choice }));
+      setAnswers((prev) => {
+        const next = { ...prev, [index]: choice };
+        if (Object.keys(next).length >= POLLS.length) {
+          window.setTimeout(closeShowcase, 350);
+        }
+        return next;
+      });
     },
-    [index]
+    [POLLS.length, closeShowcase, index]
   );
 
   const handleDragEnd = useCallback(
@@ -234,12 +232,12 @@ export function PollShowcase() {
           "radial-gradient(circle at 1px 1px, rgba(217,217,217,0.06) 1px, transparent 0)",
         backgroundSize: "14px 14px",
       }}
-      onClick={() => setOpen(false)}
+      onClick={closeShowcase}
     >
       <div className="relative w-full max-w-md" onClick={(event) => event.stopPropagation()}>
         <button
           type="button"
-          onClick={() => setOpen(false)}
+          onClick={closeShowcase}
           aria-label="Close poll preview"
           className="absolute -top-12 right-0 flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-black/70 text-white/70 transition hover:bg-white/10 hover:text-white"
         >

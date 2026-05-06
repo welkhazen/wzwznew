@@ -208,6 +208,73 @@
     0 0 24px rgba(var(--raw-accent) / 0.35);
 }
 
+.raw-logo-ra {
+  color: hsl(var(--foreground));
+  background: none !important;
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
+  -webkit-text-fill-color: currentColor;
+  -webkit-text-stroke: 0.015em hsl(var(--foreground) / 0.24);
+  paint-order: stroke fill;
+  filter: drop-shadow(0 0 16px hsl(var(--foreground) / 0.24));
+  text-shadow:
+    1px 1px 0 color-mix(in srgb, hsl(var(--foreground)) 72%, hsl(var(--background))),
+    2px 2px 0 color-mix(in srgb, hsl(var(--foreground)) 44%, hsl(var(--background))),
+    3px 3px 0 hsl(var(--background) / 0.62),
+    7px 9px 14px rgba(0, 0, 0, 0.62),
+    0 0 20px hsl(var(--foreground) / 0.28);
+}
+
+.raw-logo-w {
+  color: hsl(var(--primary));
+  background: none !important;
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
+  -webkit-text-fill-color: currentColor;
+  -webkit-text-stroke: 0.018em hsl(var(--primary) / 0.42);
+  paint-order: stroke fill;
+  filter: drop-shadow(0 0 18px hsl(var(--primary) / 0.46));
+  text-shadow:
+    1px 1px 0 color-mix(in srgb, hsl(var(--primary)) 78%, black),
+    2px 2px 0 color-mix(in srgb, hsl(var(--primary)) 60%, black),
+    3px 3px 0 color-mix(in srgb, hsl(var(--primary)) 45%, black),
+    5px 5px 0 rgba(0, 0, 0, 0.56),
+    10px 11px 18px rgba(0, 0, 0, 0.66),
+    0 0 26px hsl(var(--primary) / 0.62),
+    0 0 48px hsl(var(--primary) / 0.32);
+}
+
+html.theme-light .raw-logo-ra {
+  -webkit-text-stroke-color: hsl(var(--foreground) / 0.2);
+  filter: drop-shadow(0 0 12px hsl(var(--foreground) / 0.12));
+  text-shadow:
+    1px 1px 0 color-mix(in srgb, hsl(var(--foreground)) 55%, hsl(var(--background))),
+    2px 2px 0 color-mix(in srgb, hsl(var(--foreground)) 34%, hsl(var(--background))),
+    4px 5px 10px hsl(var(--foreground) / 0.18);
+}
+
+html.theme-light .raw-logo-w {
+  -webkit-text-stroke-color: hsl(var(--primary) / 0.38);
+  filter: drop-shadow(0 0 14px hsl(var(--primary) / 0.34));
+  text-shadow:
+    1px 1px 0 color-mix(in srgb, hsl(var(--primary)) 78%, black),
+    2px 2px 0 color-mix(in srgb, hsl(var(--primary)) 62%, black),
+    5px 6px 12px rgba(0, 0, 0, 0.3),
+    0 0 24px hsl(var(--primary) / 0.4);
+}
+
+@supports not (-webkit-background-clip: text) {
+  .raw-logo-ra {
+    color: rgb(var(--raw-text));
+    -webkit-text-fill-color: currentColor;
+  }
+
+  .raw-logo-w {
+    color: hsl(var(--primary));
+    -webkit-text-fill-color: currentColor;
+  }
+}
+
 .landing-heading {
   font-family: Michroma, sans-serif;
   font-size: 1.875rem;
