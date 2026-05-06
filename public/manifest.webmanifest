@@ -1,0 +1,17 @@
+{
+  "name": "raW",
+  "short_name": "raW",
+  "description": "Answer anonymously. Join the right 24/7 communities. Build your avatar identity.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#0a0a0a",
+  "icons": [
+    {
+      "src": "/raw-logo-96.png",
+      "sizes": "96x96",
+      "type": "image/png"
+    }
+  ]
+}

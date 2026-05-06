@@ -90,11 +90,11 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
     let rotationTimer: NodeJS.Timeout;
     if (autoRotate) {
       rotationTimer = setInterval(() => {
-        setRotationAngle((prev) => Number(((prev + 0.25) % 360).toFixed(3)));
+        setRotationAngle((prev) => Number(((prev + (isCompact ? 0.15 : 0.25)) % 360).toFixed(3)));
       }, 50);
     }
     return () => { if (rotationTimer) clearInterval(rotationTimer); };
-  }, [autoRotate]);
+  }, [autoRotate, isCompact]);
 
   const calculateNodePosition = (index: number, total: number) => {
     const angle = ((index / total) * 360 + rotationAngle) % 360;
@@ -112,9 +112,9 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
     return getRelatedItems(activeNodeId).includes(itemId);
   };
 
-  const glowSize = isCompact ? 340 : 420;
-  const outerRingSize = isCompact ? 300 : 380;
-  const innerRingSize = isCompact ? 220 : 280;
+  const glowSize = isCompact ? 306 : 420;
+  const outerRingSize = isCompact ? 270 : 380;
+  const innerRingSize = isCompact ? 198 : 280;
 
   return (
     <div
@@ -163,16 +163,16 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
           />
 
           {/* Center orb */}
-          <div className="absolute z-10 flex h-[120px] w-[120px] items-center justify-center">
+          <div className={`absolute z-10 flex items-center justify-center ${isCompact ? "h-[84px] w-[84px]" : "h-[120px] w-[120px]"}`}>
             {/* Ping rings */}
-            <div className="absolute h-[140px] w-[140px] animate-ping rounded-full"
+            <div className={`absolute animate-ping rounded-full ${isCompact ? "h-[108px] w-[108px]" : "h-[140px] w-[140px]"}`}
               style={{ border: "1px solid rgba(241,196,45,0.2)", animationDuration: "2.5s" }} />
-            <div className="absolute h-[165px] w-[165px] animate-ping rounded-full"
+            <div className={`absolute animate-ping rounded-full ${isCompact ? "h-[126px] w-[126px]" : "h-[165px] w-[165px]"}`}
               style={{ border: "1px solid rgba(241,196,45,0.1)", animationDuration: "2.5s", animationDelay: "0.8s" }} />
             <img
               src="/raw-logo-96.png"
               alt="raW"
-              className="h-[120px] w-[120px] object-contain drop-shadow-[0_0_20px_rgba(241,196,45,0.4)]"
+              className={`object-contain drop-shadow-[0_0_20px_rgba(241,196,45,0.4)] ${isCompact ? "h-[84px] w-[84px]" : "h-[120px] w-[120px]"}`}
               style={{ animation: "logoFlip 3s ease-in-out infinite" }}
             />
           </div>
@@ -235,11 +235,12 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
 
                 {/* Label */}
                 <div
-                  className="absolute left-1/2 top-12 -translate-x-1/2 text-center font-display text-[0.62rem] uppercase tracking-[0.1em] transition-all duration-300"
+                  className="absolute left-1/2 top-12 -translate-x-1/2 text-center font-display uppercase tracking-[0.1em] transition-all duration-300"
                   style={{
                     maxWidth: isCompact ? 110 : 180,
                     whiteSpace: isCompact ? "normal" : "nowrap",
-                    lineHeight: isCompact ? 1.15 : 1.2,
+                    fontSize: isCompact ? "0.496rem" : "0.62rem",
+                    lineHeight: isCompact ? 1.1 : 1.2,
                     color: isExpanded ? "#F1C42D" : "rgba(241,196,45,0.75)",
                     textShadow: isExpanded
                       ? "0 0 10px rgba(241,196,45,0.6), 0 0 22px rgba(241,196,45,0.3)"

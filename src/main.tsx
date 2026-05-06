@@ -22,6 +22,15 @@ if (typeof window !== "undefined" && import.meta.env.DEV) {
   }
 }
 
+
+if ("serviceWorker" in navigator && import.meta.env.PROD) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch(() => {
+      // no-op: app works without offline caching if registration fails.
+    });
+  });
+}
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ErrorBoundary>
