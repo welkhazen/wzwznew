@@ -163,32 +163,37 @@
   background-clip: text;
 }
 
-/* Brand mark "ra" should match foreground text in both themes */
+/* Chrome silver metallic — for "ra" in brand mark */
 .raw-chrome-metallic {
-  color: hsl(var(--foreground));
-  background: none;
-  -webkit-text-fill-color: currentColor;
-  -webkit-background-clip: border-box;
-  background-clip: border-box;
-  -webkit-text-stroke: 0.014em hsl(var(--foreground) / 0.24);
-  text-shadow:
-    0 0 10px hsl(var(--foreground) / 0.16),
-    1px 1px 0 hsl(var(--background) / 0.32);
+  background: linear-gradient(
+    160deg,
+    #ffffff  0%,
+    #c0c0c0 18%,
+    #f4f4f4 34%,
+    #707070 52%,
+    #d8d8d8 68%,
+    #a4a4a4 84%,
+    #f2f2f2 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-/* Brand mark "W": primary front face + primary depth, chrome silver outline */
+/* 3D outlined W — silver chrome fill + thick accent border + gold depth shadows */
 .raw-chrome-w-3d {
-  color: hsl(var(--primary));
-  -webkit-text-fill-color: currentColor;
-  -webkit-text-stroke: 0.06em rgb(var(--raw-silver) / 0.92);
+  color: #e0e0e0;
+  -webkit-text-stroke: 4px rgb(var(--raw-accent));
   paint-order: stroke fill;
   text-shadow:
-    1px 1px 0 color-mix(in srgb, hsl(var(--primary)) 85%, black),
-    2px 2px 0 color-mix(in srgb, hsl(var(--primary)) 72%, black),
-    3px 3px 0 color-mix(in srgb, hsl(var(--primary)) 58%, black),
-    4px 4px 0 color-mix(in srgb, hsl(var(--primary)) 48%, black),
-    6px 6px 10px rgba(0, 0, 0, 0.55),
-    0 0 16px hsl(var(--primary) / 0.38);
+    1px  1px 0   rgb(210, 158,   0),
+    2px  2px 0   rgb(188, 138,   0),
+    3px  3px 0   rgb(162, 115,   0),
+    4px  4px 0   rgb(130,  88,   0),
+    5px  5px 0   rgb( 95,  60,   0),
+    6px  6px 0   rgb( 58,  34,   0),
+    9px  9px 14px rgba(0,   0,   0, 0.65);
+  filter: drop-shadow(0 0 18px rgba(241, 196, 45, 0.4));
 }
 
 .raw-filled {
@@ -269,6 +274,30 @@ html.theme-light .raw-logo-w {
     -webkit-text-fill-color: currentColor;
   }
 }
+
+.landing-heading {
+  font-family: Michroma, sans-serif;
+  font-size: 1.875rem;
+  line-height: 1.05;
+  letter-spacing: 0.08em;
+  color: rgb(var(--raw-accent));
+  text-transform: none;
+}
+
+@media (min-width: 640px) {
+  .landing-heading {
+    font-size: 2.25rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .landing-heading {
+    font-size: 3rem;
+  }
+}
+
+/* Subtle animated gradient border */
+@keyframes gradient-shift {
 
 .landing-heading {
   font-family: Michroma, sans-serif;
