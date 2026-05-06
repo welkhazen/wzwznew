@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, X, Send } from "lucide-react";
 import {
   motion,
@@ -9,6 +10,8 @@ import {
   AnimatePresence,
 } from "framer-motion";
 import { POLL_QUESTION_SEEDS } from "@/features/polls/pollQuestions";
+import { apiRequest } from "@/lib/api/client";
+import type { Poll } from "@/store/types";
 
 interface PollData {
   id?: string;
@@ -27,6 +30,20 @@ const FALLBACK_POLLS: PollData[] = POLL_QUESTION_SEEDS.map((s) => ({
   yesPercent: Math.round((s.yesVotes / (s.yesVotes + s.noVotes)) * 100),
   noPercent: Math.round((s.noVotes / (s.yesVotes + s.noVotes)) * 100),
 }));
+
+const apiPollsToPollData = (polls: Poll[]): PollData[] =>
+  polls.map((poll) => {
+    const yesVotes = poll.options.find((option) => option.label.toLowerCase() === "yes")?.votes ?? 0;
+    const noVotes = poll.options.find((option) => option.label.toLowerCase() === "no")?.votes ?? 0;
+    const totalVotes = yesVotes + noVotes;
+
+    return {
+      id: poll.id,
+      question: poll.question,
+      yesPercent: totalVotes > 0 ? Math.round((yesVotes / totalVotes) * 100) : 50,
+      noPercent: totalVotes > 0 ? Math.round((noVotes / totalVotes) * 100) : 50,
+    };
+  });
 
 function GoldIcosahedron({ className = "" }: { className?: string }) {
   return (
@@ -121,7 +138,32 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
     [-120, 0],
     ["rgba(239,68,68,0.18)", "rgba(239,68,68,0)"]
   );
+
   const POLLS: PollData[] = FALLBACK_POLLS;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   useEffect(() => {
     setMounted(true);
@@ -182,6 +224,7 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
   const showComments = !!selected;
   const allComments = extraComments[index] ?? [];
 
+
   const handleSubmitComment = () => {
     const text = (commentInputs[index] ?? "").trim();
     if (!text) return;
@@ -190,6 +233,12 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
       [index]: [...(prev[index] ?? []), text],
     }));
     setCommentInputs((prev) => ({ ...prev, [index]: "" }));
+
+
+
+
+
+
   };
 
   const overlay = (
