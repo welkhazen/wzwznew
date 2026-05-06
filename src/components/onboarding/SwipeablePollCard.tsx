@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, SendHorizontal } from "lucide-react";
 import { PremiumPollCard } from "@/components/polls/PremiumPollCard";
 import type { Comment } from "./PollComments";
+import { isNoPollOption, isYesPollOption } from "@/lib/polls/normalizePollOptionText";
 
 interface SwipeablePollCardProps {
   id: string;
@@ -22,9 +23,9 @@ interface SwipeablePollCardProps {
 }
 
 function resolveOptions(options: string[]) {
-  const yesOption = options.find((option) => option.trim().toLowerCase() === "yes") ?? options[0];
+  const yesOption = options.find((option) => isYesPollOption(option)) ?? options[0];
   const noOption =
-    options.find((option) => option.trim().toLowerCase() === "no") ??
+    options.find((option) => isNoPollOption(option)) ??
     options.find((option) => option !== yesOption) ??
     yesOption;
 

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { Poll } from "@/store/useRawStore";
 import { useTheme } from "@/providers/useTheme";
 import { PremiumPollCard } from "@/components/polls/PremiumPollCard";
+import { isNoPollOption, isYesPollOption } from "@/lib/polls/normalizePollOptionText";
 import {
   BarChart3,
   BookOpen,
@@ -74,9 +75,9 @@ interface DashboardPollsProps {
 }
 
 function resolveYesNoOptions(poll: Poll) {
-  const yesOption = poll.options.find((option) => option.text.trim().toLowerCase() === "yes") ?? poll.options[0];
+  const yesOption = poll.options.find((option) => isYesPollOption(option.text)) ?? poll.options[0];
   const noOption =
-    poll.options.find((option) => option.text.trim().toLowerCase() === "no") ??
+    poll.options.find((option) => isNoPollOption(option.text)) ??
     poll.options.find((option) => option.id !== yesOption?.id) ??
     yesOption;
 
