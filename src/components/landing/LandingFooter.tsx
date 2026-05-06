@@ -35,6 +35,7 @@ export function LandingFooter() {
               </li>
               <li><a href="/#poll-benefits" className="text-xs text-raw-silver/55 transition hover:text-raw-gold">Poll Benefits</a></li>
               <li><a href="/#polls" className="text-xs text-raw-silver/55 transition hover:text-raw-gold">Communities</a></li>
+              <li><a href="/pitch" className="text-xs text-raw-silver/55 transition hover:text-raw-gold">Investor Deck</a></li>
             </ul>
           </div>
 

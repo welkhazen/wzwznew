@@ -16,6 +16,9 @@ const AskAI = lazy(() => import("./pages/AskAI"));
 const Security = lazy(() => import("./pages/Security"));
 const Terms = lazy(() => import("./pages/Terms"));
 const Privacy = lazy(() => import("./pages/Privacy"));
+const PitchSelector = lazy(() => import("./pages/PitchSelector"));
+const PitchV1 = lazy(() => import("./pages/PitchV1"));
+const PitchV2 = lazy(() => import("./pages/PitchV2"));
 const TestPollOnboarding = import.meta.env.DEV
   ? lazy(() => import("./pages/_TestPollOnboarding"))
   : null;
@@ -41,6 +44,9 @@ const App = () => (
                 <Route path="/security" element={<Security />} />
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/privacy" element={<Privacy />} />
+                <Route path="/pitch" element={<PitchSelector />} />
+                <Route path="/pitch-v1" element={<PitchV1 />} />
+                <Route path="/pitch-v2" element={<PitchV2 />} />
                 {TestPollOnboarding && (
                   <Route path="/__test/poll-onboarding" element={<TestPollOnboarding />} />
                 )}
