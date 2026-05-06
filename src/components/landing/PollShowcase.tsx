@@ -139,31 +139,7 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
     ["rgba(239,68,68,0.18)", "rgba(239,68,68,0)"]
   );
 
-  const pollsQuery = useQuery({
-    queryKey: ["polls", "showcase"],
-    retry: false,
-    queryFn: async (): Promise<Poll[]> => {
-      const res = await apiRequest<{ polls: Poll[] }>("/api/polls/random?limit=3");
-      return res.polls;
-    },
-  });
-
-  const POLLS: PollData[] =
-    pollsQuery.data && pollsQuery.data.length > 0
-      ? apiPollsToPollData(pollsQuery.data)
-      : FALLBACK_POLLS;
-
-  const poll = POLLS[index] as PollData | undefined;
-
-  const commentsQuery = useQuery({
-    queryKey: ["poll-comments", poll?.id],
-    enabled: !!poll?.id,
-    retry: false,
-    queryFn: async () => {
-      const res = await apiRequest<{ comments: string[] }>(`/api/polls/${poll!.id}/comments`);
-      return res.comments;
-    },
-  });
+  const POLLS: PollData[] = FALLBACK_POLLS;
 
   useEffect(() => {
     setMounted(true);
@@ -222,8 +198,7 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
   const selected = answers[index];
   const currentPoll = POLLS[index];
   const showComments = !!selected;
-  const backendComments = commentsQuery.data ?? [];
-  const allComments = [...backendComments, ...(extraComments[index] ?? [])];
+  const allComments = extraComments[index] ?? [];
 
   const handleSubmitComment = () => {
     const text = (commentInputs[index] ?? "").trim();
@@ -233,12 +208,6 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
       [index]: [...(prev[index] ?? []), text],
     }));
     setCommentInputs((prev) => ({ ...prev, [index]: "" }));
-    if (currentPoll?.id) {
-      apiRequest(`/api/polls/${currentPoll.id}/comments`, {
-        method: "POST",
-        body: JSON.stringify({ text }),
-      }).catch(() => {/* optimistic — already added locally */});
-    }
   };
 
   const overlay = (
