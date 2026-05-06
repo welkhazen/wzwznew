@@ -163,16 +163,16 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
           />
 
           {/* Center orb */}
-          <div className="absolute z-10 flex h-[72px] w-[72px] items-center justify-center">
+          <div className="absolute z-10 flex h-[120px] w-[120px] items-center justify-center">
             {/* Ping rings */}
-            <div className="absolute h-[84px] w-[84px] animate-ping rounded-full"
+            <div className="absolute h-[140px] w-[140px] animate-ping rounded-full"
               style={{ border: "1px solid rgba(241,196,45,0.2)", animationDuration: "2.5s" }} />
-            <div className="absolute h-[99px] w-[99px] animate-ping rounded-full"
+            <div className="absolute h-[165px] w-[165px] animate-ping rounded-full"
               style={{ border: "1px solid rgba(241,196,45,0.1)", animationDuration: "2.5s", animationDelay: "0.8s" }} />
             <img
               src="/raw-logo-96.png"
               alt="raW"
-              className="h-[72px] w-[72px] object-contain drop-shadow-[0_0_20px_rgba(241,196,45,0.4)]"
+              className="h-[120px] w-[120px] object-contain drop-shadow-[0_0_20px_rgba(241,196,45,0.4)]"
               style={{ animation: "logoFlip 3s ease-in-out infinite" }}
             />
           </div>
