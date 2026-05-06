@@ -572,13 +572,12 @@ export function PollSection({
       setTimeout(() => {
         if (currentIndex < polls.length - 1) {
           setCurrentIndex((i) => i + 1);
-        } else {
-          onSignupClick();
         }
+        // On last poll: user explicitly clicks "Enter raW" to proceed.
         setAdvancing(false);
       }, 420);
     },
-    [advancing, currentIndex, polls.length, onSignupClick]
+    [advancing, currentIndex, polls.length]
   );
 
   const handleVote = useCallback(
@@ -768,12 +767,30 @@ export function PollSection({
             )}
           </div>
 
-          <NavArrow
-            direction="next"
-            onClick={() => setCurrentIndex((i) => Math.min(polls.length - 1, i + 1))}
-            disabled={!canGoNext}
-            isLight={isLight}
-          />
+          {currentIndex === polls.length - 1 && currentHasVoted ? (
+            <motion.button
+              type="button"
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={onSignupClick}
+              className="flex h-11 shrink-0 items-center justify-center rounded-full px-4 text-[11px] font-semibold uppercase tracking-[0.12em] transition-all"
+              style={{
+                border: `1.5px solid ${isLight ? "rgba(180,140,20,0.6)" : "rgba(241,196,45,0.55)"}`,
+                background: isLight ? "rgba(241,196,45,0.12)" : "rgba(241,196,45,0.1)",
+                color: goldAccent,
+                boxShadow: isLight ? "none" : "0 0 12px rgba(241,196,45,0.2)",
+              }}
+            >
+              Enter raW
+            </motion.button>
+          ) : (
+            <NavArrow
+              direction="next"
+              onClick={() => setCurrentIndex((i) => Math.min(polls.length - 1, i + 1))}
+              disabled={!canGoNext || currentIndex >= polls.length - 1}
+              isLight={isLight}
+            />
+          )}
         </div>
       </div>
     </LandingSectionShell>
