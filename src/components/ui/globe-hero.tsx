@@ -67,7 +67,7 @@ const DotGlobeHero = React.forwardRef<
       </div>
 
       <div className="absolute inset-0 z-0 pointer-events-none">
-        <Canvas>
+        <Canvas gl={{ powerPreference: "low-power", antialias: false }} dpr={1}>
           <PerspectiveCamera makeDefault position={[0, 0, 3]} fov={75} />
           <ambientLight intensity={0.5} />
           <pointLight position={[10, 10, 10]} intensity={1} />
