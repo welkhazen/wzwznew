@@ -917,48 +917,40 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                     const likeCount = likedBy.length;
 
                     return (
-                      <div key={message.id} className={`flex w-full ${isOwnMessage ? "justify-end" : "justify-start"}`}><div
-                        className={`group/msg relative w-4/5 rounded-2xl px-3.5 pt-2 pb-5 backdrop-blur-sm ${
-                          isOwnMessage
-                            ? "border border-raw-gold/25 text-raw-text"
-                            : "border border-raw-border/30 text-raw-silver/80"
-                        }`}
-                        style={isOwnMessage ? {
-                          background: "linear-gradient(160deg, rgba(241,196,45,0.18) 0%, rgba(241,196,45,0.08) 100%)",
-                          boxShadow: "inset 0 1px 0 rgba(241,196,45,0.22), 0 2px 16px rgba(0,0,0,0.25)",
-                        } : {
-                          background: "linear-gradient(160deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)",
-                          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.1), 0 2px 16px rgba(0,0,0,0.3)",
-                        }}
+                      <div key={message.id} className="group/msg relative w-full rounded-xl px-3.5 py-2.5 backdrop-blur-sm border border-raw-border/20"
+                        style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)" }}
                       >
-                        <div className={`flex items-center gap-2 text-[10px] uppercase tracking-[0.12em] ${isOwnMessage ? "justify-start" : "justify-end"}`}>
-                          <span className={isOwnMessage ? "text-raw-gold/80" : "text-raw-gold/60"}>{message.senderName}</span>
-                          <span className="text-raw-silver/25">{formatChatTimestamp(message.createdAt)}</span>
-                          {message.pinned && <span className="text-raw-gold/75">Pinned</span>}
-                        </div>
                         {message.replyToText && (
-                          <div className={`mt-1.5 rounded-lg border border-raw-border/20 bg-raw-black/20 px-2.5 py-1.5 text-xs text-raw-silver/55 ${isOwnMessage ? "text-left" : "text-right"}`}>
+                          <div className="mb-1.5 rounded-lg border border-raw-border/20 bg-raw-black/20 px-2.5 py-1.5 text-xs text-raw-silver/55">
                             <p className="font-medium text-raw-gold/75">↩ {message.replyToSenderName}</p>
                             <p className="mt-0.5 truncate">{message.replyToText}</p>
                           </div>
                         )}
-                        <p className={`mt-0.5 text-sm leading-snug ${isOwnMessage ? "text-left" : "text-right"} ${message.deletedAt ? "italic text-raw-silver/45" : ""}`}>
-                          {message.text.split(/(@\w+)/g).map((part, i) =>
-                            /^@\w+$/.test(part)
-                              ? <span key={i} className="font-semibold text-raw-gold">{part}</span>
-                              : part
-                          )}
+                        <p className={`text-sm leading-snug ${message.deletedAt ? "italic text-raw-silver/45" : ""}`}>
+                          <span className={`mr-0.5 font-semibold uppercase tracking-wide text-[11px] ${isOwnMessage ? "text-raw-gold" : "text-raw-gold/60"}`}>
+                            {message.senderName}:
+                          </span>
+                          {" "}
+                          <span className={isOwnMessage ? "text-raw-text" : "text-raw-silver/75"}>
+                            {message.text.split(/(@\w+)/g).map((part, i) =>
+                              /^@\w+$/.test(part)
+                                ? <span key={i} className="font-semibold text-raw-gold">{part}</span>
+                                : part
+                            )}
+                          </span>
+                          <span className="ml-2 text-[9px] text-raw-silver/25">{formatChatTimestamp(message.createdAt)}</span>
+                          {message.pinned && <span className="ml-1 text-[9px] text-raw-gold/60">· Pinned</span>}
                         </p>
                         {!message.deletedAt && (
                           <button
                             onClick={() => { likeMessage(message.id, user.id).then(() => reloadChatData()).catch(() => {}); }}
-                            className={`absolute bottom-1.5 ${isOwnMessage ? "right-2.5" : "left-2.5"} inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] transition-all ${alreadyLiked ? "border-raw-gold/45 bg-raw-gold/10 text-raw-gold opacity-100" : "border-raw-border/20 text-raw-silver/40 opacity-0 group-hover/msg:opacity-100"}`}
+                            className={`absolute right-2.5 top-1/2 -translate-y-1/2 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] transition-all ${alreadyLiked ? "border-raw-gold/45 bg-raw-gold/10 text-raw-gold opacity-100" : "border-raw-border/20 text-raw-silver/40 opacity-0 group-hover/msg:opacity-100"}`}
                           >
                             <Heart className={`h-2.5 w-2.5 ${alreadyLiked ? "fill-current" : ""}`} />
                             {likeCount > 0 && <span>{likeCount}</span>}
                           </button>
                         )}
-                      </div></div>
+                      </div>
                     );
                   })}
                 </div>
