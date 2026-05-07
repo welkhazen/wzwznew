@@ -917,8 +917,11 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                     const likeCount = likedBy.length;
 
                     return (
-                      <div key={message.id} className="group/msg relative w-full rounded-xl px-3.5 py-2.5 backdrop-blur-sm border border-raw-border/20"
-                        style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)" }}
+                      <div key={message.id} className="group/msg relative w-full rounded-xl px-3.5 py-2.5 backdrop-blur-sm"
+                        style={{
+                          background: "rgb(var(--raw-accent) / 0.10)",
+                          border: "1px solid rgb(var(--raw-accent) / 0.25)",
+                        }}
                       >
                         {message.replyToText && (
                           <div className="mb-1.5 rounded-lg border border-raw-border/20 bg-raw-black/20 px-2.5 py-1.5 text-xs text-raw-silver/55">
@@ -927,7 +930,10 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                           </div>
                         )}
                         <p className={`text-sm leading-snug ${message.deletedAt ? "italic text-raw-silver/45" : ""}`}>
-                          <span className={`mr-0.5 font-semibold uppercase tracking-wide text-[11px] ${isOwnMessage ? "text-raw-gold" : "text-raw-gold/60"}`}>
+                          <span
+                            className="mr-0.5 font-semibold uppercase tracking-wide text-[11px]"
+                            style={{ color: isOwnMessage ? "rgb(var(--raw-accent))" : "rgb(var(--raw-accent) / 0.65)" }}
+                          >
                             {message.senderName}:
                           </span>
                           {" "}
