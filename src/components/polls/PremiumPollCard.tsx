@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
-import { animate, motion, useMotionValue, useTransform, type PanInfo } from "motion/react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 export interface PremiumPollOption {
@@ -23,25 +22,12 @@ interface PremiumPollCardProps {
 const CARD_CLIP =
   "polygon(0 7%, 5.5% 0, 28% 0, 31% 1.4%, 69% 1.4%, 72% 0, 94.5% 0, 100% 7%, 100% 93%, 94.5% 100%, 5.5% 100%, 0 93%)";
 const BUTTON_CLIP = "polygon(10% 0, 90% 0, 100% 22%, 100% 78%, 90% 100%, 10% 100%, 0 78%, 0 22%)";
-const SWIPE_THRESHOLD = 90;
-const VELOCITY_THRESHOLD = 500;
 
 function getPercent(optionVotes: number, totalVotes: number, selected: boolean) {
   if (totalVotes <= 0) return selected ? 100 : 0;
   return Math.round((optionVotes / totalVotes) * 100);
 }
 
-/**
- * Tinder-style swipeable poll card.
- *
- * Drag right or tap the gold button → primary option (yes-ish).
- * Drag left or tap the silver button → secondary option (no-ish).
- *
- * Implementation mirrors the landing-page DraggablePollCard that is known to
- * work: a single motion.div with drag="x", dragConstraints, dragElastic,
- * onDragEnd computing offset/velocity thresholds. Buttons use an isDragging
- * ref to avoid firing onClick after a drag.
- */
 export function PremiumPollCard({
   question,
   primaryOption,
@@ -63,18 +49,20 @@ export function PremiumPollCard({
   const primaryPercent = getPercent(primaryVotes, totalVotes, primarySelected);
   const secondaryPercent = getPercent(secondaryVotes, totalVotes, secondarySelected);
 
-  const x = useMotionValue(0);
-  const rotate = useTransform(x, [-200, 0, 200], [-14, 0, 14]);
-  const primaryGlow = useTransform(x, [20, 110], [0, 1]);
-  const secondaryGlow = useTransform(x, [-110, -20], [1, 0]);
-
-  const isDragging = useRef(false);
   const voteLocked = useRef(false);
+  const [waterFilled, setWaterFilled] = useState(false);
 
   useEffect(() => {
     voteLocked.current = false;
-    animate(x, 0, { type: "spring", stiffness: 400, damping: 30 });
-  }, [question, selectedOptionId, x]);
+    setWaterFilled(false);
+  }, [question, selectedOptionId]);
+
+  useEffect(() => {
+    if (isAnswered) {
+      const t = setTimeout(() => setWaterFilled(true), 60);
+      return () => clearTimeout(t);
+    }
+  }, [isAnswered]);
 
   const submitVote = useCallback(
     (optionId: string) => {
@@ -86,76 +74,11 @@ export function PremiumPollCard({
     [disabled, isAnswered, onHintSeen, onVote]
   );
 
-  const flingAndVote = useCallback(
-    (optionId: string, targetX: number) => {
-      animate(x, targetX, { type: "spring", stiffness: 180, damping: 22 }).then(() =>
-        submitVote(optionId)
-      );
-    },
-    [submitVote, x]
-  );
-
-  const handleDragEnd = useCallback(
-    (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-      // Release drag flag after a microtask so click on button that triggered
-      // drag still fires but click handlers see isDragging=true and bail.
-      setTimeout(() => {
-        isDragging.current = false;
-      }, 50);
-
-      if (disabled || isAnswered) {
-        animate(x, 0, { type: "spring", stiffness: 400, damping: 30 });
-        return;
-      }
-
-      const { offset, velocity } = info;
-      if (offset.x > SWIPE_THRESHOLD || velocity.x > VELOCITY_THRESHOLD) {
-        flingAndVote(primaryOption.id, 600);
-      } else if (offset.x < -SWIPE_THRESHOLD || velocity.x < -VELOCITY_THRESHOLD) {
-        flingAndVote(secondaryOption.id, -600);
-      } else {
-        animate(x, 0, { type: "spring", stiffness: 400, damping: 28 });
-      }
-    },
-    [disabled, isAnswered, flingAndVote, primaryOption.id, secondaryOption.id, x]
-  );
-
-  const canDrag = !disabled && !isAnswered;
-
   return (
-    <motion.article
-      className={cn(
-        "relative mx-auto w-full max-w-[22rem] select-none",
-        canDrag ? "touch-pan-y cursor-grab active:cursor-grabbing" : "touch-auto",
-        className
-      )}
-      drag={canDrag ? "x" : false}
-      dragConstraints={{ left: 0, right: 0 }}
-      dragElastic={0.85}
-      onDragStart={() => {
-        isDragging.current = true;
-      }}
-      onDragEnd={handleDragEnd}
-      style={{ x, rotate }}
+    <article
+      className={cn("relative mx-auto w-full max-w-[22rem] select-none", className)}
       aria-label={question}
     >
-      {/* NO indicator */}
-      <motion.div
-        className="pointer-events-none absolute left-1 top-8 z-20 rounded-full border border-raw-silver/45 bg-[#111]/90 p-2.5 text-raw-silver shadow-[0_0_22px_rgba(180,180,180,0.22)] sm:-left-5 sm:top-10 sm:p-3"
-        style={{ opacity: secondaryGlow }}
-        aria-hidden="true"
-      >
-        <span className="block text-xs font-bold uppercase leading-none tracking-widest sm:text-sm">No</span>
-      </motion.div>
-      {/* YES indicator */}
-      <motion.div
-        className="pointer-events-none absolute right-1 top-8 z-20 rounded-full border border-raw-gold/65 bg-[#151006]/95 p-2.5 text-raw-gold shadow-[0_0_24px_rgba(241,196,45,0.35)] sm:-right-5 sm:top-10 sm:p-3"
-        style={{ opacity: primaryGlow }}
-        aria-hidden="true"
-      >
-        <span className="block text-xs font-bold uppercase leading-none tracking-widest sm:text-sm">Yes</span>
-      </motion.div>
-
       <div
         className="relative p-px shadow-[0_28px_70px_rgba(0,0,0,0.68),0_0_36px_rgba(241,196,45,0.14)]"
         style={{
@@ -200,7 +123,7 @@ export function PremiumPollCard({
 
             {showHint && !isAnswered && (
               <p className="mt-4 text-center text-[10px] uppercase tracking-[0.2em] text-raw-gold/75">
-                swipe or tap to vote
+                tap to vote
               </p>
             )}
 
@@ -210,17 +133,11 @@ export function PremiumPollCard({
 
             <div className="mt-auto w-full pt-4 sm:pt-5">
               <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                {/* Primary / Yes button */}
                 <button
                   type="button"
                   disabled={disabled || isAnswered}
-                  onClick={() => {
-                    // Short-circuit if the click came at the end of a drag
-                    if (isDragging.current) {
-                      isDragging.current = false;
-                      return;
-                    }
-                    submitVote(primaryOption.id);
-                  }}
+                  onClick={() => submitVote(primaryOption.id)}
                   className={cn(
                     "relative min-h-[4rem] cursor-pointer overflow-hidden px-2 py-2.5 text-center font-display text-base tracking-wide transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/80 disabled:cursor-not-allowed sm:min-h-[4.8rem] sm:px-3 sm:py-3 sm:text-lg",
                     primarySelected ? "text-black" : "text-raw-gold hover:text-[#ffe07a]",
@@ -228,30 +145,44 @@ export function PremiumPollCard({
                   )}
                   style={{
                     clipPath: BUTTON_CLIP,
-                    background: primarySelected
-                      ? "linear-gradient(160deg, #f7d557, #d29b12)"
-                      : "linear-gradient(145deg, rgba(241,196,45,0.20), rgba(18,14,5,0.9))",
+                    background: "linear-gradient(145deg, rgba(241,196,45,0.20), rgba(18,14,5,0.9))",
                     border: "1px solid rgba(241,196,45,0.62)",
                     boxShadow: "inset 0 0 0 1px rgba(255,241,178,0.12), 0 0 18px rgba(241,196,45,0.17)",
                   }}
                 >
+                  {/* Water fill — animates from the right edge inward */}
+                  {isAnswered && (
+                    <div
+                      className="pointer-events-none absolute inset-y-0 right-0"
+                      style={{
+                        width: waterFilled ? `${primaryPercent}%` : "0%",
+                        transition: "width 1.2s cubic-bezier(0.22, 1, 0.36, 1)",
+                        background: "linear-gradient(to left, rgba(247,213,87,0.92), rgba(210,155,18,0.75))",
+                      }}
+                    >
+                      {/* Leading-edge wave shimmer */}
+                      <div
+                        className="absolute inset-y-0 left-0 w-1.5 origin-left"
+                        style={{
+                          background: "rgba(255,236,120,0.95)",
+                          boxShadow: "0 0 10px 3px rgba(247,213,87,0.7)",
+                          animation: "water-edge-pulse 1s ease-in-out infinite",
+                        }}
+                      />
+                    </div>
+                  )}
                   <span className="pointer-events-none absolute inset-x-5 top-2 h-px bg-gradient-to-r from-transparent via-raw-gold/70 to-transparent" />
-                  <span className="relative flex flex-col items-center justify-center gap-1">
+                  <span className="relative z-10 flex flex-col items-center justify-center gap-1">
                     {isAnswered && <span className="text-xl font-semibold leading-none">{primaryPercent}%</span>}
                     {!isAnswered && <span>{primaryOption.label}</span>}
                   </span>
                 </button>
 
+                {/* Secondary / No button */}
                 <button
                   type="button"
                   disabled={disabled || isAnswered}
-                  onClick={() => {
-                    if (isDragging.current) {
-                      isDragging.current = false;
-                      return;
-                    }
-                    submitVote(secondaryOption.id);
-                  }}
+                  onClick={() => submitVote(secondaryOption.id)}
                   className={cn(
                     "group relative min-h-[4rem] overflow-hidden px-2 py-2.5 text-center font-display text-base tracking-wide transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/70 disabled:cursor-not-allowed sm:min-h-[4.8rem] sm:px-3 sm:py-3 sm:text-lg",
                     secondarySelected ? "text-black" : "text-[#d9d9d9] hover:border-raw-gold/50 hover:text-white",
@@ -259,15 +190,34 @@ export function PremiumPollCard({
                   )}
                   style={{
                     clipPath: BUTTON_CLIP,
-                    background: secondarySelected
-                      ? "linear-gradient(160deg, #ececec, #9b9b9b)"
-                      : "linear-gradient(145deg, rgba(235,235,235,0.08), rgba(12,12,12,0.92))",
+                    background: "linear-gradient(145deg, rgba(235,235,235,0.08), rgba(12,12,12,0.92))",
                     border: "1px solid rgba(217,217,217,0.34)",
                     boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.07)",
                   }}
                 >
+                  {/* Water fill — animates from the left edge inward */}
+                  {isAnswered && (
+                    <div
+                      className="pointer-events-none absolute inset-y-0 left-0"
+                      style={{
+                        width: waterFilled ? `${secondaryPercent}%` : "0%",
+                        transition: "width 1.2s cubic-bezier(0.22, 1, 0.36, 1)",
+                        background: "linear-gradient(to right, rgba(200,200,200,0.85), rgba(140,140,140,0.65))",
+                      }}
+                    >
+                      {/* Leading-edge wave shimmer */}
+                      <div
+                        className="absolute inset-y-0 right-0 w-1.5 origin-right"
+                        style={{
+                          background: "rgba(230,230,230,0.95)",
+                          boxShadow: "0 0 10px 3px rgba(200,200,200,0.7)",
+                          animation: "water-edge-pulse 1s ease-in-out infinite",
+                        }}
+                      />
+                    </div>
+                  )}
                   <span className="pointer-events-none absolute inset-x-5 top-2 h-px bg-gradient-to-r from-transparent via-white/45 to-transparent" />
-                  <span className="relative flex flex-col items-center justify-center gap-1">
+                  <span className="relative z-10 flex flex-col items-center justify-center gap-1">
                     {isAnswered && <span className="text-xl font-semibold leading-none">{secondaryPercent}%</span>}
                     <span>{secondaryOption.label}</span>
                   </span>
@@ -277,6 +227,6 @@ export function PremiumPollCard({
           </div>
         </div>
       </div>
-    </motion.article>
+    </article>
   );
 }

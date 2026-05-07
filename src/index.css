@@ -842,3 +842,8 @@ html.theme-light .landing-page-shell footer {
 .jackpot-claim-button {
   animation: jackpot-claim-pulse 1000ms ease-in-out infinite;
 }
+
+@keyframes water-edge-pulse {
+  0%, 100% { opacity: 0.65; transform: scaleX(1); }
+  50% { opacity: 1; transform: scaleX(1.4); }
+}
