@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { highlightRawWordmark } from "@/components/ui/brand-name";
 
 interface LandingSectionShellProps {
   id?: string;
@@ -36,19 +37,19 @@ export function LandingSectionShell({
               <div className="mb-2 flex items-center justify-center gap-2 sm:mb-3">
                 <div className="h-px w-6 bg-raw-gold/30 sm:w-8" />
                 <p className="font-display text-[10px] uppercase tracking-[0.28em] text-raw-gold/60 sm:tracking-[0.3em]">
-                  {eyebrow}
+                  {highlightRawWordmark(eyebrow)}
                 </p>
                 <div className="h-px w-6 bg-raw-gold/30 sm:w-8" />
               </div>
             )}
             {title && (
               <h2 className="landing-heading mx-auto max-w-3xl">
-                {title}
+                {highlightRawWordmark(title)}
               </h2>
             )}
             {description && (
               <p className="mx-auto mt-3 max-w-xl text-sm text-raw-silver/55 sm:mt-4 sm:text-base">
-                {description}
+                {highlightRawWordmark(description)}
               </p>
             )}
           </header>
