@@ -21,6 +21,12 @@ import {
   saveDailySpinPoolToSupabase,
   type DailySpinAvatarPoolItem,
 } from "@/lib/dailySpinAvatarPool";
+import {
+  readLandingNewAvatarsLocal,
+  loadLandingNewAvatars,
+  saveLandingNewAvatars,
+  type LandingNewAvatar,
+} from "@/lib/landingNewAvatars";
 import { supabase } from "@/lib/supabase";
 import { WheelOfFortune, type WheelPrize } from "@/components/wheel/WheelOfFortune";
 import {
@@ -114,6 +120,10 @@ export default function Admin() {
   const [newSpinName, setNewSpinName] = useState("");
   const [newSpinImageSrc, setNewSpinImageSrc] = useState("");
   const [isSavingSpinPool, setIsSavingSpinPool] = useState(false);
+  const [newAvatarsDraft, setNewAvatarsDraft] = useState<LandingNewAvatar[]>(() => readLandingNewAvatarsLocal());
+  const [isSavingNewAvatars, setIsSavingNewAvatars] = useState(false);
+  const [newAvatarName, setNewAvatarName] = useState("");
+  const [newAvatarImageSrc, setNewAvatarImageSrc] = useState("");
   const [spinPreviewPrize, setSpinPreviewPrize] = useState<WheelPrize | null>(null);
   const [spinDropIndex, setSpinDropIndex] = useState<number | null>(null);
   const [publishInsertAt, setPublishInsertAt] = useState(1);
@@ -403,6 +413,49 @@ export default function Admin() {
       // revert on failure
       setDailySpinPoolDraft(dailySpinPoolDraft);
     });
+  };
+
+  const addNewAvatar = () => {
+    const name = newAvatarName.trim();
+    const imageSrc = newAvatarImageSrc.trim();
+    if (!name) {
+      toast({ title: "Missing name", description: "Provide a name for the new avatar." });
+      return;
+    }
+    const id = `new-avatar-${Date.now()}`;
+    setNewAvatarsDraft((prev) => [...prev, { id, name, imageSrc, position: prev.length }]);
+    setNewAvatarName("");
+    setNewAvatarImageSrc("");
+  };
+
+  const removeNewAvatar = (id: string) => {
+    setNewAvatarsDraft((prev) => prev.filter((a) => a.id !== id));
+  };
+
+  const saveNewAvatarsDraft = () => {
+    setIsSavingNewAvatars(true);
+    void saveLandingNewAvatars(newAvatarsDraft)
+      .then((saved) => {
+        setNewAvatarsDraft(saved);
+        toast({ title: "Show More avatars saved", description: `${saved.length} avatars now appear in the Show More panel.` });
+      })
+      .catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : "Please try again.";
+        toast({ title: "Could not save", description: msg });
+      })
+      .finally(() => setIsSavingNewAvatars(false));
+  };
+
+  const loadNewAvatarsFromSupabase = () => {
+    void loadLandingNewAvatars()
+      .then((items) => {
+        setNewAvatarsDraft(items);
+        toast({ title: "Loaded from Supabase", description: `${items.length} avatars loaded.` });
+      })
+      .catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : "Please try again.";
+        toast({ title: "Could not load", description: msg });
+      });
   };
 
   useEffect(() => {
@@ -2681,6 +2734,135 @@ export default function Admin() {
                 )}
               </div>
             </div>
+          </div>
+        </section>
+
+        <section className="rounded-2xl border border-raw-border/30 bg-raw-surface/20 p-4 sm:rounded-3xl sm:p-6">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <Database className="h-5 w-5 text-raw-gold/70" />
+              <div>
+                <h2 className="font-display text-xl tracking-wide">Show More avatars</h2>
+                <p className="mt-1 text-sm text-raw-silver/45">These avatars appear in the "Show More" drop-down panel on the landing page.</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={loadNewAvatarsFromSupabase}
+                className="rounded-lg border border-raw-border/25 px-3 py-1.5 text-xs text-raw-silver/65 hover:border-raw-gold/40 hover:text-raw-text"
+              >
+                Reload
+              </button>
+              <button
+                type="button"
+                onClick={saveNewAvatarsDraft}
+                disabled={isSavingNewAvatars}
+                className="rounded-lg border border-raw-gold/40 bg-raw-gold/10 px-3 py-1.5 text-xs font-semibold text-raw-gold hover:bg-raw-gold/20 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isSavingNewAvatars ? "Saving..." : "Save"}
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-5 space-y-4">
+            {/* Add new entry */}
+            <div className="rounded-xl border border-raw-border/20 bg-raw-black/30 p-3">
+              <p className="text-[11px] uppercase tracking-[0.15em] text-raw-silver/35">Add new avatar</p>
+              <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_1.5fr_auto_auto]">
+                <input
+                  type="text"
+                  value={newAvatarName}
+                  onChange={(e) => setNewAvatarName(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && addNewAvatar()}
+                  className="rounded-lg border border-raw-border/25 bg-raw-surface/20 px-2.5 py-2 text-sm text-raw-text outline-none focus:border-raw-gold/40"
+                  placeholder="Name"
+                />
+                <input
+                  type="text"
+                  value={newAvatarImageSrc}
+                  onChange={(e) => setNewAvatarImageSrc(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && addNewAvatar()}
+                  className="rounded-lg border border-raw-border/25 bg-raw-surface/20 px-2.5 py-2 text-sm text-raw-text outline-none focus:border-raw-gold/40"
+                  placeholder="Image URL"
+                />
+                <label
+                  className="flex cursor-pointer items-center justify-center rounded-lg border border-raw-border/25 bg-raw-surface/20 px-2 text-raw-silver/60 transition hover:border-raw-gold/40 hover:text-raw-gold"
+                  title="Upload image"
+                >
+                  <Upload className="h-3.5 w-3.5" />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="sr-only"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const reader = new FileReader();
+                      reader.onload = () => setNewAvatarImageSrc(String(reader.result));
+                      reader.readAsDataURL(file);
+                      e.target.value = "";
+                    }}
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={addNewAvatar}
+                  className="rounded-lg border border-raw-border/25 px-3 py-2 text-xs text-raw-silver/65 hover:border-raw-gold/40 hover:text-raw-text"
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+
+            {/* Avatar list */}
+            {newAvatarsDraft.length === 0 ? (
+              <div className="rounded-xl border border-raw-border/20 bg-raw-black/40 p-4 text-sm text-raw-silver/45">
+                No avatars yet. Add one above and click Save.
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {newAvatarsDraft.map((item) => (
+                  <div
+                    key={item.id}
+                    className="grid items-center gap-2 rounded-xl border border-raw-border/20 bg-raw-black/30 p-2 sm:grid-cols-[52px_1fr_1.5fr_auto]"
+                  >
+                    <div className="h-12 w-12 overflow-hidden rounded-full border border-raw-border/25 bg-raw-black/50">
+                      {item.imageSrc && <img src={item.imageSrc} alt={item.name} className="h-full w-full object-cover" />}
+                    </div>
+                    <input
+                      type="text"
+                      value={item.name}
+                      onChange={(e) => setNewAvatarsDraft((prev) => prev.map((a) => a.id === item.id ? { ...a, name: e.target.value } : a))}
+                      className="rounded-lg border border-raw-border/25 bg-raw-surface/20 px-2.5 py-2 text-sm text-raw-text outline-none focus:border-raw-gold/40"
+                      placeholder="Name"
+                    />
+                    <input
+                      type="text"
+                      value={item.imageSrc}
+                      onChange={(e) => setNewAvatarsDraft((prev) => prev.map((a) => a.id === item.id ? { ...a, imageSrc: e.target.value } : a))}
+                      className="rounded-lg border border-raw-border/25 bg-raw-surface/20 px-2.5 py-2 text-xs text-raw-text outline-none focus:border-raw-gold/40"
+                      placeholder="Image URL"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeNewAvatar(item.id)}
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-raw-border/25 text-raw-silver/55 hover:border-red-400/40 hover:text-red-300"
+                      aria-label={`Remove ${item.name}`}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <p className="text-[11px] text-raw-silver/30">
+              Run in Supabase SQL editor before first use:{" "}
+              <code className="rounded bg-raw-surface/30 px-1 text-raw-silver/50">
+                CREATE TABLE landing_new_avatars (id text PRIMARY KEY, name text NOT NULL, image_src text NOT NULL DEFAULT &apos;&apos;, position integer NOT NULL DEFAULT 0);
+              </code>
+            </p>
           </div>
         </section>
 

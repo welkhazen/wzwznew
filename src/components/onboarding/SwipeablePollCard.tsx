@@ -20,6 +20,7 @@ interface SwipeablePollCardProps {
   onAddComment?: (content: string) => void;
   currentIndex: number;
   completedCount: number;
+  hideInternalNav?: boolean;
 }
 
 function resolveOptions(options: string[]) {
@@ -48,6 +49,7 @@ export function SwipeablePollCard({
   onAddComment,
   currentIndex,
   completedCount,
+  hideInternalNav = false,
 }: SwipeablePollCardProps) {
   const [commentText, setCommentText] = useState("");
   const [replyText, setReplyText] = useState("");
@@ -127,10 +129,11 @@ export function SwipeablePollCard({
         primaryOption={{ id: yesOption, label: yesOption, votes: responseStats[yesOption] ?? 0 }}
         secondaryOption={{ id: noOption, label: noOption, votes: responseStats[noOption] ?? 0 }}
         selectedOptionId={isAnswered ? selectedOption ?? null : null}
+        uniformNeutralTheme
         onVote={onSwipe}
       />
 
-      {isAnswered && (
+      {isAnswered && !hideInternalNav && (
         <div className="grid grid-cols-2 gap-2 sm:gap-3">
           <button
             type="button"

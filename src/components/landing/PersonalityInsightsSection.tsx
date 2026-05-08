@@ -1,6 +1,8 @@
 import type React from "react";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 import { Sparkles, Zap, Crown } from "lucide-react";
+import { GlareCard } from "@/components/ui/glare-card";
+import { useTheme } from "@/providers/useTheme";
 
 const insights = [
   {
@@ -37,6 +39,8 @@ const insights = [
 ];
 
 export function PersonalityInsightsSection() {
+  const { mode } = useTheme();
+  const isLight = mode === "light";
   const sectionRef = useTrackSectionView("personality_insights");
 
   return (
@@ -66,12 +70,12 @@ export function PersonalityInsightsSection() {
           {insights.map((insight) => {
             const Icon = insight.icon;
             return (
-              <div
+              <GlareCard
                 key={insight.name}
-                className={`relative rounded-2xl border ${insight.accentBorder} bg-raw-surface/30 p-6 sm:p-7 overflow-hidden`}
+                className={`border ${insight.accentBorder} bg-raw-surface/30 p-6 sm:p-7`}
               >
-                <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${insight.glowFrom} via-transparent to-transparent`} />
-                <div className="relative">
+                {!isLight && <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${insight.glowFrom} via-transparent to-transparent`} />}
+                <div className="relative z-10">
                   <div className={`mb-4 inline-flex items-center gap-1.5 rounded-full border ${insight.accentBorder} ${insight.softSurface} px-3 py-1`}>
                     <Icon className={`h-3 w-3 ${insight.accentText}`} />
                     <span className={`text-[10px] font-medium tracking-wider uppercase ${insight.accentText}`}>
@@ -88,7 +92,7 @@ export function PersonalityInsightsSection() {
                     {insight.description}
                   </p>
                 </div>
-              </div>
+              </GlareCard>
             );
           })}
         </div>
