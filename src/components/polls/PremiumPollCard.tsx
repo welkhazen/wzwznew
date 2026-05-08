@@ -50,19 +50,23 @@ export function PremiumPollCard({
   const secondaryPercent = getPercent(secondaryVotes, totalVotes, secondarySelected);
 
   const voteLocked = useRef(false);
+  const skipAnimation = useRef(false);
   const [waterFilled, setWaterFilled] = useState(false);
 
+  // On question change (navigation): show fill immediately if already answered, reset if not.
   useEffect(() => {
     voteLocked.current = false;
-    setWaterFilled(false);
-  }, [question, selectedOptionId]);
+    skipAnimation.current = isAnswered;
+    setWaterFilled(isAnswered);
+  }, [question]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // On vote (selectedOptionId goes from null → value): animate the fill in.
   useEffect(() => {
-    if (isAnswered) {
-      const t = setTimeout(() => setWaterFilled(true), 60);
-      return () => clearTimeout(t);
-    }
-  }, [isAnswered]);
+    if (!selectedOptionId || skipAnimation.current) return;
+    setWaterFilled(false);
+    const t = setTimeout(() => setWaterFilled(true), 60);
+    return () => clearTimeout(t);
+  }, [selectedOptionId]);
 
   const submitVote = useCallback(
     (optionId: string) => {
@@ -147,7 +151,12 @@ export function PremiumPollCard({
                     clipPath: BUTTON_CLIP,
                     background: "linear-gradient(145deg, rgba(241,196,45,0.20), rgba(18,14,5,0.9))",
                     border: "1px solid rgba(241,196,45,0.62)",
-                    boxShadow: "inset 0 0 0 1px rgba(255,241,178,0.12), 0 0 18px rgba(241,196,45,0.17)",
+                    boxShadow: primarySelected
+                      ? "inset 0 0 0 1px rgba(255,241,178,0.28), 0 0 28px rgba(241,196,45,0.75), 0 0 60px rgba(241,196,45,0.38)"
+                      : isAnswered
+                        ? "inset 0 0 0 1px rgba(255,241,178,0.06), 0 0 6px rgba(241,196,45,0.07)"
+                        : "inset 0 0 0 1px rgba(255,241,178,0.12), 0 0 18px rgba(241,196,45,0.17)",
+                    transition: "box-shadow 0.5s ease",
                   }}
                 >
                   {/* Water fill — animates from the right edge inward */}
@@ -192,7 +201,12 @@ export function PremiumPollCard({
                     clipPath: BUTTON_CLIP,
                     background: "linear-gradient(145deg, rgba(235,235,235,0.08), rgba(12,12,12,0.92))",
                     border: "1px solid rgba(217,217,217,0.34)",
-                    boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.07)",
+                    boxShadow: secondarySelected
+                      ? "inset 0 0 0 1px rgba(255,255,255,0.22), 0 0 28px rgba(210,210,210,0.65), 0 0 56px rgba(180,180,180,0.28)"
+                      : isAnswered
+                        ? "inset 0 0 0 1px rgba(255,255,255,0.04)"
+                        : "inset 0 0 0 1px rgba(255,255,255,0.07)",
+                    transition: "box-shadow 0.5s ease",
                   }}
                 >
                   {/* Water fill — animates from the left edge inward */}

@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
+import { getMessagesForCommunity, type ChatMessage } from "@/lib/communityMessages";
 import isItJustMeVideo from "@/assets/itisjustme.webm";
 import speakYourTruthVideo from "@/assets/speakyourheart.webm";
 import lateNightTalksVideo from "@/assets/2026-04-18 10_10_00.webm";
@@ -47,22 +48,36 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
   const [replyVisible, setReplyVisible] = useState(false);
   const [anonInput, setAnonInput] = useState("");
 
-  const mockMessages = [
-    { user: "Alex", text: "Hey, does anyone here know what tonight's topic is?" },
-    { user: "Jordan", text: "I think it's about finding clarity in the chaos." },
-    { user: "Casey", text: "Yes, that's what I came for. Real talk needed." },
-    { user: "Morgan", text: "Count me in. Let's dig deeper into this." },
-  ];
+  // Per-open random message pool (3 messages)
+  const [selectedMessages, setSelectedMessages] = useState<ChatMessage[]>([]);
+  const [messageAnonIds, setMessageAnonIds] = useState<string[]>([]);
+  const selectedCountRef = useRef(0);
+
+  // Messages the visitor has sent anonymously this session
+  const [sentMessages, setSentMessages] = useState<ChatMessage[]>([]);
+  const [anonId, setAnonId] = useState("");
+
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   function openCommunityPreview(e: React.MouseEvent<HTMLDivElement>, community: (typeof communities)[number]) {
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const pool = getMessagesForCommunity(community.title);
+    const shuffled = [...pool].sort(() => Math.random() - 0.5);
+    const msgs = shuffled.slice(0, 3);
+
     setClickedCardRect(rect);
     setSelectedCommunity(community.title);
+    setSelectedMessages(msgs);
+    setMessageAnonIds(msgs.map(() => `ANON${Math.floor(10000 + Math.random() * 90000)}`));
+    selectedCountRef.current = msgs.length;
+    setSentMessages([]);
+    setAnonId(`ANON${Math.floor(10000 + Math.random() * 90000)}`);
     setPreviewOpen(true);
     setVisibleMessages(0);
     setReplyTyping(false);
     setReplyVisible(false);
     setAnonInput("");
+
     if (community.waitlist) {
       setWaitlistConfirmed(true);
     }
@@ -73,11 +88,12 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
 
     const timers: number[] = [];
     let messageIndex = 0;
+    const count = selectedCountRef.current;
 
     const interval = window.setInterval(() => {
       messageIndex += 1;
       setVisibleMessages(messageIndex);
-      if (messageIndex >= mockMessages.length) {
+      if (messageIndex >= count) {
         window.clearInterval(interval);
         timers.push(window.setTimeout(() => setReplyTyping(true), 1000));
         timers.push(window.setTimeout(() => {
@@ -92,6 +108,18 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
       timers.forEach((t) => window.clearTimeout(t));
     };
   }, [previewOpen]);
+
+  // Scroll to bottom when new messages appear
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [visibleMessages, replyVisible, sentMessages.length]);
+
+  function sendMessage() {
+    const text = anonInput.trim();
+    if (!text) return;
+    setSentMessages((prev) => [...prev, { user: anonId, text }]);
+    setAnonInput("");
+  }
 
   return (
     <section
@@ -215,10 +243,10 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
 
       {previewOpen && selectedCommunity && clickedCardRect && createPortal(
         <>
-          {/* backdrop — portal-level z so it's above everything */}
+          {/* backdrop */}
           <div className="fixed inset-0 z-[9998]" onClick={() => setPreviewOpen(false)} />
 
-          {/* popup positioned at card */}
+          {/* popup */}
           <div
             className="fixed z-[9999] w-[22rem]"
             style={{
@@ -228,7 +256,6 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
               animation: "popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards",
             }}
           >
-            {/* gradient border wrapper — same technique as PremiumPollCard */}
             <div
               className="relative p-px shadow-[0_28px_70px_rgba(0,0,0,0.72),0_0_40px_rgba(241,196,45,0.18)]"
               style={{
@@ -237,22 +264,17 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
                   "linear-gradient(155deg, rgba(241,196,45,0.72), rgba(235,235,235,0.18) 28%, rgba(35,35,35,0.5) 52%, rgba(241,196,45,0.64))",
               }}
             >
-              {/* interior — adapts to light/dark via CSS class */}
               <div
                 className="chat-popup-interior relative overflow-hidden"
                 style={{ borderRadius: "calc(1.25rem - 1px)" }}
               >
-                {/* dot-grid texture */}
                 <div className="chat-popup-dots pointer-events-none absolute inset-0 opacity-100" />
-                {/* vignette */}
                 <div className="chat-popup-vignette pointer-events-none absolute inset-0" />
-                {/* inner gold border line */}
                 <div
                   className="pointer-events-none absolute inset-[5px] border border-raw-gold/[0.12]"
                   style={{ borderRadius: "calc(1.25rem - 6px)" }}
                 />
 
-                {/* content */}
                 <div className="relative px-5 pt-5 pb-5">
                   {/* close */}
                   <button
@@ -263,14 +285,12 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
                     ✕
                   </button>
 
-                  {/* gold separator — matches PremiumPollCard */}
                   <div className="flex w-full items-center gap-3 mb-4">
                     <span className="h-px flex-1 bg-gradient-to-r from-transparent via-raw-gold/55 to-raw-gold/20" />
                     <span className="h-1.5 w-1.5 rotate-45 bg-raw-gold shadow-[0_0_10px_rgba(241,196,45,0.9)]" />
                     <span className="h-px flex-1 bg-gradient-to-l from-transparent via-raw-gold/55 to-raw-gold/20" />
                   </div>
 
-                  {/* label + community name */}
                   <p className="text-center text-[10px] uppercase tracking-[0.3em] text-raw-gold/70">
                     Live chat preview
                   </p>
@@ -278,92 +298,94 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
                     {selectedCommunity}
                   </h3>
 
-                  {/* messages */}
-                  <div className="mt-4 space-y-2 max-h-44 overflow-y-auto pr-1">
-                    {mockMessages.slice(0, visibleMessages).map((msg, idx) => (
+                  {/* messages feed */}
+                  <div className="mt-4 max-h-52 space-y-2 overflow-y-auto pr-1">
+                    {/* auto messages */}
+                    {selectedMessages.slice(0, visibleMessages).map((msg, idx) => (
                       <div
                         key={idx}
                         className="chat-popup-bubble animate-fadeInUp rounded-2xl border border-raw-gold/15 p-3"
                         style={{ animationDelay: `${idx * 120}ms` }}
                       >
-                        <p className="text-[10px] uppercase tracking-[0.22em] text-raw-gold/60">{msg.user}</p>
+                        <p className="text-[10px] uppercase tracking-[0.22em] text-raw-gold/60">{messageAnonIds[idx] ?? msg.user}</p>
                         <p className="mt-1 text-sm leading-relaxed text-raw-text/90">{msg.text}</p>
                       </div>
                     ))}
 
-                    {visibleMessages < mockMessages.length && (
+                    {/* loading dots while messages are appearing */}
+                    {visibleMessages < selectedMessages.length && (
                       <div className="chat-popup-reply flex items-center gap-2 rounded-2xl border border-raw-gold/10 p-3">
                         <span className="h-2 w-2 rounded-full bg-raw-gold/70 animate-pulse" />
                         <span className="h-2 w-2 rounded-full bg-raw-gold/70 animate-pulse" style={{ animationDelay: "160ms" }} />
                         <span className="h-2 w-2 rounded-full bg-raw-gold/70 animate-pulse" style={{ animationDelay: "320ms" }} />
                       </div>
                     )}
-                  </div>
 
-                  {/* typing indicator */}
-                  {replyTyping && (
-                    <div
-                      className="chat-popup-bubble animate-fadeInUp mt-2 flex items-center gap-3 rounded-2xl border border-raw-gold/15 p-3"
-                    >
-                      <div className="h-8 w-8 flex-shrink-0 rounded-full bg-raw-gold/10 ring-1 ring-raw-gold/30" />
-                      <div>
-                        <p className="text-[10px] uppercase tracking-[0.22em] text-raw-gold/60">Someone is typing</p>
-                        <div className="mt-1.5 inline-flex items-center gap-1.5">
-                          <span className="h-2 w-2 rounded-full bg-raw-gold/70 animate-pulse" />
-                          <span className="h-2 w-2 rounded-full bg-raw-gold/70 animate-pulse" style={{ animationDelay: "160ms" }} />
-                          <span className="h-2 w-2 rounded-full bg-raw-gold/70 animate-pulse" style={{ animationDelay: "320ms" }} />
+                    {/* typing indicator */}
+                    {replyTyping && (
+                      <div className="chat-popup-bubble animate-fadeInUp flex items-center gap-3 rounded-2xl border border-raw-gold/15 p-3">
+                        <div className="h-8 w-8 flex-shrink-0 rounded-full bg-raw-gold/10 ring-1 ring-raw-gold/30" />
+                        <div>
+                          <p className="text-[10px] uppercase tracking-[0.22em] text-raw-gold/60">Someone is typing</p>
+                          <div className="mt-1.5 inline-flex items-center gap-1.5">
+                            <span className="h-2 w-2 rounded-full bg-raw-gold/70 animate-pulse" />
+                            <span className="h-2 w-2 rounded-full bg-raw-gold/70 animate-pulse" style={{ animationDelay: "160ms" }} />
+                            <span className="h-2 w-2 rounded-full bg-raw-gold/70 animate-pulse" style={{ animationDelay: "320ms" }} />
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {/* community reply */}
-                  {replyVisible && (
-                    <div
-                      className="chat-popup-bubble animate-fadeInUp mt-2 rounded-2xl border border-raw-gold/25 p-3 shadow-[0_0_20px_rgba(241,196,45,0.08)]"
-                    >
-                      <p className="text-[10px] uppercase tracking-[0.24em] text-raw-gold/70">Community reply</p>
-                      <p className="mt-1.5 text-sm leading-relaxed text-raw-text/90">
-                        {selectedCommunity === "Speak Your Truth"
-                          ? "Yes — this room is safe for your story. Share what happened and we'll listen without judgment."
-                          : selectedCommunity === "Is It Just Me?"
-                          ? "That's how I felt too. You're not the only one — let's talk about it."
-                          : selectedCommunity === "Late Night Talks"
-                          ? "Late night means honest thoughts. Bring your real talk and let the group respond."
-                          : "This room is full of people who speak their mind. Start with one sentence and see who replies."}
-                      </p>
-                    </div>
-                  )}
+                    {/* community reply */}
+                    {replyVisible && (
+                      <div className="chat-popup-bubble animate-fadeInUp rounded-2xl border border-raw-gold/25 p-3 shadow-[0_0_20px_rgba(241,196,45,0.08)]">
+                        <p className="text-[10px] uppercase tracking-[0.24em] text-raw-gold/70">Community reply</p>
+                        <p className="mt-1.5 text-sm leading-relaxed text-raw-text/90">
+                          {selectedCommunity === "Speak Your Truth"
+                            ? "Yes — this room is safe for your story. Share what happened and we'll listen without judgment."
+                            : selectedCommunity === "Is It Just Me?"
+                            ? "That's how I felt too. You're not the only one — let's talk about it."
+                            : selectedCommunity === "Late Night Talks"
+                            ? "Late night means honest thoughts. Bring your real talk and let the group respond."
+                            : "This room is full of people who speak their mind. Start with one sentence and see who replies."}
+                        </p>
+                      </div>
+                    )}
 
-                  {/* gold separator */}
+                    {/* anonymous user messages */}
+                    {sentMessages.map((msg, idx) => (
+                      <div
+                        key={`sent-${idx}`}
+                        className="animate-fadeInUp rounded-2xl border border-raw-gold/30 bg-raw-gold/5 p-3"
+                      >
+                        <p className="text-[10px] uppercase tracking-[0.22em] text-raw-gold/80">{msg.user}</p>
+                        <p className="mt-1 text-sm leading-relaxed text-raw-text/90">{msg.text}</p>
+                      </div>
+                    ))}
+
+                    <div ref={messagesEndRef} />
+                  </div>
+
                   <div className="flex w-full items-center gap-3 my-4">
                     <span className="h-px flex-1 bg-gradient-to-r from-transparent via-raw-gold/30 to-raw-gold/10" />
                     <span className="h-1 w-1 rotate-45 bg-raw-gold/40" />
                     <span className="h-px flex-1 bg-gradient-to-l from-transparent via-raw-gold/30 to-raw-gold/10" />
                   </div>
 
-                  {/* anonymous write input */}
+                  {/* anonymous input — no redirect */}
                   <div className="chat-popup-input flex items-center gap-2 rounded-xl border border-raw-gold/20 px-3 py-2">
-                    <span className="flex-shrink-0 text-[10px] uppercase tracking-[0.2em] text-raw-gold/50">You</span>
+                    <span className="flex-shrink-0 text-[10px] uppercase tracking-[0.2em] text-raw-gold/50">{anonId || "You"}</span>
                     <input
                       type="text"
                       value={anonInput}
                       onChange={(e) => setAnonInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          onSignupClick();
-                          setPreviewOpen(false);
-                        }
-                      }}
+                      onKeyDown={(e) => { if (e.key === "Enter") sendMessage(); }}
                       placeholder="Write anonymously..."
                       className="min-w-0 flex-1 bg-transparent text-sm text-raw-text/90 placeholder:text-raw-silver/30 outline-none"
                     />
                     <button
                       type="button"
-                      onClick={() => {
-                        onSignupClick();
-                        setPreviewOpen(false);
-                      }}
+                      onClick={sendMessage}
                       className="flex-shrink-0 rounded-lg px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-raw-black transition"
                       style={{
                         background: "linear-gradient(145deg, rgba(241,196,45,0.95), rgba(180,140,20,0.9))",
@@ -375,7 +397,7 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
                     </button>
                   </div>
 
-                  {/* join button */}
+                  {/* join button — redirects to signup */}
                   <button
                     type="button"
                     onClick={() => {

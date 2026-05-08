@@ -1,36 +1,63 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { LandingSectionShell } from "@/components/landing/LandingSectionShell";
 import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { AvatarPhoneHomeScreen } from "@/components/ui/avatar-phone-home-screen";
 import { PhoneMockup } from "@/components/ui/phone-mockup";
 import { AVATARS } from "@/lib/avataridentity";
+import { loadAvatarCatalog } from "@/lib/avatarCatalog";
+import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 
 const VISIBLE_COUNT = 4;
+const DESKTOP_COUNT = 8;
 
 export function AvatarShowcaseSection() {
   const sectionRef = useTrackSectionView("avatar");
   const [avatarIndex, setAvatarIndex] = useState(1);
   const [previewIndex, setPreviewIndex] = useState(1);
   const [startIndex, setStartIndex] = useState(0);
+  const [desktopStart, setDesktopStart] = useState(0);
   const [showAll, setShowAll] = useState(false);
+  const [catalog, setCatalog] = useState<AvatarCatalogItem[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Load the real avatar catalog from Supabase on mount
+  useEffect(() => {
+    loadAvatarCatalog().then(setCatalog).catch(() => {});
+  }, []);
+
+  // Use live catalog if loaded, otherwise fall back to module defaults
+  const avatarList = catalog.length > 0 ? catalog : AVATARS;
+  const total = avatarList.length || 1;
 
   const canPrev = true;
   const canNext = true;
 
   function prev() {
-    setStartIndex((i) => (i - 1 + AVATARS.length) % AVATARS.length);
+    setStartIndex((i) => (i - 1 + total) % total);
   }
 
   function next() {
-    setStartIndex((i) => (i + 1) % AVATARS.length);
+    setStartIndex((i) => (i + 1) % total);
+  }
+
+  function prevDesktop() {
+    setDesktopStart((i) => (i - 4 + total) % total);
+  }
+
+  function nextDesktop() {
+    setDesktopStart((i) => (i + 4) % total);
   }
 
   const visibleAvatars = Array.from({ length: VISIBLE_COUNT }, (_, i) => {
-    const idx = (startIndex + i) % AVATARS.length;
-    return { avatar: AVATARS[idx], index: idx + 1 };
+    const idx = (startIndex + i) % total;
+    return { avatar: avatarList[idx], index: idx + 1 };
+  });
+
+  const desktopAvatars = Array.from({ length: DESKTOP_COUNT }, (_, i) => {
+    const idx = (desktopStart + i) % total;
+    return { avatar: avatarList[idx], index: idx + 1 };
   });
 
   function AvatarButton({
@@ -39,7 +66,7 @@ export function AvatarShowcaseSection() {
     mobile,
   }: {
     index: number;
-    avatar: (typeof AVATARS)[0];
+    avatar: (typeof avatarList)[0];
     mobile?: boolean;
   }) {
     const isActive = index === previewIndex;
@@ -192,38 +219,87 @@ Just like in real life, every person is born with a name, an appearance, and an 
         </span>
       }
     >
-      <div className="mx-auto flex w-full max-w-4xl flex-col items-center gap-8">
-        <PhoneMockup className="w-full max-w-[360px]" showStatusBar={false}>
+      {/* ── Mobile (<sm): phone left + 2-col avatar grid right, 50/50 ── */}
+      <div className="mx-auto flex w-full max-w-5xl flex-row items-start gap-3 sm:hidden">
+
+        {/* Phone — zoomed to fit the left half */}
+        <div className="w-[46%] shrink-0 overflow-hidden">
+          {/* zoom shrinks layout footprint; 280 × 0.54 ≈ 151px fits in ~172px half */}
+          <div style={{ zoom: 0.54 }}>
+            <PhoneMockup className="w-[280px]" showStatusBar={false}>
+              <AvatarPhoneHomeScreen avatarIndex={previewIndex} />
+            </PhoneMockup>
+          </div>
+        </div>
+
+        {/* Avatar grid — right half */}
+        <div className="flex flex-1 flex-col min-w-0 pt-1">
+          <p className="mb-3 text-center font-display text-[9px] uppercase tracking-[0.18em] text-raw-gold/70">
+            Choose your avatar
+          </p>
+          <div
+            ref={scrollRef}
+            className="grid grid-cols-2 gap-x-2 gap-y-4 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            style={{ maxHeight: `${646 * 0.54 - 24}px` }}
+          >
+            {avatarList.map((avatar, i) => (
+              <button
+                key={i + 1}
+                type="button"
+                onClick={() => { setAvatarIndex(i + 1); setPreviewIndex(i + 1); }}
+                className="flex flex-col items-center gap-1 outline-none"
+                aria-label={`Select ${avatar.name}`}
+                aria-pressed={avatarIndex === i + 1}
+              >
+                <div
+                  className="rounded-full transition-all duration-200"
+                  style={{
+                    outline: avatarIndex === i + 1
+                      ? "2px solid #F1C42D"
+                      : "1px solid rgba(241,196,45,0.15)",
+                    outlineOffset: 2,
+                    filter: avatarIndex === i + 1
+                      ? "drop-shadow(0 0 8px rgba(241,196,45,0.55))"
+                      : undefined,
+                  }}
+                >
+                  <AvatarFigure avatarIndex={i + 1} size="sm" selected={avatarIndex === i + 1} />
+                </div>
+                <span
+                  className="text-center font-display uppercase leading-tight transition-colors duration-200"
+                  style={{
+                    fontSize: "0.52rem",
+                    letterSpacing: "0.1em",
+                    color: avatarIndex === i + 1 ? "#F1C42D" : "rgba(255,255,255,0.4)",
+                  }}
+                >
+                  {avatar.name}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Tablet (sm–lg): phone on top, windowed avatar strip below ── */}
+      <div className="mx-auto hidden w-full max-w-5xl flex-col items-center gap-8 sm:flex lg:hidden">
+        <PhoneMockup className="w-[280px]" showStatusBar={false}>
           <AvatarPhoneHomeScreen avatarIndex={previewIndex} />
         </PhoneMockup>
 
-        <div className="relative w-full max-w-4xl overflow-hidden rounded-2xl border border-raw-border/40 bg-raw-surface/20 p-5 sm:p-6"
+        <div
+          className="relative w-full overflow-hidden rounded-2xl border border-raw-border/40 bg-raw-surface/20 p-5 sm:p-6"
           style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 0 40px rgba(0,0,0,0.3)" }}
         >
-          {/* Subtle top shimmer line */}
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/30 to-transparent" />
-
-          <p className="text-center font-display text-xs uppercase tracking-[0.25em] text-raw-gold/70 mb-6">
+          <p className="mb-6 text-center font-display text-xs uppercase tracking-[0.25em] text-raw-gold/70">
             Choose your avatar
           </p>
-
-          {/* Mobile: free scroll */}
-          <div
-            ref={scrollRef}
-            className="flex items-center justify-start gap-8 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:hidden"
-          >
-            {AVATARS.map((avatar, i) => (
-              <AvatarButton key={i + 1} index={i + 1} avatar={avatar} mobile />
-            ))}
-          </div>
-
-          {/* Desktop: windowed with prev/next arrows */}
-          <div className="hidden sm:flex items-center gap-4">
-            {!showAll && <NavButton direction="prev" onClick={prev} disabled={!canPrev} />}
-
-            <div className={`flex flex-1 items-center justify-center flex-wrap gap-8 transition-all duration-500`}>
+          <div className="flex items-center gap-4">
+            <NavButton direction="prev" onClick={prev} disabled={!canPrev} />
+            <div className="flex flex-1 flex-wrap items-center justify-center gap-6 transition-all duration-500">
               {showAll
-                ? AVATARS.map((avatar, i) => (
+                ? avatarList.map((avatar, i) => (
                     <AvatarButton key={i + 1} index={i + 1} avatar={avatar} />
                   ))
                 : visibleAvatars.map(({ avatar, index }) => (
@@ -231,25 +307,50 @@ Just like in real life, every person is born with a name, an appearance, and an 
                   ))
               }
             </div>
-
-            {!showAll && <NavButton direction="next" onClick={next} disabled={!canNext} />}
+            <NavButton direction="next" onClick={next} disabled={!canNext} />
           </div>
-
-          {/* Show All / Show Less toggle */}
-          <div className="hidden sm:flex justify-center mt-5">
+          <div className="mt-5 flex justify-center">
             <button
               type="button"
               onClick={() => setShowAll((v) => !v)}
-              className="group relative flex items-center gap-2 rounded-full border border-raw-border/40 bg-raw-black/60 px-5 py-2 text-xs tracking-[0.18em] uppercase text-raw-silver/50 transition-all duration-300 hover:border-raw-gold/50 hover:text-raw-gold"
+              className="group relative flex items-center gap-2 rounded-full border border-raw-border/40 bg-raw-black/60 px-5 py-2 text-xs uppercase tracking-[0.18em] text-raw-silver/50 transition-all duration-300 hover:border-raw-gold/50 hover:text-raw-gold"
             >
               <div className="absolute inset-0 rounded-full opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-                style={{ boxShadow: "0 0 14px rgba(241,196,45,0.2), inset 0 0 10px rgba(241,196,45,0.05)" }}
-              />
+                style={{ boxShadow: "0 0 14px rgba(241,196,45,0.2), inset 0 0 10px rgba(241,196,45,0.05)" }} />
               <span className="relative">{showAll ? "Show Less" : "Show All Avatars"}</span>
-              <span className="relative transition-transform duration-300" style={{ transform: showAll ? "rotate(180deg)" : "rotate(0deg)" }}>
-                ▾
-              </span>
+              <span className="relative transition-transform duration-300" style={{ transform: showAll ? "rotate(180deg)" : "rotate(0deg)" }}>▾</span>
             </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Desktop (lg+): large phone left + 2×4 grid right ── */}
+      <div className="mx-auto hidden w-full max-w-5xl flex-row items-start gap-10 lg:flex">
+
+        <div className="flex shrink-0 justify-center">
+          <PhoneMockup className="w-[280px]" showStatusBar={false}>
+            <AvatarPhoneHomeScreen avatarIndex={previewIndex} />
+          </PhoneMockup>
+        </div>
+
+        <div
+          className="relative flex h-[646px] flex-1 min-w-0 flex-col overflow-hidden rounded-2xl border border-raw-border/40 bg-raw-surface/20 p-6"
+          style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 0 40px rgba(0,0,0,0.3)" }}
+        >
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/30 to-transparent" />
+          <p className="mb-5 text-center font-display text-xs uppercase tracking-[0.25em] text-raw-gold/70">
+            Choose your avatar
+          </p>
+          <div className="flex flex-1 flex-col">
+            <div className="grid flex-1 grid-cols-2 grid-rows-4 place-items-center gap-x-4 gap-y-2">
+              {desktopAvatars.map(({ avatar, index }) => (
+                <AvatarButton key={`${desktopStart}-${index}`} index={index} avatar={avatar} />
+              ))}
+            </div>
+            <div className="flex items-center justify-center gap-4 pt-3">
+              <NavButton direction="prev" onClick={prevDesktop} disabled={false} />
+              <NavButton direction="next" onClick={nextDesktop} disabled={false} />
+            </div>
           </div>
         </div>
       </div>

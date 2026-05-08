@@ -1,5 +1,4 @@
 import type React from "react";
-import { GlareCard } from "@/components/ui/glare-card";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 import { Sparkles, Zap, Crown } from "lucide-react";
 
@@ -67,30 +66,29 @@ export function PersonalityInsightsSection() {
           {insights.map((insight) => {
             const Icon = insight.icon;
             return (
-              <GlareCard key={insight.name}>
-                <div
-                  className={`relative rounded-2xl border ${insight.accentBorder} bg-raw-surface/30 p-6 sm:p-7 overflow-hidden`}
-                >
-                  <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${insight.glowFrom} via-transparent to-transparent`} />
-                  <div className="relative">
-                    <div className={`mb-4 inline-flex items-center gap-1.5 rounded-full border ${insight.accentBorder} ${insight.softSurface} px-3 py-1`}>
-                      <Icon className={`h-3 w-3 ${insight.accentText}`} />
-                      <span className={`text-[10px] font-medium tracking-wider uppercase ${insight.accentText}`}>
-                        {insight.badge}
-                      </span>
-                      {insight.isFree && (
-                        <span className="ml-1 text-[9px] text-emerald-400/70 uppercase tracking-wider">· Free</span>
-                      )}
-                    </div>
-                    <h3 className={`font-display text-base tracking-wide ${insight.accentText}`}>
-                      {insight.name}
-                    </h3>
-                    <p className="mt-3 text-xs leading-relaxed text-raw-silver/50">
-                      {insight.description}
-                    </p>
+              <div
+                key={insight.name}
+                className={`relative rounded-2xl border ${insight.accentBorder} bg-raw-surface/30 p-6 sm:p-7 overflow-hidden`}
+              >
+                <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${insight.glowFrom} via-transparent to-transparent`} />
+                <div className="relative">
+                  <div className={`mb-4 inline-flex items-center gap-1.5 rounded-full border ${insight.accentBorder} ${insight.softSurface} px-3 py-1`}>
+                    <Icon className={`h-3 w-3 ${insight.accentText}`} />
+                    <span className={`text-[10px] font-medium tracking-wider uppercase ${insight.accentText}`}>
+                      {insight.badge}
+                    </span>
+                    {insight.isFree && (
+                      <span className="ml-1 text-[9px] text-emerald-400/70 uppercase tracking-wider">· Free</span>
+                    )}
                   </div>
+                  <h3 className={`font-display text-base tracking-wide ${insight.accentText}`}>
+                    {insight.name}
+                  </h3>
+                  <p className="mt-3 text-xs leading-relaxed text-raw-silver/50">
+                    {insight.description}
+                  </p>
                 </div>
-              </GlareCard>
+              </div>
             );
           })}
         </div>
