@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Menu, X, Moon, Sun } from "lucide-react";
 import { ThemeCustomizer } from "@/components/theme/ThemeCustomizer";
@@ -17,6 +17,34 @@ export function Navbar({ isLoggedIn, username, onSignupClick }: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const { mode, setMode } = useTheme();
   const isLightMode = mode === "light";
+  const [navVisible, setNavVisible] = useState(true);
+
+  useEffect(() => {
+    let lastY = window.scrollY;
+    let hideTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (y <= 10) {
+        if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+        setNavVisible(true);
+      } else if (y < lastY) {
+        if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+        setNavVisible(true);
+      } else if (y > lastY) {
+        if (!hideTimer) {
+          hideTimer = setTimeout(() => { setNavVisible(false); hideTimer = null; }, 150);
+        }
+      }
+      lastY = y;
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (hideTimer) clearTimeout(hideTimer);
+    };
+  }, []);
 
   const handleSignupClick = () => {
     track("landing_cta_clicked", {
@@ -31,7 +59,10 @@ export function Navbar({ isLoggedIn, username, onSignupClick }: NavbarProps) {
   const navLinks: { href: string; label: string }[] = [];
 
   return (
-    <nav className="landing-navbar fixed top-0 left-0 right-0 z-50 overflow-hidden border-b border-raw-border/50 bg-raw-black/80 backdrop-blur-xl">
+    <nav
+      className="landing-navbar fixed top-0 left-0 right-0 z-50 overflow-hidden border-b border-raw-border/50 bg-raw-black/80 backdrop-blur-xl transition-transform duration-300 ease-in-out"
+      style={{ transform: navVisible ? "translateY(0)" : "translateY(-100%)" }}
+    >
       <div className="flex h-16 w-full items-center justify-between px-4 sm:px-6 lg:px-10">
         <Link
           to="/"
