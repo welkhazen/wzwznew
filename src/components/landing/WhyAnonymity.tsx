@@ -1,6 +1,8 @@
 import { GlareCard } from "@/components/ui/glare-card";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 
+const pillars = ["No real names", "Better honesty", "Better matching"];
+
 const cards = [
   {
     title: "Less pressure",
@@ -28,9 +30,13 @@ export function WhyAnonymity() {
       >
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/30 to-transparent" />
 
-        <h2 className="mb-8 text-center landing-heading sm:mb-12">
-          No real names. Better honesty. Better matching.
-        </h2>
+        <div className="mb-6 grid gap-2 text-center sm:mb-8 md:grid-cols-3 md:gap-4">
+          {pillars.map((pillar) => (
+            <p key={pillar} className="font-display text-2xl tracking-wide text-raw-gold sm:text-3xl">
+              {pillar}
+            </p>
+          ))}
+        </div>
 
         <div className="grid gap-4 sm:gap-6 md:grid-cols-3">
           {cards.map((card, i) => (
