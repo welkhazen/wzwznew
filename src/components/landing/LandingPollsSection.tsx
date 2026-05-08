@@ -1,5 +1,6 @@
 import { useRef, useCallback, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useTheme } from "@/providers/useTheme";
 import { ChevronLeft, ChevronRight, Send } from "lucide-react";
 import {
   motion,
@@ -98,6 +99,8 @@ function GoldIcosahedron({ className = "" }: { className?: string }) {
 }
 
 export function LandingPollsSection() {
+  const { mode } = useTheme();
+  const isLight = mode === "light";
   const sectionRef = useTrackSectionView("polls");
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, "yes" | "no">>({});
@@ -328,7 +331,9 @@ export function LandingPollsSection() {
                   className="relative px-7 pt-7 pb-7"
                   style={{
                     clipPath: CARD_INNER_CLIP,
-                    background: "linear-gradient(165deg, #161616 0%, #0a0a0a 60%, #050505 100%)",
+                    background: isLight
+                      ? "linear-gradient(165deg, #fffdf5 0%, #fdf8e8 60%, #faf4d8 100%)"
+                      : "linear-gradient(165deg, #161616 0%, #0a0a0a 60%, #050505 100%)",
                   }}
                 >
                   {/* Corner accents */}
@@ -347,9 +352,10 @@ export function LandingPollsSection() {
                     </p>
 
                     <p
-                      className="mt-5 font-display text-[26px] font-medium leading-[1.18] tracking-wide text-[#EBEBEB]"
+                      className="mt-5 font-display text-[26px] font-medium leading-[1.18] tracking-wide"
                       style={{
                         fontFamily: 'var(--font-display, "Orbitron", "Inter", system-ui, sans-serif)',
+                        color: isLight ? "#1a1a1a" : "#EBEBEB",
                       }}
                     >
                       {currentPoll?.question}
