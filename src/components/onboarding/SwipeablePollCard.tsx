@@ -129,6 +129,7 @@ export function SwipeablePollCard({
         primaryOption={{ id: yesOption, label: yesOption, votes: responseStats[yesOption] ?? 0 }}
         secondaryOption={{ id: noOption, label: noOption, votes: responseStats[noOption] ?? 0 }}
         selectedOptionId={isAnswered ? selectedOption ?? null : null}
+        uniformNeutralTheme
         onVote={onSwipe}
       />
 
