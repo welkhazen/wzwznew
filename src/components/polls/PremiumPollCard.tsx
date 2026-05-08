@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { motion, useMotionValue, useSpring, useMotionValueEvent } from "framer-motion";
+import { motion, useMotionValue, useMotionValueEvent, useSpring } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 export interface PremiumPollOption {
@@ -15,9 +15,22 @@ interface PremiumPollCardProps {
   selectedOptionId?: string | null;
   disabled?: boolean;
   showHint?: boolean;
+  uniformNeutralTheme?: boolean;
   className?: string;
   onVote: (optionId: string) => void;
   onHintSeen?: () => void;
+}
+
+interface VoteButtonProps {
+  label: string;
+  answered: boolean;
+  selected: boolean;
+  percent: number;
+  disabled: boolean;
+  pulse: boolean;
+  tone: "primary" | "neutral";
+  onClick: () => void;
+  animateNumbers: boolean;
 }
 
 const CARD_CLIP =
@@ -28,8 +41,6 @@ function getPercent(optionVotes: number, totalVotes: number, selected: boolean) 
   if (totalVotes <= 0) return selected ? 100 : 0;
   return Math.round((optionVotes / totalVotes) * 100);
 }
-
-
 
 function AnimatedPercentage({ value, animate }: { value: number; animate: boolean }) {
   const [displayValue, setDisplayValue] = useState(value);
@@ -49,10 +60,76 @@ function AnimatedPercentage({ value, animate }: { value: number; animate: boolea
     motionValue.set(0);
     springValue.set(0);
     motionValue.set(value);
-  }, [animate, value]);
+  }, [animate, value, motionValue, springValue]);
 
   return <span className="text-xl font-semibold leading-none">{displayValue}%</span>;
 }
+
+function VoteButton({
+  label,
+  answered,
+  selected,
+  percent,
+  disabled,
+  pulse,
+  tone,
+  onClick,
+  animateNumbers,
+}: VoteButtonProps) {
+  const isPrimary = tone === "primary";
+
+  return (
+    <motion.button
+      type="button"
+      disabled={disabled || answered}
+      onClick={onClick}
+      className={cn(
+        "relative min-h-[4rem] overflow-hidden px-2 py-2.5 text-center font-display text-base tracking-wide transition duration-200 focus-visible:outline-none focus-visible:ring-2 disabled:cursor-not-allowed sm:min-h-[4.8rem] sm:px-3 sm:py-3 sm:text-lg",
+        isPrimary ? "focus-visible:ring-raw-gold/80" : "focus-visible:ring-white/55"
+      )}
+      animate={pulse && selected ? { scale: [1, 1.04, 1] } : { scale: 1 }}
+      transition={{ duration: 0.28, ease: "easeOut" }}
+      style={{
+        clipPath: BUTTON_CLIP,
+        background: isPrimary
+          ? "linear-gradient(145deg, rgba(241,196,45,0.20), rgba(18,14,5,0.9))"
+          : "linear-gradient(145deg, rgba(235,235,235,0.08), rgba(12,12,12,0.92))",
+        border: isPrimary ? "1px solid rgba(241,196,45,0.62)" : "1px solid rgba(217,217,217,0.34)",
+        boxShadow: selected
+          ? isPrimary
+            ? "inset 0 0 0 1px rgba(255,241,178,0.28), 0 0 28px rgba(241,196,45,0.75), 0 0 60px rgba(241,196,45,0.38)"
+            : "inset 0 0 0 1px rgba(255,255,255,0.22), 0 0 28px rgba(210,210,210,0.65), 0 0 56px rgba(180,180,180,0.28)"
+          : answered
+            ? isPrimary
+              ? "inset 0 0 0 1px rgba(255,241,178,0.06), 0 0 6px rgba(241,196,45,0.07)"
+              : "inset 0 0 0 1px rgba(255,255,255,0.04)"
+            : isPrimary
+              ? "inset 0 0 0 1px rgba(255,241,178,0.12), 0 0 18px rgba(241,196,45,0.17)"
+              : "inset 0 0 0 1px rgba(255,255,255,0.07)",
+      }}
+    >
+      <span
+        className={cn(
+          "pointer-events-none absolute inset-x-5 top-2 h-px bg-gradient-to-r from-transparent to-transparent",
+          isPrimary ? "via-raw-gold/70" : "via-white/45"
+        )}
+      />
+      <span
+        className="relative z-10 flex flex-col items-center justify-center gap-1"
+        style={{
+          color: answered ? (selected ? "#FFFFFF" : "rgba(255,255,255,0.55)") : undefined,
+          textShadow: selected ? (isPrimary ? "0 0 10px rgba(241,196,45,1)" : "0 0 10px rgba(255,255,255,0.9)") : undefined,
+          transition: "color 0.4s ease",
+        }}
+      >
+        {answered && <AnimatedPercentage value={percent} animate={animateNumbers} />}
+        {!answered && <span>{label}</span>}
+        {answered && !selected && <span>{label}</span>}
+      </span>
+    </motion.button>
+  );
+}
+
 export function PremiumPollCard({
   question,
   primaryOption,
@@ -60,6 +137,7 @@ export function PremiumPollCard({
   selectedOptionId = null,
   disabled = false,
   showHint = false,
+  uniformNeutralTheme = false,
   className,
   onVote,
   onHintSeen,
@@ -103,10 +181,7 @@ export function PremiumPollCard({
   );
 
   return (
-    <article
-      className={cn("relative mx-auto w-full max-w-[22rem] select-none", className)}
-      aria-label={question}
-    >
+    <article className={cn("relative mx-auto w-full max-w-[22rem] select-none", className)} aria-label={question}>
       <div
         className="relative p-px shadow-[0_28px_70px_rgba(0,0,0,0.68),0_0_36px_rgba(241,196,45,0.14)]"
         style={{
@@ -150,9 +225,7 @@ export function PremiumPollCard({
             </div>
 
             {showHint && !isAnswered && (
-              <p className="mt-4 text-center text-[10px] uppercase tracking-[0.2em] text-raw-gold/75">
-                tap to vote
-              </p>
+              <p className="mt-4 text-center text-[10px] uppercase tracking-[0.2em] text-raw-gold/75">tap to vote</p>
             )}
 
             <h2 className="mt-4 flex min-h-[5.5rem] items-center text-center font-display text-[clamp(1rem,4.6vw,1.46rem)] leading-[1.4] text-[#dedede] [text-wrap:balance] sm:mt-5 sm:min-h-[7.75rem]">
@@ -161,77 +234,28 @@ export function PremiumPollCard({
 
             <div className="mt-auto w-full pt-4 sm:pt-5">
               <div className="grid grid-cols-2 gap-2 sm:gap-3">
-                {/* Primary / Yes button */}
-                <motion.button
-                  type="button"
-                  disabled={disabled || isAnswered}
+                <VoteButton
+                  label={primaryOption.label}
+                  answered={isAnswered}
+                  selected={primarySelected}
+                  percent={primaryPercent}
+                  disabled={disabled}
+                  pulse={votePulse}
+                  tone={uniformNeutralTheme ? "neutral" : "primary"}
                   onClick={() => submitVote(primaryOption.id)}
-                  className={cn(
-                    "relative min-h-[4rem] cursor-pointer overflow-hidden px-2 py-2.5 text-center font-display text-base tracking-wide transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/80 disabled:cursor-not-allowed sm:min-h-[4.8rem] sm:px-3 sm:py-3 sm:text-lg"
-                  )}
-                  animate={votePulse && primarySelected ? { scale: [1, 1.04, 1] } : { scale: 1 }}
-                  transition={{ duration: 0.28, ease: "easeOut" }}
-                  style={{
-                    clipPath: BUTTON_CLIP,
-                    background: "linear-gradient(145deg, rgba(241,196,45,0.20), rgba(18,14,5,0.9))",
-                    border: "1px solid rgba(241,196,45,0.62)",
-                    boxShadow: primarySelected
-                      ? "inset 0 0 0 1px rgba(255,241,178,0.28), 0 0 28px rgba(241,196,45,0.75), 0 0 60px rgba(241,196,45,0.38)"
-                      : isAnswered
-                        ? "inset 0 0 0 1px rgba(255,241,178,0.06), 0 0 6px rgba(241,196,45,0.07)"
-                        : "inset 0 0 0 1px rgba(255,241,178,0.12), 0 0 18px rgba(241,196,45,0.17)",
-                    transition: "box-shadow 0.5s ease",
-                  }}
-                >
-                  <span className="pointer-events-none absolute inset-x-5 top-2 h-px bg-gradient-to-r from-transparent via-raw-gold/70 to-transparent" />
-                  <span
-                    className="relative z-10 flex flex-col items-center justify-center gap-1"
-                    style={{
-                      color: isAnswered ? (primarySelected ? "#FFFFFF" : "rgba(255,255,255,0.55)") : undefined,
-                      textShadow: primarySelected ? "0 0 10px rgba(241,196,45,1)" : undefined,
-                      transition: "color 0.4s ease",
-                    }}
-                  >
-                    {isAnswered && <AnimatedPercentage value={primaryPercent} animate={animateNumbers} />}
-                    {!isAnswered && <span>{primaryOption.label}</span>}
-                  </span>
-                </motion.button>
-
-                {/* Secondary / No button */}
-                <motion.button
-                  type="button"
-                  disabled={disabled || isAnswered}
+                  animateNumbers={animateNumbers}
+                />
+                <VoteButton
+                  label={secondaryOption.label}
+                  answered={isAnswered}
+                  selected={secondarySelected}
+                  percent={secondaryPercent}
+                  disabled={disabled}
+                  pulse={votePulse}
+                  tone="neutral"
                   onClick={() => submitVote(secondaryOption.id)}
-                  className={cn(
-                    "group relative min-h-[4rem] overflow-hidden px-2 py-2.5 text-center font-display text-base tracking-wide transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/70 disabled:cursor-not-allowed sm:min-h-[4.8rem] sm:px-3 sm:py-3 sm:text-lg"
-                  )}
-                  animate={votePulse && secondarySelected ? { scale: [1, 1.04, 1] } : { scale: 1 }}
-                  transition={{ duration: 0.28, ease: "easeOut" }}
-                  style={{
-                    clipPath: BUTTON_CLIP,
-                    background: "linear-gradient(145deg, rgba(235,235,235,0.08), rgba(12,12,12,0.92))",
-                    border: "1px solid rgba(217,217,217,0.34)",
-                    boxShadow: secondarySelected
-                      ? "inset 0 0 0 1px rgba(255,255,255,0.22), 0 0 28px rgba(210,210,210,0.65), 0 0 56px rgba(180,180,180,0.28)"
-                      : isAnswered
-                        ? "inset 0 0 0 1px rgba(255,255,255,0.04)"
-                        : "inset 0 0 0 1px rgba(255,255,255,0.07)",
-                    transition: "box-shadow 0.5s ease",
-                  }}
-                >
-                  <span className="pointer-events-none absolute inset-x-5 top-2 h-px bg-gradient-to-r from-transparent via-white/45 to-transparent" />
-                  <span
-                    className="relative z-10 flex flex-col items-center justify-center gap-1"
-                    style={{
-                      color: isAnswered ? (secondarySelected ? "#FFFFFF" : "rgba(255,255,255,0.55)") : undefined,
-                      textShadow: secondarySelected ? "0 0 10px rgba(255,255,255,0.9)" : undefined,
-                      transition: "color 0.4s ease",
-                    }}
-                  >
-                    {isAnswered && <AnimatedPercentage value={secondaryPercent} animate={animateNumbers} />}
-                    <span>{secondaryOption.label}</span>
-                  </span>
-                </motion.button>
+                  animateNumbers={animateNumbers}
+                />
               </div>
             </div>
           </div>
