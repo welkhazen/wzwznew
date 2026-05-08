@@ -182,7 +182,7 @@ export function PremiumPollCard({
             <div className="mt-auto w-full pt-4 sm:pt-5">
               <div className="grid grid-cols-2 gap-2 sm:gap-3">
                 {/* Primary / Yes button */}
-                <HoverGradientVoteButton
+                <HoverGradientVoteButton></HoverGradientVoteButton>
                   label={primaryOption.label}
                   answered={isAnswered}
                   selected={primarySelected}
