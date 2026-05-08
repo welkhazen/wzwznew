@@ -4,6 +4,7 @@ import React from "react";
 import { motion } from "motion/react";
 import { ArrowRight, Zap } from "lucide-react";
 import { track } from "@/lib/analytics";
+import { EncryptedText } from "@/components/ui/encrypted-text";
 
 import { TypewriterStack } from "@/components/ui/typewriter-stack";
 import { Canvas } from "@react-three/fiber";
@@ -99,6 +100,7 @@ export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
                     rawWordBaseClassName="raw-logo-ra font-display font-black"
                     rawWClassName="raw-logo-w font-display font-black"
                     lineClassNamesByIndex={{ 3: "mt-14" }}
+                    encryptActiveLine
                   />
                 </span>
                 <motion.div
@@ -120,7 +122,7 @@ export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
             <p
               className="font-display text-lg font-medium leading-relaxed text-foreground sm:text-xl md:text-2xl"
             >
-              Your new 24/7 living and ever-growing new world
+              <EncryptedText text="Your new 24/7 living and ever-growing new world" speed={56} />
             </p>
             <p
               className="text-base font-semibold leading-relaxed text-primary sm:text-lg"
