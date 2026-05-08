@@ -29,6 +29,35 @@ function getPercent(optionVotes: number, totalVotes: number, selected: boolean) 
   return Math.round((optionVotes / totalVotes) * 100);
 }
 
+
+
+function AnimatedPercentage({ value, animate }: { value: number; animate: boolean }) {
+  const [displayValue, setDisplayValue] = useState(animate ? 0 : value);
+
+  useEffect(() => {
+    if (!animate) {
+      setDisplayValue(value);
+      return;
+    }
+
+    let frame = 0;
+    const durationMs = 800;
+    const start = performance.now();
+
+    const tick = (now: number) => {
+      const elapsed = Math.min(now - start, durationMs);
+      const progress = elapsed / durationMs;
+      const eased = 1 - (1 - progress) ** 3;
+      setDisplayValue(Math.round(value * eased));
+      if (progress < 1) frame = requestAnimationFrame(tick);
+    };
+
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [animate, value]);
+
+  return <span className="text-xl font-semibold leading-none">{displayValue}%</span>;
+}
 export function PremiumPollCard({
   question,
   primaryOption,
