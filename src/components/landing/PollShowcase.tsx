@@ -245,7 +245,7 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
                 <div className="mt-6 h-px w-16 bg-white/20" />
 
                 <p className="mt-4 text-[11px] tracking-[0.05em] text-white/45">
-                  {selected ? `You answered: ${selected.toUpperCase()}` : "Click To Answer"}
+                  {!selected && "Click To Answer"}
                 </p>
 
                 <div className="mt-5 grid w-full grid-cols-2 gap-3">
@@ -256,7 +256,11 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
                     onClick={() => handleAnswer("no")}
                     aria-label="Vote no"
                     className="group relative h-12 overflow-hidden transition active:scale-95 disabled:cursor-not-allowed"
-                    style={{ clipPath: BUTTON_CLIP }}
+                    style={{
+                      clipPath: BUTTON_CLIP,
+                      filter: selected === "no" ? "drop-shadow(0 0 10px rgba(220,220,220,0.7))" : undefined,
+                      transition: "filter 0.5s ease",
+                    }}
                   >
                     <span
                       className="absolute inset-0"
@@ -282,17 +286,26 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
                           background: "linear-gradient(to right, rgba(200,200,200,0.85), rgba(140,140,140,0.6))",
                         }}
                       >
-                        <span
-                          className="absolute inset-y-0 right-0 w-1.5 origin-right"
-                          style={{
-                            background: "rgba(230,230,230,0.95)",
-                            boxShadow: "0 0 10px 3px rgba(200,200,200,0.7)",
-                            animation: "water-edge-pulse 1s ease-in-out infinite",
-                          }}
-                        />
+                        {selected === "no" && (
+                          <span
+                            className="absolute inset-y-0 right-0 w-1.5 origin-right"
+                            style={{
+                              background: "rgba(230,230,230,0.95)",
+                              boxShadow: "0 0 10px 3px rgba(200,200,200,0.7)",
+                              animation: "water-edge-pulse 1s ease-in-out infinite",
+                            }}
+                          />
+                        )}
                       </span>
                     )}
-                    <span className="relative z-10 flex h-full w-full items-center justify-center gap-1.5 text-base font-semibold tracking-wide text-[#EBEBEB]">
+                    <span
+                      className="relative z-10 flex h-full w-full items-center justify-center gap-1.5 text-base font-semibold tracking-wide"
+                      style={{
+                        color: selected === "no" ? "#FFFFFF" : "rgba(255,255,255,0.55)",
+                        textShadow: selected === "no" ? "0 0 10px rgba(255,255,255,0.9)" : undefined,
+                        transition: "color 0.4s ease",
+                      }}
+                    >
                       No
                       {selected && (
                         <span className="text-sm font-bold opacity-90">{currentPoll?.noPercent}%</span>
@@ -307,7 +320,11 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
                     onClick={() => handleAnswer("yes")}
                     aria-label="Vote yes"
                     className="group relative h-12 overflow-hidden transition active:scale-95 disabled:cursor-not-allowed"
-                    style={{ clipPath: BUTTON_CLIP }}
+                    style={{
+                      clipPath: BUTTON_CLIP,
+                      filter: selected === "yes" ? "drop-shadow(0 0 10px rgba(241,196,45,0.8))" : undefined,
+                      transition: "filter 0.5s ease",
+                    }}
                   >
                     <span
                       className="absolute inset-0"
@@ -333,17 +350,26 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
                           background: "linear-gradient(to left, rgba(247,213,87,0.92), rgba(210,155,18,0.75))",
                         }}
                       >
-                        <span
-                          className="absolute inset-y-0 left-0 w-1.5 origin-left"
-                          style={{
-                            background: "rgba(255,236,120,0.95)",
-                            boxShadow: "0 0 10px 3px rgba(247,213,87,0.7)",
-                            animation: "water-edge-pulse 1s ease-in-out infinite",
-                          }}
-                        />
+                        {selected === "yes" && (
+                          <span
+                            className="absolute inset-y-0 left-0 w-1.5 origin-left"
+                            style={{
+                              background: "rgba(255,236,120,0.95)",
+                              boxShadow: "0 0 10px 3px rgba(247,213,87,0.7)",
+                              animation: "water-edge-pulse 1s ease-in-out infinite",
+                            }}
+                          />
+                        )}
                       </span>
                     )}
-                    <span className="relative z-10 flex h-full w-full items-center justify-center gap-1.5 text-base font-semibold tracking-wide text-[#F1C42D]">
+                    <span
+                      className="relative z-10 flex h-full w-full items-center justify-center gap-1.5 text-base font-semibold tracking-wide"
+                      style={{
+                        color: selected === "yes" ? "#FFFFFF" : "rgba(255,255,255,0.55)",
+                        textShadow: selected === "yes" ? "0 0 10px rgba(241,196,45,1)" : undefined,
+                        transition: "color 0.4s ease",
+                      }}
+                    >
                       Yes
                       {selected && (
                         <span className="text-sm font-bold opacity-90">{currentPoll?.yesPercent}%</span>

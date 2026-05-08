@@ -143,9 +143,7 @@ export function PremiumPollCard({
                   disabled={disabled || isAnswered}
                   onClick={() => submitVote(primaryOption.id)}
                   className={cn(
-                    "relative min-h-[4rem] cursor-pointer overflow-hidden px-2 py-2.5 text-center font-display text-base tracking-wide transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/80 disabled:cursor-not-allowed sm:min-h-[4.8rem] sm:px-3 sm:py-3 sm:text-lg",
-                    primarySelected ? "text-black" : "text-raw-gold hover:text-[#ffe07a]",
-                    !primarySelected && isAnswered && "text-raw-gold/75"
+                    "relative min-h-[4rem] cursor-pointer overflow-hidden px-2 py-2.5 text-center font-display text-base tracking-wide transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/80 disabled:cursor-not-allowed sm:min-h-[4.8rem] sm:px-3 sm:py-3 sm:text-lg"
                   )}
                   style={{
                     clipPath: BUTTON_CLIP,
@@ -169,19 +167,28 @@ export function PremiumPollCard({
                         background: "linear-gradient(to left, rgba(247,213,87,0.92), rgba(210,155,18,0.75))",
                       }}
                     >
-                      {/* Leading-edge wave shimmer */}
-                      <div
-                        className="absolute inset-y-0 left-0 w-1.5 origin-left"
-                        style={{
-                          background: "rgba(255,236,120,0.95)",
-                          boxShadow: "0 0 10px 3px rgba(247,213,87,0.7)",
-                          animation: "water-edge-pulse 1s ease-in-out infinite",
-                        }}
-                      />
+                      {/* Leading-edge wave shimmer — only on selected */}
+                      {primarySelected && (
+                        <div
+                          className="absolute inset-y-0 left-0 w-1.5 origin-left"
+                          style={{
+                            background: "rgba(255,236,120,0.95)",
+                            boxShadow: "0 0 10px 3px rgba(247,213,87,0.7)",
+                            animation: "water-edge-pulse 1s ease-in-out infinite",
+                          }}
+                        />
+                      )}
                     </div>
                   )}
                   <span className="pointer-events-none absolute inset-x-5 top-2 h-px bg-gradient-to-r from-transparent via-raw-gold/70 to-transparent" />
-                  <span className="relative z-10 flex flex-col items-center justify-center gap-1">
+                  <span
+                    className="relative z-10 flex flex-col items-center justify-center gap-1"
+                    style={{
+                      color: isAnswered ? (primarySelected ? "#FFFFFF" : "rgba(255,255,255,0.55)") : undefined,
+                      textShadow: primarySelected ? "0 0 10px rgba(241,196,45,1)" : undefined,
+                      transition: "color 0.4s ease",
+                    }}
+                  >
                     {isAnswered && <span className="text-xl font-semibold leading-none">{primaryPercent}%</span>}
                     {!isAnswered && <span>{primaryOption.label}</span>}
                   </span>
@@ -193,9 +200,7 @@ export function PremiumPollCard({
                   disabled={disabled || isAnswered}
                   onClick={() => submitVote(secondaryOption.id)}
                   className={cn(
-                    "group relative min-h-[4rem] overflow-hidden px-2 py-2.5 text-center font-display text-base tracking-wide transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/70 disabled:cursor-not-allowed sm:min-h-[4.8rem] sm:px-3 sm:py-3 sm:text-lg",
-                    secondarySelected ? "text-black" : "text-[#d9d9d9] hover:border-raw-gold/50 hover:text-white",
-                    !secondarySelected && isAnswered && "text-raw-silver/72"
+                    "group relative min-h-[4rem] overflow-hidden px-2 py-2.5 text-center font-display text-base tracking-wide transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/70 disabled:cursor-not-allowed sm:min-h-[4.8rem] sm:px-3 sm:py-3 sm:text-lg"
                   )}
                   style={{
                     clipPath: BUTTON_CLIP,
@@ -219,19 +224,28 @@ export function PremiumPollCard({
                         background: "linear-gradient(to right, rgba(200,200,200,0.85), rgba(140,140,140,0.65))",
                       }}
                     >
-                      {/* Leading-edge wave shimmer */}
-                      <div
-                        className="absolute inset-y-0 right-0 w-1.5 origin-right"
-                        style={{
-                          background: "rgba(230,230,230,0.95)",
-                          boxShadow: "0 0 10px 3px rgba(200,200,200,0.7)",
-                          animation: "water-edge-pulse 1s ease-in-out infinite",
-                        }}
-                      />
+                      {/* Leading-edge wave shimmer — only on selected */}
+                      {secondarySelected && (
+                        <div
+                          className="absolute inset-y-0 right-0 w-1.5 origin-right"
+                          style={{
+                            background: "rgba(230,230,230,0.95)",
+                            boxShadow: "0 0 10px 3px rgba(200,200,200,0.7)",
+                            animation: "water-edge-pulse 1s ease-in-out infinite",
+                          }}
+                        />
+                      )}
                     </div>
                   )}
                   <span className="pointer-events-none absolute inset-x-5 top-2 h-px bg-gradient-to-r from-transparent via-white/45 to-transparent" />
-                  <span className="relative z-10 flex flex-col items-center justify-center gap-1">
+                  <span
+                    className="relative z-10 flex flex-col items-center justify-center gap-1"
+                    style={{
+                      color: isAnswered ? (secondarySelected ? "#FFFFFF" : "rgba(255,255,255,0.55)") : undefined,
+                      textShadow: secondarySelected ? "0 0 10px rgba(255,255,255,0.9)" : undefined,
+                      transition: "color 0.4s ease",
+                    }}
+                  >
                     {isAnswered && <span className="text-xl font-semibold leading-none">{secondaryPercent}%</span>}
                     <span>{secondaryOption.label}</span>
                   </span>
