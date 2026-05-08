@@ -119,6 +119,8 @@ export function PremiumPollCard({
     (optionId: string) => {
       if (disabled || isAnswered || voteLocked.current) return;
       voteLocked.current = true;
+      hasJustVotedRef.current = true;
+      setAnimateNumbers(true);
       onHintSeen?.();
       onVote(optionId);
     },
