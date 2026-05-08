@@ -1,10 +1,12 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { LandingSectionShell } from "@/components/landing/LandingSectionShell";
 import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { AvatarPhoneHomeScreen } from "@/components/ui/avatar-phone-home-screen";
 import { PhoneMockup } from "@/components/ui/phone-mockup";
 import { AVATARS } from "@/lib/avataridentity";
+import { loadAvatarCatalog } from "@/lib/avatarCatalog";
+import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 
 const VISIBLE_COUNT = 4;
@@ -17,35 +19,45 @@ export function AvatarShowcaseSection() {
   const [startIndex, setStartIndex] = useState(0);
   const [desktopStart, setDesktopStart] = useState(0);
   const [showAll, setShowAll] = useState(false);
+  const [catalog, setCatalog] = useState<AvatarCatalogItem[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Load the real avatar catalog from Supabase on mount
+  useEffect(() => {
+    loadAvatarCatalog().then(setCatalog).catch(() => {});
+  }, []);
+
+  // Use live catalog if loaded, otherwise fall back to module defaults
+  const avatarList = catalog.length > 0 ? catalog : AVATARS;
+  const total = avatarList.length || 1;
 
   const canPrev = true;
   const canNext = true;
 
   function prev() {
-    setStartIndex((i) => (i - 1 + AVATARS.length) % AVATARS.length);
+    setStartIndex((i) => (i - 1 + total) % total);
   }
 
   function next() {
-    setStartIndex((i) => (i + 1) % AVATARS.length);
+    setStartIndex((i) => (i + 1) % total);
   }
 
   function prevDesktop() {
-    setDesktopStart((i) => (i - 4 + AVATARS.length) % AVATARS.length);
+    setDesktopStart((i) => (i - 4 + total) % total);
   }
 
   function nextDesktop() {
-    setDesktopStart((i) => (i + 4) % AVATARS.length);
+    setDesktopStart((i) => (i + 4) % total);
   }
 
   const visibleAvatars = Array.from({ length: VISIBLE_COUNT }, (_, i) => {
-    const idx = (startIndex + i) % AVATARS.length;
-    return { avatar: AVATARS[idx], index: idx + 1 };
+    const idx = (startIndex + i) % total;
+    return { avatar: avatarList[idx], index: idx + 1 };
   });
 
   const desktopAvatars = Array.from({ length: DESKTOP_COUNT }, (_, i) => {
-    const idx = (desktopStart + i) % AVATARS.length;
-    return { avatar: AVATARS[idx], index: idx + 1 };
+    const idx = (desktopStart + i) % total;
+    return { avatar: avatarList[idx], index: idx + 1 };
   });
 
   function AvatarButton({
@@ -54,7 +66,7 @@ export function AvatarShowcaseSection() {
     mobile,
   }: {
     index: number;
-    avatar: (typeof AVATARS)[0];
+    avatar: (typeof avatarList)[0];
     mobile?: boolean;
   }) {
     const isActive = index === previewIndex;
@@ -233,7 +245,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
             ref={scrollRef}
             className="flex items-center justify-start gap-8 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:hidden"
           >
-            {AVATARS.map((avatar, i) => (
+            {avatarList.map((avatar, i) => (
               <AvatarButton key={i + 1} index={i + 1} avatar={avatar} mobile />
             ))}
           </div>
@@ -243,7 +255,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
             {!showAll && <NavButton direction="prev" onClick={prev} disabled={!canPrev} />}
             <div className="flex flex-1 items-center justify-center flex-wrap gap-6 transition-all duration-500">
               {showAll
-                ? AVATARS.map((avatar, i) => (
+                ? avatarList.map((avatar, i) => (
                     <AvatarButton key={i + 1} index={i + 1} avatar={avatar} />
                   ))
                 : visibleAvatars.map(({ avatar, index }) => (
