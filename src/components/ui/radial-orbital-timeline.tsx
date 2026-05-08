@@ -268,19 +268,12 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
       {/* ── End orbit area ── */}
       </div>
 
-      {/* ── Card — OUTSIDE overflow-hidden orbit, anchored below top node ── */}
-      {activeItem && (
-        <div
-          className="absolute left-1/2 z-[300] w-[min(260px,88vw)] -translate-x-1/2"
-          style={{ top: cardTopPx }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Connector line from top node down to card */}
-          <div className="mx-auto mb-1 h-3 w-px bg-raw-gold/35" />
-
+      {/* ── Card ── */}
+      {activeItem && (() => {
+        const cardInner = (
           <div
-            className="rounded-xl border border-raw-gold/30 bg-[#080808]/97 p-4 text-left backdrop-blur-xl"
-            style={{ boxShadow: "0 0 0 1px rgba(241,196,45,0.12), 0 12px 40px rgba(0,0,0,0.8), 0 0 24px rgba(241,196,45,0.06)" }}
+            className="relative rounded-xl border border-raw-gold/30 bg-[#080808] p-4 text-left backdrop-blur-xl"
+            style={{ boxShadow: "0 0 0 1px rgba(241,196,45,0.12), 0 12px 40px rgba(0,0,0,0.9), 0 0 24px rgba(241,196,45,0.06)" }}
           >
             <button
               type="button"
@@ -325,8 +318,38 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
               </div>
             )}
           </div>
-        </div>
-      )}
+        );
+
+        // Mobile: fixed modal with backdrop so parent overflow-hidden can't clip it
+        if (isCompact || isTinyPhone) {
+          return (
+            <div
+              className="fixed inset-0 z-[9999] flex items-center justify-center p-5"
+              onClick={closeAll}
+            >
+              <div className="absolute inset-0 bg-black/65" />
+              <div
+                className="relative z-10 w-[min(300px,90vw)] max-h-[80vh] overflow-y-auto"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {cardInner}
+              </div>
+            </div>
+          );
+        }
+
+        // Desktop: absolute, anchored below the top node
+        return (
+          <div
+            className="absolute left-1/2 z-[300] w-[min(260px,88vw)] -translate-x-1/2"
+            style={{ top: cardTopPx }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mx-auto mb-1 h-3 w-px bg-raw-gold/35" />
+            {cardInner}
+          </div>
+        );
+      })()}
     </div>
   );
 }
