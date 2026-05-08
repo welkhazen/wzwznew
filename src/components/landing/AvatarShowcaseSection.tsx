@@ -8,12 +8,14 @@ import { AVATARS } from "@/lib/avataridentity";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 
 const VISIBLE_COUNT = 4;
+const DESKTOP_COUNT = 8;
 
 export function AvatarShowcaseSection() {
   const sectionRef = useTrackSectionView("avatar");
   const [avatarIndex, setAvatarIndex] = useState(1);
   const [previewIndex, setPreviewIndex] = useState(1);
   const [startIndex, setStartIndex] = useState(0);
+  const [desktopStart, setDesktopStart] = useState(0);
   const [showAll, setShowAll] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -28,8 +30,21 @@ export function AvatarShowcaseSection() {
     setStartIndex((i) => (i + 1) % AVATARS.length);
   }
 
+  function prevDesktop() {
+    setDesktopStart((i) => (i - 2 + AVATARS.length) % AVATARS.length);
+  }
+
+  function nextDesktop() {
+    setDesktopStart((i) => (i + 2) % AVATARS.length);
+  }
+
   const visibleAvatars = Array.from({ length: VISIBLE_COUNT }, (_, i) => {
     const idx = (startIndex + i) % AVATARS.length;
+    return { avatar: AVATARS[idx], index: idx + 1 };
+  });
+
+  const desktopAvatars = Array.from({ length: DESKTOP_COUNT }, (_, i) => {
+    const idx = (desktopStart + i) % AVATARS.length;
     return { avatar: AVATARS[idx], index: idx + 1 };
   });
 
@@ -254,11 +269,17 @@ Just like in real life, every person is born with a name, an appearance, and an 
             </button>
           </div>
 
-          {/* Desktop (lg+): 2-col × 4-row grid filling card height */}
-          <div className="hidden lg:grid flex-1 grid-cols-2 grid-rows-4 place-items-center gap-x-4 gap-y-2">
-            {AVATARS.slice(0, 8).map((avatar, i) => (
-              <AvatarButton key={i + 1} index={i + 1} avatar={avatar} />
-            ))}
+          {/* Desktop (lg+): 2-col × 4-row grid filling card height + prev/next */}
+          <div className="hidden lg:flex flex-col flex-1">
+            <div className="grid flex-1 grid-cols-2 grid-rows-4 place-items-center gap-x-4 gap-y-2">
+              {desktopAvatars.map(({ avatar, index }) => (
+                <AvatarButton key={`${desktopStart}-${index}`} index={index} avatar={avatar} />
+              ))}
+            </div>
+            <div className="flex items-center justify-center gap-4 pt-3">
+              <NavButton direction="prev" onClick={prevDesktop} disabled={false} />
+              <NavButton direction="next" onClick={nextDesktop} disabled={false} />
+            </div>
           </div>
         </div>
       </div>
