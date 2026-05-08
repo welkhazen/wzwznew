@@ -28,6 +28,35 @@ function getPercent(optionVotes: number, totalVotes: number, selected: boolean) 
   return Math.round((optionVotes / totalVotes) * 100);
 }
 
+
+
+function AnimatedPercentage({ value, animate }: { value: number; animate: boolean }) {
+  const [displayValue, setDisplayValue] = useState(animate ? 0 : value);
+
+  useEffect(() => {
+    if (!animate) {
+      setDisplayValue(value);
+      return;
+    }
+
+    let frame = 0;
+    const durationMs = 800;
+    const start = performance.now();
+
+    const tick = (now: number) => {
+      const elapsed = Math.min(now - start, durationMs);
+      const progress = elapsed / durationMs;
+      const eased = 1 - (1 - progress) ** 3;
+      setDisplayValue(Math.round(value * eased));
+      if (progress < 1) frame = requestAnimationFrame(tick);
+    };
+
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [animate, value]);
+
+  return <span className="text-xl font-semibold leading-none">{displayValue}%</span>;
+}
 export function PremiumPollCard({
   question,
   primaryOption,
@@ -163,7 +192,7 @@ export function PremiumPollCard({
                       className="pointer-events-none absolute inset-y-0 right-0"
                       style={{
                         width: waterFilled ? `${primaryPercent}%` : "0%",
-                        transition: "width 1.2s cubic-bezier(0.22, 1, 0.36, 1)",
+                        transition: "width 0.8s cubic-bezier(0.22, 1, 0.36, 1)",
                         background: "linear-gradient(to left, rgba(247,213,87,0.92), rgba(210,155,18,0.75))",
                       }}
                     >
@@ -189,7 +218,7 @@ export function PremiumPollCard({
                       transition: "color 0.4s ease",
                     }}
                   >
-                    {isAnswered && <span className="text-xl font-semibold leading-none">{primaryPercent}%</span>}
+                    {isAnswered && <AnimatedPercentage value={primaryPercent} animate={waterFilled} />}
                     {!isAnswered && <span>{primaryOption.label}</span>}
                   </span>
                 </button>
@@ -220,7 +249,7 @@ export function PremiumPollCard({
                       className="pointer-events-none absolute inset-y-0 left-0"
                       style={{
                         width: waterFilled ? `${secondaryPercent}%` : "0%",
-                        transition: "width 1.2s cubic-bezier(0.22, 1, 0.36, 1)",
+                        transition: "width 0.8s cubic-bezier(0.22, 1, 0.36, 1)",
                         background: "linear-gradient(to right, rgba(200,200,200,0.85), rgba(140,140,140,0.65))",
                       }}
                     >
@@ -246,7 +275,7 @@ export function PremiumPollCard({
                       transition: "color 0.4s ease",
                     }}
                   >
-                    {isAnswered && <span className="text-xl font-semibold leading-none">{secondaryPercent}%</span>}
+                    {isAnswered && <AnimatedPercentage value={secondaryPercent} animate={waterFilled} />}
                     <span>{secondaryOption.label}</span>
                   </span>
                 </button>
