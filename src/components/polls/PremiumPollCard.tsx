@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { EncryptedText } from "@/components/ui/encrypted-text";
 import { cn } from "@/lib/utils";
 
 export interface PremiumPollOption {
@@ -133,7 +132,7 @@ export function PremiumPollCard({
             )}
 
             <h2 className="mt-4 flex min-h-[5.5rem] items-center text-center font-display text-[clamp(1rem,4.6vw,1.46rem)] leading-[1.4] text-[#dedede] [text-wrap:balance] sm:mt-5 sm:min-h-[7.75rem]">
-              <EncryptedText text={question} />
+              {question}
             </h2>
 
             <div className="mt-auto w-full pt-4 sm:pt-5">
