@@ -156,25 +156,20 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
 
   const activeItem = activeNodeId != null ? timelineData.find((i) => i.id === activeNodeId) ?? null : null;
 
-  const glowSize  = isTinyPhone ? 210 : isCompact ? 260 : 390;
-  const outerRing = isTinyPhone ? 192 : isCompact ? 238 : 352;
-  const innerRing = isTinyPhone ? 136 : isCompact ? 168 : 252;
-  const orbitH    = isTinyPhone ? "h-[520px]" : isCompact ? "h-[570px]" : "h-[640px]";
-
-  // Card vertical position: open below node if node is in top half, above if bottom half
-  const cardStyle = (() => {
-    if (!activeNodePos) return {};
-    const ICON_PX = 40;  // node icon size
-    const GAP = 10;
-    const openBelow = activeNodePos.y <= 0;
-    const topVal = openBelow
-      ? `calc(50% + ${activeNodePos.y + ICON_PX + GAP}px)`   // below node
-      : `calc(50% + ${activeNodePos.y - GAP}px - 100%)`;     // above node
-    return { top: topVal };
-  })();
+  const glowSize     = isTinyPhone ? 210 : isCompact ? 260 : 390;
+  const outerRing    = isTinyPhone ? 192 : isCompact ? 238 : 352;
+  const innerRing    = isTinyPhone ? 136 : isCompact ? 168 : 252;
+  const orbitHeightPx = isTinyPhone ? 400 : isCompact ? 440 : 520;
+  const orbitHClass  = isTinyPhone ? "h-[400px]" : isCompact ? "h-[440px]" : "h-[520px]";
+  const radius       = isTinyPhone ? 92 : isCompact ? 115 : 170;
+  // Card sits just below the top node, outside the overflow-hidden orbit div
+  const cardTopPx    = orbitHeightPx / 2 - radius + 50; // 50 = icon(40) + gap(10)
 
   return (
-    <div className={`relative w-full overflow-hidden ${orbitH}`} onClick={closeAll}>
+    <div className="relative w-full" onClick={closeAll}>
+      {/* ── Orbit area — overflow-hidden clips rings but not the card ── */}
+      <div className={`relative w-full overflow-hidden ${orbitHClass}`}>
+
       {/* Backdrop glow */}
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
         <div
@@ -267,76 +262,71 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
           })}
 
           {/* Expanded card — anchored to the selected node, horizontally centered */}
-          {activeItem && activeNodePos && (
-            <div
-              className="absolute left-1/2 z-[300] w-[min(224px,80vw)] -translate-x-1/2"
-              style={cardStyle}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Connector dot */}
-              <div
-                className="mx-auto mb-1 h-2 w-px bg-raw-gold/40"
-                style={{ display: activeNodePos.y <= 0 ? "block" : "none" }}
-              />
-
-              <div
-                className="rounded-xl border border-raw-gold/30 bg-[#080808]/95 p-4 text-left backdrop-blur-xl"
-                style={{ boxShadow: "0 0 0 1px rgba(241,196,45,0.12), 0 12px 40px rgba(0,0,0,0.7), 0 0 24px rgba(241,196,45,0.06)" }}
-              >
-                {/* Close */}
-                <button
-                  type="button"
-                  className="absolute right-2.5 top-2.5 rounded-full p-1 text-raw-gold/40 transition-colors hover:text-raw-gold/80"
-                  onClick={closeAll}
-                  aria-label="Close"
-                >
-                  <X size={13} />
-                </button>
-
-                <div className="mb-2">
-                  <span className="rounded-full border border-raw-gold/30 bg-raw-gold/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-raw-gold">
-                    {activeItem.category}
-                  </span>
-                </div>
-
-                <p className="mb-2 font-display text-sm uppercase tracking-[0.06em] text-raw-gold">
-                  {activeItem.title}
-                </p>
-
-                <p className="text-[13px] leading-relaxed text-white/70">{activeItem.content}</p>
-
-                {activeItem.relatedIds.length > 0 && (
-                  <div className="mt-3 border-t border-raw-gold/10 pt-3">
-                    <p className="mb-1.5 text-[10px] uppercase tracking-wider text-white/30">Connected</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {activeItem.relatedIds.map((relatedId) => {
-                        const rel = timelineData.find((i) => i.id === relatedId);
-                        return (
-                          <button
-                            key={relatedId}
-                            type="button"
-                            className="flex items-center gap-1 rounded-full border border-raw-gold/20 bg-raw-gold/8 px-2.5 py-1 text-xs text-raw-gold/70 transition-colors hover:bg-raw-gold/15"
-                            onClick={() => toggleItem(relatedId)}
-                          >
-                            {rel?.title}
-                            <ArrowRight size={9} />
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Bottom connector for nodes in bottom half */}
-              <div
-                className="mx-auto mt-1 h-2 w-px bg-raw-gold/40"
-                style={{ display: activeNodePos.y > 0 ? "block" : "none" }}
-              />
-            </div>
-          )}
         </div>
       </div>
+
+      {/* ── End orbit area ── */}
+      </div>
+
+      {/* ── Card — OUTSIDE overflow-hidden orbit, anchored below top node ── */}
+      {activeItem && (
+        <div
+          className="absolute left-1/2 z-[300] w-[min(260px,88vw)] -translate-x-1/2"
+          style={{ top: cardTopPx }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Connector line from top node down to card */}
+          <div className="mx-auto mb-1 h-3 w-px bg-raw-gold/35" />
+
+          <div
+            className="rounded-xl border border-raw-gold/30 bg-[#080808]/97 p-4 text-left backdrop-blur-xl"
+            style={{ boxShadow: "0 0 0 1px rgba(241,196,45,0.12), 0 12px 40px rgba(0,0,0,0.8), 0 0 24px rgba(241,196,45,0.06)" }}
+          >
+            <button
+              type="button"
+              className="absolute right-2.5 top-2.5 rounded-full p-1 text-raw-gold/40 transition-colors hover:text-raw-gold/80"
+              onClick={closeAll}
+              aria-label="Close"
+            >
+              <X size={13} />
+            </button>
+
+            <div className="mb-2">
+              <span className="rounded-full border border-raw-gold/30 bg-raw-gold/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-raw-gold">
+                {activeItem.category}
+              </span>
+            </div>
+
+            <p className="mb-2 font-display text-sm uppercase tracking-[0.06em] text-raw-gold">
+              {activeItem.title}
+            </p>
+
+            <p className="text-[13px] leading-relaxed text-white/70">{activeItem.content}</p>
+
+            {activeItem.relatedIds.length > 0 && (
+              <div className="mt-3 border-t border-raw-gold/10 pt-3">
+                <p className="mb-1.5 text-[10px] uppercase tracking-wider text-white/30">Connected</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {activeItem.relatedIds.map((relatedId) => {
+                    const rel = timelineData.find((i) => i.id === relatedId);
+                    return (
+                      <button
+                        key={relatedId}
+                        type="button"
+                        className="flex items-center gap-1 rounded-full border border-raw-gold/20 bg-raw-gold/8 px-2.5 py-1 text-xs text-raw-gold/70 transition-colors hover:bg-raw-gold/15"
+                        onClick={() => toggleItem(relatedId)}
+                      >
+                        {rel?.title}
+                        <ArrowRight size={9} />
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
