@@ -8,12 +8,14 @@ import { AVATARS } from "@/lib/avataridentity";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 
 const VISIBLE_COUNT = 4;
+const DESKTOP_COUNT = 8;
 
 export function AvatarShowcaseSection() {
   const sectionRef = useTrackSectionView("avatar");
   const [avatarIndex, setAvatarIndex] = useState(1);
   const [previewIndex, setPreviewIndex] = useState(1);
   const [startIndex, setStartIndex] = useState(0);
+  const [desktopStart, setDesktopStart] = useState(0);
   const [showAll, setShowAll] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -28,8 +30,21 @@ export function AvatarShowcaseSection() {
     setStartIndex((i) => (i + 1) % AVATARS.length);
   }
 
+  function prevDesktop() {
+    setDesktopStart((i) => (i - 4 + AVATARS.length) % AVATARS.length);
+  }
+
+  function nextDesktop() {
+    setDesktopStart((i) => (i + 4) % AVATARS.length);
+  }
+
   const visibleAvatars = Array.from({ length: VISIBLE_COUNT }, (_, i) => {
     const idx = (startIndex + i) % AVATARS.length;
+    return { avatar: AVATARS[idx], index: idx + 1 };
+  });
+
+  const desktopAvatars = Array.from({ length: DESKTOP_COUNT }, (_, i) => {
+    const idx = (desktopStart + i) % AVATARS.length;
     return { avatar: AVATARS[idx], index: idx + 1 };
   });
 
@@ -192,22 +207,28 @@ Just like in real life, every person is born with a name, an appearance, and an 
         </span>
       }
     >
-      <div className="mx-auto flex w-full max-w-4xl flex-col items-center gap-8">
-        <PhoneMockup className="w-full max-w-[360px]" showStatusBar={false}>
-          <AvatarPhoneHomeScreen avatarIndex={previewIndex} />
-        </PhoneMockup>
+      {/* Side-by-side on lg+, stacked on mobile */}
+      <div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-8 lg:flex-row lg:items-start lg:gap-10">
 
-        <div className="relative w-full max-w-4xl overflow-hidden rounded-2xl border border-raw-border/40 bg-raw-surface/20 p-5 sm:p-6"
+        {/* Phone */}
+        <div className="flex shrink-0 justify-center">
+          <PhoneMockup className="w-[260px] sm:w-[280px]" showStatusBar={false}>
+            <AvatarPhoneHomeScreen avatarIndex={previewIndex} />
+          </PhoneMockup>
+        </div>
+
+        {/* Avatar selector card */}
+        <div
+          className="relative flex w-full min-w-0 flex-col overflow-hidden rounded-2xl border border-raw-border/40 bg-raw-surface/20 p-5 sm:p-6 lg:h-[646px]"
           style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 0 40px rgba(0,0,0,0.3)" }}
         >
-          {/* Subtle top shimmer line */}
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/30 to-transparent" />
 
-          <p className="text-center font-display text-xs uppercase tracking-[0.25em] text-raw-gold/70 mb-6">
+          <p className="text-center font-display text-xs uppercase tracking-[0.25em] text-raw-gold/70 mb-5">
             Choose your avatar
           </p>
 
-          {/* Mobile: free scroll */}
+          {/* Mobile (<sm): horizontal free-scroll row */}
           <div
             ref={scrollRef}
             className="flex items-center justify-start gap-8 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:hidden"
@@ -217,11 +238,10 @@ Just like in real life, every person is born with a name, an appearance, and an 
             ))}
           </div>
 
-          {/* Desktop: windowed with prev/next arrows */}
-          <div className="hidden sm:flex items-center gap-4">
+          {/* Tablet (sm–lg): windowed 4 with prev/next arrows */}
+          <div className="hidden sm:flex lg:hidden items-center gap-4">
             {!showAll && <NavButton direction="prev" onClick={prev} disabled={!canPrev} />}
-
-            <div className={`flex flex-1 items-center justify-center flex-wrap gap-8 transition-all duration-500`}>
+            <div className="flex flex-1 items-center justify-center flex-wrap gap-6 transition-all duration-500">
               {showAll
                 ? AVATARS.map((avatar, i) => (
                     <AvatarButton key={i + 1} index={i + 1} avatar={avatar} />
@@ -231,12 +251,11 @@ Just like in real life, every person is born with a name, an appearance, and an 
                   ))
               }
             </div>
-
             {!showAll && <NavButton direction="next" onClick={next} disabled={!canNext} />}
           </div>
 
-          {/* Show All / Show Less toggle */}
-          <div className="hidden sm:flex justify-center mt-5">
+          {/* Tablet Show All */}
+          <div className="hidden sm:flex lg:hidden justify-center mt-5">
             <button
               type="button"
               onClick={() => setShowAll((v) => !v)}
@@ -246,10 +265,21 @@ Just like in real life, every person is born with a name, an appearance, and an 
                 style={{ boxShadow: "0 0 14px rgba(241,196,45,0.2), inset 0 0 10px rgba(241,196,45,0.05)" }}
               />
               <span className="relative">{showAll ? "Show Less" : "Show All Avatars"}</span>
-              <span className="relative transition-transform duration-300" style={{ transform: showAll ? "rotate(180deg)" : "rotate(0deg)" }}>
-                ▾
-              </span>
+              <span className="relative transition-transform duration-300" style={{ transform: showAll ? "rotate(180deg)" : "rotate(0deg)" }}>▾</span>
             </button>
+          </div>
+
+          {/* Desktop (lg+): 2-col × 4-row grid filling card height + prev/next */}
+          <div className="hidden lg:flex flex-col flex-1">
+            <div className="grid flex-1 grid-cols-2 grid-rows-4 place-items-center gap-x-4 gap-y-2">
+              {desktopAvatars.map(({ avatar, index }) => (
+                <AvatarButton key={`${desktopStart}-${index}`} index={index} avatar={avatar} />
+              ))}
+            </div>
+            <div className="flex items-center justify-center gap-4 pt-3">
+              <NavButton direction="prev" onClick={prevDesktop} disabled={false} />
+              <NavButton direction="next" onClick={nextDesktop} disabled={false} />
+            </div>
           </div>
         </div>
       </div>
