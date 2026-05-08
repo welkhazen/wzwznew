@@ -182,7 +182,7 @@ export function PremiumPollCard({
             <div className="mt-auto w-full pt-4 sm:pt-5">
               <div className="grid grid-cols-2 gap-2 sm:gap-3">
                 {/* Primary / Yes button */}
-                <HoverGradientVoteButton></HoverGradientVoteButton>
+                <HoverGradientVoteButton
                   label={primaryOption.label}
                   answered={isAnswered}
                   selected={primarySelected}
@@ -206,7 +206,7 @@ export function PremiumPollCard({
                     transition: "box-shadow 0.5s ease, transform 0.2s ease",
                     transform: votePulse && primarySelected ? "scale(1.03)" : "scale(1)",
                   }}
-                >
+              >
                   <span className="pointer-events-none absolute inset-x-5 top-2 h-px bg-gradient-to-r from-transparent via-raw-gold/70 to-transparent" />
                   <span
                     className="relative z-10 flex flex-col items-center justify-center gap-1"
