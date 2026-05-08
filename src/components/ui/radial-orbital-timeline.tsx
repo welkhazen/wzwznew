@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowRight, X } from "lucide-react";
+import { useTheme } from "@/providers/useTheme";
 
 interface TimelineItem {
   id: number;
@@ -20,6 +21,8 @@ interface RadialOrbitalTimelineProps {
 }
 
 export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTimelineProps) {
+  const { mode } = useTheme();
+  const isLight = mode === "light";
   const [expandedItems, setExpandedItems] = useState<Record<number, boolean>>({});
   const [pulseEffect, setPulseEffect] = useState<Record<number, boolean>>({});
   const [activeNodeId, setActiveNodeId] = useState<number | null>(null);
@@ -249,10 +252,14 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
                     fontSize: isTinyPhone ? "0.6rem" : isCompact ? "0.575rem" : "0.6rem",
                     lineHeight: 1.3,
                     fontWeight: 700,
-                    color: isExpanded ? "#F1C42D" : "rgba(241,196,45,0.95)",
-                    textShadow: isExpanded
-                      ? "0 0 10px rgba(241,196,45,0.7), 0 0 20px rgba(241,196,45,0.4)"
-                      : "0 1px 4px rgba(0,0,0,1), 0 0 8px rgba(0,0,0,0.9)",
+                    color: isLight
+                      ? (isExpanded ? "#7a5a08" : "rgba(100,74,8,0.9)")
+                      : (isExpanded ? "#F1C42D" : "rgba(241,196,45,0.95)"),
+                    textShadow: isLight
+                      ? "none"
+                      : (isExpanded
+                          ? "0 0 10px rgba(241,196,45,0.7), 0 0 20px rgba(241,196,45,0.4)"
+                          : "0 1px 4px rgba(0,0,0,1), 0 0 8px rgba(0,0,0,0.9)"),
                   }}
                 >
                   {item.title}
@@ -272,8 +279,13 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
       {activeItem && (() => {
         const cardInner = (
           <div
-            className="relative rounded-xl border border-raw-gold/30 bg-[#080808] p-4 text-left backdrop-blur-xl"
-            style={{ boxShadow: "0 0 0 1px rgba(241,196,45,0.12), 0 12px 40px rgba(0,0,0,0.9), 0 0 24px rgba(241,196,45,0.06)" }}
+            className="relative rounded-xl border border-raw-gold/30 p-4 text-left backdrop-blur-xl"
+            style={{
+              background: isLight ? "#fffbf0" : "#080808",
+              boxShadow: isLight
+                ? "0 0 0 1px rgba(180,140,20,0.18), 0 12px 40px rgba(0,0,0,0.12), 0 0 24px rgba(180,140,20,0.06)"
+                : "0 0 0 1px rgba(241,196,45,0.12), 0 12px 40px rgba(0,0,0,0.9), 0 0 24px rgba(241,196,45,0.06)",
+            }}
           >
             <button
               type="button"
@@ -294,11 +306,11 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
               {activeItem.title}
             </p>
 
-            <p className="text-[13px] leading-relaxed text-white/70">{activeItem.content}</p>
+            <p className={`text-[13px] leading-relaxed ${isLight ? "text-stone-700" : "text-white/75"}`}>{activeItem.content}</p>
 
             {activeItem.relatedIds.length > 0 && (
               <div className="mt-3 border-t border-raw-gold/10 pt-3">
-                <p className="mb-1.5 text-[10px] uppercase tracking-wider text-white/30">Connected</p>
+                <p className={`mb-1.5 text-[10px] uppercase tracking-wider ${isLight ? "text-stone-400" : "text-white/30"}`}>Connected</p>
                 <div className="flex flex-wrap gap-1.5">
                   {activeItem.relatedIds.map((relatedId) => {
                     const rel = timelineData.find((i) => i.id === relatedId);
