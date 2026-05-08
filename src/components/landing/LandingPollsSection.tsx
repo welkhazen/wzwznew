@@ -505,61 +505,81 @@ export function LandingPollsSection() {
           </button>
         </div>
 
-        {/* Comments panel — same as PollShowcase */}
-        <div className="mt-4 w-full max-w-[330px] mx-auto" style={{ minHeight: 130 }}>
-          {showComments && (
-            <div
-              className="p-[1px]"
-              style={{
-                clipPath: COMMENT_CLIP,
-                background:
-                  "linear-gradient(160deg, rgba(241,196,45,0.4) 0%, rgba(241,196,45,0.1) 50%, rgba(241,196,45,0.3) 100%)",
-              }}
-            >
-              <div
-                className="px-4 py-4"
-                style={{
-                  clipPath: COMMENT_CLIP,
-                  background: "linear-gradient(165deg, #131313 0%, #080808 100%)",
-                }}
+        {/* Comments — drops down attached to card */}
+        <div className="w-full max-w-[330px] mx-auto">
+          <AnimatePresence>
+            {showComments && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.52, ease: [0.22, 1, 0.36, 1] }}
+                className="overflow-hidden"
               >
-                <p className="text-[10px] font-bold uppercase tracking-[0.32em] text-[#F1C42D]/70 mb-3">
-                  Anonymous Comments
-                </p>
+                {/* Gold connector line + glow sweep */}
+                <motion.div
+                  initial={{ scaleX: 0, opacity: 0 }}
+                  animate={{ scaleX: 1, opacity: 1 }}
+                  transition={{ duration: 0.45, delay: 0.1, ease: "easeOut" }}
+                  className="h-px origin-left bg-gradient-to-r from-transparent via-[#F1C42D]/55 to-transparent"
+                  style={{ boxShadow: "0 0 8px rgba(241,196,45,0.4)" }}
+                />
 
-                <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
-                  {allComments.map((c, i) => (
-                    <div key={i} className="flex items-start gap-2">
-                      <span className="mt-0.5 h-5 w-5 flex-shrink-0 rounded-full bg-[#F1C42D]/15 flex items-center justify-center text-[9px] text-[#F1C42D]/60 font-bold">
-                        ?
-                      </span>
-                      <p className="text-[12px] text-white/60 leading-[1.4]">{c}</p>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mt-3 flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Add anonymous comment…"
-                    value={commentInputs[index] ?? ""}
-                    onChange={(e) =>
-                      setCommentInputs((prev) => ({ ...prev, [index]: e.target.value }))
-                    }
-                    onKeyDown={(e) => e.key === "Enter" && handleSubmitComment()}
-                    className="flex-1 bg-white/5 border border-white/10 rounded px-3 py-1.5 text-[12px] text-white/70 placeholder:text-white/25 outline-none focus:border-[#F1C42D]/40 transition"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleSubmitComment}
-                    className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded border border-[#F1C42D]/30 bg-[#F1C42D]/10 text-[#F1C42D]/70 transition hover:bg-[#F1C42D]/20"
+                <div
+                  className="p-[1px]"
+                  style={{
+                    clipPath: COMMENT_CLIP,
+                    background:
+                      "linear-gradient(160deg, rgba(241,196,45,0.35) 0%, rgba(241,196,45,0.08) 50%, rgba(241,196,45,0.25) 100%)",
+                    boxShadow: "0 8px 32px rgba(241,196,45,0.1)",
+                  }}
+                >
+                  <div
+                    className="px-4 py-4"
+                    style={{
+                      clipPath: COMMENT_CLIP,
+                      background: "linear-gradient(165deg, #111111 0%, #070707 100%)",
+                    }}
                   >
-                    <Send className="h-3.5 w-3.5" />
-                  </button>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.32em] text-[#F1C42D]/60 mb-3">
+                      Anonymous Comments
+                    </p>
+
+                    <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
+                      {allComments.map((c, i) => (
+                        <div key={i} className="flex items-start gap-2">
+                          <span className="mt-0.5 h-5 w-5 flex-shrink-0 rounded-full bg-[#F1C42D]/12 flex items-center justify-center text-[9px] text-[#F1C42D]/55 font-bold">
+                            ?
+                          </span>
+                          <p className="text-[12px] text-white/55 leading-[1.4]">{c}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="mt-3 flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Add anonymous comment…"
+                        value={commentInputs[index] ?? ""}
+                        onChange={(e) =>
+                          setCommentInputs((prev) => ({ ...prev, [index]: e.target.value }))
+                        }
+                        onKeyDown={(e) => e.key === "Enter" && handleSubmitComment()}
+                        className="flex-1 bg-white/5 border border-white/10 rounded px-3 py-1.5 text-[12px] text-white/70 placeholder:text-white/25 outline-none focus:border-[#F1C42D]/40 transition"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleSubmitComment}
+                        className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded border border-[#F1C42D]/30 bg-[#F1C42D]/10 text-[#F1C42D]/70 transition hover:bg-[#F1C42D]/20"
+                      >
+                        <Send className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </LandingSectionShell>

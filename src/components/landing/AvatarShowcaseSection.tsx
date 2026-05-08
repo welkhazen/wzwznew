@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronDown, Sparkles } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { LandingSectionShell } from "@/components/landing/LandingSectionShell";
 import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { AvatarPhoneHomeScreen } from "@/components/ui/avatar-phone-home-screen";
@@ -7,6 +8,8 @@ import { PhoneMockup } from "@/components/ui/phone-mockup";
 import { AVATARS } from "@/lib/avataridentity";
 import { loadAvatarCatalog } from "@/lib/avatarCatalog";
 import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
+import { loadLandingNewAvatars } from "@/lib/landingNewAvatars";
+import type { LandingNewAvatar } from "@/lib/landingNewAvatars";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 
 const VISIBLE_COUNT = 4;
@@ -19,15 +22,16 @@ export function AvatarShowcaseSection() {
   const [startIndex, setStartIndex] = useState(0);
   const [desktopStart, setDesktopStart] = useState(0);
   const [showAll, setShowAll] = useState(false);
+  const [showMore, setShowMore] = useState(false);
   const [catalog, setCatalog] = useState<AvatarCatalogItem[]>([]);
+  const [newAvatars, setNewAvatars] = useState<LandingNewAvatar[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Load the real avatar catalog from Supabase on mount
   useEffect(() => {
     loadAvatarCatalog().then(setCatalog).catch(() => {});
+    loadLandingNewAvatars().then(setNewAvatars).catch(() => {});
   }, []);
 
-  // Use live catalog if loaded, otherwise fall back to module defaults
   const avatarList = catalog.length > 0 ? catalog : AVATARS;
   const total = avatarList.length || 1;
 
@@ -353,6 +357,78 @@ Just like in real life, every person is born with a name, an appearance, and an 
             </div>
           </div>
         </div>
+      </div>
+
+      {/* ── Show More: new avatars drop-down ── */}
+      <div className="mx-auto mt-6 w-full max-w-5xl">
+        {/* Button — only shows if there are new avatars */}
+        {newAvatars.length > 0 && (
+          <div className="flex justify-center">
+            <button
+              type="button"
+              onClick={() => setShowMore((v) => !v)}
+              className="group relative flex items-center gap-2.5 rounded-full border border-raw-gold/40 bg-raw-black/70 px-6 py-2.5 text-xs font-semibold uppercase tracking-[0.22em] text-raw-gold/80 transition-all duration-300 hover:border-raw-gold/70 hover:text-raw-gold"
+              style={{ boxShadow: showMore ? "0 0 20px rgba(241,196,45,0.25), inset 0 0 12px rgba(241,196,45,0.07)" : undefined }}
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              {showMore ? "Show Less" : "Show More"}
+              <motion.span
+                animate={{ rotate: showMore ? 180 : 0 }}
+                transition={{ duration: 0.3 }}
+                className="flex"
+              >
+                <ChevronDown className="h-3.5 w-3.5" />
+              </motion.span>
+            </button>
+          </div>
+        )}
+
+        {/* Drop-down panel */}
+        <AnimatePresence>
+          {showMore && newAvatars.length > 0 && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+              className="overflow-hidden"
+            >
+              <div className="mt-5 relative rounded-2xl border border-raw-gold/25 bg-raw-surface/20 p-6 sm:p-8"
+                style={{ boxShadow: "0 0 40px rgba(241,196,45,0.08), inset 0 1px 0 rgba(241,196,45,0.12)" }}
+              >
+                {/* Top shimmer */}
+                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/50 to-transparent" />
+
+                <p className="mb-6 text-center font-display text-[10px] uppercase tracking-[0.28em] text-raw-gold/60">
+                  New Arrivals
+                </p>
+
+                <div className="flex flex-wrap justify-center gap-8">
+                  {newAvatars.map((avatar) => (
+                    <div key={avatar.id} className="relative flex flex-col items-center gap-3">
+                      <span
+                        className="absolute -top-1 -right-1 z-10 rounded-full px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-raw-black"
+                        style={{
+                          background: "linear-gradient(135deg, #F1C42D, #ffed8a)",
+                          boxShadow: "0 0 10px rgba(241,196,45,0.7)",
+                        }}
+                      >
+                        NEW
+                      </span>
+                      <div className="h-20 w-20 overflow-hidden rounded-full border-2 border-raw-gold/40 bg-raw-surface/40">
+                        {avatar.imageSrc
+                          ? <img src={avatar.imageSrc} alt={avatar.name} className="h-full w-full object-cover" />
+                          : <div className="h-full w-full" />
+                        }
+                      </div>
+                      <p className="text-center text-xs text-raw-silver/70">{avatar.name}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </LandingSectionShell>
   );

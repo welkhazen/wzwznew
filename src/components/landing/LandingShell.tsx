@@ -1,4 +1,5 @@
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useState } from "react";
+import { motion } from "framer-motion";
 import MatrixBackground from "@/components/ui/matrix-background";
 import { Navbar } from "@/components/landing/Navbar";
 import { ProblemSection } from "@/components/landing/ProblemSection";
@@ -40,13 +41,21 @@ export default function LandingShell({
   verifySignupOtp,
   login,
 }: LandingShellProps) {
+  const [siteReady, setSiteReady] = useState(false);
+
   return (
     <div className="landing-page-shell min-h-screen overflow-x-hidden bg-raw-black">
-      <div className="relative overflow-x-hidden">
+      <PollShowcase onResolved={() => setSiteReady(true)} />
+
+      <motion.div
+        className="relative overflow-x-hidden"
+        initial={{ opacity: 0, filter: "blur(14px)" }}
+        animate={siteReady ? { opacity: 1, filter: "blur(0px)" } : {}}
+        transition={{ duration: 0.75, ease: "easeOut" }}
+        style={{ pointerEvents: siteReady ? "auto" : "none" }}
+      >
         <PerforatedBackground />
         <MatrixBackground />
-
-        <PollShowcase />
 
         <Navbar
           isLoggedIn={isLoggedIn}
@@ -66,7 +75,7 @@ export default function LandingShell({
         <WhyAnonymity />
         <TestimonialsSection />
         <LandingFooter />
-      </div>
+      </motion.div>
 
       <Suspense fallback={null}>
         <SignupModalLazy
