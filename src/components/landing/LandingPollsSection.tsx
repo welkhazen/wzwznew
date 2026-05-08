@@ -391,7 +391,7 @@ export function LandingPollsSection() {
                             className="pointer-events-none absolute inset-y-0 left-0"
                             style={{
                               width: waterFilled ? `${currentPoll?.noPercent}%` : "0%",
-                              transition: "width 1.2s cubic-bezier(0.22, 1, 0.36, 1)",
+                              transition: waterFilled ? "width 1.2s cubic-bezier(0.22, 1, 0.36, 1)" : "none",
                               background: "linear-gradient(to right, rgba(200,200,200,0.85), rgba(140,140,140,0.65))",
                             }}
                           >
@@ -449,7 +449,7 @@ export function LandingPollsSection() {
                             className="pointer-events-none absolute inset-y-0 right-0"
                             style={{
                               width: waterFilled ? `${currentPoll?.yesPercent}%` : "0%",
-                              transition: "width 1.2s cubic-bezier(0.22, 1, 0.36, 1)",
+                              transition: waterFilled ? "width 1.2s cubic-bezier(0.22, 1, 0.36, 1)" : "none",
                               background: "linear-gradient(to left, rgba(247,213,87,0.92), rgba(210,155,18,0.75))",
                             }}
                           >
