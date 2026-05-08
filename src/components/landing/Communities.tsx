@@ -44,8 +44,6 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
   const [selectedCommunity, setSelectedCommunity] = useState<string | null>(null);
   const [clickedCardRect, setClickedCardRect] = useState<DOMRect | null>(null);
   const [visibleMessages, setVisibleMessages] = useState<number>(0);
-  const [replyTyping, setReplyTyping] = useState(false);
-  const [replyVisible, setReplyVisible] = useState(false);
   const [anonInput, setAnonInput] = useState("");
 
   // Per-open random message pool (3 messages)
@@ -74,8 +72,6 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
     setAnonId(`ANON${Math.floor(10000 + Math.random() * 90000)}`);
     setPreviewOpen(true);
     setVisibleMessages(0);
-    setReplyTyping(false);
-    setReplyVisible(false);
     setAnonInput("");
 
     if (community.waitlist) {
@@ -95,11 +91,6 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
       setVisibleMessages(messageIndex);
       if (messageIndex >= count) {
         window.clearInterval(interval);
-        timers.push(window.setTimeout(() => setReplyTyping(true), 1000));
-        timers.push(window.setTimeout(() => {
-          setReplyTyping(false);
-          setReplyVisible(true);
-        }, 3200));
       }
     }, 800);
 
@@ -112,7 +103,7 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
   // Scroll to bottom when new messages appear
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [visibleMessages, replyVisible, sentMessages.length]);
+  }, [visibleMessages, sentMessages.length]);
 
   function sendMessage() {
     const text = anonInput.trim();
@@ -318,37 +309,6 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
                         <span className="h-2 w-2 rounded-full bg-raw-gold/70 animate-pulse" />
                         <span className="h-2 w-2 rounded-full bg-raw-gold/70 animate-pulse" style={{ animationDelay: "160ms" }} />
                         <span className="h-2 w-2 rounded-full bg-raw-gold/70 animate-pulse" style={{ animationDelay: "320ms" }} />
-                      </div>
-                    )}
-
-                    {/* typing indicator */}
-                    {replyTyping && (
-                      <div className="chat-popup-bubble animate-fadeInUp flex items-center gap-3 rounded-2xl border border-raw-gold/15 p-3">
-                        <div className="h-8 w-8 flex-shrink-0 rounded-full bg-raw-gold/10 ring-1 ring-raw-gold/30" />
-                        <div>
-                          <p className="text-[10px] uppercase tracking-[0.22em] text-raw-gold/60">Someone is typing</p>
-                          <div className="mt-1.5 inline-flex items-center gap-1.5">
-                            <span className="h-2 w-2 rounded-full bg-raw-gold/70 animate-pulse" />
-                            <span className="h-2 w-2 rounded-full bg-raw-gold/70 animate-pulse" style={{ animationDelay: "160ms" }} />
-                            <span className="h-2 w-2 rounded-full bg-raw-gold/70 animate-pulse" style={{ animationDelay: "320ms" }} />
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* community reply */}
-                    {replyVisible && (
-                      <div className="chat-popup-bubble animate-fadeInUp rounded-2xl border border-raw-gold/25 p-3 shadow-[0_0_20px_rgba(241,196,45,0.08)]">
-                        <p className="text-[10px] uppercase tracking-[0.24em] text-raw-gold/70">Community reply</p>
-                        <p className="mt-1.5 text-sm leading-relaxed text-raw-text/90">
-                          {selectedCommunity === "Speak Your Truth"
-                            ? "Yes — this room is safe for your story. Share what happened and we'll listen without judgment."
-                            : selectedCommunity === "Is It Just Me?"
-                            ? "That's how I felt too. You're not the only one — let's talk about it."
-                            : selectedCommunity === "Late Night Talks"
-                            ? "Late night means honest thoughts. Bring your real talk and let the group respond."
-                            : "This room is full of people who speak their mind. Start with one sentence and see who replies."}
-                        </p>
                       </div>
                     )}
 
