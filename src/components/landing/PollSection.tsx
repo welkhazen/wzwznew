@@ -352,13 +352,6 @@ function DraggablePollCard({
               <div className="flex-1 h-px" style={{ background: `linear-gradient(90deg, ${isLight ? "rgba(0,0,0,0.12)" : "rgba(255,255,255,0.1)"}, transparent)` }} />
             </div>
 
-            {/* Swipe hint */}
-            <p
-              className="text-[10px] tracking-[0.18em] uppercase text-center"
-              style={{ color: textSecondary }}
-            >
-              Swipe right for Yes, left for No
-            </p>
 
             {/* Buttons */}
             <div className="flex w-full gap-3">
