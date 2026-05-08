@@ -192,15 +192,20 @@ Just like in real life, every person is born with a name, an appearance, and an 
         </span>
       }
     >
-      <div className="mx-auto flex w-full max-w-4xl flex-col items-center gap-8">
-        <PhoneMockup className="w-full max-w-[360px]" showStatusBar={false}>
-          <AvatarPhoneHomeScreen avatarIndex={previewIndex} />
-        </PhoneMockup>
+      {/* Side-by-side on lg+, stacked on mobile */}
+      <div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-8 lg:flex-row lg:items-center lg:gap-12">
 
-        <div className="relative w-full max-w-4xl overflow-hidden rounded-2xl border border-raw-border/40 bg-raw-surface/20 p-5 sm:p-6"
+        {/* Phone — shrinks to natural width, centered on mobile */}
+        <div className="flex shrink-0 justify-center lg:justify-end">
+          <PhoneMockup className="w-[260px] sm:w-[280px]" showStatusBar={false}>
+            <AvatarPhoneHomeScreen avatarIndex={previewIndex} />
+          </PhoneMockup>
+        </div>
+
+        {/* Avatar selector card — fills remaining space */}
+        <div className="relative w-full min-w-0 overflow-hidden rounded-2xl border border-raw-border/40 bg-raw-surface/20 p-5 sm:p-6"
           style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 0 40px rgba(0,0,0,0.3)" }}
         >
-          {/* Subtle top shimmer line */}
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/30 to-transparent" />
 
           <p className="text-center font-display text-xs uppercase tracking-[0.25em] text-raw-gold/70 mb-6">
@@ -217,11 +222,11 @@ Just like in real life, every person is born with a name, an appearance, and an 
             ))}
           </div>
 
-          {/* Desktop: windowed with prev/next arrows */}
+          {/* sm+: windowed with prev/next arrows */}
           <div className="hidden sm:flex items-center gap-4">
             {!showAll && <NavButton direction="prev" onClick={prev} disabled={!canPrev} />}
 
-            <div className={`flex flex-1 items-center justify-center flex-wrap gap-8 transition-all duration-500`}>
+            <div className="flex flex-1 items-center justify-center flex-wrap gap-6 transition-all duration-500">
               {showAll
                 ? AVATARS.map((avatar, i) => (
                     <AvatarButton key={i + 1} index={i + 1} avatar={avatar} />
@@ -235,7 +240,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
             {!showAll && <NavButton direction="next" onClick={next} disabled={!canNext} />}
           </div>
 
-          {/* Show All / Show Less toggle */}
+          {/* Show All / Show Less */}
           <div className="hidden sm:flex justify-center mt-5">
             <button
               type="button"
