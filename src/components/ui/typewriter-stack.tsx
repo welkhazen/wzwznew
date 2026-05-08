@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import { motion } from "motion/react";
-import { EncryptedText } from "@/components/ui/encrypted-text";
 import { cn } from "@/lib/utils";
 
 interface TypewriterStackProps {
@@ -24,7 +23,6 @@ interface TypewriterStackProps {
   rawWordBaseClassName?: string;
   rawWClassName?: string;
   lineClassNamesByIndex?: Partial<Record<number, string>>;
-  encryptActiveLine?: boolean;
 }
 
 function splitFirstWord(value: string): [string, string] {
@@ -54,7 +52,6 @@ export function TypewriterStack({
   rawWordBaseClassName = "text-foreground",
   rawWClassName,
   lineClassNamesByIndex,
-  encryptActiveLine = false,
 }: TypewriterStackProps) {
   const [wordIndex, setWordIndex] = useState(0);
   const [text, setText] = useState("");
@@ -162,7 +159,7 @@ export function TypewriterStack({
       >
         <span aria-live="polite">
           {typing.head ? <span className={prefixClassName}>{typing.head}</span> : null}
-          {encryptActiveLine ? <EncryptedText text={typing.tail} speed={56} className={textClassName} /> : renderStyledTail(typing.tail)}
+          {renderStyledTail(typing.tail)}
         </span>
         <motion.span
           aria-hidden="true"
