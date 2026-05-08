@@ -24,18 +24,8 @@ export function LandingFooter() {
           <div>
             <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-raw-gold/60">Insights</p>
             <ul className="space-y-2.5">
-              <li>
-                <button
-                  type="button"
-                  onClick={() => window.dispatchEvent(new CustomEvent("open-poll-showcase"))}
-                  className="text-xs text-raw-silver/55 transition hover:text-raw-gold"
-                >
-                  Live Polls
-                </button>
-              </li>
-              <li><a href="/#poll-benefits" className="text-xs text-raw-silver/55 transition hover:text-raw-gold">Poll Benefits</a></li>
-              <li><a href="/#polls" className="text-xs text-raw-silver/55 transition hover:text-raw-gold">Communities</a></li>
-              <li><a href="/pitch" className="text-xs text-raw-silver/55 transition hover:text-raw-gold">Investor Deck</a></li>
+              <li><a href="/polls-explained" className="text-xs text-raw-silver/55 transition hover:text-raw-gold">Poll Benefits</a></li>
+              <li><a href="/communities-explained" className="text-xs text-raw-silver/55 transition hover:text-raw-gold">Communities</a></li>
             </ul>
           </div>
 

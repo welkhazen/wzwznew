@@ -41,16 +41,7 @@ export function GlareCard({ children, className = "" }: GlareCardProps) {
         transformStyle: "preserve-3d",
       }}
     >
-      {/* Glare overlay */}
-      <div
-        className="pointer-events-none absolute inset-0 z-10 transition-opacity duration-300"
-        style={{
-          opacity: isHovered ? 1 : 0,
-          background: `radial-gradient(circle at ${glarePos.x}% ${glarePos.y}%, rgba(241,196,45,0.15) 0%, rgba(241,196,45,0.04) 40%, transparent 70%)`,
-        }}
-      />
-      {/* Content */}
-      <div className="relative z-0">{children}</div>
+      {children}
     </div>
   );
 }

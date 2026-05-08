@@ -70,10 +70,10 @@ const PerforatedBackground = memo(() => {
           background: `
             /* Center light vignette - subtle warmth */
             radial-gradient(ellipse 80% 80% at 50% 50%, transparent 30%, hsl(40 15% 90% / 0.5) 90%),
-            /* Perforated dot pattern - small, subtle */
-            radial-gradient(circle at center, hsl(40 10% 82%) 1px, transparent 1px),
-            /* Perforated dot pattern - larger */
-            radial-gradient(circle at center, hsl(40 8% 88%) 2.5px, transparent 2.5px),
+            /* Perforated dot pattern - small, ~15% darker for stronger visibility */
+            radial-gradient(circle at center, hsl(40 10% 70%) 1px, transparent 1px),
+            /* Perforated dot pattern - larger, ~15% darker for stronger visibility */
+            radial-gradient(circle at center, hsl(40 8% 75%) 2.5px, transparent 2.5px),
             /* Base creamy white gradient */
             linear-gradient(145deg, hsl(40 20% 96%) 0%, hsl(40 15% 94%) 50%, hsl(40 18% 95%) 100%)
           `,

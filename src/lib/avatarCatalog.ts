@@ -11,6 +11,7 @@ export type AvatarCatalogItem = {
   ring: string;
   glow: string;
   isActive?: boolean;
+  isNew?: boolean;
   showIn?: "landing" | "app" | "both";
 };
 
@@ -75,6 +76,7 @@ function sanitizeCatalog(items: AvatarCatalogItem[]): AvatarCatalogItem[] {
       ring: item.ring || DEFAULT_AVATAR_CATALOG[Math.min(idx, DEFAULT_AVATAR_CATALOG.length - 1)].ring,
       glow: item.glow || DEFAULT_AVATAR_CATALOG[Math.min(idx, DEFAULT_AVATAR_CATALOG.length - 1)].glow,
       isActive: item.isActive !== false,
+      isNew: item.isNew ?? false,
     });
   });
 
@@ -136,7 +138,7 @@ export async function loadAvatarCatalog(): Promise<AvatarCatalogItem[]> {
   try {
     const { data, error } = await supabase
       .from("avatar_catalog")
-      .select("id, level, name, price, image_src, bg, figure, ring, glow, is_active")
+      .select("id, level, name, price, image_src, bg, figure, ring, glow, is_active, is_new")
       .eq("is_active", true)
       .order("level", { ascending: true });
 
@@ -156,6 +158,7 @@ export async function loadAvatarCatalog(): Promise<AvatarCatalogItem[]> {
       ring: row.ring,
       glow: row.glow,
       isActive: row.is_active,
+      isNew: row.is_new ?? false,
     }));
 
     if (mapped.length === 0) return readAvatarCatalogLocal();
@@ -168,7 +171,7 @@ export async function loadAvatarCatalog(): Promise<AvatarCatalogItem[]> {
 export async function loadAvatarCatalogSupabaseOnly(): Promise<AvatarCatalogItem[]> {
   const { data, error } = await supabase
     .from("avatar_catalog")
-    .select("id, level, name, price, image_src, bg, figure, ring, glow, is_active")
+    .select("id, level, name, price, image_src, bg, figure, ring, glow, is_active, is_new")
     .eq("is_active", true)
     .order("level", { ascending: true });
 
@@ -188,6 +191,7 @@ export async function loadAvatarCatalogSupabaseOnly(): Promise<AvatarCatalogItem
       ring: row.ring,
       glow: row.glow,
       isActive: row.is_active,
+      isNew: row.is_new ?? false,
     }))
   );
 
@@ -205,7 +209,7 @@ export async function saveAvatarCatalog(items: AvatarCatalogItem[]): Promise<Ava
   try {
     const baseRow = (item: AvatarCatalogItem) => ({
       id: item.id, level: item.level, name: item.name, price: item.price,
-      bg: item.bg, figure: item.figure, ring: item.ring, glow: item.glow, is_active: true,
+      bg: item.bg, figure: item.figure, ring: item.ring, glow: item.glow, is_active: true, is_new: item.isNew ?? false,
     });
     const withImage = next.filter((i) => i.imageSrc && !i.imageSrc.startsWith("data:"))
       .map((i) => ({ ...baseRow(i), image_src: i.imageSrc! }));
@@ -243,7 +247,7 @@ export async function saveAvatarCatalogSupabaseOnly(items: AvatarCatalogItem[]):
   const next = sanitizeCatalog(items);
   const baseRow = (item: AvatarCatalogItem) => ({
     id: item.id, level: item.level, name: item.name, price: item.price,
-    bg: item.bg, figure: item.figure, ring: item.ring, glow: item.glow, is_active: true,
+    bg: item.bg, figure: item.figure, ring: item.ring, glow: item.glow, is_active: true, is_new: item.isNew ?? false,
   });
   // Split into two batches: rows with a real image URL vs rows without (or with legacy base64).
   // PostgREST requires all rows in a batch to share the same column set, and base64 data URLs

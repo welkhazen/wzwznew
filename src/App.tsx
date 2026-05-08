@@ -16,6 +16,8 @@ const AskAI = lazy(() => import("./pages/AskAI"));
 const Security = lazy(() => import("./pages/Security"));
 const Terms = lazy(() => import("./pages/Terms"));
 const Privacy = lazy(() => import("./pages/Privacy"));
+const PollsExplained = lazy(() => import("./pages/PollsExplained"));
+const CommunitiesExplained = lazy(() => import("./pages/CommunitiesExplained"));
 const PitchSelector = lazy(() => import("./pages/PitchSelector"));
 const PitchV1 = lazy(() => import("./pages/PitchV1"));
 const PitchV2 = lazy(() => import("./pages/PitchV2"));
@@ -41,6 +43,8 @@ const App = () => (
                 <Route path="/dashboard/communities/:communityId" element={<Index />} />
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/faq" element={<FAQ />} />
+                <Route path="/polls-explained" element={<PollsExplained />} />
+                <Route path="/communities-explained" element={<CommunitiesExplained />} />
                 <Route path="/ask" element={<AskAI />} />
                 <Route path="/security" element={<Security />} />
                 <Route path="/terms" element={<Terms />} />
