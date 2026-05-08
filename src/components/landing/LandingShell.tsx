@@ -47,6 +47,12 @@ export default function LandingShell({
     <div className="landing-page-shell min-h-screen overflow-x-hidden bg-raw-black">
       <PollShowcase onResolved={() => setSiteReady(true)} />
 
+      <Navbar
+        isLoggedIn={isLoggedIn}
+        username={user?.username}
+        onSignupClick={() => setShowSignup(true)}
+      />
+
       <motion.div
         className="relative overflow-x-hidden"
         initial={{ opacity: 0, filter: "blur(14px)" }}
@@ -56,12 +62,6 @@ export default function LandingShell({
       >
         <PerforatedBackground />
         <MatrixBackground />
-
-        <Navbar
-          isLoggedIn={isLoggedIn}
-          username={user?.username}
-          onSignupClick={() => setShowSignup(true)}
-        />
 
         <GlobeHero onSignupClick={() => setShowSignup(true)} />
         <ProblemSection />

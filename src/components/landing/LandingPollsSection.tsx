@@ -343,7 +343,7 @@ export function LandingPollsSection() {
                     <GoldIcosahedron className="mb-5 h-20 w-20" />
 
                     <p className="text-[11px] font-bold uppercase tracking-[0.36em] text-[#F1C42D] [text-shadow:0_0_8px_rgba(241,196,45,0.45)]">
-                      Poll Question
+                      Instantly See What Everyone Else Thinks.
                     </p>
 
                     <p

@@ -327,7 +327,7 @@ function DraggablePollCard({
                 className="font-display text-[9px] tracking-[0.35em] uppercase whitespace-nowrap"
                 style={{ color: goldAccent }}
               >
-                Poll Question
+                Instantly See What Everyone Else Thinks.
               </p>
               <div className="flex-1 h-px" style={{ background: `linear-gradient(90deg, ${goldAccent}, transparent)` }} />
             </div>
