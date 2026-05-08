@@ -532,6 +532,13 @@ html.theme-light .dashboard-enhanced-bg [class*="text-raw-silver/"] {
   font-family: "Michroma", "Inter", system-ui, sans-serif;
 }
 
+html:not(.theme-light) .landing-page-shell {
+  /* Dark mode only: lift landing background palette by ~20% for better legibility. */
+  --raw-black: 57 57 57;
+  --raw-surface: 65 65 65;
+}
+
+
 .landing-page-shell :is(p, a, button, label, li, input, textarea, h1, h2, h3, h4, h5, h6) {
   font-family: inherit;
 }
