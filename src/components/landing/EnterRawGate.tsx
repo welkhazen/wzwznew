@@ -1,3 +1,4 @@
+import { BrandName } from "@/components/ui/brand-name";
 import { useEffect } from "react";
 
 interface EnterRawGateProps {
@@ -33,7 +34,7 @@ export function EnterRawGate({ onEnter }: EnterRawGateProps) {
           welcome
         </p>
         <h1 className="font-display text-3xl leading-tight text-raw-text sm:text-5xl">
-          this is <span className="text-raw-gold">raW</span>
+          this is <BrandName className="text-raw-gold" wClassName="text-raw-gold" />
         </h1>
         <p className="text-sm leading-relaxed text-raw-silver/65 sm:text-base">
           Anonymous voices. Real opinions. Step inside to see what people are actually saying.
