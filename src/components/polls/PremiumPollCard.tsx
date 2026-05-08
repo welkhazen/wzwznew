@@ -28,6 +28,36 @@ function getPercent(optionVotes: number, totalVotes: number, selected: boolean) 
   return Math.round((optionVotes / totalVotes) * 100);
 }
 
+
+
+function AnimatedPercentage({ value, animate }: { value: number; animate: boolean }) {
+  const [displayValue, setDisplayValue] = useState(value);
+
+  useEffect(() => {
+    if (!animate) {
+      setDisplayValue(value);
+      return;
+    }
+
+    setDisplayValue(0);
+    let frame = 0;
+    const durationMs = 800;
+    const start = performance.now();
+
+    const tick = (now: number) => {
+      const elapsed = Math.min(now - start, durationMs);
+      const progress = elapsed / durationMs;
+      const eased = 1 - (1 - progress) ** 3;
+      setDisplayValue(Math.round(value * eased));
+      if (progress < 1) frame = requestAnimationFrame(tick);
+    };
+
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [animate, value]);
+
+  return <span className="text-xl font-semibold leading-none">{displayValue}%</span>;
+}
 export function PremiumPollCard({
   question,
   primaryOption,
@@ -50,21 +80,20 @@ export function PremiumPollCard({
   const secondaryPercent = getPercent(secondaryVotes, totalVotes, secondarySelected);
 
   const voteLocked = useRef(false);
-  const skipAnimation = useRef(false);
-  const [waterFilled, setWaterFilled] = useState(false);
+  const [animateNumbers, setAnimateNumbers] = useState(false);
+  const [votePulse, setVotePulse] = useState(false);
 
-  // On question change (navigation): show fill immediately if already answered, reset if not.
   useEffect(() => {
     voteLocked.current = false;
-    skipAnimation.current = isAnswered;
-    setWaterFilled(isAnswered);
-  }, [question]); // eslint-disable-line react-hooks/exhaustive-deps
+    setAnimateNumbers(false);
+    setVotePulse(false);
+  }, [question]);
 
-  // On vote (selectedOptionId goes from null → value): animate the fill in.
   useEffect(() => {
-    if (!selectedOptionId || skipAnimation.current) return;
-    setWaterFilled(false);
-    const t = setTimeout(() => setWaterFilled(true), 60);
+    if (!selectedOptionId) return;
+    setAnimateNumbers(true);
+    setVotePulse(true);
+    const t = setTimeout(() => setVotePulse(false), 280);
     return () => clearTimeout(t);
   }, [selectedOptionId]);
 
@@ -154,32 +183,10 @@ export function PremiumPollCard({
                       : isAnswered
                         ? "inset 0 0 0 1px rgba(255,241,178,0.06), 0 0 6px rgba(241,196,45,0.07)"
                         : "inset 0 0 0 1px rgba(255,241,178,0.12), 0 0 18px rgba(241,196,45,0.17)",
-                    transition: "box-shadow 0.5s ease",
+                    transition: "box-shadow 0.5s ease, transform 0.2s ease",
+                    transform: votePulse && primarySelected ? "scale(1.03)" : "scale(1)",
                   }}
                 >
-                  {/* Water fill — animates from the right edge inward */}
-                  {isAnswered && (
-                    <div
-                      className="pointer-events-none absolute inset-y-0 right-0"
-                      style={{
-                        width: waterFilled ? `${primaryPercent}%` : "0%",
-                        transition: "width 1.2s cubic-bezier(0.22, 1, 0.36, 1)",
-                        background: "linear-gradient(to left, rgba(247,213,87,0.92), rgba(210,155,18,0.75))",
-                      }}
-                    >
-                      {/* Leading-edge wave shimmer — only on selected */}
-                      {primarySelected && (
-                        <div
-                          className="absolute inset-y-0 left-0 w-1.5 origin-left"
-                          style={{
-                            background: "rgba(255,236,120,0.95)",
-                            boxShadow: "0 0 10px 3px rgba(247,213,87,0.7)",
-                            animation: "water-edge-pulse 1s ease-in-out infinite",
-                          }}
-                        />
-                      )}
-                    </div>
-                  )}
                   <span className="pointer-events-none absolute inset-x-5 top-2 h-px bg-gradient-to-r from-transparent via-raw-gold/70 to-transparent" />
                   <span
                     className="relative z-10 flex flex-col items-center justify-center gap-1"
@@ -189,7 +196,7 @@ export function PremiumPollCard({
                       transition: "color 0.4s ease",
                     }}
                   >
-                    {isAnswered && <span className="text-xl font-semibold leading-none">{primaryPercent}%</span>}
+                    {isAnswered && <AnimatedPercentage value={primaryPercent} animate={animateNumbers} />}
                     {!isAnswered && <span>{primaryOption.label}</span>}
                   </span>
                 </button>
@@ -211,32 +218,10 @@ export function PremiumPollCard({
                       : isAnswered
                         ? "inset 0 0 0 1px rgba(255,255,255,0.04)"
                         : "inset 0 0 0 1px rgba(255,255,255,0.07)",
-                    transition: "box-shadow 0.5s ease",
+                    transition: "box-shadow 0.5s ease, transform 0.2s ease",
+                    transform: votePulse && secondarySelected ? "scale(1.03)" : "scale(1)",
                   }}
                 >
-                  {/* Water fill — animates from the left edge inward */}
-                  {isAnswered && (
-                    <div
-                      className="pointer-events-none absolute inset-y-0 left-0"
-                      style={{
-                        width: waterFilled ? `${secondaryPercent}%` : "0%",
-                        transition: "width 1.2s cubic-bezier(0.22, 1, 0.36, 1)",
-                        background: "linear-gradient(to right, rgba(200,200,200,0.85), rgba(140,140,140,0.65))",
-                      }}
-                    >
-                      {/* Leading-edge wave shimmer — only on selected */}
-                      {secondarySelected && (
-                        <div
-                          className="absolute inset-y-0 right-0 w-1.5 origin-right"
-                          style={{
-                            background: "rgba(230,230,230,0.95)",
-                            boxShadow: "0 0 10px 3px rgba(200,200,200,0.7)",
-                            animation: "water-edge-pulse 1s ease-in-out infinite",
-                          }}
-                        />
-                      )}
-                    </div>
-                  )}
                   <span className="pointer-events-none absolute inset-x-5 top-2 h-px bg-gradient-to-r from-transparent via-white/45 to-transparent" />
                   <span
                     className="relative z-10 flex flex-col items-center justify-center gap-1"
@@ -246,7 +231,7 @@ export function PremiumPollCard({
                       transition: "color 0.4s ease",
                     }}
                   >
-                    {isAnswered && <span className="text-xl font-semibold leading-none">{secondaryPercent}%</span>}
+                    {isAnswered && <AnimatedPercentage value={secondaryPercent} animate={animateNumbers} />}
                     <span>{secondaryOption.label}</span>
                   </span>
                 </button>
