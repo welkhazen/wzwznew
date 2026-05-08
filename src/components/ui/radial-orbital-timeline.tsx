@@ -232,12 +232,24 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
                 <div
                   className={`${isTinyPhone ? "h-8 w-8" : "h-10 w-10"} rounded-full flex items-center justify-center ${isPulsing ? "animate-pulse" : ""}`}
                   style={{
-                    background: isExpanded ? "linear-gradient(135deg, #F1C42D, #d4a017)" : isRelated ? "rgba(241,196,45,0.18)" : "rgba(8,8,8,0.88)",
-                    border: isExpanded ? "2px solid #F1C42D" : isRelated ? "2px solid rgba(241,196,45,0.55)" : "1px solid rgba(241,196,45,0.28)",
-                    boxShadow: isExpanded ? "0 0 18px rgba(241,196,45,0.55), 0 0 36px rgba(241,196,45,0.2)" : isRelated ? "0 0 12px rgba(241,196,45,0.3)" : "0 0 6px rgba(241,196,45,0.08)",
+                    background: isExpanded
+                      ? "linear-gradient(135deg, #F1C42D, #d4a017)"
+                      : isRelated
+                        ? (isLight ? "rgba(180,140,20,0.15)" : "rgba(241,196,45,0.18)")
+                        : (isLight ? "rgba(255,255,255,0.92)" : "rgba(8,8,8,0.88)"),
+                    border: isExpanded
+                      ? "2px solid #F1C42D"
+                      : isRelated
+                        ? "2px solid rgba(241,196,45,0.55)"
+                        : (isLight ? "1.5px solid rgba(160,120,10,0.5)" : "1px solid rgba(241,196,45,0.28)"),
+                    boxShadow: isExpanded
+                      ? "0 0 18px rgba(241,196,45,0.55), 0 0 36px rgba(241,196,45,0.2)"
+                      : isRelated
+                        ? "0 0 12px rgba(241,196,45,0.3)"
+                        : (isLight ? "0 2px 8px rgba(0,0,0,0.12)" : "0 0 6px rgba(241,196,45,0.08)"),
                     transform: isExpanded ? "scale(1.4)" : "scale(1)",
                     transition: "transform 0.3s, background 0.3s, border 0.3s, box-shadow 0.3s",
-                    color: isExpanded ? "#0a0a0a" : "rgba(241,196,45,0.82)",
+                    color: isExpanded ? "#0a0a0a" : (isLight ? "rgba(120,88,8,0.9)" : "rgba(241,196,45,0.82)"),
                   }}
                 >
                   <Icon size={isTinyPhone ? 13 : 15} />
@@ -253,7 +265,7 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
                     lineHeight: 1.3,
                     fontWeight: 700,
                     color: isLight
-                      ? (isExpanded ? "#7a5a08" : "rgba(100,74,8,0.9)")
+                      ? (isExpanded ? "#5a4206" : "#6b4f07")
                       : (isExpanded ? "#F1C42D" : "rgba(241,196,45,0.95)"),
                     textShadow: isLight
                       ? "none"
