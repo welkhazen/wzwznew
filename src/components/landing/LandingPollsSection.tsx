@@ -367,12 +367,13 @@ export function LandingPollsSection() {
                       {/* No button */}
                       <button
                         type="button"
+                        disabled={!!selected}
                         onClick={() => {
                           if (isDragging.current) { isDragging.current = false; return; }
                           handleAnswer("no");
                         }}
                         aria-label="Vote no"
-                        className="group relative h-12 overflow-hidden transition active:scale-95"
+                        className="group relative h-12 overflow-hidden transition active:scale-95 disabled:cursor-not-allowed"
                         style={{ clipPath: BUTTON_CLIP }}
                       >
                         <span
@@ -425,12 +426,13 @@ export function LandingPollsSection() {
                       {/* Yes button */}
                       <button
                         type="button"
+                        disabled={!!selected}
                         onClick={() => {
                           if (isDragging.current) { isDragging.current = false; return; }
                           handleAnswer("yes");
                         }}
                         aria-label="Vote yes"
-                        className="group relative h-12 overflow-hidden transition active:scale-95"
+                        className="group relative h-12 overflow-hidden transition active:scale-95 disabled:cursor-not-allowed"
                         style={{ clipPath: BUTTON_CLIP }}
                       >
                         <span
