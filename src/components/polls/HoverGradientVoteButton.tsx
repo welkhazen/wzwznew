@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
 interface HoverGradientVoteButtonProps {
@@ -21,6 +22,15 @@ export function HoverGradientVoteButton({
   themeHue = "primary",
   onClick,
 }: HoverGradientVoteButtonProps) {
+  const [waterFilled, setWaterFilled] = useState(false);
+
+  useEffect(() => {
+    if (!answered) { setWaterFilled(false); return; }
+    setWaterFilled(false);
+    const t = setTimeout(() => setWaterFilled(true), 60);
+    return () => clearTimeout(t);
+  }, [answered]);
+
   const isPrimary = themeHue === "primary";
   const borderGradient = isPrimary
     ? "linear-gradient(120deg, hsl(var(--primary) / 0.35), hsl(var(--primary) / 1), hsl(var(--ring) / 0.5))"
@@ -55,10 +65,14 @@ export function HoverGradientVoteButton({
         {answered && (
           <span
             className={cn(
-              "pointer-events-none absolute inset-y-0 transition-all duration-1000 ease-out",
+              "pointer-events-none absolute inset-y-0",
               align === "right" ? "right-0" : "left-0"
             )}
-            style={{ width: `${percent ?? 0}%`, background: fillGradient }}
+            style={{
+              width: waterFilled ? `${percent ?? 0}%` : "0%",
+              background: fillGradient,
+              transition: waterFilled ? "width 1.2s cubic-bezier(0.22, 1, 0.36, 1)" : "none",
+            }}
           />
         )}
         <span

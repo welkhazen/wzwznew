@@ -15,6 +15,7 @@ interface PremiumPollCardProps {
   selectedOptionId?: string | null;
   disabled?: boolean;
   showHint?: boolean;
+  uniformNeutralTheme?: boolean;
   className?: string;
   onVote: (optionId: string) => void;
   onHintSeen?: () => void;
@@ -35,6 +36,7 @@ export function PremiumPollCard({
   selectedOptionId = null,
   disabled = false,
   showHint = false,
+  uniformNeutralTheme = false,
   className,
   onVote,
   onHintSeen,
@@ -131,7 +133,7 @@ export function PremiumPollCard({
                   selected={primarySelected}
                   percent={primaryPercent}
                   align="right"
-                  themeHue="primary"
+                  themeHue={uniformNeutralTheme ? "neutral" : "primary"}
                   disabled={disabled}
                   onClick={() => submitVote(primaryOption.id)}
                 />

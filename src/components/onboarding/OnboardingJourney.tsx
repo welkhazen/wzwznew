@@ -10,6 +10,8 @@ import { AvatarPhoneHomeScreen } from "@/components/ui/avatar-phone-home-screen"
 import { PhoneMockup } from "@/components/ui/phone-mockup";
 import { fetchSupabasePolls, addPollComment } from "@/utils/supabasePolls";
 
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import { SwipeablePollCard } from "./SwipeablePollCard";
 import { EnterRawModal } from "./EnterRawModal";
 import type { OnboardingStep, Poll, User } from "@/store/useRawStore";
@@ -359,122 +361,127 @@ export function OnboardingJourney({
                 </p>
               </div>
 
-              {/* Single Poll Card */}
-              <div className="mt-3 flex flex-col items-center justify-center sm:mt-6 sm:min-h-[55vh]">
+              <div className="mt-3 flex flex-col items-center sm:mt-6">
                 {onboardingPolls.length > 0 && currentPoll && (
-                  <div className="w-full">
-                    <div className="mx-auto mb-2.5 flex w-full max-w-[22rem] items-center justify-between sm:mb-3 sm:max-w-xl lg:max-w-2xl">
+                  <div className="w-full max-w-[330px]">
+                    {/* Progress dashes */}
+                    <div className="mb-4 flex flex-col items-center">
+                      <div className="flex items-center gap-3">
+                        <span className="h-px w-7 bg-white/35" />
+                        <p className="text-[12px] font-medium tracking-[0.42em] text-white/85">
+                          {currentPollIndex + 1} / {onboardingPolls.length}
+                        </p>
+                        <span className="h-px w-7 bg-white/35" />
+                      </div>
+                      <div className="mt-3 flex items-center gap-2">
+                        {onboardingPolls.map((_, i) => (
+                          <span
+                            key={i}
+                            className={`h-[3px] transition-all ${
+                              i === currentPollIndex
+                                ? "w-9 bg-[#F1C42D] shadow-[0_0_8px_rgba(241,196,45,0.7)]"
+                                : "w-6 bg-white/20"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Card with side arrows */}
+                    <div className="relative flex items-center justify-center">
                       <button
-                        onClick={() => setCurrentPollIndex(Math.max(0, currentPollIndex - 1))}
+                        type="button"
+                        onClick={() => setCurrentPollIndex((i) => Math.max(0, i - 1))}
                         disabled={currentPollIndex === 0}
-                        className="flex h-10 w-10 items-center justify-center rounded-full border border-raw-border/35 bg-raw-black/45 text-base text-raw-silver/70 transition-all hover:border-raw-gold/35 hover:text-raw-gold/75 disabled:cursor-not-allowed disabled:opacity-35 sm:h-9 sm:w-9 sm:text-lg"
                         aria-label="Previous poll"
+                        className="absolute left-0 z-10 flex h-11 w-11 -translate-x-3 items-center justify-center rounded-full border border-[#F1C42D]/55 bg-black/75 text-[#F1C42D] shadow-[0_0_18px_rgba(241,196,45,0.25)] transition hover:bg-[#F1C42D]/10 disabled:cursor-not-allowed disabled:opacity-25 sm:-translate-x-7"
                       >
-                        ←
+                        <ChevronLeft className="h-5 w-5" strokeWidth={2.5} />
                       </button>
-                      <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-raw-silver/35">
-                        {currentPollIndex + 1} / {onboardingPolls.length}
-                      </span>
+
+                      <div className="w-full">
+                        <AnimatePresence mode="wait">
+                          <motion.div
+                            key={currentPoll.id}
+                            initial={{ opacity: 0, scale: 0.96 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.94 }}
+                            transition={{ duration: 0.18 }}
+                          >
+                            <SwipeablePollCard
+                              id={currentPoll.id}
+                              question={currentPoll.question}
+                              options={currentPoll.options}
+                              selectedOption={currentPollSelected}
+                              isAnswered={currentPollAnswered}
+                              totalResponses={Object.values(currentPollStats).reduce((a, b) => a + b, 0)}
+                              responseStats={currentPollStats}
+                              comments={pollComments[currentPoll.id] || []}
+                              pollIndex={currentPollIndex}
+                              totalPolls={onboardingPolls.length}
+                              hideInternalNav
+                              onSwipe={(option) => {
+                                track("onboarding_poll_answered", { poll_id: currentPoll.id, option_id: option, step_index: currentPollIndex });
+                                setPollSelections((prev) => ({ ...prev, [currentPoll.id]: option }));
+                                onMarkPollAnswered(currentPoll.id);
+                              }}
+                              onNavigate={(direction) => {
+                                if (direction === "left") {
+                                  setCurrentPollIndex((prev) => Math.max(0, prev - 1));
+                                } else {
+                                  setCurrentPollIndex((prev) => Math.min(onboardingPolls.length - 1, prev + 1));
+                                }
+                              }}
+                              currentIndex={currentPollIndex}
+                              completedCount={answeredCount}
+                              onAddComment={(content) => {
+                                const newComment: Comment = {
+                                  id: `${currentPoll.id}-${Date.now()}`,
+                                  author: user.username,
+                                  avatar: avatarIndex,
+                                  content,
+                                  timestamp: new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
+                                  likes: 0,
+                                  replies: [],
+                                  isAnonymous: Math.random() > 0.7,
+                                };
+                                setPollComments((prev) => ({
+                                  ...prev,
+                                  [currentPoll.id]: [...(prev[currentPoll.id] || []), newComment],
+                                }));
+                                addPollComment(currentPoll.id, content).catch((error) => {
+                                  console.error("Failed to save onboarding comment to Supabase", error);
+                                });
+                              }}
+                            />
+                          </motion.div>
+                        </AnimatePresence>
+                      </div>
+
                       <button
+                        type="button"
                         onClick={() => {
                           if (currentPollIndex < onboardingPolls.length - 1) {
-                            setCurrentPollIndex(Math.min(onboardingPolls.length - 1, currentPollIndex + 1));
+                            setCurrentPollIndex((i) => i + 1);
                             return;
                           }
                           goToNextStep();
                         }}
                         disabled={currentPollIndex === onboardingPolls.length - 1 && !canContinueFromPolls}
-                        className={`flex h-10 w-10 items-center justify-center rounded-full border text-base transition-all disabled:cursor-not-allowed disabled:opacity-35 sm:h-9 sm:w-9 sm:text-lg ${
-                          currentPollIndex < onboardingPolls.length - 1
-                            ? "border-raw-border/35 bg-raw-black/45 text-raw-silver/70 hover:border-raw-gold/35 hover:text-raw-gold/75"
-                            : "border-raw-gold/40 bg-raw-gold/15 text-raw-gold hover:bg-raw-gold/25"
-                        }`}
                         aria-label={currentPollIndex < onboardingPolls.length - 1 ? "Next poll" : "Complete polls"}
+                        className={`absolute right-0 z-10 flex h-11 w-11 translate-x-3 items-center justify-center rounded-full border text-[#F1C42D] transition sm:translate-x-7 ${
+                          currentPollIndex < onboardingPolls.length - 1
+                            ? "border-[#F1C42D]/55 bg-black/75 shadow-[0_0_18px_rgba(241,196,45,0.25)] hover:bg-[#F1C42D]/10 disabled:cursor-not-allowed disabled:opacity-25"
+                            : "border-[#F1C42D]/70 bg-[#F1C42D]/15 hover:bg-[#F1C42D]/25 disabled:cursor-not-allowed disabled:opacity-35"
+                        }`}
                       >
-                        →
+                        <ChevronRight className="h-5 w-5" strokeWidth={2.5} />
                       </button>
-                    </div>
-
-                    <div className="mx-auto w-full max-w-[22rem] sm:max-w-xl lg:max-w-2xl lg:px-12">
-                      <div className="poll-deck relative">
-                        {/* Tinder-style stacked cards behind the active one */}
-                        {onboardingPolls.slice(currentPollIndex + 1, currentPollIndex + 3).map((peek, i) => (
-                          <div
-                            key={peek.id}
-                            aria-hidden="true"
-                            className="poll-deck__peek pointer-events-none absolute left-1/2 top-0 h-[22rem] w-full max-w-[22rem] -translate-x-1/2 border border-raw-gold/25 bg-gradient-to-br from-[#111] to-[#050505] shadow-[0_18px_40px_rgba(0,0,0,0.55)] sm:h-[25.5rem] sm:max-w-[20rem]"
-                            style={{
-                              transform: `translate(-50%, ${(i + 1) * 10}px) scale(${1 - (i + 1) * 0.04})`,
-                              opacity: 0.55 - i * 0.2,
-                              zIndex: -1 - i,
-                              clipPath:
-                                "polygon(0 7%, 5.5% 0, 28% 0, 31% 1.4%, 69% 1.4%, 72% 0, 94.5% 0, 100% 7%, 100% 93%, 94.5% 100%, 5.5% 100%, 0 93%)",
-                            }}
-                          />
-                        ))}
-                        <SwipeablePollCard
-                          id={currentPoll.id}
-                          question={currentPoll.question}
-                          options={currentPoll.options}
-                          selectedOption={currentPollSelected}
-                          isAnswered={currentPollAnswered}
-                          totalResponses={Object.values(currentPollStats).reduce((a, b) => a + b, 0)}
-                          responseStats={currentPollStats}
-                          comments={pollComments[currentPoll.id] || []}
-                          pollIndex={currentPollIndex}
-                          totalPolls={onboardingPolls.length}
-                          onSwipe={(option) => {
-                            track("onboarding_poll_answered", { poll_id: currentPoll.id, option_id: option, step_index: currentPollIndex });
-                            setPollSelections((prev) => ({ ...prev, [currentPoll.id]: option }));
-                            onMarkPollAnswered(currentPoll.id);
-                            // Tinder-style: advance to next un-answered poll, or trigger Enter raW.
-                            const nextUnanswered = onboardingPolls.findIndex(
-                              (p, idx) => idx !== currentPollIndex && !onboardingAnsweredPollIds.has(p.id) && p.id !== currentPoll.id
-                            );
-                            if (nextUnanswered !== -1) {
-                              setCurrentPollIndex(nextUnanswered);
-                            } else if (currentPollIndex < onboardingPolls.length - 1) {
-                              setCurrentPollIndex(currentPollIndex + 1);
-                            } else {
-                              // last poll just answered: open Enter raW now
-                              setEnterRawOpen(true);
-                            }
-                          }}
-                          onNavigate={(direction) => {
-                            if (direction === "left") {
-                              setCurrentPollIndex((prev) => Math.max(0, prev - 1));
-                              return;
-                            }
-                            setCurrentPollIndex((prev) => Math.min(onboardingPolls.length - 1, prev + 1));
-                          }}
-                          currentIndex={currentPollIndex}
-                          completedCount={answeredCount}
-                          onAddComment={(content) => {
-                            const newComment: Comment = {
-                              id: `${currentPoll.id}-${Date.now()}`,
-                              author: user.username,
-                              avatar: avatarIndex,
-                              content,
-                              timestamp: new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
-                              likes: 0,
-                              replies: [],
-                              isAnonymous: Math.random() > 0.7,
-                            };
-                            setPollComments((prev) => ({
-                              ...prev,
-                              [currentPoll.id]: [...(prev[currentPoll.id] || []), newComment],
-                            }));
-
-                            addPollComment(currentPoll.id, content).catch((error) => {
-                              console.error("Failed to save onboarding comment to Supabase", error);
-                            });
-                          }}
-                        />
-                      </div>
                     </div>
                   </div>
                 )}
               </div>
+
               <div className="mt-5 flex justify-end sm:mt-6">
                 <button
                   onClick={goToNextStep}
