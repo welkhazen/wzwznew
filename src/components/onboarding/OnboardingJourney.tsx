@@ -1,3 +1,4 @@
+import { BrandName } from "@/components/ui/brand-name";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import isItJustMeVideo from "@/assets/itisjustme.webm";
@@ -257,7 +258,7 @@ export function OnboardingJourney({
       <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-3 py-4 sm:px-6 sm:py-8 md:py-10">
         <div className="mb-5 sm:mb-8">
           <div className="flex items-center justify-between gap-2">
-            <p className="font-display text-[10px] uppercase tracking-[0.3em] text-raw-gold/60 sm:text-xs sm:tracking-[0.35em]">Welcome to raW</p>
+            <p className="font-display text-[10px] uppercase tracking-[0.3em] text-raw-gold/60 sm:text-xs sm:tracking-[0.35em]">Welcome to <BrandName /></p>
             <button
               onClick={onLogout}
               className="shrink-0 rounded-xl border border-raw-border/50 px-2.5 py-1.5 text-[10px] uppercase tracking-[0.14em] text-raw-silver/55 transition-colors hover:border-raw-border hover:text-raw-silver sm:px-3"

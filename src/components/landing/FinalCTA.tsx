@@ -1,3 +1,4 @@
+import { BrandName } from "@/components/ui/brand-name";
 import { FormEvent, Suspense, useState } from "react";
 import { MinimalFooter } from "@/components/ui/minimal-footer";
 import { track } from "@/lib/analytics";
@@ -116,7 +117,7 @@ export function FinalCTA({ onSignupClick }: FinalCTAProps) {
           Join the Community Owner Early Access
         </h2>
         <div className="mt-4 flex items-center justify-center">
-          <Suspense fallback={<span className="font-display text-3xl text-raw-gold sm:text-4xl">raW</span>}>
+          <Suspense fallback={<BrandName className="font-display text-3xl text-raw-gold sm:text-4xl" wClassName="text-raw-gold" />}>
             <ContainerTextFlipLazy
               words={["launch-ready", "trusted", "member-led", "raW"]}
               interval={2500}

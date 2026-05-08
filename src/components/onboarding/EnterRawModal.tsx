@@ -1,3 +1,4 @@
+import { BrandName } from "@/components/ui/brand-name";
 import { useEffect } from "react";
 
 interface EnterRawModalProps {
@@ -47,7 +48,7 @@ export function EnterRawModal({ open, onEnter, onDismiss }: EnterRawModalProps) 
       >
         <p className="font-display text-[10px] uppercase tracking-[0.3em] text-raw-gold/70 sm:tracking-[0.4em]">You're in</p>
         <h2 className="mt-2 font-display text-xl tracking-wide text-raw-text sm:text-3xl">
-          Welcome to <span className="text-raw-gold">raW</span>
+          Welcome to <BrandName className="text-raw-gold" wClassName="text-raw-gold" />
         </h2>
         <p className="mt-2 text-xs text-raw-silver/70 sm:mt-3 sm:text-sm">
           Your answers are locked in. Step inside to meet your circles.
