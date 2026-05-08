@@ -357,11 +357,6 @@ export function LandingPollsSection() {
 
                     <div className="mt-6 h-px w-16 bg-white/20" />
 
-                    {!selected && (
-                      <p className="mt-4 text-[11px] tracking-[0.05em] text-white/45">
-                        Swipe right for Yes · left for No
-                      </p>
-                    )}
 
                     <div className="mt-5 grid w-full grid-cols-2 gap-3">
                       {/* No button */}
