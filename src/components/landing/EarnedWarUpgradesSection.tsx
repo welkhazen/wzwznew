@@ -19,7 +19,7 @@ export function EarnedWarUpgradesSection() {
 
         <p className="mt-5 text-sm leading-relaxed text-raw-silver/60 sm:text-base">
           We give back to those who are being{" "}
-          <span className="font-medium text-raw-gold/80">raW</span>. Earn{" "}
+          <span className="font-medium text-raw-gold/80">ra<span className="raw-word-w">W</span></span>. Earn{" "}
           <span className="font-medium text-raw-gold/80">War Points</span> and{" "}
           <span className="font-medium text-raw-gold/80">War-Up</span> by staying active — you
           deserve it and earned it.

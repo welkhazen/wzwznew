@@ -790,6 +790,15 @@ html.theme-light .landing-page-shell textarea[class*="bg-raw-black/"] {
   background-color: rgb(232 237 246 / 0.75) !important;
 }
 
+
+.raw-word-w {
+  color: hsl(var(--primary));
+}
+
+.hero-landing .raw-word-w,
+.hero-landing-overlay .raw-word-w {
+  color: inherit;
+}
 /* Footer */
 html.theme-light .landing-page-shell footer {
   background: rgb(243 244 248) !important;
