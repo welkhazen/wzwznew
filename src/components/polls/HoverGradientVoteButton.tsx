@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useAnimatedPercent } from "@/components/polls/useAnimatedPercent";
 import { cn } from "@/lib/utils";
 
 interface HoverGradientVoteButtonProps {
@@ -12,6 +13,8 @@ interface HoverGradientVoteButtonProps {
   onClick: () => void;
 }
 
+const RESULT_ANIMATION_DURATION_MS = 800;
+
 export function HoverGradientVoteButton({
   label,
   percent,
@@ -23,12 +26,23 @@ export function HoverGradientVoteButton({
   onClick,
 }: HoverGradientVoteButtonProps) {
   const [waterFilled, setWaterFilled] = useState(false);
+  const displayedPercent = useAnimatedPercent(percent ?? 0, {
+    durationMs: RESULT_ANIMATION_DURATION_MS,
+    enabled: answered,
+  });
 
   useEffect(() => {
-    if (!answered) { setWaterFilled(false); return; }
+    if (!answered) {
+      setWaterFilled(false);
+      return;
+    }
+
     setWaterFilled(false);
-    const t = setTimeout(() => setWaterFilled(true), 60);
-    return () => clearTimeout(t);
+    const fillTimer = setTimeout(() => setWaterFilled(true), 60);
+
+    return () => {
+      clearTimeout(fillTimer);
+    };
   }, [answered]);
 
   const isPrimary = themeHue === "primary";
@@ -71,7 +85,7 @@ export function HoverGradientVoteButton({
             style={{
               width: waterFilled ? `${percent ?? 0}%` : "0%",
               background: fillGradient,
-              transition: waterFilled ? "width 1.2s cubic-bezier(0.22, 1, 0.36, 1)" : "none",
+              transition: waterFilled ? `width ${RESULT_ANIMATION_DURATION_MS}ms cubic-bezier(0.22, 1, 0.36, 1)` : "none",
             }}
           />
         )}
@@ -82,7 +96,7 @@ export function HoverGradientVoteButton({
             opacity: answered && !selected ? 0.7 : 1,
           }}
         >
-          {answered ? <span className="text-xl font-semibold leading-none">{percent ?? 0}%</span> : null}
+          {answered ? <span className="text-xl font-semibold leading-none">{displayedPercent}%</span> : null}
           <span>{label}</span>
         </span>
       </span>
