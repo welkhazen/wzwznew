@@ -56,6 +56,37 @@
     --sidebar-ring: 47 88% 56%;
   }
 
+
+
+  html.theme-medium {
+    --raw-black: 38 38 42;
+    --raw-surface: 56 56 62;
+    --raw-silver: 214 214 220;
+    --raw-text: 242 242 246;
+    --raw-border: 98 98 108;
+    --raw-ink: 20 20 24;
+    --background: 240 7% 18%;
+    --foreground: 0 0% 95%;
+    --card: 240 7% 22%;
+    --card-foreground: 0 0% 95%;
+    --popover: 240 7% 22%;
+    --popover-foreground: 0 0% 95%;
+    --primary-foreground: 0 0% 8%;
+    --secondary: 240 6% 28%;
+    --secondary-foreground: 0 0% 92%;
+    --muted: 240 5% 26%;
+    --muted-foreground: 0 0% 78%;
+    --accent-foreground: 0 0% 8%;
+    --border: 240 5% 38%;
+    --input: 240 5% 38%;
+    --sidebar-background: 240 7% 20%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-accent: 240 6% 27%;
+    --sidebar-accent-foreground: 0 0% 94%;
+    --sidebar-border: 240 5% 36%;
+    --scrollbar-track: rgba(255, 255, 255, 0.08);
+  }
+
   html.theme-light {
     --raw-black: 250 247 242;
     --raw-surface: 244 241 236;

@@ -14,7 +14,7 @@ function getStoredThemeMode(): ThemeMode {
   }
 
   const storedMode = window.localStorage.getItem(THEME_MODE_STORAGE_KEY);
-  return storedMode === "light" ? "light" : "dark";
+  return storedMode === "light" || storedMode === "medium" ? storedMode : "dark";
 }
 
 function getStoredAccent(): AccentPresetId {
@@ -39,6 +39,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const selectedAccent = ACCENT_PRESETS.find((preset) => preset.id === accent) ?? ACCENT_PRESETS[0];
 
     root.classList.toggle("theme-light", mode === "light");
+    root.classList.toggle("theme-medium", mode === "medium");
     root.dataset.themeMode = mode;
     root.dataset.themeAccent = accent;
     root.style.setProperty("--raw-accent", selectedAccent.rgb);
