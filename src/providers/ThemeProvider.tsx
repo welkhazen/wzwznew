@@ -4,6 +4,7 @@ import {
   THEME_ACCENT_STORAGE_KEY,
   THEME_MODE_STORAGE_KEY,
   ThemeContext,
+  THEME_MODE_ORDER,
   type AccentPresetId,
   type ThemeMode,
 } from "@/providers/theme-context";
@@ -14,6 +15,7 @@ function getStoredThemeMode(): ThemeMode {
   }
 
   const storedMode = window.localStorage.getItem(THEME_MODE_STORAGE_KEY);
+  return THEME_MODE_ORDER.includes(storedMode as ThemeMode) ? (storedMode as ThemeMode) : "dark";
   return storedMode === "light" || storedMode === "medium" ? storedMode : "dark";
 }
 
@@ -39,6 +41,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const selectedAccent = ACCENT_PRESETS.find((preset) => preset.id === accent) ?? ACCENT_PRESETS[0];
 
     root.classList.toggle("theme-light", mode === "light");
+    root.classList.toggle("theme-dusk", mode === "dusk");
+    root.classList.toggle("theme-dawn", mode === "dawn");
     root.classList.toggle("theme-medium", mode === "medium");
     root.dataset.themeMode = mode;
     root.dataset.themeAccent = accent;

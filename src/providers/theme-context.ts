@@ -1,5 +1,6 @@
 import { createContext } from "react";
 
+export type ThemeMode = "dark" | "dusk" | "dawn" | "light";
 export type ThemeMode = "dark" | "medium" | "light";
 
 export type AccentPresetId =
@@ -47,3 +48,13 @@ export const ACCENT_PRESETS: AccentPreset[] = [
 ];
 
 export const ThemeContext = createContext<ThemeContextValue | null>(null);
+
+
+export const THEME_MODE_ORDER: ThemeMode[] = ["dark", "dusk", "dawn", "light"];
+
+export const THEME_MODE_LABELS: Record<ThemeMode, string> = {
+  dark: "Dark",
+  dusk: "Dusk",
+  dawn: "Dawn",
+  light: "Light",
+};

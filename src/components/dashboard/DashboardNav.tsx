@@ -18,7 +18,7 @@ import {
 import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/providers/useTheme";
-import { type AccentPresetId, type ThemeMode } from "@/providers/theme-context";
+import { THEME_MODE_LABELS, THEME_MODE_ORDER, type AccentPresetId, type ThemeMode } from "@/providers/theme-context";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -77,6 +77,7 @@ export function DashboardNav({ username, avatarLevel, showAdminLink = false, onP
   const effectiveMode = hoveredMode ?? mode;
   const effectiveAccent = hoveredAccent ?? accent;
   const isEffectiveLight = effectiveMode === "light";
+  const effectiveModeIndex = THEME_MODE_ORDER.indexOf(effectiveMode);
   const isEffectiveMedium = effectiveMode === "medium";
 
   useEffect(() => {
@@ -88,6 +89,8 @@ export function DashboardNav({ username, avatarLevel, showAdminLink = false, onP
     const selectedAccent = accentPresets.find((preset) => preset.id === effectiveAccent) ?? accentPresets[0];
 
     root.classList.toggle("theme-light", effectiveMode === "light");
+    root.classList.toggle("theme-dusk", effectiveMode === "dusk");
+    root.classList.toggle("theme-dawn", effectiveMode === "dawn");
     root.classList.toggle("theme-medium", effectiveMode === "medium");
     root.dataset.themeMode = effectiveMode;
     root.dataset.themeAccent = effectiveAccent;
@@ -242,6 +245,25 @@ export function DashboardNav({ username, avatarLevel, showAdminLink = false, onP
                     Theme Studio
                   </div>
 
+                  <div className={cn("rounded-lg border px-3 py-2", isEffectiveLight ? "border-slate-200 bg-slate-50" : "border-raw-border/25 bg-raw-black/25")}>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className={cn("text-[10px] uppercase tracking-[0.16em]", isEffectiveLight ? "text-slate-500" : "text-raw-silver/45")}>Mode</span>
+                      <span className={cn("text-[10px] uppercase tracking-[0.16em]", isEffectiveLight ? "text-slate-600" : "text-raw-silver/65")}>{THEME_MODE_LABELS[effectiveMode]}</span>
+                    </div>
+                    <div className="mt-2 flex items-center gap-2">
+                      <Moon className="h-3.5 w-3.5 text-raw-silver/60" />
+                      <input
+                        type="range"
+                        min={0}
+                        max={3}
+                        step={1}
+                        value={effectiveModeIndex}
+                        onChange={(e) => { setMode(THEME_MODE_ORDER[Number(e.target.value)] ?? "dark"); setHoveredMode(null); }}
+                        className="h-1.5 w-full cursor-pointer accent-[rgb(var(--raw-accent))]"
+                        aria-label="Theme mode swiper"
+                      />
+                      <Sun className="h-3.5 w-3.5 text-raw-silver/60" />
+                    </div>
                   <div className={cn("flex items-center gap-2 rounded-lg border p-1", isEffectiveLight ? "border-slate-200 bg-slate-50" : "border-raw-border/25 bg-raw-black/25")}>
                     <button
                       onClick={() => { setMode("dark"); setHoveredMode(null); }}
