@@ -26,24 +26,39 @@ export function HoverGradientVoteButton({
   onClick,
 }: HoverGradientVoteButtonProps) {
   const [waterFilled, setWaterFilled] = useState(false);
-  const displayedPercent = useAnimatedPercent(percent ?? 0, {
-    durationMs: RESULT_ANIMATION_DURATION_MS,
-    enabled: answered,
-  });
+  const [displayedPercent, setDisplayedPercent] = useState(0);
 
   useEffect(() => {
     if (!answered) {
       setWaterFilled(false);
+      setDisplayedPercent(0);
       return;
     }
 
     setWaterFilled(false);
     const fillTimer = setTimeout(() => setWaterFilled(true), 60);
 
+    const targetPercent = Math.max(0, Math.min(100, percent ?? 0));
+    let animationFrame = 0;
+    const startedAt = performance.now();
+
+    const tick = (now: number) => {
+      const elapsed = now - startedAt;
+      const progress = Math.min(1, elapsed / RESULT_ANIMATION_DURATION_MS);
+      setDisplayedPercent(Math.round(targetPercent * progress));
+      if (progress < 1) {
+        animationFrame = requestAnimationFrame(tick);
+      }
+    };
+
+    setDisplayedPercent(0);
+    animationFrame = requestAnimationFrame(tick);
+
     return () => {
       clearTimeout(fillTimer);
+      cancelAnimationFrame(animationFrame);
     };
-  }, [answered]);
+  }, [answered, percent]);
 
   const isPrimary = themeHue === "primary";
   const borderGradient = isPrimary
