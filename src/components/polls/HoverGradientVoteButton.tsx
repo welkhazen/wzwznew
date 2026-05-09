@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useAnimatedPercent } from "@/components/polls/useAnimatedPercent";
 import { cn } from "@/lib/utils";
 
 interface HoverGradientVoteButtonProps {
