@@ -1,6 +1,7 @@
 import { createContext } from "react";
 
 export type ThemeMode = "dark" | "dusk" | "dawn" | "light";
+export type ThemeMode = "dark" | "medium" | "light";
 
 export type AccentPresetId =
   | "gold"

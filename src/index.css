@@ -58,62 +58,33 @@
 
 
 
-  html.theme-dusk {
-    --raw-black: 22 22 24;
-    --raw-surface: 34 34 38;
-    --raw-silver: 226 226 230;
-    --raw-text: 241 241 244;
-    --raw-border: 62 62 70;
-    --raw-ink: 16 16 18;
-    --background: 240 5% 10%;
-    --foreground: 0 0% 94%;
-    --card: 240 5% 14%;
-    --card-foreground: 0 0% 94%;
-    --popover: 240 5% 13%;
-    --popover-foreground: 0 0% 94%;
-    --primary-foreground: 0 0% 5%;
-    --secondary: 240 5% 18%;
-    --secondary-foreground: 0 0% 88%;
-    --muted: 240 4% 17%;
-    --muted-foreground: 0 0% 70%;
-    --accent-foreground: 0 0% 6%;
-    --border: 240 4% 25%;
-    --input: 240 4% 25%;
-    --sidebar-background: 240 5% 12%;
-    --sidebar-foreground: 0 0% 94%;
-    --sidebar-accent: 240 4% 17%;
-    --sidebar-accent-foreground: 0 0% 92%;
-    --sidebar-border: 240 4% 24%;
-    --scrollbar-track: rgba(255, 255, 255, 0.06);
-  }
-
-  html.theme-dawn {
-    --raw-black: 115 113 110;
-    --raw-surface: 162 159 153;
-    --raw-silver: 34 34 34;
-    --raw-text: 12 12 12;
-    --raw-border: 189 183 174;
-    --raw-ink: 12 12 12;
-    --background: 36 14% 66%;
-    --foreground: 0 0% 9%;
-    --card: 36 14% 72%;
-    --card-foreground: 0 0% 8%;
-    --popover: 36 14% 73%;
-    --popover-foreground: 0 0% 8%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 36 12% 76%;
-    --secondary-foreground: 0 0% 12%;
-    --muted: 36 10% 74%;
-    --muted-foreground: 0 0% 28%;
+  html.theme-medium {
+    --raw-black: 38 38 42;
+    --raw-surface: 56 56 62;
+    --raw-silver: 214 214 220;
+    --raw-text: 242 242 246;
+    --raw-border: 98 98 108;
+    --raw-ink: 20 20 24;
+    --background: 240 7% 18%;
+    --foreground: 0 0% 95%;
+    --card: 240 7% 22%;
+    --card-foreground: 0 0% 95%;
+    --popover: 240 7% 22%;
+    --popover-foreground: 0 0% 95%;
+    --primary-foreground: 0 0% 8%;
+    --secondary: 240 6% 28%;
+    --secondary-foreground: 0 0% 92%;
+    --muted: 240 5% 26%;
+    --muted-foreground: 0 0% 78%;
     --accent-foreground: 0 0% 8%;
-    --border: 36 10% 58%;
-    --input: 36 10% 58%;
-    --sidebar-background: 36 14% 71%;
-    --sidebar-foreground: 0 0% 8%;
-    --sidebar-accent: 36 12% 75%;
-    --sidebar-accent-foreground: 0 0% 9%;
-    --sidebar-border: 36 10% 56%;
-    --scrollbar-track: rgba(20, 18, 16, 0.1);
+    --border: 240 5% 38%;
+    --input: 240 5% 38%;
+    --sidebar-background: 240 7% 20%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-accent: 240 6% 27%;
+    --sidebar-accent-foreground: 0 0% 94%;
+    --sidebar-border: 240 5% 36%;
+    --scrollbar-track: rgba(255, 255, 255, 0.08);
   }
 
   html.theme-light {

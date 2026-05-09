@@ -13,6 +13,7 @@ import {
   Settings,
   Shield,
   Sun,
+  Monitor,
 } from "lucide-react";
 import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { cn } from "@/lib/utils";
@@ -77,6 +78,7 @@ export function DashboardNav({ username, avatarLevel, showAdminLink = false, onP
   const effectiveAccent = hoveredAccent ?? accent;
   const isEffectiveLight = effectiveMode === "light";
   const effectiveModeIndex = THEME_MODE_ORDER.indexOf(effectiveMode);
+  const isEffectiveMedium = effectiveMode === "medium";
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -89,6 +91,7 @@ export function DashboardNav({ username, avatarLevel, showAdminLink = false, onP
     root.classList.toggle("theme-light", effectiveMode === "light");
     root.classList.toggle("theme-dusk", effectiveMode === "dusk");
     root.classList.toggle("theme-dawn", effectiveMode === "dawn");
+    root.classList.toggle("theme-medium", effectiveMode === "medium");
     root.dataset.themeMode = effectiveMode;
     root.dataset.themeAccent = effectiveAccent;
     root.style.setProperty("--raw-accent", selectedAccent.rgb);
@@ -261,6 +264,43 @@ export function DashboardNav({ username, avatarLevel, showAdminLink = false, onP
                       />
                       <Sun className="h-3.5 w-3.5 text-raw-silver/60" />
                     </div>
+                  <div className={cn("flex items-center gap-2 rounded-lg border p-1", isEffectiveLight ? "border-slate-200 bg-slate-50" : "border-raw-border/25 bg-raw-black/25")}>
+                    <button
+                      onClick={() => { setMode("dark"); setHoveredMode(null); }}
+                      className={cn(
+                        "flex min-h-[36px] flex-1 items-center justify-center rounded-md px-2 py-2 text-xs font-medium transition-colors",
+                        effectiveMode === "dark" ? "bg-raw-gold/15 text-raw-gold" : "text-slate-500 hover:text-slate-900",
+                      )}
+                    >
+                      <span className="inline-flex items-center gap-1.5">
+                        <Moon className="h-3.5 w-3.5" />
+                        Dark
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => { setMode("medium"); setHoveredMode(null); }}
+                      className={cn(
+                        "flex min-h-[36px] flex-1 items-center justify-center rounded-md px-2 py-2 text-xs font-medium transition-colors",
+                        isEffectiveMedium ? "bg-raw-gold/15 text-raw-gold" : "text-raw-silver/60 hover:text-raw-text",
+                      )}
+                    >
+                      <span className="inline-flex items-center gap-1.5">
+                        <Monitor className="h-3.5 w-3.5" />
+                        Medium
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => { setMode("light"); setHoveredMode(null); }}
+                      className={cn(
+                        "flex min-h-[36px] flex-1 items-center justify-center rounded-md px-2 py-2 text-xs font-medium transition-colors",
+                        isEffectiveLight ? "bg-raw-gold/15 text-raw-gold" : "text-raw-silver/60 hover:text-raw-text",
+                      )}
+                    >
+                      <span className="inline-flex items-center gap-1.5">
+                        <Sun className="h-3.5 w-3.5" />
+                        Light
+                      </span>
+                    </button>
                   </div>
 
                   <div className="mt-3">
