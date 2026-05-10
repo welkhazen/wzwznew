@@ -264,6 +264,8 @@ export function DashboardNav({ username, avatarLevel, showAdminLink = false, onP
                       />
                       <Sun className="h-3.5 w-3.5 text-raw-silver/60" />
                     </div>
+                  </div>
+
                   <div className={cn("flex items-center gap-2 rounded-lg border p-1", isEffectiveLight ? "border-slate-200 bg-slate-50" : "border-raw-border/25 bg-raw-black/25")}>
                     <button
                       onClick={() => { setMode("dark"); setHoveredMode(null); }}
