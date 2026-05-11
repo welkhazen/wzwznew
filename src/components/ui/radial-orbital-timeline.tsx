@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { ArrowRight, X } from "lucide-react";
 import { useTheme } from "@/providers/useTheme";
 
@@ -344,9 +345,9 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
           </div>
         );
 
-        // Mobile: fixed modal with backdrop so parent overflow-hidden can't clip it
+        // Mobile: portal to body so ancestor filter/transform containing blocks can't trap it
         if (isCompact || isTinyPhone) {
-          return (
+          return createPortal(
             <div
               className="fixed inset-0 z-[9999] flex items-center justify-center p-5"
               onClick={closeAll}
@@ -358,7 +359,8 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
               >
                 {cardInner}
               </div>
-            </div>
+            </div>,
+            document.body
           );
         }
 
