@@ -107,6 +107,7 @@ export default function Dashboard({
       return (
         <DashboardSectionShell>
           <DashboardHome
+            userId={user.id}
             username={user.username}
             avatarLevel={avatarLevel}
             polls={polls}
@@ -189,6 +190,7 @@ export default function Dashboard({
         return (
           <DashboardSectionShell>
             <DashboardHome
+              userId={user.id}
               username={user.username}
               avatarLevel={avatarLevel}
               polls={polls}

@@ -1,13 +1,15 @@
-import { Suspense, useMemo } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ContainerTextFlipLazy } from "@/components/ui/container-text-flip.lazy";
 import { ChevronRight, Dices, Zap, Flame, Users, BarChart3, Sparkles } from "lucide-react";
 import type { Poll } from "@/store/useRawStore";
 import type { DashboardTab } from "./DashboardNav";
 import { readCommunityChats } from "@/lib/communityChat";
 import { COMMUNITY_COVER_IMAGES, COMMUNITY_COVER_VIDEOS, FEATURED_COMMUNITY_IDS } from "@/lib/communityConstants";
+import { getTodayKey } from "@/store/useRawStore.storage";
 
 interface DashboardHomeProps {
   username: string;
+  userId?: string;
   avatarLevel: number;
   polls: Poll[];
   votedPolls: Set<string>;
@@ -68,6 +70,7 @@ function CommunityCard({
 }
 
 export function DashboardHome({
+  userId,
   dailyAnsweredCount,
   dailyPollLimit,
   onNavigate,
@@ -75,6 +78,35 @@ export function DashboardHome({
 }: DashboardHomeProps) {
   const dailyItemsLeft = Math.max(0, dailyPollLimit - dailyAnsweredCount);
   const allCommunities = useMemo(() => readCommunityChats(), []);
+
+  const spinStorageKey = userId ? `raw.daily-spin.${userId}` : null;
+  const hasSpunToday = useMemo(() => {
+    if (!spinStorageKey) return false;
+    try {
+      const stored = localStorage.getItem(spinStorageKey);
+      if (!stored) return false;
+      return (JSON.parse(stored) as { date: string }).date === getTodayKey();
+    } catch { return false; }
+  }, [spinStorageKey]);
+
+  const [spinCountdown, setSpinCountdown] = useState("");
+  const spinTimerRef = useRef<number | null>(null);
+  const updateSpinCountdown = useCallback(() => {
+    const now = new Date();
+    const midnight = new Date();
+    midnight.setHours(24, 0, 0, 0);
+    const diff = midnight.getTime() - now.getTime();
+    const h = Math.floor(diff / 3_600_000);
+    const m = Math.floor((diff % 3_600_000) / 60_000);
+    const s = Math.floor((diff % 60_000) / 1_000);
+    setSpinCountdown(`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`);
+  }, []);
+  useEffect(() => {
+    if (!hasSpunToday) { setSpinCountdown(""); return; }
+    updateSpinCountdown();
+    spinTimerRef.current = window.setInterval(updateSpinCountdown, 1000);
+    return () => { if (spinTimerRef.current) window.clearInterval(spinTimerRef.current); };
+  }, [hasSpunToday, updateSpinCountdown]);
 
   const trending = useMemo(
     () => [...allCommunities].sort((a, b) => b.members.length - a.members.length).slice(0, 4),
@@ -212,7 +244,7 @@ export function DashboardHome({
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Daily Spin */}
-          <div className="bg-[#1a1a1a] border border-white/10 p-6 rounded-[1.5rem] space-y-6">
+          <div className="bg-[#1a1a1a] border border-white/10 p-6 rounded-[1.5rem] space-y-5">
             <div className="flex items-start justify-between">
               <div className="space-y-0.5">
                 <h3 className="text-xl font-bold text-white tracking-tight">Daily Spin</h3>
@@ -223,12 +255,19 @@ export function DashboardHome({
               </div>
             </div>
             <p className="text-sm text-white/50 leading-relaxed">Spin the wheel once a day for a chance to earn XP, badges, and avatar themes.</p>
-            <button
-              onClick={() => onNavigate("challenges")}
-              className="w-full py-3 rounded-xl border border-raw-gold/30 text-raw-gold font-bold text-xs uppercase tracking-[0.2em] hover:bg-raw-gold/5 transition-all"
-            >
-              Spin Now
-            </button>
+            {hasSpunToday && spinCountdown ? (
+              <div className="rounded-xl border border-white/5 bg-white/[0.03] p-4 text-center">
+                <p className="text-[10px] uppercase tracking-[0.16em] text-white/30">Next spin in</p>
+                <p className="mt-1.5 font-display text-2xl tracking-widest text-raw-gold/90">{spinCountdown}</p>
+              </div>
+            ) : (
+              <button
+                onClick={() => onNavigate("challenges")}
+                className="w-full py-3 rounded-xl border border-raw-gold/30 text-raw-gold font-bold text-xs uppercase tracking-[0.2em] hover:bg-raw-gold/5 transition-all"
+              >
+                Spin Now
+              </button>
+            )}
           </div>
 
           {/* Level Up */}
