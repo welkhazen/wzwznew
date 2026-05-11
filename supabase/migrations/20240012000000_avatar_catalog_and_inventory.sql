@@ -9,6 +9,7 @@ create table if not exists public.avatar_catalog (
   ring text not null,
   glow text not null,
   is_active boolean not null default true,
+  is_new boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
