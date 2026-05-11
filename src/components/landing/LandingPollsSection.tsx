@@ -1,14 +1,8 @@
-import { useRef, useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTheme } from "@/providers/useTheme";
 import { ChevronLeft, ChevronRight, Send } from "lucide-react";
-import {
-  motion,
-  useMotionValue,
-  useTransform,
-  animate,
-  AnimatePresence,
-} from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { LandingSectionShell } from "@/components/landing/LandingSectionShell";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 import { fetchSupabasePolls, fetchPollComments, addPollComment } from "@/utils/supabasePolls";
@@ -36,8 +30,6 @@ const BUTTON_CLIP =
 const COMMENT_CLIP =
   "polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px)";
 
-const SWIPE_THRESHOLD = 80;
-const VELOCITY_THRESHOLD = 400;
 
 function GoldIcosahedron({ className = "" }: { className?: string }) {
   return (
@@ -107,13 +99,6 @@ export function LandingPollsSection() {
   const [commentInputs, setCommentInputs] = useState<Record<number, string>>({});
   const [extraComments, setExtraComments] = useState<Record<number, string[]>>({});
   const [dbComments, setDbComments] = useState<string[]>([]);
-  const isDragging = useRef(false);
-  const x = useMotionValue(0);
-  const rotate = useTransform(x, [-200, 0, 200], [-14, 0, 14]);
-  const yesOpacity = useTransform(x, [20, 90], [0, 1]);
-  const noOpacity = useTransform(x, [-90, -20], [1, 0]);
-  const yesBg = useTransform(x, [0, 120], ["rgba(16,185,129,0)", "rgba(16,185,129,0.18)"]);
-  const noBg = useTransform(x, [-120, 0], ["rgba(239,68,68,0.18)", "rgba(239,68,68,0)"]);
 
   const { data: fetchedPolls } = useQuery({
     queryKey: ["landing-polls-section"],
@@ -147,12 +132,6 @@ export function LandingPollsSection() {
     ? [...dbComments, ...(extraComments[index] ?? [])]
     : (extraComments[index] ?? []);
 
-  // Reset card position on poll change
-  const prevIndex = useRef(index);
-  if (prevIndex.current !== index) {
-    prevIndex.current = index;
-    x.set(0);
-  }
 
   useEffect(() => {
     if (!currentPoll?.id) { setDbComments([]); return; }
@@ -193,26 +172,6 @@ export function LandingPollsSection() {
     [index]
   );
 
-  const handleDragEnd = useCallback(
-    (_: unknown, info: { offset: { x: number }; velocity: { x: number } }) => {
-      const { offset, velocity } = info;
-      if (offset.x > SWIPE_THRESHOLD || velocity.x > VELOCITY_THRESHOLD) {
-        animate(x, 600, { type: "spring", stiffness: 180, damping: 22 }).then(() => {
-          handleAnswer("yes");
-          x.set(0);
-        });
-      } else if (offset.x < -SWIPE_THRESHOLD || velocity.x < -VELOCITY_THRESHOLD) {
-        animate(x, -600, { type: "spring", stiffness: 180, damping: 22 }).then(() => {
-          handleAnswer("no");
-          x.set(0);
-        });
-      } else {
-        animate(x, 0, { type: "spring", stiffness: 400, damping: 28 });
-      }
-      isDragging.current = false;
-    },
-    [handleAnswer, x]
-  );
 
   return (
     <LandingSectionShell
@@ -264,12 +223,6 @@ export function LandingPollsSection() {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.94 }}
               transition={{ duration: 0.18 }}
-              style={{ x, rotate, position: "relative", width: "100%" }}
-              drag={selected ? false : "x"}
-              dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={0.18}
-              onDragStart={() => { isDragging.current = true; }}
-              onDragEnd={handleDragEnd}
               className="w-full max-w-[330px] mx-auto"
             >
               <div
@@ -281,51 +234,6 @@ export function LandingPollsSection() {
                   boxShadow: "0 0 60px rgba(241,196,45,0.18), 0 0 24px rgba(241,196,45,0.22)",
                 }}
               >
-                {/* Swipe bg tints */}
-                <motion.div
-                  className="absolute inset-0 rounded-[1px] pointer-events-none z-10"
-                  style={{ background: yesBg, clipPath: CARD_CLIP }}
-                />
-                <motion.div
-                  className="absolute inset-0 rounded-[1px] pointer-events-none z-10"
-                  style={{ background: noBg, clipPath: CARD_CLIP }}
-                />
-
-                {/* YES indicator */}
-                <motion.div
-                  className="absolute top-5 right-5 z-20 pointer-events-none"
-                  style={{ opacity: yesOpacity }}
-                >
-                  <div
-                    className="rounded-md px-2.5 py-1 font-bold text-xs tracking-widest uppercase"
-                    style={{
-                      border: "2px solid rgba(16,185,129,0.8)",
-                      color: "rgba(16,185,129,0.95)",
-                      background: "rgba(16,185,129,0.1)",
-                      textShadow: "0 0 10px rgba(16,185,129,0.55)",
-                    }}
-                  >
-                    YES ✓
-                  </div>
-                </motion.div>
-
-                {/* NO indicator */}
-                <motion.div
-                  className="absolute top-5 left-5 z-20 pointer-events-none"
-                  style={{ opacity: noOpacity }}
-                >
-                  <div
-                    className="rounded-md px-2.5 py-1 font-bold text-xs tracking-widest uppercase"
-                    style={{
-                      border: "2px solid rgba(239,68,68,0.8)",
-                      color: "rgba(239,68,68,0.95)",
-                      background: "rgba(239,68,68,0.1)",
-                      textShadow: "0 0 10px rgba(239,68,68,0.55)",
-                    }}
-                  >
-                    NO ✗
-                  </div>
-                </motion.div>
 
                 <div
                   className="relative px-7 pt-7 pb-7"
@@ -369,10 +277,7 @@ export function LandingPollsSection() {
                       <button
                         type="button"
                         disabled={!!selected}
-                        onClick={() => {
-                          if (isDragging.current) { isDragging.current = false; return; }
-                          handleAnswer("no");
-                        }}
+                        onClick={() => handleAnswer("no")}
                         aria-label="Vote no"
                         className="group relative h-12 overflow-hidden transition active:scale-95 disabled:cursor-not-allowed"
                         style={{ clipPath: BUTTON_CLIP }}
@@ -428,10 +333,7 @@ export function LandingPollsSection() {
                       <button
                         type="button"
                         disabled={!!selected}
-                        onClick={() => {
-                          if (isDragging.current) { isDragging.current = false; return; }
-                          handleAnswer("yes");
-                        }}
+                        onClick={() => handleAnswer("yes")}
                         aria-label="Vote yes"
                         className="group relative h-12 overflow-hidden transition active:scale-95 disabled:cursor-not-allowed"
                         style={{ clipPath: BUTTON_CLIP }}
