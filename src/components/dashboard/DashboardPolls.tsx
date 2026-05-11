@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Poll } from "@/store/useRawStore";
 import { useTheme } from "@/providers/useTheme";
 import { PremiumPollCard } from "@/components/polls/PremiumPollCard";
@@ -113,6 +113,7 @@ export function DashboardPolls({
   const [answerHistory, setAnswerHistory] = useState<Record<string, string>>({});
   const [historyComments, setHistoryComments] = useState<Record<string, PollHistoryComment[]>>({});
   const [commentDraft, setCommentDraft] = useState("");
+  const commentsEndRef = useRef<HTMLDivElement>(null);
   const [currentPollIndex, setCurrentPollIndex] = useState(0);
   const [hasSeenVoteHint, setHasSeenVoteHint] = useState(false);
 
@@ -307,10 +308,11 @@ export function DashboardPolls({
 
     setHistoryComments((previous) => ({
       ...previous,
-      [currentPoll.id]: [nextComment, ...(previous[currentPoll.id] ?? [])],
+      [currentPoll.id]: [...(previous[currentPoll.id] ?? []), nextComment],
     }));
 
     setCommentDraft("");
+    setTimeout(() => commentsEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
 
     try {
       await addPollComment(currentPoll.id, content);
@@ -485,6 +487,7 @@ export function DashboardPolls({
                   </article>
                 ))
               )}
+              <div ref={commentsEndRef} />
             </div>
           </div>
         )}
