@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { HoverGradientVoteButton } from "@/components/polls/HoverGradientVoteButton";
+import { useTheme } from "@/providers/useTheme";
 
 export interface PremiumPollOption {
   id: string;
@@ -42,6 +43,8 @@ export function PremiumPollCard({
   onVote,
   onHintSeen,
 }: PremiumPollCardProps) {
+  const { mode } = useTheme();
+  const isLight = mode === "light";
   const isAnswered = Boolean(selectedOptionId);
   const primarySelected = selectedOptionId === primaryOption.id;
   const secondarySelected = selectedOptionId === secondaryOption.id;
@@ -79,22 +82,25 @@ export function PremiumPollCard({
         }}
       >
         <div
-          className="relative min-h-[22rem] overflow-hidden bg-[#070707] sm:min-h-[25.5rem]"
+          className="relative min-h-[22rem] overflow-hidden sm:min-h-[25.5rem]"
           style={{
             clipPath: CARD_CLIP,
-            background:
-              "radial-gradient(circle at 50% 0%, rgba(241,196,45,0.14), transparent 33%), linear-gradient(180deg, #20201d 0%, #0a0a0a 38%, #050505 100%)",
+            background: isLight
+              ? "radial-gradient(circle at 50% 0%, rgba(241,196,45,0.18), transparent 33%), linear-gradient(180deg, #faf6e8 0%, #f5f0d8 38%, #ede8c8 100%)"
+              : "radial-gradient(circle at 50% 0%, rgba(241,196,45,0.14), transparent 33%), linear-gradient(180deg, #20201d 0%, #0a0a0a 38%, #050505 100%)",
           }}
         >
           <div className="absolute inset-[0.42rem] border border-raw-gold/18" style={{ clipPath: CARD_CLIP }} />
           <div
             className="absolute inset-0 opacity-[0.18]"
             style={{
-              backgroundImage: "radial-gradient(circle at 1px 1px, rgba(235,235,235,0.52) 1px, transparent 0)",
+              backgroundImage: isLight
+                ? "radial-gradient(circle at 1px 1px, rgba(100,80,0,0.3) 1px, transparent 0)"
+                : "radial-gradient(circle at 1px 1px, rgba(235,235,235,0.52) 1px, transparent 0)",
               backgroundSize: "18px 18px",
             }}
           />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_0%,rgba(0,0,0,0.34)_65%,rgba(0,0,0,0.84)_100%)]" />
+          {!isLight && <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_0%,rgba(0,0,0,0.34)_65%,rgba(0,0,0,0.84)_100%)]" />}
 
           <div className="relative flex min-h-[22rem] flex-col items-center px-4 pb-5 pt-7 sm:min-h-[25.5rem] sm:px-6 sm:pb-6 sm:pt-9">
             <div className="flex w-full items-center gap-3">
@@ -116,7 +122,7 @@ export function PremiumPollCard({
               <p className="mt-4 text-center text-[10px] uppercase tracking-[0.2em] text-raw-gold/75">tap to vote</p>
             )}
 
-            <h2 className="mt-4 flex min-h-[5.5rem] items-center text-center font-display text-[clamp(1rem,4.6vw,1.46rem)] leading-[1.4] text-[#dedede] [text-wrap:balance] sm:mt-5 sm:min-h-[7.75rem]">
+            <h2 className={`mt-4 flex min-h-[5.5rem] items-center text-center font-display text-[clamp(1rem,4.6vw,1.46rem)] leading-[1.4] [text-wrap:balance] sm:mt-5 sm:min-h-[7.75rem] ${isLight ? "text-[#2a2000]" : "text-[#dedede]"}`}>
               {question}
             </h2>
 
