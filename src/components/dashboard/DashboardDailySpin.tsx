@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Gift, Sparkles, Star, Zap, Clock } from "lucide-react";
 import { WheelOfFortune, type WheelPrize } from "@/components/wheel/WheelOfFortune";
 import { useTheme } from "@/providers/useTheme";
@@ -101,7 +101,17 @@ export function DashboardDailySpin({ userId, isAdmin = false }: DashboardDailySp
   );
   const [todayKey, setTodayKey] = useState(() => getTodayKey());
   const [selectedRewardId, setSelectedRewardId] = useState<string | null>(null);
-  const [hasSpunToday, setHasSpunToday] = useState(false);
+  const [hasSpunToday, setHasSpunToday] = useState(() => {
+    try {
+      const stored = localStorage.getItem(storageKey);
+      if (!stored) return false;
+      const parsed = JSON.parse(stored) as { date: string };
+      return parsed.date === getTodayKey();
+    } catch {
+      return false;
+    }
+  });
+  const [countdown, setCountdown] = useState("");
   const [prizeModal, setPrizeModal] = useState<WheelPrize | null>(null);
   const [adminSelectedRewardId, setAdminSelectedRewardId] = useState<string>("random");
   const [themeRewardAvatar, setThemeRewardAvatar] = useState<DailySpinAvatarPoolItem | null>(null);
@@ -119,6 +129,24 @@ export function DashboardDailySpin({ userId, isAdmin = false }: DashboardDailySp
     setHasSpunToday(false);
     setSelectedRewardId(null);
   }, [todayKey, userId]);
+
+  const updateCountdown = useCallback(() => {
+    const now = new Date();
+    const midnight = new Date();
+    midnight.setHours(24, 0, 0, 0);
+    const diff = midnight.getTime() - now.getTime();
+    const h = Math.floor(diff / 3_600_000);
+    const m = Math.floor((diff % 3_600_000) / 60_000);
+    const s = Math.floor((diff % 60_000) / 1_000);
+    setCountdown(`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`);
+  }, []);
+
+  useEffect(() => {
+    if (!hasSpunToday) return;
+    updateCountdown();
+    const timer = window.setInterval(updateCountdown, 1000);
+    return () => window.clearInterval(timer);
+  }, [hasSpunToday, updateCountdown]);
 
   const selectedPrize = prizes.find((prize) => prize.id === selectedRewardId) ?? null;
 
@@ -138,6 +166,7 @@ export function DashboardDailySpin({ userId, isAdmin = false }: DashboardDailySp
     setSelectedRewardId(prize.id);
     setHasSpunToday(true);
     setPrizeModal(prize);
+    try { localStorage.setItem(storageKey, JSON.stringify({ date: getTodayKey() })); } catch { /* noop */ }
   };
 
   const selectedMessage = selectedPrize ? prizeMessages[selectedPrize.id] : null;
@@ -212,9 +241,14 @@ export function DashboardDailySpin({ userId, isAdmin = false }: DashboardDailySp
         <div className="mx-auto max-w-sm rounded-2xl border border-raw-border/40 bg-raw-surface/40 p-5 text-center">
           <p className="mb-1 text-xs text-raw-silver/40">Today&apos;s Result</p>
           <p className="font-display text-sm tracking-wide text-raw-gold">{selectedMessage.title}</p>
-          <p className="mt-2 text-xs text-raw-silver/30">
-            {isAdmin ? "Admin test mode: spin infinitely and force rewards one by one." : "Come back tomorrow for another spin!"}
-          </p>
+          {isAdmin ? (
+            <p className="mt-2 text-xs text-raw-silver/30">Admin test mode: spin infinitely and force rewards one by one.</p>
+          ) : (
+            <div className="mt-3">
+              <p className="text-[10px] uppercase tracking-[0.16em] text-raw-silver/35">Next spin in</p>
+              <p className="mt-1 font-display text-2xl tracking-widest text-raw-gold/90">{countdown}</p>
+            </div>
+          )}
         </div>
       )}
 

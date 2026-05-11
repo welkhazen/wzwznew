@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Poll } from "@/store/useRawStore";
 import { useTheme } from "@/providers/useTheme";
 import { PremiumPollCard } from "@/components/polls/PremiumPollCard";
@@ -114,7 +114,6 @@ export function DashboardPolls({
   const [historyComments, setHistoryComments] = useState<Record<string, PollHistoryComment[]>>({});
   const [commentDraft, setCommentDraft] = useState("");
   const [currentPollIndex, setCurrentPollIndex] = useState(0);
-  const [showAllComments, setShowAllComments] = useState(false);
   const [hasSeenVoteHint, setHasSeenVoteHint] = useState(false);
 
   useEffect(() => {
@@ -158,8 +157,11 @@ export function DashboardPolls({
     if (currentPollIndex >= polls.length && polls.length > 0) {
       setCurrentPollIndex(polls.length - 1);
     }
-    setShowAllComments(false);
   }, [currentPollIndex, polls.length]);
+
+  useEffect(() => {
+    setTimeout(() => commentsEndRef.current?.scrollIntoView({ behavior: "instant" }), 0);
+  }, [currentPollIndex]);
 
   const currentPoll = polls[currentPollIndex]
     ? {
@@ -189,6 +191,7 @@ export function DashboardPolls({
             }),
           })),
         }));
+        setTimeout(() => commentsEndRef.current?.scrollIntoView({ behavior: "instant" }), 0);
       })
       .catch(() => {
         // leave existing comments in place if fetch fails
@@ -309,10 +312,11 @@ export function DashboardPolls({
 
     setHistoryComments((previous) => ({
       ...previous,
-      [currentPoll.id]: [nextComment, ...(previous[currentPoll.id] ?? [])],
+      [currentPoll.id]: [...(previous[currentPoll.id] ?? []), nextComment],
     }));
 
     setCommentDraft("");
+    setTimeout(() => commentsEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
 
     try {
       await addPollComment(currentPoll.id, content);
@@ -439,6 +443,26 @@ export function DashboardPolls({
             <div className="mb-2 flex items-center justify-between">
               <p className={`text-[11px] uppercase tracking-[0.12em] ${isLightMode ? "text-slate-600" : "text-raw-silver/55"}`}>COMMENTS</p>
             </div>
+
+            <div className="mb-3 max-h-64 overflow-y-auto flex flex-col gap-2.5 pr-1">
+              {currentComments.length === 0 ? (
+                <p className={`text-center text-xs ${isLightMode ? "text-slate-500" : "text-raw-silver/45"}`}>
+                  No comments yet. Be the first.
+                </p>
+              ) : (
+                currentComments.map((comment) => (
+                  <article key={comment.id} className="border border-raw-border/35 bg-raw-black/50 px-3.5 py-2.5">
+                    <div className="flex items-center justify-between text-[11px] text-raw-silver/50">
+                      <span>@{comment.author}</span>
+                      <span>{comment.createdAt}</span>
+                    </div>
+                    <p className="mt-1 text-sm text-raw-silver/85">{comment.content}</p>
+                  </article>
+                ))
+              )}
+              <div ref={commentsEndRef} />
+            </div>
+
             <form
               onSubmit={(event) => {
                 event.preventDefault();

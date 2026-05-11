@@ -1,23 +1,15 @@
-import { Suspense, useMemo } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ContainerTextFlipLazy } from "@/components/ui/container-text-flip.lazy";
-import {
-  Target,
-  ChevronRight,
-  Dices,
-  Zap,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { ChevronRight, Dices, Zap, Flame, Users, BarChart3, Sparkles } from "lucide-react";
 import type { Poll } from "@/store/useRawStore";
 import type { DashboardTab } from "./DashboardNav";
 import { readCommunityChats } from "@/lib/communityChat";
-import {
-  COMMUNITY_COVER_IMAGES,
-  COMMUNITY_COVER_VIDEOS,
-  FEATURED_COMMUNITY_IDS,
-} from "@/lib/communityConstants";
+import { COMMUNITY_COVER_IMAGES, COMMUNITY_COVER_VIDEOS, FEATURED_COMMUNITY_IDS } from "@/lib/communityConstants";
+import { getTodayKey } from "@/store/useRawStore.storage";
 
 interface DashboardHomeProps {
   username: string;
+  userId?: string;
   avatarLevel: number;
   polls: Poll[];
   votedPolls: Set<string>;
@@ -27,49 +19,58 @@ interface DashboardHomeProps {
   onOpenCommunity: (communityId: string) => void;
 }
 
-interface ActivityCardProps {
-  title: string;
-  desc: string;
-  action: string;
-  tab: DashboardTab;
-  icon: LucideIcon;
-  onNavigate: (tab: DashboardTab) => void;
-}
+function CommunityCard({
+  community,
+  rank,
+  onOpenCommunity,
+}: {
+  community: ReturnType<typeof readCommunityChats>[number];
+  rank?: number;
+  onOpenCommunity: (id: string) => void;
+}) {
+  const coverImage = COMMUNITY_COVER_IMAGES[community.id] ?? community.logoUrl;
+  const coverVideo = COMMUNITY_COVER_VIDEOS[community.id];
 
-function ActivityCard({
-  title,
-  desc,
-  action,
-  tab,
-  icon: Icon,
-  onNavigate,
-}: ActivityCardProps) {
   return (
-    <div className="dashboard-activity-card rounded-2xl border border-raw-border/40 bg-raw-surface/30 p-3 sm:p-4">
-      <div className="flex items-start gap-2.5">
-        <div className="dashboard-activity-icon flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-raw-gold/[0.06]">
-          <Icon className="h-3.5 w-3.5 text-raw-gold/50" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-xs font-medium leading-snug text-raw-text">{title}</p>
-          <p className="mt-0.5 text-[11px] leading-snug text-raw-silver/35 line-clamp-2">{desc}</p>
-        </div>
+    <button
+      onClick={() => onOpenCommunity(community.id)}
+      className="group relative bg-[#1a1a1a] border border-white/5 rounded-2xl text-left w-full cursor-pointer hover:border-raw-gold/30 transition-all duration-200 overflow-hidden"
+    >
+      {/* Cover */}
+      <div className="relative h-36 overflow-hidden">
+        {coverVideo ? (
+          <video src={coverVideo} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" autoPlay loop muted playsInline />
+        ) : coverImage ? (
+          <img src={coverImage} alt={community.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
+        ) : (
+          <div className="w-full h-full bg-raw-gold/5 flex items-center justify-center">
+            <span className="font-display text-4xl text-raw-gold/20">{community.abbr}</span>
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a1a]/80 to-transparent" />
+        {rank !== undefined && (
+          <div className={`absolute top-2.5 right-2.5 px-1.5 py-0.5 rounded-lg text-[9px] font-black border ${
+            rank === 0
+              ? "bg-raw-gold/20 text-raw-gold border-raw-gold/30"
+              : "bg-black/50 text-white/50 border-white/10"
+          }`}>
+            #{rank + 1}
+          </div>
+        )}
       </div>
-      <button
-        onClick={() => onNavigate(tab)}
-        className="dashboard-activity-action mt-3 w-full rounded-full border border-raw-gold/25 py-1.5 text-[11px] font-medium text-raw-gold/70 transition-all hover:border-raw-gold/40 hover:bg-raw-gold/5"
-      >
-        {action}
-      </button>
-    </div>
+      {/* Info */}
+      <div className="p-4">
+        <h3 className="text-sm font-bold text-white leading-snug mb-1">{community.title}</h3>
+        <p className="text-[10px] text-white/40 uppercase tracking-[0.1em] font-bold flex items-center gap-1">
+          <Users className="size-2.5" />{community.members.length} members
+        </p>
+      </div>
+    </button>
   );
 }
 
 export function DashboardHome({
-  username,
-  avatarLevel,
-  polls,
-  votedPolls,
+  userId,
   dailyAnsweredCount,
   dailyPollLimit,
   onNavigate,
@@ -77,126 +78,230 @@ export function DashboardHome({
 }: DashboardHomeProps) {
   const dailyItemsLeft = Math.max(0, dailyPollLimit - dailyAnsweredCount);
   const allCommunities = useMemo(() => readCommunityChats(), []);
-  const previewCommunities = useMemo(
-    () => FEATURED_COMMUNITY_IDS.map((id) => allCommunities.find((c) => c.id === id)).filter(Boolean) as typeof allCommunities,
+
+  const spinStorageKey = userId ? `raw.daily-spin.${userId}` : null;
+  const hasSpunToday = useMemo(() => {
+    if (!spinStorageKey) return false;
+    try {
+      const stored = localStorage.getItem(spinStorageKey);
+      if (!stored) return false;
+      return (JSON.parse(stored) as { date: string }).date === getTodayKey();
+    } catch { return false; }
+  }, [spinStorageKey]);
+
+  const [spinCountdown, setSpinCountdown] = useState("");
+  const spinTimerRef = useRef<number | null>(null);
+  const updateSpinCountdown = useCallback(() => {
+    const now = new Date();
+    const midnight = new Date();
+    midnight.setHours(24, 0, 0, 0);
+    const diff = midnight.getTime() - now.getTime();
+    const h = Math.floor(diff / 3_600_000);
+    const m = Math.floor((diff % 3_600_000) / 60_000);
+    const s = Math.floor((diff % 60_000) / 1_000);
+    setSpinCountdown(`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`);
+  }, []);
+  useEffect(() => {
+    if (!hasSpunToday) { setSpinCountdown(""); return; }
+    updateSpinCountdown();
+    spinTimerRef.current = window.setInterval(updateSpinCountdown, 1000);
+    return () => { if (spinTimerRef.current) window.clearInterval(spinTimerRef.current); };
+  }, [hasSpunToday, updateSpinCountdown]);
+
+  const trending = useMemo(
+    () => [...allCommunities].sort((a, b) => b.members.length - a.members.length).slice(0, 4),
     [allCommunities],
   );
 
+  // Always show featured communities as picks regardless of trending overlap
+  const picks = useMemo(
+    () => FEATURED_COMMUNITY_IDS.map((id) => allCommunities.find((c) => c.id === id)).filter((c): c is NonNullable<typeof c> => !!c),
+    [allCommunities],
+  );
+
+  const pollProgress = Math.min(100, (dailyAnsweredCount / dailyPollLimit) * 100);
+
   return (
-    <div className="space-y-8 sm:space-y-10">
-      {/* Welcome Hero */}
-      <div>
-        <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-          <h1 className="font-display text-2xl tracking-wide text-raw-text sm:text-3xl md:text-4xl">
-            Stay
+    <div className="space-y-10 pb-6">
+
+      {/* ── Hero ── */}
+      <section className="relative">
+        <div className="relative z-10">
+          <h1 className="font-display text-3xl md:text-4xl max-w-2xl leading-[1.15] text-white">
+            Stay{" "}
+            <Suspense fallback={<span className="text-raw-gold italic">anonymous</span>}>
+              <ContainerTextFlipLazy
+                words={["anonymous", "connected", "growing", "raW"]}
+                interval={2800}
+                className="!text-3xl md:!text-4xl"
+              />
+            </Suspense>
+            . Speak your truth without identity.
           </h1>
-          <Suspense fallback={null}>
-            <ContainerTextFlipLazy
-              words={["anonymous", "connected", "growing", "raW"]}
-              interval={2800}
-              className="!text-xl sm:!text-2xl md:!text-3xl"
-            />
-          </Suspense>
-        </div>
-      </div>
-
-      {/* Explore Communities */}
-      <div>
-        <div className="mb-4 flex items-center justify-between sm:mb-5">
-          <h2 className="font-display text-base tracking-wide text-raw-text sm:text-lg">Explore Communities</h2>
-          <button
-            onClick={() => onNavigate("communities")}
-            className="flex items-center gap-1 text-xs text-raw-gold/60 transition-colors hover:text-raw-gold"
-          >
-            View All <ChevronRight className="h-3 w-3" />
-          </button>
-        </div>
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-          {previewCommunities.map((community) => {
-            const coverVideo = COMMUNITY_COVER_VIDEOS[community.id];
-            const coverImage = COMMUNITY_COVER_IMAGES[community.id] ?? community.logoUrl;
-            const isActive = community.status === "active";
-            return (
-              <button key={community.id} onClick={() => onOpenCommunity(community.id)} className="text-left w-full">
-                <div className="flex flex-col rounded-2xl border border-raw-border/40 bg-raw-surface/40 h-full overflow-hidden">
-                  <div className="relative h-32 shrink-0 overflow-hidden">
-                    {coverVideo ? (
-                      <video src={coverVideo} className="h-full w-full object-cover" autoPlay loop muted playsInline />
-                    ) : coverImage ? (
-                      <img src={coverImage} alt={`${community.title} cover`} className="h-full w-full object-cover" loading="lazy" />
-                    ) : (
-                      <div className="h-full w-full bg-gradient-to-br from-raw-gold/10 to-raw-surface flex items-center justify-center">
-                        <span className="font-display text-3xl text-raw-gold/20">{community.abbr}</span>
-                      </div>
-                    )}
-                    {!coverVideo && <div className="absolute inset-0 bg-gradient-to-t from-raw-black/70 via-raw-black/20 to-transparent" />}
-                  </div>
-                  <div className="p-4">
-                    <div className="mb-2 inline-block rounded-full border px-2.5 py-0.5 border-raw-gold/20 bg-raw-gold/5">
-                      <span className={`text-[9px] font-medium tracking-wider uppercase ${isActive ? "text-raw-gold/70" : "text-raw-silver/40"}`}>
-                        {community.status}
-                      </span>
-                    </div>
-                    <h3 className="font-display text-sm tracking-wide text-raw-text">{community.title}</h3>
-                    <p className="mt-2 text-xs text-raw-silver/40 leading-relaxed line-clamp-2">{community.description}</p>
-                  </div>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Answer Your Daily Polls */}
-      <div>
-        <h2 className="font-display text-lg tracking-wide text-raw-text mb-4">Answer Your Daily Polls</h2>
-        <div className="dashboard-activity-card rounded-2xl border border-raw-border/40 bg-raw-surface/30 p-4 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="dashboard-activity-icon h-9 w-9 rounded-xl bg-raw-gold/[0.06] flex items-center justify-center shrink-0">
-              <Target className="h-4 w-4 text-raw-gold/50" />
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10">
+              <BarChart3 className="size-3.5 text-raw-gold" />
+              <span className="text-xs text-white/60 font-medium tracking-wide">{dailyAnsweredCount} polls answered</span>
             </div>
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-raw-text">Daily Poll</p>
-              <p className="mt-0.5 text-xs text-raw-silver/35">Answer today's anonymous question</p>
+            <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10">
+              <Users className="size-3.5 text-white/60" />
+              <span className="text-xs text-white/60 font-medium tracking-wide">{allCommunities.length} communities</span>
             </div>
           </div>
-          <div className="flex items-center gap-3 ml-auto">
-            <div className="text-right">
-              <p className="text-[10px] uppercase tracking-wide text-raw-silver/40">Dailies left</p>
-              <p className="text-xl font-bold text-raw-gold/80">{dailyItemsLeft}</p>
+        </div>
+        <div className="absolute -right-12 -top-12 w-64 h-64 bg-raw-gold/5 blur-[80px] rounded-full pointer-events-none" />
+      </section>
+
+      {/* ── Trending ── */}
+      <section className="space-y-5">
+        <div className="flex justify-between items-end">
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-2">
+              <Flame className="size-4 text-raw-gold" />
+              <h2 className="text-xl font-bold text-white tracking-tight">Trending</h2>
+            </div>
+            <p className="text-[13px] text-white/40">Most active anonymous circles.</p>
+          </div>
+          <button
+            onClick={() => onNavigate("communities")}
+            className="text-sm text-raw-gold hover:underline flex items-center gap-1 font-bold"
+          >
+            View All <ChevronRight className="size-4" />
+          </button>
+        </div>
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          {trending.map((community, i) => (
+            <CommunityCard key={community.id} community={community} rank={i} onOpenCommunity={onOpenCommunity} />
+          ))}
+        </div>
+      </section>
+
+      {/* ── Personalized Picks ── */}
+      {picks.length > 0 && (
+        <section className="space-y-5 border-t border-white/5 pt-10">
+          <div className="flex justify-between items-end">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2">
+                <Sparkles className="size-4 text-raw-gold" />
+                <h2 className="text-xl font-bold text-white tracking-tight">Personalized Picks</h2>
+              </div>
+              <p className="text-[13px] text-white/40">Based on your recent activity.</p>
             </div>
             <button
-              onClick={() => onNavigate("polls")}
-              className="dashboard-activity-action rounded-full border border-raw-gold/25 px-4 py-2 text-[11px] font-medium text-raw-gold/70 hover:bg-raw-gold/5 hover:border-raw-gold/40 transition-all min-h-[36px]"
+              onClick={() => onNavigate("communities")}
+              className="text-sm text-raw-gold hover:underline flex items-center gap-1 font-bold"
             >
-              Answer
+              View All <ChevronRight className="size-4" />
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            {picks.map((community) => (
+              <CommunityCard key={community.id} community={community} onOpenCommunity={onOpenCommunity} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ── Daily Poll Progress ── */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-2">
+          <BarChart3 className="size-4 text-raw-gold" />
+          <h2 className="text-xl font-bold text-white">Daily Poll Progress</h2>
+        </div>
+        <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl p-5 flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-raw-gold/5 flex items-center justify-center border border-raw-gold/20">
+              <BarChart3 className="size-5 text-raw-gold" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-white">Voice Your Opinion</p>
+              <p className="text-[11px] text-white/40">50 XP per poll · anonymous</p>
+            </div>
+          </div>
+          <div className="flex-1 min-w-[140px] space-y-1.5">
+            <div className="flex justify-between text-[11px] text-white/40">
+              <span>Progress</span>
+              <span className="text-raw-gold font-bold">{dailyAnsweredCount} / {dailyPollLimit}</span>
+            </div>
+            <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+              <div className="h-full bg-raw-gold rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(241,196,45,0.4)]" style={{ width: `${pollProgress}%` }} />
+            </div>
+          </div>
+          <button
+            onClick={() => onNavigate("polls")}
+            className="shrink-0 px-5 py-2.5 rounded-xl border border-raw-gold/30 text-raw-gold font-bold text-xs uppercase tracking-[0.18em] hover:bg-raw-gold/5 transition-all"
+          >
+            Answer Now
+          </button>
+        </div>
+      </section>
+
+      {/* ── Challenges ── */}
+      <section className="space-y-5">
+        <div className="flex items-center gap-2">
+          <Zap className="size-4 text-raw-gold" />
+          <h2 className="text-xl font-bold text-white">Challenges</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Daily Spin */}
+          <div className="bg-[#1a1a1a] border border-white/10 p-6 rounded-[1.5rem] space-y-5">
+            <div className="flex items-start justify-between">
+              <div className="space-y-0.5">
+                <h3 className="text-xl font-bold text-white tracking-tight">Daily Spin</h3>
+                <p className="text-xs text-white/40">Luck of the anonymous</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-raw-gold/5 flex items-center justify-center border border-raw-gold/10">
+                <Dices className="size-5 text-raw-gold" />
+              </div>
+            </div>
+            <p className="text-sm text-white/50 leading-relaxed">Spin the wheel once a day for a chance to earn XP, badges, and avatar themes.</p>
+            {hasSpunToday && spinCountdown ? (
+              <div className="rounded-xl border border-white/5 bg-white/[0.03] p-4 text-center">
+                <p className="text-[10px] uppercase tracking-[0.16em] text-white/30">Next spin in</p>
+                <p className="mt-1.5 font-display text-2xl tracking-widest text-raw-gold/90">{spinCountdown}</p>
+              </div>
+            ) : (
+              <button
+                onClick={() => onNavigate("challenges")}
+                className="w-full py-3 rounded-xl border border-raw-gold/30 text-raw-gold font-bold text-xs uppercase tracking-[0.2em] hover:bg-raw-gold/5 transition-all"
+              >
+                Spin Now
+              </button>
+            )}
+          </div>
+
+          {/* Level Up */}
+          <div className="bg-[#1a1a1a] border border-white/10 p-6 rounded-[1.5rem] space-y-6">
+            <div className="flex items-start justify-between">
+              <div className="space-y-0.5">
+                <h3 className="text-xl font-bold text-white tracking-tight">Level Up</h3>
+                <p className="text-xs text-white/40">Complete interactions to earn XP</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-raw-gold/5 flex items-center justify-center border border-raw-gold/10">
+                <Zap className="size-5 text-raw-gold" />
+              </div>
+            </div>
+            <div className="space-y-3">
+              <div className="flex justify-between items-end">
+                <span className="text-xs font-bold text-white">Polls Answered</span>
+                <span className="text-base font-bold text-raw-gold">{dailyAnsweredCount} / {dailyPollLimit}</span>
+              </div>
+              <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-raw-gold rounded-full shadow-[0_0_10px_rgba(241,196,45,0.4)] transition-all duration-500"
+                  style={{ width: `${pollProgress}%` }}
+                />
+              </div>
+            </div>
+            <button
+              onClick={() => onNavigate("challenges")}
+              className="w-full py-4 rounded-xl border border-raw-gold/30 text-raw-gold font-bold text-xs uppercase tracking-[0.2em] hover:bg-raw-gold/5 transition-all"
+            >
+              View Missions
             </button>
           </div>
         </div>
-      </div>
-
-      {/* Earn More By Completing The Challenges */}
-      <div>
-        <h2 className="mb-4 font-display text-base tracking-wide text-raw-text sm:text-lg">Complete Challenges</h2>
-        <div className="grid grid-cols-2 gap-3">
-          <ActivityCard
-            title="Daily Spin"
-            desc="Spin once and claim your reward"
-            action="Spin"
-            tab="challenges"
-            icon={Dices}
-            onNavigate={onNavigate}
-          />
-          <ActivityCard
-            title="Level Up"
-            desc="Complete 3 interactions to earn XP"
-            action="Start"
-            tab="challenges"
-            icon={Zap}
-            onNavigate={onNavigate}
-          />
-        </div>
-      </div>
+      </section>
 
     </div>
   );

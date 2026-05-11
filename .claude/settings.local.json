@@ -23,7 +23,11 @@
       "Bash(findstr /i \"SUPABASE VITE_\")",
       "Bash(git add *)",
       "Bash(git commit -m 'Fix anon RLS access, poll_comments table, and WebGL context pressure *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(node -e \"console.log\\(require\\('./node_modules/@supabase/supabase-js/package.json'\\).version\\)\")",
+      "Bash(git pull *)",
+      "Bash(git commit -m ' *)",
+      "Read(//c/Users/user/npm-global/**)"
     ]
   }
 }

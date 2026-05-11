@@ -2,7 +2,10 @@ import { useCallback, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTheme } from "@/providers/useTheme";
 import { ChevronLeft, ChevronRight, Send } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import {
+  motion,
+  AnimatePresence,
+} from "framer-motion";
 import { LandingSectionShell } from "@/components/landing/LandingSectionShell";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 import { fetchSupabasePolls } from "@/utils/supabasePolls";
@@ -176,7 +179,6 @@ export function LandingPollsSection() {
     [index]
   );
 
-
   return (
     <LandingSectionShell
       id="landing-polls"
@@ -238,7 +240,6 @@ export function LandingPollsSection() {
                   boxShadow: "0 0 60px rgba(241,196,45,0.18), 0 0 24px rgba(241,196,45,0.22)",
                 }}
               >
-
                 <div
                   className="relative px-7 pt-7 pb-7"
                   style={{
