@@ -47,11 +47,11 @@ export function AvatarShowcaseSection() {
   }
 
   function prevDesktop() {
-    setDesktopStart((i) => (i - 4 + total) % total);
+    setDesktopStart((i) => (i - 8 + total) % total);
   }
 
   function nextDesktop() {
-    setDesktopStart((i) => (i + 4) % total);
+    setDesktopStart((i) => (i + 8) % total);
   }
 
   const visibleAvatars = Array.from({ length: VISIBLE_COUNT }, (_, i) => {
@@ -274,7 +274,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
       </div>
 
       {/* ── Desktop (lg+): large phone left + 2×4 grid right ── */}
-      <div className="mx-auto hidden w-full max-w-5xl flex-row items-start gap-10 lg:flex">
+      <div className="mx-auto hidden w-full max-w-5xl flex-row items-stretch gap-10 lg:flex">
 
         <div className="flex shrink-0 justify-center">
           <PhoneMockup className="w-[310px]" showStatusBar={false}>
@@ -283,7 +283,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
         </div>
 
         <div
-          className="relative flex h-[646px] flex-1 min-w-0 flex-col overflow-hidden rounded-2xl border border-raw-border/40 bg-raw-surface/20 p-6"
+          className="relative flex flex-1 min-w-0 flex-col overflow-hidden rounded-2xl border border-raw-border/40 bg-raw-surface/20 p-6"
           style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 0 40px rgba(0,0,0,0.3)" }}
         >
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/30 to-transparent" />
@@ -291,11 +291,20 @@ Just like in real life, every person is born with a name, an appearance, and an 
             Choose your avatar
           </p>
           <div className="flex flex-1 flex-col">
-            <div className="grid flex-1 grid-cols-2 grid-rows-4 place-items-center gap-x-4 gap-y-2">
-              {desktopAvatars.map(({ avatar, index }) => (
-                <AvatarButton key={`${desktopStart}-${index}`} index={index} avatar={avatar} />
-              ))}
-            </div>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={desktopStart}
+                initial={{ opacity: 0, x: 24 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -24 }}
+                transition={{ duration: 0.22 }}
+                className="grid flex-1 grid-cols-2 grid-rows-4 grid-flow-col place-items-center gap-x-4 gap-y-2"
+              >
+                {desktopAvatars.map(({ avatar, index }) => (
+                  <AvatarButton key={`${desktopStart}-${index}`} index={index} avatar={avatar} />
+                ))}
+              </motion.div>
+            </AnimatePresence>
             <div className="flex items-center justify-center gap-4 pt-3">
               <NavButton direction="prev" onClick={prevDesktop} disabled={false} />
               <NavButton direction="next" onClick={nextDesktop} disabled={false} />
