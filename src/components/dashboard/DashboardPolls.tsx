@@ -114,7 +114,6 @@ export function DashboardPolls({
   const [historyComments, setHistoryComments] = useState<Record<string, PollHistoryComment[]>>({});
   const [commentDraft, setCommentDraft] = useState("");
   const [currentPollIndex, setCurrentPollIndex] = useState(0);
-  const [showAllComments, setShowAllComments] = useState(false);
   const [hasSeenVoteHint, setHasSeenVoteHint] = useState(false);
 
   useEffect(() => {
@@ -471,13 +470,13 @@ export function DashboardPolls({
               </button>
             </form>
 
-            <div className="mt-4 flex flex-col gap-2.5">
+            <div className="mt-4 max-h-64 overflow-y-auto flex flex-col gap-2.5 pr-1">
               {currentComments.length === 0 ? (
                 <p className={`text-center text-xs ${isLightMode ? "text-slate-500" : "text-raw-silver/45"}`}>
                   No comments yet. Be the first.
                 </p>
               ) : (
-                (showAllComments ? currentComments : currentComments.slice(0, 3)).map((comment) => (
+                currentComments.map((comment) => (
                   <article key={comment.id} className="border border-raw-border/35 bg-raw-black/50 px-3.5 py-2.5">
                     <div className="flex items-center justify-between text-[11px] text-raw-silver/50">
                       <span>@{comment.author}</span>
@@ -486,18 +485,6 @@ export function DashboardPolls({
                     <p className="mt-1 text-sm text-raw-silver/85">{comment.content}</p>
                   </article>
                 ))
-              )}
-              {currentComments.length > 3 && (
-                <button
-                  onClick={() => setShowAllComments((prev) => !prev)}
-                  className={`w-full border py-2 text-xs font-medium transition ${
-                    isLightMode
-                      ? "border-slate-200 text-slate-500 hover:bg-slate-100"
-                      : "border-raw-border/35 text-raw-silver/55 hover:bg-raw-surface/20"
-                  }`}
-                >
-                  {showAllComments ? "Show less" : `Show ${currentComments.length - 3} more comment${currentComments.length - 3 === 1 ? "" : "s"}`}
-                </button>
               )}
             </div>
           </div>
