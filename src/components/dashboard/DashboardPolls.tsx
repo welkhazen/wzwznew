@@ -160,6 +160,10 @@ export function DashboardPolls({
     }
   }, [currentPollIndex, polls.length]);
 
+  useEffect(() => {
+    setTimeout(() => commentsEndRef.current?.scrollIntoView({ behavior: "instant" }), 0);
+  }, [currentPollIndex]);
+
   const currentPoll = polls[currentPollIndex]
     ? {
         ...polls[currentPollIndex],
@@ -188,6 +192,7 @@ export function DashboardPolls({
             }),
           })),
         }));
+        setTimeout(() => commentsEndRef.current?.scrollIntoView({ behavior: "instant" }), 0);
       })
       .catch(() => {
         // leave existing comments in place if fetch fails
