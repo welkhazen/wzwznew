@@ -1,6 +1,6 @@
 import { Suspense, useMemo } from "react";
 import { ContainerTextFlipLazy } from "@/components/ui/container-text-flip.lazy";
-import { Target, ChevronRight, Dices, Zap, TrendingUp, Flame, Users, Sparkles } from "lucide-react";
+import { Target, ChevronRight, Dices, Zap, Flame, Users, Sparkles } from "lucide-react";
 import type { Poll } from "@/store/useRawStore";
 import type { DashboardTab } from "./DashboardNav";
 import { readCommunityChats } from "@/lib/communityChat";
@@ -18,10 +18,13 @@ interface DashboardHomeProps {
   onOpenCommunity: (communityId: string) => void;
 }
 
+const RANK_COLORS = [
+  "bg-amber-500 text-white",
+  "bg-zinc-500 text-white",
+  "bg-orange-700 text-white",
+];
+
 export function DashboardHome({
-  username,
-  polls,
-  votedPolls,
   dailyAnsweredCount,
   dailyPollLimit,
   onNavigate,
@@ -33,35 +36,34 @@ export function DashboardHome({
   const dailyItemsLeft = Math.max(0, dailyPollLimit - dailyAnsweredCount);
   const allCommunities = useMemo(() => readCommunityChats(), []);
 
+  // Top 3 by member count → Trending
   const trending = useMemo(
-    () => [...allCommunities].sort((a, b) => b.members.length - a.members.length).slice(0, 4),
+    () => [...allCommunities].sort((a, b) => b.members.length - a.members.length).slice(0, 3),
     [allCommunities],
   );
 
   const trendingIds = useMemo(() => new Set(trending.map((c) => c.id)), [trending]);
 
-  const forYou = useMemo(
-    () =>
-      FEATURED_COMMUNITY_IDS.map((id) => allCommunities.find((c) => c.id === id))
-        .filter(Boolean)
-        .filter((c) => !trendingIds.has(c!.id))
-        .concat(allCommunities.filter((c) => !trendingIds.has(c.id) && !FEATURED_COMMUNITY_IDS.includes(c.id as never)))
-        .slice(0, 4) as typeof allCommunities,
-    [allCommunities, trendingIds],
-  );
+  // Featured communities not already in trending → For You
+  const forYou = useMemo(() => {
+    const featuredNotTrending = FEATURED_COMMUNITY_IDS
+      .map((id) => allCommunities.find((c) => c.id === id))
+      .filter((c): c is NonNullable<typeof c> => !!c && !trendingIds.has(c.id));
 
-  const sectionLabel = isLight
-    ? "text-xs font-semibold uppercase tracking-[0.18em] text-slate-500"
-    : "text-xs font-semibold uppercase tracking-[0.18em] text-raw-silver/45";
+    const extraNotTrending = allCommunities.filter(
+      (c) => !trendingIds.has(c.id) && !(FEATURED_COMMUNITY_IDS as readonly string[]).includes(c.id),
+    );
 
-  const cardBase = isLight
-    ? "border border-slate-200 bg-white/80 shadow-sm"
-    : "border border-raw-border/35 bg-raw-surface/30";
+    return [...featuredNotTrending, ...extraNotTrending].slice(0, 4);
+  }, [allCommunities, trendingIds]);
+
+  const h2 = `font-display text-base tracking-wide sm:text-lg ${isLight ? "text-slate-900" : "text-raw-text"}`;
+  const silver = isLight ? "text-slate-500" : "text-raw-silver/45";
 
   return (
     <div className="space-y-10 pb-6">
       {/* ── Hero ── */}
-      <div className={`rounded-2xl p-5 sm:p-7 ${isLight ? "bg-gradient-to-br from-amber-50 to-white border border-amber-100" : "bg-gradient-to-br from-raw-gold/[0.07] to-raw-black/0 border border-raw-gold/10"}`}>
+      <div>
         <div className="flex flex-wrap items-center gap-3">
           <h1 className={`font-display text-2xl tracking-wide sm:text-3xl md:text-4xl ${isLight ? "text-slate-900" : "text-raw-text"}`}>
             Stay
@@ -74,15 +76,15 @@ export function DashboardHome({
             />
           </Suspense>
         </div>
-        <div className="mt-4 flex flex-wrap items-center gap-4">
-          <div className={`flex items-center gap-1.5 text-xs ${isLight ? "text-slate-500" : "text-raw-silver/45"}`}>
+        <div className={`mt-3 flex flex-wrap gap-4 text-xs ${silver}`}>
+          <span className="flex items-center gap-1.5">
             <Target className="size-3.5 text-raw-gold/60" />
             <span><span className={`font-bold ${isLight ? "text-slate-700" : "text-raw-text"}`}>{dailyAnsweredCount}</span> polls answered today</span>
-          </div>
-          <div className={`flex items-center gap-1.5 text-xs ${isLight ? "text-slate-500" : "text-raw-silver/45"}`}>
+          </span>
+          <span className="flex items-center gap-1.5">
             <Users className="size-3.5 text-raw-gold/60" />
             <span><span className={`font-bold ${isLight ? "text-slate-700" : "text-raw-text"}`}>{allCommunities.length}</span> communities</span>
-          </div>
+          </span>
         </div>
       </div>
 
@@ -91,9 +93,7 @@ export function DashboardHome({
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Flame className="size-4 text-orange-400" />
-            <h2 className={`font-display text-base tracking-wide sm:text-lg ${isLight ? "text-slate-900" : "text-raw-text"}`}>
-              Trending Communities
-            </h2>
+            <h2 className={h2}>Trending Communities</h2>
           </div>
           <button
             onClick={() => onNavigate("communities")}
@@ -103,7 +103,7 @@ export function DashboardHome({
           </button>
         </div>
 
-        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none snap-x snap-mandatory">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
           {trending.map((community, i) => {
             const coverVideo = COMMUNITY_COVER_VIDEOS[community.id];
             const coverImage = COMMUNITY_COVER_IMAGES[community.id] ?? community.logoUrl;
@@ -111,28 +111,36 @@ export function DashboardHome({
               <button
                 key={community.id}
                 onClick={() => onOpenCommunity(community.id)}
-                className="group relative min-w-[200px] snap-start overflow-hidden rounded-2xl text-left sm:min-w-[220px]"
-                style={{ aspectRatio: "3/4", flex: "0 0 auto" }}
+                className={`group w-full overflow-hidden rounded-2xl border text-left transition-all duration-200 ${
+                  isLight
+                    ? "border-slate-200 bg-white shadow-sm hover:border-amber-300 hover:shadow-md"
+                    : "border-raw-border/40 bg-raw-surface/40 hover:border-raw-gold/30 hover:shadow-[0_0_24px_rgba(241,196,45,0.08)]"
+                }`}
               >
-                {coverVideo ? (
-                  <video src={coverVideo} className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" autoPlay loop muted playsInline />
-                ) : coverImage ? (
-                  <img src={coverImage} alt={community.title} className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
-                ) : (
-                  <div className="absolute inset-0 bg-gradient-to-br from-raw-gold/20 to-raw-black flex items-center justify-center">
-                    <span className="font-display text-5xl text-raw-gold/30">{community.abbr}</span>
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
-                <div className="absolute left-2.5 top-2.5 flex items-center gap-1 rounded-full bg-orange-500/90 px-2 py-0.5">
-                  <TrendingUp className="size-2.5 text-white" />
-                  <span className="text-[9px] font-bold uppercase tracking-wide text-white">#{i + 1}</span>
+                {/* Cover */}
+                <div className="relative h-32 overflow-hidden">
+                  {coverVideo ? (
+                    <video src={coverVideo} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" autoPlay loop muted playsInline />
+                  ) : coverImage ? (
+                    <img src={coverImage} alt={community.title} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
+                  ) : (
+                    <div className={`flex h-full w-full items-center justify-center ${isLight ? "bg-amber-50" : "bg-raw-gold/5"}`}>
+                      <span className="font-display text-4xl text-raw-gold/20">{community.abbr}</span>
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                  {/* Rank badge */}
+                  <span className={`absolute left-2.5 top-2.5 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ${RANK_COLORS[i] ?? RANK_COLORS[2]}`}>
+                    #{i + 1} Trending
+                  </span>
                 </div>
-                <div className="absolute bottom-0 left-0 right-0 p-3.5">
-                  <p className="font-display text-sm font-semibold leading-tight text-white sm:text-base">{community.title}</p>
-                  <p className="mt-1 flex items-center gap-1 text-[10px] text-white/55">
-                    <Users className="size-3" />
-                    {community.members.length} members
+
+                {/* Content */}
+                <div className="p-3.5">
+                  <h3 className={`font-display text-sm leading-snug tracking-wide ${isLight ? "text-slate-900" : "text-raw-text"}`}>{community.title}</h3>
+                  <p className={`mt-1.5 line-clamp-2 text-[11px] leading-relaxed ${silver}`}>{community.description}</p>
+                  <p className={`mt-2.5 flex items-center gap-1 text-[10px] ${isLight ? "text-amber-600" : "text-raw-gold/60"}`}>
+                    <Users className="size-3" />{community.members.length} members
                   </p>
                 </div>
               </button>
@@ -146,38 +154,40 @@ export function DashboardHome({
         <div>
           <div className="mb-3 flex items-center gap-2">
             <Sparkles className="size-4 text-raw-gold/70" />
-            <h2 className={`font-display text-base tracking-wide sm:text-lg ${isLight ? "text-slate-900" : "text-raw-text"}`}>
-              Communities for You
-            </h2>
+            <h2 className={h2}>Communities for You</h2>
           </div>
-          <div className="flex flex-col divide-y divide-raw-border/20 overflow-hidden rounded-2xl border border-raw-border/30">
-            {forYou.map((community) => {
+          <div className={`overflow-hidden rounded-2xl border ${isLight ? "border-slate-200" : "border-raw-border/30"}`}>
+            {forYou.map((community, i) => {
               const coverImage = COMMUNITY_COVER_IMAGES[community.id] ?? community.logoUrl;
-              const isActive = community.status?.toLowerCase() === "active";
+              const isActive = (community.status ?? "").toLowerCase() === "active";
               return (
                 <button
                   key={community.id}
                   onClick={() => onOpenCommunity(community.id)}
-                  className={`group flex w-full items-center gap-3.5 p-3.5 text-left transition-colors ${isLight ? "bg-white hover:bg-amber-50/60" : "bg-raw-surface/20 hover:bg-raw-surface/40"}`}
+                  className={`group flex w-full items-center gap-3.5 p-3.5 text-left transition-colors ${
+                    i > 0 ? (isLight ? "border-t border-slate-100" : "border-t border-raw-border/20") : ""
+                  } ${isLight ? "bg-white hover:bg-amber-50/60" : "bg-raw-surface/20 hover:bg-raw-surface/40"}`}
                 >
-                  <div className="relative size-12 shrink-0 overflow-hidden rounded-xl">
+                  <div className="relative size-11 shrink-0 overflow-hidden rounded-xl">
                     {coverImage ? (
                       <img src={coverImage} alt={community.title} className="h-full w-full object-cover" loading="lazy" />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-raw-gold/10">
-                        <span className="font-display text-lg text-raw-gold/40">{community.abbr}</span>
+                      <div className={`flex h-full w-full items-center justify-center ${isLight ? "bg-amber-50" : "bg-raw-gold/8"}`}>
+                        <span className="font-display text-base text-raw-gold/40">{community.abbr}</span>
                       </div>
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className={`text-sm font-medium leading-snug ${isLight ? "text-slate-900" : "text-raw-text"}`}>{community.title}</p>
-                    <p className={`mt-0.5 line-clamp-1 text-[11px] ${isLight ? "text-slate-500" : "text-raw-silver/40"}`}>{community.description}</p>
+                    <p className={`text-sm font-medium ${isLight ? "text-slate-900" : "text-raw-text"}`}>{community.title}</p>
+                    <p className={`mt-0.5 line-clamp-1 text-[11px] ${silver}`}>{community.description}</p>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
-                    <span className={`rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${isActive ? "bg-emerald-500/10 text-emerald-500" : "bg-raw-gold/10 text-raw-gold/70"}`}>
+                    <span className={`rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${
+                      isActive ? "bg-emerald-500/10 text-emerald-500" : "bg-raw-gold/10 text-raw-gold/70"
+                    }`}>
                       {community.status ?? "active"}
                     </span>
-                    <ChevronRight className={`size-3.5 transition-transform group-hover:translate-x-0.5 ${isLight ? "text-slate-400" : "text-raw-silver/30"}`} />
+                    <ChevronRight className={`size-3.5 transition-transform group-hover:translate-x-0.5 ${isLight ? "text-slate-300" : "text-raw-silver/25"}`} />
                   </div>
                 </button>
               );
@@ -190,20 +200,16 @@ export function DashboardHome({
       <div>
         <div className="mb-3 flex items-center gap-2">
           <Target className="size-4 text-raw-gold/70" />
-          <h2 className={`font-display text-base tracking-wide sm:text-lg ${isLight ? "text-slate-900" : "text-raw-text"}`}>
-            Answer Your Daily Polls
-          </h2>
+          <h2 className={h2}>Answer Your Daily Polls</h2>
         </div>
-        <div
-          className={`relative overflow-hidden rounded-2xl p-5 ${isLight ? "border border-amber-200 bg-gradient-to-br from-amber-50 to-white" : "border border-raw-gold/20 bg-gradient-to-br from-raw-gold/[0.06] to-raw-black/0"}`}
-        >
+        <div className={`rounded-2xl border p-5 ${isLight ? "border-amber-200 bg-gradient-to-br from-amber-50 to-white" : "border-raw-gold/20 bg-gradient-to-br from-raw-gold/[0.06] to-transparent"}`}>
           <div className="flex items-start justify-between gap-4">
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <p className={`text-sm font-semibold ${isLight ? "text-slate-900" : "text-raw-text"}`}>Daily Poll</p>
-              <p className={`mt-0.5 text-xs ${isLight ? "text-slate-500" : "text-raw-silver/45"}`}>Answer today's anonymous questions</p>
+              <p className={`mt-0.5 text-xs ${silver}`}>Answer today's anonymous questions</p>
               <div className="mt-4">
                 <div className="mb-1.5 flex items-center justify-between">
-                  <span className={sectionLabel}>Progress</span>
+                  <span className={`text-[10px] uppercase tracking-wide ${silver}`}>Progress</span>
                   <span className={`text-xs font-bold ${isLight ? "text-amber-600" : "text-raw-gold/80"}`}>{dailyAnsweredCount} / {dailyPollLimit}</span>
                 </div>
                 <div className={`h-1.5 w-full overflow-hidden rounded-full ${isLight ? "bg-slate-200" : "bg-raw-border/30"}`}>
@@ -216,7 +222,7 @@ export function DashboardHome({
             </div>
             <div className="shrink-0 text-center">
               <p className={`text-3xl font-bold leading-none ${isLight ? "text-amber-600" : "text-raw-gold"}`}>{dailyItemsLeft}</p>
-              <p className={`mt-1 text-[10px] uppercase tracking-wide ${isLight ? "text-slate-400" : "text-raw-silver/40"}`}>left</p>
+              <p className={`mt-1 text-[10px] uppercase tracking-wide ${silver}`}>left</p>
             </div>
           </div>
           <button
@@ -232,25 +238,27 @@ export function DashboardHome({
       <div>
         <div className="mb-3 flex items-center gap-2">
           <Zap className="size-4 text-raw-gold/70" />
-          <h2 className={`font-display text-base tracking-wide sm:text-lg ${isLight ? "text-slate-900" : "text-raw-text"}`}>
-            Complete Challenges
-          </h2>
+          <h2 className={h2}>Complete Challenges</h2>
         </div>
         <div className="grid grid-cols-2 gap-3">
           {[
-            { title: "Daily Spin", desc: "Spin once and claim your reward", action: "Spin", Icon: Dices, color: "from-violet-500/10" },
-            { title: "Level Up", desc: "Complete 3 interactions to earn XP", action: "Start", Icon: Zap, color: "from-sky-500/10" },
-          ].map(({ title, desc, action, Icon, color }) => (
+            { title: "Daily Spin", desc: "Spin once and claim your reward", action: "Spin", Icon: Dices },
+            { title: "Level Up", desc: "Complete 3 interactions to earn XP", action: "Start", Icon: Zap },
+          ].map(({ title, desc, action, Icon }) => (
             <button
               key={title}
               onClick={() => onNavigate("challenges")}
-              className={`group flex flex-col rounded-2xl border p-4 text-left transition-all ${isLight ? `border-slate-200 bg-gradient-to-br ${color} to-white hover:border-slate-300` : `border-raw-border/35 bg-gradient-to-br ${color} to-raw-black/0 hover:border-raw-border/60`}`}
+              className={`group flex flex-col rounded-2xl border p-4 text-left transition-all ${
+                isLight
+                  ? "border-slate-200 bg-white shadow-sm hover:border-amber-300 hover:shadow-md"
+                  : "border-raw-border/35 bg-raw-surface/30 hover:border-raw-border/60"
+              }`}
             >
-              <div className={`mb-3 flex size-9 items-center justify-center rounded-xl ${isLight ? "bg-slate-100" : "bg-raw-surface/50"}`}>
-                <Icon className="size-4 text-raw-gold/60" />
+              <div className={`mb-3 flex size-9 items-center justify-center rounded-xl ${isLight ? "bg-amber-50" : "bg-raw-gold/[0.07]"}`}>
+                <Icon className="size-4 text-raw-gold/70" />
               </div>
               <p className={`text-sm font-semibold leading-snug ${isLight ? "text-slate-900" : "text-raw-text"}`}>{title}</p>
-              <p className={`mt-1 text-[11px] leading-snug ${isLight ? "text-slate-500" : "text-raw-silver/40"}`}>{desc}</p>
+              <p className={`mt-1 text-[11px] leading-snug ${silver}`}>{desc}</p>
               <span className={`mt-3 text-[11px] font-semibold transition-colors ${isLight ? "text-amber-600 group-hover:text-amber-700" : "text-raw-gold/70 group-hover:text-raw-gold"}`}>
                 {action} →
               </span>
