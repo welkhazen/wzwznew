@@ -1409,7 +1409,70 @@ export default function Admin() {
     }
   };
 
-  const stepReviewCursor = (direction: -1 | 1) => {
+  const seedNewAvatars = async () => {
+    setIsSavingAvatarCatalog(true);
+    const GROUP_COLORS: Record<string, { bg: string; figure: string; ring: string; glow: string }> = {
+      img_4395_0: { bg: "#111827", figure: "#60a5fa", ring: "#3b82f6", glow: "#3b82f680" },
+      img_4395_1: { bg: "#1a0f2e", figure: "#a78bfa", ring: "#7c3aed", glow: "#7c3aed80" },
+      img_4395_2: { bg: "#0f2318", figure: "#34d399", ring: "#059669", glow: "#34d39980" },
+      img_4395_3: { bg: "#2d1b0e", figure: "#fb923c", ring: "#ea580c", glow: "#fb923c80" },
+      img_4756_2: { bg: "#1f1535", figure: "#e879f9", ring: "#a21caf", glow: "#e879f980" },
+      img_4756_3: { bg: "#0f1f2e", figure: "#38bdf8", ring: "#0284c7", glow: "#38bdf880" },
+      img_4764_1: { bg: "#1f1a0a", figure: "#fbbf24", ring: "#d97706", glow: "#fbbf2480" },
+    };
+    const files = [
+      "img_4395_0_avatar_01_60x60","img_4395_0_avatar_02_60x60","img_4395_0_avatar_03_60x60",
+      "img_4395_0_avatar_04_60x60","img_4395_0_avatar_05_60x60","img_4395_0_avatar_06_60x60",
+      "img_4395_0_avatar_07_60x60","img_4395_0_avatar_08_60x60","img_4395_0_avatar_09_60x60",
+      "img_4395_0_avatar_10_60x60","img_4395_0_avatar_11_60x60","img_4395_0_avatar_12_60x60",
+      "img_4395_1_avatar_01_60x60","img_4395_1_avatar_02_60x60","img_4395_1_avatar_03_60x60",
+      "img_4395_1_avatar_04_60x60","img_4395_1_avatar_05_60x60","img_4395_1_avatar_06_60x60",
+      "img_4395_1_avatar_07_60x60","img_4395_1_avatar_08_60x60","img_4395_1_avatar_09_60x60",
+      "img_4395_2_avatar_01_60x60","img_4395_2_avatar_02_60x60","img_4395_2_avatar_03_60x60",
+      "img_4395_2_avatar_04_60x60","img_4395_2_avatar_05_60x60","img_4395_2_avatar_06_60x60",
+      "img_4395_2_avatar_07_60x60","img_4395_2_avatar_08_60x60","img_4395_2_avatar_09_60x60",
+      "img_4395_3_avatar_01_60x60","img_4395_3_avatar_02_60x60","img_4395_3_avatar_03_60x60",
+      "img_4395_3_avatar_04_60x60","img_4395_3_avatar_05_60x60","img_4395_3_avatar_06_60x60",
+      "img_4395_3_avatar_07_60x60","img_4395_3_avatar_08_60x60","img_4395_3_avatar_09_60x60",
+      "img_4395_3_avatar_10_60x60","img_4395_3_avatar_11_60x60","img_4395_3_avatar_12_60x60",
+      "img_4395_3_avatar_13_60x60","img_4395_3_avatar_14_60x60",
+      "img_4756_2_avatar_01_60x60","img_4756_2_avatar_02_60x60","img_4756_2_avatar_03_60x60",
+      "img_4756_2_avatar_04_60x60","img_4756_2_avatar_05_60x60","img_4756_2_avatar_06_60x60",
+      "img_4756_2_avatar_07_60x60","img_4756_2_avatar_08_60x60","img_4756_2_avatar_09_60x60",
+      "img_4756_2_avatar_10_60x60","img_4756_2_avatar_11_60x60","img_4756_2_avatar_12_60x60",
+      "img_4756_3_avatar_01_60x60","img_4756_3_avatar_02_60x60","img_4756_3_avatar_03_60x60",
+      "img_4756_3_avatar_04_60x60","img_4756_3_avatar_05_60x60","img_4756_3_avatar_06_60x60",
+      "img_4756_3_avatar_07_60x60","img_4756_3_avatar_08_60x60","img_4756_3_avatar_09_60x60",
+      "img_4756_3_avatar_10_60x60","img_4756_3_avatar_11_60x60","img_4756_3_avatar_12_60x60",
+      "img_4764_1_avatar_01_60x60","img_4764_1_avatar_02_60x60","img_4764_1_avatar_03_60x60",
+      "img_4764_1_avatar_04_60x60","img_4764_1_avatar_05_60x60","img_4764_1_avatar_06_60x60",
+      "img_4764_1_avatar_07_60x60","img_4764_1_avatar_08_60x60","img_4764_1_avatar_09_60x60",
+    ];
+    try {
+      const existing = await loadAvatarCatalogSupabaseOnly();
+      const existingIds = new Set(existing.map((a) => a.id));
+      const newItems: AvatarCatalogItem[] = files
+        .filter((file) => !existingIds.has(file))
+        .map((file, i) => {
+          const group = Object.keys(GROUP_COLORS).find((g) => file.startsWith(g));
+          const c = GROUP_COLORS[group ?? ""] ?? { bg: "#1a1a1a", figure: "#c8c8c8", ring: "#8a8a8a", glow: "none" };
+          return { id: file, level: existing.length + i + 1, name: `Avatar ${existing.length + i + 1}`,
+            price: "0", imageSrc: `/avatars/${file}.png`, bg: c.bg, figure: c.figure, ring: c.ring, glow: c.glow,
+            isActive: true, isNew: true };
+        });
+      if (newItems.length === 0) { toast({ title: "All avatars already seeded" }); return; }
+      await saveAvatarCatalogSupabaseOnly([...existing, ...newItems]);
+      toast({ title: `Seeded ${newItems.length} new avatars`, description: `Levels ${existing.length + 1}–${existing.length + newItems.length}` });
+      const updated = await loadAvatarCatalogSupabaseOnly();
+      setAvatarCatalogDraft(updated);
+    } catch (e) {
+      toast({ title: "Seed failed", description: String(e), variant: "destructive" });
+    } finally {
+      setIsSavingAvatarCatalog(false);
+    }
+  };
+
+ = (direction: -1 | 1) => {
     if (slicedAvatars.length === 0) return;
     setReviewCursor((previous) => {
       const next = previous + direction;
@@ -2641,6 +2704,14 @@ export default function Admin() {
                       className="rounded-lg border border-raw-border/25 px-2.5 py-1.5 text-[11px] text-raw-silver/65 hover:border-raw-gold/40 hover:text-raw-text disabled:opacity-40"
                     >
                       {isSavingAvatarCatalog ? "Saving..." : "Save catalog"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void seedNewAvatars()}
+                      disabled={isSavingAvatarCatalog}
+                      className="rounded-lg border border-emerald-500/30 px-2.5 py-1.5 text-[11px] text-emerald-400 hover:border-emerald-400/60 hover:text-emerald-300 disabled:opacity-40"
+                    >
+                      {isSavingAvatarCatalog ? "Seeding..." : "⚡ Seed 77 new avatars"}
                     </button>
                   </div>
                 </div>
