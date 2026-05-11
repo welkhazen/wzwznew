@@ -1,10 +1,32 @@
 import type React from "react";
+import { useState } from "react";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
-import { Sparkles, Zap, Crown } from "lucide-react";
+import { Sparkles, Zap, Crown, X } from "lucide-react";
 import { GlareCard } from "@/components/ui/glare-card";
 import { useTheme } from "@/providers/useTheme";
 
-const insights = [
+interface Trait {
+  label: string;
+  value: number;
+  description: string;
+}
+
+interface InsightDetail {
+  name: string;
+  description: string;
+  badge: string;
+  icon: React.ElementType;
+  accentText: string;
+  accentBorder: string;
+  softSurface: string;
+  glowFrom: string;
+  isFree?: boolean;
+  accentColor: string;
+  radarColor: string;
+  traits: Trait[];
+}
+
+const insights: InsightDetail[] = [
   {
     name: "Signal Discipline",
     description: "How consistently your responses align with deliberate, conviction-driven choices. Tracks your consistency signature over time.",
@@ -15,6 +37,15 @@ const insights = [
     softSurface: "bg-amber-500/8",
     glowFrom: "from-amber-500/15",
     isFree: true,
+    accentColor: "#F59E0B",
+    radarColor: "rgba(245,158,11,0.55)",
+    traits: [
+      { label: "Consistency", value: 82, description: "Repeatable response patterns across sessions" },
+      { label: "Conviction", value: 76, description: "Strength of commitment to chosen positions" },
+      { label: "Deliberateness", value: 91, description: "Intentional, non-impulsive decision making" },
+      { label: "Reflexivity", value: 68, description: "Tendency to revisit and refine past views" },
+      { label: "Self-Alignment", value: 79, description: "Internal coherence between stated values and choices" },
+    ],
   },
   {
     name: "Growth Friction Index",
@@ -25,6 +56,15 @@ const insights = [
     accentBorder: "border-emerald-400/40",
     softSurface: "bg-emerald-500/8",
     glowFrom: "from-emerald-500/15",
+    accentColor: "#10B981",
+    radarColor: "rgba(16,185,129,0.55)",
+    traits: [
+      { label: "Challenge Seeking", value: 88, description: "Appetite for difficult, stretch-goal scenarios" },
+      { label: "Discomfort Tolerance", value: 73, description: "Ability to sit with uncertainty and friction" },
+      { label: "Growth Drive", value: 94, description: "Orientation toward expansion over comfort" },
+      { label: "Adaptability", value: 67, description: "Flexibility when plans or expectations shift" },
+      { label: "Resilience", value: 81, description: "Recovery speed after friction or setback" },
+    ],
   },
   {
     name: "Collective Impact Lens",
@@ -35,13 +75,165 @@ const insights = [
     accentBorder: "border-sky-400/40",
     softSurface: "bg-sky-500/8",
     glowFrom: "from-sky-500/15",
+    accentColor: "#38BDF8",
+    radarColor: "rgba(56,189,248,0.55)",
+    traits: [
+      { label: "Social Awareness", value: 79, description: "Sensitivity to collective context in decisions" },
+      { label: "Collective Thinking", value: 85, description: "Weighting of group outcomes over personal ones" },
+      { label: "Agency", value: 61, description: "Belief in individual influence on shared systems" },
+      { label: "Systems View", value: 72, description: "Ability to see downstream effects of choices" },
+      { label: "Empathy Reach", value: 90, description: "Breadth of concern across in/out-group divides" },
+    ],
   },
 ];
+
+// SVG radar chart — pure, no library
+function RadarChart({ traits, color }: { traits: Trait[]; color: string }) {
+  const cx = 110;
+  const cy = 110;
+  const r = 85;
+  const n = traits.length;
+
+  const angleOf = (i: number) => (Math.PI * 2 * i) / n - Math.PI / 2;
+
+  const pointAt = (i: number, pct: number) => {
+    const a = angleOf(i);
+    return {
+      x: cx + r * pct * Math.cos(a),
+      y: cy + r * pct * Math.sin(a),
+    };
+  };
+
+  const gridLevels = [0.25, 0.5, 0.75, 1];
+
+  const axisPoints = traits.map((_, i) => pointAt(i, 1));
+  const dataPoints = traits.map((t, i) => pointAt(i, t.value / 100));
+
+  const polygonPoints = (pts: { x: number; y: number }[]) =>
+    pts.map((p) => `${p.x},${p.y}`).join(" ");
+
+  return (
+    <svg viewBox="0 0 220 220" className="w-full max-w-[240px] mx-auto">
+      {/* Grid polygons */}
+      {gridLevels.map((lvl) => {
+        const pts = traits.map((_, i) => pointAt(i, lvl));
+        return (
+          <polygon
+            key={lvl}
+            points={polygonPoints(pts)}
+            fill="none"
+            stroke="rgba(255,255,255,0.08)"
+            strokeWidth="1"
+          />
+        );
+      })}
+
+      {/* Axis lines */}
+      {axisPoints.map((p, i) => (
+        <line
+          key={i}
+          x1={cx}
+          y1={cy}
+          x2={p.x}
+          y2={p.y}
+          stroke="rgba(255,255,255,0.1)"
+          strokeWidth="1"
+        />
+      ))}
+
+      {/* Data polygon */}
+      <polygon
+        points={polygonPoints(dataPoints)}
+        fill={color}
+        stroke={color.replace("0.55", "0.9")}
+        strokeWidth="1.5"
+      />
+
+      {/* Axis labels */}
+      {traits.map((t, i) => {
+        const p = pointAt(i, 1.22);
+        return (
+          <text
+            key={i}
+            x={p.x}
+            y={p.y}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fontSize="8"
+            fill="rgba(255,255,255,0.55)"
+          >
+            {t.label}
+          </text>
+        );
+      })}
+    </svg>
+  );
+}
+
+function InsightModal({ insight, onClose }: { insight: InsightDetail; onClose: () => void }) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" />
+
+      <div
+        className="relative z-10 w-full max-w-sm rounded-2xl border border-white/10 bg-[#0e0e0e] p-6 shadow-2xl overflow-y-auto max-h-[90vh]"
+        onClick={(e) => e.stopPropagation()}
+        style={{ boxShadow: `0 0 60px ${insight.accentColor}22` }}
+      >
+        {/* Header */}
+        <div className="flex items-start justify-between mb-5">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-white/30 mb-1">{insight.badge}</p>
+            <h3 className="text-lg font-bold text-white leading-tight">{insight.name}</h3>
+          </div>
+          <button
+            onClick={onClose}
+            className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-white/5 text-white/40 hover:text-white transition ml-3 mt-0.5"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* Radar */}
+        <RadarChart traits={insight.traits} color={insight.radarColor} />
+
+        {/* Traits */}
+        <div className="mt-5 space-y-4">
+          <p className="text-xs font-bold text-white/80 uppercase tracking-[0.15em]">Trait Breakdown</p>
+          {insight.traits.map((trait) => (
+            <div key={trait.label}>
+              <div className="flex justify-between items-baseline mb-1">
+                <span className="text-sm font-semibold text-white">{trait.label}</span>
+                <span className="text-sm font-bold" style={{ color: insight.accentColor }}>{trait.value}%</span>
+              </div>
+              <div className="h-1.5 w-full rounded-full bg-white/5 overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-700"
+                  style={{ width: `${trait.value}%`, backgroundColor: insight.accentColor }}
+                />
+              </div>
+              <p className="mt-1 text-[11px] text-white/35">{trait.description}</p>
+            </div>
+          ))}
+        </div>
+
+        <p className="mt-6 text-center text-[10px] text-white/20">
+          Sample data · your real profile unlocks with raW membership
+        </p>
+      </div>
+    </div>
+  );
+}
 
 export function PersonalityInsightsSection() {
   const { mode } = useTheme();
   const isLight = mode === "light";
   const sectionRef = useTrackSectionView("personality_insights");
+  const [openInsight, setOpenInsight] = useState<InsightDetail | null>(null);
 
   return (
     <section
@@ -70,29 +262,38 @@ export function PersonalityInsightsSection() {
           {insights.map((insight) => {
             const Icon = insight.icon;
             return (
-              <GlareCard
+              <button
                 key={insight.name}
-                className={`border ${insight.accentBorder} bg-raw-surface/30 p-6 sm:p-7`}
+                type="button"
+                onClick={() => setOpenInsight(insight)}
+                className="text-left w-full"
               >
-                {!isLight && <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${insight.glowFrom} via-transparent to-transparent`} />}
-                <div className="relative z-10">
-                  <div className={`mb-4 inline-flex items-center gap-1.5 rounded-full border ${insight.accentBorder} ${insight.softSurface} px-3 py-1`}>
-                    <Icon className={`h-3 w-3 ${insight.accentText}`} />
-                    <span className={`text-[10px] font-medium tracking-wider uppercase ${insight.accentText}`}>
-                      {insight.badge}
-                    </span>
-                    {insight.isFree && (
-                      <span className="ml-1 text-[9px] text-emerald-400/70 uppercase tracking-wider">· Free</span>
-                    )}
+                <GlareCard
+                  className={`border ${insight.accentBorder} bg-raw-surface/30 p-6 sm:p-7 cursor-pointer hover:scale-[1.02] transition-transform duration-200`}
+                >
+                  {!isLight && <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${insight.glowFrom} via-transparent to-transparent`} />}
+                  <div className="relative z-10">
+                    <div className={`mb-4 inline-flex items-center gap-1.5 rounded-full border ${insight.accentBorder} ${insight.softSurface} px-3 py-1`}>
+                      <Icon className={`h-3 w-3 ${insight.accentText}`} />
+                      <span className={`text-[10px] font-medium tracking-wider uppercase ${insight.accentText}`}>
+                        {insight.badge}
+                      </span>
+                      {insight.isFree && (
+                        <span className="ml-1 text-[9px] text-emerald-400/70 uppercase tracking-wider">· Free</span>
+                      )}
+                    </div>
+                    <h3 className={`font-display text-base tracking-wide ${insight.accentText}`}>
+                      {insight.name}
+                    </h3>
+                    <p className="mt-3 text-xs leading-relaxed text-raw-silver/50">
+                      {insight.description}
+                    </p>
+                    <p className={`mt-4 text-[10px] font-semibold uppercase tracking-wider ${insight.accentText} opacity-60`}>
+                      View Profile →
+                    </p>
                   </div>
-                  <h3 className={`font-display text-base tracking-wide ${insight.accentText}`}>
-                    {insight.name}
-                  </h3>
-                  <p className="mt-3 text-xs leading-relaxed text-raw-silver/50">
-                    {insight.description}
-                  </p>
-                </div>
-              </GlareCard>
+                </GlareCard>
+              </button>
             );
           })}
         </div>
@@ -101,6 +302,10 @@ export function PersonalityInsightsSection() {
           Unlock deeper insights as your War Level rises. Signal Discipline is free for everyone.
         </p>
       </div>
+
+      {openInsight && (
+        <InsightModal insight={openInsight} onClose={() => setOpenInsight(null)} />
+      )}
     </section>
   );
 }
