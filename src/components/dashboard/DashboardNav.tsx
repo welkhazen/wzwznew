@@ -270,7 +270,7 @@ export function DashboardNav({ username, avatarLevel, showAdminLink = false, onP
                     <button
                       onClick={() => { setMode("dark"); setHoveredMode(null); }}
                       className={cn(
-                        "flex h-10 flex-1 items-center justify-center rounded-md px-2 text-xs font-medium transition-colors",
+                        "flex h-12 flex-1 items-center justify-center rounded-md px-2 text-xs font-medium transition-colors",
                         effectiveMode === "dark" ? "bg-raw-gold/15 text-raw-gold" : "text-slate-500 hover:text-slate-900",
                       )}
                     >
@@ -282,7 +282,7 @@ export function DashboardNav({ username, avatarLevel, showAdminLink = false, onP
                     <button
                       onClick={() => { setMode("medium"); setHoveredMode(null); }}
                       className={cn(
-                        "flex h-10 flex-1 items-center justify-center rounded-md px-2 text-xs font-medium transition-colors",
+                        "flex h-12 flex-1 items-center justify-center rounded-md px-2 text-xs font-medium transition-colors",
                         isEffectiveMedium ? "bg-raw-gold/15 text-raw-gold" : "text-raw-silver/60 hover:text-raw-text",
                       )}
                     >
@@ -294,7 +294,7 @@ export function DashboardNav({ username, avatarLevel, showAdminLink = false, onP
                     <button
                       onClick={() => { setMode("light"); setHoveredMode(null); }}
                       className={cn(
-                        "flex h-10 flex-1 items-center justify-center rounded-md px-2 text-xs font-medium transition-colors",
+                        "flex h-12 flex-1 items-center justify-center rounded-md px-2 text-xs font-medium transition-colors",
                         isEffectiveLight ? "bg-raw-gold/15 text-raw-gold" : "text-raw-silver/60 hover:text-raw-text",
                       )}
                     >
