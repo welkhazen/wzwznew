@@ -60,7 +60,7 @@ export function TestimonialsSection() {
           From the community
         </p>
 
-        <div className="flex items-center justify-center">
+        <div className="flex items-center justify-center w-full max-w-xl mx-auto">
           <CardStack items={CARDS} isLight={isLight} />
         </div>
       </div>

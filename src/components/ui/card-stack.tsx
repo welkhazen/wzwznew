@@ -37,11 +37,11 @@ export const CardStack = ({
   }, []);
 
   return (
-    <div className="relative h-60 w-60 md:h-60 md:w-96 cursor-pointer" onClick={flip}>
+    <div className="relative h-52 w-full max-w-xl cursor-pointer sm:h-56" onClick={flip}>
       {cards.map((card, index) => (
         <motion.div
           key={card.id}
-          className="absolute h-60 w-60 md:h-60 md:w-96 rounded-xl p-5 shadow-lg flex flex-col justify-between select-none"
+          className="absolute h-52 w-full max-w-xl sm:h-56 rounded-xl p-6 shadow-lg flex flex-col justify-between select-none"
           style={{
             transformOrigin: "top center",
             background: isLight ? "#ffffff" : "#0e0e0e",
