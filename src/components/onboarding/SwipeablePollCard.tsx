@@ -52,8 +52,6 @@ export function SwipeablePollCard({
   hideInternalNav = false,
 }: SwipeablePollCardProps) {
   const [commentText, setCommentText] = useState("");
-  const [replyText, setReplyText] = useState("");
-  const [replyingToId, setReplyingToId] = useState<string | null>(null);
   const [updatedComments, setUpdatedComments] = useState<Comment[]>(comments);
   const resolvedOptions = resolveOptions(options);
 
@@ -79,29 +77,6 @@ export function SwipeablePollCard({
     setCommentText("");
   };
 
-  const handleReplyAdd = (commentId: string) => {
-    const content = replyText.trim();
-    if (!content) return;
-    const next: Comment = {
-      id: `${commentId}-reply-${Date.now()}`,
-      author: "You",
-      avatar: 5,
-      content,
-      timestamp: new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
-      likes: 0,
-      replies: [],
-      isAnonymous: false,
-    };
-    setUpdatedComments((prev) =>
-      prev.map((comment) =>
-        comment.id === commentId
-          ? { ...comment, replies: [...(comment.replies ?? []), next] }
-          : comment
-      )
-    );
-    setReplyText("");
-    setReplyingToId(null);
-  };
 
   if (!resolvedOptions) {
     return (
@@ -115,7 +90,7 @@ export function SwipeablePollCard({
 
   return (
     <div className="flex flex-col gap-4 sm:gap-5" data-poll-id={id}>
-      <div className="flex items-center justify-between border border-raw-gold/20 bg-black/35 px-3 py-2 sm:px-4 sm:py-3">
+      <div className="flex items-center justify-between border border-raw-gold/20 bg-raw-black/35 px-3 py-2 sm:px-4 sm:py-3">
         <span className="font-display text-[10px] uppercase tracking-[0.18em] text-raw-silver/45">
           {currentIndex + 1} / {totalPolls}
         </span>
@@ -157,7 +132,7 @@ export function SwipeablePollCard({
       )}
 
       {isAnswered && (
-        <div className="border border-raw-border/35 bg-raw-black/45 p-3 sm:p-4">
+        <div className="border border-raw-border/35 bg-raw-surface/60 p-3 sm:p-4">
           <div className="mb-2 flex items-center justify-between">
             <p className="text-[11px] uppercase tracking-[0.12em] text-raw-silver/55">
               Comments
@@ -169,7 +144,7 @@ export function SwipeablePollCard({
               event.preventDefault();
               handleCommentAdd();
             }}
-            className="flex items-center gap-2 rounded-full border border-raw-border/35 bg-raw-black/35 px-3 py-2"
+            className="flex items-center gap-2 rounded-full border border-raw-border/35 bg-raw-surface/50 px-3 py-2"
           >
             <input
               value={commentText}
@@ -193,50 +168,12 @@ export function SwipeablePollCard({
                 <p className="text-center text-xs text-raw-silver/45">No comments yet. Be the first.</p>
               ) : (
                 updatedComments.slice(0, 6).map((comment) => (
-                  <article key={comment.id} className="border border-raw-border/35 bg-raw-black/50 px-3.5 py-2.5">
+                  <article key={comment.id} className="border border-raw-border/35 bg-raw-surface/40 px-3.5 py-2.5">
                     <div className="flex items-center justify-between text-[11px] text-raw-silver/50">
                       <span>@{comment.isAnonymous ? "Anonymous" : comment.author}</span>
                       <span>{comment.timestamp}</span>
                     </div>
                     <p className="mt-1 text-sm text-raw-silver/85">{comment.content}</p>
-
-                    <div className="mt-2 flex flex-col gap-1.5">
-                      {(comment.replies ?? []).slice(-2).map((reply) => (
-                        <div key={reply.id} className="border border-raw-border/35 bg-raw-black/30 px-3 py-2">
-                          <div className="flex items-center justify-between text-[10px] text-raw-silver/45">
-                            <span>@{reply.isAnonymous ? "Anonymous" : reply.author}</span>
-                            <span>{reply.timestamp}</span>
-                          </div>
-                          <p className="mt-0.5 text-xs text-raw-silver/80">{reply.content}</p>
-                        </div>
-                      ))}
-                    </div>
-
-                    <form
-                      onSubmit={(event) => {
-                        event.preventDefault();
-                        handleReplyAdd(comment.id);
-                      }}
-                      className="mt-2 flex items-center gap-2 rounded-full border border-raw-border/35 bg-raw-black/30 px-3 py-1.5"
-                    >
-                      <input
-                        value={replyingToId === comment.id ? replyText : ""}
-                        onFocus={() => setReplyingToId(comment.id)}
-                        onChange={(event) => {
-                          setReplyingToId(comment.id);
-                          setReplyText(event.target.value);
-                        }}
-                        placeholder="Reply..."
-                        className="flex-1 bg-transparent text-xs text-raw-text placeholder:text-raw-silver/35 focus:outline-none"
-                      />
-                      <button
-                        type="submit"
-                        disabled={replyingToId !== comment.id || !replyText.trim()}
-                        className="rounded-full border border-raw-border/40 px-2 py-0.5 text-[10px] text-raw-silver/80 hover:bg-raw-surface/40 disabled:cursor-not-allowed disabled:opacity-40"
-                      >
-                        Reply
-                      </button>
-                    </form>
                   </article>
                 ))
               )}
