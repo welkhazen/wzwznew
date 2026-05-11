@@ -23,6 +23,7 @@ export function AvatarShowcaseSection() {
   const [desktopStart, setDesktopStart] = useState(0);
   const [showAll, setShowAll] = useState(false);
   const [showMore, setShowMore] = useState(false);
+  const [showExpandGrid, setShowExpandGrid] = useState(false);
   const [catalog, setCatalog] = useState<AvatarCatalogItem[]>([]);
   const [newAvatars, setNewAvatars] = useState<LandingNewAvatar[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -314,6 +315,79 @@ Just like in real life, every person is born with a name, an appearance, and an 
             </div>
           </div>
         </div>
+      </div>
+
+      {/* ── Expand: full avatar grid ── */}
+      <div className="mx-auto mt-6 w-full max-w-5xl flex flex-col items-center">
+        <button
+          type="button"
+          onClick={() => setShowExpandGrid((v) => !v)}
+          className="group flex flex-col items-center gap-1 outline-none"
+          aria-label={showExpandGrid ? "Collapse avatar grid" : "Expand avatar grid"}
+        >
+          <span className="text-[10px] uppercase tracking-[0.22em] text-raw-silver/30 group-hover:text-raw-gold/60 transition-colors duration-300">
+            {showExpandGrid ? "hide" : "explore all"}
+          </span>
+          <motion.div
+            animate={{ y: showExpandGrid ? 0 : [0, 6, 0] }}
+            transition={showExpandGrid ? { duration: 0.2 } : { repeat: Infinity, duration: 1.6, ease: "easeInOut" }}
+          >
+            <motion.div animate={{ rotate: showExpandGrid ? 180 : 0 }} transition={{ duration: 0.3 }}>
+              <ChevronDown className="h-6 w-6 text-raw-silver/30 group-hover:text-raw-gold/70 transition-colors duration-300" />
+            </motion.div>
+          </motion.div>
+        </button>
+
+        <AnimatePresence>
+          {showExpandGrid && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              className="overflow-hidden w-full"
+            >
+              <div
+                className="relative mt-5 rounded-2xl border border-raw-border/40 bg-raw-surface/20 p-6 sm:p-8"
+                style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 0 40px rgba(0,0,0,0.3)" }}
+              >
+                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/30 to-transparent" />
+                <p className="mb-6 text-center font-display text-[10px] uppercase tracking-[0.28em] text-raw-gold/60">
+                  All Avatars
+                </p>
+                <div className="grid grid-cols-4 gap-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10">
+                  {avatarList.map((avatar, i) => (
+                    <button
+                      key={i + 1}
+                      type="button"
+                      onClick={() => { setAvatarIndex(i + 1); setPreviewIndex(i + 1); }}
+                      onMouseEnter={() => setPreviewIndex(i + 1)}
+                      onMouseLeave={() => setPreviewIndex(avatarIndex)}
+                      className="group flex flex-col items-center gap-1.5 outline-none"
+                      aria-label={`Select ${avatar.name}`}
+                    >
+                      <div
+                        className="rounded-full transition-all duration-300 group-hover:scale-110"
+                        style={{
+                          transition: "transform 0.3s cubic-bezier(0.34,1.56,0.64,1)",
+                          filter: previewIndex === i + 1 ? `drop-shadow(0 0 8px ${avatar.glow ?? "rgba(241,196,45,0.5)"})` : "none",
+                        }}
+                      >
+                        <AvatarFigure avatarIndex={i + 1} size="sm" selected={avatarIndex === i + 1} />
+                      </div>
+                      <span
+                        className="text-center font-display text-[8px] uppercase tracking-wide transition-colors duration-200"
+                        style={{ color: avatarIndex === i + 1 ? "#F1C42D" : "rgba(255,255,255,0.3)" }}
+                      >
+                        {avatar.name}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* ── Show More: new avatars drop-down ── */}
