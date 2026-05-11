@@ -326,7 +326,7 @@ export function OnboardingJourney({
 
                 {/* Right: Phone preview */}
                 <div className="hidden md:flex flex-col items-center justify-center">
-                  <PhoneMockup className="w-full max-w-[260px]" showStatusBar={false}>
+                  <PhoneMockup className="w-full max-w-[290px]" showStatusBar={false}>
                     <AvatarPhoneHomeScreen avatarIndex={avatarIndex} />
                   </PhoneMockup>
                 </div>

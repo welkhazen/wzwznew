@@ -184,7 +184,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
         <div className="w-[46%] shrink-0 overflow-hidden">
           {/* zoom shrinks layout footprint; 280 × 0.54 ≈ 151px fits in ~172px half */}
           <div style={{ zoom: 0.54 }}>
-            <PhoneMockup className="w-[280px]" showStatusBar={false}>
+            <PhoneMockup className="w-[310px]" showStatusBar={false}>
               <AvatarPhoneHomeScreen avatarIndex={previewIndex} />
             </PhoneMockup>
           </div>
@@ -232,7 +232,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
 
       {/* ── Tablet (sm–lg): phone on top, windowed avatar strip below ── */}
       <div className="mx-auto hidden w-full max-w-5xl flex-col items-center gap-8 sm:flex lg:hidden">
-        <PhoneMockup className="w-[280px]" showStatusBar={false}>
+        <PhoneMockup className="w-[310px]" showStatusBar={false}>
           <AvatarPhoneHomeScreen avatarIndex={previewIndex} />
         </PhoneMockup>
 
@@ -277,7 +277,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
       <div className="mx-auto hidden w-full max-w-5xl flex-row items-start gap-10 lg:flex">
 
         <div className="flex shrink-0 justify-center">
-          <PhoneMockup className="w-[280px]" showStatusBar={false}>
+          <PhoneMockup className="w-[310px]" showStatusBar={false}>
             <AvatarPhoneHomeScreen avatarIndex={previewIndex} />
           </PhoneMockup>
         </div>
