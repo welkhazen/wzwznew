@@ -72,7 +72,7 @@ export function SwipeablePollCard({
       replies: [],
       isAnonymous: false,
     };
-    setUpdatedComments((prev) => [next, ...prev]);
+    setUpdatedComments((prev) => [...prev, next]);
     onAddComment?.(content);
     setCommentText("");
   };
