@@ -2,7 +2,10 @@ import { useCallback, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTheme } from "@/providers/useTheme";
 import { ChevronLeft, ChevronRight, Send } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import {
+  motion,
+  AnimatePresence,
+} from "framer-motion";
 import { LandingSectionShell } from "@/components/landing/LandingSectionShell";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 import { fetchSupabasePolls } from "@/utils/supabasePolls";
@@ -122,6 +125,7 @@ export function LandingPollsSection() {
   const [answers, setAnswers] = useState<Record<number, "yes" | "no">>({});
   const [commentInputs, setCommentInputs] = useState<Record<number, string>>({});
   const [extraComments, setExtraComments] = useState<Record<number, string[]>>({});
+  const [dbComments, setDbComments] = useState<string[]>([]);
 
   const { data: fetchedPolls } = useQuery({
     queryKey: ["landing-polls-section"],
@@ -151,7 +155,18 @@ export function LandingPollsSection() {
   const currentPoll = polls[index];
   const selected = answers[index];
   const showComments = !!selected;
-  const allComments = [...(SEED_COMMENTS[index] ?? []), ...(extraComments[index] ?? [])];
+  const allComments = currentPoll?.id
+    ? [...dbComments, ...(extraComments[index] ?? [])]
+    : (extraComments[index] ?? []);
+
+  useEffect(() => {
+    if (!currentPoll?.id) { setDbComments([]); return; }
+    let alive = true;
+    fetchPollComments(currentPoll.id)
+      .then((rows) => { if (alive) setDbComments(rows.map((r) => r.body)); })
+      .catch(() => { if (alive) setDbComments([]); });
+    return () => { alive = false; };
+  }, [currentPoll?.id]);
 
   const handleSubmitComment = () => {
     const text = (commentInputs[index] ?? "").trim();
@@ -175,7 +190,6 @@ export function LandingPollsSection() {
     },
     [index]
   );
-
 
   return (
     <LandingSectionShell
@@ -238,7 +252,6 @@ export function LandingPollsSection() {
                   boxShadow: "0 0 60px rgba(241,196,45,0.18), 0 0 24px rgba(241,196,45,0.22)",
                 }}
               >
-
                 <div
                   className="relative px-7 pt-7 pb-7"
                   style={{
