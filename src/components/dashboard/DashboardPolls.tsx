@@ -157,7 +157,6 @@ export function DashboardPolls({
     if (currentPollIndex >= polls.length && polls.length > 0) {
       setCurrentPollIndex(polls.length - 1);
     }
-    setShowAllComments(false);
   }, [currentPollIndex, polls.length]);
 
   const currentPoll = polls[currentPollIndex]
