@@ -55,16 +55,18 @@ const FloatingDockMobile = ({
   return (
     <div
       className={cn(
-        "fixed bottom-0 left-0 right-0 z-50 flex lg:hidden flex-row items-center justify-around bg-raw-black border-t border-raw-border/40",
+        "fixed bottom-0 left-0 right-0 z-50 flex lg:hidden flex-row items-center justify-around border-t border-white/10",
         className
       )}
-      style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))", paddingTop: "0.5rem" }}
+      style={{
+        background: "rgba(10,10,10,0.98)",
+        paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))",
+        paddingTop: "0.6rem",
+      }}
     >
       {items.map((item) => (
         <motion.a
-          whileTap={{ scale: 0.9 }}
-          animate={{ scale: item.active ? 1.05 : 1 }}
-          transition={{ type: "spring", stiffness: 300, damping: 18 }}
+          whileTap={{ scale: 0.88 }}
           href={item.href}
           key={item.title}
           onClick={(event) => {
@@ -74,12 +76,12 @@ const FloatingDockMobile = ({
             }
           }}
           className={cn(
-            "flex flex-col items-center gap-0.5 px-2 pb-1 transition-colors",
-            item.active ? "text-raw-gold" : "text-raw-silver/50",
+            "flex flex-col items-center gap-1 px-3 transition-colors",
+            item.active ? "text-raw-gold" : "text-white/60",
           )}
         >
           <div className="h-5 w-5">{item.icon}</div>
-          <span className="text-[9px] font-medium tracking-wide uppercase">{item.title}</span>
+          <span className="text-[9px] font-semibold tracking-wide uppercase">{item.title}</span>
         </motion.a>
       ))}
     </div>
