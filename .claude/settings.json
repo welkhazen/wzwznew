@@ -14,7 +14,8 @@
       "Bash(curl -s 'https://zdqcnjwmahklqzzxqvcj.supabase.co/rest/v1/poll_comments?poll_id=eq.109f8bb1-7d75-44cf-8694-0dc3368e1487&select=body&order=created_at.desc' -H 'apikey: sb_publishable_vIh_kvBsHvnJb1gaXqay6w_bHGyiU4P' -H 'Authorization: Bearer sb_publishable_vIh_kvBsHvnJb1gaXqay6w_bHGyiU4P')",
       "Bash(curl -s -X DELETE 'https://zdqcnjwmahklqzzxqvcj.supabase.co/rest/v1/poll_comments?body=eq.test&poll_id=eq.109f8bb1-7d75-44cf-8694-0dc3368e1487' -H 'apikey: sb_publishable_vIh_kvBsHvnJb1gaXqay6w_bHGyiU4P' -H 'Authorization: Bearer sb_publishable_vIh_kvBsHvnJb1gaXqay6w_bHGyiU4P')",
       "Bash(npx supabase *)",
-      "Bash(Select-Object -First 5)"
+      "Bash(Select-Object -First 5)",
+      "Read(//c/Users/user/AppData/Roaming/Code/User/**)"
     ]
   },
   "hooks": {
