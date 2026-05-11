@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTheme } from "@/providers/useTheme";
 import { ChevronLeft, ChevronRight, Send } from "lucide-react";
@@ -125,6 +125,7 @@ export function LandingPollsSection() {
   const [answers, setAnswers] = useState<Record<number, "yes" | "no">>({});
   const [commentInputs, setCommentInputs] = useState<Record<number, string>>({});
   const [extraComments, setExtraComments] = useState<Record<number, string[]>>({});
+  const commentsEndRef = useRef<HTMLDivElement>(null);
 
   const { data: fetchedPolls } = useQuery({
     queryKey: ["landing-polls-section"],
@@ -161,6 +162,7 @@ export function LandingPollsSection() {
     if (!text) return;
     setExtraComments((prev) => ({ ...prev, [index]: [...(prev[index] ?? []), text] }));
     setCommentInputs((prev) => ({ ...prev, [index]: "" }));
+    setTimeout(() => commentsEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
   };
 
   const [waterFilled, setWaterFilled] = useState(false);
@@ -464,6 +466,7 @@ export function LandingPollsSection() {
                           <p className={`text-[12px] leading-[1.4] ${isLight ? "text-stone-600" : "text-white/55"}`}>{c}</p>
                         </div>
                       ))}
+                      <div ref={commentsEndRef} />
                     </div>
 
                     <div className="mt-3 flex gap-2">
