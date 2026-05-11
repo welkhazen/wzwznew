@@ -7,6 +7,7 @@ import {
   loadAvatarCatalog,
   loadUserAvatarState,
   purchaseAvatarForUser,
+  readAvatarCatalogLocal,
 } from "@/lib/avatarCatalog";
 import { setAvatarThemes } from "@/lib/avataridentity";
 import type { User } from "@/store/types";
@@ -19,11 +20,7 @@ export function useRewards(user: User | null) {
   const [inventoryLoaded, setInventoryLoaded] = useState(false);
 
   useEffect(() => {
-    let cancelled = false;
-
-    void (async () => {
-      const catalog = await loadAvatarCatalog();
-      if (cancelled) return;
+    const apply = (catalog: AvatarCatalogItem[]) => {
       setAvatarCatalog(catalog);
       setAvatarThemes(catalog.map((item) => ({
         bg: item.bg,
@@ -33,11 +30,12 @@ export function useRewards(user: User | null) {
         name: item.name,
         imageSrc: item.imageSrc,
       })));
-    })();
-
-    return () => {
-      cancelled = true;
     };
+
+    loadAvatarCatalog().then(apply).catch(() => {});
+    const handler = () => apply(readAvatarCatalogLocal());
+    window.addEventListener("raw:avatar-catalog-updated", handler);
+    return () => window.removeEventListener("raw:avatar-catalog-updated", handler);
   }, []);
 
   useEffect(() => {

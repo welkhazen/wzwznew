@@ -6,7 +6,7 @@ import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { AvatarPhoneHomeScreen } from "@/components/ui/avatar-phone-home-screen";
 import { PhoneMockup } from "@/components/ui/phone-mockup";
 import { AVATARS } from "@/lib/avataridentity";
-import { loadAvatarCatalog } from "@/lib/avatarCatalog";
+import { loadAvatarCatalog, readAvatarCatalogLocal } from "@/lib/avatarCatalog";
 import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
 import { loadLandingNewAvatars } from "@/lib/landingNewAvatars";
 import type { LandingNewAvatar } from "@/lib/landingNewAvatars";
@@ -30,6 +30,9 @@ export function AvatarShowcaseSection() {
   useEffect(() => {
     loadAvatarCatalog().then(setCatalog).catch(() => {});
     loadLandingNewAvatars().then(setNewAvatars).catch(() => {});
+    const handler = () => setCatalog(readAvatarCatalogLocal());
+    window.addEventListener("raw:avatar-catalog-updated", handler);
+    return () => window.removeEventListener("raw:avatar-catalog-updated", handler);
   }, []);
 
   const avatarList = catalog.length > 0 ? catalog : AVATARS;

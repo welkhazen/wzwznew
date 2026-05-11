@@ -130,11 +130,7 @@ export function readAvatarThemesFromCache(): AvatarCatalogItem[] {
   return readAvatarCatalogLocal();
 }
 
-export async function loadAvatarCatalog(): Promise<AvatarCatalogItem[]> {
-  if (avatarBackendMissingTables) {
-    return readAvatarCatalogLocal();
-  }
-
+async function refreshAvatarCatalogFromSupabase(): Promise<void> {
   try {
     const { data, error } = await supabase
       .from("avatar_catalog")
@@ -142,10 +138,7 @@ export async function loadAvatarCatalog(): Promise<AvatarCatalogItem[]> {
       .eq("is_active", true)
       .order("level", { ascending: true });
 
-    if (error) {
-      markBackendMissingIfNeeded(error);
-      return readAvatarCatalogLocal();
-    }
+    if (error) { markBackendMissingIfNeeded(error); return; }
 
     const mapped = (data ?? []).map((row) => ({
       id: row.id,
@@ -161,11 +154,13 @@ export async function loadAvatarCatalog(): Promise<AvatarCatalogItem[]> {
       isNew: row.is_new ?? false,
     }));
 
-    if (mapped.length === 0) return readAvatarCatalogLocal();
-    return writeAvatarCatalogLocal(mapped);
-  } catch {
-    return readAvatarCatalogLocal();
-  }
+    if (mapped.length > 0) writeAvatarCatalogLocal(mapped); // dispatches raw:avatar-catalog-updated
+  } catch { /* stay on local cache */ }
+}
+
+export function loadAvatarCatalog(): Promise<AvatarCatalogItem[]> {
+  if (!avatarBackendMissingTables) void refreshAvatarCatalogFromSupabase();
+  return Promise.resolve(readAvatarCatalogLocal());
 }
 
 export async function loadAvatarCatalogSupabaseOnly(): Promise<AvatarCatalogItem[]> {
