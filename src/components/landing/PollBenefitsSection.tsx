@@ -16,7 +16,7 @@ export function PollBenefitsSection() {
         <div className="mb-8 text-center sm:mb-14">
           <p className="text-[11px] uppercase tracking-[0.25em] text-raw-gold/70">Poll Intelligence</p>
           <h2 className="mt-3 landing-heading">
-            Why raW Polls Matter
+            Why ra<span className="raw-word-w">W</span> Polls Matter
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-raw-silver/60 sm:text-base">
             Polls are the first step in turning anonymous answers into real insight. They show what people really think, help the AI understand each voice, and recommend the best community for you.

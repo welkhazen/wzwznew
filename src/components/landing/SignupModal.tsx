@@ -219,7 +219,7 @@ export function SignupModal({ open, onClose, onRequestSignupOtp, onVerifySignupO
 
         <div className="overflow-y-auto px-5 pb-6 pt-8 sm:px-8 sm:pb-8 sm:pt-8">
         <div className="text-center mb-6 sm:mb-8">
-          <p className="font-display text-lg tracking-wide text-raw-text">Enter raW</p>
+          <p className="font-display text-lg tracking-wide text-raw-text">Enter ra<span className="raw-word-w">W</span></p>
           <p className="mt-2 text-sm text-raw-silver/50">
             Anonymous. No email. No real name.
           </p>

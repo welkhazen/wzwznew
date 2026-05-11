@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion } from "motion/react";
-import { ArrowRight, Zap } from "lucide-react";
+import { ArrowRight, ArrowDown } from "lucide-react";
 import { track } from "@/lib/analytics";
 
 import { TypewriterStack } from "@/components/ui/typewriter-stack";
@@ -163,20 +163,13 @@ export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
           </motion.button>
 
           <motion.a
-            href="#communities"
+            href="#how-it-works"
             onClick={handleSecondaryClick}
-            whileHover={{
-              scale: 1.05,
-              backgroundColor: "hsl(var(--accent))",
-              borderColor: "hsl(var(--primary))",
-              boxShadow: "0 15px 30px rgba(0,0,0,0.1), 0 0 15px hsl(var(--primary) / 0.1)",
-              y: -2,
-            }}
             whileTap={{ scale: 0.98 }}
             className="group relative inline-flex min-h-11 w-full items-center justify-center gap-3 overflow-hidden rounded-xl border-2 border-border/40 bg-background/60 px-6 py-3.5 text-base font-semibold shadow-lg backdrop-blur-xl transition-all duration-500 hover:border-primary/40 hover:bg-background/90 sm:w-auto sm:px-8 sm:py-4 sm:text-lg"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <Zap className="relative z-10 w-5 h-5 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300" />
+            <ArrowDown className="relative z-10 w-5 h-5 group-hover:translate-y-1 transition-transform duration-300" />
             <span className="relative z-10 tracking-wide">Learn More</span>
           </motion.a>
         </motion.div>

@@ -47,11 +47,11 @@ export function AvatarShowcaseSection() {
   }
 
   function prevDesktop() {
-    setDesktopStart((i) => (i - 4 + total) % total);
+    setDesktopStart((i) => (i - 8 + total) % total);
   }
 
   function nextDesktop() {
-    setDesktopStart((i) => (i + 4) % total);
+    setDesktopStart((i) => (i + 8) % total);
   }
 
   const visibleAvatars = Array.from({ length: VISIBLE_COUNT }, (_, i) => {
@@ -92,65 +92,19 @@ export function AvatarShowcaseSection() {
         aria-label={`Select ${avatar.name}`}
         aria-pressed={isSelected}
       >
-        {/* Outer glow ring */}
-        <div className="relative">
-          {/* Animated glow behind avatar */}
-          <div
-            className={`absolute inset-0 rounded-full blur-xl transition-all duration-500 ${
-              isActive
-                ? "opacity-80 scale-125"
-                : "opacity-0 scale-100 group-hover:opacity-40 group-hover:scale-110"
-            }`}
-            style={{
-              background: isSelected || isActive
-                ? "radial-gradient(circle, rgba(241,196,45,0.6) 0%, rgba(241,196,45,0.1) 70%)"
-                : "radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%)",
-            }}
-          />
-
-          {/* Spinning ring for selected */}
-          {isSelected && (
-            <div
-              className="absolute inset-[-6px] rounded-full border-2 border-transparent animate-spin"
-              style={{
-                background: "linear-gradient(135deg, rgba(241,196,45,0.9), rgba(241,196,45,0.1), rgba(241,196,45,0.9)) border-box",
-                WebkitMask: "linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0)",
-                WebkitMaskComposite: "destination-out",
-                maskComposite: "exclude",
-                animationDuration: "3s",
-              }}
-            />
-          )}
-
-          {/* Pulse ring on hover */}
-          <div
-            className={`absolute inset-[-4px] rounded-full border transition-all duration-300 ${
-              isActive
-                ? "border-raw-gold/60 scale-100 opacity-100"
-                : "border-raw-silver/20 scale-95 opacity-0 group-hover:scale-100 group-hover:opacity-100"
-            }`}
-          />
-
-          <div
-            className={`relative rounded-full transition-all duration-300 ${
-              isActive ? "scale-115 drop-shadow-[0_0_16px_rgba(241,196,45,0.5)]" : "scale-100 group-hover:scale-108"
-            }`}
-            style={{
-              transform: isActive ? "scale(1.15)" : undefined,
-              filter: isActive ? "drop-shadow(0 0 14px rgba(241,196,45,0.45))" : undefined,
-              transition: "transform 0.3s cubic-bezier(0.34,1.56,0.64,1), filter 0.3s ease",
-            }}
-          >
-            <AvatarFigure avatarIndex={index} size="md" selected={isSelected || isActive} />
-          </div>
+        <div
+          className={`relative rounded-full transition-all duration-300 ${
+            isActive ? "scale-110" : "scale-100 group-hover:scale-105"
+          }`}
+          style={{ transition: "transform 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}
+        >
+          <AvatarFigure avatarIndex={index} size="md" selected={isSelected || isActive} />
         </div>
 
         {/* Name */}
         <span
           className={`font-display text-[9px] tracking-[0.18em] uppercase transition-all duration-300 ${
-            isActive
-              ? "text-raw-gold drop-shadow-[0_0_8px_rgba(241,196,45,0.6)]"
-              : "text-raw-silver/45 group-hover:text-raw-silver/80"
+            isActive ? "text-raw-gold" : "text-raw-silver/45 group-hover:text-raw-silver/80"
           }`}
         >
           {avatar.name}
@@ -230,7 +184,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
         <div className="w-[46%] shrink-0 overflow-hidden">
           {/* zoom shrinks layout footprint; 280 × 0.54 ≈ 151px fits in ~172px half */}
           <div style={{ zoom: 0.54 }}>
-            <PhoneMockup className="w-[280px]" showStatusBar={false}>
+            <PhoneMockup className="w-[310px]" showStatusBar={false}>
               <AvatarPhoneHomeScreen avatarIndex={previewIndex} />
             </PhoneMockup>
           </div>
@@ -256,16 +210,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
                 aria-pressed={avatarIndex === i + 1}
               >
                 <div
-                  className="rounded-full transition-all duration-200"
-                  style={{
-                    outline: avatarIndex === i + 1
-                      ? "2px solid #F1C42D"
-                      : "1px solid rgba(241,196,45,0.15)",
-                    outlineOffset: 2,
-                    filter: avatarIndex === i + 1
-                      ? "drop-shadow(0 0 8px rgba(241,196,45,0.55))"
-                      : undefined,
-                  }}
+                  className={`rounded-full transition-all duration-200 ${avatarIndex === i + 1 ? "scale-110" : "scale-100"}`}
                 >
                   <AvatarFigure avatarIndex={i + 1} size="sm" selected={avatarIndex === i + 1} />
                 </div>
@@ -287,7 +232,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
 
       {/* ── Tablet (sm–lg): phone on top, windowed avatar strip below ── */}
       <div className="mx-auto hidden w-full max-w-5xl flex-col items-center gap-8 sm:flex lg:hidden">
-        <PhoneMockup className="w-[280px]" showStatusBar={false}>
+        <PhoneMockup className="w-[310px]" showStatusBar={false}>
           <AvatarPhoneHomeScreen avatarIndex={previewIndex} />
         </PhoneMockup>
 
@@ -329,16 +274,16 @@ Just like in real life, every person is born with a name, an appearance, and an 
       </div>
 
       {/* ── Desktop (lg+): large phone left + 2×4 grid right ── */}
-      <div className="mx-auto hidden w-full max-w-5xl flex-row items-start gap-10 lg:flex">
+      <div className="mx-auto hidden w-full max-w-5xl flex-row items-stretch gap-10 lg:flex">
 
         <div className="flex shrink-0 justify-center">
-          <PhoneMockup className="w-[280px]" showStatusBar={false}>
+          <PhoneMockup className="w-[310px]" showStatusBar={false}>
             <AvatarPhoneHomeScreen avatarIndex={previewIndex} />
           </PhoneMockup>
         </div>
 
         <div
-          className="relative flex h-[646px] flex-1 min-w-0 flex-col overflow-hidden rounded-2xl border border-raw-border/40 bg-raw-surface/20 p-6"
+          className="relative flex flex-1 min-w-0 flex-col overflow-hidden rounded-2xl border border-raw-border/40 bg-raw-surface/20 p-6"
           style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 0 40px rgba(0,0,0,0.3)" }}
         >
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/30 to-transparent" />
@@ -346,11 +291,20 @@ Just like in real life, every person is born with a name, an appearance, and an 
             Choose your avatar
           </p>
           <div className="flex flex-1 flex-col">
-            <div className="grid flex-1 grid-cols-2 grid-rows-4 place-items-center gap-x-4 gap-y-2">
-              {desktopAvatars.map(({ avatar, index }) => (
-                <AvatarButton key={`${desktopStart}-${index}`} index={index} avatar={avatar} />
-              ))}
-            </div>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={desktopStart}
+                initial={{ opacity: 0, x: 24 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -24 }}
+                transition={{ duration: 0.22 }}
+                className="grid flex-1 grid-cols-2 grid-rows-4 grid-flow-col place-items-center gap-x-4 gap-y-2"
+              >
+                {desktopAvatars.map(({ avatar, index }) => (
+                  <AvatarButton key={`${desktopStart}-${index}`} index={index} avatar={avatar} />
+                ))}
+              </motion.div>
+            </AnimatePresence>
             <div className="flex items-center justify-center gap-4 pt-3">
               <NavButton direction="prev" onClick={prevDesktop} disabled={false} />
               <NavButton direction="next" onClick={nextDesktop} disabled={false} />

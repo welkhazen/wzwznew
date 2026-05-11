@@ -41,7 +41,7 @@ export function PhoneMockup({ children, className = "", showStatusBar = true }: 
           )}
 
           {/* Screen content */}
-          <div className="phone-mockup-screen h-[580px] pointer-events-auto overflow-hidden">
+          <div className="phone-mockup-screen h-[530px] pointer-events-auto overflow-hidden">
             {children}
           </div>
 

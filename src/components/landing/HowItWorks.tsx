@@ -35,6 +35,7 @@ export function HowItWorks() {
 
   return (
     <section
+      id="how-it-works"
       ref={sectionRef as React.RefObject<HTMLElement>}
       className="landing-section relative px-4 py-14 sm:px-6 sm:py-20 md:py-28"
     >

@@ -29,7 +29,7 @@ interface PollProgressProps {
 function PollProgress({ currentIndex, total, onSelect }: PollProgressProps) {
   return (
     <div className="mt-3 text-center">
-      <p className="font-display text-[12px] tracking-[0.32em] text-[#D9D9D9]">{currentIndex + 1} / {total}</p>
+      <p className="font-display text-[12px] tracking-[0.32em] text-raw-silver/70">{currentIndex + 1} / {total}</p>
       <div className="mt-3 flex items-center justify-center gap-2">
         {Array.from({ length: total }).map((_, index) => (
           <button
@@ -39,7 +39,7 @@ function PollProgress({ currentIndex, total, onSelect }: PollProgressProps) {
             className={`h-1.5 rounded-none transition-all ${
               index === currentIndex
                 ? "w-7 bg-[#F1C42D] shadow-[0_0_10px_rgba(241,196,45,0.45)]"
-                : "w-4 bg-[#3A3A3A]"
+                : "w-4 bg-raw-border/60"
             }`}
             aria-label={`Go to poll ${index + 1}`}
           />
