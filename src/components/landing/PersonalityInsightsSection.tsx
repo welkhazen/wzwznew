@@ -1,5 +1,6 @@
 import type React from "react";
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 import { Sparkles, Zap, Crown, X } from "lucide-react";
 import { GlareCard } from "@/components/ui/glare-card";
@@ -303,8 +304,9 @@ export function PersonalityInsightsSection() {
         </p>
       </div>
 
-      {openInsight && (
-        <InsightModal insight={openInsight} onClose={() => setOpenInsight(null)} />
+      {openInsight && createPortal(
+        <InsightModal insight={openInsight} onClose={() => setOpenInsight(null)} />,
+        document.body,
       )}
     </section>
   );
