@@ -43,7 +43,17 @@ export function AvatarShowcaseSection() {
     };
     loadAvatarCatalog().then(applyThemes).catch(() => {});
     loadAvatarCatalogSupabaseOnly().then(applyThemes).catch(() => {});
-    loadFullAvatarCatalog().then(setFullCatalog).catch(() => {});
+    loadFullAvatarCatalog().then((items) => {
+      setFullCatalog(items);
+      setAvatarThemes(items.map((item) => ({
+        bg: item.bg,
+        figure: item.figure,
+        ring: item.ring,
+        glow: item.glow,
+        name: item.name,
+        imageSrc: item.imageSrc,
+      })));
+    }).catch(() => {});
     loadLandingNewAvatars().then(setNewAvatars).catch(() => {});
     const handler = () => applyThemes(readAvatarCatalogLocal());
     window.addEventListener("raw:avatar-catalog-updated", handler);
