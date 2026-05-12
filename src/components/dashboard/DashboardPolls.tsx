@@ -417,7 +417,7 @@ export function DashboardPolls({
               {dailyAnsweredCount}/{dailyPollLimit}
             </span>
           </div>
-          <PollProgress currentIndex={currentPollIndex} total={displayPolls.length} answeredCount={dailyAnsweredCount} dailyLimit={dailyPollLimit} onSelect={setCurrentPollIndex} />
+          <PollProgress currentIndex={Math.min(currentPollIndex, dailyPollLimit - 1)} total={dailyPollLimit} answeredCount={dailyAnsweredCount} dailyLimit={dailyPollLimit} onSelect={setCurrentPollIndex} />
         </div>
 
         <div className="relative w-full max-w-[24rem]">

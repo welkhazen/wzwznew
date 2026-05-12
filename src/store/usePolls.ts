@@ -62,7 +62,23 @@ export function usePolls(isLoggedIn: boolean, userId?: string) {
       return GUEST_TOKEN_BALANCE;
     }
   });
-  const [extraBatchesUnlocked, setExtraBatchesUnlocked] = useState(0);
+  const EXTRA_BATCHES_KEY = `raw.polls.extra-batches.${todayKey}`;
+  const [extraBatchesUnlocked, setExtraBatchesUnlocked] = useState<number>(() => {
+    try {
+      const stored = window.localStorage.getItem(`raw.polls.extra-batches.${todayKey}`);
+      return stored !== null ? Number(stored) : 0;
+    } catch {
+      return 0;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(EXTRA_BATCHES_KEY, String(extraBatchesUnlocked));
+    } catch {
+      // ignore storage errors
+    }
+  }, [EXTRA_BATCHES_KEY, extraBatchesUnlocked]);
 
   // Sync token balance from Supabase when logged in
   useEffect(() => {
