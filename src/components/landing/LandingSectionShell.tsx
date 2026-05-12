@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { highlightRawWordmark } from "@/components/ui/brand-name";
+import { highlightRawWordmark } from "@/components/ui/highlightRawWordmark";
 
 interface LandingSectionShellProps {
   id?: string;

@@ -151,6 +151,8 @@ const INITIAL_COMMUNITY_SETTINGS_DRAFT: CommunitySettingsDraft = {
   logoUrl: "",
 };
 
+const createEmptyWaitlistSummary = () => ({ counts: {}, joinedCommunityIds: new Set<string>() });
+
 const COMMUNITY_LOGOS: Record<string, string> = {
   lnt: LNTLogo,
   syt: SYTLogo,
@@ -184,7 +186,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       const [communitiesData, requestsData, waitlistData] = await Promise.all([
         fetchCommunities(),
         fetchCommunityRequests(user.id),
-        fetchWaitlistSummary(user.id).catch(() => ({ counts: {}, joinedCommunityIds: new Set<string>() })),
+        fetchWaitlistSummary(user.id).catch(() => createEmptyWaitlistSummary()),
       ]);
       setCommunities(communitiesData);
       onCommunitiesChange?.(communitiesData);
@@ -193,7 +195,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       setCommunityJoinRequests(readCommunityJoinRequests());
       setWaitlistCounts(waitlistData.counts);
       setWaitlistJoinedIds(waitlistData.joinedCommunityIds);
-    }, [user.id]);
+    }, [onCommunitiesChange, user.id]);
 
     const selectedCommunity = useMemo(
       () => activeCommunityId ? communities.find((community) => community.id === activeCommunityId) ?? null : null,

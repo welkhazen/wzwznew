@@ -92,7 +92,6 @@ export function AvatarShowcaseSection() {
     const handler = () => applyThemes(readAvatarCatalogLocal());
     window.addEventListener("raw:avatar-catalog-updated", handler);
     return () => window.removeEventListener("raw:avatar-catalog-updated", handler);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const avatarList = catalog.length > 0 ? catalog : AVATARS;
