@@ -30,9 +30,12 @@ export function consumeAvatarCatalogLocalWriteFailure(): boolean {
 function isMissingAvatarTableError(error: unknown): boolean {
   if (!error || typeof error !== "object") return false;
   const maybe = error as { code?: string; message?: string; details?: string; hint?: string };
+  // PGRST204 = column not found in schema cache — not a missing table, don't block future fetches
+  if (maybe.code === "PGRST204") return false;
   if (maybe.code === "PGRST205" || maybe.code === "42P01") return true;
   const haystack = `${maybe.message ?? ""} ${maybe.details ?? ""} ${maybe.hint ?? ""}`.toLowerCase();
-  return haystack.includes("could not find the table") || haystack.includes("does not exist");
+  return haystack.includes("could not find the table") ||
+    (haystack.includes("does not exist") && !haystack.includes("column"));
 }
 
 function markBackendMissingIfNeeded(error: unknown): void {
