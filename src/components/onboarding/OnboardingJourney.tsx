@@ -268,9 +268,12 @@ export function OnboardingJourney({
   const canContinueFromAvatar = avatarIndex >= 1 && avatarIndex <= FREE_ONBOARDING_AVATAR_COUNT;
   const canContinueFromPolls = answeredCount >= onboardingPolls.length;
   const canContinueFromCommunities = selectedCommunityIds.length === 2;
-  const avatarPageCount = Math.max(1, Math.ceil(onboardingAvatars.length / AVATAR_PAGE_SIZE));
-  const visibleAvatarChoices = onboardingAvatars.slice(avatarPage * AVATAR_PAGE_SIZE, (avatarPage + 1) * AVATAR_PAGE_SIZE);
   const previewAvatar = onboardingAvatars[previewAvatarIndex - 1] ?? onboardingAvatars[0];
+  const canContinueWithPreviewAvatar = canContinueFromAvatar && previewAvatarIndex === avatarIndex;
+  const freeAvatarChoices = onboardingAvatars.slice(0, FREE_ONBOARDING_AVATAR_COUNT);
+  const previewAvatarChoices = onboardingAvatars.slice(FREE_ONBOARDING_AVATAR_COUNT);
+  const previewAvatarPageCount = Math.max(1, Math.ceil(previewAvatarChoices.length / AVATAR_PAGE_SIZE));
+  const visiblePreviewAvatarChoices = previewAvatarChoices.slice(avatarPage * AVATAR_PAGE_SIZE, (avatarPage + 1) * AVATAR_PAGE_SIZE);
 
   useEffect(() => {
     const cached = readFullAvatarCatalogLocal();
@@ -294,14 +297,14 @@ export function OnboardingJourney({
   }, []);
 
   useEffect(() => {
-    setAvatarPage((page) => Math.min(page, avatarPageCount - 1));
+    setAvatarPage((page) => Math.min(page, previewAvatarPageCount - 1));
     setPreviewAvatarIndex((index) => Math.min(Math.max(index, 1), Math.max(1, onboardingAvatars.length)));
-  }, [avatarPageCount, onboardingAvatars.length]);
+  }, [onboardingAvatars.length, previewAvatarPageCount]);
 
   useEffect(() => {
     if (avatarIndex >= 1 && avatarIndex <= FREE_ONBOARDING_AVATAR_COUNT) {
       setPreviewAvatarIndex(avatarIndex);
-      setAvatarPage(Math.floor((avatarIndex - 1) / AVATAR_PAGE_SIZE));
+      setAvatarPage(0);
     }
   }, [avatarIndex]);
 
@@ -363,41 +366,16 @@ export function OnboardingJourney({
                 Your avatar is your public signal. You can evolve it later, but choose your starting form now.
               </p>
 
-              <div className="mt-5 grid grid-cols-1 gap-5 md:mt-8 md:grid-cols-[minmax(0,1fr)_18rem] md:items-center md:gap-8">
-                <div className="order-2 flex min-w-0 flex-col items-center md:order-1">
-                  <div className="mb-3 flex w-full max-w-[30rem] items-center justify-between gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setAvatarPage((page) => Math.max(0, page - 1))}
-                      disabled={avatarPage === 0}
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-raw-border/45 bg-raw-black/70 text-raw-gold transition hover:border-raw-gold/45 disabled:cursor-not-allowed disabled:opacity-25"
-                      aria-label="Previous avatars"
-                    >
-                      <ChevronLeft className="h-5 w-5" />
-                    </button>
-                    <div className="text-center">
-                      <p className="font-display text-[9px] uppercase tracking-[0.2em] text-raw-gold/70">
-                        {avatarPage === 0 ? "Free avatars" : "Preview only"}
-                      </p>
-                      <p className="mt-1 text-[10px] text-raw-silver/40">
-                        Page {avatarPage + 1} / {avatarPageCount}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setAvatarPage((page) => Math.min(avatarPageCount - 1, page + 1))}
-                      disabled={avatarPage >= avatarPageCount - 1}
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-raw-border/45 bg-raw-black/70 text-raw-gold transition hover:border-raw-gold/45 disabled:cursor-not-allowed disabled:opacity-25"
-                      aria-label="Next avatars"
-                    >
-                      <ChevronRight className="h-5 w-5" />
-                    </button>
-                  </div>
-
-                  <div className="grid w-full max-w-[30rem] grid-cols-5 gap-x-2 gap-y-3 sm:gap-x-3 sm:gap-y-4">
-                    {visibleAvatarChoices.map((avatar, i) => {
-                      const index = avatarPage * AVATAR_PAGE_SIZE + i + 1;
-                      const isFree = index <= FREE_ONBOARDING_AVATAR_COUNT;
+              <div className="mt-5 grid grid-cols-[minmax(0,1fr)_9.8rem] gap-3 md:mt-8 md:grid-cols-[minmax(0,1fr)_18rem] md:items-center md:gap-8">
+                <div className="flex min-w-0 flex-col gap-5">
+                  <div>
+                    <p className="mb-3 text-center font-display text-[9px] uppercase tracking-[0.2em] text-raw-gold/70">
+                      Free avatars
+                    </p>
+                    <div className="grid w-full grid-cols-5 gap-x-2 gap-y-3 sm:max-w-[30rem] sm:gap-x-3 sm:gap-y-4">
+                    {freeAvatarChoices.map((avatar, i) => {
+                      const index = i + 1;
+                      const isFree = true;
                       const isActive = index === avatarIndex && isFree;
                       const isPreviewed = index === previewAvatarIndex;
                       return (
@@ -414,7 +392,7 @@ export function OnboardingJourney({
                             }
                           }}
                           className="group relative flex min-w-0 flex-col items-center gap-1 rounded-xl p-1.5 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/50"
-                          aria-label={isFree ? `Select ${avatar.name}` : `Preview ${avatar.name}, locked until later`}
+                          aria-label={`Select ${avatar.name}`}
                           aria-pressed={isActive}
                         >
                           <div className={`relative rounded-full transition-all duration-300 ${
@@ -436,18 +414,79 @@ export function OnboardingJourney({
                           }`}>
                             {avatar.name.split(" ")[0]}
                           </span>
-                          {!isFree && (
-                            <span className="rounded-full border border-raw-border/35 px-1.5 py-0.5 text-[7px] uppercase tracking-[0.08em] text-raw-silver/35">
-                              locked
-                            </span>
-                          )}
                         </button>
                       );
                     })}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="mb-3 flex w-full items-center justify-between gap-3 sm:max-w-[30rem]">
+                      <button
+                        type="button"
+                        onClick={() => setAvatarPage((page) => Math.max(0, page - 1))}
+                        disabled={avatarPage === 0}
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-raw-border/45 bg-raw-black/70 text-raw-gold transition hover:border-raw-gold/45 disabled:cursor-not-allowed disabled:opacity-25 sm:h-10 sm:w-10"
+                        aria-label="Previous preview avatars"
+                      >
+                        <ChevronLeft className="h-5 w-5" />
+                      </button>
+                      <div className="text-center">
+                        <p className="font-display text-[9px] uppercase tracking-[0.2em] text-raw-gold/70">
+                          Preview only
+                        </p>
+                        <p className="mt-1 text-[10px] text-raw-silver/40">
+                          Page {avatarPage + 1} / {previewAvatarPageCount}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setAvatarPage((page) => Math.min(previewAvatarPageCount - 1, page + 1))}
+                        disabled={avatarPage >= previewAvatarPageCount - 1}
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-raw-border/45 bg-raw-black/70 text-raw-gold transition hover:border-raw-gold/45 disabled:cursor-not-allowed disabled:opacity-25 sm:h-10 sm:w-10"
+                        aria-label="Next preview avatars"
+                      >
+                        <ChevronRight className="h-5 w-5" />
+                      </button>
+                    </div>
+
+                    <div className="grid w-full grid-cols-5 gap-x-2 gap-y-3 sm:max-w-[30rem] sm:gap-x-3 sm:gap-y-4">
+                      {visiblePreviewAvatarChoices.map((avatar, i) => {
+                        const index = FREE_ONBOARDING_AVATAR_COUNT + avatarPage * AVATAR_PAGE_SIZE + i + 1;
+                        const isPreviewed = index === previewAvatarIndex;
+                        return (
+                          <button
+                            key={index}
+                            type="button"
+                            onClick={() => {
+                              setPreviewAvatarIndex(index);
+                              track("onboarding_avatar_selected", { avatar_level: index, attempts: 1 });
+                            }}
+                            className="group relative flex min-w-0 flex-col items-center gap-1 rounded-xl p-1.5 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/50"
+                            aria-label={`Preview ${avatar.name}, locked until later`}
+                          >
+                            <div className={`relative rounded-full transition-all duration-300 ${
+                              isPreviewed ? "scale-100 opacity-100" : "opacity-80 group-hover:opacity-100 group-hover:scale-105"
+                            }`}>
+                              <AvatarFigure avatarIndex={index} size="sm" selected={isPreviewed} className="sm:hidden" />
+                              <AvatarFigure avatarIndex={index} size="md" selected={isPreviewed} className="hidden sm:block" />
+                            </div>
+                            <span className={`max-w-full truncate text-center font-display text-[7px] leading-tight tracking-[0.08em] transition-colors sm:text-[8px] ${
+                              isPreviewed ? "text-raw-gold/80" : "text-raw-silver/45 group-hover:text-raw-silver/80"
+                            }`}>
+                              {avatar.name.split(" ")[0]}
+                            </span>
+                            <span className="rounded-full border border-raw-border/35 px-1.5 py-0.5 text-[7px] uppercase tracking-[0.08em] text-raw-silver/35">
+                              locked
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
 
-                <div className="order-1 flex flex-col items-center justify-center md:order-2">
+                <div className="flex flex-col items-center justify-start md:justify-center">
                   <div className="h-[360px] w-[157px] overflow-visible md:hidden">
                     <div
                       style={{
@@ -475,7 +514,7 @@ export function OnboardingJourney({
               <div className="mt-6 flex justify-end sm:mt-8">
                 <button
                   onClick={goToNextStep}
-                  disabled={!canContinueFromAvatar}
+                  disabled={!canContinueWithPreviewAvatar}
                   className="w-full rounded-xl bg-raw-gold px-5 py-3 text-sm font-semibold text-raw-ink transition-opacity disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:py-2.5"
                 >
                   Next: Polls
