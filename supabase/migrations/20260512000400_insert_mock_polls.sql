@@ -1,5 +1,6 @@
 -- Insert 20 mock dashboard polls (is_onboarding = false).
--- Safe to re-run: ON CONFLICT DO NOTHING.
+-- Safe to re-run: upserts on conflict of id, updating question/status/is_onboarding/created_at for polls
+-- and poll_id/label/position for options.
 
 INSERT INTO polls (id, question, status, is_onboarding, created_at) VALUES
   ('a1000000-0000-0000-0000-000000000001', 'Do you think money buys happiness?', 'active', false, now() - interval '20 days'),

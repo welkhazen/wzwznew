@@ -2092,6 +2092,11 @@ export default function Admin() {
             <div className="flex-1">
               <div className="flex flex-wrap items-center gap-3">
                 <h2 className="font-display text-xl tracking-wide">Create poll</h2>
+                {adminPolls.length > 0 && (
+                  <span className="inline-flex items-center rounded-full border border-raw-border/35 bg-raw-surface/30 px-2.5 py-0.5 text-[11px] text-raw-silver/60">
+                    {adminPolls.length} poll{adminPolls.length !== 1 ? "s" : ""}
+                  </span>
+                )}
                 <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[10px] ${
                   supabaseStatus === "ok"
                     ? "border-emerald-400/35 bg-emerald-500/10 text-emerald-300"
