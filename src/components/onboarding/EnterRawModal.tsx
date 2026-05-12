@@ -8,7 +8,7 @@ interface EnterRawModalProps {
 }
 
 /**
- * Pulsating "Enter raW" overlay shown after the user answers all 3 onboarding polls.
+ * Pulsating "Enter raW" overlay shown after the user completes community selection.
  * - Click the button to enter raW (calls onEnter).
  * - Click the dimmed/blurred backdrop (anywhere outside the card) to dismiss (calls onDismiss).
  * - Press Escape to dismiss.

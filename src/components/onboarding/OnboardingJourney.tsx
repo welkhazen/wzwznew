@@ -225,7 +225,6 @@ export function OnboardingJourney({
   const [pollStats, setPollStats] = useState<Record<string, Record<string, number>>>({});
   const [currentPollIndex, setCurrentPollIndex] = useState(0);
   const [enterRawOpen, setEnterRawOpen] = useState(false);
-  const [enterRawDismissed, setEnterRawDismissed] = useState(false);
   const [onboardingAvatars, setOnboardingAvatars] = useState<AvatarCatalogItem[]>(() => {
     const cached = readFullAvatarCatalogLocal();
     return cached.length > 0 ? cached : fallbackAvatarCatalog();
@@ -253,18 +252,6 @@ export function OnboardingJourney({
     track("onboarding_step_viewed", { step: onboardingStep as "avatar" | "polls" | "communities" | "ready", step_index: stepIndex });
     stepStartTimeRef.current = Date.now();
   }, [onboardingStep]);
-
-  // Open the "Enter raW" modal once all polls are answered (once per dismissal)
-  useEffect(() => {
-    if (
-      onboardingStep === "polls" &&
-      onboardingPolls.length > 0 &&
-      answeredCount >= onboardingPolls.length &&
-      !enterRawDismissed
-    ) {
-      setEnterRawOpen(true);
-    }
-  }, [answeredCount, onboardingPolls.length, onboardingStep, enterRawDismissed]);
 
   const canContinueFromAvatar = avatarIndex >= 1 && avatarIndex <= FREE_ONBOARDING_AVATAR_COUNT;
   const canContinueFromPolls = answeredCount >= onboardingPolls.length;
@@ -786,8 +773,9 @@ export function OnboardingJourney({
                       total_duration_ms: Date.now() - stepStartTimeRef.current,
                       polls_answered: answeredCount,
                       communities_selected: selectedCommunityIds.length,
+                      source: "complete_onboarding_button",
                     });
-                    onCompleteOnboarding();
+                    setEnterRawOpen(true);
                   }}
                   disabled={!canContinueFromCommunities}
                   className="w-full rounded-xl bg-raw-gold px-5 py-3 text-sm font-semibold text-raw-ink transition-opacity disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:py-2.5"
@@ -814,7 +802,6 @@ export function OnboardingJourney({
         }}
         onDismiss={() => {
           setEnterRawOpen(false);
-          setEnterRawDismissed(true);
         }}
       />
     </div>
