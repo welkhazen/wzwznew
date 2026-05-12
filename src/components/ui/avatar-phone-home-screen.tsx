@@ -25,11 +25,11 @@ export function AvatarPhoneHomeScreen({ avatarIndex, compact = false, previewAva
       loading="eager"
       decoding="async"
       draggable={false}
-      className="relative h-full w-full animate-[iconPop_420ms_ease-out] object-cover"
+      className={`relative h-full w-full animate-[iconPop_420ms_ease-out] ${compact ? "object-contain p-2" : "object-cover"}`}
       style={{ objectPosition: "center 35%" }}
     />
   ) : (
-    <div className="relative scale-[1.45]">
+    <div className={`relative ${compact ? "scale-100" : "scale-[1.45]"}`}>
       <AvatarFigure avatarIndex={avatarIndex} size="md" selected />
     </div>
   );
@@ -56,7 +56,7 @@ export function AvatarPhoneHomeScreen({ avatarIndex, compact = false, previewAva
               className="relative flex h-full min-h-[150px] w-full items-center justify-center overflow-hidden rounded-[18px] shadow-[0_10px_24px_rgba(0,0,0,0.25)]"
               style={{
                 background: `linear-gradient(135deg, ${activeBg} 0%, #050505 74%)`,
-                boxShadow: activeGlow !== "none" ? `0 0 24px ${activeGlow}` : "0 10px 24px rgba(0,0,0,0.25)",
+                boxShadow: "0 10px 24px rgba(0,0,0,0.25)",
               }}
             >
               <div className="absolute inset-0 bg-gradient-to-b from-white/[0.08] via-transparent to-black/20" />

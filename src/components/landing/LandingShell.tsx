@@ -63,18 +63,20 @@ export default function LandingShell({
           <PerforatedBackground />
           <MatrixBackground />
 
-          <GlobeHero onSignupClick={() => setShowSignup(true)} />
-          <ProblemSection />
-          <HowItWorks />
-          <AvatarShowcaseSection />
-          <LandingPollsSection />
-          <Communities onSignupClick={() => setShowSignup(true)} />
-          <PersonalityInsightsSection />
-          <EarnedWarUpgradesSection />
-          <WheelReward onSignupClick={() => setShowSignup(true)} />
-          <WhyAnonymity />
-          <TestimonialsSection />
-          <LandingFooter />
+          <div className="relative max-sm:z-10">
+            <GlobeHero onSignupClick={() => setShowSignup(true)} />
+            <ProblemSection />
+            <HowItWorks />
+            <AvatarShowcaseSection />
+            <LandingPollsSection />
+            <Communities onSignupClick={() => setShowSignup(true)} />
+            <PersonalityInsightsSection />
+            <EarnedWarUpgradesSection />
+            <WheelReward onSignupClick={() => setShowSignup(true)} />
+            <WhyAnonymity />
+            <TestimonialsSection />
+            <LandingFooter />
+          </div>
         </motion.div>
       )}
 
