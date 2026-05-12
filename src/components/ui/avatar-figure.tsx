@@ -30,7 +30,7 @@ export function AvatarFigure({ avatarIndex, size = "md", selected = false, class
         <div
           className="relative h-full w-full overflow-hidden rounded-full"
           style={{
-            background: `radial-gradient(circle at 50% 40%, ${theme.bg} 0%, #050505 70%)`,
+            background: theme.bg,
             boxShadow: "inset 0 0 10px rgba(0,0,0,0.4)",
           }}
         >

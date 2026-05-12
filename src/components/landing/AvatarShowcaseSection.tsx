@@ -67,35 +67,44 @@ export function AvatarShowcaseSection() {
   }, []);
 
   const avatarList = catalog.length > 0 ? catalog : AVATARS;
-  const total = avatarList.length || 1;
+
+  // "Choose Your Avatar" shows only the original 10 SVG avatars (id: "avatar-1".."avatar-10")
+  const baseAvatars = avatarList.filter((a) => a.id.startsWith("avatar-"));
+  const baseTotal = baseAvatars.length || 10;
+
+  // "All Avatars" grid shows everything else, preserving the full-catalog theme index
+  const allCatalogSource = fullCatalog.length > 0 ? fullCatalog : avatarList;
+  const extendedAvatars = allCatalogSource
+    .map((avatar, i) => ({ avatar, themeIndex: i + 1 }))
+    .filter(({ avatar }) => !avatar.id.startsWith("avatar-"));
 
   const canPrev = true;
   const canNext = true;
 
   function prev() {
-    setStartIndex((i) => (i - 1 + total) % total);
+    setStartIndex((i) => (i - 1 + baseTotal) % baseTotal);
   }
 
   function next() {
-    setStartIndex((i) => (i + 1) % total);
+    setStartIndex((i) => (i + 1) % baseTotal);
   }
 
   function prevDesktop() {
-    setDesktopStart((i) => (i - 8 + total) % total);
+    setDesktopStart((i) => (i - 8 + baseTotal) % baseTotal);
   }
 
   function nextDesktop() {
-    setDesktopStart((i) => (i + 8) % total);
+    setDesktopStart((i) => (i + 8) % baseTotal);
   }
 
   const visibleAvatars = Array.from({ length: VISIBLE_COUNT }, (_, i) => {
-    const idx = (startIndex + i) % total;
-    return { avatar: avatarList[idx], index: idx + 1 };
+    const idx = (startIndex + i) % baseTotal;
+    return { avatar: baseAvatars[idx], index: idx + 1 };
   });
 
   const desktopAvatars = Array.from({ length: DESKTOP_COUNT }, (_, i) => {
-    const idx = (desktopStart + i) % total;
-    return { avatar: avatarList[idx], index: idx + 1 };
+    const idx = (desktopStart + i) % baseTotal;
+    return { avatar: baseAvatars[idx], index: idx + 1 };
   });
 
   function AvatarButton({
@@ -231,10 +240,10 @@ Just like in real life, every person is born with a name, an appearance, and an 
           </p>
           <div
             ref={scrollRef}
-            className="grid grid-cols-2 gap-x-2 gap-y-4 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="grid grid-cols-2 place-items-center gap-x-2 gap-y-4 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             style={{ maxHeight: `${646 * 0.54 - 24}px` }}
           >
-            {avatarList.map((avatar, i) => (
+            {baseAvatars.map((avatar, i) => (
               <button
                 key={i + 1}
                 type="button"
@@ -385,29 +394,26 @@ Just like in real life, every person is born with a name, an appearance, and an 
                 <p className="mb-6 text-center font-display text-[10px] uppercase tracking-[0.28em] text-raw-gold/60">
                   All Avatars
                 </p>
-                <div className="grid grid-cols-4 gap-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10">
-                  {(fullCatalog.length > 0 ? fullCatalog : avatarList).map((avatar, i) => (
+                <div className="grid grid-cols-4 gap-4 place-items-center sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10">
+                  {extendedAvatars.map(({ avatar, themeIndex }) => (
                     <button
-                      key={avatar.id ?? i + 1}
+                      key={avatar.id ?? themeIndex}
                       type="button"
-                      onClick={() => { setAvatarIndex(i + 1); setPreviewIndex(i + 1); }}
-                      onMouseEnter={() => setPreviewIndex(i + 1)}
+                      onClick={() => { setAvatarIndex(themeIndex); setPreviewIndex(themeIndex); }}
+                      onMouseEnter={() => setPreviewIndex(themeIndex)}
                       onMouseLeave={() => setPreviewIndex(avatarIndex)}
                       className="group flex flex-col items-center gap-1.5 outline-none"
                       aria-label={`Select ${avatar.name}`}
                     >
                       <div
                         className="rounded-full transition-all duration-300 group-hover:scale-110"
-                        style={{
-                          transition: "transform 0.3s cubic-bezier(0.34,1.56,0.64,1)",
-                          filter: "none",
-                        }}
+                        style={{ transition: "transform 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}
                       >
-                        <AvatarFigure avatarIndex={i + 1} size="sm" selected={avatarIndex === i + 1} />
+                        <AvatarFigure avatarIndex={themeIndex} size="sm" selected={avatarIndex === themeIndex} />
                       </div>
                       <span
                         className="text-center font-display text-[8px] uppercase tracking-wide transition-colors duration-200"
-                        style={{ color: avatarIndex === i + 1 ? "#F1C42D" : "rgba(255,255,255,0.3)" }}
+                        style={{ color: avatarIndex === themeIndex ? "#F1C42D" : "rgba(255,255,255,0.3)" }}
                       >
                         {avatar.name}
                       </span>
