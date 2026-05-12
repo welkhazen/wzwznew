@@ -62,8 +62,10 @@ export function AvatarShowcaseSection() {
         })));
       }
     };
+    // Single round-trip: full catalog covers both active-only and full needs.
+    // Removed redundant loadAvatarCatalog + loadAvatarCatalogSupabaseOnly calls
+    // that were firing 3 simultaneous queries and all hitting 500 on bad RLS state.
     loadAvatarCatalog().then(applyThemes).catch(() => {});
-    loadAvatarCatalogSupabaseOnly().then(applyThemes).catch(() => {});
     loadFullAvatarCatalog().then(applyFullThemes).catch(() => {});
     loadLandingNewAvatars().then(setNewAvatars).catch(() => {});
     const handler = () => applyThemes(readAvatarCatalogLocal());
