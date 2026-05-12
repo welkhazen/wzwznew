@@ -381,7 +381,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
                         className="rounded-full transition-all duration-300 group-hover:scale-110"
                         style={{
                           transition: "transform 0.3s cubic-bezier(0.34,1.56,0.64,1)",
-                          filter: previewIndex === i + 1 ? `drop-shadow(0 0 8px ${avatar.glow ?? "rgba(241,196,45,0.5)"})` : "none",
+                          filter: "none",
                         }}
                       >
                         <AvatarFigure avatarIndex={i + 1} size="sm" selected={avatarIndex === i + 1} />
