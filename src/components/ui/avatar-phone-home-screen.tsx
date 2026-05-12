@@ -172,7 +172,9 @@ function AppIcon({ kind, label, compact = false }: { kind: IconKind; label: stri
   return (
     <div className={`flex flex-col items-center ${compact ? "gap-0.5" : "gap-1"}`}>
       <IconTile kind={kind} compact={compact} />
-      {!compact && <span className="leading-none text-[8px] font-medium text-[#222]">{label}</span>}
+      <span className={`leading-none font-medium text-[#222] ${compact ? "text-[7px]" : "text-[8px]"}`}>
+        {label}
+      </span>
     </div>
   );
 }

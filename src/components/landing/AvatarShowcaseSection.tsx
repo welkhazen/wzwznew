@@ -15,7 +15,8 @@ import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 const VISIBLE_COUNT = 4;
 const DESKTOP_COUNT = 8;
 const FEATURED_AVATAR_COUNT = 10;
-const EXPANDED_AVATAR_BATCH_SIZE = 24;
+const EXPANDED_AVATAR_BATCH_SIZE = 8;
+const MOBILE_PHONE_SCALE = 0.5;
 
 export function AvatarShowcaseSection() {
   const sectionRef = useTrackSectionView("avatar");
@@ -30,6 +31,7 @@ export function AvatarShowcaseSection() {
   const [extraPreviewAvatar, setExtraPreviewAvatar] = useState<LandingNewAvatar | null>(null);
   const [catalog, setCatalog] = useState<AvatarCatalogItem[]>([]);
   const [fullCatalog, setFullCatalog] = useState<AvatarCatalogItem[]>(() => readFullAvatarCatalogLocal());
+  const [isLoadingExpandedAvatars, setIsLoadingExpandedAvatars] = useState(false);
   const [newAvatars, setNewAvatars] = useState<LandingNewAvatar[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -76,10 +78,11 @@ export function AvatarShowcaseSection() {
   const featuredAvatars = baseAvatars.slice(0, FEATURED_AVATAR_COUNT);
   const chooserAvatars = featuredAvatars.length > 0 ? featuredAvatars : baseAvatars.slice(0, 1);
   const chooserTotal = chooserAvatars.length;
-  const extendedAvatars = baseAvatars
-    .slice(FEATURED_AVATAR_COUNT)
+  const expandedAvatarSource = baseAvatars.slice(FEATURED_AVATAR_COUNT);
+  const expandedAvatarTotal = expandedAvatarSource.length;
+  const visibleExtendedAvatars = expandedAvatarSource
+    .slice(0, expandedVisibleCount)
     .map((avatar, index) => ({ avatar, themeIndex: index + FEATURED_AVATAR_COUNT + 1 }));
-  const visibleExtendedAvatars = extendedAvatars.slice(0, expandedVisibleCount);
   const previewAvatar = useMemo(
     () => extraPreviewAvatar ?? baseAvatars[previewIndex - 1] ?? baseAvatars[0] ?? null,
     [baseAvatars, extraPreviewAvatar, previewIndex]
@@ -102,8 +105,8 @@ export function AvatarShowcaseSection() {
       timer = window.setTimeout(() => {
         if (cancelled) return;
         setExpandedVisibleCount((current) => {
-          const next = Math.min(current + EXPANDED_AVATAR_BATCH_SIZE, extendedAvatars.length);
-          if (next < extendedAvatars.length) {
+          const next = Math.min(current + EXPANDED_AVATAR_BATCH_SIZE, expandedAvatarTotal);
+          if (next < expandedAvatarTotal) {
             loadNextBatch();
           }
           return next;
@@ -111,7 +114,7 @@ export function AvatarShowcaseSection() {
       }, 40);
     };
 
-    if (extendedAvatars.length > EXPANDED_AVATAR_BATCH_SIZE) {
+    if (expandedAvatarTotal > EXPANDED_AVATAR_BATCH_SIZE) {
       loadNextBatch();
     }
 
@@ -119,7 +122,22 @@ export function AvatarShowcaseSection() {
       cancelled = true;
       if (timer) window.clearTimeout(timer);
     };
-  }, [extendedAvatars.length, showExpandGrid]);
+  }, [expandedAvatarTotal, showExpandGrid]);
+
+  function handleToggleExpandGrid() {
+    const shouldOpen = !showExpandGrid;
+    setShowExpandGrid(shouldOpen);
+
+    if (!shouldOpen || fullCatalog.length > FEATURED_AVATAR_COUNT || isLoadingExpandedAvatars) return;
+
+    setIsLoadingExpandedAvatars(true);
+    loadFullAvatarCatalog()
+      .then((items) => {
+        if (items.length > 0) applyFullThemes(items);
+      })
+      .catch(() => {})
+      .finally(() => setIsLoadingExpandedAvatars(false));
+  }
 
   function prev() {
     setStartIndex((i) => (i - 1 + chooserTotal) % chooserTotal);
@@ -263,10 +281,19 @@ Just like in real life, every person is born with a name, an appearance, and an 
       {/* ── Mobile (<sm): phone left + 2-col avatar grid right, 50/50 ── */}
       <div className="mx-auto flex w-full max-w-5xl flex-row items-start gap-3 sm:hidden">
 
-        {/* Phone — zoomed to fit the left half */}
-        <div className="w-[43%] shrink-0 overflow-visible pt-1">
-          {/* zoom shrinks layout footprint; 280 × 0.54 ≈ 151px fits in ~172px half */}
-          <div style={{ zoom: 0.5 }}>
+        {/* Phone: scaled to fit the left half while keeping the full home screen intact. */}
+        <div
+          className="w-[43%] shrink-0 overflow-visible pt-1"
+          style={{ height: 646 * MOBILE_PHONE_SCALE }}
+        >
+          {/* Transform scaling avoids mobile browser zoom side effects. */}
+          <div
+            style={{
+              width: 280,
+              transform: `scale(${MOBILE_PHONE_SCALE})`,
+              transformOrigin: "top left",
+            }}
+          >
             <PhoneMockup className="w-[280px]" showStatusBar={false}>
               <AvatarPhoneHomeScreen avatarIndex={previewIndex} compact previewAvatar={previewAvatar} />
             </PhoneMockup>
@@ -281,7 +308,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
           <div
             ref={scrollRef}
             className="grid grid-cols-2 gap-x-2 gap-y-3 overflow-y-auto [scrollbar-width:none] min-[380px]:gap-y-4 [&::-webkit-scrollbar]:hidden"
-            style={{ maxHeight: `${646 * 0.5 - 10}px` }}
+            style={{ maxHeight: `${646 * MOBILE_PHONE_SCALE - 10}px` }}
           >
             {chooserAvatars.map((avatar, i) => (
               <button
@@ -400,7 +427,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
       <div className="mx-auto mt-6 w-full max-w-5xl flex flex-col items-center">
         <button
           type="button"
-          onClick={() => setShowExpandGrid((v) => !v)}
+          onClick={handleToggleExpandGrid}
           className="group flex flex-col items-center gap-1 outline-none"
           aria-label={showExpandGrid ? "Collapse avatar grid" : "Expand avatar grid"}
         >
@@ -418,7 +445,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
         </button>
 
         <AnimatePresence>
-          {showExpandGrid && extendedAvatars.length > 0 && (
+          {showExpandGrid && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
@@ -434,32 +461,53 @@ Just like in real life, every person is born with a name, an appearance, and an 
                 <p className="mb-6 text-center font-display text-[10px] uppercase tracking-[0.28em] text-raw-gold/60">
                   All Avatars
                 </p>
-                <div className="grid grid-cols-4 gap-4 place-items-center sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10">
-                  {visibleExtendedAvatars.map(({ avatar, themeIndex }) => (
-                    <button
-                      key={avatar.id ?? themeIndex}
-                      type="button"
-                      onClick={() => { setAvatarIndex(themeIndex); setPreviewIndex(themeIndex); }}
-                      onMouseEnter={() => setPreviewIndex(themeIndex)}
-                      onMouseLeave={() => setPreviewIndex(avatarIndex)}
-                      className="group flex flex-col items-center gap-1.5 outline-none"
-                      aria-label={`Select ${avatar.name}`}
+                {visibleExtendedAvatars.length > 0 ? (
+                  <>
+                    <div className="grid grid-cols-4 gap-4 place-items-center sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10">
+                      {visibleExtendedAvatars.map(({ avatar, themeIndex }) => (
+                        <button
+                          key={avatar.id ?? themeIndex}
+                          type="button"
+                          onClick={() => { setAvatarIndex(themeIndex); setPreviewIndex(themeIndex); }}
+                          onMouseEnter={() => setPreviewIndex(themeIndex)}
+                          onMouseLeave={() => setPreviewIndex(avatarIndex)}
+                          className="group flex flex-col items-center gap-1.5 outline-none [content-visibility:auto] [contain-intrinsic-size:72px]"
+                          aria-label={`Select ${avatar.name}`}
+                        >
+                          <div
+                            className="rounded-full transition-all duration-300 group-hover:scale-110"
+                            style={{ transition: "transform 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}
+                          >
+                            <AvatarFigure avatarIndex={themeIndex} size="sm" selected={avatarIndex === themeIndex} />
+                          </div>
+                          <span
+                            className="text-center font-display text-[8px] uppercase tracking-wide transition-colors duration-200"
+                            style={{ color: avatarIndex === themeIndex ? "#F1C42D" : "rgba(255,255,255,0.3)" }}
+                          >
+                            {avatar.name}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                    {expandedVisibleCount < expandedAvatarTotal && (
+                      <p className="mt-5 text-center font-display text-[8px] uppercase tracking-[0.22em] text-raw-silver/35">
+                        Loading more avatars...
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <div
+                    className="flex min-h-24 items-center justify-center rounded-xl border border-raw-border/30 bg-raw-black/30 px-4 text-center"
+                    aria-live="polite"
+                  >
+                    <p
+                      className="font-display text-[9px] uppercase tracking-[0.2em]"
+                      style={{ color: isLoadingExpandedAvatars ? "rgba(241,196,45,0.75)" : "rgba(255,255,255,0.42)" }}
                     >
-                      <div
-                        className="rounded-full transition-all duration-300 group-hover:scale-110"
-                        style={{ transition: "transform 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}
-                      >
-                        <AvatarFigure avatarIndex={themeIndex} size="sm" selected={avatarIndex === themeIndex} />
-                      </div>
-                      <span
-                        className="text-center font-display text-[8px] uppercase tracking-wide transition-colors duration-200"
-                        style={{ color: avatarIndex === themeIndex ? "#F1C42D" : "rgba(255,255,255,0.3)" }}
-                      >
-                        {avatar.name}
-                      </span>
-                    </button>
-                  ))}
-                </div>
+                      {isLoadingExpandedAvatars ? "Loading avatars..." : "More avatars are loading. Tap again in a moment."}
+                    </p>
+                  </div>
+                )}
               </div>
             </motion.div>
           )}
