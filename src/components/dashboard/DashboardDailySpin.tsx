@@ -10,7 +10,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { getTodayKey } from "@/store/useRawStore.storage";
-import { readDailySpinAvatarPool, type DailySpinAvatarPoolItem } from "@/lib/dailySpinAvatarPool";
+import {
+  loadDailySpinPoolFromSupabase,
+  readDailySpinAvatarPool,
+  type DailySpinAvatarPoolItem,
+} from "@/lib/dailySpinAvatarPool";
 
 interface DashboardDailySpinProps {
   userId: string;
@@ -115,6 +119,7 @@ export function DashboardDailySpin({ userId, isAdmin = false }: DashboardDailySp
   const [prizeModal, setPrizeModal] = useState<WheelPrize | null>(null);
   const [adminSelectedRewardId, setAdminSelectedRewardId] = useState<string>("random");
   const [themeRewardAvatar, setThemeRewardAvatar] = useState<DailySpinAvatarPoolItem | null>(null);
+  const [themeRewardPool, setThemeRewardPool] = useState<DailySpinAvatarPoolItem[]>(() => readDailySpinAvatarPool());
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -129,6 +134,12 @@ export function DashboardDailySpin({ userId, isAdmin = false }: DashboardDailySp
     setHasSpunToday(false);
     setSelectedRewardId(null);
   }, [todayKey, userId]);
+
+  useEffect(() => {
+    loadDailySpinPoolFromSupabase()
+      .then((items) => setThemeRewardPool(items))
+      .catch(() => setThemeRewardPool(readDailySpinAvatarPool()));
+  }, []);
 
   const updateCountdown = useCallback(() => {
     const now = new Date();
@@ -152,7 +163,7 @@ export function DashboardDailySpin({ userId, isAdmin = false }: DashboardDailySp
 
   const handleSpinEnd = (prize: WheelPrize) => {
     if (prize.id === "theme") {
-      const pool = readDailySpinAvatarPool();
+      const pool = themeRewardPool.length > 0 ? themeRewardPool : readDailySpinAvatarPool();
       if (pool.length > 0) {
         const randomIndex = Math.floor(Math.random() * pool.length);
         setThemeRewardAvatar(pool[randomIndex]);

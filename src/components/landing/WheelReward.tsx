@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { LandingSectionShell } from "@/components/landing/LandingSectionShell";
 import { WheelOfFortune, type WheelPrize } from "@/components/wheel/WheelOfFortune";
-import { readDailySpinAvatarPool, type DailySpinAvatarPoolItem } from "@/lib/dailySpinAvatarPool";
+import { loadDailySpinPoolFromSupabase, readDailySpinAvatarPool } from "@/lib/dailySpinAvatarPool";
 import { AVATARS } from "@/lib/avataridentity";
 import { useTheme } from "@/providers/useTheme";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
@@ -46,6 +46,15 @@ export function WheelReward({ onSignupClick }: WheelRewardProps) {
 
   useEffect(() => {
     function refresh() { setPool(getPool()); }
+    loadDailySpinPoolFromSupabase()
+      .then((items) => {
+        if (items.length > 0) {
+          setPool(items);
+        }
+      })
+      .catch(() => {
+        refresh();
+      });
     window.addEventListener("raw:avatar-catalog-updated", refresh);
     return () => window.removeEventListener("raw:avatar-catalog-updated", refresh);
   }, []);
