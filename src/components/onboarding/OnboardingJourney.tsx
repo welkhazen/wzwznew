@@ -47,6 +47,8 @@ const STEP_LABELS: Record<OnboardingStep, string> = {
   marketplace: "insights",
   ready: "ready",
 };
+const FREE_ONBOARDING_AVATAR_COUNT = 10;
+const AVATAR_PAGE_SIZE = 10;
 
 const FALLBACK_POLLS: OnboardingPoll[] = [
   {
@@ -197,6 +199,8 @@ export function OnboardingJourney({
   const [currentPollIndex, setCurrentPollIndex] = useState(0);
   const [enterRawOpen, setEnterRawOpen] = useState(false);
   const [enterRawDismissed, setEnterRawDismissed] = useState(false);
+  const [previewAvatarIndex, setPreviewAvatarIndex] = useState(() => Math.min(Math.max(avatarIndex, 1), Math.max(1, AVATARS.length)));
+  const [avatarPage, setAvatarPage] = useState(() => Math.floor((Math.min(Math.max(avatarIndex, 1), Math.max(1, AVATARS.length)) - 1) / AVATAR_PAGE_SIZE));
   const answeredCount = onboardingPolls.filter((poll) => onboardingAnsweredPollIds.has(poll.id)).length;
   const startedFiredRef = useRef(false);
   const stepStartTimeRef = useRef(Date.now());
@@ -230,9 +234,19 @@ export function OnboardingJourney({
     }
   }, [answeredCount, onboardingPolls.length, onboardingStep, enterRawDismissed]);
 
-  const canContinueFromAvatar = avatarIndex >= 1;
+  const canContinueFromAvatar = avatarIndex >= 1 && avatarIndex <= FREE_ONBOARDING_AVATAR_COUNT;
   const canContinueFromPolls = answeredCount >= onboardingPolls.length;
   const canContinueFromCommunities = selectedCommunityIds.length === 2;
+  const avatarPageCount = Math.max(1, Math.ceil(AVATARS.length / AVATAR_PAGE_SIZE));
+  const visibleAvatarChoices = AVATARS.slice(avatarPage * AVATAR_PAGE_SIZE, (avatarPage + 1) * AVATAR_PAGE_SIZE);
+  const previewAvatar = AVATARS[previewAvatarIndex - 1] ?? AVATARS[0];
+
+  useEffect(() => {
+    if (avatarIndex >= 1 && avatarIndex <= FREE_ONBOARDING_AVATAR_COUNT) {
+      setPreviewAvatarIndex(avatarIndex);
+      setAvatarPage(Math.floor((avatarIndex - 1) / AVATAR_PAGE_SIZE));
+    }
+  }, [avatarIndex]);
 
   // Initialize poll stats with mock data
   useMemo(() => {
@@ -292,43 +306,112 @@ export function OnboardingJourney({
                 Your avatar is your public signal. You can evolve it later, but choose your starting form now.
               </p>
 
-              <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8 md:items-center">
-                {/* Left: Avatar Selector Grid */}
-                <div className="flex flex-col items-center justify-center min-w-0">
-                  <div className="grid w-fit grid-cols-5 gap-2 sm:gap-4">
-                    {AVATARS.map((avatar, i) => {
-                      const index = i + 1;
-                      const isActive = index === avatarIndex;
+              <div className="mt-5 grid grid-cols-1 gap-5 md:mt-8 md:grid-cols-[minmax(0,1fr)_18rem] md:items-center md:gap-8">
+                <div className="order-2 flex min-w-0 flex-col items-center md:order-1">
+                  <div className="mb-3 flex w-full max-w-[30rem] items-center justify-between gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setAvatarPage((page) => Math.max(0, page - 1))}
+                      disabled={avatarPage === 0}
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-raw-border/45 bg-raw-black/70 text-raw-gold transition hover:border-raw-gold/45 disabled:cursor-not-allowed disabled:opacity-25"
+                      aria-label="Previous avatars"
+                    >
+                      <ChevronLeft className="h-5 w-5" />
+                    </button>
+                    <div className="text-center">
+                      <p className="font-display text-[9px] uppercase tracking-[0.2em] text-raw-gold/70">
+                        {avatarPage === 0 ? "Free avatars" : "Preview only"}
+                      </p>
+                      <p className="mt-1 text-[10px] text-raw-silver/40">
+                        Page {avatarPage + 1} / {avatarPageCount}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setAvatarPage((page) => Math.min(avatarPageCount - 1, page + 1))}
+                      disabled={avatarPage >= avatarPageCount - 1}
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-raw-border/45 bg-raw-black/70 text-raw-gold transition hover:border-raw-gold/45 disabled:cursor-not-allowed disabled:opacity-25"
+                      aria-label="Next avatars"
+                    >
+                      <ChevronRight className="h-5 w-5" />
+                    </button>
+                  </div>
+
+                  <div className="grid w-full max-w-[30rem] grid-cols-5 gap-x-2 gap-y-3 sm:gap-x-3 sm:gap-y-4">
+                    {visibleAvatarChoices.map((avatar, i) => {
+                      const index = avatarPage * AVATAR_PAGE_SIZE + i + 1;
+                      const isFree = index <= FREE_ONBOARDING_AVATAR_COUNT;
+                      const isActive = index === avatarIndex && isFree;
+                      const isPreviewed = index === previewAvatarIndex;
                       return (
                         <button
                           key={index}
-                          onClick={() => { track("onboarding_avatar_selected", { avatar_level: index, attempts: 1 }); onAvatarChange(index); }}
-                          className="group relative flex flex-col items-center gap-1 p-1 sm:gap-2 sm:p-2 focus:outline-none"
-                          aria-label={`Select ${avatar.name}`}
+                          type="button"
+                          onClick={() => {
+                            setPreviewAvatarIndex(index);
+                            if (isFree) {
+                              track("onboarding_avatar_selected", { avatar_level: index, attempts: 1 });
+                              onAvatarChange(index);
+                            } else {
+                              track("onboarding_avatar_selected", { avatar_level: index, attempts: 1 });
+                            }
+                          }}
+                          className="group relative flex min-w-0 flex-col items-center gap-1 rounded-xl p-1.5 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/50"
+                          aria-label={isFree ? `Select ${avatar.name}` : `Preview ${avatar.name}, locked until later`}
                           aria-pressed={isActive}
                         >
                           <div className={`relative rounded-full transition-all duration-300 ${
-                            isActive ? "scale-110" : "opacity-80 group-hover:opacity-100 group-hover:scale-105"
+                            isActive
+                              ? "scale-105"
+                              : isPreviewed
+                                ? "scale-100 opacity-100"
+                                : "opacity-80 group-hover:opacity-100 group-hover:scale-105"
                           }`}>
-                            <AvatarFigure avatarIndex={index} size="sm" selected={isActive} className="sm:hidden" />
-                            <AvatarFigure avatarIndex={index} size="md" selected={isActive} className="hidden sm:block" />
+                            <AvatarFigure avatarIndex={index} size="sm" selected={isActive || isPreviewed} className="sm:hidden" />
+                            <AvatarFigure avatarIndex={index} size="md" selected={isActive || isPreviewed} className="hidden sm:block" />
                           </div>
-                          <span className={`font-display text-[8px] tracking-[0.1em] text-center leading-tight transition-colors ${
-                            isActive ? "text-raw-text" : "text-raw-silver/45 group-hover:text-raw-silver/80"
+                          <span className={`max-w-full truncate text-center font-display text-[7px] leading-tight tracking-[0.08em] transition-colors sm:text-[8px] ${
+                            isActive
+                              ? "text-raw-text"
+                              : isPreviewed
+                                ? "text-raw-gold/80"
+                                : "text-raw-silver/45 group-hover:text-raw-silver/80"
                           }`}>
                             {avatar.name.split(" ")[0]}
                           </span>
+                          {!isFree && (
+                            <span className="rounded-full border border-raw-border/35 px-1.5 py-0.5 text-[7px] uppercase tracking-[0.08em] text-raw-silver/35">
+                              locked
+                            </span>
+                          )}
                         </button>
                       );
                     })}
                   </div>
                 </div>
 
-                {/* Right: Phone preview */}
-                <div className="hidden md:flex flex-col items-center justify-center">
-                  <PhoneMockup className="w-full max-w-[290px]" showStatusBar={false}>
-                    <AvatarPhoneHomeScreen avatarIndex={avatarIndex} />
-                  </PhoneMockup>
+                <div className="order-1 flex flex-col items-center justify-center md:order-2">
+                  <div className="h-[360px] w-[157px] overflow-visible md:hidden">
+                    <div
+                      style={{
+                        width: 280,
+                        transform: "scale(0.56)",
+                        transformOrigin: "top left",
+                      }}
+                    >
+                      <PhoneMockup className="w-[280px]" showStatusBar={false}>
+                        <AvatarPhoneHomeScreen avatarIndex={previewAvatarIndex} compact previewAvatar={previewAvatar} />
+                      </PhoneMockup>
+                    </div>
+                  </div>
+                  <div className="hidden w-full max-w-[290px] md:block">
+                    <PhoneMockup className="w-full" showStatusBar={false}>
+                      <AvatarPhoneHomeScreen avatarIndex={previewAvatarIndex} compact={false} previewAvatar={previewAvatar} />
+                    </PhoneMockup>
+                  </div>
+                  <p className="mt-3 text-center text-[10px] uppercase tracking-[0.18em] text-raw-silver/40">
+                    {previewAvatarIndex <= FREE_ONBOARDING_AVATAR_COUNT ? "Pick this starter" : "Preview only"}
+                  </p>
                 </div>
               </div>
 
