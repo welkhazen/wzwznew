@@ -21,15 +21,11 @@ export function AvatarFigure({ avatarIndex, size = "md", selected = false, class
   const useImage = !!theme.imageSrc && !imageFailed;
   const s = sizes[size];
 
-  const glowFilter = selected && theme.glow && theme.glow !== "none"
-    ? `drop-shadow(0 0 10px ${theme.glow})`
-    : undefined;
-
   if (useImage) {
     return (
       <div
         className={`relative inline-flex items-center justify-center ${className}`}
-        style={{ width: s.outer, height: s.outer, filter: glowFilter, transition: "filter 0.3s ease" }}
+        style={{ width: s.outer, height: s.outer }}
       >
         <div
           className="relative h-full w-full overflow-hidden rounded-full"
@@ -62,7 +58,7 @@ export function AvatarFigure({ avatarIndex, size = "md", selected = false, class
   const eyeGap = r * faceScale * 0.12;
 
   return (
-    <div className={`relative inline-flex items-center justify-center ${className}`} style={{ filter: glowFilter, transition: "filter 0.3s ease" }}>
+    <div className={`relative inline-flex items-center justify-center ${className}`}>
       <svg width={s.outer} height={s.outer} viewBox={`0 0 ${s.outer} ${s.outer}`}>
         <circle cx={cx} cy={cy} r={r} fill={theme.bg} />
 
