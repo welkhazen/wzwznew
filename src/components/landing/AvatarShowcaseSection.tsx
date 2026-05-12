@@ -5,8 +5,8 @@ import { LandingSectionShell } from "@/components/landing/LandingSectionShell";
 import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { AvatarPhoneHomeScreen } from "@/components/ui/avatar-phone-home-screen";
 import { PhoneMockup } from "@/components/ui/phone-mockup";
-import { AVATARS, setAvatarThemes } from "@/lib/avataridentity";
-import { loadAvatarCatalog, loadAvatarCatalogSupabaseOnly, loadFullAvatarCatalog, readAvatarCatalogLocal } from "@/lib/avatarCatalog";
+import { AVATARS, LEVEL_THEMES, setAvatarThemes } from "@/lib/avataridentity";
+import { loadAvatarCatalog, loadAvatarCatalogSupabaseOnly, loadFullAvatarCatalog, readAvatarCatalogLocal, readFullAvatarCatalogLocal } from "@/lib/avatarCatalog";
 import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
 import { loadLandingNewAvatars } from "@/lib/landingNewAvatars";
 import type { LandingNewAvatar } from "@/lib/landingNewAvatars";
@@ -25,39 +25,45 @@ export function AvatarShowcaseSection() {
   const [showMore, setShowMore] = useState(false);
   const [showExpandGrid, setShowExpandGrid] = useState(false);
   const [catalog, setCatalog] = useState<AvatarCatalogItem[]>([]);
-  const [fullCatalog, setFullCatalog] = useState<AvatarCatalogItem[]>([]);
+  const [fullCatalog, setFullCatalog] = useState<AvatarCatalogItem[]>(() => readFullAvatarCatalogLocal());
   const [newAvatars, setNewAvatars] = useState<LandingNewAvatar[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  const applyFullThemes = (items: AvatarCatalogItem[]) => {
+    setFullCatalog(items);
+    setAvatarThemes(items.map((item) => ({
+      bg: item.bg, figure: item.figure, ring: item.ring,
+      glow: item.glow, name: item.name, imageSrc: item.imageSrc,
+    })));
+  };
+
   useEffect(() => {
+    // Seed LEVEL_THEMES from localStorage cache immediately so avatars render
+    // on the first paint without waiting for a Supabase round-trip.
+    const cached = readFullAvatarCatalogLocal();
+    if (cached.length > 0) applyFullThemes(cached);
+
     const applyThemes = (items: AvatarCatalogItem[]) => {
       setCatalog(items);
-      setAvatarThemes(items.map((item) => ({
-        bg: item.bg,
-        figure: item.figure,
-        ring: item.ring,
-        glow: item.glow,
-        name: item.name,
-        imageSrc: item.imageSrc,
-      })));
+      // Never downgrade LEVEL_THEMES to a smaller set once the full catalog
+      // has been loaded — this prevents the race where loadAvatarCatalogSupabaseOnly
+      // (active-only, ~10 items) resolves after loadFullAvatarCatalog (70+ items)
+      // and resets all avatars back to the blue fallback.
+      if (items.length >= LEVEL_THEMES.length) {
+        setAvatarThemes(items.map((item) => ({
+          bg: item.bg, figure: item.figure, ring: item.ring,
+          glow: item.glow, name: item.name, imageSrc: item.imageSrc,
+        })));
+      }
     };
     loadAvatarCatalog().then(applyThemes).catch(() => {});
     loadAvatarCatalogSupabaseOnly().then(applyThemes).catch(() => {});
-    loadFullAvatarCatalog().then((items) => {
-      setFullCatalog(items);
-      setAvatarThemes(items.map((item) => ({
-        bg: item.bg,
-        figure: item.figure,
-        ring: item.ring,
-        glow: item.glow,
-        name: item.name,
-        imageSrc: item.imageSrc,
-      })));
-    }).catch(() => {});
+    loadFullAvatarCatalog().then(applyFullThemes).catch(() => {});
     loadLandingNewAvatars().then(setNewAvatars).catch(() => {});
     const handler = () => applyThemes(readAvatarCatalogLocal());
     window.addEventListener("raw:avatar-catalog-updated", handler);
     return () => window.removeEventListener("raw:avatar-catalog-updated", handler);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const avatarList = catalog.length > 0 ? catalog : AVATARS;

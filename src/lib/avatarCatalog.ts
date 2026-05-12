@@ -16,6 +16,7 @@ export type AvatarCatalogItem = {
 };
 
 const CATALOG_STORAGE_KEY = "raw.avatar.catalog.v1";
+const FULL_CATALOG_STORAGE_KEY = "raw.avatar.catalog.full.v1";
 const INVENTORY_STORAGE_PREFIX = "raw.avatar.inventory.v1.";
 const SELECTED_STORAGE_PREFIX = "raw.avatar.selected.v1.";
 let avatarBackendMissingTables = false;
@@ -197,6 +198,24 @@ export async function loadAvatarCatalogSupabaseOnly(): Promise<AvatarCatalogItem
   return mapped;
 }
 
+export function readFullAvatarCatalogLocal(): AvatarCatalogItem[] {
+  if (!isBrowser()) return [];
+  try {
+    const raw = window.localStorage.getItem(FULL_CATALOG_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed as AvatarCatalogItem[];
+  } catch {
+    return [];
+  }
+}
+
+function writeFullAvatarCatalogLocal(items: AvatarCatalogItem[]): void {
+  if (!isBrowser()) return;
+  try { window.localStorage.setItem(FULL_CATALOG_STORAGE_KEY, JSON.stringify(items)); } catch { /* ignore */ }
+}
+
 export async function loadFullAvatarCatalog(): Promise<AvatarCatalogItem[]> {
   const { data, error } = await supabase
     .from("avatar_catalog")
@@ -207,7 +226,7 @@ export async function loadFullAvatarCatalog(): Promise<AvatarCatalogItem[]> {
     throw new Error(error.message || "Could not load full avatar catalog from Supabase.");
   }
 
-  return (data ?? []).map((row, idx) => ({
+  const mapped = (data ?? []).map((row, idx) => ({
     id: row.id,
     level: idx + 1,
     name: row.name,
@@ -220,6 +239,9 @@ export async function loadFullAvatarCatalog(): Promise<AvatarCatalogItem[]> {
     isActive: row.is_active,
     isNew: false,
   }));
+
+  if (mapped.length > 0) writeFullAvatarCatalogLocal(mapped);
+  return mapped;
 }
 
 export async function saveAvatarCatalog(items: AvatarCatalogItem[]): Promise<AvatarCatalogItem[]> {
