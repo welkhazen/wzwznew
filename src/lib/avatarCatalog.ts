@@ -222,18 +222,6 @@ export async function saveAvatarCatalog(items: AvatarCatalogItem[]): Promise<Ava
       const { error } = await supabase.from("avatar_catalog").upsert(withoutImage, { onConflict: "id" });
       if (error) { markBackendMissingIfNeeded(error); return next; }
     }
-
-    const currentIds = new Set(next.map((item) => item.id));
-    const { data: existingRows, error: existingError } = await supabase.from("avatar_catalog").select("id");
-    if (existingError || !existingRows) {
-      markBackendMissingIfNeeded(existingError);
-      return next;
-    }
-
-    const retiredIds = existingRows.map((row) => row.id).filter((id) => !currentIds.has(id));
-    if (retiredIds.length > 0) {
-      await supabase.from("avatar_catalog").update({ is_active: false }).in("id", retiredIds);
-    }
   } catch {
     // Local cache remains the source of truth if Supabase write is unavailable.
   }
@@ -263,23 +251,6 @@ export async function saveAvatarCatalogSupabaseOnly(items: AvatarCatalogItem[]):
   if (withoutImage.length > 0) {
     const { error } = await supabase.from("avatar_catalog").upsert(withoutImage, { onConflict: "id" });
     if (error) throw new Error(error.message || "Could not save avatar catalog to Supabase.");
-  }
-
-  const currentIds = new Set(next.map((item) => item.id));
-  const { data: existingRows, error: existingError } = await supabase.from("avatar_catalog").select("id");
-  if (existingError || !existingRows) {
-    throw new Error(existingError?.message || "Could not verify saved avatar catalog.");
-  }
-
-  const retiredIds = existingRows.map((row) => row.id).filter((id) => !currentIds.has(id));
-  if (retiredIds.length > 0) {
-    const { error: retireError } = await supabase
-      .from("avatar_catalog")
-      .update({ is_active: false })
-      .in("id", retiredIds);
-    if (retireError) {
-      throw new Error(retireError.message || "Could not deactivate removed avatars.");
-    }
   }
 
   return next;
