@@ -28,6 +28,8 @@ interface DashboardProps {
   dailyAnsweredCount: number;
   dailyPollLimit: number;
   isDailyPollLimitReached: boolean;
+  tokenBalance: number;
+  unlockExtraPolls: () => void;
   vote: (pollId: string, optionId: string) => void;
   onLogout: () => void;
 }
@@ -44,6 +46,8 @@ export default function Dashboard({
   dailyAnsweredCount,
   dailyPollLimit,
   isDailyPollLimitReached,
+  tokenBalance,
+  unlockExtraPolls,
   vote,
   onLogout,
 }: DashboardProps) {
@@ -132,6 +136,8 @@ export default function Dashboard({
             dailyAnsweredCount={dailyAnsweredCount}
             dailyPollLimit={dailyPollLimit}
             isDailyPollLimitReached={isDailyPollLimitReached}
+            tokenBalance={tokenBalance}
+            onUnlockExtra={unlockExtraPolls}
             onVote={vote}
           />
         );

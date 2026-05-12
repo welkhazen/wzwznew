@@ -11,6 +11,7 @@ import {
   ChevronLeft,
   ChevronRight,
   CircleGauge,
+  Coins,
   Fingerprint,
   Lock,
   Map,
@@ -19,6 +20,14 @@ import {
   Users,
   WandSparkles,
 } from "lucide-react";
+
+function getNextUnlockTime(): string {
+  const now = new Date();
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(22, 0, 0, 0);
+  return tomorrow.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" }) + " at 10:00 PM";
+}
 
 interface PollProgressProps {
   currentIndex: number;
@@ -64,6 +73,8 @@ interface DashboardPollsProps {
   dailyAnsweredCount: number;
   dailyPollLimit: number;
   isDailyPollLimitReached: boolean;
+  tokenBalance: number;
+  onUnlockExtra: () => void;
   onVote: (pollId: string, optionId: string) => void;
 }
 
@@ -103,6 +114,8 @@ export function DashboardPolls({
   dailyAnsweredCount,
   dailyPollLimit,
   isDailyPollLimitReached,
+  tokenBalance,
+  onUnlockExtra,
   onVote,
 }: DashboardPollsProps) {
   const { mode } = useTheme();
@@ -359,20 +372,26 @@ export function DashboardPolls({
 
       {showMorePollsPaywall && (
         <section className="border border-raw-gold/35 bg-gradient-to-r from-raw-gold/12 via-raw-black/60 to-raw-black/60 p-4 sm:p-5">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-4">
             <div className="min-w-0">
               <p className="text-[11px] uppercase tracking-[0.16em] text-raw-gold/80">Daily Limit Reached</p>
-              <h3 className="mt-1 font-display text-lg text-raw-text sm:text-xl">You completed {dailyAnsweredCount}/{dailyPollLimit} polls today.</h3>
-              <p className="mt-1 text-xs text-raw-silver/50 sm:text-sm">
-                Want to solve more right now? Upgrade to unlock extra polls instantly.
+              <h3 className="mt-1 font-display text-lg text-raw-text sm:text-xl">You answered all {dailyPollLimit} polls for today.</h3>
+              <p className="mt-1.5 text-xs text-raw-silver/60 sm:text-sm">
+                Next 7 polls unlock on <span className="text-raw-gold/80">{getNextUnlockTime()}</span>.
               </p>
             </div>
-            <div className="flex items-stretch gap-2 sm:items-center">
-              <button className="flex-1 border border-raw-border/45 bg-raw-black/35 px-4 py-2.5 text-xs text-raw-silver/75 hover:border-raw-gold/35 hover:text-raw-gold sm:flex-none">
-                Maybe Later
-              </button>
-              <button className="flex-1 border border-raw-gold/65 bg-raw-gold/90 px-4 py-2.5 text-xs font-semibold text-raw-ink hover:bg-raw-gold sm:flex-none">
-                Solve More - Pay
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <div className="flex items-center gap-1.5 text-[11px] text-raw-silver/50">
+                <Coins className="size-3.5 text-raw-gold/60" />
+                <span>Your balance: <span className="text-raw-gold/80 font-medium">{tokenBalance} tokens</span></span>
+              </div>
+              <button
+                onClick={onUnlockExtra}
+                disabled={tokenBalance < 10}
+                className="mt-1 flex items-center justify-center gap-2 border border-raw-gold/65 bg-raw-gold/90 px-4 py-2.5 text-xs font-semibold text-raw-ink hover:bg-raw-gold disabled:cursor-not-allowed disabled:opacity-50 sm:mt-0 sm:ml-auto"
+              >
+                <Coins className="size-3.5" />
+                {tokenBalance < 10 ? "Not enough tokens" : "Unlock 7 more — 10 tokens"}
               </button>
             </div>
           </div>
@@ -383,7 +402,7 @@ export function DashboardPolls({
         <div className="w-full border border-raw-gold/20 bg-black/35 px-4 py-3 shadow-[inset_0_0_0_1px_rgba(241,196,45,0.08)]">
           <div className="flex items-center justify-between gap-3">
             <h3 className="min-w-0 font-display text-sm uppercase tracking-[0.18em] text-[#EBEBEB] sm:text-base">
-              2. Answer 5 launch polls
+              2. Answer 7 polls
             </h3>
             <span className="shrink-0 border border-[#F1C42D]/60 bg-[#F1C42D]/10 px-3 py-1 text-[11px] uppercase tracking-[0.12em] text-[#F1C42D]">
               {dailyAnsweredCount}/{dailyPollLimit}

@@ -7,6 +7,9 @@ import { getTodayKey } from "@/store/useRawStore.storage";
 import { POLL_QUESTION_SEEDS } from "@/features/polls/pollQuestions";
 
 const DAILY_POLL_LIMIT = 7;
+const EXTRA_BATCH_SIZE = 7;
+const UNLOCK_TOKEN_COST = 10;
+const MOCK_TOKEN_BALANCE = 25;
 
 const INITIAL_POLLS: Poll[] = POLL_QUESTION_SEEDS.map((poll, index) => ({
   id: poll.id,
@@ -20,7 +23,7 @@ const INITIAL_POLLS: Poll[] = POLL_QUESTION_SEEDS.map((poll, index) => ({
 
 async function fetchPollsWithFallback(): Promise<Poll[]> {
   try {
-    const polls = await fetchSupabasePolls(10);
+    const polls = await fetchSupabasePolls(20);
     if (polls.length > 0) {
       return polls;
     }
@@ -38,6 +41,8 @@ export function usePolls(isLoggedIn: boolean) {
   const [dailyPollDate, setDailyPollDate] = useState(getTodayKey());
   const [dailyAnsweredPollIds, setDailyAnsweredPollIds] = useState<Set<string>>(new Set());
   const [sessionVotedPolls, setSessionVotedPolls] = useState<Set<string>>(new Set());
+  const [tokenBalance, setTokenBalance] = useState(MOCK_TOKEN_BALANCE);
+  const [extraBatchesUnlocked, setExtraBatchesUnlocked] = useState(0);
 
   const pollsQuery = useQuery({
     queryKey: ["polls", "randomized"],
@@ -72,6 +77,12 @@ export function usePolls(isLoggedIn: boolean) {
     },
   });
 
+  const unlockExtraPolls = useCallback(() => {
+    if (tokenBalance < UNLOCK_TOKEN_COST) return;
+    setTokenBalance((prev) => prev - UNLOCK_TOKEN_COST);
+    setExtraBatchesUnlocked((prev) => prev + 1);
+  }, [tokenBalance]);
+
   const vote = useCallback((pollId: string, optionId: string) => {
     const todayKey = getTodayKey();
     if (dailyPollDate !== todayKey) {
@@ -79,8 +90,9 @@ export function usePolls(isLoggedIn: boolean) {
       setDailyAnsweredPollIds(new Set());
     }
 
+    const effectiveLimit = DAILY_POLL_LIMIT + extraBatchesUnlocked * EXTRA_BATCH_SIZE;
     const currentDailySet = dailyPollDate === todayKey ? dailyAnsweredPollIds : new Set<string>();
-    if (!currentDailySet.has(pollId) && currentDailySet.size >= DAILY_POLL_LIMIT) {
+    if (!currentDailySet.has(pollId) && currentDailySet.size >= effectiveLimit) {
       return;
     }
 
@@ -101,18 +113,21 @@ export function usePolls(isLoggedIn: boolean) {
 
     setGuestVotedPolls((previous) => new Set(previous).add(pollId));
     setFreeVotesUsed((previous) => previous + 1);
-  }, [dailyAnsweredPollIds, dailyPollDate, guestVotedPolls, isLoggedIn, sessionVotedPolls, voteMutation]);
+  }, [dailyAnsweredPollIds, dailyPollDate, extraBatchesUnlocked, guestVotedPolls, isLoggedIn, sessionVotedPolls, voteMutation]);
 
   const polls = useMemo(() => pollsQuery.data ?? INITIAL_POLLS, [pollsQuery.data]);
   const votedPolls = isLoggedIn ? sessionVotedPolls : guestVotedPolls;
+  const effectiveDailyLimit = DAILY_POLL_LIMIT + extraBatchesUnlocked * EXTRA_BATCH_SIZE;
 
   return useMemo(() => ({
     polls,
     votedPolls,
     freeVotesUsed,
     vote,
+    unlockExtraPolls,
+    tokenBalance,
     dailyAnsweredCount: dailyAnsweredPollIds.size,
-    dailyPollLimit: DAILY_POLL_LIMIT,
-    isDailyPollLimitReached: dailyAnsweredPollIds.size >= DAILY_POLL_LIMIT,
-  }), [dailyAnsweredPollIds.size, freeVotesUsed, polls, vote, votedPolls]);
+    dailyPollLimit: effectiveDailyLimit,
+    isDailyPollLimitReached: dailyAnsweredPollIds.size >= effectiveDailyLimit,
+  }), [dailyAnsweredPollIds.size, effectiveDailyLimit, freeVotesUsed, polls, tokenBalance, unlockExtraPolls, vote, votedPolls]);
 }

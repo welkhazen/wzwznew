@@ -1,0 +1,51 @@
+-- Insert 14 mock dashboard polls (is_onboarding = false) for testing.
+-- 7 available now + 7 more to cover the "unlock tomorrow" batch.
+-- Options: always two rows per poll (Yes/No style).
+
+INSERT INTO polls (id, question, status, is_onboarding, created_at) VALUES
+  ('mock-poll-01', 'Do you think money buys happiness?', 'active', false, now() - interval '14 days'),
+  ('mock-poll-02', 'Would you rather be respected or liked?', 'active', false, now() - interval '13 days'),
+  ('mock-poll-03', 'Is social media making us more lonely?', 'active', false, now() - interval '12 days'),
+  ('mock-poll-04', 'Do you believe people can truly change?', 'active', false, now() - interval '11 days'),
+  ('mock-poll-05', 'Would you give up your phone for a week for $1000?', 'active', false, now() - interval '10 days'),
+  ('mock-poll-06', 'Is it ever okay to lie to protect someone''s feelings?', 'active', false, now() - interval '9 days'),
+  ('mock-poll-07', 'Do you trust your gut more than data?', 'active', false, now() - interval '8 days'),
+  ('mock-poll-08', 'Would you move to another country for love?', 'active', false, now() - interval '7 days'),
+  ('mock-poll-09', 'Do you think success is mostly luck or hard work?', 'active', false, now() - interval '6 days'),
+  ('mock-poll-10', 'Is being alone the same as being lonely?', 'active', false, now() - interval '5 days'),
+  ('mock-poll-11', 'Would you read your partner''s messages if you could?', 'active', false, now() - interval '4 days'),
+  ('mock-poll-12', 'Do you think first impressions are usually right?', 'active', false, now() - interval '3 days'),
+  ('mock-poll-13', 'Is it possible to be friends with an ex?', 'active', false, now() - interval '2 days'),
+  ('mock-poll-14', 'Do you believe in love at first sight?', 'active', false, now() - interval '1 day')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO poll_options (id, poll_id, label, position) VALUES
+  ('mock-poll-01-yes', 'mock-poll-01', 'Yes', 0),
+  ('mock-poll-01-no',  'mock-poll-01', 'No',  1),
+  ('mock-poll-02-yes', 'mock-poll-02', 'Respected', 0),
+  ('mock-poll-02-no',  'mock-poll-02', 'Liked', 1),
+  ('mock-poll-03-yes', 'mock-poll-03', 'Yes', 0),
+  ('mock-poll-03-no',  'mock-poll-03', 'No',  1),
+  ('mock-poll-04-yes', 'mock-poll-04', 'Yes', 0),
+  ('mock-poll-04-no',  'mock-poll-04', 'No',  1),
+  ('mock-poll-05-yes', 'mock-poll-05', 'Yes', 0),
+  ('mock-poll-05-no',  'mock-poll-05', 'No',  1),
+  ('mock-poll-06-yes', 'mock-poll-06', 'Yes', 0),
+  ('mock-poll-06-no',  'mock-poll-06', 'No',  1),
+  ('mock-poll-07-yes', 'mock-poll-07', 'Yes', 0),
+  ('mock-poll-07-no',  'mock-poll-07', 'No',  1),
+  ('mock-poll-08-yes', 'mock-poll-08', 'Yes', 0),
+  ('mock-poll-08-no',  'mock-poll-08', 'No',  1),
+  ('mock-poll-09-yes', 'mock-poll-09', 'Hard work', 0),
+  ('mock-poll-09-no',  'mock-poll-09', 'Luck', 1),
+  ('mock-poll-10-yes', 'mock-poll-10', 'Yes', 0),
+  ('mock-poll-10-no',  'mock-poll-10', 'No',  1),
+  ('mock-poll-11-yes', 'mock-poll-11', 'Yes', 0),
+  ('mock-poll-11-no',  'mock-poll-11', 'No',  1),
+  ('mock-poll-12-yes', 'mock-poll-12', 'Yes', 0),
+  ('mock-poll-12-no',  'mock-poll-12', 'No',  1),
+  ('mock-poll-13-yes', 'mock-poll-13', 'Yes', 0),
+  ('mock-poll-13-no',  'mock-poll-13', 'No',  1),
+  ('mock-poll-14-yes', 'mock-poll-14', 'Yes', 0),
+  ('mock-poll-14-no',  'mock-poll-14', 'No',  1)
+ON CONFLICT (id) DO NOTHING;

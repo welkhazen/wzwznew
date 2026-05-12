@@ -43,6 +43,8 @@ export function useRawStore() {
     dailyAnsweredCount: polls.dailyAnsweredCount,
     dailyPollLimit: polls.dailyPollLimit,
     isDailyPollLimitReached: polls.isDailyPollLimitReached,
+    tokenBalance: polls.tokenBalance,
+    unlockExtraPolls: polls.unlockExtraPolls,
     completeOnboarding: onboarding.completeOnboarding,
     resetOnboardingProgress: onboarding.resetOnboardingProgress,
     vote: polls.vote,
