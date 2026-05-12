@@ -134,7 +134,7 @@ async function refreshAvatarCatalogFromSupabase(): Promise<void> {
   try {
     const { data, error } = await supabase
       .from("avatar_catalog")
-      .select("id, level, name, price, image_src, bg, figure, ring, glow, is_active, is_new")
+      .select("id, level, name, price, image_src, bg, figure, ring, glow, is_active")
       .eq("is_active", true)
       .order("level", { ascending: true });
 
@@ -151,7 +151,7 @@ async function refreshAvatarCatalogFromSupabase(): Promise<void> {
       ring: row.ring,
       glow: row.glow,
       isActive: row.is_active,
-      isNew: row.is_new ?? false,
+      isNew: false,
     }));
 
     if (mapped.length > 0) writeAvatarCatalogLocal(mapped); // dispatches raw:avatar-catalog-updated
@@ -166,7 +166,7 @@ export function loadAvatarCatalog(): Promise<AvatarCatalogItem[]> {
 export async function loadAvatarCatalogSupabaseOnly(): Promise<AvatarCatalogItem[]> {
   const { data, error } = await supabase
     .from("avatar_catalog")
-    .select("id, level, name, price, image_src, bg, figure, ring, glow, is_active, is_new")
+    .select("id, level, name, price, image_src, bg, figure, ring, glow, is_active")
     .eq("is_active", true)
     .order("level", { ascending: true });
 
@@ -186,7 +186,7 @@ export async function loadAvatarCatalogSupabaseOnly(): Promise<AvatarCatalogItem
       ring: row.ring,
       glow: row.glow,
       isActive: row.is_active,
-      isNew: row.is_new ?? false,
+      isNew: false,
     }))
   );
 
