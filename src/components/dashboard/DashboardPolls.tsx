@@ -32,13 +32,15 @@ function getNextUnlockTime(): string {
 interface PollProgressProps {
   currentIndex: number;
   total: number;
+  answeredCount: number;
+  dailyLimit: number;
   onSelect: (index: number) => void;
 }
 
-function PollProgress({ currentIndex, total, onSelect }: PollProgressProps) {
+function PollProgress({ currentIndex, total, answeredCount, dailyLimit, onSelect }: PollProgressProps) {
   return (
     <div className="mt-3 text-center">
-      <p className="font-display text-[12px] tracking-[0.32em] text-raw-silver/70">{currentIndex + 1} / {total}</p>
+      <p className="font-display text-[12px] tracking-[0.32em] text-raw-silver/70">{answeredCount} / {dailyLimit}</p>
       <div className="mt-3 flex items-center justify-center gap-2">
         {Array.from({ length: total }).map((_, index) => (
           <button
@@ -175,7 +177,7 @@ export function DashboardPolls({
   }, [currentPollIndex, polls.length]);
 
   useEffect(() => {
-    setTimeout(() => commentsEndRef.current?.scrollIntoView({ behavior: "instant" }), 0);
+    setShowAllComments(false);
   }, [currentPollIndex]);
 
   const currentPoll = polls[currentPollIndex]
@@ -206,7 +208,6 @@ export function DashboardPolls({
             }),
           })),
         }));
-        setTimeout(() => commentsEndRef.current?.scrollIntoView({ behavior: "instant" }), 0);
       })
       .catch(() => {
         // leave existing comments in place if fetch fails
@@ -408,7 +409,7 @@ export function DashboardPolls({
               {dailyAnsweredCount}/{dailyPollLimit}
             </span>
           </div>
-          <PollProgress currentIndex={currentPollIndex} total={polls.length} onSelect={setCurrentPollIndex} />
+          <PollProgress currentIndex={currentPollIndex} total={polls.length} answeredCount={dailyAnsweredCount} dailyLimit={dailyPollLimit} onSelect={setCurrentPollIndex} />
         </div>
 
         <div className="relative w-full max-w-[24rem]">
