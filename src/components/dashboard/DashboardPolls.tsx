@@ -170,6 +170,12 @@ export function DashboardPolls({
     }
   }, [hasSeenVoteHint, voteHintStorageKey]);
 
+  // Only show polls the user hasn't answered yet
+  const unseenPolls = useMemo(
+    () => polls.filter((p) => !answerHistory[p.id]),
+    [polls, answerHistory]
+  );
+
   useEffect(() => {
     if (currentPollIndex >= unseenPolls.length && unseenPolls.length > 0) {
       setCurrentPollIndex(unseenPolls.length - 1);
@@ -179,12 +185,6 @@ export function DashboardPolls({
   useEffect(() => {
     setShowAllComments(false);
   }, [currentPollIndex]);
-
-  // Only show polls the user hasn't answered yet
-  const unseenPolls = useMemo(
-    () => polls.filter((p) => !answerHistory[p.id]),
-    [polls, answerHistory]
-  );
 
   const currentPoll = unseenPolls[currentPollIndex]
     ? {
