@@ -112,6 +112,7 @@ export function OnboardingPollCard({
 
   const [commentInput, setCommentInput] = useState("");
   const [waterFilled, setWaterFilled] = useState(false);
+  const commentInputRef = useRef<HTMLInputElement>(null);
 
   const opt0 = options[0] ?? "";
   const opt1 = options[1] ?? "";
@@ -161,6 +162,7 @@ export function OnboardingPollCard({
     if (!text) return;
     onAddComment(text);
     setCommentInput("");
+    commentInputRef.current?.blur();
   };
 
   return (
@@ -424,14 +426,20 @@ export function OnboardingPollCard({
                     </div>
                   ))}
                 </div>
-                <div className="mt-3 flex gap-2">
+                <div className="mt-3 flex w-full min-w-0 gap-2 overflow-hidden">
                   <input
+                    ref={commentInputRef}
                     type="text"
                     placeholder="Add anonymous comment…"
                     value={commentInput}
                     onChange={(e) => setCommentInput(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleSubmitComment()}
-                    className="flex-1 rounded border border-white/10 bg-white/5 px-3 py-1.5 text-[12px] text-white/70 outline-none placeholder:text-white/25 transition focus:border-[#F1C42D]/40"
+                    onKeyDown={(e) => {
+                      if (e.key !== "Enter") return;
+                      e.preventDefault();
+                      handleSubmitComment();
+                    }}
+                    enterKeyHint="send"
+                    className="min-w-0 flex-1 rounded border border-white/10 bg-white/5 px-3 py-1.5 text-base text-white/70 outline-none placeholder:text-white/25 transition focus:border-[#F1C42D]/40 sm:text-[12px]"
                   />
                   <button
                     type="button"

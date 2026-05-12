@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, SendHorizontal } from "lucide-react";
 import { PremiumPollCard } from "@/components/polls/PremiumPollCard";
 import type { Comment } from "./PollComments";
@@ -53,6 +53,7 @@ export function SwipeablePollCard({
 }: SwipeablePollCardProps) {
   const [commentText, setCommentText] = useState("");
   const [updatedComments, setUpdatedComments] = useState<Comment[]>(comments);
+  const commentInputRef = useRef<HTMLInputElement>(null);
   const resolvedOptions = resolveOptions(options);
 
   useEffect(() => {
@@ -75,6 +76,7 @@ export function SwipeablePollCard({
     setUpdatedComments((prev) => [...prev, next]);
     onAddComment?.(content);
     setCommentText("");
+    commentInputRef.current?.blur();
   };
 
 
@@ -144,18 +146,26 @@ export function SwipeablePollCard({
               event.preventDefault();
               handleCommentAdd();
             }}
-            className="flex items-center gap-2 rounded-full border border-raw-border/35 bg-raw-surface/50 px-3 py-2"
+            className="flex w-full min-w-0 items-center gap-2 overflow-hidden rounded-full border border-raw-border/35 bg-raw-surface/50 px-3 py-2"
           >
             <input
+              ref={commentInputRef}
+              type="text"
               value={commentText}
               onChange={(event) => setCommentText(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key !== "Enter") return;
+                event.preventDefault();
+                handleCommentAdd();
+              }}
               placeholder="Add a comment..."
-              className="flex-1 bg-transparent text-sm text-raw-text placeholder:text-raw-silver/35 focus:outline-none"
+              enterKeyHint="send"
+              className="min-w-0 flex-1 bg-transparent text-base text-raw-text placeholder:text-raw-silver/35 focus:outline-none sm:text-sm"
             />
             <button
               type="submit"
               disabled={!commentText.trim()}
-              className="rounded-full border border-raw-border/40 bg-raw-surface/40 p-2 text-raw-silver/80 transition hover:bg-raw-surface/55 disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex size-9 shrink-0 items-center justify-center rounded-full border border-raw-border/40 bg-raw-surface/40 text-raw-silver/80 transition hover:bg-raw-surface/55 disabled:cursor-not-allowed disabled:opacity-40"
               aria-label="Add comment"
             >
               <SendHorizontal className="size-3.5" />
