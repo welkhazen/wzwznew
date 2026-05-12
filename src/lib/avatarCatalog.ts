@@ -244,6 +244,36 @@ export async function loadFullAvatarCatalog(): Promise<AvatarCatalogItem[]> {
   return mapped;
 }
 
+export async function loadAvatarCatalogRange(startLevel: number, endLevel: number): Promise<AvatarCatalogItem[]> {
+  const { data, error } = await supabase
+    .from("avatar_catalog")
+    .select("id, level, name, price, bg, figure, ring, glow, is_active, is_new")
+    .gte("level", startLevel)
+    .lte("level", endLevel)
+    .order("level", { ascending: true });
+
+  if (error) {
+    throw new Error(error.message || "Could not load avatar catalog range from Supabase.");
+  }
+
+  return (data ?? []).map((row, idx) => {
+    const fallback = DEFAULT_AVATAR_CATALOG[Math.min(idx, DEFAULT_AVATAR_CATALOG.length - 1)];
+    return {
+      id: row.id,
+      level: row.level,
+      name: row.name,
+      price: row.price,
+      imageSrc: undefined,
+      bg: row.bg || fallback.bg,
+      figure: row.figure || fallback.figure,
+      ring: row.ring || fallback.ring,
+      glow: row.glow || fallback.glow,
+      isActive: row.is_active,
+      isNew: row.is_new ?? false,
+    };
+  });
+}
+
 export async function saveAvatarCatalog(items: AvatarCatalogItem[]): Promise<AvatarCatalogItem[]> {
   const next = writeAvatarCatalogLocal(items);
 

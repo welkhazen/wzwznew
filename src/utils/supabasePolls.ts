@@ -57,8 +57,13 @@ export async function fetchSupabasePolls(limit = 10): Promise<Poll[]> {
     .filter((poll) => poll.question?.trim().length > 5 && poll.options.length >= 2);
 }
 
-export async function submitPollVote(pollId: string, optionId: string): Promise<void> {
-  const { error } = await supabase.from("poll_votes").insert({ poll_id: pollId, option_id: optionId });
+export async function submitPollVote(pollId: string, optionId: string, userId: string): Promise<void> {
+  const { error } = await supabase
+    .from("poll_votes")
+    .upsert(
+      { poll_id: pollId, option_id: optionId, user_id: userId, surface: "app" },
+      { onConflict: "poll_id,user_id" }
+    );
   if (error) throw error;
 }
 
