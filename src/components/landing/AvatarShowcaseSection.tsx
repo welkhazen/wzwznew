@@ -14,6 +14,7 @@ import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 
 const VISIBLE_COUNT = 4;
 const DESKTOP_COUNT = 8;
+const FEATURED_AVATAR_COUNT = 10;
 
 export function AvatarShowcaseSection() {
   const sectionRef = useTrackSectionView("avatar");
@@ -70,8 +71,12 @@ export function AvatarShowcaseSection() {
   const avatarList = catalog.length > 0 ? catalog : AVATARS;
   const safeAvatarList = avatarList.length > 0 ? avatarList : AVATARS.slice(0, 1);
   const baseAvatars = fullCatalog.length > 0 ? fullCatalog : safeAvatarList;
-  const baseTotal = baseAvatars.length;
-  const extendedAvatars = baseAvatars.map((avatar, index) => ({ avatar, themeIndex: index + 1 }));
+  const featuredAvatars = baseAvatars.slice(0, FEATURED_AVATAR_COUNT);
+  const chooserAvatars = featuredAvatars.length > 0 ? featuredAvatars : baseAvatars.slice(0, 1);
+  const chooserTotal = chooserAvatars.length;
+  const extendedAvatars = baseAvatars
+    .slice(FEATURED_AVATAR_COUNT)
+    .map((avatar, index) => ({ avatar, themeIndex: index + FEATURED_AVATAR_COUNT + 1 }));
   const previewAvatar = useMemo(
     () => extraPreviewAvatar ?? baseAvatars[previewIndex - 1] ?? baseAvatars[0] ?? null,
     [baseAvatars, extraPreviewAvatar, previewIndex]
@@ -81,29 +86,29 @@ export function AvatarShowcaseSection() {
   const canNext = true;
 
   function prev() {
-    setStartIndex((i) => (i - 1 + baseTotal) % baseTotal);
+    setStartIndex((i) => (i - 1 + chooserTotal) % chooserTotal);
   }
 
   function next() {
-    setStartIndex((i) => (i + 1) % baseTotal);
+    setStartIndex((i) => (i + 1) % chooserTotal);
   }
 
   function prevDesktop() {
-    setDesktopStart((i) => (i - 8 + baseTotal) % baseTotal);
+    setDesktopStart((i) => (i - DESKTOP_COUNT + chooserTotal) % chooserTotal);
   }
 
   function nextDesktop() {
-    setDesktopStart((i) => (i + 8) % baseTotal);
+    setDesktopStart((i) => (i + DESKTOP_COUNT) % chooserTotal);
   }
 
   const visibleAvatars = Array.from({ length: VISIBLE_COUNT }, (_, i) => {
-    const idx = (startIndex + i) % baseTotal;
-    return { avatar: baseAvatars[idx], index: idx + 1 };
+    const idx = (startIndex + i) % chooserTotal;
+    return { avatar: chooserAvatars[idx], index: idx + 1 };
   });
 
   const desktopAvatars = Array.from({ length: DESKTOP_COUNT }, (_, i) => {
-    const idx = (desktopStart + i) % baseTotal;
-    return { avatar: baseAvatars[idx], index: idx + 1 };
+    const idx = (desktopStart + i) % chooserTotal;
+    return { avatar: chooserAvatars[idx], index: idx + 1 };
   });
 
   function AvatarButton({
@@ -242,7 +247,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
             className="grid grid-cols-2 gap-x-2 gap-y-3 overflow-y-auto [scrollbar-width:none] min-[380px]:gap-y-4 [&::-webkit-scrollbar]:hidden"
             style={{ maxHeight: `${646 * 0.48 - 10}px` }}
           >
-            {baseAvatars.map((avatar, i) => (
+            {chooserAvatars.map((avatar, i) => (
               <button
                 key={i + 1}
                 type="button"
@@ -290,7 +295,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
             <NavButton direction="prev" onClick={prev} disabled={!canPrev} />
             <div className="flex flex-1 flex-wrap items-center justify-center gap-6 transition-all duration-500">
               {showAll
-                ? safeAvatarList.map((avatar, i) => (
+                ? chooserAvatars.map((avatar, i) => (
                     <AvatarButton key={i + 1} index={i + 1} avatar={avatar} />
                   ))
                 : visibleAvatars.map(({ avatar, index }) => (
@@ -377,7 +382,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
         </button>
 
         <AnimatePresence>
-          {showExpandGrid && (
+          {showExpandGrid && extendedAvatars.length > 0 && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
