@@ -6,7 +6,7 @@ import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { AvatarPhoneHomeScreen } from "@/components/ui/avatar-phone-home-screen";
 import { PhoneMockup } from "@/components/ui/phone-mockup";
 import { AVATARS, setAvatarThemes } from "@/lib/avataridentity";
-import { loadAvatarCatalog, loadAvatarCatalogSupabaseOnly, readAvatarCatalogLocal } from "@/lib/avatarCatalog";
+import { loadAvatarCatalog, loadAvatarCatalogSupabaseOnly, loadFullAvatarCatalog, readAvatarCatalogLocal } from "@/lib/avatarCatalog";
 import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
 import { loadLandingNewAvatars } from "@/lib/landingNewAvatars";
 import type { LandingNewAvatar } from "@/lib/landingNewAvatars";
@@ -25,6 +25,7 @@ export function AvatarShowcaseSection() {
   const [showMore, setShowMore] = useState(false);
   const [showExpandGrid, setShowExpandGrid] = useState(false);
   const [catalog, setCatalog] = useState<AvatarCatalogItem[]>([]);
+  const [fullCatalog, setFullCatalog] = useState<AvatarCatalogItem[]>([]);
   const [newAvatars, setNewAvatars] = useState<LandingNewAvatar[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -42,6 +43,7 @@ export function AvatarShowcaseSection() {
     };
     loadAvatarCatalog().then(applyThemes).catch(() => {});
     loadAvatarCatalogSupabaseOnly().then(applyThemes).catch(() => {});
+    loadFullAvatarCatalog().then(setFullCatalog).catch(() => {});
     loadLandingNewAvatars().then(setNewAvatars).catch(() => {});
     const handler = () => applyThemes(readAvatarCatalogLocal());
     window.addEventListener("raw:avatar-catalog-updated", handler);
@@ -368,9 +370,9 @@ Just like in real life, every person is born with a name, an appearance, and an 
                   All Avatars
                 </p>
                 <div className="grid grid-cols-4 gap-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10">
-                  {avatarList.map((avatar, i) => (
+                  {(fullCatalog.length > 0 ? fullCatalog : avatarList).map((avatar, i) => (
                     <button
-                      key={i + 1}
+                      key={avatar.id ?? i + 1}
                       type="button"
                       onClick={() => { setAvatarIndex(i + 1); setPreviewIndex(i + 1); }}
                       onMouseEnter={() => setPreviewIndex(i + 1)}

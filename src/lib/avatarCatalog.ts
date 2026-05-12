@@ -197,8 +197,31 @@ export async function loadAvatarCatalogSupabaseOnly(): Promise<AvatarCatalogItem
   return mapped;
 }
 
-export async function saveAvatarCatalog(items: AvatarCatalogItem[]): Promise<AvatarCatalogItem[]> {
-  const next = writeAvatarCatalogLocal(items);
+export async function loadFullAvatarCatalog(): Promise<AvatarCatalogItem[]> {
+  const { data, error } = await supabase
+    .from("avatar_catalog")
+    .select("*")
+    .order("level", { ascending: true });
+
+  if (error) {
+    throw new Error(error.message || "Could not load full avatar catalog from Supabase.");
+  }
+
+  return (data ?? []).map((row, idx) => ({
+    id: row.id,
+    level: idx + 1,
+    name: row.name,
+    price: row.price,
+    imageSrc: row.image_src ?? undefined,
+    bg: row.bg || DEFAULT_AVATAR_CATALOG[Math.min(idx, DEFAULT_AVATAR_CATALOG.length - 1)].bg,
+    figure: row.figure || DEFAULT_AVATAR_CATALOG[Math.min(idx, DEFAULT_AVATAR_CATALOG.length - 1)].figure,
+    ring: row.ring || DEFAULT_AVATAR_CATALOG[Math.min(idx, DEFAULT_AVATAR_CATALOG.length - 1)].ring,
+    glow: row.glow || DEFAULT_AVATAR_CATALOG[Math.min(idx, DEFAULT_AVATAR_CATALOG.length - 1)].glow,
+    isActive: row.is_active,
+    isNew: false,
+  }));
+}
+
 
   if (avatarBackendMissingTables) {
     return next;
