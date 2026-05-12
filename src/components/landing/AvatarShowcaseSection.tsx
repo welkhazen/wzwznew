@@ -69,14 +69,14 @@ export function AvatarShowcaseSection() {
   const avatarList = catalog.length > 0 ? catalog : AVATARS;
 
   // "Choose Your Avatar" shows only the original 10 SVG avatars (id: "avatar-1".."avatar-10")
-  const baseAvatars = avatarList.filter((a) => a.id.startsWith("avatar-"));
+  const baseAvatars = avatarList.filter((a) => a.id?.startsWith("avatar-"));
   const baseTotal = baseAvatars.length || 10;
 
   // "All Avatars" grid shows everything else, preserving the full-catalog theme index
   const allCatalogSource = fullCatalog.length > 0 ? fullCatalog : avatarList;
   const extendedAvatars = allCatalogSource
     .map((avatar, i) => ({ avatar, themeIndex: i + 1 }))
-    .filter(({ avatar }) => !avatar.id.startsWith("avatar-"));
+    .filter(({ avatar }) => !avatar.id?.startsWith("avatar-"));
 
   const canPrev = true;
   const canNext = true;
