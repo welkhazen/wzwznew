@@ -1,5 +1,6 @@
 -- Insert 20 mock dashboard polls (is_onboarding = false).
--- Safe to re-run: ON CONFLICT DO NOTHING.
+-- Safe to re-run: upserts on conflict of id, updating question/status/is_onboarding/created_at for polls
+-- and poll_id/label/position for options.
 
 INSERT INTO polls (id, question, status, is_onboarding, created_at) VALUES
   ('a1000000-0000-0000-0000-000000000001', 'Do you think money buys happiness?', 'active', false, now() - interval '20 days'),
@@ -22,7 +23,11 @@ INSERT INTO polls (id, question, status, is_onboarding, created_at) VALUES
   ('a1000000-0000-0000-0000-000000000018', 'Would you take a pill that removes painful memories?', 'active', false, now() - interval '3 days'),
   ('a1000000-0000-0000-0000-000000000019', 'Is it selfish to prioritize your happiness over others?', 'active', false, now() - interval '2 days'),
   ('a1000000-0000-0000-0000-000000000020', 'Do you think you are the main character of your life?', 'active', false, now() - interval '1 day')
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET
+  question = EXCLUDED.question,
+  status = EXCLUDED.status,
+  is_onboarding = EXCLUDED.is_onboarding,
+  created_at = EXCLUDED.created_at;
 
 INSERT INTO poll_options (id, poll_id, label, position) VALUES
   ('b1000000-0000-0000-0000-000000000001', 'a1000000-0000-0000-0000-000000000001', 'Yes', 0),
@@ -65,4 +70,7 @@ INSERT INTO poll_options (id, poll_id, label, position) VALUES
   ('b1000000-0000-0000-0000-000000000038', 'a1000000-0000-0000-0000-000000000019', 'No',  1),
   ('b1000000-0000-0000-0000-000000000039', 'a1000000-0000-0000-0000-000000000020', 'Yes', 0),
   ('b1000000-0000-0000-0000-000000000040', 'a1000000-0000-0000-0000-000000000020', 'No',  1)
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET
+  poll_id = EXCLUDED.poll_id,
+  label = EXCLUDED.label,
+  position = EXCLUDED.position;
