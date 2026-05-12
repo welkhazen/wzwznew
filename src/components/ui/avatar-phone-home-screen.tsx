@@ -37,27 +37,44 @@ export function AvatarPhoneHomeScreen({ avatarIndex, compact = false, previewAva
   if (compact) {
     return (
       <div className="relative flex h-full flex-col overflow-hidden bg-gradient-to-b from-[#f4f4f5] via-[#e8e8eb] to-[#d7d7da] px-4 pb-4 pt-5">
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-4 gap-x-3 gap-y-4">
           <AppIcon kind="facetime" label="FaceTime" compact />
           <AppIcon kind="calendar" label="Calendar" compact />
           <AppIcon kind="photos" label="Photos" compact />
           <AppIcon kind="camera" label="Camera" compact />
+
+          <AppIcon kind="clock" label="Clock" compact />
+          <AppIcon kind="maps" label="Maps" compact />
+          <AppIcon kind="weather" label="Weather" compact />
+          <AppIcon kind="notes" label="Notes" compact />
+
+          <AppIcon kind="reminders" label="Reminders" compact />
+          <AppIcon kind="stocks" label="Stocks" compact />
+
+          <div className="col-span-2 row-span-2 flex flex-col items-center gap-1.5">
+            <div
+              className="relative flex h-full min-h-[150px] w-full items-center justify-center overflow-hidden rounded-[18px] shadow-[0_10px_24px_rgba(0,0,0,0.25)]"
+              style={{
+                background: `linear-gradient(135deg, ${activeBg} 0%, #050505 74%)`,
+                boxShadow: activeGlow !== "none" ? `0 0 24px ${activeGlow}` : "0 10px 24px rgba(0,0,0,0.25)",
+              }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-b from-white/[0.08] via-transparent to-black/20" />
+              {avatarArt}
+            </div>
+            <span className="font-display text-[9px] tracking-[0.16em] text-[#222]">raW</span>
+          </div>
+
+          <AppIcon kind="podcasts" label="Podcasts" compact />
+          <AppIcon kind="tv" label="TV" compact />
+
+          <AppIcon kind="reminders" label="Health" compact />
+          <AppIcon kind="stocks" label="Wallet" compact />
+          <AppIcon kind="maps" label="Find My" compact />
+          <AppIcon kind="notes" label="Files" compact />
         </div>
 
-        <div
-          className="relative mt-5 flex min-h-[260px] flex-1 items-center justify-center overflow-hidden rounded-[28px] shadow-[0_12px_28px_rgba(0,0,0,0.22)]"
-          style={{
-            background: `linear-gradient(135deg, ${activeBg} 0%, #050505 74%)`,
-            boxShadow: activeGlow !== "none" ? `0 0 24px ${activeGlow}` : "0 12px 28px rgba(0,0,0,0.22)",
-          }}
-        >
-          <div className="absolute inset-0 bg-gradient-to-b from-white/[0.08] via-transparent to-black/20" />
-          {avatarArt}
-        </div>
-
-        <span className="mt-2 text-center font-display text-[10px] tracking-[0.18em] text-[#222]">raW</span>
-
-        <div className="py-3 flex items-center justify-center gap-1.5">
+        <div className="flex flex-1 items-end justify-center gap-1.5 py-3">
           <div className="h-[3px] w-[3px] rounded-full bg-[#1a1a1a]/60" />
           <div className="h-[3px] w-[3px] rounded-full bg-[#1a1a1a]/25" />
           <div className="h-[3px] w-[3px] rounded-full bg-[#1a1a1a]/25" />

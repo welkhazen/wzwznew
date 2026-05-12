@@ -15,6 +15,7 @@ import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 const VISIBLE_COUNT = 4;
 const DESKTOP_COUNT = 8;
 const FEATURED_AVATAR_COUNT = 10;
+const EXPANDED_AVATAR_BATCH_SIZE = 24;
 
 export function AvatarShowcaseSection() {
   const sectionRef = useTrackSectionView("avatar");
@@ -24,6 +25,7 @@ export function AvatarShowcaseSection() {
   const [desktopStart, setDesktopStart] = useState(0);
   const [showAll, setShowAll] = useState(false);
   const [showExpandGrid, setShowExpandGrid] = useState(false);
+  const [expandedVisibleCount, setExpandedVisibleCount] = useState(EXPANDED_AVATAR_BATCH_SIZE);
   const [showMore, setShowMore] = useState(false);
   const [extraPreviewAvatar, setExtraPreviewAvatar] = useState<LandingNewAvatar | null>(null);
   const [catalog, setCatalog] = useState<AvatarCatalogItem[]>([]);
@@ -77,6 +79,7 @@ export function AvatarShowcaseSection() {
   const extendedAvatars = baseAvatars
     .slice(FEATURED_AVATAR_COUNT)
     .map((avatar, index) => ({ avatar, themeIndex: index + FEATURED_AVATAR_COUNT + 1 }));
+  const visibleExtendedAvatars = extendedAvatars.slice(0, expandedVisibleCount);
   const previewAvatar = useMemo(
     () => extraPreviewAvatar ?? baseAvatars[previewIndex - 1] ?? baseAvatars[0] ?? null,
     [baseAvatars, extraPreviewAvatar, previewIndex]
@@ -84,6 +87,39 @@ export function AvatarShowcaseSection() {
 
   const canPrev = true;
   const canNext = true;
+
+  useEffect(() => {
+    if (!showExpandGrid) {
+      setExpandedVisibleCount(EXPANDED_AVATAR_BATCH_SIZE);
+      return;
+    }
+
+    setExpandedVisibleCount(EXPANDED_AVATAR_BATCH_SIZE);
+    let cancelled = false;
+    let timer: number | undefined;
+
+    const loadNextBatch = () => {
+      timer = window.setTimeout(() => {
+        if (cancelled) return;
+        setExpandedVisibleCount((current) => {
+          const next = Math.min(current + EXPANDED_AVATAR_BATCH_SIZE, extendedAvatars.length);
+          if (next < extendedAvatars.length) {
+            loadNextBatch();
+          }
+          return next;
+        });
+      }, 40);
+    };
+
+    if (extendedAvatars.length > EXPANDED_AVATAR_BATCH_SIZE) {
+      loadNextBatch();
+    }
+
+    return () => {
+      cancelled = true;
+      if (timer) window.clearTimeout(timer);
+    };
+  }, [extendedAvatars.length, showExpandGrid]);
 
   function prev() {
     setStartIndex((i) => (i - 1 + chooserTotal) % chooserTotal);
@@ -228,10 +264,10 @@ Just like in real life, every person is born with a name, an appearance, and an 
       <div className="mx-auto flex w-full max-w-5xl flex-row items-start gap-3 sm:hidden">
 
         {/* Phone — zoomed to fit the left half */}
-        <div className="w-[40%] shrink-0 overflow-hidden pt-1">
+        <div className="w-[43%] shrink-0 overflow-visible pt-1">
           {/* zoom shrinks layout footprint; 280 × 0.54 ≈ 151px fits in ~172px half */}
-          <div style={{ zoom: 0.48 }}>
-            <PhoneMockup className="w-[310px]" showStatusBar={false}>
+          <div style={{ zoom: 0.5 }}>
+            <PhoneMockup className="w-[280px]" showStatusBar={false}>
               <AvatarPhoneHomeScreen avatarIndex={previewIndex} compact previewAvatar={previewAvatar} />
             </PhoneMockup>
           </div>
@@ -245,7 +281,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
           <div
             ref={scrollRef}
             className="grid grid-cols-2 gap-x-2 gap-y-3 overflow-y-auto [scrollbar-width:none] min-[380px]:gap-y-4 [&::-webkit-scrollbar]:hidden"
-            style={{ maxHeight: `${646 * 0.48 - 10}px` }}
+            style={{ maxHeight: `${646 * 0.5 - 10}px` }}
           >
             {chooserAvatars.map((avatar, i) => (
               <button
@@ -399,7 +435,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
                   All Avatars
                 </p>
                 <div className="grid grid-cols-4 gap-4 place-items-center sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10">
-                  {extendedAvatars.map(({ avatar, themeIndex }) => (
+                  {visibleExtendedAvatars.map(({ avatar, themeIndex }) => (
                     <button
                       key={avatar.id ?? themeIndex}
                       type="button"
