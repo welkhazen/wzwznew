@@ -68,9 +68,11 @@ export function AvatarShowcaseSection() {
 
   const avatarList = catalog.length > 0 ? catalog : AVATARS;
 
-  // "Choose Your Avatar" shows only the original 10 SVG avatars (id: "avatar-1".."avatar-10")
-  const baseAvatars = avatarList.filter((a) => a.id?.startsWith("avatar-"));
-  const baseTotal = baseAvatars.length || 10;
+  // "Choose Your Avatar" shows only the original 10 SVG avatars (id: "avatar-1".."avatar-10").
+  // Fall back to the full avatarList if the catalog hasn't loaded yet (AVATARS items lack avatar-* ids).
+  const filteredBase = avatarList.filter((a) => a.id?.startsWith("avatar-"));
+  const baseAvatars = filteredBase.length > 0 ? filteredBase : avatarList;
+  const baseTotal = baseAvatars.length || 1;
 
   // "All Avatars" grid shows everything else, preserving the full-catalog theme index
   const allCatalogSource = fullCatalog.length > 0 ? fullCatalog : avatarList;
