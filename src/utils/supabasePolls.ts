@@ -82,3 +82,24 @@ export async function addPollComment(pollId: string, text: string): Promise<Poll
   if (error || !data) throw error ?? new Error("Failed to create comment");
   return data as PollCommentRow;
 }
+
+export async function fetchTokenBalance(userId: string): Promise<number> {
+  const { data, error } = await supabase
+    .from("users")
+    .select("token_balance")
+    .eq("id", userId)
+    .single();
+  if (error || !data) throw error ?? new Error("Failed to fetch token balance");
+  return (data as { token_balance: number }).token_balance;
+}
+
+export async function spendTokens(userId: string, amount: number): Promise<number> {
+  const { data, error } = await supabase.rpc("spend_tokens", {
+    p_user_id: userId,
+    p_amount: amount,
+  });
+  if (error) throw error;
+  const result = data as { ok: boolean; balance?: number; error?: string };
+  if (!result.ok) throw new Error(result.error ?? "Failed to spend tokens");
+  return result.balance!;
+}

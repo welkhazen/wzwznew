@@ -9,7 +9,7 @@ export type { AuthResult, OnboardingStep, Poll, PollOption, User } from "@/store
 
 export function useRawStore() {
   const auth = useAuth();
-  const polls = usePolls(auth.isLoggedIn);
+  const polls = usePolls(auth.isLoggedIn, auth.user?.id);
   const rewards = useRewards(auth.user);
   const onboarding = useOnboarding(auth.isLoggedIn, auth.user?.username);
   const communities = useCommunities();

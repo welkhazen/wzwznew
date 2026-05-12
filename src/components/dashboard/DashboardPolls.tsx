@@ -170,26 +170,28 @@ export function DashboardPolls({
     }
   }, [hasSeenVoteHint, voteHintStorageKey]);
 
-  // Only show polls the user hasn't answered yet
   const unseenPolls = useMemo(
     () => polls.filter((p) => !answerHistory[p.id]),
     [polls, answerHistory]
   );
 
+  // When unseen polls run out, fall back to full list so the UI stays visible
+  const displayPolls = unseenPolls.length > 0 ? unseenPolls : polls;
+
   useEffect(() => {
-    if (currentPollIndex >= unseenPolls.length && unseenPolls.length > 0) {
-      setCurrentPollIndex(unseenPolls.length - 1);
+    if (currentPollIndex >= displayPolls.length && displayPolls.length > 0) {
+      setCurrentPollIndex(displayPolls.length - 1);
     }
-  }, [currentPollIndex, unseenPolls.length]);
+  }, [currentPollIndex, displayPolls.length]);
 
   useEffect(() => {
     setShowAllComments(false);
   }, [currentPollIndex]);
 
-  const currentPoll = unseenPolls[currentPollIndex]
+  const currentPoll = displayPolls[currentPollIndex]
     ? {
-        ...unseenPolls[currentPollIndex],
-        options: unseenPolls[currentPollIndex].options.slice(0, 2),
+        ...displayPolls[currentPollIndex],
+        options: displayPolls[currentPollIndex].options.slice(0, 2),
       }
     : undefined;
 
@@ -357,9 +359,7 @@ export function DashboardPolls({
   if (!currentPoll) {
     return (
       <div className="border border-raw-border/30 bg-raw-black/30 p-6 text-center text-sm text-raw-silver/55">
-        {polls.length > 0
-          ? "You've answered all available polls. Check back tomorrow for more."
-          : "No polls available yet."}
+        No polls available yet.
       </div>
     );
   }
@@ -417,7 +417,7 @@ export function DashboardPolls({
               {dailyAnsweredCount}/{dailyPollLimit}
             </span>
           </div>
-          <PollProgress currentIndex={currentPollIndex} total={unseenPolls.length} answeredCount={dailyAnsweredCount} dailyLimit={dailyPollLimit} onSelect={setCurrentPollIndex} />
+          <PollProgress currentIndex={currentPollIndex} total={displayPolls.length} answeredCount={dailyAnsweredCount} dailyLimit={dailyPollLimit} onSelect={setCurrentPollIndex} />
         </div>
 
         <div className="relative w-full max-w-[24rem]">
@@ -455,8 +455,8 @@ export function DashboardPolls({
           )}
 
           <button
-            onClick={() => setCurrentPollIndex((previous) => Math.min(unseenPolls.length - 1, previous + 1))}
-            disabled={currentPollIndex === unseenPolls.length - 1}
+            onClick={() => setCurrentPollIndex((previous) => Math.min(displayPolls.length - 1, previous + 1))}
+            disabled={currentPollIndex === displayPolls.length - 1}
             className={`absolute -right-2 top-1/2 z-20 inline-flex size-12 -translate-y-1/2 items-center justify-center rounded-full border transition disabled:cursor-not-allowed disabled:opacity-35 md:-right-6 ${
               isLightMode
                 ? "border-slate-300 bg-white/95 text-slate-700 shadow-[0_10px_25px_rgba(15,23,42,0.2)] hover:border-amber-400 hover:text-amber-700"
