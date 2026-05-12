@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { CheckCircle2 } from "lucide-react";
 import TokenImage from "@/assets/tokens.png";
+import { useRawStore } from "@/store/useRawStore";
 
 const PACKAGES = [
   { id: "tokens-100",  tokens: 100,  price: 10, label: "Starter",    highlight: false, accent: "from-sky-500/20 via-blue-500/10 to-transparent",       perToken: "10¢ / token" },
@@ -10,7 +11,7 @@ const PACKAGES = [
 ] as const;
 
 export function DashboardWallet() {
-  const [balance] = useState(0);
+  const { tokenBalance: balance } = useRawStore();
   const [selected, setSelected] = useState<string | null>(null);
 
   return (
