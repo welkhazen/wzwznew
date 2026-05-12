@@ -22,6 +22,7 @@ export function AvatarShowcaseSection() {
   const [startIndex, setStartIndex] = useState(0);
   const [desktopStart, setDesktopStart] = useState(0);
   const [showAll, setShowAll] = useState(false);
+  const [showExpandGrid, setShowExpandGrid] = useState(false);
   const [showMore, setShowMore] = useState(false);
   const [extraPreviewAvatar, setExtraPreviewAvatar] = useState<LandingNewAvatar | null>(null);
   const [catalog, setCatalog] = useState<AvatarCatalogItem[]>([]);
@@ -67,10 +68,13 @@ export function AvatarShowcaseSection() {
   }, []);
 
   const avatarList = catalog.length > 0 ? catalog : AVATARS;
-  const total = avatarList.length || 1;
+  const safeAvatarList = avatarList.length > 0 ? avatarList : AVATARS.slice(0, 1);
+  const baseAvatars = fullCatalog.length > 0 ? fullCatalog : safeAvatarList;
+  const baseTotal = baseAvatars.length;
+  const extendedAvatars = baseAvatars.map((avatar, index) => ({ avatar, themeIndex: index + 1 }));
   const previewAvatar = useMemo(
-    () => extraPreviewAvatar ?? avatarList[previewIndex - 1] ?? avatarList[0] ?? null,
-    [avatarList, extraPreviewAvatar, previewIndex]
+    () => extraPreviewAvatar ?? baseAvatars[previewIndex - 1] ?? baseAvatars[0] ?? null,
+    [baseAvatars, extraPreviewAvatar, previewIndex]
   );
 
   const canPrev = true;
@@ -108,7 +112,7 @@ export function AvatarShowcaseSection() {
     mobile,
   }: {
     index: number;
-    avatar: (typeof avatarList)[0];
+    avatar: (typeof baseAvatars)[0];
     mobile?: boolean;
   }) {
     const isActive = index === previewIndex;
@@ -286,7 +290,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
             <NavButton direction="prev" onClick={prev} disabled={!canPrev} />
             <div className="flex flex-1 flex-wrap items-center justify-center gap-6 transition-all duration-500">
               {showAll
-                ? avatarList.map((avatar, i) => (
+                ? safeAvatarList.map((avatar, i) => (
                     <AvatarButton key={i + 1} index={i + 1} avatar={avatar} />
                   ))
                 : visibleAvatars.map(({ avatar, index }) => (
