@@ -5,10 +5,11 @@ import isItJustMeVideo from "@/assets/itisjustme.webm";
 import speakYourTruthVideo from "@/assets/speakyourheart.webm";
 import lntVideo from "@/assets/2026-04-18 10_10_00.webm";
 import { AvatarFigure } from "@/components/ui/avatar-figure";
-import { AVATARS } from "@/lib/avataridentity";
+import { AVATARS, setAvatarThemes } from "@/lib/avataridentity";
 import { AvatarPhoneHomeScreen } from "@/components/ui/avatar-phone-home-screen";
 import { PhoneMockup } from "@/components/ui/phone-mockup";
 import { fetchSupabasePolls, addPollComment } from "@/utils/supabasePolls";
+import { loadFullAvatarCatalog, readFullAvatarCatalogLocal, type AvatarCatalogItem } from "@/lib/avatarCatalog";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -49,6 +50,32 @@ const STEP_LABELS: Record<OnboardingStep, string> = {
 };
 const FREE_ONBOARDING_AVATAR_COUNT = 10;
 const AVATAR_PAGE_SIZE = 10;
+
+function fallbackAvatarCatalog(): AvatarCatalogItem[] {
+  return AVATARS.map((avatar, index) => ({
+    id: `avatar-${index + 1}`,
+    level: index + 1,
+    name: avatar.name,
+    price: index < FREE_ONBOARDING_AVATAR_COUNT ? "Free" : "Locked",
+    imageSrc: avatar.imageSrc,
+    bg: avatar.bg,
+    figure: avatar.figure,
+    ring: avatar.ring,
+    glow: avatar.glow,
+    isActive: index < FREE_ONBOARDING_AVATAR_COUNT,
+  }));
+}
+
+function applyAvatarThemes(items: AvatarCatalogItem[]): void {
+  setAvatarThemes(items.map((item) => ({
+    bg: item.bg,
+    figure: item.figure,
+    ring: item.ring,
+    glow: item.glow,
+    name: item.name,
+    imageSrc: item.imageSrc,
+  })));
+}
 
 const FALLBACK_POLLS: OnboardingPoll[] = [
   {
@@ -199,8 +226,12 @@ export function OnboardingJourney({
   const [currentPollIndex, setCurrentPollIndex] = useState(0);
   const [enterRawOpen, setEnterRawOpen] = useState(false);
   const [enterRawDismissed, setEnterRawDismissed] = useState(false);
-  const [previewAvatarIndex, setPreviewAvatarIndex] = useState(() => Math.min(Math.max(avatarIndex, 1), Math.max(1, AVATARS.length)));
-  const [avatarPage, setAvatarPage] = useState(() => Math.floor((Math.min(Math.max(avatarIndex, 1), Math.max(1, AVATARS.length)) - 1) / AVATAR_PAGE_SIZE));
+  const [onboardingAvatars, setOnboardingAvatars] = useState<AvatarCatalogItem[]>(() => {
+    const cached = readFullAvatarCatalogLocal();
+    return cached.length > 0 ? cached : fallbackAvatarCatalog();
+  });
+  const [previewAvatarIndex, setPreviewAvatarIndex] = useState(() => Math.min(Math.max(avatarIndex, 1), Math.max(1, onboardingAvatars.length)));
+  const [avatarPage, setAvatarPage] = useState(() => Math.floor((Math.min(Math.max(avatarIndex, 1), Math.max(1, onboardingAvatars.length)) - 1) / AVATAR_PAGE_SIZE));
   const answeredCount = onboardingPolls.filter((poll) => onboardingAnsweredPollIds.has(poll.id)).length;
   const startedFiredRef = useRef(false);
   const stepStartTimeRef = useRef(Date.now());
@@ -237,9 +268,35 @@ export function OnboardingJourney({
   const canContinueFromAvatar = avatarIndex >= 1 && avatarIndex <= FREE_ONBOARDING_AVATAR_COUNT;
   const canContinueFromPolls = answeredCount >= onboardingPolls.length;
   const canContinueFromCommunities = selectedCommunityIds.length === 2;
-  const avatarPageCount = Math.max(1, Math.ceil(AVATARS.length / AVATAR_PAGE_SIZE));
-  const visibleAvatarChoices = AVATARS.slice(avatarPage * AVATAR_PAGE_SIZE, (avatarPage + 1) * AVATAR_PAGE_SIZE);
-  const previewAvatar = AVATARS[previewAvatarIndex - 1] ?? AVATARS[0];
+  const avatarPageCount = Math.max(1, Math.ceil(onboardingAvatars.length / AVATAR_PAGE_SIZE));
+  const visibleAvatarChoices = onboardingAvatars.slice(avatarPage * AVATAR_PAGE_SIZE, (avatarPage + 1) * AVATAR_PAGE_SIZE);
+  const previewAvatar = onboardingAvatars[previewAvatarIndex - 1] ?? onboardingAvatars[0];
+
+  useEffect(() => {
+    const cached = readFullAvatarCatalogLocal();
+    if (cached.length > 0) {
+      setOnboardingAvatars(cached);
+      applyAvatarThemes(cached);
+    }
+
+    let cancelled = false;
+    loadFullAvatarCatalog()
+      .then((items) => {
+        if (cancelled || items.length === 0) return;
+        setOnboardingAvatars(items);
+        applyAvatarThemes(items);
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    setAvatarPage((page) => Math.min(page, avatarPageCount - 1));
+    setPreviewAvatarIndex((index) => Math.min(Math.max(index, 1), Math.max(1, onboardingAvatars.length)));
+  }, [avatarPageCount, onboardingAvatars.length]);
 
   useEffect(() => {
     if (avatarIndex >= 1 && avatarIndex <= FREE_ONBOARDING_AVATAR_COUNT) {
