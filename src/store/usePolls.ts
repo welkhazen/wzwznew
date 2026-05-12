@@ -9,7 +9,7 @@ import { POLL_QUESTION_SEEDS } from "@/features/polls/pollQuestions";
 const DAILY_POLL_LIMIT = 7;
 const EXTRA_BATCH_SIZE = 7;
 const UNLOCK_TOKEN_COST = 10;
-const MOCK_TOKEN_BALANCE = 25;
+const MOCK_TOKEN_BALANCE = 0;
 
 const INITIAL_POLLS: Poll[] = POLL_QUESTION_SEEDS.map((poll, index) => ({
   id: poll.id,
