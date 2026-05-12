@@ -230,6 +230,7 @@ export function OnboardingJourney({
     const cached = readFullAvatarCatalogLocal();
     return cached.length > 0 ? cached : fallbackAvatarCatalog();
   });
+  const [isLoadingPreviewAvatars, setIsLoadingPreviewAvatars] = useState(() => readFullAvatarCatalogLocal().length === 0);
   const [previewAvatarIndex, setPreviewAvatarIndex] = useState(() => Math.min(Math.max(avatarIndex, 1), Math.max(1, onboardingAvatars.length)));
   const [avatarPage, setAvatarPage] = useState(() => Math.floor((Math.min(Math.max(avatarIndex, 1), Math.max(1, onboardingAvatars.length)) - 1) / AVATAR_PAGE_SIZE));
   const answeredCount = onboardingPolls.filter((poll) => onboardingAnsweredPollIds.has(poll.id)).length;
@@ -280,6 +281,7 @@ export function OnboardingJourney({
     if (cached.length > 0) {
       setOnboardingAvatars(cached);
       applyAvatarThemes(cached);
+      setIsLoadingPreviewAvatars(false);
     }
 
     let cancelled = false;
@@ -289,7 +291,8 @@ export function OnboardingJourney({
         setOnboardingAvatars(items);
         applyAvatarThemes(items);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setIsLoadingPreviewAvatars(false); });
 
     return () => {
       cancelled = true;
@@ -304,7 +307,7 @@ export function OnboardingJourney({
   useEffect(() => {
     if (avatarIndex >= 1 && avatarIndex <= FREE_ONBOARDING_AVATAR_COUNT) {
       setPreviewAvatarIndex(avatarIndex);
-      setAvatarPage(0);
+      // Do NOT reset avatarPage here — user may be browsing preview page 5+
     }
   }, [avatarIndex]);
 
@@ -451,6 +454,14 @@ export function OnboardingJourney({
                     </div>
 
                     <div className="grid w-full grid-cols-5 gap-x-2 gap-y-3 sm:max-w-[30rem] sm:gap-x-3 sm:gap-y-4">
+                      {isLoadingPreviewAvatars && visiblePreviewAvatarChoices.length === 0
+                        ? Array.from({ length: AVATAR_PAGE_SIZE }).map((_, i) => (
+                            <div key={i} className="flex flex-col items-center gap-1 p-1.5">
+                              <div className="h-9 w-9 animate-pulse rounded-full bg-raw-surface/40 sm:h-12 sm:w-12" />
+                              <div className="h-1.5 w-8 animate-pulse rounded bg-raw-surface/30" />
+                            </div>
+                          ))
+                        : null}
                       {visiblePreviewAvatarChoices.map((avatar, i) => {
                         const index = FREE_ONBOARDING_AVATAR_COUNT + avatarPage * AVATAR_PAGE_SIZE + i + 1;
                         const isPreviewed = index === previewAvatarIndex;
