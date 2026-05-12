@@ -9,7 +9,8 @@ import { POLL_QUESTION_SEEDS } from "@/features/polls/pollQuestions";
 const DAILY_POLL_LIMIT = 7;
 const EXTRA_BATCH_SIZE = 7;
 const UNLOCK_TOKEN_COST = 10;
-const MOCK_TOKEN_BALANCE = 0;
+const MOCK_TOKEN_BALANCE = 1000;
+const TOKEN_BALANCE_STORAGE_KEY = "raw.polls.token-balance";
 
 const INITIAL_POLLS: Poll[] = POLL_QUESTION_SEEDS.map((poll, index) => ({
   id: poll.id,
@@ -52,7 +53,14 @@ export function usePolls(isLoggedIn: boolean) {
     }
   });
   const [sessionVotedPolls, setSessionVotedPolls] = useState<Set<string>>(new Set());
-  const [tokenBalance, setTokenBalance] = useState(MOCK_TOKEN_BALANCE);
+  const [tokenBalance, setTokenBalance] = useState<number>(() => {
+    try {
+      const stored = window.localStorage.getItem(TOKEN_BALANCE_STORAGE_KEY);
+      return stored !== null ? Number(stored) : MOCK_TOKEN_BALANCE;
+    } catch {
+      return MOCK_TOKEN_BALANCE;
+    }
+  });
   const [extraBatchesUnlocked, setExtraBatchesUnlocked] = useState(0);
 
   useEffect(() => {
@@ -62,6 +70,14 @@ export function usePolls(isLoggedIn: boolean) {
       // ignore storage errors
     }
   }, [STORAGE_KEY, dailyAnsweredPollIds]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(TOKEN_BALANCE_STORAGE_KEY, String(tokenBalance));
+    } catch {
+      // ignore storage errors
+    }
+  }, [tokenBalance]);
 
   const pollsQuery = useQuery({
     queryKey: ["polls", "randomized"],
