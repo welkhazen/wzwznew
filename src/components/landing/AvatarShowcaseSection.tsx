@@ -5,7 +5,7 @@ import { LandingSectionShell } from "@/components/landing/LandingSectionShell";
 import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { AvatarPhoneHomeScreen } from "@/components/ui/avatar-phone-home-screen";
 import { PhoneMockup } from "@/components/ui/phone-mockup";
-import { AVATARS } from "@/lib/avataridentity";
+import { AVATARS, setAvatarThemes } from "@/lib/avataridentity";
 import { loadAvatarCatalog, readAvatarCatalogLocal } from "@/lib/avatarCatalog";
 import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
 import { loadLandingNewAvatars } from "@/lib/landingNewAvatars";
@@ -29,9 +29,20 @@ export function AvatarShowcaseSection() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    loadAvatarCatalog().then(setCatalog).catch(() => {});
+    const applyThemes = (items: AvatarCatalogItem[]) => {
+      setCatalog(items);
+      setAvatarThemes(items.map((item) => ({
+        bg: item.bg,
+        figure: item.figure,
+        ring: item.ring,
+        glow: item.glow,
+        name: item.name,
+        imageSrc: item.imageSrc,
+      })));
+    };
+    loadAvatarCatalog().then(applyThemes).catch(() => {});
     loadLandingNewAvatars().then(setNewAvatars).catch(() => {});
-    const handler = () => setCatalog(readAvatarCatalogLocal());
+    const handler = () => applyThemes(readAvatarCatalogLocal());
     window.addEventListener("raw:avatar-catalog-updated", handler);
     return () => window.removeEventListener("raw:avatar-catalog-updated", handler);
   }, []);
