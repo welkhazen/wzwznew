@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchSupabasePolls, submitPollVote } from "@/utils/supabasePolls";
 import { track } from "@/lib/analytics";
@@ -38,11 +38,30 @@ export function usePolls(isLoggedIn: boolean) {
   const queryClient = useQueryClient();
   const [freeVotesUsed, setFreeVotesUsed] = useState(0);
   const [guestVotedPolls, setGuestVotedPolls] = useState<Set<string>>(new Set());
-  const [dailyPollDate, setDailyPollDate] = useState(getTodayKey());
-  const [dailyAnsweredPollIds, setDailyAnsweredPollIds] = useState<Set<string>>(new Set());
+  const todayKey = getTodayKey();
+  const STORAGE_KEY = `raw.polls.daily-answered.${todayKey}`;
+
+  const [dailyPollDate, setDailyPollDate] = useState(todayKey);
+  const [dailyAnsweredPollIds, setDailyAnsweredPollIds] = useState<Set<string>>(() => {
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      const ids = raw ? (JSON.parse(raw) as string[]) : [];
+      return new Set(Array.isArray(ids) ? ids : []);
+    } catch {
+      return new Set();
+    }
+  });
   const [sessionVotedPolls, setSessionVotedPolls] = useState<Set<string>>(new Set());
   const [tokenBalance, setTokenBalance] = useState(MOCK_TOKEN_BALANCE);
   const [extraBatchesUnlocked, setExtraBatchesUnlocked] = useState(0);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify([...dailyAnsweredPollIds]));
+    } catch {
+      // ignore storage errors
+    }
+  }, [STORAGE_KEY, dailyAnsweredPollIds]);
 
   const pollsQuery = useQuery({
     queryKey: ["polls", "randomized"],
@@ -84,14 +103,14 @@ export function usePolls(isLoggedIn: boolean) {
   }, [tokenBalance]);
 
   const vote = useCallback((pollId: string, optionId: string) => {
-    const todayKey = getTodayKey();
-    if (dailyPollDate !== todayKey) {
-      setDailyPollDate(todayKey);
+    const currentDay = getTodayKey();
+    if (dailyPollDate !== currentDay) {
+      setDailyPollDate(currentDay);
       setDailyAnsweredPollIds(new Set());
     }
 
     const effectiveLimit = DAILY_POLL_LIMIT + extraBatchesUnlocked * EXTRA_BATCH_SIZE;
-    const currentDailySet = dailyPollDate === todayKey ? dailyAnsweredPollIds : new Set<string>();
+    const currentDailySet = dailyPollDate === currentDay ? dailyAnsweredPollIds : new Set<string>();
     if (!currentDailySet.has(pollId) && currentDailySet.size >= effectiveLimit) {
       return;
     }
