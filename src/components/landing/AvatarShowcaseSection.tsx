@@ -6,7 +6,7 @@ import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { AvatarPhoneHomeScreen } from "@/components/ui/avatar-phone-home-screen";
 import { PhoneMockup } from "@/components/ui/phone-mockup";
 import { AVATARS, LEVEL_THEMES, setAvatarThemes } from "@/lib/avataridentity";
-import { loadAvatarCatalog, loadAvatarCatalogSupabaseOnly, loadFullAvatarCatalog, readAvatarCatalogLocal, readFullAvatarCatalogLocal } from "@/lib/avatarCatalog";
+import { loadAvatarCatalog, loadAvatarCatalogRange, readAvatarCatalogLocal, readFullAvatarCatalogLocal } from "@/lib/avatarCatalog";
 import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
 import { loadLandingNewAvatars } from "@/lib/landingNewAvatars";
 import type { LandingNewAvatar } from "@/lib/landingNewAvatars";
@@ -15,6 +15,8 @@ import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 const VISIBLE_COUNT = 4;
 const DESKTOP_COUNT = 8;
 const FEATURED_AVATAR_COUNT = 10;
+const EXPANDED_AVATAR_START_LEVEL = 11;
+const EXPANDED_AVATAR_END_LEVEL = 30;
 const EXPANDED_AVATAR_BATCH_SIZE = 8;
 const MOBILE_PHONE_SCALE = 0.5;
 
@@ -31,6 +33,7 @@ export function AvatarShowcaseSection() {
   const [extraPreviewAvatar, setExtraPreviewAvatar] = useState<LandingNewAvatar | null>(null);
   const [catalog, setCatalog] = useState<AvatarCatalogItem[]>([]);
   const [fullCatalog, setFullCatalog] = useState<AvatarCatalogItem[]>(() => readFullAvatarCatalogLocal());
+  const [expandedCatalog, setExpandedCatalog] = useState<AvatarCatalogItem[]>([]);
   const [isLoadingExpandedAvatars, setIsLoadingExpandedAvatars] = useState(false);
   const [newAvatars, setNewAvatars] = useState<LandingNewAvatar[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -41,6 +44,24 @@ export function AvatarShowcaseSection() {
       bg: item.bg, figure: item.figure, ring: item.ring,
       glow: item.glow, name: item.name, imageSrc: item.imageSrc,
     })));
+  };
+
+  const applyRangedThemes = (items: AvatarCatalogItem[]) => {
+    setExpandedCatalog(items);
+    if (items.length === 0) return;
+
+    const nextThemes = [...LEVEL_THEMES];
+    items.forEach((item) => {
+      nextThemes[item.level - 1] = {
+        bg: item.bg,
+        figure: item.figure,
+        ring: item.ring,
+        glow: item.glow,
+        name: item.name,
+        imageSrc: item.imageSrc,
+      };
+    });
+    setAvatarThemes(nextThemes);
   };
 
   useEffect(() => {
@@ -66,7 +87,7 @@ export function AvatarShowcaseSection() {
     // Removed redundant loadAvatarCatalog + loadAvatarCatalogSupabaseOnly calls
     // that were firing 3 simultaneous queries and all hitting 500 on bad RLS state.
     loadAvatarCatalog().then(applyThemes).catch(() => {});
-    loadFullAvatarCatalog().then(applyFullThemes).catch(() => {});
+    loadAvatarCatalogRange(EXPANDED_AVATAR_START_LEVEL, EXPANDED_AVATAR_END_LEVEL).then(applyRangedThemes).catch(() => {});
     loadLandingNewAvatars().then(setNewAvatars).catch(() => {});
     const handler = () => applyThemes(readAvatarCatalogLocal());
     window.addEventListener("raw:avatar-catalog-updated", handler);
@@ -80,11 +101,13 @@ export function AvatarShowcaseSection() {
   const featuredAvatars = baseAvatars.slice(0, FEATURED_AVATAR_COUNT);
   const chooserAvatars = featuredAvatars.length > 0 ? featuredAvatars : baseAvatars.slice(0, 1);
   const chooserTotal = chooserAvatars.length;
-  const expandedAvatarSource = baseAvatars.slice(FEATURED_AVATAR_COUNT);
+  const expandedAvatarSource = expandedCatalog.length > 0
+    ? expandedCatalog
+    : baseAvatars.filter((avatar) => avatar.level >= EXPANDED_AVATAR_START_LEVEL && avatar.level <= EXPANDED_AVATAR_END_LEVEL);
   const expandedAvatarTotal = expandedAvatarSource.length;
   const visibleExtendedAvatars = expandedAvatarSource
     .slice(0, expandedVisibleCount)
-    .map((avatar, index) => ({ avatar, themeIndex: index + FEATURED_AVATAR_COUNT + 1 }));
+    .map((avatar) => ({ avatar, themeIndex: avatar.level }));
   const previewAvatar = useMemo(
     () => extraPreviewAvatar ?? baseAvatars[previewIndex - 1] ?? baseAvatars[0] ?? null,
     [baseAvatars, extraPreviewAvatar, previewIndex]
@@ -130,13 +153,11 @@ export function AvatarShowcaseSection() {
     const shouldOpen = !showExpandGrid;
     setShowExpandGrid(shouldOpen);
 
-    if (!shouldOpen || fullCatalog.length > FEATURED_AVATAR_COUNT || isLoadingExpandedAvatars) return;
+    if (!shouldOpen || expandedCatalog.length > 0 || isLoadingExpandedAvatars) return;
 
     setIsLoadingExpandedAvatars(true);
-    loadFullAvatarCatalog()
-      .then((items) => {
-        if (items.length > 0) applyFullThemes(items);
-      })
+    loadAvatarCatalogRange(EXPANDED_AVATAR_START_LEVEL, EXPANDED_AVATAR_END_LEVEL)
+      .then(applyRangedThemes)
       .catch(() => {})
       .finally(() => setIsLoadingExpandedAvatars(false));
   }
