@@ -175,8 +175,18 @@ export function DashboardPolls({
     [polls, answerHistory]
   );
 
-  // When unseen polls run out, fall back to full list so the UI stays visible
-  const displayPolls = unseenPolls.length > 0 ? unseenPolls : polls;
+  const answeredPolls = useMemo(
+    () => polls.filter((p) => answerHistory[p.id]),
+    [polls, answerHistory]
+  );
+
+  // Once the daily limit is hit, show only polls the user already answered.
+  // While still under the limit, show unseen polls (or answered ones if nothing left to answer).
+  const displayPolls = isDailyPollLimitReached
+    ? answeredPolls
+    : unseenPolls.length > 0
+      ? unseenPolls
+      : answeredPolls;
 
   useEffect(() => {
     if (currentPollIndex >= displayPolls.length && displayPolls.length > 0) {
