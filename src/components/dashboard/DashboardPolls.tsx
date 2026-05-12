@@ -239,6 +239,9 @@ export function DashboardPolls({
   const currentComments = currentPoll ? historyComments[currentPoll.id] ?? [] : [];
   const currentOptions = currentPoll ? resolveYesNoOptions(currentPoll) : null;
   const showVoteHint = currentPollIndex === 0 && !hasVotedCurrent && !hasSeenVoteHint;
+  const progressIndex = isDailyPollLimitReached
+    ? Math.min(currentPollIndex, dailyPollLimit - 1)
+    : Math.min(dailyAnsweredCount + currentPollIndex, dailyPollLimit - 1);
 
   const totalResponses = useMemo(
     () => polls.reduce((sum, poll) => sum + poll.options.reduce((acc, option) => acc + option.votes, 0), 0),
@@ -470,7 +473,7 @@ export function DashboardPolls({
               {dailyAnsweredCount}/{dailyPollLimit}
             </span>
           </div>
-          <PollProgress currentIndex={Math.min(currentPollIndex, dailyPollLimit - 1)} total={dailyPollLimit} answeredCount={dailyAnsweredCount} dailyLimit={dailyPollLimit} onSelect={setCurrentPollIndex} />
+          <PollProgress currentIndex={progressIndex} total={dailyPollLimit} answeredCount={dailyAnsweredCount} dailyLimit={dailyPollLimit} onSelect={setCurrentPollIndex} />
         </div>
 
         <div className="relative w-full max-w-[24rem]">

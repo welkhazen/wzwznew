@@ -35,59 +35,74 @@ async function fetchPollsWithFallback(): Promise<Poll[]> {
   return INITIAL_POLLS;
 }
 
+function readStoredPollIds(storageKey: string): Set<string> {
+  try {
+    const raw = window.localStorage.getItem(storageKey);
+    const ids = raw ? (JSON.parse(raw) as string[]) : [];
+    return new Set(Array.isArray(ids) ? ids : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function readStoredExtraBatches(storageKey: string, answeredStorageKey: string): number {
+  try {
+    const stored = window.localStorage.getItem(storageKey);
+    const storedValue = stored !== null ? Number(stored) : 0;
+    const answeredCount = readStoredPollIds(answeredStorageKey).size;
+    const minBatches = Math.max(0, Math.ceil((answeredCount - DAILY_POLL_LIMIT) / EXTRA_BATCH_SIZE));
+
+    return Math.max(storedValue, minBatches);
+  } catch {
+    return 0;
+  }
+}
+
 export function usePolls(isLoggedIn: boolean, userId?: string) {
   const queryClient = useQueryClient();
   const [freeVotesUsed, setFreeVotesUsed] = useState(0);
   const [guestVotedPolls, setGuestVotedPolls] = useState<Set<string>>(new Set());
   const todayKey = getTodayKey();
-  const STORAGE_KEY = `raw.polls.daily-answered.${todayKey}`;
+  const pollStorageScope = isLoggedIn && userId ? `user.${userId}` : "guest";
+  const STORAGE_KEY = `raw.polls.daily-answered.${pollStorageScope}.${todayKey}`;
+  const EXTRA_BATCHES_KEY = `raw.polls.extra-batches.${pollStorageScope}.${todayKey}`;
+  const TOKEN_BALANCE_KEY = isLoggedIn && userId ? `${TOKEN_BALANCE_STORAGE_KEY}.${userId}` : TOKEN_BALANCE_STORAGE_KEY;
 
   const [dailyPollDate, setDailyPollDate] = useState(todayKey);
-  const [dailyAnsweredPollIds, setDailyAnsweredPollIds] = useState<Set<string>>(() => {
-    try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      const ids = raw ? (JSON.parse(raw) as string[]) : [];
-      return new Set(Array.isArray(ids) ? ids : []);
-    } catch {
-      return new Set();
-    }
-  });
+  const [loadedDailyStorageKey, setLoadedDailyStorageKey] = useState(STORAGE_KEY);
+  const [dailyAnsweredPollIds, setDailyAnsweredPollIds] = useState<Set<string>>(() => readStoredPollIds(STORAGE_KEY));
   const [sessionVotedPolls, setSessionVotedPolls] = useState<Set<string>>(new Set());
   const [tokenBalance, setTokenBalance] = useState<number>(() => {
     if (!isLoggedIn) return GUEST_TOKEN_BALANCE;
     try {
-      const stored = window.localStorage.getItem(TOKEN_BALANCE_STORAGE_KEY);
+      const stored = window.localStorage.getItem(TOKEN_BALANCE_KEY);
       return stored !== null ? Number(stored) : GUEST_TOKEN_BALANCE;
     } catch {
       return GUEST_TOKEN_BALANCE;
     }
   });
-  const EXTRA_BATCHES_KEY = `raw.polls.extra-batches.${todayKey}`;
-  const [extraBatchesUnlocked, setExtraBatchesUnlocked] = useState<number>(() => {
-    try {
-      const stored = window.localStorage.getItem(`raw.polls.extra-batches.${todayKey}`);
-      const storedValue = stored !== null ? Number(stored) : 0;
-
-      // If extraBatches was never persisted (old sessions), infer it from
-      // how many polls were already answered today so the limit stays consistent.
-      const answeredRaw = window.localStorage.getItem(`raw.polls.daily-answered.${todayKey}`);
-      const answeredIds = answeredRaw ? (JSON.parse(answeredRaw) as string[]) : [];
-      const answeredCount = Array.isArray(answeredIds) ? answeredIds.length : 0;
-      const minBatches = Math.max(0, Math.ceil((answeredCount - DAILY_POLL_LIMIT) / EXTRA_BATCH_SIZE));
-
-      return Math.max(storedValue, minBatches);
-    } catch {
-      return 0;
-    }
-  });
+  const [loadedExtraBatchesKey, setLoadedExtraBatchesKey] = useState(EXTRA_BATCHES_KEY);
+  const [extraBatchesUnlocked, setExtraBatchesUnlocked] = useState<number>(() => readStoredExtraBatches(EXTRA_BATCHES_KEY, STORAGE_KEY));
 
   useEffect(() => {
+    setDailyPollDate(todayKey);
+    setLoadedDailyStorageKey(STORAGE_KEY);
+    setDailyAnsweredPollIds(readStoredPollIds(STORAGE_KEY));
+    setLoadedExtraBatchesKey(EXTRA_BATCHES_KEY);
+    setExtraBatchesUnlocked(readStoredExtraBatches(EXTRA_BATCHES_KEY, STORAGE_KEY));
+    setSessionVotedPolls(new Set());
+    setGuestVotedPolls(new Set());
+    setFreeVotesUsed(0);
+  }, [EXTRA_BATCHES_KEY, STORAGE_KEY, todayKey]);
+
+  useEffect(() => {
+    if (loadedExtraBatchesKey !== EXTRA_BATCHES_KEY) return;
     try {
       window.localStorage.setItem(EXTRA_BATCHES_KEY, String(extraBatchesUnlocked));
     } catch {
       // ignore storage errors
     }
-  }, [EXTRA_BATCHES_KEY, extraBatchesUnlocked]);
+  }, [EXTRA_BATCHES_KEY, extraBatchesUnlocked, loadedExtraBatchesKey]);
 
   // Sync token balance from Supabase when logged in
   useEffect(() => {
@@ -96,7 +111,7 @@ export function usePolls(isLoggedIn: boolean, userId?: string) {
       .then((balance) => {
         setTokenBalance(balance);
         try {
-          window.localStorage.setItem(TOKEN_BALANCE_STORAGE_KEY, String(balance));
+          window.localStorage.setItem(TOKEN_BALANCE_KEY, String(balance));
         } catch {
           // ignore
         }
@@ -104,15 +119,16 @@ export function usePolls(isLoggedIn: boolean, userId?: string) {
       .catch(() => {
         // keep local value on network error
       });
-  }, [isLoggedIn, userId]);
+  }, [TOKEN_BALANCE_KEY, isLoggedIn, userId]);
 
   useEffect(() => {
+    if (loadedDailyStorageKey !== STORAGE_KEY) return;
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify([...dailyAnsweredPollIds]));
     } catch {
       // ignore storage errors
     }
-  }, [STORAGE_KEY, dailyAnsweredPollIds]);
+  }, [STORAGE_KEY, dailyAnsweredPollIds, loadedDailyStorageKey]);
 
   const pollsQuery = useQuery({
     queryKey: ["polls", "randomized"],
@@ -159,7 +175,7 @@ export function usePolls(isLoggedIn: boolean, userId?: string) {
         const newBalance = await spendTokens(userId, UNLOCK_TOKEN_COST);
         setTokenBalance(newBalance);
         try {
-          window.localStorage.setItem(TOKEN_BALANCE_STORAGE_KEY, String(newBalance));
+          window.localStorage.setItem(TOKEN_BALANCE_KEY, String(newBalance));
         } catch {
           // ignore
         }
@@ -172,7 +188,7 @@ export function usePolls(isLoggedIn: boolean, userId?: string) {
       setTokenBalance((prev) => prev - UNLOCK_TOKEN_COST);
       setExtraBatchesUnlocked((prev) => prev + 1);
     }
-  }, [tokenBalance, isLoggedIn, userId]);
+  }, [TOKEN_BALANCE_KEY, tokenBalance, isLoggedIn, userId]);
 
   const vote = useCallback((pollId: string, optionId: string) => {
     const currentDay = getTodayKey();
