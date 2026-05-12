@@ -203,7 +203,9 @@ export function readFullAvatarCatalogLocal(): AvatarCatalogItem[] {
   try {
     const raw = window.localStorage.getItem(FULL_CATALOG_STORAGE_KEY);
     if (!raw) return [];
-    return JSON.parse(raw) as AvatarCatalogItem[];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed as AvatarCatalogItem[];
   } catch {
     return [];
   }
