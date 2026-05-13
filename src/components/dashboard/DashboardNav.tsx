@@ -125,8 +125,9 @@ export function DashboardNav({ username, avatarLevel, showAdminLink = false, onP
           </div>
         )}
 
-        {/* Right: bell + token + avatar */}
+        {/* Right: token + bell + avatar */}
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
+          <TokenBalanceButton />
           <div className="relative" ref={notifRef}>
             <button
               type="button"
@@ -166,7 +167,6 @@ export function DashboardNav({ username, avatarLevel, showAdminLink = false, onP
               </div>
             )}
           </div>
-          <TokenBalanceButton />
           <DropdownMenu onOpenChange={(open) => { if (!open) setAppearanceOpen(false); }}>
             <DropdownMenuTrigger asChild>
               <button
