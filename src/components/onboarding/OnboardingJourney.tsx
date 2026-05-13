@@ -373,7 +373,7 @@ const [pollStats, setPollStats] = useState<Record<string, Record<string, number>
                           type="button"
                           onClick={() => {
                             setPreviewAvatarIndex(index);
-                            phonePreviewRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                            phonePreviewRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
                             if (isFree) {
                               track("onboarding_avatar_selected", { avatar_level: index, attempts: 1 });
                               onAvatarChange(index);
@@ -458,7 +458,7 @@ const [pollStats, setPollStats] = useState<Record<string, Record<string, number>
                             type="button"
                             onClick={() => {
                               setPreviewAvatarIndex(index);
-                              phonePreviewRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                              phonePreviewRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
                               track("onboarding_avatar_selected", { avatar_level: index, attempts: 1 });
                             }}
                             className="group relative flex min-w-0 flex-col items-center gap-1 rounded-xl p-1.5 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/50"
