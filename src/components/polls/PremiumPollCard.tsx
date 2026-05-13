@@ -138,7 +138,7 @@ export function PremiumPollCard({
                   themeHue={uniformNeutralTheme && !primarySelected ? "neutral" : "primary"}
                   disabled={disabled}
                   onClick={() => submitVote(primaryOption.id)}
-                  showFill
+                  showFill={false}
                 />
 
                 {/* Secondary / No button */}
@@ -151,7 +151,7 @@ export function PremiumPollCard({
                   themeHue={secondarySelected ? "primary" : "neutral"}
                   disabled={disabled}
                   onClick={() => submitVote(secondaryOption.id)}
-                  showFill
+                  showFill={false}
                 />
 </div>
             </div>
