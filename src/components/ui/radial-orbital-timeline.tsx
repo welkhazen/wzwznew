@@ -242,15 +242,15 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
                       ? "2px solid #F1C42D"
                       : isRelated
                         ? "2px solid rgba(241,196,45,0.55)"
-                        : (isLight ? "1.5px solid rgba(160,120,10,0.5)" : "1px solid rgba(241,196,45,0.28)"),
+                        : (isLight ? "1.5px solid rgba(120,120,120,0.4)" : "1px solid rgba(180,180,180,0.18)"),
                     boxShadow: isExpanded
                       ? "0 0 18px rgba(241,196,45,0.55), 0 0 36px rgba(241,196,45,0.2)"
                       : isRelated
                         ? "0 0 12px rgba(241,196,45,0.3)"
-                        : (isLight ? "0 2px 8px rgba(0,0,0,0.12)" : "0 0 6px rgba(241,196,45,0.08)"),
+                        : "none",
                     transform: isExpanded ? "scale(1.4)" : "scale(1)",
                     transition: "transform 0.3s, background 0.3s, border 0.3s, box-shadow 0.3s",
-                    color: isExpanded ? "#0a0a0a" : (isLight ? "rgba(120,88,8,0.9)" : "rgba(241,196,45,0.82)"),
+                    color: isExpanded ? "#0a0a0a" : (isLight ? "rgba(80,80,80,0.7)" : "rgba(180,180,180,0.55)"),
                   }}
                 >
                   <Icon size={isTinyPhone ? 13 : 15} />
@@ -266,8 +266,8 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
                     lineHeight: 1.3,
                     fontWeight: 700,
                     color: isLight
-                      ? (isExpanded ? "#000000" : "rgba(0,0,0,0.75)")
-                      : (isExpanded ? "#F1C42D" : "rgba(255,255,255,0.85)"),
+                      ? (isExpanded ? "#000000" : "rgba(0,0,0,0.45)")
+                      : (isExpanded ? "#F1C42D" : "rgba(180,180,180,0.5)"),
                     textShadow: isLight
                       ? "none"
                       : (isExpanded
