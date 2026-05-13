@@ -178,7 +178,7 @@ export function DashboardHome({
 
       {/* ── Personalized Picks ── */}
       {picks.length > 0 && (
-        <section className="relative space-y-5 border-t border-white/5 pt-10">
+        <section className="space-y-5 border-t border-white/5 pt-10">
           <div className="flex justify-between items-end">
             <div className="space-y-0.5">
               <div className="flex items-center gap-2">
@@ -195,12 +195,12 @@ export function DashboardHome({
             </button>
           </div>
           <div className="relative">
-            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 pointer-events-none select-none opacity-40 blur-[2px]" inert={true}>
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 pointer-events-none select-none opacity-40 blur-[2px]" aria-hidden="true" inert={true}>
               {picks.map((community) => (
                 <CommunityCard key={community.id} community={community} onOpenCommunity={onOpenCommunity} />
               ))}
             </div>
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2" role="status" aria-live="polite">
               <span className="rounded-full border border-raw-gold/40 bg-raw-black/80 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-raw-gold backdrop-blur-sm">
                 Coming Soon
               </span>
