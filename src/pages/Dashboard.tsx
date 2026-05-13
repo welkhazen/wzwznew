@@ -114,6 +114,12 @@ export default function Dashboard({
     navigate("/dashboard");
   };
 
+  const handleBillingClick = () => {
+    setActiveTab("wallet");
+    setIsHome(false);
+    navigate("/dashboard");
+  };
+
   const renderContent = () => {
     if (isHome || activeTab === "home") {
       return (
@@ -250,6 +256,7 @@ export default function Dashboard({
         avatarLevel={avatarLevel}
         showAdminLink={user.role === "admin"}
         onProfileClick={handleProfileClick}
+        onBillingClick={handleBillingClick}
         onLogout={onLogout}
         communityTitle={activeCommunityTitle}
         onBack={handleBackToCommunities}

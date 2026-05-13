@@ -153,7 +153,7 @@ function LootSpin({ tokenBalance }: { tokenBalance: number }) {
     <div className="rounded-2xl border border-raw-border/35 bg-raw-black/45 p-5">
       <div className="mb-4 flex items-center gap-2">
         <Sparkles className="h-4 w-4 text-raw-gold/60" />
-        <h3 className="font-display text-sm tracking-wide text-raw-text">Rarity Roll</h3>
+        <h3 className="font-display text-sm tracking-wide text-raw-text">Rarity Spin</h3>
         <span className="ml-auto flex items-center gap-1 rounded-full border border-raw-border/35 bg-raw-black/50 px-2.5 py-1 text-[10px] text-raw-silver/50">
           <img src={TokenImage} alt="" className="h-3 w-3 object-contain" />
           {SPIN_COST} per spin
@@ -200,7 +200,7 @@ function LootSpin({ tokenBalance }: { tokenBalance: number }) {
         ) : (
           <span className="flex items-center justify-center gap-1.5">
             <img src={TokenImage} alt="" className="h-4 w-4 object-contain" />
-            Roll for {SPIN_COST} tokens
+            Spin for {SPIN_COST} tokens
           </span>
         )}
       </button>
@@ -257,7 +257,7 @@ export function DashboardInventory({
 
       {/* Loot Spin */}
       <section>
-        <h2 className="mb-3 font-display text-sm tracking-wide text-raw-text">Loot Roll</h2>
+        <h2 className="mb-3 font-display text-sm tracking-wide text-raw-text">Loot Spin</h2>
         <LootSpin tokenBalance={tokenBalance} />
       </section>
     </div>

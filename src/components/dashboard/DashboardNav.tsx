@@ -36,13 +36,14 @@ interface DashboardNavProps {
   avatarLevel: number;
   showAdminLink?: boolean;
   onProfileClick: () => void;
+  onBillingClick: () => void;
   onLogout: () => void;
   communityTitle?: string;
   onBack?: () => void;
   communities?: PersistedCommunityRecord[];
 }
 
-export function DashboardNav({ username, avatarLevel, showAdminLink = false, onProfileClick, onLogout, communityTitle, onBack, communities: propCommunities }: DashboardNavProps) {
+export function DashboardNav({ username, avatarLevel, showAdminLink = false, onProfileClick, onBillingClick, onLogout, communityTitle, onBack, communities: propCommunities }: DashboardNavProps) {
   const { mode, accent, accentPresets, setMode, setAccent } = useTheme();
   const [hoveredMode, setHoveredMode] = useState<ThemeMode | null>(null);
   const [hoveredAccent, setHoveredAccent] = useState<AccentPresetId | null>(null);
@@ -209,7 +210,10 @@ export function DashboardNav({ username, avatarLevel, showAdminLink = false, onP
                 </div>
               </button>
 
-              <DropdownMenuItem className={cn("rounded-lg px-3 py-2.5 text-sm focus:text-raw-text", isEffectiveLight ? "text-slate-700 focus:bg-slate-100" : "text-raw-silver/80 focus:bg-raw-surface/80")}>
+              <DropdownMenuItem
+                onClick={onBillingClick}
+                className={cn("cursor-pointer rounded-lg px-3 py-2.5 text-sm focus:text-raw-text", isEffectiveLight ? "text-slate-700 focus:bg-slate-100" : "text-raw-silver/80 focus:bg-raw-surface/80")}
+              >
                 <Receipt className="mr-3 h-4 w-4" />
                 Billing
               </DropdownMenuItem>
