@@ -328,7 +328,7 @@ export function Terminal({
     } else {
       setPhase("pausing");
     }
-  }, [phase, currentCommand, currentOutputs.length, isLastCommand]);
+  }, [phase, currentCommand, currentOutputs.length, isLastCommand, largeLastCommand]);
   useEffect(() => {
     if (phase !== "outputting") return;
     if (outputIdx >= 0 && outputIdx < currentOutputs.length) {
