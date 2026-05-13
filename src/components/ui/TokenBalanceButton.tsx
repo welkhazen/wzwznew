@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import tokenImg from "@/assets/tokens.png";
 
 interface TokenBalanceButtonProps {
   balance?: number | string;
@@ -56,7 +57,7 @@ export function TokenBalanceButton({ balance = 0, symbol = "WZWZ" }: TokenBalanc
         aria-expanded={open}
       >
         <img
-          src="/token.png"
+          src={tokenImg}
           alt="WZWZ token"
           width={26}
           height={26}
@@ -73,7 +74,7 @@ export function TokenBalanceButton({ balance = 0, symbol = "WZWZ" }: TokenBalanc
           style={{ boxShadow: "0 0 12px rgba(250,204,21,0.12), inset 0 0 0 1px rgba(250,204,21,0.06)" }}
         >
           <img
-            src="/token.png"
+            src={tokenImg}
             alt=""
             width={14}
             height={14}
