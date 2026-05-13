@@ -128,6 +128,7 @@ export function LandingPollsSection() {
   const [extraComments, setExtraComments] = useState<Record<number, string[]>>({});
   const [waterFilled, setWaterFilled] = useState(false);
   const commentsEndRef = useRef<HTMLDivElement>(null);
+  const commentsContainerRef = useRef<HTMLDivElement>(null);
 
   const { data: fetchedPolls } = useQuery({
     queryKey: ["landing-polls-section"],
@@ -180,7 +181,7 @@ export function LandingPollsSection() {
     if (!text) return;
     setExtraComments((prev) => ({ ...prev, [index]: [...(prev[index] ?? []), text] }));
     setCommentInputs((prev) => ({ ...prev, [index]: "" }));
-    setTimeout(() => commentsEndRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 50);
+    setTimeout(() => { if (commentsContainerRef.current) commentsContainerRef.current.scrollTop = commentsContainerRef.current.scrollHeight; }, 50);
   };
 
   return (
@@ -459,7 +460,7 @@ export function LandingPollsSection() {
                       Anonymous Comments
                     </p>
 
-                    <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
+                    <div ref={commentsContainerRef} className="space-y-2 max-h-36 overflow-y-auto pr-1">
                       {allComments.map((c, i) => (
                         <div key={i} className="flex items-start gap-2">
                           <span className="mt-0.5 h-5 w-5 flex-shrink-0 rounded-full bg-[#F1C42D]/15 flex items-center justify-center text-[9px] text-[#F1C42D]/70 font-bold">
