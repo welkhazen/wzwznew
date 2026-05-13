@@ -451,7 +451,7 @@ export function LandingPollsSection() {
                   }}
                 >
                   <div
-                    className="px-4 py-4"
+                    className="px-4 py-4 overflow-hidden"
                     style={{
                       clipPath: COMMENT_CLIP,
                       background: isLight
@@ -475,7 +475,7 @@ export function LandingPollsSection() {
                       <div ref={commentsEndRef} />
                     </div>
 
-                    <div ref={commentInputWrapperRef} className="mt-3 flex gap-2">
+                    <div ref={commentInputWrapperRef} className="mt-3 flex items-center gap-2 pr-1">
                       <input
                         type="text"
                         placeholder="Add anonymous comment…"
@@ -484,7 +484,7 @@ export function LandingPollsSection() {
                           setCommentInputs((prev) => ({ ...prev, [index]: e.target.value }))
                         }
                         onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleSubmitComment(); } }}
-                        className={`flex-1 rounded px-3 py-1.5 text-[12px] outline-none transition ${
+                        className={`min-w-0 flex-1 rounded px-3 py-1.5 text-[12px] outline-none transition ${
                           isLight
                             ? "bg-black/5 border border-black/10 text-stone-700 placeholder:text-stone-400 focus:border-[#F1C42D]/50"
                             : "bg-white/5 border border-white/10 text-white/70 placeholder:text-white/25 focus:border-[#F1C42D]/40"
@@ -493,7 +493,7 @@ export function LandingPollsSection() {
                       <button
                         type="button"
                         onClick={handleSubmitComment}
-                        className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded border border-[#F1C42D]/30 bg-[#F1C42D]/10 text-[#F1C42D]/70 transition hover:bg-[#F1C42D]/20"
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded border border-[#F1C42D]/30 bg-[#F1C42D]/10 text-[#F1C42D]/70 transition hover:bg-[#F1C42D]/20"
                       >
                         <Send className="h-3.5 w-3.5" />
                       </button>
