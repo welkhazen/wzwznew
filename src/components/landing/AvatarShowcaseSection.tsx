@@ -329,28 +329,27 @@ Just like in real life, every person is born with a name, an appearance, and an 
           </p>
           <div
             ref={scrollRef}
-            className="grid grid-cols-2 gap-x-2 gap-y-3 overflow-y-auto [scrollbar-width:none] min-[380px]:gap-y-4 [&::-webkit-scrollbar]:hidden"
-            style={{ maxHeight: `${646 * MOBILE_PHONE_SCALE - 10}px` }}
+            className="grid grid-cols-4 gap-x-1 gap-y-3"
           >
             {chooserAvatars.map((avatar, i) => (
               <button
                 key={i + 1}
                 type="button"
                 onClick={() => { setExtraPreviewAvatar(null); setAvatarIndex(i + 1); setPreviewIndex(i + 1); }}
-                className="flex flex-col items-center gap-1 outline-none"
+                className="flex flex-col items-center gap-0.5 outline-none"
                 aria-label={`Select ${avatar.name}`}
                 aria-pressed={avatarIndex === i + 1}
               >
                 <div
-                  className={`rounded-full transition-all duration-200 ${avatarIndex === i + 1 ? "scale-110" : "scale-100"}`}
+                  className={`rounded-full transition-all duration-200 scale-[0.72] ${avatarIndex === i + 1 ? "scale-[0.82]" : ""}`}
                 >
                   <AvatarFigure avatarIndex={i + 1} size="sm" selected={avatarIndex === i + 1} />
                 </div>
                 <span
                   className="text-center font-display uppercase leading-tight transition-colors duration-200"
                   style={{
-                    fontSize: "0.52rem",
-                    letterSpacing: "0.1em",
+                    fontSize: "0.44rem",
+                    letterSpacing: "0.08em",
                     color: avatarIndex === i + 1 ? "#F1C42D" : "rgba(255,255,255,0.4)",
                   }}
                 >
