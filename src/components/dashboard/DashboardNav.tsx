@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { xpProgressInLevel } from "@/lib/userProgress";
+import { MAX_LEVEL } from "@/lib/avataridentity";
 import { track } from "@/lib/analytics";
 import { readCommunityChats } from "@/lib/communityChat";
 import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
@@ -41,9 +43,11 @@ interface DashboardNavProps {
   communityTitle?: string;
   onBack?: () => void;
   communities?: PersistedCommunityRecord[];
+  xp?: number;
+  level?: number;
 }
 
-export function DashboardNav({ username, avatarLevel, showAdminLink = false, onProfileClick, onBillingClick, onLogout, communityTitle, onBack, communities: propCommunities }: DashboardNavProps) {
+export function DashboardNav({ username, avatarLevel, showAdminLink = false, onProfileClick, onBillingClick, onLogout, communityTitle, onBack, communities: propCommunities, xp = 0, level = 1 }: DashboardNavProps) {
   const { mode, accent, accentPresets, setMode, setAccent } = useTheme();
   const [hoveredMode, setHoveredMode] = useState<ThemeMode | null>(null);
   const [hoveredAccent, setHoveredAccent] = useState<AccentPresetId | null>(null);
@@ -209,6 +213,30 @@ export function DashboardNav({ username, avatarLevel, showAdminLink = false, onP
                   <p className={cn("truncate text-xs", isEffectiveLight ? "text-slate-600" : "text-raw-silver/50")}>@{username}</p>
                 </div>
               </button>
+
+              {/* XP progress strip */}
+              {(() => {
+                const { current, needed, pct } = xpProgressInLevel(xp, level);
+                const isMax = level >= MAX_LEVEL;
+                return (
+                  <div className="mx-1 mb-1 rounded-lg border border-raw-border/25 bg-raw-black/30 px-3 py-2">
+                    <div className="mb-1.5 flex items-center justify-between">
+                      <span className="text-[10px] font-semibold text-raw-gold/70">
+                        Lvl {level}{!isMax ? ` → Lvl ${level + 1}` : " · Max"}
+                      </span>
+                      <span className="text-[10px] text-raw-silver/40">
+                        {isMax ? `${xp.toLocaleString()} XP` : `${current.toLocaleString()} / ${needed.toLocaleString()} XP`}
+                      </span>
+                    </div>
+                    <div className="h-1 overflow-hidden rounded-full bg-raw-border/30">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-raw-gold/60 to-raw-gold transition-all duration-500"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })()}
 
               <DropdownMenuItem
                 onClick={onBillingClick}

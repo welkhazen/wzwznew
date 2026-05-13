@@ -180,13 +180,14 @@ export default function Dashboard({
               pollsAnswered={votedPolls.size}
               dailyAnsweredCount={dailyAnsweredCount}
               dailyPollLimit={dailyPollLimit}
+              onAwardXP={award}
             />
           </DashboardSectionShell>
         );
       case "daily-spin":
         return (
           <DashboardSectionShell>
-            <DashboardDailySpin userId={user.id} isAdmin={user.role === "admin"} />
+            <DashboardDailySpin userId={user.id} isAdmin={user.role === "admin"} onAwardXP={award} />
           </DashboardSectionShell>
         );
       case "inventory":
@@ -260,6 +261,8 @@ export default function Dashboard({
         onLogout={onLogout}
         communityTitle={activeCommunityTitle}
         onBack={handleBackToCommunities}
+        xp={progress?.xp ?? 0}
+        level={progress?.level ?? 1}
       />
 
       <DashboardSidebar
