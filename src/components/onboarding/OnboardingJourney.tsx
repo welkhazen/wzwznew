@@ -255,7 +255,7 @@ export function OnboardingJourney({
 
   const canContinueFromAvatar = avatarIndex >= 1 && avatarIndex <= FREE_ONBOARDING_AVATAR_COUNT;
   const canContinueFromPolls = answeredCount >= onboardingPolls.length;
-  const canContinueFromCommunities = selectedCommunityIds.length === 2;
+  const canContinueFromCommunities = selectedCommunityIds.length >= 1;
   const previewAvatar = onboardingAvatars[previewAvatarIndex - 1] ?? onboardingAvatars[0];
   const canContinueWithPreviewAvatar = canContinueFromAvatar && previewAvatarIndex === avatarIndex;
   const freeAvatarChoices = onboardingAvatars.slice(0, FREE_ONBOARDING_AVATAR_COUNT);
@@ -668,20 +668,20 @@ export function OnboardingJourney({
           {onboardingStep === "communities" && (
             <section>
               <div className="flex items-center justify-between gap-3">
-                <h2 className="font-display text-lg tracking-wide text-raw-text sm:text-xl">3. Pick 2 communities</h2>
+                <h2 className="font-display text-lg tracking-wide text-raw-text sm:text-xl">3. Pick a community</h2>
                 <span className={`shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
-                  selectedCommunityIds.length === 2
+                  selectedCommunityIds.length >= 1
                     ? "border-raw-gold/60 bg-raw-gold/10 text-raw-gold"
                     : "border-raw-border/40 text-raw-gold/75"
                 }`}>
-                  {selectedCommunityIds.length}/2
+                  {selectedCommunityIds.length}/1
                 </span>
               </div>
 
               <div className="mt-5 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
                 {ONBOARDING_COMMUNITIES.map((community) => {
                   const isSelected = selectedCommunityIds.includes(community.id);
-                  const selectionLimitReached = selectedCommunityIds.length >= 2;
+                  const selectionLimitReached = selectedCommunityIds.length >= 1;
                   const isSelectionDisabled = selectionLimitReached && !isSelected;
 
                   return (
