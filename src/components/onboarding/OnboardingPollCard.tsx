@@ -21,6 +21,23 @@ const COMMENT_CLIP =
 const SWIPE_THRESHOLD = 80;
 const VELOCITY_THRESHOLD = 400;
 
+function CountUp({ target, duration = 900 }: { target: number; duration?: number }) {
+  const [val, setVal] = useState(0);
+  useEffect(() => {
+    setVal(0);
+    let raf: number;
+    const start = performance.now();
+    const tick = (now: number) => {
+      const t = Math.min((now - start) / duration, 1);
+      setVal(Math.round(target * (1 - Math.pow(1 - t, 3))));
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, duration]);
+  return <>{val}</>;
+}
+
 function GoldIcosahedron({ className = "" }: { className?: string }) {
   return (
     <svg
@@ -314,7 +331,7 @@ export function OnboardingPollCard({
                     }}
                   >
                     <span className="truncate max-w-[70px]">{opt0}</span>
-                    {selectedOption && <span className="shrink-0 text-sm font-bold opacity-90">{opt0Percent}%</span>}
+                    {selectedOption && <span className="shrink-0 text-sm font-bold opacity-90"><CountUp target={opt0Percent} />%</span>}
                   </span>
                 </button>
 
@@ -371,7 +388,7 @@ export function OnboardingPollCard({
                     }}
                   >
                     <span className="truncate max-w-[70px]">{opt1}</span>
-                    {selectedOption && <span className="shrink-0 text-sm font-bold opacity-90">{opt1Percent}%</span>}
+                    {selectedOption && <span className="shrink-0 text-sm font-bold opacity-90"><CountUp target={opt1Percent} />%</span>}
                   </span>
                 </button>
               </div>
