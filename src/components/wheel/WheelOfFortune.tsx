@@ -16,6 +16,7 @@ interface WheelOfFortuneProps {
   disabled?: boolean;
   prizeWeights?: Partial<Record<string, number>>;
   forcedPrizeId?: string | null;
+  radius?: number;
 }
 
 const SPIN_DURATION = 5000;
@@ -65,14 +66,14 @@ function getLabelLines(label: string): string[] {
   return [parts.slice(0, midpoint).join(" "), parts.slice(midpoint).join(" ")];
 }
 
-export function WheelOfFortune({ prizes, onSpinEnd, disabled = false, prizeWeights, forcedPrizeId = null }: WheelOfFortuneProps) {
+export function WheelOfFortune({ prizes, onSpinEnd, disabled = false, prizeWeights, forcedPrizeId = null, radius: radiusProp = 200 }: WheelOfFortuneProps) {
   const { mode } = useTheme();
   const pointerId = useId().replace(/:/g, "");
   const [rotation, setRotation] = useState(0);
   const [isSpinning, setIsSpinning] = useState(false);
   const currentPrizeRef = useRef<WheelPrize | null>(null);
 
-  const radius = 200;
+  const radius = radiusProp;
   const size = radius * 2;
   const total = prizes.length;
   const isLight = mode === "light";

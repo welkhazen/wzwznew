@@ -39,31 +39,31 @@ function buildSpinPrizes(mode: "light" | "dark", accentRgb: string): WheelPrize[
     { id: "xp-50", label: "50 XP", shortLabel: "50 XP", color: neutralA, textColor: neutralText },
     { id: "try-1", label: "Try Again", shortLabel: "TRY AGAIN", color: neutralB, textColor: missText },
     { id: "xp-100", label: "100 XP", shortLabel: "100 XP", color: accentSoft, textColor: neutralText },
-    { id: "streak", label: "Streak Shield", shortLabel: "SHIELD", color: neutralA, textColor: neutralText },
-    { id: "xp-200", label: "200 XP", shortLabel: "200 XP", color: accentStrong, textColor: neutralText },
     { id: "try-2", label: "Try Again", shortLabel: "TRY AGAIN", color: neutralB, textColor: missText },
+    { id: "xp-200", label: "200 XP", shortLabel: "200 XP", color: accentStrong, textColor: neutralText },
+    { id: "try-3", label: "Try Again", shortLabel: "TRY AGAIN", color: neutralB, textColor: missText },
     { id: "theme", label: "Avatar Theme", shortLabel: "THEME", color: accentStrong, textColor: neutralText },
     { id: "xp-50b", label: "50 XP", shortLabel: "50 XP", color: neutralA, textColor: neutralText },
-    { id: "try-3", label: "Try Again", shortLabel: "TRY AGAIN", color: neutralB, textColor: missText },
+    { id: "try-4", label: "Try Again", shortLabel: "TRY AGAIN", color: neutralB, textColor: missText },
     { id: "xp-500", label: "500 XP Jackpot!", shortLabel: "500 XP", color: isLight ? "#efd98f" : "#1a1508", textColor: isLight ? "#6f4e00" : "#F1C42D" },
-    { id: "badge", label: "Community Badge", shortLabel: "BADGE", color: neutralA, textColor: neutralText },
     { id: "xp-100b", label: "100 XP", shortLabel: "100 XP", color: accentSoft, textColor: neutralText },
+    { id: "xp-50c", label: "50 XP", shortLabel: "50 XP", color: neutralA, textColor: neutralText },
   ];
 }
 
 const PRIZE_WEIGHTS: Partial<Record<string, number>> = {
   "xp-500": 0.01,
-  "try-1": 0.17,
-  "try-2": 0.17,
-  "try-3": 0.17,
-  "xp-50": 0.12,
-  "xp-50b": 0.12,
-  "xp-100": 0.08,
-  "xp-100b": 0.08,
+  "try-1": 0.15,
+  "try-2": 0.15,
+  "try-3": 0.15,
+  "try-4": 0.15,
+  "xp-50": 0.10,
+  "xp-50b": 0.10,
+  "xp-50c": 0.10,
+  "xp-100": 0.06,
+  "xp-100b": 0.06,
   "xp-200": 0.04,
-  streak: 0.02,
-  theme: 0.015,
-  badge: 0.015,
+  theme: 0.03,
 };
 
 const prizeMessages: Record<string, { title: string; desc: string; icon: typeof Gift; poolLabel: string; rarity: string; poolColor: string }> = {
@@ -73,12 +73,12 @@ const prizeMessages: Record<string, { title: string; desc: string; icon: typeof 
   "xp-100b": { title: "100 XP Earned!", desc: "Solid spin! Your avatar grows stronger.", icon: Star, poolLabel: "100 XP", rarity: "Common", poolColor: "text-raw-gold/60" },
   "xp-200": { title: "200 XP Earned!", desc: "Big win! You're leveling up fast.", icon: Sparkles, poolLabel: "200 XP", rarity: "Rare", poolColor: "text-raw-gold/80" },
   "xp-500": { title: "500 XP Jackpot!", desc: "Incredible! The wheel favors the bold.", icon: Gift, poolLabel: "500 XP", rarity: "Jackpot", poolColor: "text-raw-gold" },
-  streak: { title: "Streak Shield!", desc: "Your streak is protected for one missed day.", icon: Sparkles, poolLabel: "Streak Shield", rarity: "Rare", poolColor: "text-raw-silver/70" },
   theme: { title: "Avatar Theme Unlocked!", desc: "A new look awaits you in the Marketplace.", icon: Gift, poolLabel: "Avatar Theme", rarity: "Rare", poolColor: "text-raw-gold/80" },
-  badge: { title: "Community Badge!", desc: "Show it off in your communities.", icon: Star, poolLabel: "Badge", rarity: "Uncommon", poolColor: "text-raw-silver/60" },
   "try-1": { title: "Not This Time", desc: "The wheel will turn again tomorrow.", icon: Clock, poolLabel: "Try Again", rarity: "Miss", poolColor: "text-raw-silver/45" },
   "try-2": { title: "Not This Time", desc: "The wheel will turn again tomorrow.", icon: Clock, poolLabel: "Try Again", rarity: "Miss", poolColor: "text-raw-silver/45" },
   "try-3": { title: "Not This Time", desc: "The wheel will turn again tomorrow.", icon: Clock, poolLabel: "Try Again", rarity: "Miss", poolColor: "text-raw-silver/45" },
+  "try-4": { title: "Not This Time", desc: "The wheel will turn again tomorrow.", icon: Clock, poolLabel: "Try Again", rarity: "Miss", poolColor: "text-raw-silver/45" },
+  "xp-50c": { title: "50 XP Earned!", desc: "Every bit counts on your journey.", icon: Zap, poolLabel: "50 XP", rarity: "Common", poolColor: "text-raw-silver/50" },
 };
 
 export function DashboardDailySpin({ userId, isAdmin = false }: DashboardDailySpinProps) {
@@ -96,9 +96,7 @@ export function DashboardDailySpin({ userId, isAdmin = false }: DashboardDailySp
       { id: "xp-100", label: "100 XP" },
       { id: "xp-200", label: "200 XP" },
       { id: "xp-500", label: "500 XP Jackpot" },
-      { id: "streak", label: "Streak Shield" },
       { id: "theme", label: "Avatar Theme" },
-      { id: "badge", label: "Community Badge" },
       { id: "try-1", label: "Try Again" },
     ],
     [],
@@ -244,6 +242,7 @@ export function DashboardDailySpin({ userId, isAdmin = false }: DashboardDailySp
             disabled={isSpinDisabled}
             prizeWeights={PRIZE_WEIGHTS}
             forcedPrizeId={forcedPrizeId}
+            radius={160}
           />
         </div>
       </div>
