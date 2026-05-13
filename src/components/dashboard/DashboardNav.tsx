@@ -16,6 +16,7 @@ import {
   Monitor,
 } from "lucide-react";
 import { AvatarFigure } from "@/components/ui/avatar-figure";
+import { TokenBalanceButton } from "@/components/ui/TokenBalanceButton";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/providers/useTheme";
 import { THEME_MODE_LABELS, THEME_MODE_ORDER, type AccentPresetId, type ThemeMode } from "@/providers/theme-context";
@@ -124,7 +125,7 @@ export function DashboardNav({ username, avatarLevel, showAdminLink = false, onP
           </div>
         )}
 
-        {/* Right: bell + avatar */}
+        {/* Right: bell + token + avatar */}
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
           <div className="relative" ref={notifRef}>
             <button
@@ -165,6 +166,7 @@ export function DashboardNav({ username, avatarLevel, showAdminLink = false, onP
               </div>
             )}
           </div>
+          <TokenBalanceButton />
           <DropdownMenu onOpenChange={(open) => { if (!open) setAppearanceOpen(false); }}>
             <DropdownMenuTrigger asChild>
               <button
