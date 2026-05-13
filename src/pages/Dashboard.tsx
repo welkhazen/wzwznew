@@ -2,7 +2,7 @@ import { FloatingDock } from "@/components/ui/floating-dock";
 import { useEffect, useMemo, useState } from "react";
 import { readCommunityChats } from "@/lib/communityChat";
 import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
-import { Home as HomeIcon, MessageCircle, Target, User as UserIcon, Wallet, LogOut, Shield, Trophy, Sparkles } from "lucide-react";
+import { Archive, Home as HomeIcon, MessageCircle, Target, User as UserIcon, Wallet, LogOut, Shield, Trophy, Sparkles } from "lucide-react";
 import { matchPath, useLocation, useNavigate } from "react-router-dom";
 import { DashboardNav, type DashboardTab } from "@/components/dashboard/DashboardNav";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
@@ -13,11 +13,13 @@ import { DashboardChallenges } from "@/components/dashboard/DashboardChallenges"
 import { DashboardDailySpin } from "@/components/dashboard/DashboardDailySpin";
 import { DashboardProfile } from "@/components/dashboard/DashboardProfile";
 import { DashboardWallet } from "@/components/dashboard/DashboardWallet";
+import { DashboardInventory } from "@/components/dashboard/DashboardInventory";
 import { DashboardSectionShell } from "@/components/dashboard/DashboardSectionShell";
 import { LevelUpCelebration } from "@/components/ui/LevelUpCelebration";
 import { useUserProgress } from "@/store/useUserProgress";
 import { XP_REWARDS } from "@/lib/userProgress";
 import type { User, Poll } from "@/store/useRawStore";
+import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
 
 interface DashboardProps {
   user: User;
@@ -28,6 +30,7 @@ interface DashboardProps {
   ownedAvatarLevels: Set<number>;
   unlockAvatarLevel: (level: number) => Promise<boolean>;
   avatarPricesByLevel: Record<number, string>;
+  avatarCatalog: AvatarCatalogItem[];
   dailyAnsweredCount: number;
   dailyPollLimit: number;
   isDailyPollLimitReached: boolean;
@@ -46,6 +49,7 @@ export default function Dashboard({
   ownedAvatarLevels,
   unlockAvatarLevel,
   avatarPricesByLevel,
+  avatarCatalog,
   dailyAnsweredCount,
   dailyPollLimit,
   isDailyPollLimitReached,
@@ -179,6 +183,22 @@ export default function Dashboard({
             <DashboardDailySpin userId={user.id} isAdmin={user.role === "admin"} />
           </DashboardSectionShell>
         );
+      case "inventory":
+        return (
+          <DashboardSectionShell>
+            <DashboardInventory
+              polls={polls}
+              votedPolls={votedPolls}
+              avatarLevel={avatarLevel}
+              ownedAvatarLevels={ownedAvatarLevels}
+              onUnlockAvatar={unlockAvatarLevel}
+              avatarPricesByLevel={avatarPricesByLevel}
+              avatarCatalog={avatarCatalog}
+              tokenBalance={tokenBalance}
+              userId={user.id}
+            />
+          </DashboardSectionShell>
+        );
       case "wallet":
         return (
           <DashboardSectionShell>
@@ -296,7 +316,14 @@ export default function Dashboard({
             active: !isHome && activeTab === "challenges",
           },
           {
-            title: "Wallet",
+            title: "Inventory",
+            icon: <Archive className="h-5 w-5" />,
+            href: "#",
+            onClick: () => handleTabChange("inventory"),
+            active: !isHome && activeTab === "inventory",
+          },
+          {
+            title: "Billing",
             icon: <Wallet className="h-5 w-5" />,
             href: "#",
             onClick: () => handleTabChange("wallet"),

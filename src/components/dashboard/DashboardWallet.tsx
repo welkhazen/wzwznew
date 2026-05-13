@@ -17,7 +17,7 @@ export function DashboardWallet() {
   return (
     <div className="space-y-6 sm:space-y-8">
       <header className="space-y-1">
-        <h1 className="font-display text-xl tracking-wide text-raw-text sm:text-2xl">Wallet</h1>
+        <h1 className="font-display text-xl tracking-wide text-raw-text sm:text-2xl">Billing</h1>
         <p className="text-xs text-raw-silver/45 sm:text-sm">
           Purchase tokens to unlock features, boost rewards, and access premium content.
         </p>

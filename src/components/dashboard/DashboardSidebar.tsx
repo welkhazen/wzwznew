@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Home, MessageCircle, Target, Trophy, Wallet, Shield, LogOut } from "lucide-react";
+import { Archive, Home, MessageCircle, Target, Trophy, Wallet, Shield, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
 import { FloatingDock } from "@/components/ui/floating-dock";
 import { countUnreadMessages, readCommunityChats, type PersistedCommunityRecord } from "@/lib/communityChat";
@@ -22,7 +22,8 @@ const NAV: { icon: typeof Home; label: string; tab: DashboardTab | "home" }[] = 
   { icon: MessageCircle, label: "Communities", tab: "communities" },
   { icon: Target,        label: "Polls",       tab: "polls"       },
   { icon: Trophy,        label: "Challenges",  tab: "challenges"  },
-  { icon: Wallet,        label: "Wallet",      tab: "wallet"      },
+  { icon: Archive,       label: "Inventory",   tab: "inventory"   },
+  { icon: Wallet,        label: "Billing",     tab: "wallet"      },
 ];
 
 export function DashboardSidebar({

@@ -24,6 +24,7 @@ const Index = () => {
     ownedAvatarLevels,
     unlockAvatarLevel,
     avatarPricesByLevel,
+    avatarCatalog,
     onboardingStep,
     setOnboardingStep,
     onboardingAnsweredPollIds,
@@ -128,6 +129,7 @@ const Index = () => {
         ownedAvatarLevels={ownedAvatarLevels}
         unlockAvatarLevel={unlockAvatarLevel}
         avatarPricesByLevel={avatarPricesByLevel}
+        avatarCatalog={avatarCatalog}
         dailyAnsweredCount={dailyAnsweredCount}
         dailyPollLimit={dailyPollLimit}
         isDailyPollLimitReached={isDailyPollLimitReached}

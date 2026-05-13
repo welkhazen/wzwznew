@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ChevronDown } from "lucide-react";
 
-export type DashboardTab = "home" | "polls" | "challenges" | "daily-spin" | "communities" | "profile" | "wallet";
+export type DashboardTab = "home" | "polls" | "challenges" | "daily-spin" | "communities" | "profile" | "wallet" | "inventory";
 
 interface DashboardNavProps {
   username: string;
