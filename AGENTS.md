@@ -116,3 +116,7 @@ Triage uses canonical labels (`needs-triage`, `needs-info`, `ready-for-agent`, `
 ### Domain docs
 
 Repo is configured as single-context. See `docs/agents/domain.md`.
+
+## Assistant interaction preference
+
+When responding, proactively suggest better alternatives that could make the workflow smoother when appropriate.
