@@ -19,6 +19,7 @@ import {
 interface DashboardDailySpinProps {
   userId: string;
   isAdmin?: boolean;
+  onAwardXP?: (amount: number) => Promise<void>;
 }
 
 function toRgba(rgbSpaceSeparated: string, alpha: number): string {
@@ -81,7 +82,7 @@ const prizeMessages: Record<string, { title: string; desc: string; icon: typeof 
   "xp-50c": { title: "50 XP Earned!", desc: "Every bit counts on your journey.", icon: Zap, poolLabel: "50 XP", rarity: "Common", poolColor: "text-raw-silver/50" },
 };
 
-export function DashboardDailySpin({ userId, isAdmin = false }: DashboardDailySpinProps) {
+export function DashboardDailySpin({ userId, isAdmin = false, onAwardXP }: DashboardDailySpinProps) {
   const { mode, accent, accentPresets } = useTheme();
   const storageKey = useMemo(() => `raw.daily-spin.${userId}`, [userId]);
   const accentRgb = useMemo(
@@ -176,6 +177,11 @@ export function DashboardDailySpin({ userId, isAdmin = false }: DashboardDailySp
     setHasSpunToday(true);
     setPrizeModal(prize);
     try { localStorage.setItem(storageKey, JSON.stringify({ date: getTodayKey() })); } catch { /* noop */ }
+
+    const xpMatch = prize.id.match(/^xp-(\d+)/);
+    if (xpMatch && onAwardXP) {
+      void onAwardXP(parseInt(xpMatch[1], 10));
+    }
   };
 
   const selectedMessage = selectedPrize ? prizeMessages[selectedPrize.id] : null;

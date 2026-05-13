@@ -18,6 +18,7 @@ interface DashboardChallengesProps {
   pollsAnswered: number;
   dailyAnsweredCount: number;
   dailyPollLimit: number;
+  onAwardXP?: (amount: number) => Promise<void>;
 }
 
 const challengeDefinitions = [
@@ -94,6 +95,7 @@ export function DashboardChallenges({
   pollsAnswered,
   dailyAnsweredCount,
   dailyPollLimit,
+  onAwardXP,
 }: DashboardChallengesProps) {
   const progressMap: Record<string, number> = {
     "first-session": pollsAnswered > 0 ? 1 : 0,
@@ -112,7 +114,7 @@ export function DashboardChallenges({
 
   return (
     <div className="space-y-5">
-      <DashboardDailySpin userId={userId} isAdmin={isAdmin} />
+      <DashboardDailySpin userId={userId} isAdmin={isAdmin} onAwardXP={onAwardXP} />
 
       <header className="space-y-2">
         <h1 className="font-display text-xl tracking-wide text-raw-text sm:text-2xl">Challenges</h1>
