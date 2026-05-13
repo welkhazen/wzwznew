@@ -112,7 +112,6 @@ export function HoverGradientVoteButton({
         <span
           className="relative z-10 flex h-full flex-col items-center justify-center gap-1 font-display text-base tracking-wide text-white sm:text-lg"
           style={{
-            textShadow: selected ? "0 0 10px hsl(var(--primary) / 0.9)" : undefined,
             opacity: answered && !selected ? 0.7 : 1,
           }}
         >

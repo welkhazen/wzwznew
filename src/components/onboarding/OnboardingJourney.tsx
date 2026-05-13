@@ -355,13 +355,13 @@ const [pollStats, setPollStats] = useState<Record<string, Record<string, number>
                 Your avatar is your public signal. You can evolve it later, but choose your starting form now.
               </p>
 
-              <div className="mt-5 grid grid-cols-[minmax(0,1fr)_9.8rem] gap-3 md:mt-8 md:grid-cols-[minmax(0,1fr)_18rem] md:items-center md:gap-8">
+              <div className="mt-5 grid grid-cols-1 gap-6 md:mt-8 md:grid-cols-[minmax(0,1fr)_18rem] md:items-center md:gap-8">
                 <div className="flex min-w-0 flex-col gap-5">
                   <div>
                     <p className="mb-3 text-center font-display text-[9px] uppercase tracking-[0.2em] text-raw-gold/70">
                       Free avatars
                     </p>
-                    <div className="grid w-full grid-cols-5 gap-x-2 gap-y-3 sm:max-w-[30rem] sm:gap-x-3 sm:gap-y-4">
+                    <div className="mx-auto grid w-full max-w-[15rem] grid-cols-2 gap-x-3 gap-y-3 min-[420px]:max-w-[22rem] min-[420px]:grid-cols-3 sm:max-w-[30rem] sm:grid-cols-5 sm:gap-x-3 sm:gap-y-4 md:mx-0">
                     {freeAvatarChoices.map((avatar, i) => {
                       const index = i + 1;
                       const isFree = true;
@@ -411,7 +411,7 @@ const [pollStats, setPollStats] = useState<Record<string, Record<string, number>
                   </div>
 
                   <div>
-                    <div className="mb-3 flex w-full items-center justify-between gap-3 sm:max-w-[30rem]">
+                    <div className="mx-auto mb-3 flex w-full max-w-[15rem] items-center justify-between gap-3 min-[420px]:max-w-[22rem] sm:max-w-[30rem] md:mx-0">
                       <button
                         type="button"
                         onClick={() => setAvatarPage((page) => Math.max(0, page - 1))}
@@ -440,7 +440,7 @@ const [pollStats, setPollStats] = useState<Record<string, Record<string, number>
                       </button>
                     </div>
 
-                    <div className="grid w-full grid-cols-5 gap-x-2 gap-y-3 sm:max-w-[30rem] sm:gap-x-3 sm:gap-y-4">
+                    <div className="mx-auto grid w-full max-w-[15rem] grid-cols-2 gap-x-3 gap-y-3 min-[420px]:max-w-[22rem] min-[420px]:grid-cols-3 sm:max-w-[30rem] sm:grid-cols-5 sm:gap-x-3 sm:gap-y-4 md:mx-0">
                       {isLoadingPreviewAvatars && visiblePreviewAvatarChoices.length === 0
                         ? Array.from({ length: AVATAR_PAGE_SIZE }).map((_, i) => (
                             <div key={i} className="flex flex-col items-center gap-1 p-1.5">
@@ -485,7 +485,7 @@ const [pollStats, setPollStats] = useState<Record<string, Record<string, number>
                   </div>
                 </div>
 
-                <div ref={phonePreviewRef} className="flex flex-col items-center justify-start md:justify-center">
+                <div className="order-first flex flex-col items-center justify-start md:order-none md:justify-center">
                   <div className="h-[360px] w-[157px] overflow-visible md:hidden">
                     <div
                       style={{
@@ -602,8 +602,6 @@ const [pollStats, setPollStats] = useState<Record<string, Record<string, number>
                                   setCurrentPollIndex((prev) => Math.min(onboardingPolls.length - 1, prev + 1));
                                 }
                               }}
-                              currentIndex={currentPollIndex}
-                              completedCount={answeredCount}
                             />
                           </motion.div>
                         </AnimatePresence>

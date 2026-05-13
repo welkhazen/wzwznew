@@ -310,12 +310,16 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
             </button>
 
             <div className="mb-2">
-              <span className="rounded-full border border-raw-gold/30 bg-raw-gold/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-raw-gold">
+              <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                isLight
+                  ? "border border-raw-ink/30 bg-raw-ink/5 text-raw-ink"
+                  : "border border-white/35 bg-white/8 text-white"
+              }`}>
                 {activeItem.category}
               </span>
             </div>
 
-            <p className="mb-2 font-display text-sm uppercase tracking-[0.06em] text-raw-gold">
+            <p className={`mb-2 font-display text-sm uppercase tracking-[0.06em] ${isLight ? "text-raw-ink" : "text-white"}`}>
               {activeItem.title}
             </p>
 

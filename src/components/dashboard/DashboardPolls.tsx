@@ -460,6 +460,9 @@ export function DashboardPolls({
               <p className="mt-1.5 text-xs text-raw-silver/60 sm:text-sm">
                 Next 7 polls unlock on <span className="text-raw-gold/80">{getNextUnlockTime()}</span>.
               </p>
+              <p className="mt-1 text-xs text-raw-gold/75 sm:text-sm">
+                Use 10 tokens to unlock 7 more polls now.
+              </p>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <div className="flex items-center gap-1.5 text-[11px] text-raw-silver/50">
@@ -472,7 +475,7 @@ export function DashboardPolls({
                 className="mt-1 flex items-center justify-center gap-2 border border-raw-gold/65 bg-raw-gold/90 px-4 py-2.5 text-xs font-semibold text-raw-ink hover:bg-raw-gold disabled:cursor-not-allowed disabled:opacity-50 sm:mt-0 sm:ml-auto"
               >
                 <Coins className="size-3.5" />
-                {tokenBalance < 10 ? "Not enough tokens" : "Unlock 7 more — 10 tokens"}
+                {tokenBalance < 10 ? "Need 10 tokens to unlock 7 more" : "Unlock 7 more polls - 10 tokens"}
               </button>
             </div>
           </div>
