@@ -63,7 +63,7 @@ function cloneCatalog(items: AvatarCatalogItem[]): AvatarCatalogItem[] {
 function sanitizeCatalog(items: AvatarCatalogItem[]): AvatarCatalogItem[] {
   const unique = new Map<string, AvatarCatalogItem>();
 
-  items.forEach((item, idx) => {
+  items.filter(Boolean).forEach((item, idx) => {
     const id = (item.id || `avatar-${idx + 1}`).trim();
     if (!id) return;
 
