@@ -234,17 +234,17 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
                   className={`${isTinyPhone ? "h-8 w-8" : "h-10 w-10"} rounded-full flex items-center justify-center ${isPulsing ? "animate-pulse" : ""}`}
                   style={{
                     background: isExpanded
-                      ? "linear-gradient(135deg, #F1C42D, #d4a017)"
+                      ? "linear-gradient(135deg, rgb(var(--raw-accent)), color-mix(in srgb, rgb(var(--raw-accent)) 78%, black))"
                       : isRelated
                         ? (isLight ? "rgba(180,140,20,0.15)" : "rgba(241,196,45,0.18)")
                         : (isLight ? "rgba(255,255,255,0.92)" : "rgba(8,8,8,0.88)"),
                     border: isExpanded
-                      ? "2px solid #F1C42D"
+                      ? "2px solid rgb(var(--raw-accent))"
                       : isRelated
                         ? "2px solid rgba(241,196,45,0.55)"
                         : (isLight ? "1.5px solid rgba(160,120,10,0.5)" : "1px solid rgba(241,196,45,0.28)"),
                     boxShadow: isExpanded
-                      ? "0 0 18px rgba(241,196,45,0.55), 0 0 36px rgba(241,196,45,0.2)"
+                      ? "0 0 18px rgb(var(--raw-accent) / 0.55), 0 0 36px rgb(var(--raw-accent) / 0.2)"
                       : isRelated
                         ? "0 0 12px rgba(241,196,45,0.3)"
                         : (isLight ? "0 2px 8px rgba(0,0,0,0.12)" : "0 0 6px rgba(241,196,45,0.08)"),
@@ -267,11 +267,11 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
                     fontWeight: 700,
                     color: isLight
                       ? (isExpanded ? "#000000" : "rgba(0,0,0,0.75)")
-                      : (isExpanded ? "#F1C42D" : "rgba(255,255,255,0.85)"),
+                      : (isExpanded ? "rgb(var(--raw-accent))" : "rgba(255,255,255,0.85)"),
                     textShadow: isLight
                       ? "none"
                       : (isExpanded
-                          ? "0 0 10px rgba(241,196,45,0.7), 0 0 20px rgba(241,196,45,0.4)"
+                          ? "0 0 10px rgb(var(--raw-accent) / 0.7), 0 0 20px rgb(var(--raw-accent) / 0.4)"
                           : "0 1px 4px rgba(0,0,0,1), 0 0 8px rgba(0,0,0,0.9)"),
                   }}
                 >
@@ -310,12 +310,16 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
             </button>
 
             <div className="mb-2">
-              <span className="rounded-full border border-raw-gold/30 bg-raw-gold/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-raw-gold">
+              <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                isLight
+                  ? "border border-raw-ink/30 bg-raw-ink/5 text-raw-ink"
+                  : "border border-white/35 bg-white/8 text-white"
+              }`}>
                 {activeItem.category}
               </span>
             </div>
 
-            <p className="mb-2 font-display text-sm uppercase tracking-[0.06em] text-raw-gold">
+            <p className={`mb-2 font-display text-sm uppercase tracking-[0.06em] ${isLight ? "text-raw-ink" : "text-white"}`}>
               {activeItem.title}
             </p>
 
