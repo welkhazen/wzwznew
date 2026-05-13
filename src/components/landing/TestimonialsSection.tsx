@@ -1,67 +1,74 @@
-import { CardStack } from "@/components/ui/card-stack";
-import { useTheme } from "@/providers/useTheme";
+import { Card, CardContent } from "@/components/ui/card";
+import { Marquee } from "@/components/ui/3d-testimonails";
+import { Instagram } from "lucide-react";
 
-const CARDS = [
-  {
-    id: 0,
-    name: "anon_wolf",
-    designation: "Late Night Talks",
-    content: (
-      <p>I've never felt this comfortable being honest online. No judgment, just real talk.</p>
-    ),
-  },
-  {
-    id: 1,
-    name: "midnight_sage",
-    designation: "Self-Improvement Circle",
-    content: (
-      <p>The anonymity actually makes the community stronger. People show up as who they really are.</p>
-    ),
-  },
-  {
-    id: 2,
-    name: "quiet_storm",
-    designation: "Mental Wellness",
-    content: (
-      <p>Finally a place where I don't have to perform. I just exist and connect.</p>
-    ),
-  },
-  {
-    id: 3,
-    name: "echo_mind",
-    designation: "Late Night Talks",
-    content: (
-      <p>I feel more like myself here than on traditional profiles.</p>
-    ),
-  },
-  {
-    id: 4,
-    name: "raw_thinker",
-    designation: "Self-Improvement Circle",
-    content: (
-      <p>The polls are addictive. Seeing how others think without the social pressure is powerful.</p>
-    ),
-  },
+const testimonials = [
+  { id: "ava", body: "Cascade AI made my workflow 10x faster!" },
+  { id: "ana", body: "Vertical marquee is a game changer!" },
+  { id: "mat", body: "Animations are buttery smooth!" },
+  { id: "maya", body: "Setup was a breeze!" },
+  { id: "noah", body: "Best marquee component!" },
+  { id: "luc", body: "Very customizable and smooth." },
+  { id: "haru", body: "Impressive performance on mobile!" },
+  { id: "emma", body: "Love the pause on hover feature!" },
+  { id: "carl", body: "Great for testimonials and logos." },
 ];
 
-export function TestimonialsSection() {
-  const { mode } = useTheme();
-  const isLight = mode === "light";
-
+function TestimonialCard({ body }: (typeof testimonials)[number]) {
   return (
-    <section className="landing-section relative py-14 px-4 sm:py-20 sm:px-6">
-      <div
-        className="relative w-full overflow-hidden rounded-2xl border border-raw-border/40 bg-raw-surface/20 px-6 py-10 sm:px-10 sm:py-14"
-        style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 0 40px rgba(0,0,0,0.3)" }}
-      >
-        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/30 to-transparent" />
+    <Card className="w-56 border-border/70 bg-card/95">
+      <CardContent className="p-4">
+        <div className="mb-3 flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+          <Instagram className="size-3.5" aria-hidden="true" />
+          <span>Instagram</span>
+        </div>
+        <blockquote className="text-sm leading-relaxed text-foreground">“{body}”</blockquote>
+      </CardContent>
+    </Card>
+  );
+}
 
-        <p className="mb-10 text-center font-display text-[10px] tracking-[0.3em] uppercase text-raw-silver/40 sm:mb-12">
+export function TestimonialsSection() {
+  return (
+    <section className="landing-section relative px-4 py-14 sm:px-6 sm:py-20">
+      <div className="relative w-full overflow-hidden rounded-2xl border border-raw-border/40 bg-raw-surface/20 px-6 py-10 sm:px-10 sm:py-14">
+        <p className="mb-10 text-center font-display text-[10px] uppercase tracking-[0.3em] text-raw-silver/40 sm:mb-12">
           From the community
         </p>
 
-        <div className="flex items-center justify-center w-full max-w-xl mx-auto">
-          <CardStack items={CARDS} isLight={isLight} />
+        <div className="relative mx-auto flex h-96 w-full max-w-[800px] flex-row items-center justify-center overflow-hidden gap-1.5 rounded-lg border border-border [perspective:300px]">
+          <div
+            className="flex flex-row items-center gap-4"
+            style={{
+              transform:
+                "translateX(-100px) translateY(0px) translateZ(-100px) rotateX(20deg) rotateY(-10deg) rotateZ(20deg)",
+            }}
+          >
+            <Marquee vertical pauseOnHover repeat={3} className="[--duration:40s]">
+              {testimonials.map((review) => (
+                <TestimonialCard key={`a-${review.id}`} {...review} />
+              ))}
+            </Marquee>
+            <Marquee vertical pauseOnHover reverse repeat={3} className="[--duration:40s]">
+              {testimonials.map((review) => (
+                <TestimonialCard key={`b-${review.id}`} {...review} />
+              ))}
+            </Marquee>
+            <Marquee vertical pauseOnHover repeat={3} className="[--duration:40s]">
+              {testimonials.map((review) => (
+                <TestimonialCard key={`c-${review.id}`} {...review} />
+              ))}
+            </Marquee>
+            <Marquee vertical pauseOnHover reverse repeat={3} className="[--duration:40s]">
+              {testimonials.map((review) => (
+                <TestimonialCard key={`d-${review.id}`} {...review} />
+              ))}
+            </Marquee>
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-1/4 bg-gradient-to-b from-background" />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-background" />
+            <div className="pointer-events-none absolute inset-y-0 left-0 w-1/4 bg-gradient-to-r from-background" />
+            <div className="pointer-events-none absolute inset-y-0 right-0 w-1/4 bg-gradient-to-l from-background" />
+          </div>
         </div>
       </div>
     </section>
