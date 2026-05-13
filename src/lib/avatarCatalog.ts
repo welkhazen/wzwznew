@@ -203,7 +203,8 @@ export function readFullAvatarCatalogLocal(): AvatarCatalogItem[] {
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    return parsed as AvatarCatalogItem[];
+    // Sanitize to guard against stale/incomplete cache entries
+    return sanitizeCatalog(parsed as AvatarCatalogItem[]);
   } catch {
     return [];
   }
