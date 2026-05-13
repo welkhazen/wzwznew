@@ -328,17 +328,17 @@ export function LandingPollsSection() {
                           </div>
                         )}
                         <span
-                          className="relative z-10 flex h-full w-full items-center justify-center gap-1.5 text-base font-semibold tracking-wide"
+                          className="relative z-10 flex h-full w-full flex-col items-center justify-center gap-0.5 tracking-wide"
                           style={{
                             color: selected ? (selected === "no" ? "#FFFFFF" : "rgba(255,255,255,0.55)") : "#EBEBEB",
                             textShadow: selected === "no" ? "0 0 10px rgba(255,255,255,0.9)" : undefined,
                             transition: "color 0.4s ease",
                           }}
                         >
-                          No
                           {selected && (
-                            <span className="text-sm font-bold opacity-90">{animNoPercent}%</span>
+                            <span className="text-xl font-semibold leading-none">{animNoPercent}%</span>
                           )}
+                          <span className="text-base font-semibold">No</span>
                         </span>
                       </button>
 
@@ -384,17 +384,17 @@ export function LandingPollsSection() {
                           </div>
                         )}
                         <span
-                          className="relative z-10 flex h-full w-full items-center justify-center gap-1.5 text-base font-semibold tracking-wide"
+                          className="relative z-10 flex h-full w-full flex-col items-center justify-center gap-0.5 tracking-wide"
                           style={{
                             color: selected ? (selected === "yes" ? "#FFFFFF" : "rgba(255,255,255,0.55)") : "#F1C42D",
                             textShadow: selected === "yes" ? "0 0 10px rgba(241,196,45,1)" : undefined,
                             transition: "color 0.4s ease",
                           }}
                         >
-                          Yes
                           {selected && (
-                            <span className="text-sm font-bold opacity-90">{animYesPercent}%</span>
+                            <span className="text-xl font-semibold leading-none">{animYesPercent}%</span>
                           )}
+                          <span className="text-base font-semibold">Yes</span>
                         </span>
                       </button>
                     </div>

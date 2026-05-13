@@ -51,10 +51,10 @@ const FREE_ONBOARDING_AVATAR_COUNT = 10;
 const AVATAR_PAGE_SIZE = 10;
 
 function fallbackAvatarCatalog(): AvatarCatalogItem[] {
-  return AVATARS.map((avatar, index) => ({
+  return AVATARS.filter(Boolean).map((avatar, index) => ({
     id: `avatar-${index + 1}`,
     level: index + 1,
-    name: avatar.name,
+    name: avatar.name || `Avatar ${index + 1}`,
     price: index < FREE_ONBOARDING_AVATAR_COUNT ? "Free" : "Locked",
     imageSrc: avatar.imageSrc,
     bg: avatar.bg,

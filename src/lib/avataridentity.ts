@@ -23,12 +23,12 @@ const DEFAULT_LEVEL_THEMES: AvatarTheme[] = [
 ];
 
 function loadInitialThemes(): AvatarTheme[] {
-  const fromCache = readAvatarThemesFromCache().map((item) => ({
-    bg: item.bg,
-    figure: item.figure,
-    ring: item.ring,
-    glow: item.glow,
-    name: item.name,
+  const fromCache = readAvatarThemesFromCache().filter(Boolean).map((item, idx) => ({
+    bg: item.bg || "#1a1a1a",
+    figure: item.figure || "#c8c8c8",
+    ring: item.ring || "#c8c8c8",
+    glow: item.glow || "none",
+    name: item.name || `Avatar ${idx + 1}`,
     imageSrc: item.imageSrc,
   }));
 
