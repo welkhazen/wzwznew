@@ -135,10 +135,10 @@ export function PremiumPollCard({
                   selected={primarySelected}
                   percent={primaryPercent}
                   align="right"
-                  themeHue={uniformNeutralTheme ? "neutral" : "primary"}
+                  themeHue={uniformNeutralTheme && !primarySelected ? "neutral" : "primary"}
                   disabled={disabled}
                   onClick={() => submitVote(primaryOption.id)}
-                  showFill={false}
+                  showFill
                 />
 
                 {/* Secondary / No button */}
@@ -148,10 +148,10 @@ export function PremiumPollCard({
                   selected={secondarySelected}
                   percent={secondaryPercent}
                   align="left"
-                  themeHue="neutral"
+                  themeHue={secondarySelected ? "primary" : "neutral"}
                   disabled={disabled}
                   onClick={() => submitVote(secondaryOption.id)}
-                  showFill={false}
+                  showFill
                 />
 </div>
             </div>
