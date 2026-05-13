@@ -125,16 +125,17 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
     [index]
   );
 
+  const selected = answers[index];
+  const currentPoll = POLLS[index];
+  const animNoPercent = useAnimatedPercent(currentPoll?.noPercent ?? 0, { enabled: !!selected, durationMs: 900 });
+  const animYesPercent = useAnimatedPercent(currentPoll?.yesPercent ?? 0, { enabled: !!selected, durationMs: 900 });
+
   if (!mounted || !open) return null;
 
   const total = POLLS.length;
   const isLastPoll = index === total - 1;
   const canPrev = index > 0;
   const canNext = index < total - 1;
-  const selected = answers[index];
-  const currentPoll = POLLS[index];
-  const animNoPercent = useAnimatedPercent(currentPoll?.noPercent ?? 0, { enabled: !!selected, durationMs: 900 });
-  const animYesPercent = useAnimatedPercent(currentPoll?.yesPercent ?? 0, { enabled: !!selected, durationMs: 900 });
 
   const overlay = (
     <div
