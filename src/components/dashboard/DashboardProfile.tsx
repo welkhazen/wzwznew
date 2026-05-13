@@ -11,6 +11,7 @@ import {
 
 import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { LEVEL_THEMES, MAX_LEVEL, getAvatar } from "@/lib/avataridentity";
+import { xpProgressInLevel } from "@/lib/userProgress";
 
 interface DashboardProfileProps {
   username: string;
@@ -54,8 +55,7 @@ export function DashboardProfile({
   const [unlockingLevel, setUnlockingLevel] = useState<number | null>(null);
   const displayIndex = hoveredIndex ?? avatarLevel;
   const theme = getAvatar(displayIndex);
-  const xpForNext = displayIndex * 500;
-  const xpPct = Math.min(Math.round((xp / xpForNext) * 100), 100);
+  const { current: xpCurrent, needed: xpNeeded, pct: xpPct } = xpProgressInLevel(xp, avatarLevel);
 
   return (
     <div className="space-y-5">
@@ -82,10 +82,10 @@ export function DashboardProfile({
         <div className="mt-4 w-full">
           <div className="mb-1.5 flex items-center justify-between">
             <span className="text-[10px] text-raw-silver/30">
-              XP to Level {Math.min(displayIndex + 1, MAX_LEVEL)}
+              {avatarLevel < MAX_LEVEL ? `XP to Level ${avatarLevel + 1}` : "Max Level"}
             </span>
             <span className="text-[10px] text-raw-gold/60">
-              {xp.toLocaleString()} / {xpForNext.toLocaleString()}
+              {xpCurrent.toLocaleString()} {xpNeeded > 0 ? `/ ${xpNeeded.toLocaleString()}` : ""}
             </span>
           </div>
           <div className="h-1.5 overflow-hidden rounded-full bg-raw-border/30">

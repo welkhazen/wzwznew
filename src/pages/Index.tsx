@@ -4,6 +4,7 @@ import { useHostMode } from "@/hooks/use-host-mode";
 import Dashboard from "@/pages/Dashboard";
 import { useRawStore } from "@/store/useRawStore";
 import { joinCommunityChat } from "@/lib/communityChat";
+import { awardXP, XP_REWARDS } from "@/lib/userProgress";
 
 const LandingShellLazy = lazy(() => import("@/components/landing/LandingShell"));
 
@@ -110,6 +111,7 @@ const Index = () => {
               joinCommunityChat(communityId, { userId: user.id, username: user.username });
             });
             completeOnboarding();
+            void awardXP(user.id, XP_REWARDS.ONBOARDING_COMPLETE);
           }}
           onLogout={logout}
         />

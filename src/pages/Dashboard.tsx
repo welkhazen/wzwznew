@@ -14,6 +14,9 @@ import { DashboardDailySpin } from "@/components/dashboard/DashboardDailySpin";
 import { DashboardProfile } from "@/components/dashboard/DashboardProfile";
 import { DashboardWallet } from "@/components/dashboard/DashboardWallet";
 import { DashboardSectionShell } from "@/components/dashboard/DashboardSectionShell";
+import { LevelUpCelebration } from "@/components/ui/LevelUpCelebration";
+import { useUserProgress } from "@/store/useUserProgress";
+import { XP_REWARDS } from "@/lib/userProgress";
 import type { User, Poll } from "@/store/useRawStore";
 
 interface DashboardProps {
@@ -53,6 +56,7 @@ export default function Dashboard({
 }: DashboardProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { progress, leveledUpTo, clearLevelUp, award } = useUserProgress(user.id);
   const [activeTab, setActiveTab] = useState<DashboardTab>("home");
   const [dashboardCommunities, setDashboardCommunities] = useState<PersistedCommunityRecord[]>([]);
   const [isHome, setIsHome] = useState(true);
@@ -138,7 +142,10 @@ export default function Dashboard({
             isDailyPollLimitReached={isDailyPollLimitReached}
             tokenBalance={tokenBalance}
             onUnlockExtra={unlockExtraPolls}
-            onVote={vote}
+            onVote={(pollId, optionId) => {
+              vote(pollId, optionId);
+              void award(XP_REWARDS.POLL_VOTE);
+            }}
           />
         );
       case "communities":
@@ -189,6 +196,7 @@ export default function Dashboard({
               onUnlockAvatar={unlockAvatarLevel}
               avatarPricesByLevel={avatarPricesByLevel}
               pollsAnswered={votedPolls.size}
+              xp={progress?.xp ?? 0}
             />
           </DashboardSectionShell>
         );
@@ -214,6 +222,9 @@ export default function Dashboard({
     <div
       className="dashboard-enhanced-bg relative min-h-screen overflow-hidden bg-raw-black"
     >
+      {leveledUpTo !== null && (
+        <LevelUpCelebration newLevel={leveledUpTo} onClose={clearLevelUp} />
+      )}
       <DashboardNav
         username={user.username}
         avatarLevel={avatarLevel}
