@@ -3,7 +3,7 @@ import tokenImg from "@/assets/tokens.png";
 import { useRawStore } from "@/store/useRawStore";
 
 export function TokenBalanceButton() {
-  const balance = useRawStore((s) => s.tokenBalance);
+  const { tokenBalance: balance } = useRawStore();
   const [open, setOpen] = useState(false);
   const [spinning, setSpinning] = useState(false);
   const spinTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
