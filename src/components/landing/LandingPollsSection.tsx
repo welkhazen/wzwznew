@@ -10,6 +10,8 @@ import { LandingSectionShell } from "@/components/landing/LandingSectionShell";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 import { fetchSupabasePolls } from "@/utils/supabasePolls";
 import { POLL_QUESTION_SEEDS } from "@/features/polls/pollQuestions";
+import { useAnimatedPercent } from "@/components/polls/useAnimatedPercent";
+import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 
 interface PollItem {
   id?: string;
@@ -127,6 +129,9 @@ export function LandingPollsSection() {
   const [extraComments, setExtraComments] = useState<Record<number, string[]>>({});
   const [waterFilled, setWaterFilled] = useState(false);
   const commentsEndRef = useRef<HTMLDivElement>(null);
+  const commentsContainerRef = useRef<HTMLDivElement>(null);
+  const commentInputWrapperRef = useRef<HTMLDivElement>(null);
+  useKeyboardOffset(commentInputWrapperRef);
 
   const { data: fetchedPolls } = useQuery({
     queryKey: ["landing-polls-section"],
@@ -156,6 +161,8 @@ export function LandingPollsSection() {
   const currentPoll = polls[index];
   const selected = answers[index];
   const showComments = !!selected;
+  const animNoPercent = useAnimatedPercent(currentPoll?.noPercent ?? 0, { enabled: !!selected, durationMs: 900 });
+  const animYesPercent = useAnimatedPercent(currentPoll?.yesPercent ?? 0, { enabled: !!selected, durationMs: 900 });
   const allComments = [...(SEED_COMMENTS[index] ?? []), ...(extraComments[index] ?? [])];
 
   useEffect(() => {
@@ -177,7 +184,7 @@ export function LandingPollsSection() {
     if (!text) return;
     setExtraComments((prev) => ({ ...prev, [index]: [...(prev[index] ?? []), text] }));
     setCommentInputs((prev) => ({ ...prev, [index]: "" }));
-    setTimeout(() => commentsEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+    setTimeout(() => { if (commentsContainerRef.current) commentsContainerRef.current.scrollTop = commentsContainerRef.current.scrollHeight; }, 50);
   };
 
   return (
@@ -330,7 +337,7 @@ export function LandingPollsSection() {
                         >
                           No
                           {selected && (
-                            <span className="text-sm font-bold opacity-90">{currentPoll?.noPercent}%</span>
+                            <span className="text-sm font-bold opacity-90">{animNoPercent}%</span>
                           )}
                         </span>
                       </button>
@@ -386,7 +393,7 @@ export function LandingPollsSection() {
                         >
                           Yes
                           {selected && (
-                            <span className="text-sm font-bold opacity-90">{currentPoll?.yesPercent}%</span>
+                            <span className="text-sm font-bold opacity-90">{animYesPercent}%</span>
                           )}
                         </span>
                       </button>
@@ -444,7 +451,7 @@ export function LandingPollsSection() {
                   }}
                 >
                   <div
-                    className="px-4 py-4"
+                    className="px-4 py-4 overflow-hidden"
                     style={{
                       clipPath: COMMENT_CLIP,
                       background: isLight
@@ -456,7 +463,7 @@ export function LandingPollsSection() {
                       Anonymous Comments
                     </p>
 
-                    <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
+                    <div ref={commentsContainerRef} className="space-y-2 max-h-36 overflow-y-auto pr-1">
                       {allComments.map((c, i) => (
                         <div key={i} className="flex items-start gap-2">
                           <span className="mt-0.5 h-5 w-5 flex-shrink-0 rounded-full bg-[#F1C42D]/15 flex items-center justify-center text-[9px] text-[#F1C42D]/70 font-bold">
@@ -468,7 +475,7 @@ export function LandingPollsSection() {
                       <div ref={commentsEndRef} />
                     </div>
 
-                    <div className="mt-3 flex gap-2">
+                    <div ref={commentInputWrapperRef} className="mt-3 flex items-center gap-2 pr-1">
                       <input
                         type="text"
                         placeholder="Add anonymous comment…"
@@ -476,8 +483,8 @@ export function LandingPollsSection() {
                         onChange={(e) =>
                           setCommentInputs((prev) => ({ ...prev, [index]: e.target.value }))
                         }
-                        onKeyDown={(e) => e.key === "Enter" && handleSubmitComment()}
-                        className={`flex-1 rounded px-3 py-1.5 text-[12px] outline-none transition ${
+                        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleSubmitComment(); } }}
+                        className={`min-w-0 flex-1 rounded px-3 py-1.5 text-[12px] outline-none transition ${
                           isLight
                             ? "bg-black/5 border border-black/10 text-stone-700 placeholder:text-stone-400 focus:border-[#F1C42D]/50"
                             : "bg-white/5 border border-white/10 text-white/70 placeholder:text-white/25 focus:border-[#F1C42D]/40"
@@ -486,7 +493,7 @@ export function LandingPollsSection() {
                       <button
                         type="button"
                         onClick={handleSubmitComment}
-                        className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded border border-[#F1C42D]/30 bg-[#F1C42D]/10 text-[#F1C42D]/70 transition hover:bg-[#F1C42D]/20"
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded border border-[#F1C42D]/30 bg-[#F1C42D]/10 text-[#F1C42D]/70 transition hover:bg-[#F1C42D]/20"
                       >
                         <Send className="h-3.5 w-3.5" />
                       </button>

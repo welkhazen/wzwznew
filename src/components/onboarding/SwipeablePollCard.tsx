@@ -1,7 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, SendHorizontal } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { PremiumPollCard } from "@/components/polls/PremiumPollCard";
-import type { Comment } from "./PollComments";
 import { isNoPollOption, isYesPollOption } from "@/lib/polls/normalizePollOptionText";
 
 interface SwipeablePollCardProps {
@@ -10,14 +8,11 @@ interface SwipeablePollCardProps {
   options: string[];
   selectedOption?: string;
   isAnswered: boolean;
-  totalResponses: number;
   responseStats: Record<string, number>;
-  comments?: Comment[];
   pollIndex: number;
   totalPolls: number;
   onSwipe: (option: string) => void;
   onNavigate?: (direction: "left" | "right") => void;
-  onAddComment?: (content: string) => void;
   currentIndex: number;
   completedCount: number;
   hideInternalNav?: boolean;
@@ -39,45 +34,16 @@ export function SwipeablePollCard({
   options,
   selectedOption,
   isAnswered,
-  totalResponses,
   responseStats,
-  comments = [],
   pollIndex,
   totalPolls,
   onSwipe,
   onNavigate,
-  onAddComment,
   currentIndex,
   completedCount,
   hideInternalNav = false,
 }: SwipeablePollCardProps) {
-  const [commentText, setCommentText] = useState("");
-  const [updatedComments, setUpdatedComments] = useState<Comment[]>(comments);
-  const commentInputRef = useRef<HTMLInputElement>(null);
   const resolvedOptions = resolveOptions(options);
-
-  useEffect(() => {
-    setUpdatedComments(comments);
-  }, [comments]);
-
-  const handleCommentAdd = () => {
-    const content = commentText.trim();
-    if (!content) return;
-    const next: Comment = {
-      id: `comment-${Date.now()}`,
-      author: "You",
-      avatar: 5,
-      content,
-      timestamp: new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
-      likes: 0,
-      replies: [],
-      isAnonymous: false,
-    };
-    setUpdatedComments((prev) => [...prev, next]);
-    onAddComment?.(content);
-    setCommentText("");
-    commentInputRef.current?.blur();
-  };
 
 
   if (!resolvedOptions) {
@@ -133,64 +99,6 @@ export function SwipeablePollCard({
         </div>
       )}
 
-      {isAnswered && (
-        <div className="border border-raw-border/35 bg-raw-surface/60 p-3 sm:p-4">
-          <div className="mb-2 flex items-center justify-between">
-            <p className="text-[11px] uppercase tracking-[0.12em] text-raw-silver/55">
-              Comments
-              {totalResponses > 0 && <span className="ml-2 text-raw-silver/35">{totalResponses} responses</span>}
-            </p>
-          </div>
-          <form
-            onSubmit={(event) => {
-              event.preventDefault();
-              handleCommentAdd();
-            }}
-            className="flex w-full min-w-0 items-center gap-2 overflow-hidden rounded-full border border-raw-border/35 bg-raw-surface/50 px-3 py-2"
-          >
-            <input
-              ref={commentInputRef}
-              type="text"
-              value={commentText}
-              onChange={(event) => setCommentText(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key !== "Enter") return;
-                event.preventDefault();
-                handleCommentAdd();
-              }}
-              placeholder="Add a comment..."
-              enterKeyHint="send"
-              className="min-w-0 flex-1 bg-transparent text-base text-raw-text placeholder:text-raw-silver/35 focus:outline-none sm:text-sm"
-            />
-            <button
-              type="submit"
-              disabled={!commentText.trim()}
-              className="flex size-9 shrink-0 items-center justify-center rounded-full border border-raw-border/40 bg-raw-surface/40 text-raw-silver/80 transition hover:bg-raw-surface/55 disabled:cursor-not-allowed disabled:opacity-40"
-              aria-label="Add comment"
-            >
-              <SendHorizontal className="size-3.5" />
-            </button>
-          </form>
-
-          <div className="mt-3 max-h-[50vh] overflow-y-auto pr-1 sm:mt-4 sm:max-h-64">
-            <div className="flex flex-col gap-2.5">
-              {updatedComments.length === 0 ? (
-                <p className="text-center text-xs text-raw-silver/45">No comments yet. Be the first.</p>
-              ) : (
-                updatedComments.slice(0, 6).map((comment) => (
-                  <article key={comment.id} className="border border-raw-border/35 bg-raw-surface/40 px-3.5 py-2.5">
-                    <div className="flex items-center justify-between text-[11px] text-raw-silver/50">
-                      <span>@{comment.isAnonymous ? "Anonymous" : comment.author}</span>
-                      <span>{comment.timestamp}</span>
-                    </div>
-                    <p className="mt-1 text-sm text-raw-silver/85">{comment.content}</p>
-                  </article>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

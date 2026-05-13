@@ -1,11 +1,10 @@
 import { useRef, useCallback, useEffect, useState } from "react";
-import { Send } from "lucide-react";
+import { useAnimatedPercent } from "@/components/polls/useAnimatedPercent";
 import {
   motion,
   useMotionValue,
   useTransform,
   animate,
-  AnimatePresence,
 } from "framer-motion";
 import { useTheme } from "@/providers/useTheme";
 
@@ -15,11 +14,10 @@ const CARD_INNER_CLIP =
   "polygon(17px 0, calc(100% - 17px) 0, 100% 17px, 100% calc(100% - 17px), calc(100% - 17px) 100%, 17px 100%, 0 calc(100% - 17px), 0 17px)";
 const BUTTON_CLIP =
   "polygon(12px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 12px), 0 12px)";
-const COMMENT_CLIP =
-  "polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px)";
 
 const SWIPE_THRESHOLD = 80;
 const VELOCITY_THRESHOLD = 400;
+
 
 function GoldIcosahedron({ className = "" }: { className?: string }) {
   return (
@@ -86,9 +84,7 @@ interface OnboardingPollCardProps {
   options: string[];
   selectedOption?: string;
   responseStats: Record<string, number>;
-  comments: string[];
   onVote: (option: string) => void;
-  onAddComment: (text: string) => void;
 }
 
 export function OnboardingPollCard({
@@ -96,9 +92,7 @@ export function OnboardingPollCard({
   options,
   selectedOption,
   responseStats,
-  comments,
   onVote,
-  onAddComment,
 }: OnboardingPollCardProps) {
   const { mode } = useTheme();
   const isLight = mode === "light";
@@ -110,9 +104,7 @@ export function OnboardingPollCard({
   const opt1Bg = useTransform(x, [0, 120], ["rgba(16,185,129,0)", "rgba(16,185,129,0.18)"]);
   const opt0Bg = useTransform(x, [-120, 0], ["rgba(239,68,68,0.18)", "rgba(239,68,68,0)"]);
 
-  const [commentInput, setCommentInput] = useState("");
   const [waterFilled, setWaterFilled] = useState(false);
-  const commentInputRef = useRef<HTMLInputElement>(null);
 
   const opt0 = options[0] ?? "";
   const opt1 = options[1] ?? "";
@@ -120,6 +112,10 @@ export function OnboardingPollCard({
   const totalVotes = (responseStats[opt0] ?? 0) + (responseStats[opt1] ?? 0);
   const opt0Percent = totalVotes > 0 ? Math.round(((responseStats[opt0] ?? 0) / totalVotes) * 100) : 50;
   const opt1Percent = totalVotes > 0 ? Math.round(((responseStats[opt1] ?? 0) / totalVotes) * 100) : 50;
+
+  const isAnswered = !!selectedOption;
+  const animOpt0 = useAnimatedPercent(opt0Percent, { enabled: isAnswered, durationMs: 900 });
+  const animOpt1 = useAnimatedPercent(opt1Percent, { enabled: isAnswered, durationMs: 900 });
 
   useEffect(() => {
     if (!selectedOption) { setWaterFilled(false); return; }
@@ -156,14 +152,6 @@ export function OnboardingPollCard({
     },
     [handleVote, opt0, opt1, x]
   );
-
-  const handleSubmitComment = () => {
-    const text = commentInput.trim();
-    if (!text) return;
-    onAddComment(text);
-    setCommentInput("");
-    commentInputRef.current?.blur();
-  };
 
   return (
     <div className="w-full">
@@ -314,7 +302,7 @@ export function OnboardingPollCard({
                     }}
                   >
                     <span className="truncate max-w-[70px]">{opt0}</span>
-                    {selectedOption && <span className="shrink-0 text-sm font-bold opacity-90">{opt0Percent}%</span>}
+                    {selectedOption && <span className="shrink-0 font-bold">{animOpt0}%</span>}
                   </span>
                 </button>
 
@@ -371,7 +359,7 @@ export function OnboardingPollCard({
                     }}
                   >
                     <span className="truncate max-w-[70px]">{opt1}</span>
-                    {selectedOption && <span className="shrink-0 text-sm font-bold opacity-90">{opt1Percent}%</span>}
+                    {selectedOption && <span className="shrink-0 font-bold">{animOpt1}%</span>}
                   </span>
                 </button>
               </div>
@@ -380,80 +368,6 @@ export function OnboardingPollCard({
         </div>
       </motion.div>
 
-      {/* Comments — slides down after voting */}
-      <AnimatePresence>
-        {selectedOption && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.52, ease: [0.22, 1, 0.36, 1] }}
-            className="overflow-hidden"
-          >
-            <motion.div
-              initial={{ scaleX: 0, opacity: 0 }}
-              animate={{ scaleX: 1, opacity: 1 }}
-              transition={{ duration: 0.45, delay: 0.1, ease: "easeOut" }}
-              className="h-px origin-left bg-gradient-to-r from-transparent via-[#F1C42D]/55 to-transparent"
-              style={{ boxShadow: "0 0 8px rgba(241,196,45,0.4)" }}
-            />
-            <div
-              className="p-[1px]"
-              style={{
-                clipPath: COMMENT_CLIP,
-                background:
-                  "linear-gradient(160deg, rgba(241,196,45,0.35) 0%, rgba(241,196,45,0.08) 50%, rgba(241,196,45,0.25) 100%)",
-                boxShadow: "0 8px 32px rgba(241,196,45,0.1)",
-              }}
-            >
-              <div
-                className="px-4 py-4"
-                style={{
-                  clipPath: COMMENT_CLIP,
-                  background: "linear-gradient(165deg, #111111 0%, #070707 100%)",
-                }}
-              >
-                <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.32em] text-[#F1C42D]/60">
-                  Anonymous Comments
-                </p>
-                <div className="max-h-36 space-y-2 overflow-y-auto pr-1">
-                  {comments.map((c, i) => (
-                    <div key={i} className="flex items-start gap-2">
-                      <span className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[#F1C42D]/12 text-[9px] font-bold text-[#F1C42D]/55">
-                        ?
-                      </span>
-                      <p className="text-[12px] leading-[1.4] text-white/55">{c}</p>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-3 flex w-full min-w-0 gap-2 overflow-hidden">
-                  <input
-                    ref={commentInputRef}
-                    type="text"
-                    placeholder="Add anonymous comment…"
-                    value={commentInput}
-                    onChange={(e) => setCommentInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key !== "Enter") return;
-                      e.preventDefault();
-                      handleSubmitComment();
-                    }}
-                    enterKeyHint="send"
-                    className="min-w-0 flex-1 rounded border border-white/10 bg-white/5 px-3 py-1.5 text-base text-white/70 outline-none placeholder:text-white/25 transition focus:border-[#F1C42D]/40 sm:text-[12px]"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleSubmitComment}
-                    className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded border border-[#F1C42D]/30 bg-[#F1C42D]/10 text-[#F1C42D]/70 transition hover:bg-[#F1C42D]/20"
-                  >
-                    <Send className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

@@ -46,10 +46,8 @@ function markBackendMissingIfNeeded(error: unknown): void {
 }
 
 const DEFAULT_AVATAR_CATALOG: AvatarCatalogItem[] = [
-  { id: "avatar-1", level: 1, name: "Cyborg Prime", price: "Free", imageSrc: "/avatars/avatar-1.svg", bg: "#1a1a1a", figure: "#c8c8c8", ring: "#8a8a8a", glow: "none", isActive: true },
   { id: "avatar-2", level: 2, name: "Chrome Ghost", price: "Free", imageSrc: "/avatars/avatar-2.svg", bg: "#0c1a24", figure: "#5ed6ff", ring: "#2ea6d6", glow: "#5ed6ff80", isActive: true },
   { id: "avatar-3", level: 3, name: "Iron Specter", price: "0", imageSrc: "/avatars/avatar-3.svg", bg: "#0a1124", figure: "#3f8bff", ring: "#2557c4", glow: "#3f8bff80", isActive: true },
-  { id: "avatar-4", level: 4, name: "Steampunk Drake", price: "0", imageSrc: "/avatars/avatar-4.svg", bg: "#0f1f12", figure: "#4ade80", ring: "#22a84a", glow: "#4ade8080", isActive: true },
   { id: "avatar-5", level: 5, name: "Solar Enforcer", price: "0", imageSrc: "/avatars/avatar-5.svg", bg: "#0b1a0e", figure: "#16a34a", ring: "#0f7a36", glow: "#16a34a80", isActive: true },
   { id: "avatar-6", level: 6, name: "Neon Oracle", price: "0", imageSrc: "/avatars/avatar-6.svg", bg: "#1f0d18", figure: "#ec4899", ring: "#a6235f", glow: "#ec489980", isActive: true },
   { id: "avatar-7", level: 7, name: "Void Phantom", price: "0", imageSrc: "/avatars/avatar-7.svg", bg: "#150a22", figure: "#8b5cf6", ring: "#5b2aa8", glow: "#8b5cf680", isActive: true },
@@ -65,7 +63,7 @@ function cloneCatalog(items: AvatarCatalogItem[]): AvatarCatalogItem[] {
 function sanitizeCatalog(items: AvatarCatalogItem[]): AvatarCatalogItem[] {
   const unique = new Map<string, AvatarCatalogItem>();
 
-  items.forEach((item, idx) => {
+  items.filter(Boolean).forEach((item, idx) => {
     const id = (item.id || `avatar-${idx + 1}`).trim();
     if (!id) return;
 
@@ -205,7 +203,8 @@ export function readFullAvatarCatalogLocal(): AvatarCatalogItem[] {
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    return parsed as AvatarCatalogItem[];
+    // Sanitize to guard against stale/incomplete cache entries
+    return sanitizeCatalog(parsed as AvatarCatalogItem[]);
   } catch {
     return [];
   }

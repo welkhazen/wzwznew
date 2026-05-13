@@ -8,7 +8,7 @@ import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { AVATARS, setAvatarThemes } from "@/lib/avataridentity";
 import { AvatarPhoneHomeScreen } from "@/components/ui/avatar-phone-home-screen";
 import { PhoneMockup } from "@/components/ui/phone-mockup";
-import { fetchSupabasePolls, addPollComment } from "@/utils/supabasePolls";
+import { fetchSupabasePolls } from "@/utils/supabasePolls";
 import { loadFullAvatarCatalog, readFullAvatarCatalogLocal, type AvatarCatalogItem } from "@/lib/avatarCatalog";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -16,7 +16,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import { SwipeablePollCard } from "./SwipeablePollCard";
 import { EnterRawModal } from "./EnterRawModal";
 import type { OnboardingStep, Poll, User } from "@/store/useRawStore";
-import type { Comment } from "./PollComments";
 import { track } from "@/lib/analytics";
 
 type OnboardingPoll = {
@@ -221,8 +220,7 @@ export function OnboardingJourney({
     return toOnboardingPolls(polls);
   }, [supabasePolls, polls]);
   const [pollSelections, setPollSelections] = useState<Record<string, string>>({});
-  const [pollComments, setPollComments] = useState<Record<string, Comment[]>>({});
-  const [pollStats, setPollStats] = useState<Record<string, Record<string, number>>>({});
+const [pollStats, setPollStats] = useState<Record<string, Record<string, number>>>({});
   const [currentPollIndex, setCurrentPollIndex] = useState(0);
   const [enterRawOpen, setEnterRawOpen] = useState(false);
   const [onboardingAvatars, setOnboardingAvatars] = useState<AvatarCatalogItem[]>(() => {
@@ -233,6 +231,7 @@ export function OnboardingJourney({
   const [previewAvatarIndex, setPreviewAvatarIndex] = useState(() => Math.min(Math.max(avatarIndex, 1), Math.max(1, onboardingAvatars.length)));
   const [avatarPage, setAvatarPage] = useState(() => Math.floor((Math.min(Math.max(avatarIndex, 1), Math.max(1, onboardingAvatars.length)) - 1) / AVATAR_PAGE_SIZE));
   const answeredCount = onboardingPolls.filter((poll) => onboardingAnsweredPollIds.has(poll.id)).length;
+  const phonePreviewRef = useRef<HTMLDivElement>(null);
   const startedFiredRef = useRef(false);
   const stepStartTimeRef = useRef(Date.now());
   const currentPoll = onboardingPolls[currentPollIndex];
@@ -255,7 +254,7 @@ export function OnboardingJourney({
 
   const canContinueFromAvatar = avatarIndex >= 1 && avatarIndex <= FREE_ONBOARDING_AVATAR_COUNT;
   const canContinueFromPolls = answeredCount >= onboardingPolls.length;
-  const canContinueFromCommunities = selectedCommunityIds.length === 2;
+  const canContinueFromCommunities = selectedCommunityIds.length >= 1;
   const previewAvatar = onboardingAvatars[previewAvatarIndex - 1] ?? onboardingAvatars[0];
   const canContinueWithPreviewAvatar = canContinueFromAvatar && previewAvatarIndex === avatarIndex;
   const freeAvatarChoices = onboardingAvatars.slice(0, FREE_ONBOARDING_AVATAR_COUNT);
@@ -374,6 +373,7 @@ export function OnboardingJourney({
                           type="button"
                           onClick={() => {
                             setPreviewAvatarIndex(index);
+                            phonePreviewRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
                             if (isFree) {
                               track("onboarding_avatar_selected", { avatar_level: index, attempts: 1 });
                               onAvatarChange(index);
@@ -458,6 +458,7 @@ export function OnboardingJourney({
                             type="button"
                             onClick={() => {
                               setPreviewAvatarIndex(index);
+                              phonePreviewRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
                               track("onboarding_avatar_selected", { avatar_level: index, attempts: 1 });
                             }}
                             className="group relative flex min-w-0 flex-col items-center gap-1 rounded-xl p-1.5 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/50"
@@ -585,9 +586,7 @@ export function OnboardingJourney({
                               options={currentPoll.options}
                               selectedOption={currentPollSelected}
                               isAnswered={currentPollAnswered}
-                              totalResponses={Object.values(currentPollStats).reduce((a, b) => a + b, 0)}
                               responseStats={currentPollStats}
-                              comments={pollComments[currentPoll.id] || []}
                               pollIndex={currentPollIndex}
                               totalPolls={onboardingPolls.length}
                               hideInternalNav
@@ -605,25 +604,6 @@ export function OnboardingJourney({
                               }}
                               currentIndex={currentPollIndex}
                               completedCount={answeredCount}
-                              onAddComment={(content) => {
-                                const newComment: Comment = {
-                                  id: `${currentPoll.id}-${Date.now()}`,
-                                  author: user.username,
-                                  avatar: avatarIndex,
-                                  content,
-                                  timestamp: new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
-                                  likes: 0,
-                                  replies: [],
-                                  isAnonymous: Math.random() > 0.7,
-                                };
-                                setPollComments((prev) => ({
-                                  ...prev,
-                                  [currentPoll.id]: [...(prev[currentPoll.id] || []), newComment],
-                                }));
-                                addPollComment(currentPoll.id, content).catch((error) => {
-                                  console.error("Failed to save onboarding comment to Supabase", error);
-                                });
-                              }}
                             />
                           </motion.div>
                         </AnimatePresence>
@@ -668,41 +648,38 @@ export function OnboardingJourney({
           {onboardingStep === "communities" && (
             <section>
               <div className="flex items-center justify-between gap-3">
-                <h2 className="font-display text-lg tracking-wide text-raw-text sm:text-xl">3. Pick 2 communities</h2>
+                <h2 className="font-display text-lg tracking-wide text-raw-text sm:text-xl">3. Pick a community</h2>
                 <span className={`shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
-                  selectedCommunityIds.length === 2
+                  selectedCommunityIds.length >= 1
                     ? "border-raw-gold/60 bg-raw-gold/10 text-raw-gold"
                     : "border-raw-border/40 text-raw-gold/75"
                 }`}>
-                  {selectedCommunityIds.length}/2
+                  {selectedCommunityIds.length}/1
                 </span>
               </div>
 
               <div className="mt-5 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
                 {ONBOARDING_COMMUNITIES.map((community) => {
                   const isSelected = selectedCommunityIds.includes(community.id);
-                  const selectionLimitReached = selectedCommunityIds.length >= 2;
-                  const isSelectionDisabled = selectionLimitReached && !isSelected;
 
                   return (
                     <button
                       key={community.id}
                       onClick={() => {
-                        const willBeSelected = !selectedCommunityIds.includes(community.id);
-                        if (willBeSelected) {
+                        if (!isSelected && selectedCommunityIds.length >= 1) {
+                          onToggleCommunity(selectedCommunityIds[0]);
+                        }
+                        if (!isSelected) {
                           track("onboarding_community_selected", {
                             community_id: community.id,
-                            selected_count: selectedCommunityIds.length + 1,
+                            selected_count: 1,
                           });
                         }
                         onToggleCommunity(community.id);
                       }}
-                      disabled={isSelectionDisabled}
                       className={`group relative overflow-hidden rounded-2xl border text-left transition-all duration-300 ${
                         isSelected
                           ? "border-raw-gold/70 shadow-[0_0_0_1px_rgba(241,196,45,0.25),0_12px_28px_rgba(241,196,45,0.15)]"
-                          : isSelectionDisabled
-                          ? "border-raw-border/20 opacity-40 cursor-not-allowed"
                           : "border-raw-border/35 hover:border-raw-gold/40 hover:shadow-[0_8px_20px_rgba(0,0,0,0.4)]"
                       }`}
                     >
@@ -752,9 +729,7 @@ export function OnboardingJourney({
                             className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] transition-colors sm:px-3 ${
                               isSelected
                                 ? "border-raw-gold/80 bg-raw-gold/15 text-raw-gold"
-                                : isSelectionDisabled
-                                  ? "border-raw-border/35 text-raw-silver/35"
-                                  : "border-raw-border/50 text-raw-gold/85 group-hover:border-raw-gold/45"
+                                : "border-raw-border/50 text-raw-gold/85 group-hover:border-raw-gold/45"
                             }`}
                           >
                             {isSelected ? "✓ Selected" : "Enter Circle"}

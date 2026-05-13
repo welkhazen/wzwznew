@@ -142,6 +142,7 @@ export function DashboardPolls({
   const [currentPollIndex, setCurrentPollIndex] = useState(0);
   const [hasSeenVoteHint, setHasSeenVoteHint] = useState(false);
   const [lockedInsightMessage, setLockedInsightMessage] = useState<string | null>(null);
+  const [lockedPollId, setLockedPollId] = useState<string | null>(null);
 
   const commentsEndRef = useRef<HTMLDivElement>(null);
 
@@ -208,11 +209,12 @@ export function DashboardPolls({
   }, [currentPollIndex, displayPolls.length]);
 
 
-  const currentPoll = displayPolls[currentPollIndex]
-    ? {
-        ...displayPolls[currentPollIndex],
-        options: displayPolls[currentPollIndex].options.slice(0, 2),
-      }
+  const rawCurrentPoll = lockedPollId
+    ? (polls.find((p) => p.id === lockedPollId) ?? displayPolls[currentPollIndex])
+    : displayPolls[currentPollIndex];
+
+  const currentPoll = rawCurrentPoll
+    ? { ...rawCurrentPoll, options: rawCurrentPoll.options.slice(0, 2) }
     : undefined;
 
   useEffect(() => {
@@ -327,6 +329,7 @@ export function DashboardPolls({
 
   const handleVote = (pollId: string, optionId: string) => {
     setHasSeenVoteHint(true);
+    setLockedPollId(pollId);
 
     setAnswerHistory((previous) => ({
       ...previous,
@@ -401,11 +404,12 @@ export function DashboardPolls({
   return (
     <div className="flex flex-col gap-6 sm:gap-8">
       {lockedInsightMessage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm" onClick={() => setLockedInsightMessage(null)}>
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="locked-insight-title"
+            onClick={(e) => e.stopPropagation()}
             className={`w-full max-w-sm border p-5 shadow-[0_18px_70px_rgba(0,0,0,0.45)] ${
               isLightMode ? "border-slate-300 bg-white text-slate-900" : "border-raw-gold/35 bg-raw-black text-raw-text"
             }`}
@@ -490,7 +494,7 @@ export function DashboardPolls({
 
         <div className="relative w-full max-w-[24rem]">
           <button
-            onClick={() => setCurrentPollIndex((previous) => Math.max(0, previous - 1))}
+            onClick={() => { setLockedPollId(null); setCurrentPollIndex((previous) => Math.max(0, previous - 1)); }}
             disabled={currentPollIndex === 0}
             className={`absolute -left-2 top-1/2 z-20 inline-flex size-12 -translate-y-1/2 items-center justify-center rounded-full border transition disabled:cursor-not-allowed disabled:opacity-35 md:-left-6 ${
               isLightMode
@@ -523,7 +527,7 @@ export function DashboardPolls({
           )}
 
           <button
-            onClick={() => setCurrentPollIndex((previous) => Math.min(displayPolls.length - 1, previous + 1))}
+            onClick={() => { setLockedPollId(null); setCurrentPollIndex((previous) => Math.min(displayPolls.length - 1, previous + 1)); }}
             disabled={currentPollIndex === displayPolls.length - 1}
             className={`absolute -right-2 top-1/2 z-20 inline-flex size-12 -translate-y-1/2 items-center justify-center rounded-full border transition disabled:cursor-not-allowed disabled:opacity-35 md:-right-6 ${
               isLightMode

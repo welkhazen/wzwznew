@@ -1,5 +1,4 @@
 import { cn } from "@/lib/utils";
-import type { ReactNode } from "react";
 
 type BrandNameProps = {
   className?: string;
@@ -15,17 +14,3 @@ export function BrandName({ className, wClassName }: BrandNameProps) {
   );
 }
 
-export function highlightRawWordmark(content: ReactNode): ReactNode {
-  if (typeof content === "string") {
-    const parts = content.split(/(raW)/g);
-    return parts.map((part, index) =>
-      part === "raW" ? <BrandName key={`raw-${index}`} /> : <span key={`txt-${index}`}>{part}</span>
-    );
-  }
-
-  if (Array.isArray(content)) {
-    return content.map((child, index) => <span key={`node-${index}`}>{highlightRawWordmark(child)}</span>);
-  }
-
-  return content;
-}
