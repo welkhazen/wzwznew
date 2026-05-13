@@ -11,6 +11,7 @@ import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 import { fetchSupabasePolls } from "@/utils/supabasePolls";
 import { POLL_QUESTION_SEEDS } from "@/features/polls/pollQuestions";
 import { useAnimatedPercent } from "@/components/polls/useAnimatedPercent";
+import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 
 interface PollItem {
   id?: string;
@@ -129,6 +130,7 @@ export function LandingPollsSection() {
   const [waterFilled, setWaterFilled] = useState(false);
   const commentsEndRef = useRef<HTMLDivElement>(null);
   const commentsContainerRef = useRef<HTMLDivElement>(null);
+  const keyboardOffset = useKeyboardOffset();
 
   const { data: fetchedPolls } = useQuery({
     queryKey: ["landing-polls-section"],
@@ -439,12 +441,13 @@ export function LandingPollsSection() {
                 />
 
                 <div
-                  className="p-[1px]"
+                  className="p-[1px] transition-[padding] duration-200"
                   style={{
                     clipPath: COMMENT_CLIP,
                     background:
                       "linear-gradient(160deg, rgba(241,196,45,0.35) 0%, rgba(241,196,45,0.08) 50%, rgba(241,196,45,0.25) 100%)",
                     boxShadow: "0 8px 32px rgba(241,196,45,0.1)",
+                    ...(keyboardOffset > 0 && { marginBottom: keyboardOffset }),
                   }}
                 >
                   <div
@@ -481,6 +484,7 @@ export function LandingPollsSection() {
                           setCommentInputs((prev) => ({ ...prev, [index]: e.target.value }))
                         }
                         onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleSubmitComment(); } }}
+                        onFocus={(e) => { setTimeout(() => e.target.scrollIntoView({ behavior: "smooth", block: "nearest" }), 350); }}
                         className={`flex-1 rounded px-3 py-1.5 text-[12px] outline-none transition ${
                           isLight
                             ? "bg-black/5 border border-black/10 text-stone-700 placeholder:text-stone-400 focus:border-[#F1C42D]/50"
