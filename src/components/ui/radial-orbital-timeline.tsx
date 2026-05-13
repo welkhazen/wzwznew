@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { ArrowRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useTheme } from "@/providers/useTheme";
 
 interface TimelineItem {
@@ -321,27 +321,34 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
 
             <p className={`text-[13px] leading-relaxed ${isLight ? "text-stone-700" : "text-white/75"}`}>{activeItem.content}</p>
 
-            {activeItem.relatedIds.length > 0 && (
-              <div className="mt-3 border-t border-raw-gold/10 pt-3">
-                <p className={`mb-1.5 text-[10px] uppercase tracking-wider ${isLight ? "text-stone-400" : "text-white/30"}`}>Connected</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {activeItem.relatedIds.map((relatedId) => {
-                    const rel = timelineData.find((i) => i.id === relatedId);
-                    return (
-                      <button
-                        key={relatedId}
-                        type="button"
-                        className="flex items-center gap-1 rounded-full border border-raw-gold/20 bg-raw-gold/8 px-2.5 py-1 text-xs text-raw-gold/70 transition-colors hover:bg-raw-gold/15"
-                        onClick={() => toggleItem(relatedId)}
-                      >
-                        {rel?.title}
-                        <ArrowRight size={9} />
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+            <div className="mt-3 border-t border-raw-gold/10 pt-3 flex justify-between gap-2">
+              <button
+                type="button"
+                aria-label="Previous"
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-raw-gold/30 bg-raw-gold/8 text-raw-gold/70 transition-colors hover:bg-raw-gold/20"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const idx = timelineData.findIndex((i) => i.id === activeItem.id);
+                  const prev = timelineData[(idx - 1 + timelineData.length) % timelineData.length];
+                  toggleItem(prev.id);
+                }}
+              >
+                <ChevronLeft size={15} />
+              </button>
+              <button
+                type="button"
+                aria-label="Next"
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-raw-gold/30 bg-raw-gold/8 text-raw-gold/70 transition-colors hover:bg-raw-gold/20"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const idx = timelineData.findIndex((i) => i.id === activeItem.id);
+                  const next = timelineData[(idx + 1) % timelineData.length];
+                  toggleItem(next.id);
+                }}
+              >
+                <ChevronRight size={15} />
+              </button>
+            </div>
           </div>
         );
 
