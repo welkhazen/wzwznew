@@ -8,7 +8,7 @@ import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { AVATARS, setAvatarThemes } from "@/lib/avataridentity";
 import { AvatarPhoneHomeScreen } from "@/components/ui/avatar-phone-home-screen";
 import { PhoneMockup } from "@/components/ui/phone-mockup";
-import { fetchSupabasePolls, addPollComment } from "@/utils/supabasePolls";
+import { fetchSupabasePolls } from "@/utils/supabasePolls";
 import { loadFullAvatarCatalog, readFullAvatarCatalogLocal, type AvatarCatalogItem } from "@/lib/avatarCatalog";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -16,7 +16,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import { SwipeablePollCard } from "./SwipeablePollCard";
 import { EnterRawModal } from "./EnterRawModal";
 import type { OnboardingStep, Poll, User } from "@/store/useRawStore";
-import type { Comment } from "./PollComments";
 import { track } from "@/lib/analytics";
 
 type OnboardingPoll = {
@@ -221,8 +220,7 @@ export function OnboardingJourney({
     return toOnboardingPolls(polls);
   }, [supabasePolls, polls]);
   const [pollSelections, setPollSelections] = useState<Record<string, string>>({});
-  const [pollComments, setPollComments] = useState<Record<string, Comment[]>>({});
-  const [pollStats, setPollStats] = useState<Record<string, Record<string, number>>>({});
+const [pollStats, setPollStats] = useState<Record<string, Record<string, number>>>({});
   const [currentPollIndex, setCurrentPollIndex] = useState(0);
   const [enterRawOpen, setEnterRawOpen] = useState(false);
   const [onboardingAvatars, setOnboardingAvatars] = useState<AvatarCatalogItem[]>(() => {
@@ -585,9 +583,7 @@ export function OnboardingJourney({
                               options={currentPoll.options}
                               selectedOption={currentPollSelected}
                               isAnswered={currentPollAnswered}
-                              totalResponses={Object.values(currentPollStats).reduce((a, b) => a + b, 0)}
                               responseStats={currentPollStats}
-                              comments={pollComments[currentPoll.id] || []}
                               pollIndex={currentPollIndex}
                               totalPolls={onboardingPolls.length}
                               hideInternalNav
@@ -605,25 +601,6 @@ export function OnboardingJourney({
                               }}
                               currentIndex={currentPollIndex}
                               completedCount={answeredCount}
-                              onAddComment={(content) => {
-                                const newComment: Comment = {
-                                  id: `${currentPoll.id}-${Date.now()}`,
-                                  author: user.username,
-                                  avatar: avatarIndex,
-                                  content,
-                                  timestamp: new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
-                                  likes: 0,
-                                  replies: [],
-                                  isAnonymous: Math.random() > 0.7,
-                                };
-                                setPollComments((prev) => ({
-                                  ...prev,
-                                  [currentPoll.id]: [...(prev[currentPoll.id] || []), newComment],
-                                }));
-                                addPollComment(currentPoll.id, content).catch((error) => {
-                                  console.error("Failed to save onboarding comment to Supabase", error);
-                                });
-                              }}
                             />
                           </motion.div>
                         </AnimatePresence>
@@ -681,28 +658,25 @@ export function OnboardingJourney({
               <div className="mt-5 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
                 {ONBOARDING_COMMUNITIES.map((community) => {
                   const isSelected = selectedCommunityIds.includes(community.id);
-                  const selectionLimitReached = selectedCommunityIds.length >= 1;
-                  const isSelectionDisabled = selectionLimitReached && !isSelected;
 
                   return (
                     <button
                       key={community.id}
                       onClick={() => {
-                        const willBeSelected = !selectedCommunityIds.includes(community.id);
-                        if (willBeSelected) {
+                        if (!isSelected && selectedCommunityIds.length >= 1) {
+                          onToggleCommunity(selectedCommunityIds[0]);
+                        }
+                        if (!isSelected) {
                           track("onboarding_community_selected", {
                             community_id: community.id,
-                            selected_count: selectedCommunityIds.length + 1,
+                            selected_count: 1,
                           });
                         }
                         onToggleCommunity(community.id);
                       }}
-                      disabled={isSelectionDisabled}
                       className={`group relative overflow-hidden rounded-2xl border text-left transition-all duration-300 ${
                         isSelected
                           ? "border-raw-gold/70 shadow-[0_0_0_1px_rgba(241,196,45,0.25),0_12px_28px_rgba(241,196,45,0.15)]"
-                          : isSelectionDisabled
-                          ? "border-raw-border/20 opacity-40 cursor-not-allowed"
                           : "border-raw-border/35 hover:border-raw-gold/40 hover:shadow-[0_8px_20px_rgba(0,0,0,0.4)]"
                       }`}
                     >
