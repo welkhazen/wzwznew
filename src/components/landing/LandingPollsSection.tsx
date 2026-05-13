@@ -479,7 +479,7 @@ export function LandingPollsSection() {
                         onChange={(e) =>
                           setCommentInputs((prev) => ({ ...prev, [index]: e.target.value }))
                         }
-                        onKeyDown={(e) => e.key === "Enter" && handleSubmitComment()}
+                        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleSubmitComment(); } }}
                         className={`flex-1 rounded px-3 py-1.5 text-[12px] outline-none transition ${
                           isLight
                             ? "bg-black/5 border border-black/10 text-stone-700 placeholder:text-stone-400 focus:border-[#F1C42D]/50"
