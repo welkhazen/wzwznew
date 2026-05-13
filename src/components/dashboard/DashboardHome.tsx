@@ -195,7 +195,7 @@ export function DashboardHome({
             </button>
           </div>
           <div className="relative">
-            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 pointer-events-none select-none opacity-40 blur-[2px]">
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 pointer-events-none select-none opacity-40 blur-[2px]" inert={true}>
               {picks.map((community) => (
                 <CommunityCard key={community.id} community={community} onOpenCommunity={onOpenCommunity} />
               ))}
