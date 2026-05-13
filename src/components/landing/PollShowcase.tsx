@@ -3,7 +3,6 @@ import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { POLL_QUESTION_SEEDS } from "@/features/polls/pollQuestions";
-import { useAnimatedPercent } from "@/components/polls/useAnimatedPercent";
 
 interface PollData {
   id?: string;
@@ -87,16 +86,12 @@ const CARD_CLIP =
   "polygon(18px 0, calc(100% - 18px) 0, 100% 18px, 100% calc(100% - 18px), calc(100% - 18px) 100%, 18px 100%, 0 calc(100% - 18px), 0 18px)";
 const CARD_INNER_CLIP =
   "polygon(17px 0, calc(100% - 17px) 0, 100% 17px, 100% calc(100% - 17px), calc(100% - 17px) 100%, 17px 100%, 0 calc(100% - 17px), 0 17px)";
-const BUTTON_CLIP =
-  "polygon(12px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 12px), 0 12px)";
 
 
 export function PollShowcase({ initialOpen = true, onResolved }: PollShowcaseProps) {
   const [index, setIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<number, "yes" | "no">>({});
   const [open, setOpen] = useState(initialOpen);
   const [mounted, setMounted] = useState(false);
-  const [waterFilled, setWaterFilled] = useState(false);
 
   const POLLS: PollData[] = FALLBACK_POLLS;
 
@@ -112,23 +107,7 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
     onResolved?.();
   }, [onResolved]);
 
-  // Reset water fill when poll changes
-  useEffect(() => {
-    setWaterFilled(false);
-  }, [index]);
-
-  const handleAnswer = useCallback(
-    (choice: "yes" | "no") => {
-      setAnswers((prev) => ({ ...prev, [index]: choice }));
-      setTimeout(() => setWaterFilled(true), 60);
-    },
-    [index]
-  );
-
-  const selected = answers[index];
   const currentPoll = POLLS[index];
-  const animNoPercent = useAnimatedPercent(currentPoll?.noPercent ?? 0, { enabled: !!selected, durationMs: 900 });
-  const animYesPercent = useAnimatedPercent(currentPoll?.yesPercent ?? 0, { enabled: !!selected, durationMs: 900 });
 
   if (!mounted || !open) return null;
 
@@ -247,180 +226,6 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
                 </p>
 
                 <div className="mt-6 h-px w-16 bg-white/20" />
-
-                <p className="mt-4 text-[11px] tracking-[0.05em] text-white/45">
-                  {!selected && "Click To Answer"}
-                </p>
-
-                <div className="mt-5 grid w-full grid-cols-2 gap-3">
-                  {/* No button — water fills from the left */}
-                  <button
-                    type="button"
-                    disabled={!!selected}
-                    onClick={() => handleAnswer("no")}
-                    aria-label="Vote no"
-                    className="group relative h-12 overflow-hidden transition active:scale-95 disabled:cursor-not-allowed"
-                    style={{
-                      clipPath: BUTTON_CLIP,
-                      filter: selected === "no" ? "drop-shadow(0 0 10px rgba(220,220,220,0.7))" : undefined,
-                      transition: "filter 0.5s ease",
-                    }}
-                  >
-                    <span
-                      className="absolute inset-0"
-                      style={{
-                        clipPath: BUTTON_CLIP,
-                        background: "rgba(180,180,180,0.6)",
-                      }}
-                    />
-                    <span
-                      className="absolute inset-[1.5px]"
-                      style={{
-                        clipPath: BUTTON_CLIP,
-                        background: "linear-gradient(155deg, rgba(255,255,255,0.06), rgba(10,10,10,0.95))",
-                      }}
-                    />
-                    {/* Water fill */}
-                    {selected && (
-                      <span
-                        className="pointer-events-none absolute inset-y-0 left-0"
-                        style={{
-                          width: waterFilled ? `${currentPoll?.noPercent ?? 0}%` : "0%",
-                          transition: "width 1.2s cubic-bezier(0.22, 1, 0.36, 1)",
-                          background: "linear-gradient(to right, rgba(200,200,200,0.85), rgba(140,140,140,0.6))",
-                        }}
-                      >
-                        {selected === "no" && (
-                          <span
-                            className="absolute inset-y-0 right-0 w-1.5 origin-right"
-                            style={{
-                              background: "rgba(230,230,230,0.95)",
-                              boxShadow: "0 0 10px 3px rgba(200,200,200,0.7)",
-                              animation: "water-edge-pulse 1s ease-in-out infinite",
-                            }}
-                          />
-                        )}
-                      </span>
-                    )}
-                    <span
-                      className="relative z-10 flex h-full w-full items-center justify-center gap-1.5 text-base font-semibold tracking-wide"
-                      style={{
-                        color: selected === "no" ? "#FFFFFF" : "rgba(255,255,255,0.55)",
-                        textShadow: selected === "no" ? "0 0 10px rgba(255,255,255,0.9)" : undefined,
-                        transition: "color 0.4s ease",
-                      }}
-                    >
-                      No
-                      {selected && (
-                        <span className="text-sm font-bold opacity-90">{animNoPercent}%</span>
-                      )}
-                    </span>
-                  </button>
-
-                  {/* Yes button — water fills from the right */}
-                  <button
-                    type="button"
-                    disabled={!!selected}
-                    onClick={() => handleAnswer("yes")}
-                    aria-label="Vote yes"
-                    className="group relative h-12 overflow-hidden transition active:scale-95 disabled:cursor-not-allowed"
-                    style={{
-                      clipPath: BUTTON_CLIP,
-                      filter: selected === "yes" ? "drop-shadow(0 0 10px rgba(241,196,45,0.8))" : undefined,
-                      transition: "filter 0.5s ease",
-                    }}
-                  >
-                    <span
-                      className="absolute inset-0"
-                      style={{
-                        clipPath: BUTTON_CLIP,
-                        background: "rgba(241,196,45,0.85)",
-                      }}
-                    />
-                    <span
-                      className="absolute inset-[1.5px]"
-                      style={{
-                        clipPath: BUTTON_CLIP,
-                        background: "linear-gradient(155deg, rgba(241,196,45,0.18), rgba(20,14,2,0.95))",
-                      }}
-                    />
-                    {/* Water fill */}
-                    {selected && (
-                      <span
-                        className="pointer-events-none absolute inset-y-0 right-0"
-                        style={{
-                          width: waterFilled ? `${currentPoll?.yesPercent ?? 0}%` : "0%",
-                          transition: "width 1.2s cubic-bezier(0.22, 1, 0.36, 1)",
-                          background: "linear-gradient(to left, rgba(247,213,87,0.92), rgba(210,155,18,0.75))",
-                        }}
-                      >
-                        {selected === "yes" && (
-                          <span
-                            className="absolute inset-y-0 left-0 w-1.5 origin-left"
-                            style={{
-                              background: "rgba(255,236,120,0.95)",
-                              boxShadow: "0 0 10px 3px rgba(247,213,87,0.7)",
-                              animation: "water-edge-pulse 1s ease-in-out infinite",
-                            }}
-                          />
-                        )}
-                      </span>
-                    )}
-                    <span
-                      className="relative z-10 flex h-full w-full items-center justify-center gap-1.5 text-base font-semibold tracking-wide"
-                      style={{
-                        color: selected === "yes" ? "#FFFFFF" : "rgba(255,255,255,0.55)",
-                        textShadow: selected === "yes" ? "0 0 10px rgba(241,196,45,1)" : undefined,
-                        transition: "color 0.4s ease",
-                      }}
-                    >
-                      Yes
-                      {selected && (
-                        <span className="text-sm font-bold opacity-90">{animYesPercent}%</span>
-                      )}
-                    </span>
-                  </button>
-                </div>
-
-                {/* Next / Enter raW button */}
-                {selected && canNext && (
-                  <button
-                    type="button"
-                    onClick={() => setIndex((i) => i + 1)}
-                    className="mt-4 w-full h-10 relative transition active:scale-95"
-                    style={{ clipPath: BUTTON_CLIP }}
-                  >
-                    <span
-                      className="absolute inset-0"
-                      style={{
-                        clipPath: BUTTON_CLIP,
-                        background: "rgba(241,196,45,0.3)",
-                      }}
-                    />
-                    <span className="relative z-10 flex h-full w-full items-center justify-center gap-1 text-sm font-semibold tracking-widest text-[#F1C42D]/80 uppercase">
-                      Next <ChevronRight className="h-4 w-4" strokeWidth={2.5} />
-                    </span>
-                  </button>
-                )}
-                {selected && isLastPoll && (
-                  <button
-                    type="button"
-                    onClick={closeShowcase}
-                    className="mt-4 w-full h-10 relative transition active:scale-95"
-                    style={{ clipPath: BUTTON_CLIP }}
-                  >
-                    <span
-                      className="absolute inset-0"
-                      style={{
-                        clipPath: BUTTON_CLIP,
-                        background: "rgba(241,196,45,0.85)",
-                      }}
-                    />
-                    <span className="relative z-10 flex h-full w-full items-center justify-center text-sm font-bold tracking-widest text-black uppercase">
-                      Enter raW
-                    </span>
-                  </button>
-                )}
               </div>
             </div>
           </div>

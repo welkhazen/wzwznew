@@ -602,8 +602,6 @@ const [pollStats, setPollStats] = useState<Record<string, Record<string, number>
                                   setCurrentPollIndex((prev) => Math.min(onboardingPolls.length - 1, prev + 1));
                                 }
                               }}
-                              currentIndex={currentPollIndex}
-                              completedCount={answeredCount}
                             />
                           </motion.div>
                         </AnimatePresence>

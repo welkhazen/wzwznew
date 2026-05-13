@@ -86,9 +86,6 @@ export function HoverGradientVoteButton({
       )}
       style={{
         background: borderGradient,
-        boxShadow: selected
-          ? "0 0 24px hsl(var(--primary) / 0.55), 0 0 48px hsl(var(--primary) / 0.28)"
-          : "0 0 12px hsl(var(--primary) / 0.12)",
       }}
     >
       <span className="absolute inset-x-5 top-2 h-px bg-gradient-to-r from-transparent via-white/55 to-transparent" />
@@ -109,7 +106,6 @@ export function HoverGradientVoteButton({
         <span
           className="relative z-10 flex h-full flex-col items-center justify-center gap-1 font-display text-base tracking-wide text-white sm:text-lg"
           style={{
-            textShadow: selected ? "0 0 10px hsl(var(--primary) / 0.9)" : undefined,
             opacity: answered && !selected ? 0.7 : 1,
           }}
         >

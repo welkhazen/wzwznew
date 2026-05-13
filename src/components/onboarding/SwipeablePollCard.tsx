@@ -13,8 +13,6 @@ interface SwipeablePollCardProps {
   totalPolls: number;
   onSwipe: (option: string) => void;
   onNavigate?: (direction: "left" | "right") => void;
-  currentIndex: number;
-  completedCount: number;
   hideInternalNav?: boolean;
 }
 
@@ -39,8 +37,6 @@ export function SwipeablePollCard({
   totalPolls,
   onSwipe,
   onNavigate,
-  currentIndex,
-  completedCount,
   hideInternalNav = false,
 }: SwipeablePollCardProps) {
   const resolvedOptions = resolveOptions(options);
@@ -58,15 +54,6 @@ export function SwipeablePollCard({
 
   return (
     <div className="flex flex-col gap-4 sm:gap-5" data-poll-id={id}>
-      <div className="flex items-center justify-between border border-raw-gold/20 bg-raw-black/35 px-3 py-2 sm:px-4 sm:py-3">
-        <span className="font-display text-[10px] uppercase tracking-[0.18em] text-raw-silver/45">
-          {currentIndex + 1} / {totalPolls}
-        </span>
-        <span className="text-[10px] uppercase tracking-[0.14em] text-raw-gold/75">
-          {completedCount}/{totalPolls} completed
-        </span>
-      </div>
-
       <PremiumPollCard
         question={question}
         primaryOption={{ id: yesOption, label: yesOption, votes: responseStats[yesOption] ?? 0 }}
