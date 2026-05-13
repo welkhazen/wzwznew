@@ -1,28 +1,90 @@
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Marquee } from "@/components/ui/3d-testimonails";
-import { Instagram } from "lucide-react";
 
 const testimonials = [
-  { id: "ava", body: "Cascade AI made my workflow 10x faster!" },
-  { id: "ana", body: "Vertical marquee is a game changer!" },
-  { id: "mat", body: "Animations are buttery smooth!" },
-  { id: "maya", body: "Setup was a breeze!" },
-  { id: "noah", body: "Best marquee component!" },
-  { id: "luc", body: "Very customizable and smooth." },
-  { id: "haru", body: "Impressive performance on mobile!" },
-  { id: "emma", body: "Love the pause on hover feature!" },
-  { id: "carl", body: "Great for testimonials and logos." },
+  {
+    name: "Ava Green",
+    username: "@ava",
+    body: "Cascade AI made my workflow 10x faster!",
+    img: "https://images.unsplash.com/photo-1494790108377-be9c29b29330",
+    country: "🇦🇺 Australia",
+  },
+  {
+    name: "Ana Miller",
+    username: "@ana",
+    body: "Vertical marquee is a game changer!",
+    img: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80",
+    country: "🇩🇪 Germany",
+  },
+  {
+    name: "Mateo Rossi",
+    username: "@mat",
+    body: "Animations are buttery smooth!",
+    img: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e",
+    country: "🇮🇹 Italy",
+  },
+  {
+    name: "Maya Patel",
+    username: "@maya",
+    body: "Setup was a breeze!",
+    img: "https://images.unsplash.com/photo-1544005313-94ddf0286df2",
+    country: "🇮🇳 India",
+  },
+  {
+    name: "Noah Smith",
+    username: "@noah",
+    body: "Best marquee component!",
+    img: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d",
+    country: "🇺🇸 USA",
+  },
+  {
+    name: "Lucas Stone",
+    username: "@luc",
+    body: "Very customizable and smooth.",
+    img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d",
+    country: "🇫🇷 France",
+  },
+  {
+    name: "Haruto Sato",
+    username: "@haru",
+    body: "Impressive performance on mobile!",
+    img: "https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f",
+    country: "🇯🇵 Japan",
+  },
+  {
+    name: "Emma Lee",
+    username: "@emma",
+    body: "Love the pause on hover feature!",
+    img: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f",
+    country: "🇨🇦 Canada",
+  },
+  {
+    name: "Carlos Ray",
+    username: "@carl",
+    body: "Great for testimonials and logos.",
+    img: "https://images.unsplash.com/photo-1504257432389-52343af06ae3",
+    country: "🇪🇸 Spain",
+  },
 ];
 
-function TestimonialCard({ body }: (typeof testimonials)[number]) {
+function TestimonialCard({ img, name, username, body, country }: (typeof testimonials)[number]) {
   return (
-    <Card className="w-56 border-border/70 bg-card/95">
-      <CardContent className="p-4">
-        <div className="mb-3 flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-          <Instagram className="size-3.5" aria-hidden="true" />
-          <span>Instagram</span>
+    <Card className="w-50">
+      <CardContent>
+        <div className="flex items-center gap-2.5">
+          <Avatar className="size-9">
+            <AvatarImage src={img} alt={name} />
+            <AvatarFallback>{name[0]}</AvatarFallback>
+          </Avatar>
+          <div className="flex flex-col">
+            <figcaption className="flex items-center gap-1 text-sm font-medium text-foreground">
+              {name} <span className="text-xs">{country}</span>
+            </figcaption>
+            <p className="text-xs font-medium text-muted-foreground">{username}</p>
+          </div>
         </div>
-        <blockquote className="text-sm leading-relaxed text-foreground">“{body}”</blockquote>
+        <blockquote className="mt-3 text-sm text-secondary-foreground">{body}</blockquote>
       </CardContent>
     </Card>
   );
@@ -46,22 +108,22 @@ export function TestimonialsSection() {
           >
             <Marquee vertical pauseOnHover repeat={3} className="[--duration:40s]">
               {testimonials.map((review) => (
-                <TestimonialCard key={`a-${review.id}`} {...review} />
+                <TestimonialCard key={`a-${review.username}`} {...review} />
               ))}
             </Marquee>
             <Marquee vertical pauseOnHover reverse repeat={3} className="[--duration:40s]">
               {testimonials.map((review) => (
-                <TestimonialCard key={`b-${review.id}`} {...review} />
+                <TestimonialCard key={`b-${review.username}`} {...review} />
               ))}
             </Marquee>
             <Marquee vertical pauseOnHover repeat={3} className="[--duration:40s]">
               {testimonials.map((review) => (
-                <TestimonialCard key={`c-${review.id}`} {...review} />
+                <TestimonialCard key={`c-${review.username}`} {...review} />
               ))}
             </Marquee>
             <Marquee vertical pauseOnHover reverse repeat={3} className="[--duration:40s]">
               {testimonials.map((review) => (
-                <TestimonialCard key={`d-${review.id}`} {...review} />
+                <TestimonialCard key={`d-${review.username}`} {...review} />
               ))}
             </Marquee>
             <div className="pointer-events-none absolute inset-x-0 top-0 h-1/4 bg-gradient-to-b from-background" />
