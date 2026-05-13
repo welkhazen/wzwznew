@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { POLL_QUESTION_SEEDS } from "@/features/polls/pollQuestions";
+import { PremiumPollCard } from "@/components/polls/PremiumPollCard";
 
 interface PollData {
   id?: string;
@@ -22,76 +23,11 @@ const FALLBACK_POLLS: PollData[] = POLL_QUESTION_SEEDS.map((s) => ({
   noPercent: Math.round((s.noVotes / (s.yesVotes + s.noVotes)) * 100),
 }));
 
-
-function GoldIcosahedron({ className = "" }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 100 100"
-      className={className}
-      aria-hidden="true"
-      style={{ filter: "drop-shadow(0 0 12px rgba(241,196,45,0.55))" }}
-    >
-      <defs>
-        <linearGradient id="goldFaceA" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#fff7c2" />
-          <stop offset="55%" stopColor="#F1C42D" />
-          <stop offset="100%" stopColor="#7a5e0a" />
-        </linearGradient>
-        <linearGradient id="goldFaceB" x1="0%" y1="100%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#5a4708" />
-          <stop offset="50%" stopColor="#d6a322" />
-          <stop offset="100%" stopColor="#fff2a8" />
-        </linearGradient>
-        <linearGradient id="goldFaceC" x1="50%" y1="0%" x2="50%" y2="100%">
-          <stop offset="0%" stopColor="#fff8c8" />
-          <stop offset="100%" stopColor="#a37f10" />
-        </linearGradient>
-        <radialGradient id="goldCore" cx="50%" cy="42%" r="50%">
-          <stop offset="0%" stopColor="#fff8d2" stopOpacity="0.95" />
-          <stop offset="60%" stopColor="#F1C42D" stopOpacity="0.6" />
-          <stop offset="100%" stopColor="#5a4708" stopOpacity="0" />
-        </radialGradient>
-      </defs>
-      <polygon points="50,4 92,28 92,72 50,96 8,72 8,28" fill="url(#goldFaceA)" opacity="0.92" />
-      <polygon points="50,4 92,28 50,52 8,28" fill="url(#goldFaceC)" opacity="0.95" />
-      <polygon points="8,28 50,52 8,72" fill="url(#goldFaceB)" opacity="0.85" />
-      <polygon points="92,28 92,72 50,52" fill="url(#goldFaceB)" opacity="0.82" />
-      <polygon points="50,52 92,72 50,96 8,72" fill="url(#goldFaceA)" opacity="0.7" />
-      <polygon points="50,18 78,34 78,66 50,82 22,66 22,34" fill="url(#goldCore)" />
-      <g stroke="#fff3a8" strokeWidth="0.9" fill="none" opacity="0.95">
-        <polygon points="50,4 92,28 92,72 50,96 8,72 8,28" />
-        <line x1="50" y1="4" x2="50" y2="96" />
-        <line x1="8" y1="28" x2="92" y2="72" />
-        <line x1="92" y1="28" x2="8" y2="72" />
-        <polygon points="50,18 78,34 78,66 50,82 22,66 22,34" />
-        <line x1="50" y1="18" x2="50" y2="82" />
-        <line x1="22" y1="34" x2="78" y2="66" />
-        <line x1="78" y1="34" x2="22" y2="66" />
-      </g>
-      <g stroke="#7a5e0a" strokeWidth="0.5" fill="none" opacity="0.85">
-        <line x1="50" y1="4" x2="22" y2="34" />
-        <line x1="50" y1="4" x2="78" y2="34" />
-        <line x1="50" y1="96" x2="22" y2="66" />
-        <line x1="50" y1="96" x2="78" y2="66" />
-        <line x1="8" y1="28" x2="22" y2="34" />
-        <line x1="8" y1="72" x2="22" y2="66" />
-        <line x1="92" y1="28" x2="78" y2="34" />
-        <line x1="92" y1="72" x2="78" y2="66" />
-      </g>
-    </svg>
-  );
-}
-
-const CARD_CLIP =
-  "polygon(18px 0, calc(100% - 18px) 0, 100% 18px, 100% calc(100% - 18px), calc(100% - 18px) 100%, 18px 100%, 0 calc(100% - 18px), 0 18px)";
-const CARD_INNER_CLIP =
-  "polygon(17px 0, calc(100% - 17px) 0, 100% 17px, 100% calc(100% - 17px), calc(100% - 17px) 100%, 17px 100%, 0 calc(100% - 17px), 0 17px)";
-
-
 export function PollShowcase({ initialOpen = true, onResolved }: PollShowcaseProps) {
   const [index, setIndex] = useState(0);
   const [open, setOpen] = useState(initialOpen);
   const [mounted, setMounted] = useState(false);
+  const [selectedByPoll, setSelectedByPoll] = useState<Record<number, "yes" | "no">>({});
 
   const POLLS: PollData[] = FALLBACK_POLLS;
 
@@ -108,6 +44,17 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
   }, [onResolved]);
 
   const currentPoll = POLLS[index];
+  const selected = selectedByPoll[index] ?? null;
+
+  const handleVote = useCallback(
+    (optionId: string) => {
+      setSelectedByPoll((prev) => ({
+        ...prev,
+        [index]: optionId === "yes" ? "yes" : "no",
+      }));
+    },
+    [index]
+  );
 
   if (!mounted || !open) return null;
 
@@ -170,7 +117,6 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
             <ChevronLeft className="h-5 w-5" strokeWidth={2.5} />
           </button>
 
-          {/* Card */}
           <AnimatePresence mode="wait">
             <motion.div
               key={index}
@@ -181,54 +127,14 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
               style={{ position: "relative", width: "100%" }}
               className="w-full max-w-[330px] mx-auto"
             >
-          <div
-            className="relative w-full max-w-[330px] p-[1.5px]"
-            style={{
-              clipPath: CARD_CLIP,
-              background:
-                "linear-gradient(160deg, rgba(241,196,45,0.95) 0%, rgba(241,196,45,0.35) 35%, rgba(241,196,45,0.15) 60%, rgba(241,196,45,0.7) 100%)",
-              boxShadow:
-                "0 0 60px rgba(241,196,45,0.18), 0 0 24px rgba(241,196,45,0.22)",
-            }}
-          >
-
-            <div
-              className="relative px-7 pt-7 pb-7"
-              style={{
-                clipPath: CARD_INNER_CLIP,
-                background:
-                  "linear-gradient(165deg, #161616 0%, #0a0a0a 60%, #050505 100%)",
-              }}
-            >
-              {/* Corner accents */}
-              <span className="pointer-events-none absolute left-[6px] top-[6px] h-[6px] w-[6px] border-l border-t border-[#F1C42D]" />
-              <span className="pointer-events-none absolute right-[6px] top-[6px] h-[6px] w-[6px] border-r border-t border-[#F1C42D]" />
-              <span className="pointer-events-none absolute bottom-[6px] left-[6px] h-[6px] w-[6px] border-b border-l border-[#F1C42D]" />
-              <span className="pointer-events-none absolute bottom-[6px] right-[6px] h-[6px] w-[6px] border-b border-r border-[#F1C42D]" />
-              <span className="pointer-events-none absolute left-[10px] top-1/2 h-1 w-1 -translate-y-1/2 rounded-full bg-[#F1C42D]/55" />
-              <span className="pointer-events-none absolute right-[10px] top-1/2 h-1 w-1 -translate-y-1/2 rounded-full bg-[#F1C42D]/55" />
-
-              <div className="flex flex-col items-center text-center">
-                <GoldIcosahedron className="mb-5 h-20 w-20" />
-
-                <p className="text-[11px] font-bold uppercase tracking-[0.36em] text-[#F1C42D] [text-shadow:0_0_8px_rgba(241,196,45,0.45)]">
-                  Instantly See What Everyone Else Thinks.
-                </p>
-
-                <p
-                  className="mt-5 font-display text-[26px] font-medium leading-[1.18] tracking-wide text-[#EBEBEB]"
-                  style={{
-                    fontFamily:
-                      'var(--font-display, "Orbitron", "Inter", system-ui, sans-serif)',
-                  }}
-                >
-                  {currentPoll?.question}
-                </p>
-
-                <div className="mt-6 h-px w-16 bg-white/20" />
-              </div>
-            </div>
-          </div>
+              <PremiumPollCard
+                question={currentPoll.question}
+                primaryOption={{ id: "yes", label: "Yes", votes: currentPoll.yesPercent }}
+                secondaryOption={{ id: "no", label: "No", votes: currentPoll.noPercent }}
+                selectedOptionId={selected}
+                showHint
+                onVote={handleVote}
+              />
             </motion.div>
           </AnimatePresence>
 
