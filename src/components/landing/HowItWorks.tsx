@@ -63,6 +63,7 @@ export function HowItWorks() {
             delayBetweenCommands={950}
             initialDelay={200}
             enableSound={false}
+            largeLastCommand
           />
         </div>
       </div>

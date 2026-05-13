@@ -245,6 +245,7 @@ function SyntaxHighlightedText({ text }: { text: string }) {
 interface TerminalLine {
   type: "command" | "output";
   content: string;
+  isLastCommand?: boolean;
 }
 export interface TerminalProps {
   commands: string[];
@@ -255,6 +256,7 @@ export interface TerminalProps {
   delayBetweenCommands?: number;
   initialDelay?: number;
   enableSound?: boolean;
+  largeLastCommand?: boolean;
 }
 export function Terminal({
   commands = ["npx shadcn@latest init"],
@@ -265,6 +267,7 @@ export function Terminal({
   delayBetweenCommands = 800,
   initialDelay = 500,
   enableSound = true,
+  largeLastCommand = false,
 }: TerminalProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -315,7 +318,7 @@ export function Terminal({
   }, [phase, charIdx, currentCommand, typingSpeed, down, up]);
   useEffect(() => {
     if (phase !== "executing") return;
-    setLines((prev) => [...prev, { type: "command", content: currentCommand }]);
+    setLines((prev) => [...prev, { type: "command", content: currentCommand, isLastCommand: isLastCommand && largeLastCommand }]);
     setCurrentText("");
     if (currentOutputs.length > 0) {
       setOutputIdx(0);
@@ -325,7 +328,7 @@ export function Terminal({
     } else {
       setPhase("pausing");
     }
-  }, [phase, currentCommand, currentOutputs.length, isLastCommand]);
+  }, [phase, currentCommand, currentOutputs.length, isLastCommand, largeLastCommand]);
   useEffect(() => {
     if (phase !== "outputting") return;
     if (outputIdx >= 0 && outputIdx < currentOutputs.length) {
@@ -404,7 +407,7 @@ export function Terminal({
           className="no-visible-scrollbar h-80 overflow-y-auto p-4 font-mono"
         >
           {lines.map((line, i) => (
-            <div key={i} className="leading-relaxed whitespace-pre-wrap">
+            <div key={i} className={cn("leading-relaxed whitespace-pre-wrap", line.isLastCommand && "text-sm")}>
               {line.type === "command" ? (
                 <span>
                   {prompt}
