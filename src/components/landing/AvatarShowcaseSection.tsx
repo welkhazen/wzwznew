@@ -437,10 +437,6 @@ Just like in real life, every person is born with a name, an appearance, and an 
                 ))}
               </motion.div>
             </AnimatePresence>
-            <div className="flex items-center justify-center gap-4 pt-3">
-              <NavButton direction="prev" onClick={prevDesktop} disabled={false} />
-              <NavButton direction="next" onClick={nextDesktop} disabled={false} />
-            </div>
           </div>
         </div>
       </div>
