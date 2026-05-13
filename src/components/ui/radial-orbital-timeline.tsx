@@ -199,8 +199,8 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
             <img
               src="/raw-logo-96.png"
               alt="raW"
-              className={`object-contain drop-shadow-[0_0_16px_hsl(var(--primary) / 0.35)] ${isCompact ? "h-[72px] w-[72px]" : "h-[106px] w-[106px]"}`}
-              style={{ animation: "logoFlip 3s ease-in-out infinite" }}
+              className={`object-contain ${isCompact ? "h-[72px] w-[72px]" : "h-[106px] w-[106px]"}`}
+              style={{ animation: "logoFlip 3s ease-in-out infinite", filter: "drop-shadow(0 0 16px hsl(var(--primary) / 0.35))" }}
             />
           </div>
 
