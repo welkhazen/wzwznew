@@ -142,6 +142,7 @@ export function DashboardPolls({
   const [currentPollIndex, setCurrentPollIndex] = useState(0);
   const [hasSeenVoteHint, setHasSeenVoteHint] = useState(false);
   const [lockedInsightMessage, setLockedInsightMessage] = useState<string | null>(null);
+  const [lockedPollId, setLockedPollId] = useState<string | null>(null);
 
   const commentsEndRef = useRef<HTMLDivElement>(null);
 
@@ -208,11 +209,12 @@ export function DashboardPolls({
   }, [currentPollIndex, displayPolls.length]);
 
 
-  const currentPoll = displayPolls[currentPollIndex]
-    ? {
-        ...displayPolls[currentPollIndex],
-        options: displayPolls[currentPollIndex].options.slice(0, 2),
-      }
+  const rawCurrentPoll = lockedPollId
+    ? (polls.find((p) => p.id === lockedPollId) ?? displayPolls[currentPollIndex])
+    : displayPolls[currentPollIndex];
+
+  const currentPoll = rawCurrentPoll
+    ? { ...rawCurrentPoll, options: rawCurrentPoll.options.slice(0, 2) }
     : undefined;
 
   useEffect(() => {
@@ -327,6 +329,7 @@ export function DashboardPolls({
 
   const handleVote = (pollId: string, optionId: string) => {
     setHasSeenVoteHint(true);
+    setLockedPollId(pollId);
 
     setAnswerHistory((previous) => ({
       ...previous,
@@ -490,7 +493,7 @@ export function DashboardPolls({
 
         <div className="relative w-full max-w-[24rem]">
           <button
-            onClick={() => setCurrentPollIndex((previous) => Math.max(0, previous - 1))}
+            onClick={() => { setLockedPollId(null); setCurrentPollIndex((previous) => Math.max(0, previous - 1)); }}
             disabled={currentPollIndex === 0}
             className={`absolute -left-2 top-1/2 z-20 inline-flex size-12 -translate-y-1/2 items-center justify-center rounded-full border transition disabled:cursor-not-allowed disabled:opacity-35 md:-left-6 ${
               isLightMode
@@ -523,7 +526,7 @@ export function DashboardPolls({
           )}
 
           <button
-            onClick={() => setCurrentPollIndex((previous) => Math.min(displayPolls.length - 1, previous + 1))}
+            onClick={() => { setLockedPollId(null); setCurrentPollIndex((previous) => Math.min(displayPolls.length - 1, previous + 1)); }}
             disabled={currentPollIndex === displayPolls.length - 1}
             className={`absolute -right-2 top-1/2 z-20 inline-flex size-12 -translate-y-1/2 items-center justify-center rounded-full border transition disabled:cursor-not-allowed disabled:opacity-35 md:-right-6 ${
               isLightMode
