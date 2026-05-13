@@ -130,7 +130,8 @@ export function LandingPollsSection() {
   const [waterFilled, setWaterFilled] = useState(false);
   const commentsEndRef = useRef<HTMLDivElement>(null);
   const commentsContainerRef = useRef<HTMLDivElement>(null);
-  const keyboardOffset = useKeyboardOffset();
+  const commentInputWrapperRef = useRef<HTMLDivElement>(null);
+  useKeyboardOffset(commentInputWrapperRef);
 
   const { data: fetchedPolls } = useQuery({
     queryKey: ["landing-polls-section"],
@@ -441,13 +442,12 @@ export function LandingPollsSection() {
                 />
 
                 <div
-                  className="p-[1px] transition-[padding] duration-200"
+                  className="p-[1px]"
                   style={{
                     clipPath: COMMENT_CLIP,
                     background:
                       "linear-gradient(160deg, rgba(241,196,45,0.35) 0%, rgba(241,196,45,0.08) 50%, rgba(241,196,45,0.25) 100%)",
                     boxShadow: "0 8px 32px rgba(241,196,45,0.1)",
-                    ...(keyboardOffset > 0 && { marginBottom: keyboardOffset }),
                   }}
                 >
                   <div
@@ -475,7 +475,7 @@ export function LandingPollsSection() {
                       <div ref={commentsEndRef} />
                     </div>
 
-                    <div className="mt-3 flex gap-2">
+                    <div ref={commentInputWrapperRef} className="mt-3 flex gap-2">
                       <input
                         type="text"
                         placeholder="Add anonymous comment…"
@@ -484,7 +484,6 @@ export function LandingPollsSection() {
                           setCommentInputs((prev) => ({ ...prev, [index]: e.target.value }))
                         }
                         onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleSubmitComment(); } }}
-                        onFocus={(e) => { setTimeout(() => e.target.scrollIntoView({ behavior: "smooth", block: "nearest" }), 350); }}
                         className={`flex-1 rounded px-3 py-1.5 text-[12px] outline-none transition ${
                           isLight
                             ? "bg-black/5 border border-black/10 text-stone-700 placeholder:text-stone-400 focus:border-[#F1C42D]/50"
