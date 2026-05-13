@@ -1,5 +1,6 @@
 import { useRef, useCallback, useEffect, useState } from "react";
 import { Send } from "lucide-react";
+import { useAnimatedPercent } from "@/components/polls/useAnimatedPercent";
 import {
   motion,
   useMotionValue,
@@ -21,22 +22,6 @@ const COMMENT_CLIP =
 const SWIPE_THRESHOLD = 80;
 const VELOCITY_THRESHOLD = 400;
 
-function CountUp({ target, duration = 900 }: { target: number; duration?: number }) {
-  const [val, setVal] = useState(0);
-  useEffect(() => {
-    setVal(0);
-    let raf: number;
-    const start = performance.now();
-    const tick = (now: number) => {
-      const t = Math.min((now - start) / duration, 1);
-      setVal(Math.round(target * (1 - Math.pow(1 - t, 3))));
-      if (t < 1) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [target, duration]);
-  return <>{val}</>;
-}
 
 function GoldIcosahedron({ className = "" }: { className?: string }) {
   return (
@@ -137,6 +122,10 @@ export function OnboardingPollCard({
   const totalVotes = (responseStats[opt0] ?? 0) + (responseStats[opt1] ?? 0);
   const opt0Percent = totalVotes > 0 ? Math.round(((responseStats[opt0] ?? 0) / totalVotes) * 100) : 50;
   const opt1Percent = totalVotes > 0 ? Math.round(((responseStats[opt1] ?? 0) / totalVotes) * 100) : 50;
+
+  const isAnswered = !!selectedOption;
+  const animOpt0 = useAnimatedPercent(opt0Percent, { enabled: isAnswered, durationMs: 800 });
+  const animOpt1 = useAnimatedPercent(opt1Percent, { enabled: isAnswered, durationMs: 800 });
 
   useEffect(() => {
     if (!selectedOption) { setWaterFilled(false); return; }
@@ -287,7 +276,7 @@ export function OnboardingPollCard({
                     handleVote(opt0);
                   }}
                   aria-label={`Vote ${opt0}`}
-                  className="group relative h-12 overflow-hidden transition active:scale-95 disabled:cursor-not-allowed"
+                  className={`group relative overflow-hidden transition active:scale-95 disabled:cursor-not-allowed ${selectedOption ? "h-16" : "h-12"}`}
                   style={{ clipPath: BUTTON_CLIP }}
                 >
                   <span
@@ -323,15 +312,15 @@ export function OnboardingPollCard({
                     </div>
                   )}
                   <span
-                    className="relative z-10 flex h-full w-full items-center justify-center gap-1.5 text-sm font-semibold tracking-wide"
+                    className="relative z-10 flex h-full w-full flex-col items-center justify-center leading-none"
                     style={{
                       color: selectedOption ? (selectedOption === opt0 ? "#FFFFFF" : "rgba(255,255,255,0.55)") : "#EBEBEB",
                       textShadow: selectedOption === opt0 ? "0 0 10px rgba(255,255,255,0.9)" : undefined,
                       transition: "color 0.4s ease",
                     }}
                   >
-                    <span className="truncate max-w-[70px]">{opt0}</span>
-                    {selectedOption && <span className="shrink-0 text-sm font-bold opacity-90"><CountUp target={opt0Percent} />%</span>}
+                    {selectedOption && <span className="text-lg font-semibold leading-none">{animOpt0}%</span>}
+                    <span className="truncate max-w-[70px] text-sm font-semibold tracking-wide">{opt0}</span>
                   </span>
                 </button>
 
@@ -344,7 +333,7 @@ export function OnboardingPollCard({
                     handleVote(opt1);
                   }}
                   aria-label={`Vote ${opt1}`}
-                  className="group relative h-12 overflow-hidden transition active:scale-95 disabled:cursor-not-allowed"
+                  className={`group relative overflow-hidden transition active:scale-95 disabled:cursor-not-allowed ${selectedOption ? "h-16" : "h-12"}`}
                   style={{ clipPath: BUTTON_CLIP }}
                 >
                   <span
@@ -380,15 +369,15 @@ export function OnboardingPollCard({
                     </div>
                   )}
                   <span
-                    className="relative z-10 flex h-full w-full items-center justify-center gap-1.5 text-sm font-semibold tracking-wide"
+                    className="relative z-10 flex h-full w-full flex-col items-center justify-center leading-none"
                     style={{
                       color: selectedOption ? (selectedOption === opt1 ? "#FFFFFF" : "rgba(255,255,255,0.55)") : "#F1C42D",
                       textShadow: selectedOption === opt1 ? "0 0 10px rgba(241,196,45,1)" : undefined,
                       transition: "color 0.4s ease",
                     }}
                   >
-                    <span className="truncate max-w-[70px]">{opt1}</span>
-                    {selectedOption && <span className="shrink-0 text-sm font-bold opacity-90"><CountUp target={opt1Percent} />%</span>}
+                    {selectedOption && <span className="text-lg font-semibold leading-none">{animOpt1}%</span>}
+                    <span className="truncate max-w-[70px] text-sm font-semibold tracking-wide">{opt1}</span>
                   </span>
                 </button>
               </div>
