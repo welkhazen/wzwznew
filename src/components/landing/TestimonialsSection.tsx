@@ -1,67 +1,136 @@
-import { CardStack } from "@/components/ui/card-stack";
-import { useTheme } from "@/providers/useTheme";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Card, CardContent } from "@/components/ui/card";
+import { Marquee } from "@/components/ui/3d-testimonails";
 
-const CARDS = [
+const testimonials = [
   {
-    id: 0,
-    name: "anon_wolf",
-    designation: "Late Night Talks",
-    content: (
-      <p>I've never felt this comfortable being honest online. No judgment, just real talk.</p>
-    ),
+    name: "Ava Green",
+    username: "@ava",
+    body: "Cascade AI made my workflow 10x faster!",
+    img: "https://images.unsplash.com/photo-1494790108377-be9c29b29330",
+    country: "🇦🇺 Australia",
   },
   {
-    id: 1,
-    name: "midnight_sage",
-    designation: "Self-Improvement Circle",
-    content: (
-      <p>The anonymity actually makes the community stronger. People show up as who they really are.</p>
-    ),
+    name: "Ana Miller",
+    username: "@ana",
+    body: "Vertical marquee is a game changer!",
+    img: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80",
+    country: "🇩🇪 Germany",
   },
   {
-    id: 2,
-    name: "quiet_storm",
-    designation: "Mental Wellness",
-    content: (
-      <p>Finally a place where I don't have to perform. I just exist and connect.</p>
-    ),
+    name: "Mateo Rossi",
+    username: "@mat",
+    body: "Animations are buttery smooth!",
+    img: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e",
+    country: "🇮🇹 Italy",
   },
   {
-    id: 3,
-    name: "echo_mind",
-    designation: "Late Night Talks",
-    content: (
-      <p>I feel more like myself here than on traditional profiles.</p>
-    ),
+    name: "Maya Patel",
+    username: "@maya",
+    body: "Setup was a breeze!",
+    img: "https://images.unsplash.com/photo-1544005313-94ddf0286df2",
+    country: "🇮🇳 India",
   },
   {
-    id: 4,
-    name: "raw_thinker",
-    designation: "Self-Improvement Circle",
-    content: (
-      <p>The polls are addictive. Seeing how others think without the social pressure is powerful.</p>
-    ),
+    name: "Noah Smith",
+    username: "@noah",
+    body: "Best marquee component!",
+    img: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d",
+    country: "🇺🇸 USA",
+  },
+  {
+    name: "Lucas Stone",
+    username: "@luc",
+    body: "Very customizable and smooth.",
+    img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d",
+    country: "🇫🇷 France",
+  },
+  {
+    name: "Haruto Sato",
+    username: "@haru",
+    body: "Impressive performance on mobile!",
+    img: "https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f",
+    country: "🇯🇵 Japan",
+  },
+  {
+    name: "Emma Lee",
+    username: "@emma",
+    body: "Love the pause on hover feature!",
+    img: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f",
+    country: "🇨🇦 Canada",
+  },
+  {
+    name: "Carlos Ray",
+    username: "@carl",
+    body: "Great for testimonials and logos.",
+    img: "https://images.unsplash.com/photo-1504257432389-52343af06ae3",
+    country: "🇪🇸 Spain",
   },
 ];
 
-export function TestimonialsSection() {
-  const { mode } = useTheme();
-  const isLight = mode === "light";
-
+function TestimonialCard({ img, name, username, body, country }: (typeof testimonials)[number]) {
   return (
-    <section className="landing-section relative py-14 px-4 sm:py-20 sm:px-6">
-      <div
-        className="relative w-full overflow-hidden rounded-2xl border border-raw-border/40 bg-raw-surface/20 px-6 py-10 sm:px-10 sm:py-14"
-        style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 0 40px rgba(0,0,0,0.3)" }}
-      >
-        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/30 to-transparent" />
+    <Card className="w-50">
+      <CardContent>
+        <div className="flex items-center gap-2.5">
+          <Avatar className="size-9">
+            <AvatarImage src={img} alt={name} />
+            <AvatarFallback>{name[0]}</AvatarFallback>
+          </Avatar>
+          <div className="flex flex-col">
+            <figcaption className="flex items-center gap-1 text-sm font-medium text-foreground">
+              {name} <span className="text-xs">{country}</span>
+            </figcaption>
+            <p className="text-xs font-medium text-muted-foreground">{username}</p>
+          </div>
+        </div>
+        <blockquote className="mt-3 text-sm text-secondary-foreground">{body}</blockquote>
+      </CardContent>
+    </Card>
+  );
+}
 
-        <p className="mb-10 text-center font-display text-[10px] tracking-[0.3em] uppercase text-raw-silver/40 sm:mb-12">
+export function TestimonialsSection() {
+  return (
+    <section className="landing-section relative px-4 py-14 sm:px-6 sm:py-20">
+      <div className="relative w-full overflow-hidden rounded-2xl border border-raw-border/40 bg-raw-surface/20 px-6 py-10 sm:px-10 sm:py-14">
+        <p className="mb-10 text-center font-display text-[10px] uppercase tracking-[0.3em] text-raw-silver/40 sm:mb-12">
           From the community
         </p>
 
-        <div className="flex items-center justify-center w-full max-w-xl mx-auto">
-          <CardStack items={CARDS} isLight={isLight} />
+        <div className="relative mx-auto flex h-96 w-full max-w-[800px] flex-row items-center justify-center overflow-hidden gap-1.5 rounded-lg border border-border [perspective:300px]">
+          <div
+            className="flex flex-row items-center gap-4"
+            style={{
+              transform:
+                "translateX(-100px) translateY(0px) translateZ(-100px) rotateX(20deg) rotateY(-10deg) rotateZ(20deg)",
+            }}
+          >
+            <Marquee vertical pauseOnHover repeat={3} className="[--duration:40s]">
+              {testimonials.map((review) => (
+                <TestimonialCard key={`a-${review.username}`} {...review} />
+              ))}
+            </Marquee>
+            <Marquee vertical pauseOnHover reverse repeat={3} className="[--duration:40s]">
+              {testimonials.map((review) => (
+                <TestimonialCard key={`b-${review.username}`} {...review} />
+              ))}
+            </Marquee>
+            <Marquee vertical pauseOnHover repeat={3} className="[--duration:40s]">
+              {testimonials.map((review) => (
+                <TestimonialCard key={`c-${review.username}`} {...review} />
+              ))}
+            </Marquee>
+            <Marquee vertical pauseOnHover reverse repeat={3} className="[--duration:40s]">
+              {testimonials.map((review) => (
+                <TestimonialCard key={`d-${review.username}`} {...review} />
+              ))}
+            </Marquee>
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-1/4 bg-gradient-to-b from-background" />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-background" />
+            <div className="pointer-events-none absolute inset-y-0 left-0 w-1/4 bg-gradient-to-r from-background" />
+            <div className="pointer-events-none absolute inset-y-0 right-0 w-1/4 bg-gradient-to-l from-background" />
+          </div>
         </div>
       </div>
     </section>
