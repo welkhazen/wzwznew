@@ -10,6 +10,7 @@ import { LandingSectionShell } from "@/components/landing/LandingSectionShell";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 import { fetchSupabasePolls } from "@/utils/supabasePolls";
 import { POLL_QUESTION_SEEDS } from "@/features/polls/pollQuestions";
+import { useAnimatedPercent } from "@/components/polls/useAnimatedPercent";
 
 interface PollItem {
   id?: string;
@@ -156,6 +157,8 @@ export function LandingPollsSection() {
   const currentPoll = polls[index];
   const selected = answers[index];
   const showComments = !!selected;
+  const animNoPercent = useAnimatedPercent(currentPoll?.noPercent ?? 0, { enabled: !!selected, durationMs: 900 });
+  const animYesPercent = useAnimatedPercent(currentPoll?.yesPercent ?? 0, { enabled: !!selected, durationMs: 900 });
   const allComments = [...(SEED_COMMENTS[index] ?? []), ...(extraComments[index] ?? [])];
 
   useEffect(() => {
@@ -330,7 +333,7 @@ export function LandingPollsSection() {
                         >
                           No
                           {selected && (
-                            <span className="text-sm font-bold opacity-90">{currentPoll?.noPercent}%</span>
+                            <span className="text-sm font-bold opacity-90">{animNoPercent}%</span>
                           )}
                         </span>
                       </button>
@@ -386,7 +389,7 @@ export function LandingPollsSection() {
                         >
                           Yes
                           {selected && (
-                            <span className="text-sm font-bold opacity-90">{currentPoll?.yesPercent}%</span>
+                            <span className="text-sm font-bold opacity-90">{animYesPercent}%</span>
                           )}
                         </span>
                       </button>

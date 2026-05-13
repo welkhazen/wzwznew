@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { POLL_QUESTION_SEEDS } from "@/features/polls/pollQuestions";
+import { useAnimatedPercent } from "@/components/polls/useAnimatedPercent";
 
 interface PollData {
   id?: string;
@@ -132,6 +133,8 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
   const canNext = index < total - 1;
   const selected = answers[index];
   const currentPoll = POLLS[index];
+  const animNoPercent = useAnimatedPercent(currentPoll?.noPercent ?? 0, { enabled: !!selected, durationMs: 900 });
+  const animYesPercent = useAnimatedPercent(currentPoll?.yesPercent ?? 0, { enabled: !!selected, durationMs: 900 });
 
   const overlay = (
     <div
@@ -308,7 +311,7 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
                     >
                       No
                       {selected && (
-                        <span className="text-sm font-bold opacity-90">{currentPoll?.noPercent}%</span>
+                        <span className="text-sm font-bold opacity-90">{animNoPercent}%</span>
                       )}
                     </span>
                   </button>
@@ -372,7 +375,7 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
                     >
                       Yes
                       {selected && (
-                        <span className="text-sm font-bold opacity-90">{currentPoll?.yesPercent}%</span>
+                        <span className="text-sm font-bold opacity-90">{animYesPercent}%</span>
                       )}
                     </span>
                   </button>
