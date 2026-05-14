@@ -110,10 +110,17 @@ export function DashboardNav({ username, avatarLevel, showAdminLink = false, onP
   }, [accentPresets, effectiveAccent, effectiveMode]);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-raw-border/50 bg-raw-black/90 backdrop-blur-xl">
+    <nav
+      className={cn(
+        "fixed top-0 left-0 right-0 z-50 border-b backdrop-blur-xl",
+        isEffectiveLight
+          ? "border-slate-200 bg-white/90"
+          : "border-raw-border/50 bg-raw-black/90",
+      )}
+    >
       <div className="flex h-14 items-center justify-between px-4 sm:px-6">
         {/* Logo — hidden on mobile when inside a community */}
-        <a href="/" className={`font-display text-base tracking-[0.3em] text-raw-text shrink-0 sm:text-lg ${communityTitle ? "hidden sm:block" : ""}`}>
+        <a href="/" className={cn("font-display text-base tracking-[0.3em] shrink-0 sm:text-lg", isEffectiveLight ? "text-slate-950" : "text-raw-text", communityTitle ? "hidden sm:block" : "")}>
           ra<span className="text-raw-gold">W</span>
         </a>
 
@@ -122,11 +129,14 @@ export function DashboardNav({ username, avatarLevel, showAdminLink = false, onP
           <div className="flex min-w-0 items-center gap-2 sm:hidden">
             <button
               onClick={onBack}
-              className="shrink-0 rounded-full border border-raw-border/30 p-1.5 text-raw-silver/55 transition-colors hover:border-raw-gold/20 hover:text-raw-gold"
+              className={cn(
+                "shrink-0 rounded-full border p-1.5 transition-colors hover:border-raw-gold/20 hover:text-raw-gold",
+                isEffectiveLight ? "border-slate-200 text-slate-500" : "border-raw-border/30 text-raw-silver/55",
+              )}
             >
               <ArrowLeft className="h-4 w-4" />
             </button>
-            <span className="truncate font-display text-sm tracking-wide text-raw-text">{communityTitle}</span>
+            <span className={cn("truncate font-display text-sm tracking-wide", isEffectiveLight ? "text-slate-950" : "text-raw-text")}>{communityTitle}</span>
           </div>
         )}
 
@@ -137,7 +147,12 @@ export function DashboardNav({ username, avatarLevel, showAdminLink = false, onP
             <button
               type="button"
               onClick={() => setNotifOpen((p) => !p)}
-              className="relative flex h-10 w-10 items-center justify-center rounded-full text-raw-silver/60 transition-colors hover:bg-raw-surface/40 hover:text-raw-silver"
+              className={cn(
+                "relative flex h-10 w-10 items-center justify-center rounded-full transition-colors",
+                isEffectiveLight
+                  ? "text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+                  : "text-raw-silver/60 hover:bg-raw-surface/40 hover:text-raw-silver",
+              )}
               aria-label="Notifications"
             >
               <Bell className="h-5 w-5" />
@@ -148,24 +163,29 @@ export function DashboardNav({ username, avatarLevel, showAdminLink = false, onP
               )}
             </button>
             {notifOpen && (
-              <div className="fixed inset-x-2 top-[57px] z-50 rounded-2xl border border-raw-border/40 bg-raw-black/95 shadow-2xl backdrop-blur-xl sm:absolute sm:inset-x-auto sm:right-0 sm:top-12 sm:w-80">
-                <div className="border-b border-raw-border/20 px-4 py-3 flex items-center justify-between">
-                  <p className="text-[11px] uppercase tracking-[0.18em] text-raw-silver/40">Notifications</p>
-                  {notifications.length > 0 && <span className="text-[10px] text-raw-silver/30">{notifications.length} total</span>}
+              <div className={cn(
+                "fixed inset-x-2 top-[57px] z-50 rounded-2xl border shadow-2xl backdrop-blur-xl sm:absolute sm:inset-x-auto sm:right-0 sm:top-12 sm:w-80",
+                isEffectiveLight
+                  ? "border-slate-200 bg-white/95 shadow-[0_18px_45px_rgba(15,23,42,0.14)]"
+                  : "border-raw-border/40 bg-raw-black/95",
+              )}>
+                <div className={cn("border-b px-4 py-3 flex items-center justify-between", isEffectiveLight ? "border-slate-200" : "border-raw-border/20")}>
+                  <p className={cn("text-[11px] uppercase tracking-[0.18em]", isEffectiveLight ? "text-slate-500" : "text-raw-silver/40")}>Notifications</p>
+                  {notifications.length > 0 && <span className={cn("text-[10px]", isEffectiveLight ? "text-slate-400" : "text-raw-silver/30")}>{notifications.length} total</span>}
                 </div>
                 <div className="max-h-[60vh] overflow-y-auto sm:max-h-80">
                   {notifications.length === 0 ? (
-                    <p className="px-4 py-6 text-center text-sm text-raw-silver/35">No notifications yet</p>
+                    <p className={cn("px-4 py-6 text-center text-sm", isEffectiveLight ? "text-slate-500" : "text-raw-silver/35")}>No notifications yet</p>
                   ) : notifications.map((n, i) => (
-                    <div key={i} className="border-b border-raw-border/15 px-4 py-3 last:border-0">
+                    <div key={i} className={cn("border-b px-4 py-3 last:border-0", isEffectiveLight ? "border-slate-100" : "border-raw-border/15")}>
                       <div className="flex items-center gap-2">
                         <span className={`text-[9px] uppercase tracking-wider font-semibold rounded-full px-2 py-0.5 ${n.type === "like" ? "bg-raw-gold/15 text-raw-gold" : "bg-raw-silver/10 text-raw-silver/60"}`}>
                           {n.type === "like" ? `♥ ${n.likeCount} like${(n.likeCount ?? 0) > 1 ? "s" : ""}` : "@ mention"}
                         </span>
-                        <p className="text-[10px] text-raw-silver/40">{n.communityTitle}</p>
+                        <p className={cn("text-[10px]", isEffectiveLight ? "text-slate-500" : "text-raw-silver/40")}>{n.communityTitle}</p>
                       </div>
-                      {n.type === "mention" && <p className="mt-1 text-xs text-raw-silver/60">from @{n.senderName}</p>}
-                      <p className="mt-1 text-sm leading-relaxed text-raw-text/80 line-clamp-2">{n.text}</p>
+                      {n.type === "mention" && <p className={cn("mt-1 text-xs", isEffectiveLight ? "text-slate-500" : "text-raw-silver/60")}>from @{n.senderName}</p>}
+                      <p className={cn("mt-1 text-sm leading-relaxed line-clamp-2", isEffectiveLight ? "text-slate-800" : "text-raw-text/80")}>{n.text}</p>
                     </div>
                   ))}
                 </div>
@@ -178,7 +198,7 @@ export function DashboardNav({ username, avatarLevel, showAdminLink = false, onP
                 className={cn(
                   "flex items-center gap-2.5 rounded-full border p-0.5 transition-colors",
                   isEffectiveLight
-                    ? "border-raw-border/50 bg-white/75 hover:border-raw-gold/35"
+                    ? "border-slate-200 bg-white shadow-[0_6px_18px_rgba(15,23,42,0.10)] hover:border-raw-gold/35"
                     : "border-raw-border/40 bg-raw-surface/35 hover:border-raw-gold/35",
                 )}
                 aria-label="Open profile menu"
@@ -219,12 +239,12 @@ export function DashboardNav({ username, avatarLevel, showAdminLink = false, onP
                 const { current, needed, pct } = xpProgressInLevel(xp, level);
                 const isMax = level >= MAX_LEVEL;
                 return (
-                  <div className="mx-1 mb-1 rounded-lg border border-raw-border/25 bg-raw-black/30 px-3 py-2">
+                  <div className={cn("mx-1 mb-1 rounded-lg border px-3 py-2", isEffectiveLight ? "border-slate-200 bg-slate-50" : "border-raw-border/25 bg-raw-black/30")}>
                     <div className="mb-1.5 flex items-center justify-between">
                       <span className="text-[10px] font-semibold text-raw-gold/70">
                         Lvl {level}{!isMax ? ` → Lvl ${level + 1}` : " · Max"}
                       </span>
-                      <span className="text-[10px] text-raw-silver/40">
+                      <span className={cn("text-[10px]", isEffectiveLight ? "text-slate-500" : "text-raw-silver/40")}>
                         {isMax ? `${xp.toLocaleString()} XP` : `${current.toLocaleString()} / ${needed.toLocaleString()} XP`}
                       </span>
                     </div>
