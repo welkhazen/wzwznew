@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { HoverGradientVoteButton } from "@/components/polls/HoverGradientVoteButton";
 import { useTheme } from "@/providers/useTheme";
+import brainPollArt from "@/assets/BRAIN.png";
 
 export interface PremiumPollOption {
   id: string;
@@ -118,7 +119,7 @@ export function PremiumPollCard({
 
             <div className="relative mt-4 h-14 w-14 overflow-hidden sm:mt-5 sm:h-20 sm:w-20">
               <img
-                src="/assets/cumulative-mind.png"
+                src={brainPollArt}
                 alt="Cumulative Mind"
                 className="h-full w-full object-contain"
                 style={{ filter: "drop-shadow(0 0 16px rgb(var(--raw-accent) / 0.36))" }}

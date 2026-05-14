@@ -175,11 +175,13 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
                           Sign up to join the waitlist
                         </h3>
                         <p className="max-w-[220px] text-xs leading-relaxed text-raw-silver/60">
-                          Lebanon Initiatives is coming soon. We'll let you know when it launches.
+                          Sign up to join the waitlist.
                         </p>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
+                      )}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (waitlistConfirmed) {
                             onSignupClick();
                           }}
                           className="mt-4 rounded-full bg-raw-gold px-4 py-2 text-[11px] font-semibold text-raw-black transition hover:opacity-90"
