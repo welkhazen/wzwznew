@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { CloudMoon, Menu, X, Moon, Sun } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { ThemeCustomizer } from "@/components/theme/ThemeCustomizer";
+import { ThemeModeSwitcher } from "@/components/theme/ThemeModeSwitcher";
 import { track } from "@/lib/analytics";
 import { useTheme } from "@/providers/useTheme";
-import type { ThemeMode } from "@/providers/theme-context";
 
 const RAW_LOGO_SRC = "/raw-logo-96.png";
 
@@ -16,25 +16,9 @@ interface NavbarProps {
 
 export function Navbar({ isLoggedIn, username, onSignupClick }: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { mode, setMode } = useTheme();
+  const { mode } = useTheme();
   const isLightMode = mode === "light";
   const [navVisible, setNavVisible] = useState(true);
-  const modeOptions: { mode: ThemeMode; label: string; shortLabel: string; icon: typeof Moon; position: string }[] = [
-    { mode: "dark", label: "Dark", shortLabel: "D", icon: Moon },
-    { mode: "dusk", label: "Dusk", shortLabel: "Du", icon: CloudMoon },
-    { mode: "light", label: "Light", shortLabel: "L", icon: Sun },
-  ].map((option, index) => ({
-    ...option,
-    position: ["translate-x-1", "translate-x-[1.875rem]", "translate-x-[3.5rem]"][index],
-  }));
-  const currentModeIndex = Math.max(0, modeOptions.findIndex((option) => option.mode === mode));
-  const currentMode = modeOptions[currentModeIndex];
-  const CurrentModeIcon = currentMode.icon;
-
-  const cycleThemeMode = () => {
-    const nextMode = modeOptions[(currentModeIndex + 1) % modeOptions.length]?.mode ?? "dark";
-    setMode(nextMode);
-  };
 
   useEffect(() => {
     let lastY = window.scrollY;
@@ -124,40 +108,7 @@ export function Navbar({ isLoggedIn, username, onSignupClick }: NavbarProps) {
             </div>
           ) : (
             <>
-              <button
-                type="button"
-                onClick={cycleThemeMode}
-                className={`relative h-8 w-[5.5rem] shrink-0 rounded-full border transition-colors ${
-                  isLightMode
-                    ? "border-slate-300 bg-white/90"
-                    : "border-raw-border/40 bg-raw-surface/60"
-                }`}
-                aria-label={`Theme mode: ${currentMode.label}`}
-              >
-                <span className="absolute inset-0 grid grid-cols-3 items-center px-1 text-[9px] font-semibold">
-                  {modeOptions.map((option) => (
-                    <span
-                      key={option.mode}
-                      className={`flex h-6 items-center justify-center rounded-full transition-colors ${
-                        option.mode === mode
-                          ? "text-transparent"
-                          : isLightMode
-                            ? "text-slate-500"
-                            : "text-raw-silver/45"
-                      }`}
-                    >
-                      {option.shortLabel}
-                    </span>
-                  ))}
-                </span>
-                <span
-                  className={`absolute left-0 top-1 flex h-6 w-6 items-center justify-center rounded-full text-raw-gold shadow transition-transform duration-300 ${currentMode.position} ${
-                    isLightMode ? "bg-white shadow-slate-300/80" : "bg-slate-700 shadow-black/40"
-                  }`}
-                >
-                  <CurrentModeIcon className="h-3.5 w-3.5" />
-                </span>
-              </button>
+              <ThemeModeSwitcher />
               <ThemeCustomizer placement="inline" triggerStyle="compact" className="flex shrink-0" />
               <button
                 onClick={handleSignupClick}
