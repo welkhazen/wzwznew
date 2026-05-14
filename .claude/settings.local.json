@@ -27,7 +27,9 @@
       "Bash(node -e \"console.log\\(require\\('./node_modules/@supabase/supabase-js/package.json'\\).version\\)\")",
       "Bash(git pull *)",
       "Bash(git commit -m ' *)",
-      "Read(//c/Users/user/npm-global/**)"
+      "Read(//c/Users/user/npm-global/**)",
+      "Bash(gh api *)",
+      "Bash(git branch *)"
     ]
   }
 }
