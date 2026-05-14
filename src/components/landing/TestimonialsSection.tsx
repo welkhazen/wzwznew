@@ -108,17 +108,17 @@ export function TestimonialsSection() {
           >
             <Marquee vertical pauseOnHover repeat={3} className="[--duration:40s]">
               {testimonials.map((review) => (
-                <TestimonialCard key={`a-${review.id}`} {...review} />
+                <TestimonialCard key={`a-${review.username}`} {...review} />
               ))}
             </Marquee>
             <Marquee vertical pauseOnHover reverse repeat={3} className="[--duration:40s]">
               {testimonials.map((review) => (
-                <TestimonialCard key={`b-${review.id}`} {...review} />
+                <TestimonialCard key={`b-${review.username}`} {...review} />
               ))}
             </Marquee>
             <Marquee vertical pauseOnHover repeat={3} className="[--duration:40s]">
               {testimonials.map((review) => (
-                <TestimonialCard key={`c-${review.id}`} {...review} />
+                <TestimonialCard key={`c-${review.username}`} {...review} />
               ))}
             </Marquee>
             <Marquee vertical pauseOnHover reverse repeat={3} className="[--duration:40s]">

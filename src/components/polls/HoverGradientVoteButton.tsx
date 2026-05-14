@@ -67,7 +67,6 @@ export function HoverGradientVoteButton({
   }, [answered]);
 
   const isPrimary = themeHue === "primary";
-  const useLightPillStyle = isLightMode && !answered;
   const dimmed = answered && !selected;
   const borderGradient = isLight
     ? dimmed
