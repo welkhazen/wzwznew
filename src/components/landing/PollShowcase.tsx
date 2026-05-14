@@ -151,7 +151,7 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
           )}
         </div>
 
-        {isLastPoll && (
+        {isLastPoll && selected && (
           <button
             type="button"
             onClick={closeShowcase}
