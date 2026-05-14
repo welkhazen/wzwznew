@@ -51,7 +51,7 @@ const insights: InsightDetail[] = [
   {
     name: "Growth Friction Index",
     description: "Measures your tendency to choose stretch and discomfort versus immediate comfort. Reveals how you negotiate challenge and expansion.",
-    badge: "Momentum",
+    badge: "Example",
     icon: Sparkles,
     accentText: "text-emerald-300",
     accentBorder: "border-emerald-400/40",
@@ -258,7 +258,7 @@ export function PersonalityInsightsSection() {
                       {insight.description}
                     </p>
                     <p className={`mt-4 text-[10px] font-semibold uppercase tracking-wider ${insight.accentText} opacity-60`}>
-                      View Profile →
+                      View Example →
                     </p>
                   </div>
                 </GlareCard>

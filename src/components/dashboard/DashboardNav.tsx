@@ -8,6 +8,7 @@ import {
   ArrowLeft,
   Bell,
   Check,
+  CloudMoon,
   LogOut,
   Moon,
   Palette,
@@ -84,7 +85,7 @@ export function DashboardNav({ username, avatarLevel, showAdminLink = false, onP
   const isEffectiveLight = effectiveMode === "light";
   const modeOptions: { mode: ThemeMode; label: string; icon: typeof Moon }[] = [
     { mode: "dark", label: "Dark", icon: Moon },
-    { mode: "dusk", label: "Dusk", icon: Palette },
+    { mode: "dusk", label: "Dusk", icon: CloudMoon },
     { mode: "light", label: "Light", icon: Sun },
   ];
 

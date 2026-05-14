@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, Moon, Sun, Palette } from "lucide-react";
+import { CloudMoon, Menu, X, Moon, Sun } from "lucide-react";
 import { ThemeCustomizer } from "@/components/theme/ThemeCustomizer";
 import { track } from "@/lib/analytics";
 import { useTheme } from "@/providers/useTheme";
@@ -21,7 +21,7 @@ export function Navbar({ isLoggedIn, username, onSignupClick }: NavbarProps) {
   const [navVisible, setNavVisible] = useState(true);
   const modeOptions: { mode: ThemeMode; label: string; shortLabel: string; icon: typeof Moon; position: string }[] = [
     { mode: "dark", label: "Dark", shortLabel: "D", icon: Moon },
-    { mode: "dusk", label: "Dusk", shortLabel: "Du", icon: Palette },
+    { mode: "dusk", label: "Dusk", shortLabel: "Du", icon: CloudMoon },
     { mode: "light", label: "Light", shortLabel: "L", icon: Sun },
   ].map((option, index) => ({
     ...option,
