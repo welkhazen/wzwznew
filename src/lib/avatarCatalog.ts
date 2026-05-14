@@ -256,7 +256,7 @@ export async function loadFullAvatarCatalog(): Promise<AvatarCatalogItem[]> {
 export async function loadAvatarCatalogRange(startLevel: number, endLevel: number): Promise<AvatarCatalogItem[]> {
   const { data, error } = await supabase
     .from("avatar_catalog")
-    .select("id, level, name, price, bg, figure, ring, glow, is_active, is_new")
+    .select("id, level, name, price, image_src, bg, figure, ring, glow, is_active, is_new, rarity, drop_weight")
     .gte("level", startLevel)
     .lte("level", endLevel)
     .order("level", { ascending: true });
@@ -272,7 +272,7 @@ export async function loadAvatarCatalogRange(startLevel: number, endLevel: numbe
       level: row.level,
       name: row.name,
       price: row.price,
-      imageSrc: undefined,
+      imageSrc: row.image_src ?? undefined,
       bg: row.bg || fallback.bg,
       figure: row.figure || fallback.figure,
       ring: row.ring || fallback.ring,
