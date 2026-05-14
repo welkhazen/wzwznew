@@ -445,18 +445,19 @@ Just like in real life, every person is born with a name, an appearance, and an 
         <button
           type="button"
           onClick={handleToggleExpandGrid}
-          className="group flex flex-col items-center gap-1 outline-none"
+          className="group flex flex-col items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.025] px-5 py-3 text-raw-silver/40 outline-none backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.02] hover:border-white/20 hover:bg-white/[0.045] hover:text-raw-silver/70 focus-visible:border-white/25"
           aria-label={showExpandGrid ? "Collapse avatar grid" : "Expand avatar grid"}
         >
-          <span className="text-[10px] uppercase tracking-[0.22em] text-raw-silver/30 group-hover:text-raw-gold/60 transition-colors duration-300">
+          <span className="text-[10px] uppercase tracking-[0.22em] transition-opacity duration-300 group-hover:opacity-100">
             {showExpandGrid ? "hide" : "explore all"}
           </span>
           <motion.div
-            animate={{ y: showExpandGrid ? 0 : [0, 6, 0] }}
-            transition={showExpandGrid ? { duration: 0.2 } : { repeat: Infinity, duration: 1.6, ease: "easeInOut" }}
+            animate={{ y: showExpandGrid ? 0 : 2 }}
+            whileHover={{ y: showExpandGrid ? 0 : 5 }}
+            transition={{ duration: 0.24, ease: "easeOut" }}
           >
             <motion.div animate={{ rotate: showExpandGrid ? 180 : 0 }} transition={{ duration: 0.3 }}>
-              <ChevronDown className="h-6 w-6 text-raw-silver/30 group-hover:text-raw-gold/70 transition-colors duration-300" />
+              <ChevronDown className="h-5 w-5 text-current opacity-70 transition-opacity duration-300 group-hover:opacity-100" />
             </motion.div>
           </motion.div>
         </button>
