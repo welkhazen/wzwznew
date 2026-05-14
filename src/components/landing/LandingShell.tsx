@@ -68,7 +68,7 @@ export default function LandingShell({
             <ProblemSection />
             <HowItWorks />
             <AvatarShowcaseSection />
-            <LandingPollsSection />
+            <LandingPollsSection onSignupClick={() => setShowSignup(true)} />
             <Communities onSignupClick={() => setShowSignup(true)} />
             <PersonalityInsightsSection />
             <EarnedWarUpgradesSection />
