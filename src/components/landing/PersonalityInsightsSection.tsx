@@ -218,7 +218,7 @@ export function PersonalityInsightsSection() {
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/30 to-transparent" />
 
         <div className="mb-8 text-center sm:mb-14">
-          <p className="text-[11px] uppercase tracking-[0.25em] text-raw-gold/70">Premium Feature</p>
+          <p className="text-[11px] uppercase tracking-[0.25em] text-raw-gold/70">Coming Soon</p>
           <h2 className="mt-3 landing-heading">
             Personality Insights
           </h2>
