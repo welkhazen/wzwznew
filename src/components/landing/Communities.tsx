@@ -154,49 +154,46 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
                 }
               >
                 {c.waitlist ? (
-                  <div className="relative flex h-full min-h-40 flex-col items-center justify-center overflow-hidden rounded-xl py-8 gap-3 text-center">
-                    {c.video && (
-                      <video
-                        className="absolute inset-0 h-full w-full object-cover"
-                        autoPlay
-                        loop
-                        muted
-                        playsInline
-                        preload="auto"
-                      >
-                        <source src={c.video} type={c.videoType ?? "video/webm"} />
-                      </video>
-                    )}
-                    <div className="absolute inset-0 bg-raw-black/55" />
-                    {waitlistConfirmed ? (
-                      <div className="relative z-10 flex flex-col items-center justify-center gap-3">
-                        <div className="text-3xl">🎉</div>
-                        <h3 className="font-display text-sm tracking-wide text-raw-gold">
-                          You're on the waitlist!
-                        </h3>
-                        <p className="max-w-[220px] text-xs leading-relaxed text-raw-silver/60">
-                          Lebanon Initiatives is coming soon. We'll let you know when it launches.
-                        </p>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onSignupClick();
-                          }}
-                          className="mt-4 rounded-full bg-raw-gold px-4 py-2 text-[11px] font-semibold text-raw-black transition hover:opacity-90"
+                  <div className="text-center">
+                    <div className="relative flex h-40 flex-col items-center justify-center overflow-hidden rounded-xl">
+                      {c.video && (
+                        <video
+                          className="absolute inset-0 h-full w-full object-cover"
+                          autoPlay
+                          loop
+                          muted
+                          playsInline
+                          preload="auto"
                         >
-                          Sign up to get notified
-                        </button>
-                      </div>
-                    ) : (
+                          <source src={c.video} type={c.videoType ?? "video/webm"} />
+                        </video>
+                      )}
+                      <div className="absolute inset-0 bg-raw-black/30" />
                       <div className="relative z-10 flex flex-col items-center justify-center gap-3">
                         <span className="text-3xl">🔒</span>
-                        <h3 className="font-display text-sm tracking-wide text-raw-text text-center">{c.title}</h3>
-                        <span className="inline-block rounded-full border border-raw-gold/30 bg-raw-gold/5 px-2 py-0.5 text-[10px] font-medium tracking-wider text-raw-gold/70 uppercase">
-                          Waitlist
-                        </span>
-                        <span className="text-[10px] text-raw-silver/40 text-center">Click to join waitlist</span>
                       </div>
-                    )}
+                    </div>
+                    <div className="mt-4 flex flex-col items-center gap-2">
+                      <h3 className="font-display text-sm tracking-wide text-raw-text text-center">{c.title}</h3>
+                      {waitlistConfirmed && (
+                        <p className="max-w-[220px] text-xs leading-relaxed text-raw-silver/60">
+                          Sign up to join the waitlist.
+                        </p>
+                      )}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (waitlistConfirmed) {
+                            onSignupClick();
+                            return;
+                          }
+                          setWaitlistConfirmed(true);
+                        }}
+                        className="rounded-full border border-raw-gold/35 bg-raw-gold/5 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-raw-gold/80 transition hover:bg-raw-gold/10 hover:text-raw-gold"
+                      >
+                        Join waitlist
+                      </button>
+                    </div>
                   </div>
                 ) : c.video ? (
                   <>

@@ -101,12 +101,10 @@ export function HoverGradientVoteButton({
       style={{
         background: borderGradient,
         boxShadow: isLight
-          ? selected && !hideSelectedGlow
-            ? "0 8px 18px rgb(var(--raw-accent) / 0.16), inset 0 1px 0 rgba(255,255,255,0.8)"
-            : "0 6px 14px rgba(55,47,24,0.08), inset 0 1px 0 rgba(255,255,255,0.75)"
-          : selected && !hideSelectedGlow
-            ? "0 0 24px rgb(var(--raw-accent) / 0.55), 0 0 48px rgb(var(--raw-accent) / 0.28)"
-            : dimmed ? "none" : "0 0 12px rgb(var(--raw-accent) / 0.12)",
+          ? "0 6px 14px rgba(55,47,24,0.08), inset 0 1px 0 rgba(255,255,255,0.75)"
+          : dimmed || selected || hideSelectedGlow
+            ? "none"
+            : "0 0 12px rgb(var(--raw-accent) / 0.12)",
       }}
     >
       <span className={cn(

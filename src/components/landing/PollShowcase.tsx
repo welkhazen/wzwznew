@@ -150,6 +150,17 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
             </button>
           )}
         </div>
+
+        {isLastPoll && (
+          <button
+            type="button"
+            onClick={closeShowcase}
+            className="mx-auto mt-5 flex items-center gap-2 rounded-full border border-raw-gold/55 bg-raw-gold px-5 py-2.5 font-display text-xs uppercase tracking-[0.22em] text-raw-black shadow-[0_0_18px_rgb(var(--raw-accent)/0.24)] transition hover:brightness-110"
+          >
+            Enter raW
+            <ChevronRight className="h-4 w-4" strokeWidth={2.5} />
+          </button>
+        )}
       </div>
     </div>
   );

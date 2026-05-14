@@ -204,7 +204,7 @@ export function WheelOfFortune({ prizes, onSpinEnd, disabled = false, prizeWeigh
                     y={textPosition.y - imgSize / 2}
                     width={imgSize}
                     height={imgSize}
-                    transform={`rotate(${textPosition.rotation} ${textPosition.x} ${textPosition.y})`}
+                    transform={`rotate(${textPosition.rotation + 90} ${textPosition.x} ${textPosition.y})`}
                     style={{ borderRadius: "50%" }}
                   />
                 ) : (
