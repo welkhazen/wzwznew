@@ -46,7 +46,7 @@ function CommunityCard({
       {/* Cover */}
       <div className="relative h-36 overflow-hidden">
         {coverVideo ? (
-          <video src={coverVideo} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" autoPlay loop muted playsInline />
+          <video src={coverVideo} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" autoPlay loop muted playsInline preload="auto" />
         ) : coverImage ? (
           <img src={coverImage} alt={community.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
         ) : (

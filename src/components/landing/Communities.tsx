@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 import { getMessagesForCommunity, type ChatMessage } from "@/lib/communityMessages";
 import isItJustMeVideo from "@/assets/itisjustme.webm";
+import lebanonVideo from "@/assets/LB.mp4";
 import speakYourTruthVideo from "@/assets/speakyourheart.webm";
 import lateNightTalksVideo from "@/assets/2026-04-18 10_10_00.webm";
 
@@ -29,6 +30,8 @@ const communities = [
     title: "Lebanon Initiatives",
     description: "Coming soon.",
     badge: "Waitlist",
+    video: lebanonVideo,
+    videoType: "video/mp4",
     waitlist: true,
   },
 ];
@@ -151,9 +154,22 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
                 }
               >
                 {c.waitlist ? (
-                  <div className="flex h-full flex-col items-center justify-center py-8 gap-3 text-center">
+                  <div className="relative flex h-full min-h-40 flex-col items-center justify-center overflow-hidden rounded-xl py-8 gap-3 text-center">
+                    {c.video && (
+                      <video
+                        className="absolute inset-0 h-full w-full object-cover"
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        preload="auto"
+                      >
+                        <source src={c.video} type={c.videoType ?? "video/webm"} />
+                      </video>
+                    )}
+                    <div className="absolute inset-0 bg-raw-black/55" />
                     {waitlistConfirmed ? (
-                      <>
+                      <div className="relative z-10 flex flex-col items-center justify-center gap-3">
                         <div className="text-3xl">🎉</div>
                         <h3 className="font-display text-sm tracking-wide text-raw-gold">
                           You're on the waitlist!
@@ -170,16 +186,16 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
                         >
                           Sign up to get notified
                         </button>
-                      </>
+                      </div>
                     ) : (
-                      <>
+                      <div className="relative z-10 flex flex-col items-center justify-center gap-3">
                         <span className="text-3xl">🔒</span>
                         <h3 className="font-display text-sm tracking-wide text-raw-text text-center">{c.title}</h3>
                         <span className="inline-block rounded-full border border-raw-gold/30 bg-raw-gold/5 px-2 py-0.5 text-[10px] font-medium tracking-wider text-raw-gold/70 uppercase">
                           Waitlist
                         </span>
                         <span className="text-[10px] text-raw-silver/40 text-center">Click to join waitlist</span>
-                      </>
+                      </div>
                     )}
                   </div>
                 ) : c.video ? (
@@ -190,9 +206,9 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
                       loop
                       muted
                       playsInline
-                      preload="metadata"
+                      preload="auto"
                     >
-                      <source src={c.video} type="video/webm" />
+                      <source src={c.video} type={c.videoType ?? "video/webm"} />
                       Your browser does not support this video format.
                     </video>
                     <h3 className="font-display text-sm tracking-wide text-raw-text">{c.title}</h3>
