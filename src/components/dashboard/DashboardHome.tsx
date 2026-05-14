@@ -6,6 +6,7 @@ import type { DashboardTab } from "./DashboardNav";
 import { readCommunityChats } from "@/lib/communityChat";
 import { COMMUNITY_COVER_IMAGES, COMMUNITY_COVER_VIDEOS, FEATURED_COMMUNITY_IDS } from "@/lib/communityConstants";
 import { getTodayKey } from "@/store/useRawStore.storage";
+import { useTheme } from "@/providers/useTheme";
 
 interface DashboardHomeProps {
   username: string;
@@ -22,10 +23,12 @@ interface DashboardHomeProps {
 function CommunityCard({
   community,
   rank,
+  isLight,
   onOpenCommunity,
 }: {
   community: ReturnType<typeof readCommunityChats>[number];
   rank?: number;
+  isLight: boolean;
   onOpenCommunity: (id: string) => void;
 }) {
   const coverImage = COMMUNITY_COVER_IMAGES[community.id] ?? community.logoUrl;
@@ -34,7 +37,11 @@ function CommunityCard({
   return (
     <button
       onClick={() => onOpenCommunity(community.id)}
-      className="group relative bg-[#1a1a1a] border border-white/5 rounded-2xl text-left w-full cursor-pointer hover:border-raw-gold/30 transition-all duration-200 overflow-hidden"
+      className={`group relative rounded-2xl text-left w-full cursor-pointer transition-all duration-200 overflow-hidden ${
+        isLight
+          ? "border border-slate-200 bg-white shadow-[0_10px_26px_rgba(15,23,42,0.08)] hover:border-raw-gold/40"
+          : "border border-white/5 bg-[#1a1a1a] hover:border-raw-gold/30"
+      }`}
     >
       {/* Cover */}
       <div className="relative h-36 overflow-hidden">
@@ -47,12 +54,14 @@ function CommunityCard({
             <span className="font-display text-4xl text-raw-gold/20">{community.abbr}</span>
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a1a]/80 to-transparent" />
+        <div className={`absolute inset-0 bg-gradient-to-t ${isLight ? "from-white/88 via-white/20 to-transparent" : "from-[#1a1a1a]/80 to-transparent"}`} />
         {rank !== undefined && (
           <div className={`absolute top-2.5 right-2.5 px-1.5 py-0.5 rounded-lg text-[9px] font-black border ${
             rank === 0
               ? "bg-raw-gold/20 text-raw-gold border-raw-gold/30"
-              : "bg-black/50 text-white/50 border-white/10"
+              : isLight
+                ? "bg-white/80 text-slate-500 border-slate-200"
+                : "bg-black/50 text-white/50 border-white/10"
           }`}>
             #{rank + 1}
           </div>
@@ -60,8 +69,8 @@ function CommunityCard({
       </div>
       {/* Info */}
       <div className="p-4">
-        <h3 className="text-sm font-bold text-white leading-snug mb-1">{community.title}</h3>
-        <p className="text-[10px] text-white/40 uppercase tracking-[0.1em] font-bold flex items-center gap-1">
+        <h3 className={`text-sm font-bold leading-snug mb-1 ${isLight ? "text-slate-950" : "text-white"}`}>{community.title}</h3>
+        <p className={`text-[10px] uppercase tracking-[0.1em] font-bold flex items-center gap-1 ${isLight ? "text-slate-500" : "text-white/40"}`}>
           <Users className="size-2.5" />{community.members.length} members
         </p>
       </div>
@@ -76,6 +85,8 @@ export function DashboardHome({
   onNavigate,
   onOpenCommunity,
 }: DashboardHomeProps) {
+  const { mode } = useTheme();
+  const isLight = mode === "light";
   const dailyItemsLeft = Math.max(0, dailyPollLimit - dailyAnsweredCount);
   const allCommunities = useMemo(() => readCommunityChats(), []);
 
@@ -127,7 +138,7 @@ export function DashboardHome({
       {/* ── Hero ── */}
       <section className="relative">
         <div className="relative z-10">
-          <h1 className="font-display text-3xl md:text-4xl max-w-2xl leading-[1.15] text-white">
+          <h1 className={`font-display text-3xl md:text-4xl max-w-2xl leading-[1.15] ${isLight ? "text-slate-950" : "text-white"}`}>
             Stay{" "}
             <Suspense fallback={<span className="text-raw-gold italic">anonymous</span>}>
               <ContainerTextFlipLazy
@@ -139,13 +150,13 @@ export function DashboardHome({
             . Speak your truth without identity.
           </h1>
           <div className="mt-6 flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10">
+            <div className={`flex items-center gap-2 px-4 py-2 rounded-full border ${isLight ? "border-slate-200 bg-white/85" : "border-white/10 bg-white/5"}`}>
               <BarChart3 className="size-3.5 text-raw-gold" />
-              <span className="text-xs text-white/60 font-medium tracking-wide">{dailyAnsweredCount} polls answered</span>
+              <span className={`text-xs font-medium tracking-wide ${isLight ? "text-slate-600" : "text-white/60"}`}>{dailyAnsweredCount} polls answered</span>
             </div>
-            <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10">
-              <Users className="size-3.5 text-white/60" />
-              <span className="text-xs text-white/60 font-medium tracking-wide">{allCommunities.length} communities</span>
+            <div className={`flex items-center gap-2 px-4 py-2 rounded-full border ${isLight ? "border-slate-200 bg-white/85" : "border-white/10 bg-white/5"}`}>
+              <Users className={`size-3.5 ${isLight ? "text-slate-500" : "text-white/60"}`} />
+              <span className={`text-xs font-medium tracking-wide ${isLight ? "text-slate-600" : "text-white/60"}`}>{allCommunities.length} communities</span>
             </div>
           </div>
         </div>
@@ -158,9 +169,9 @@ export function DashboardHome({
           <div className="space-y-0.5">
             <div className="flex items-center gap-2">
               <Flame className="size-4 text-raw-gold" />
-              <h2 className="text-xl font-bold text-white tracking-tight">Trending</h2>
+              <h2 className={`text-xl font-bold tracking-tight ${isLight ? "text-slate-950" : "text-white"}`}>Trending</h2>
             </div>
-            <p className="text-[13px] text-white/40">Most active anonymous circles.</p>
+            <p className={`text-[13px] ${isLight ? "text-slate-500" : "text-white/40"}`}>Most active anonymous circles.</p>
           </div>
           <button
             onClick={() => onNavigate("communities")}
@@ -171,21 +182,21 @@ export function DashboardHome({
         </div>
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           {trending.map((community, i) => (
-            <CommunityCard key={community.id} community={community} rank={i} onOpenCommunity={onOpenCommunity} />
+            <CommunityCard key={community.id} community={community} rank={i} isLight={isLight} onOpenCommunity={onOpenCommunity} />
           ))}
         </div>
       </section>
 
       {/* ── Personalized Picks ── */}
       {picks.length > 0 && (
-        <section className="space-y-5 border-t border-white/5 pt-10">
+        <section className={`space-y-5 border-t pt-10 ${isLight ? "border-slate-200" : "border-white/5"}`}>
           <div className="flex justify-between items-end">
             <div className="space-y-0.5">
               <div className="flex items-center gap-2">
                 <Sparkles className="size-4 text-raw-gold" />
-                <h2 className="text-xl font-bold text-white tracking-tight">Personalized Picks</h2>
+                <h2 className={`text-xl font-bold tracking-tight ${isLight ? "text-slate-950" : "text-white"}`}>Personalized Picks</h2>
               </div>
-              <p className="text-[13px] text-white/40">Based on your recent activity.</p>
+              <p className={`text-[13px] ${isLight ? "text-slate-500" : "text-white/40"}`}>Based on your recent activity.</p>
             </div>
             <button
               onClick={() => onNavigate("communities")}
@@ -197,11 +208,11 @@ export function DashboardHome({
           <div className="relative">
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 pointer-events-none select-none opacity-40 blur-[2px]" aria-hidden="true" inert={true}>
               {picks.map((community) => (
-                <CommunityCard key={community.id} community={community} onOpenCommunity={onOpenCommunity} />
+                <CommunityCard key={community.id} community={community} isLight={isLight} onOpenCommunity={onOpenCommunity} />
               ))}
             </div>
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2" role="status" aria-live="polite">
-              <span className="rounded-full border border-raw-gold/40 bg-raw-black/80 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-raw-gold backdrop-blur-sm">
+              <span className={`rounded-full border border-raw-gold/40 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-raw-gold backdrop-blur-sm ${isLight ? "bg-white/90" : "bg-raw-black/80"}`}>
                 Coming Soon
               </span>
             </div>
@@ -213,24 +224,24 @@ export function DashboardHome({
       <section className="space-y-4">
         <div className="flex items-center gap-2">
           <BarChart3 className="size-4 text-raw-gold" />
-          <h2 className="text-xl font-bold text-white">Daily Poll Progress</h2>
+          <h2 className={`text-xl font-bold ${isLight ? "text-slate-950" : "text-white"}`}>Daily Poll Progress</h2>
         </div>
-        <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl p-5 flex flex-wrap items-center gap-4">
+        <div className={`rounded-2xl p-5 flex flex-wrap items-center gap-4 ${isLight ? "border border-slate-200 bg-white shadow-[0_12px_28px_rgba(15,23,42,0.08)]" : "border border-white/10 bg-[#1a1a1a]"}`}>
           <div className="flex items-center gap-3 shrink-0">
             <div className="w-10 h-10 rounded-xl bg-raw-gold/5 flex items-center justify-center border border-raw-gold/20">
               <BarChart3 className="size-5 text-raw-gold" />
             </div>
             <div>
-              <p className="text-sm font-bold text-white">Voice Your Opinion</p>
-              <p className="text-[11px] text-white/40">50 XP per poll · anonymous</p>
+              <p className={`text-sm font-bold ${isLight ? "text-slate-950" : "text-white"}`}>Voice Your Opinion</p>
+              <p className={`text-[11px] ${isLight ? "text-slate-500" : "text-white/40"}`}>50 XP per poll · anonymous</p>
             </div>
           </div>
           <div className="flex-1 min-w-[140px] space-y-1.5">
-            <div className="flex justify-between text-[11px] text-white/40">
+            <div className={`flex justify-between text-[11px] ${isLight ? "text-slate-500" : "text-white/40"}`}>
               <span>Progress</span>
               <span className="text-raw-gold font-bold">{dailyAnsweredCount} / {dailyPollLimit}</span>
             </div>
-            <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+            <div className={`h-1.5 w-full rounded-full overflow-hidden ${isLight ? "bg-slate-200" : "bg-white/5"}`}>
               <div className="h-full bg-raw-gold rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(241,196,45,0.4)]" style={{ width: `${pollProgress}%` }} />
             </div>
           </div>
@@ -247,24 +258,24 @@ export function DashboardHome({
       <section className="space-y-5">
         <div className="flex items-center gap-2">
           <Zap className="size-4 text-raw-gold" />
-          <h2 className="text-xl font-bold text-white">Challenges</h2>
+          <h2 className={`text-xl font-bold ${isLight ? "text-slate-950" : "text-white"}`}>Challenges</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Daily Spin */}
-          <div className="bg-[#1a1a1a] border border-white/10 p-6 rounded-[1.5rem] space-y-5">
+          <div className={`p-6 rounded-[1.5rem] space-y-5 ${isLight ? "border border-slate-200 bg-white shadow-[0_12px_28px_rgba(15,23,42,0.08)]" : "border border-white/10 bg-[#1a1a1a]"}`}>
             <div className="flex items-start justify-between">
               <div className="space-y-0.5">
-                <h3 className="text-xl font-bold text-white tracking-tight">Daily Spin</h3>
-                <p className="text-xs text-white/40">Luck of the anonymous</p>
+                <h3 className={`text-xl font-bold tracking-tight ${isLight ? "text-slate-950" : "text-white"}`}>Daily Spin</h3>
+                <p className={`text-xs ${isLight ? "text-slate-500" : "text-white/40"}`}>Luck of the anonymous</p>
               </div>
               <div className="w-10 h-10 rounded-xl bg-raw-gold/5 flex items-center justify-center border border-raw-gold/10">
                 <Dices className="size-5 text-raw-gold" />
               </div>
             </div>
-            <p className="text-sm text-white/50 leading-relaxed">Spin the wheel once a day for a chance to earn XP, badges, and avatar themes.</p>
+            <p className={`text-sm leading-relaxed ${isLight ? "text-slate-600" : "text-white/50"}`}>Spin the wheel once a day for a chance to earn XP, badges, and avatar themes.</p>
             {hasSpunToday && spinCountdown ? (
-              <div className="rounded-xl border border-white/5 bg-white/[0.03] p-4 text-center">
-                <p className="text-[10px] uppercase tracking-[0.16em] text-white/30">Next spin in</p>
+              <div className={`rounded-xl border p-4 text-center ${isLight ? "border-slate-200 bg-slate-50" : "border-white/5 bg-white/[0.03]"}`}>
+                <p className={`text-[10px] uppercase tracking-[0.16em] ${isLight ? "text-slate-500" : "text-white/30"}`}>Next spin in</p>
                 <p className="mt-1.5 font-display text-2xl tracking-widest text-raw-gold/90">{spinCountdown}</p>
               </div>
             ) : (
@@ -278,11 +289,11 @@ export function DashboardHome({
           </div>
 
           {/* Level Up */}
-          <div className="bg-[#1a1a1a] border border-white/10 p-6 rounded-[1.5rem] space-y-6">
+          <div className={`p-6 rounded-[1.5rem] space-y-6 ${isLight ? "border border-slate-200 bg-white shadow-[0_12px_28px_rgba(15,23,42,0.08)]" : "border border-white/10 bg-[#1a1a1a]"}`}>
             <div className="flex items-start justify-between">
               <div className="space-y-0.5">
-                <h3 className="text-xl font-bold text-white tracking-tight">Level Up</h3>
-                <p className="text-xs text-white/40">Complete interactions to earn XP</p>
+                <h3 className={`text-xl font-bold tracking-tight ${isLight ? "text-slate-950" : "text-white"}`}>Level Up</h3>
+                <p className={`text-xs ${isLight ? "text-slate-500" : "text-white/40"}`}>Complete interactions to earn XP</p>
               </div>
               <div className="w-10 h-10 rounded-xl bg-raw-gold/5 flex items-center justify-center border border-raw-gold/10">
                 <Zap className="size-5 text-raw-gold" />
@@ -290,10 +301,10 @@ export function DashboardHome({
             </div>
             <div className="space-y-3">
               <div className="flex justify-between items-end">
-                <span className="text-xs font-bold text-white">Polls Answered</span>
+                <span className={`text-xs font-bold ${isLight ? "text-slate-950" : "text-white"}`}>Polls Answered</span>
                 <span className="text-base font-bold text-raw-gold">{dailyAnsweredCount} / {dailyPollLimit}</span>
               </div>
-              <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+              <div className={`h-1.5 w-full rounded-full overflow-hidden ${isLight ? "bg-slate-200" : "bg-white/5"}`}>
                 <div
                   className="h-full bg-raw-gold rounded-full shadow-[0_0_10px_rgba(241,196,45,0.4)] transition-all duration-500"
                   style={{ width: `${pollProgress}%` }}
