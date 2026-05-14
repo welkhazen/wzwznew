@@ -550,7 +550,7 @@ const [pollStats, setPollStats] = useState<Record<string, Record<string, number>
                           <span
                             key={i}
                             className={`h-[3px] transition-all ${i === currentPollIndex ? "w-9" : "w-6 bg-white/20"}`}
-                            style={i === currentPollIndex ? { background: "hsl(var(--primary))", boxShadow: "0 0 8px hsl(var(--primary) / 0.7)" } : undefined}
+                            style={i === currentPollIndex ? { background: "rgb(var(--raw-accent))", boxShadow: "0 0 8px rgb(var(--raw-accent) / 0.7)" } : undefined}
                           />
                         ))}
                       </div>
@@ -563,8 +563,8 @@ const [pollStats, setPollStats] = useState<Record<string, Record<string, number>
                         onClick={() => setCurrentPollIndex((i) => Math.max(0, i - 1))}
                         disabled={currentPollIndex === 0}
                         aria-label="Previous poll"
-                        className="absolute left-0 z-10 flex h-11 w-11 -translate-x-3 items-center justify-center rounded-full border border-primary/55 bg-black/75 text-primary transition hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-25 sm:-translate-x-7"
-                        style={{ boxShadow: "0 0 18px hsl(var(--primary) / 0.25)" }}
+                        className="absolute left-0 z-10 flex h-11 w-11 -translate-x-3 items-center justify-center rounded-full border border-raw-gold/55 bg-black/75 text-raw-gold transition hover:bg-raw-gold/10 disabled:cursor-not-allowed disabled:opacity-25 sm:-translate-x-7"
+                        style={{ boxShadow: "0 0 18px rgb(var(--raw-accent) / 0.25)" }}
                       >
                         <ChevronLeft className="h-5 w-5" strokeWidth={2.5} />
                       </button>
@@ -618,12 +618,12 @@ const [pollStats, setPollStats] = useState<Record<string, Record<string, number>
                         }}
                         disabled={currentPollIndex === onboardingPolls.length - 1 && !canContinueFromPolls}
                         aria-label={currentPollIndex < onboardingPolls.length - 1 ? "Next poll" : "Complete polls"}
-                        className={`absolute right-0 z-10 flex h-11 w-11 translate-x-3 items-center justify-center rounded-full border text-primary transition sm:translate-x-7 ${
+                        className={`absolute right-0 z-10 flex h-11 w-11 translate-x-3 items-center justify-center rounded-full border text-raw-gold transition sm:translate-x-7 ${
                           currentPollIndex < onboardingPolls.length - 1
-                            ? "border-primary/55 bg-black/75 hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-25"
-                            : "border-primary/70 bg-primary/15 hover:bg-primary/25 disabled:cursor-not-allowed disabled:opacity-35"
+                            ? "border-raw-gold/55 bg-black/75 hover:bg-raw-gold/10 disabled:cursor-not-allowed disabled:opacity-25"
+                            : "border-raw-gold/70 bg-raw-gold/15 hover:bg-raw-gold/25 disabled:cursor-not-allowed disabled:opacity-35"
                         }`}
-                        style={{ boxShadow: currentPollIndex < onboardingPolls.length - 1 ? "0 0 18px hsl(var(--primary) / 0.25)" : "none" }}
+                        style={{ boxShadow: currentPollIndex < onboardingPolls.length - 1 ? "0 0 18px rgb(var(--raw-accent) / 0.25)" : "none" }}
                       >
                         <ChevronRight className="h-5 w-5" strokeWidth={2.5} />
                       </button>
@@ -636,7 +636,7 @@ const [pollStats, setPollStats] = useState<Record<string, Record<string, number>
                 <button
                   onClick={goToNextStep}
                   disabled={!canContinueFromPolls}
-                  className="w-full rounded-xl border border-primary/40 bg-primary/15 px-5 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-primary transition-all hover:bg-primary/25 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:py-2.5"
+                  className="w-full rounded-xl border border-raw-gold/40 bg-raw-gold/15 px-5 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-raw-gold transition-all hover:bg-raw-gold/25 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:py-2.5"
                 >
                   Continue to communities →
                 </button>

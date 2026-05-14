@@ -13,6 +13,7 @@ interface HoverGradientVoteButtonProps {
   onClick: () => void;
   showFill?: boolean;
   hideSelectedGlow?: boolean;
+  isLight?: boolean;
 }
 
 const RESULT_ANIMATION_DURATION_MS = 800;
@@ -28,6 +29,7 @@ export function HoverGradientVoteButton({
   onClick,
   showFill = true,
   hideSelectedGlow = false,
+  isLight = false,
 }: HoverGradientVoteButtonProps) {
   const [waterFilled, setWaterFilled] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
@@ -69,13 +71,13 @@ export function HoverGradientVoteButton({
   const borderGradient = dimmed
     ? "linear-gradient(120deg, rgba(60,60,60,0.4), rgba(80,80,80,0.5), rgba(60,60,60,0.4))"
     : isPrimary
-      ? "linear-gradient(120deg, hsl(var(--primary) / 0.35), hsl(var(--primary) / 1), hsl(var(--ring) / 0.5))"
+      ? "linear-gradient(120deg, rgb(var(--raw-accent) / 0.35), rgb(var(--raw-accent) / 1), rgb(var(--raw-accent) / 0.5))"
       : "linear-gradient(120deg, rgba(230,230,230,0.28), rgba(240,240,240,0.9), rgba(170,170,170,0.36))";
 
   const fillGradient = isPrimary
     ? align === "right"
-      ? "linear-gradient(to left, hsl(var(--primary) / 0.95), hsl(var(--primary) / 0.55))"
-      : "linear-gradient(to right, hsl(var(--primary) / 0.95), hsl(var(--primary) / 0.55))"
+      ? "linear-gradient(to left, rgb(var(--raw-accent) / 0.95), rgb(var(--raw-accent) / 0.55))"
+      : "linear-gradient(to right, rgb(var(--raw-accent) / 0.95), rgb(var(--raw-accent) / 0.55))"
     : align === "right"
       ? "linear-gradient(to left, rgba(230,230,230,0.9), rgba(140,140,140,0.7))"
       : "linear-gradient(to right, rgba(230,230,230,0.9), rgba(140,140,140,0.7))";
@@ -86,18 +88,21 @@ export function HoverGradientVoteButton({
       disabled={disabled || answered}
       onClick={onClick}
       className={cn(
-        "group relative min-h-[4rem] overflow-hidden rounded-2xl p-[1.5px] text-center transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/80 disabled:cursor-not-allowed sm:min-h-[4.8rem]",
+        "group relative min-h-[4rem] overflow-hidden rounded-2xl p-[1.5px] text-center transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/80 disabled:cursor-not-allowed sm:min-h-[4.8rem]",
         selected ? "scale-[1.06]" : "hover:scale-[1.03]"
       )}
       style={{
         background: borderGradient,
         boxShadow: selected && !hideSelectedGlow
-          ? "0 0 24px hsl(var(--primary) / 0.55), 0 0 48px hsl(var(--primary) / 0.28)"
-          : dimmed ? "none" : "0 0 12px hsl(var(--primary) / 0.12)",
+          ? "0 0 24px rgb(var(--raw-accent) / 0.55), 0 0 48px rgb(var(--raw-accent) / 0.28)"
+          : dimmed ? "none" : "0 0 12px rgb(var(--raw-accent) / 0.12)",
       }}
     >
       <span className="absolute inset-x-5 top-2 h-px bg-gradient-to-r from-transparent via-white/55 to-transparent" />
-      <span className="relative block h-full w-full rounded-[calc(1rem-1.5px)] bg-black/85 px-2 py-2.5 sm:px-3 sm:py-3">
+      <span className={cn(
+        "relative block h-full w-full rounded-[calc(1rem-1.5px)] px-2 py-2.5 sm:px-3 sm:py-3",
+        isLight ? "bg-black/85" : "bg-[#050505]/85"
+      )}>
         {answered && showFill && (
           <span
             className={cn(
@@ -112,7 +117,10 @@ export function HoverGradientVoteButton({
           />
         )}
         <span
-          className="relative z-10 flex h-full flex-col items-center justify-center gap-1 font-display text-base tracking-wide text-white sm:text-lg"
+          className={cn(
+            "relative z-10 flex h-full flex-col items-center justify-center gap-1 font-display text-base tracking-wide sm:text-lg",
+            isLight ? "text-white" : "text-[#EBEBEB]"
+          )}
           style={{
             opacity: answered && !selected ? 0.7 : 1,
           }}
