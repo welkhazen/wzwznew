@@ -22,18 +22,15 @@ export async function fetchSupabasePolls(limit = 10): Promise<Poll[]> {
   const pollIds = (pollRows ?? []).map((row) => row.id).filter(Boolean) as string[];
   if (pollIds.length === 0) return [];
 
-  const { data: optionRows, error: optionError } = await supabase
-    .from("poll_options")
-    .select("id, poll_id, label, position")
-    .in("poll_id", pollIds);
+  const [
+    { data: optionRows, error: optionError },
+    { data: voteRows },
+  ] = await Promise.all([
+    supabase.from("poll_options").select("id, poll_id, label, position").in("poll_id", pollIds),
+    supabase.from("poll_votes").select("poll_id, option_id").in("poll_id", pollIds),
+  ]);
 
   if (optionError) throw optionError;
-
-  // scope votes to only the fetched polls to avoid full-table scans and RLS issues
-  const { data: voteRows } = await supabase
-    .from("poll_votes")
-    .select("poll_id, option_id")
-    .in("poll_id", pollIds);
 
   const optionsByPoll = new Map<string, { id: string; label: string; position: number }[]>();
   (optionRows ?? []).forEach((row) => {

@@ -167,7 +167,7 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
                           loop
                           muted
                           playsInline
-                          preload="auto"
+                          preload="metadata"
                         >
                           <source src={c.video} type={c.videoType ?? "video/webm"} />
                         </video>
@@ -191,7 +191,7 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
                         }}
                         className={
                           isLight
-                            ? "mt-1 rounded-full px-5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] transition bg-slate-900 text-white hover:bg-slate-700"
+                            ? "mt-1 rounded-full border border-slate-300 bg-white px-5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-700 shadow-sm transition hover:bg-slate-50 hover:border-slate-400"
                             : "mt-1 rounded-full border border-raw-gold/35 bg-raw-gold/5 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-raw-gold/80 transition hover:bg-raw-gold/10 hover:text-raw-gold"
                         }
                       >
@@ -207,7 +207,7 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
                       loop
                       muted
                       playsInline
-                      preload="auto"
+                      preload="metadata"
                     >
                       <source src={c.video} type={c.videoType ?? "video/webm"} />
                       Your browser does not support this video format.
