@@ -15,13 +15,12 @@ import {
   Settings,
   Shield,
   Sun,
-  Monitor,
 } from "lucide-react";
 import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { TokenBalanceButton } from "@/components/ui/TokenBalanceButton";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/providers/useTheme";
-import { THEME_MODE_LABELS, THEME_MODE_ORDER, type AccentPresetId, type ThemeMode } from "@/providers/theme-context";
+import { THEME_MODE_LABELS, type AccentPresetId, type ThemeMode } from "@/providers/theme-context";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -83,8 +82,11 @@ export function DashboardNav({ username, avatarLevel, showAdminLink = false, onP
   const effectiveMode = hoveredMode ?? mode;
   const effectiveAccent = hoveredAccent ?? accent;
   const isEffectiveLight = effectiveMode === "light";
-  const effectiveModeIndex = THEME_MODE_ORDER.indexOf(effectiveMode);
-  const isEffectiveMedium = effectiveMode === "medium";
+  const modeOptions: { mode: ThemeMode; label: string; icon: typeof Moon }[] = [
+    { mode: "dark", label: "Dark", icon: Moon },
+    { mode: "dusk", label: "Dusk", icon: Palette },
+    { mode: "light", label: "Light", icon: Sun },
+  ];
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -97,7 +99,6 @@ export function DashboardNav({ username, avatarLevel, showAdminLink = false, onP
     root.classList.toggle("theme-light", effectiveMode === "light");
     root.classList.toggle("theme-dusk", effectiveMode === "dusk");
     root.classList.toggle("theme-dawn", effectiveMode === "dawn");
-    root.classList.toggle("theme-medium", effectiveMode === "medium");
     root.dataset.themeMode = effectiveMode;
     root.dataset.themeAccent = effectiveAccent;
     root.style.setProperty("--raw-accent", selectedAccent.rgb);
@@ -304,59 +305,32 @@ export function DashboardNav({ username, avatarLevel, showAdminLink = false, onP
                       <span className={cn("text-[10px] uppercase tracking-[0.16em]", isEffectiveLight ? "text-slate-500" : "text-raw-silver/45")}>Mode</span>
                       <span className={cn("text-[10px] uppercase tracking-[0.16em]", isEffectiveLight ? "text-slate-600" : "text-raw-silver/65")}>{THEME_MODE_LABELS[effectiveMode]}</span>
                     </div>
-                    <div className="mt-2 flex items-center gap-2">
-                      <Moon className="h-3.5 w-3.5 text-raw-silver/60" />
-                      <input
-                        type="range"
-                        min={0}
-                        max={3}
-                        step={1}
-                        value={effectiveModeIndex}
-                        onChange={(e) => { setMode(THEME_MODE_ORDER[Number(e.target.value)] ?? "dark"); setHoveredMode(null); }}
-                        className="h-1.5 w-full cursor-pointer accent-[rgb(var(--raw-accent))]"
-                        aria-label="Theme mode swiper"
-                      />
-                      <Sun className="h-3.5 w-3.5 text-raw-silver/60" />
+                    <div className={cn("mt-2 grid grid-cols-3 gap-1 rounded-full border p-1", isEffectiveLight ? "border-slate-200 bg-white" : "border-raw-border/25 bg-raw-black/35")}>
+                      {modeOptions.map((option) => {
+                        const Icon = option.icon;
+                        const selected = effectiveMode === option.mode;
+                        return (
+                          <button
+                            key={option.mode}
+                            type="button"
+                            onClick={() => { setMode(option.mode); setHoveredMode(null); }}
+                            className={cn(
+                              "flex h-9 items-center justify-center gap-1.5 rounded-full px-2 text-[11px] font-semibold transition-colors",
+                              selected
+                                ? "bg-raw-gold/18 text-raw-gold shadow-[0_0_0_1px_rgb(var(--raw-accent)/0.35)]"
+                                : isEffectiveLight
+                                  ? "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                                  : "text-raw-silver/55 hover:bg-raw-surface/60 hover:text-raw-text",
+                            )}
+                            aria-pressed={selected}
+                            aria-label={`Use ${option.label} mode`}
+                          >
+                            <Icon className="h-3.5 w-3.5" />
+                            <span>{option.label}</span>
+                          </button>
+                        );
+                      })}
                     </div>
-                  </div>
-
-                  <div className={cn("flex items-center gap-2 rounded-lg border p-1", isEffectiveLight ? "border-slate-200 bg-slate-50" : "border-raw-border/25 bg-raw-black/25")}>
-                    <button
-                      onClick={() => { setMode("dark"); setHoveredMode(null); }}
-                      className={cn(
-                        "flex h-12 flex-1 items-center justify-center rounded-md px-2 text-xs font-medium transition-colors",
-                        effectiveMode === "dark" ? "bg-raw-gold/15 text-raw-gold" : "text-slate-500 hover:text-slate-900",
-                      )}
-                    >
-                      <span className="inline-flex items-center gap-1.5">
-                        <Moon className="h-3.5 w-3.5" />
-                        Dark
-                      </span>
-                    </button>
-                    <button
-                      onClick={() => { setMode("medium"); setHoveredMode(null); }}
-                      className={cn(
-                        "flex h-12 flex-1 items-center justify-center rounded-md px-2 text-xs font-medium transition-colors",
-                        isEffectiveMedium ? "bg-raw-gold/15 text-raw-gold" : "text-raw-silver/60 hover:text-raw-text",
-                      )}
-                    >
-                      <span className="inline-flex items-center gap-1.5">
-                        <Monitor className="h-3.5 w-3.5" />
-                        Medium
-                      </span>
-                    </button>
-                    <button
-                      onClick={() => { setMode("light"); setHoveredMode(null); }}
-                      className={cn(
-                        "flex h-12 flex-1 items-center justify-center rounded-md px-2 text-xs font-medium transition-colors",
-                        isEffectiveLight ? "bg-raw-gold/15 text-raw-gold" : "text-raw-silver/60 hover:text-raw-text",
-                      )}
-                    >
-                      <span className="inline-flex items-center gap-1.5">
-                        <Sun className="h-3.5 w-3.5" />
-                        Light
-                      </span>
-                    </button>
                   </div>
 
                   <div className="mt-3">
