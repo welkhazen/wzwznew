@@ -1,12 +1,15 @@
 import { useRef, useState } from "react";
 import tokenImg from "@/assets/tokens.png";
 import { useRawStore } from "@/store/useRawStore";
+import { useTheme } from "@/providers/useTheme";
 
 export function TokenBalanceButton() {
   const { tokenBalance: balance } = useRawStore();
+  const { mode } = useTheme();
   const [open, setOpen] = useState(false);
   const [spinning, setSpinning] = useState(false);
   const spinTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isLight = mode === "light";
 
   function handleClick() {
     if (spinning) return;
@@ -49,9 +52,15 @@ export function TokenBalanceButton() {
         aria-expanded={open}
         className="flex items-center gap-1.5 rounded-xl border px-2 py-1 transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/50"
         style={{
-          borderColor: open ? "rgba(250,204,21,0.45)" : "transparent",
-          background: open ? "rgba(0,0,0,0.85)" : "transparent",
-          boxShadow: open ? "0 0 12px rgba(250,204,21,0.12)" : "none",
+          borderColor: open
+            ? isLight ? "rgba(148,163,184,0.55)" : "rgba(250,204,21,0.45)"
+            : "transparent",
+          background: open
+            ? isLight ? "rgba(255,255,255,0.92)" : "rgba(0,0,0,0.85)"
+            : "transparent",
+          boxShadow: open
+            ? isLight ? "0 6px 16px rgba(15,23,42,0.1)" : "0 0 12px rgba(250,204,21,0.12)"
+            : "none",
           backdropFilter: open ? "blur(8px)" : "none",
         }}
       >

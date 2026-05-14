@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, Moon, Sun, Monitor } from "lucide-react";
+import { Menu, X, Moon, Sun, Palette } from "lucide-react";
 import { ThemeCustomizer } from "@/components/theme/ThemeCustomizer";
 import { track } from "@/lib/analytics";
 import { useTheme } from "@/providers/useTheme";
-import { THEME_MODE_LABELS, THEME_MODE_ORDER } from "@/providers/theme-context";
+import type { ThemeMode } from "@/providers/theme-context";
 
 const RAW_LOGO_SRC = "/raw-logo-96.png";
 
@@ -17,10 +17,24 @@ interface NavbarProps {
 export function Navbar({ isLoggedIn, username, onSignupClick }: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const { mode, setMode } = useTheme();
-  const modeIndex = THEME_MODE_ORDER.indexOf(mode);
   const isLightMode = mode === "light";
-  const isMediumMode = mode === "medium";
   const [navVisible, setNavVisible] = useState(true);
+  const modeOptions: { mode: ThemeMode; label: string; shortLabel: string; icon: typeof Moon; position: string }[] = [
+    { mode: "dark", label: "Dark", shortLabel: "D", icon: Moon },
+    { mode: "dusk", label: "Dusk", shortLabel: "Du", icon: Palette },
+    { mode: "light", label: "Light", shortLabel: "L", icon: Sun },
+  ].map((option, index) => ({
+    ...option,
+    position: ["translate-x-1", "translate-x-[1.875rem]", "translate-x-[3.5rem]"][index],
+  }));
+  const currentModeIndex = Math.max(0, modeOptions.findIndex((option) => option.mode === mode));
+  const currentMode = modeOptions[currentModeIndex];
+  const CurrentModeIcon = currentMode.icon;
+
+  const cycleThemeMode = () => {
+    const nextMode = modeOptions[(currentModeIndex + 1) % modeOptions.length]?.mode ?? "dark";
+    setMode(nextMode);
+  };
 
   useEffect(() => {
     let lastY = window.scrollY;
@@ -111,31 +125,37 @@ export function Navbar({ isLoggedIn, username, onSignupClick }: NavbarProps) {
           ) : (
             <>
               <button
-                onClick={() => setMode(mode === "dark" ? "medium" : mode === "medium" ? "light" : "dark")}
-                aria-label="Toggle dark, medium, and light mode"
-                className={`relative flex h-7 w-14 shrink-0 items-center rounded-full border transition-colors duration-300 ${
+                type="button"
+                onClick={cycleThemeMode}
+                className={`relative h-8 w-[5.5rem] shrink-0 rounded-full border transition-colors ${
                   isLightMode
-                    ? "border-slate-300 bg-slate-200"
-                    : isMediumMode
-                      ? "border-stone-500/60 bg-stone-700/70"
-                      : "border-raw-border/40 bg-raw-surface/60"
+                    ? "border-slate-300 bg-white/90"
+                    : "border-raw-border/40 bg-raw-surface/60"
                 }`}
+                aria-label={`Theme mode: ${currentMode.label}`}
               >
+                <span className="absolute inset-0 grid grid-cols-3 items-center px-1 text-[9px] font-semibold">
+                  {modeOptions.map((option) => (
+                    <span
+                      key={option.mode}
+                      className={`flex h-6 items-center justify-center rounded-full transition-colors ${
+                        option.mode === mode
+                          ? "text-transparent"
+                          : isLightMode
+                            ? "text-slate-500"
+                            : "text-raw-silver/45"
+                      }`}
+                    >
+                      {option.shortLabel}
+                    </span>
+                  ))}
+                </span>
                 <span
-                  className={`absolute flex h-5 w-5 items-center justify-center rounded-full shadow transition-transform duration-300 ${
-                    isLightMode
-                      ? "translate-x-8 bg-white"
-                      : isMediumMode
-                        ? "translate-x-4.5 bg-stone-300"
-                        : "translate-x-1 bg-slate-600"
+                  className={`absolute left-0 top-1 flex h-6 w-6 items-center justify-center rounded-full text-raw-gold shadow transition-transform duration-300 ${currentMode.position} ${
+                    isLightMode ? "bg-white shadow-slate-300/80" : "bg-slate-700 shadow-black/40"
                   }`}
                 >
-                  {isLightMode
-                    ? <Sun className="h-3 w-3 text-amber-500" />
-                    : isMediumMode
-                      ? <Monitor className="h-3 w-3 text-stone-700" />
-                      : <Moon className="h-3 w-3 text-slate-300" />
-                  }
+                  <CurrentModeIcon className="h-3.5 w-3.5" />
                 </span>
               </button>
               <ThemeCustomizer placement="inline" triggerStyle="compact" className="flex shrink-0" />
