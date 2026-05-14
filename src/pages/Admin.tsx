@@ -119,6 +119,10 @@ export default function Admin() {
   const [assetsFolderName, setAssetsFolderName] = useState<string | null>(null);
   const [avatarCatalogDraft, setAvatarCatalogDraft] = useState<AvatarCatalogItem[]>([]);
   const [isSavingAvatarCatalog, setIsSavingAvatarCatalog] = useState(false);
+  const [isLoadingCatalog, setIsLoadingCatalog] = useState(false);
+  const [catalogLoaded, setCatalogLoaded] = useState(false);
+  const [isLoadingPolls, setIsLoadingPolls] = useState(false);
+  const [pollsLoaded, setPollsLoaded] = useState(false);
   const [dailySpinPoolDraft, setDailySpinPoolDraft] = useState<DailySpinAvatarPoolItem[]>(() => readDailySpinAvatarPool());
   const [newSpinName, setNewSpinName] = useState("");
   const [newSpinImageSrc, setNewSpinImageSrc] = useState("");
@@ -163,43 +167,50 @@ export default function Admin() {
   }, []);
 
   const loadPolls = useCallback(async () => {
-    const result = await testSupabaseConnection();
-    setSupabaseStatus(result.ok ? "ok" : "error");
-    setSupabaseMessage(result.message);
-    if (result.ok) {
-      try {
-        const polls = await fetchPollsFromSupabase();
-        setAdminPolls(polls);
-      } catch {
+    setIsLoadingPolls(true);
+    try {
+      const result = await testSupabaseConnection();
+      setSupabaseStatus(result.ok ? "ok" : "error");
+      setSupabaseMessage(result.message);
+      if (result.ok) {
+        try {
+          const polls = await fetchPollsFromSupabase();
+          setAdminPolls(polls);
+        } catch {
+          setAdminPolls(readAdminPolls());
+        }
+      } else {
         setAdminPolls(readAdminPolls());
       }
-    } else {
-      setAdminPolls(readAdminPolls());
+      setPollsLoaded(true);
+    } finally {
+      setIsLoadingPolls(false);
+    }
+  }, []);
+
+  const loadCatalog = useCallback(async () => {
+    setIsLoadingCatalog(true);
+    try {
+      const catalog = await loadFullAvatarCatalog();
+      setAvatarCatalogDraft(catalog);
+      setPublishInsertAt(catalog.length + 1);
+      setCatalogLoaded(true);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Check Supabase table access for avatar_catalog.";
+      toast({ title: "Could not load avatar catalog", description: msg });
+    } finally {
+      setIsLoadingCatalog(false);
     }
   }, []);
 
   useEffect(() => {
     refreshAdminData();
-    loadPolls();
     window.addEventListener("focus", refreshAdminData);
 
     return () => {
       window.removeEventListener("focus", refreshAdminData);
     };
-  }, [refreshAdminData, loadPolls]);
-
-  useEffect(() => {
-    void (async () => {
-      try {
-        const catalog = await loadFullAvatarCatalog();
-        setAvatarCatalogDraft(catalog);
-        setPublishInsertAt(catalog.length + 1);
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : "Check Supabase table access for avatar_catalog.";
-        toast({ title: "Could not load avatar catalog", description: msg });
-      }
-    })();
-  }, []);
+  }, [refreshAdminData]);
 
   useEffect(() => {
     void loadDailySpinPoolFromSupabase()
@@ -2129,6 +2140,15 @@ export default function Admin() {
                   <Database className="h-3 w-3" />
                   {isTestingStorage ? "Testing storage..." : "Test storage"}
                 </button>
+                <button
+                  type="button"
+                  onClick={() => void loadPolls()}
+                  disabled={isLoadingPolls}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-raw-border/30 px-2.5 py-0.5 text-[10px] text-raw-silver/65 hover:border-raw-gold/40 hover:text-raw-text disabled:opacity-40"
+                >
+                  <Database className="h-3 w-3" />
+                  {isLoadingPolls ? "Loading..." : pollsLoaded ? "Reload polls" : "Load polls"}
+                </button>
               </div>
               <p className="mt-1 text-sm text-raw-silver/45">Add a new poll with its answer options. It will show up in the daily feed.</p>
             </div>
@@ -2647,8 +2667,17 @@ export default function Admin() {
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
+                      onClick={() => void loadCatalog()}
+                      disabled={isLoadingCatalog}
+                      className="rounded-lg border border-raw-border/25 px-2.5 py-1.5 text-[11px] text-raw-silver/65 hover:border-raw-gold/40 hover:text-raw-text disabled:opacity-40"
+                    >
+                      {isLoadingCatalog ? "Loading..." : catalogLoaded ? "Reload" : "Load catalog"}
+                    </button>
+                    <button
+                      type="button"
                       onClick={addAvatarCatalogDraftItem}
-                      className="rounded-lg border border-raw-border/25 px-2.5 py-1.5 text-[11px] text-raw-silver/65 hover:border-raw-gold/40 hover:text-raw-text"
+                      disabled={!catalogLoaded}
+                      className="rounded-lg border border-raw-border/25 px-2.5 py-1.5 text-[11px] text-raw-silver/65 hover:border-raw-gold/40 hover:text-raw-text disabled:opacity-40"
                     >
                       + Add avatar
                     </button>
@@ -2663,8 +2692,8 @@ export default function Admin() {
                   </div>
                 </div>
 
-                {avatarCatalogDraft.length === 0 ? (
-                  <p className="mt-3 text-xs text-raw-silver/45">No avatars in catalog yet.</p>
+                {!catalogLoaded ? (
+                  <p className="mt-3 text-xs text-raw-silver/45">Click "Load catalog" to view and edit avatars.</p>
                 ) : (
                   <div className="mt-3 space-y-2">
                     {avatarCatalogDraft.map((item, index) => (
