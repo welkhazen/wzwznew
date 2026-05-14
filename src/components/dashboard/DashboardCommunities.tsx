@@ -630,7 +630,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                 {/* Cover image */}
                 <div className="relative h-28 sm:h-44 shrink-0 overflow-hidden border-b border-raw-border/25">
                   {coverVideo ? (
-                    <video src={coverVideo} className="h-full w-full object-cover" autoPlay loop muted playsInline />
+                    <video src={coverVideo} className="h-full w-full object-cover" autoPlay loop muted playsInline preload="auto" />
                   ) : coverImage ? (
                     <img src={coverImage} alt={`${community.title} cover`} className="h-full w-full object-cover" loading="lazy" />
                   ) : (

@@ -1,5 +1,6 @@
 import lntCoverVideo from "@/assets/2026-04-18 10_10_00.webm";
 import iijmVideo from "@/assets/itisjustme.webm";
+import lebanonVideo from "@/assets/LB.mp4";
 import sytVideo from "@/assets/speakyourheart.webm";
 
 export const FEATURED_COMMUNITY_IDS = ["lnt", "syt", "iijm", "li"] as const;
@@ -17,5 +18,6 @@ export const COMMUNITY_COVER_IMAGES: Record<string, string> = {
 export const COMMUNITY_COVER_VIDEOS: Record<string, string> = {
   lnt: lntCoverVideo,
   iijm: iijmVideo,
+  li: lebanonVideo,
   syt: sytVideo,
 };
