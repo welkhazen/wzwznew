@@ -491,7 +491,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
                             setExtraPreviewAvatar(null);
                             setAvatarIndex(themeIndex);
                             setPreviewIndex(themeIndex);
-                            phoneRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                            phoneRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
                           }}
                           onMouseEnter={() => setPreviewIndex(themeIndex)}
                           onMouseLeave={() => setPreviewIndex(avatarIndex)}
