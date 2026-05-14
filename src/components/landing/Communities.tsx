@@ -170,9 +170,9 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
                     <div className="absolute inset-0 bg-raw-black/55" />
                     {waitlistConfirmed ? (
                       <div className="relative z-10 flex flex-col items-center justify-center gap-3">
-                        <div className="text-3xl">🎉</div>
-                        <h3 className="font-display text-sm tracking-wide text-raw-gold">
-                          You're on the waitlist!
+                        <div className="text-3xl">🔒</div>
+                        <h3 className="font-display text-sm tracking-wide text-raw-text">
+                          Sign up to join the waitlist
                         </h3>
                         <p className="max-w-[220px] text-xs leading-relaxed text-raw-silver/60">
                           Lebanon Initiatives is coming soon. We'll let you know when it launches.
@@ -184,17 +184,12 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
                           }}
                           className="mt-4 rounded-full bg-raw-gold px-4 py-2 text-[11px] font-semibold text-raw-black transition hover:opacity-90"
                         >
-                          Sign up to get notified
+                          Sign up
                         </button>
                       </div>
                     ) : (
                       <div className="relative z-10 flex flex-col items-center justify-center gap-3">
                         <span className="text-3xl">🔒</span>
-                        <h3 className="font-display text-sm tracking-wide text-raw-text text-center">{c.title}</h3>
-                        <span className="inline-block rounded-full border border-raw-gold/30 bg-raw-gold/5 px-2 py-0.5 text-[10px] font-medium tracking-wider text-raw-gold/70 uppercase">
-                          Waitlist
-                        </span>
-                        <span className="text-[10px] text-raw-silver/40 text-center">Click to join waitlist</span>
                       </div>
                     )}
                   </div>
