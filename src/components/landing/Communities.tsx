@@ -46,7 +46,6 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
   const sectionRef = useTrackSectionView("communities");
   const { mode } = useTheme();
   const isLight = mode === "light";
-  const [waitlistConfirmed, setWaitlistConfirmed] = useState(false);
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [previewOpen, setPreviewOpen] = useState(false);
   const [selectedCommunity, setSelectedCommunity] = useState<string | null>(null);
@@ -81,10 +80,6 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
     setPreviewOpen(true);
     setVisibleMessages(0);
     setAnonInput("");
-
-    if (community.waitlist) {
-      setWaitlistConfirmed(true);
-    }
   }
 
   useEffect(() => {
@@ -147,7 +142,7 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
           {communities.map((c) => (
             <div
               key={c.title}
-              onClick={(e) => { if (c.waitlist) setWaitlistConfirmed(true); else openCommunityPreview(e, c); }}
+              onClick={(e) => { if (!c.waitlist) openCommunityPreview(e, c); }}
               className="cursor-pointer"
             >
               <div
