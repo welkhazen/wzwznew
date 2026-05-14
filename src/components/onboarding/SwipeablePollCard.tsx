@@ -14,6 +14,8 @@ interface SwipeablePollCardProps {
   onSwipe: (option: string) => void;
   onNavigate?: (direction: "left" | "right") => void;
   hideInternalNav?: boolean;
+  noOuterGlow?: boolean;
+  hideButtonGlow?: boolean;
 }
 
 function resolveOptions(options: string[]) {
@@ -38,6 +40,8 @@ export function SwipeablePollCard({
   onSwipe,
   onNavigate,
   hideInternalNav = false,
+  noOuterGlow = false,
+  hideButtonGlow = false,
 }: SwipeablePollCardProps) {
   const resolvedOptions = resolveOptions(options);
 
@@ -60,6 +64,8 @@ export function SwipeablePollCard({
         secondaryOption={{ id: noOption, label: noOption, votes: responseStats[noOption] ?? 0 }}
         selectedOptionId={isAnswered ? selectedOption ?? null : null}
         uniformNeutralTheme
+        noOuterGlow={noOuterGlow}
+        hideButtonGlow={hideButtonGlow}
         onVote={onSwipe}
       />
 

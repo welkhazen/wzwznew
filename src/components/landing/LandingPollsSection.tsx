@@ -134,7 +134,7 @@ export function LandingPollsSection() {
                 key={i}
                 className={`h-[3px] transition-all ${
                   i === index
-                    ? "w-9 bg-[#F1C42D] shadow-[0_0_8px_rgba(241,196,45,0.7)]"
+                    ? "w-9 bg-raw-gold shadow-[0_0_8px_rgb(var(--raw-accent)/0.7)]"
                     : "w-6 bg-white/20"
                 }`}
               />
@@ -148,7 +148,7 @@ export function LandingPollsSection() {
             onClick={() => canPrev && setIndex((i) => i - 1)}
             disabled={!canPrev}
             aria-label="Previous question"
-            className="absolute left-0 z-10 flex h-11 w-11 -translate-x-3 items-center justify-center rounded-full border border-[#F1C42D]/55 bg-black/75 text-[#F1C42D] shadow-[0_0_18px_rgba(241,196,45,0.25)] transition hover:bg-[#F1C42D]/10 disabled:cursor-not-allowed disabled:opacity-25 sm:-translate-x-7"
+            className="absolute left-0 z-10 flex h-11 w-11 -translate-x-3 items-center justify-center rounded-full border border-raw-gold/55 bg-black/75 text-raw-gold shadow-[0_0_18px_rgb(var(--raw-accent)/0.25)] transition hover:bg-raw-gold/10 disabled:cursor-not-allowed disabled:opacity-25 sm:-translate-x-7"
           >
             <ChevronLeft className="h-5 w-5" strokeWidth={2.5} />
           </button>
@@ -178,7 +178,7 @@ export function LandingPollsSection() {
             onClick={() => canNext && setIndex((i) => i + 1)}
             disabled={!canNext}
             aria-label="Next question"
-            className="absolute right-0 z-10 flex h-11 w-11 translate-x-3 items-center justify-center rounded-full border border-[#F1C42D]/55 bg-black/75 text-[#F1C42D] shadow-[0_0_18px_rgba(241,196,45,0.25)] transition hover:bg-[#F1C42D]/10 disabled:cursor-not-allowed disabled:opacity-25 sm:translate-x-7"
+            className="absolute right-0 z-10 flex h-11 w-11 translate-x-3 items-center justify-center rounded-full border border-raw-gold/55 bg-black/75 text-raw-gold shadow-[0_0_18px_rgb(var(--raw-accent)/0.25)] transition hover:bg-raw-gold/10 disabled:cursor-not-allowed disabled:opacity-25 sm:translate-x-7"
           >
             <ChevronRight className="h-5 w-5" strokeWidth={2.5} />
           </button>
@@ -198,8 +198,8 @@ export function LandingPollsSection() {
                   initial={{ scaleX: 0, opacity: 0 }}
                   animate={{ scaleX: 1, opacity: 1 }}
                   transition={{ duration: 0.45, delay: 0.1, ease: "easeOut" }}
-                  className="h-px origin-left bg-gradient-to-r from-transparent via-[#F1C42D]/55 to-transparent"
-                  style={{ boxShadow: "0 0 8px rgba(241,196,45,0.4)" }}
+                  className="h-px origin-left bg-gradient-to-r from-transparent via-raw-gold/55 to-transparent"
+                  style={{ boxShadow: "0 0 8px rgb(var(--raw-accent) / 0.4)" }}
                 />
 
                 <div
@@ -207,8 +207,8 @@ export function LandingPollsSection() {
                   style={{
                     clipPath: COMMENT_CLIP,
                     background:
-                      "linear-gradient(160deg, rgba(241,196,45,0.35) 0%, rgba(241,196,45,0.08) 50%, rgba(241,196,45,0.25) 100%)",
-                    boxShadow: "0 8px 32px rgba(241,196,45,0.1)",
+                      "linear-gradient(160deg, rgb(var(--raw-accent) / 0.35) 0%, rgb(var(--raw-accent) / 0.08) 50%, rgb(var(--raw-accent) / 0.25) 100%)",
+                    boxShadow: "0 8px 32px rgb(var(--raw-accent) / 0.1)",
                   }}
                 >
                   <div
@@ -220,14 +220,14 @@ export function LandingPollsSection() {
                         : "linear-gradient(165deg, #111111 0%, #070707 100%)",
                     }}
                   >
-                    <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.32em] text-[#F1C42D]/70">
+                    <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.32em] text-raw-gold/70">
                       Anonymous Comments
                     </p>
 
                     <div ref={commentsContainerRef} className="max-h-36 space-y-2 overflow-y-auto pr-1">
                       {allComments.map((comment, i) => (
                         <div key={i} className="flex items-start gap-2">
-                          <span className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[#F1C42D]/15 text-[9px] font-bold text-[#F1C42D]/70">
+                          <span className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-raw-gold/15 text-[9px] font-bold text-raw-gold/70">
                             ?
                           </span>
                           <p className={`text-[12px] leading-[1.4] ${isLight ? "text-stone-600" : "text-white/55"}`}>
@@ -254,14 +254,14 @@ export function LandingPollsSection() {
                         }}
                         className={`min-w-0 flex-1 rounded px-3 py-1.5 text-[12px] outline-none transition ${
                           isLight
-                            ? "border border-black/10 bg-black/5 text-stone-700 placeholder:text-stone-400 focus:border-[#F1C42D]/50"
-                            : "border border-white/10 bg-white/5 text-white/70 placeholder:text-white/25 focus:border-[#F1C42D]/40"
+                            ? "border border-black/10 bg-black/5 text-stone-700 placeholder:text-stone-400 focus:border-raw-gold/50"
+                            : "border border-white/10 bg-white/5 text-white/70 placeholder:text-white/25 focus:border-raw-gold/40"
                         }`}
                       />
                       <button
                         type="button"
                         onClick={handleSubmitComment}
-                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded border border-[#F1C42D]/30 bg-[#F1C42D]/10 text-[#F1C42D]/70 transition hover:bg-[#F1C42D]/20"
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded border border-raw-gold/30 bg-raw-gold/10 text-raw-gold/70 transition hover:bg-raw-gold/20"
                       >
                         <Send className="h-3.5 w-3.5" />
                       </button>

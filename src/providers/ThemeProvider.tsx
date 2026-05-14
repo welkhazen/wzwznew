@@ -16,7 +16,6 @@ function getStoredThemeMode(): ThemeMode {
 
   const storedMode = window.localStorage.getItem(THEME_MODE_STORAGE_KEY);
   return THEME_MODE_ORDER.includes(storedMode as ThemeMode) ? (storedMode as ThemeMode) : "dark";
-  return storedMode === "light" || storedMode === "medium" ? storedMode : "dark";
 }
 
 function getStoredAccent(): AccentPresetId {
@@ -42,8 +41,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
     root.classList.toggle("theme-light", mode === "light");
     root.classList.toggle("theme-dusk", mode === "dusk");
-    root.classList.toggle("theme-dawn", mode === "dawn");
-    root.classList.toggle("theme-medium", mode === "medium");
     root.dataset.themeMode = mode;
     root.dataset.themeAccent = accent;
     root.style.setProperty("--raw-accent", selectedAccent.rgb);

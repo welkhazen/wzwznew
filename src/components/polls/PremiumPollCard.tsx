@@ -18,6 +18,8 @@ interface PremiumPollCardProps {
   showHint?: boolean;
   uniformNeutralTheme?: boolean;
   className?: string;
+  noOuterGlow?: boolean;
+  hideButtonGlow?: boolean;
   onVote: (optionId: string) => void;
   onHintSeen?: () => void;
 }
@@ -40,6 +42,8 @@ export function PremiumPollCard({
   showHint = false,
   uniformNeutralTheme = false,
   className,
+  noOuterGlow = false,
+  hideButtonGlow = false,
   onVote,
   onHintSeen,
 }: PremiumPollCardProps) {
@@ -74,11 +78,14 @@ export function PremiumPollCard({
   return (
     <article className={cn("relative mx-auto w-full max-w-[22rem] select-none", className)} aria-label={question}>
       <div
-        className="relative p-px shadow-[0_28px_70px_rgba(0,0,0,0.68),0_0_36px_rgba(241,196,45,0.14)]"
+        className="relative p-px"
         style={{
           clipPath: CARD_CLIP,
           background:
-            "linear-gradient(155deg, rgba(241,196,45,0.72), rgba(235,235,235,0.18) 28%, rgba(35,35,35,0.5) 52%, rgba(241,196,45,0.64))",
+            "linear-gradient(155deg, rgb(var(--raw-accent) / 0.72), rgba(235,235,235,0.18) 28%, rgba(35,35,35,0.5) 52%, rgb(var(--raw-accent) / 0.64))",
+          boxShadow: noOuterGlow
+            ? "0 28px 70px rgba(0,0,0,0.68)"
+            : "0 28px 70px rgba(0,0,0,0.68), 0 0 36px rgb(var(--raw-accent) / 0.14)",
         }}
       >
         <div
@@ -86,11 +93,11 @@ export function PremiumPollCard({
           style={{
             clipPath: CARD_CLIP,
             background: isLight
-              ? "radial-gradient(circle at 50% 0%, rgba(241,196,45,0.18), transparent 33%), linear-gradient(180deg, #faf6e8 0%, #f5f0d8 38%, #ede8c8 100%)"
-              : "radial-gradient(circle at 50% 0%, rgba(241,196,45,0.14), transparent 33%), linear-gradient(180deg, #20201d 0%, #0a0a0a 38%, #050505 100%)",
+              ? "radial-gradient(circle at 50% 0%, rgb(var(--raw-accent) / 0.18), transparent 33%), linear-gradient(180deg, #faf6e8 0%, #f5f0d8 38%, #ede8c8 100%)"
+              : "radial-gradient(circle at 50% 0%, rgb(var(--raw-accent) / 0.14), transparent 33%), linear-gradient(180deg, #20201d 0%, #0a0a0a 38%, #050505 100%)",
           }}
         >
-          <div className="absolute inset-[0.42rem] border border-raw-gold/18" style={{ clipPath: CARD_CLIP }} />
+          <div className="absolute inset-[0.42rem] border" style={{ clipPath: CARD_CLIP, borderColor: "rgb(var(--raw-accent) / 0.18)" }} />
           <div
             className="absolute inset-0 opacity-[0.18]"
             style={{
@@ -104,22 +111,23 @@ export function PremiumPollCard({
 
           <div className="relative flex min-h-[22rem] flex-col items-center px-4 pb-5 pt-7 sm:min-h-[25.5rem] sm:px-6 sm:pb-6 sm:pt-9">
             <div className="flex w-full items-center gap-3">
-              <span className="h-px flex-1 bg-gradient-to-r from-transparent via-raw-gold/55 to-raw-gold/20" />
-              <span className="h-1 w-1 bg-raw-gold shadow-[0_0_10px_rgba(241,196,45,0.9)]" />
-              <span className="h-px flex-1 bg-gradient-to-l from-transparent via-raw-gold/55 to-raw-gold/20" />
+              <span className="h-px flex-1" style={{ background: "linear-gradient(to right, transparent, rgb(var(--raw-accent) / 0.55), rgb(var(--raw-accent) / 0.20))" }} />
+              <span className="h-1 w-1" style={{ background: "rgb(var(--raw-accent))", boxShadow: "0 0 10px rgb(var(--raw-accent) / 0.9)" }} />
+              <span className="h-px flex-1" style={{ background: "linear-gradient(to left, transparent, rgb(var(--raw-accent) / 0.55), rgb(var(--raw-accent) / 0.20))" }} />
             </div>
 
             <div className="relative mt-4 h-14 w-14 overflow-hidden sm:mt-5 sm:h-20 sm:w-20">
               <img
                 src="/assets/cumulative-mind.png"
                 alt="Cumulative Mind"
-                className="h-full w-full object-contain drop-shadow-[0_0_16px_rgba(241,196,45,0.36)]"
+                className="h-full w-full object-contain"
+                style={{ filter: "drop-shadow(0 0 16px rgb(var(--raw-accent) / 0.36))" }}
                 draggable={false}
               />
             </div>
 
             {showHint && !isAnswered && (
-              <p className="mt-4 text-center text-[10px] uppercase tracking-[0.2em] text-raw-gold/75">tap to vote</p>
+              <p className="mt-4 text-center text-[10px] uppercase tracking-[0.2em]" style={{ color: "rgb(var(--raw-accent) / 0.75)" }}>tap to vote</p>
             )}
 
             <h2 className={`mt-4 flex min-h-[5.5rem] items-center text-center font-display text-[clamp(1rem,4.6vw,1.46rem)] leading-[1.4] [text-wrap:balance] sm:mt-5 sm:min-h-[7.75rem] ${isLight ? "text-[#2a2000]" : "text-[#dedede]"}`}>
@@ -139,7 +147,8 @@ export function PremiumPollCard({
                   disabled={disabled}
                   onClick={() => submitVote(primaryOption.id)}
                   showFill={false}
-                  isLightMode={isLight}
+                  hideSelectedGlow={hideButtonGlow}
+                  isLight={isLight}
                 />
 
                 {/* Secondary / No button */}
@@ -153,7 +162,8 @@ export function PremiumPollCard({
                   disabled={disabled}
                   onClick={() => submitVote(secondaryOption.id)}
                   showFill={false}
-                  isLightMode={isLight}
+                  hideSelectedGlow={hideButtonGlow}
+                  isLight={isLight}
                 />
 </div>
             </div>

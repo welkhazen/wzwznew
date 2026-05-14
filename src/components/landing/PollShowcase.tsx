@@ -98,7 +98,7 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
                 key={i}
                 className={`h-[3px] transition-all ${
                   i === index
-                    ? "w-9 bg-[#F1C42D] shadow-[0_0_8px_rgba(241,196,45,0.7)]"
+                    ? "w-9 bg-raw-gold shadow-[0_0_8px_rgb(var(--raw-accent)/0.7)]"
                     : "w-6 bg-white/20"
                 }`}
               />
@@ -112,7 +112,7 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
             onClick={() => canPrev && setIndex((i) => i - 1)}
             disabled={!canPrev}
             aria-label="Previous question"
-            className="absolute left-0 z-10 flex h-11 w-11 -translate-x-3 items-center justify-center rounded-full border border-[#F1C42D]/55 bg-black/75 text-[#F1C42D] shadow-[0_0_18px_rgba(241,196,45,0.25)] transition hover:bg-[#F1C42D]/10 disabled:cursor-not-allowed disabled:opacity-25 sm:-translate-x-7"
+            className="absolute left-0 z-10 flex h-11 w-11 -translate-x-3 items-center justify-center rounded-full border border-raw-gold/55 bg-black/75 text-raw-gold shadow-[0_0_18px_rgb(var(--raw-accent)/0.25)] transition hover:bg-raw-gold/10 disabled:cursor-not-allowed disabled:opacity-25 sm:-translate-x-7"
           >
             <ChevronLeft className="h-5 w-5" strokeWidth={2.5} />
           </button>
@@ -144,7 +144,7 @@ export function PollShowcase({ initialOpen = true, onResolved }: PollShowcasePro
               onClick={() => canNext && setIndex((i) => i + 1)}
               disabled={!canNext}
               aria-label="Next question"
-              className="absolute right-0 z-10 flex h-11 w-11 translate-x-3 items-center justify-center rounded-full border border-[#F1C42D]/55 bg-black/75 text-[#F1C42D] shadow-[0_0_18px_rgba(241,196,45,0.25)] transition hover:bg-[#F1C42D]/10 disabled:cursor-not-allowed disabled:opacity-25 sm:translate-x-7"
+              className="absolute right-0 z-10 flex h-11 w-11 translate-x-3 items-center justify-center rounded-full border border-raw-gold/55 bg-black/75 text-raw-gold shadow-[0_0_18px_rgb(var(--raw-accent)/0.25)] transition hover:bg-raw-gold/10 disabled:cursor-not-allowed disabled:opacity-25 sm:translate-x-7"
             >
               <ChevronRight className="h-5 w-5" strokeWidth={2.5} />
             </button>
