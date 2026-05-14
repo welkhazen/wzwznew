@@ -1,5 +1,4 @@
 import { Suspense, lazy } from "react";
-import { PasswordGate } from "@/components/PasswordGate";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -28,7 +27,6 @@ const TestPollOnboarding = import.meta.env.DEV
 const routeFallback = <div className="sr-only">Loading page…</div>;
 
 const App = () => (
-  <PasswordGate>
   <ErrorBoundary>
     <ThemeProvider>
       <TooltipProvider>
@@ -64,7 +62,6 @@ const App = () => (
       </TooltipProvider>
     </ThemeProvider>
   </ErrorBoundary>
-  </PasswordGate>
 );
 
 export default App;
