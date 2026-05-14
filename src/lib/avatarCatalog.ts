@@ -328,6 +328,11 @@ export async function saveAvatarCatalog(items: AvatarCatalogItem[]): Promise<Ava
   return next;
 }
 
+export async function deleteAvatarFromCatalog(id: string): Promise<void> {
+  const { error } = await supabase.from("avatar_catalog").delete().eq("id", id);
+  if (error) throw new Error(error.message || "Could not delete avatar from Supabase.");
+}
+
 export async function saveAvatarCatalogSupabaseOnly(items: AvatarCatalogItem[]): Promise<AvatarCatalogItem[]> {
   const next = sanitizeCatalog(items);
   const baseRow = (item: AvatarCatalogItem) => ({

@@ -14,6 +14,7 @@ import {
   loadAvatarCatalogSupabaseOnly,
   loadFullAvatarCatalog,
   saveAvatarCatalogSupabaseOnly,
+  deleteAvatarFromCatalog,
 } from "@/lib/avatarCatalog";
 import {
   readDailySpinAvatarPool,
@@ -1343,6 +1344,7 @@ export default function Admin() {
     setAvatarCatalogDraft(next);
     setIsSavingAvatarCatalog(true);
     try {
+      await deleteAvatarFromCatalog(id);
       const normalized = next.map((item, index) => ({
         ...item,
         id: item.id.trim() || `avatar-${index + 1}`,
@@ -1578,16 +1580,27 @@ export default function Admin() {
       const latestCatalog = await loadAvatarCatalogSupabaseOnly();
       const existing = latestCatalog.map((item) => ({ ...item }));
       const usedIds = new Set(existing.map((item) => item.id));
+
+      const safeIds = acceptedSlicedAvatars.map((item, index) =>
+        getUniqueAvatarId(
+          item.name || item.id || (item.publishTarget === "daily-spin" ? `daily-spin-${index + 1}` : `avatar-${existing.length + index + 1}`),
+          usedIds
+        )
+      );
+
+      const uploadResults = await Promise.all(
+        acceptedSlicedAvatars.map((item, index) =>
+          uploadAvatarBlobToSupabase(item.blob, safeIds[index], item.publishTarget === "daily-spin" ? "daily-spin" : "level")
+        )
+      );
+
       const nextFromSlice: AvatarCatalogItem[] = [];
       const nextForDailySpin: Array<{ id: string; name: string; imageSrc: string }> = [];
       for (let index = 0; index < acceptedSlicedAvatars.length; index += 1) {
         const item = acceptedSlicedAvatars[index];
-        const safeId = getUniqueAvatarId(
-          item.name || item.id || (item.publishTarget === "daily-spin" ? `daily-spin-${index + 1}` : `avatar-${existing.length + index + 1}`),
-          usedIds
-        );
+        const safeId = safeIds[index];
+        const imageSrc = uploadResults[index];
         if (item.publishTarget === "daily-spin") {
-          const imageSrc = await uploadAvatarBlobToSupabase(item.blob, safeId, "daily-spin");
           nextForDailySpin.push({
             id: safeId,
             name: item.name.trim() || `Daily Spin ${index + 1}`,
@@ -1595,10 +1608,7 @@ export default function Admin() {
           });
           continue;
         }
-
         const theme = getAvatar(existing.length + index + 1);
-        const imageSrc = await uploadAvatarBlobToSupabase(item.blob, safeId, "level");
-
         nextFromSlice.push({
           id: safeId,
           level: 0,
