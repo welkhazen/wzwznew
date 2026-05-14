@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Eye, EyeOff, X } from "lucide-react";
 import {
   isValidUsername,
@@ -204,7 +205,7 @@ export function SignupModal({ open, onClose, onRequestSignupOtp, onVerifySignupO
       ? sentChannels.map((channel) => channel === "whatsapp" ? "WhatsApp" : "SMS").join(" + ")
       : "SMS or WhatsApp";
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
 
@@ -408,6 +409,7 @@ export function SignupModal({ open, onClose, onRequestSignupOtp, onVerifySignupO
         </p>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
