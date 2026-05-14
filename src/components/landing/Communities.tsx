@@ -47,6 +47,7 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
   const { mode } = useTheme();
   const isLight = mode === "light";
   const [waitlistConfirmed, setWaitlistConfirmed] = useState(false);
+  const [showAllCards, setShowAllCards] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [selectedCommunity, setSelectedCommunity] = useState<string | null>(null);
   const [clickedCardRect, setClickedCardRect] = useState<DOMRect | null>(null);
@@ -143,11 +144,11 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
           </div>
 
           <div className="grid gap-4 sm:gap-6 grid-cols-2 md:grid-cols-4">
-          {communities.map((c) => (
+          {communities.map((c, idx) => (
             <div
               key={c.title}
               onClick={(e) => { if (c.waitlist) setWaitlistConfirmed(true); else openCommunityPreview(e, c); }}
-              className="cursor-pointer"
+              className={`cursor-pointer${idx >= 2 && !showAllCards ? " hidden md:block" : ""}`}
             >
               <div
                 className={
@@ -232,6 +233,16 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
             </div>
           ))}
           </div>
+
+          {!showAllCards && (
+            <button
+              type="button"
+              onClick={() => setShowAllCards(true)}
+              className="mt-5 w-full md:hidden rounded-full border border-raw-border/40 bg-raw-surface/40 py-2.5 text-xs font-semibold uppercase tracking-[0.18em] text-raw-silver/60 transition hover:border-raw-gold/30 hover:text-raw-silver/90"
+            >
+              Show more communities
+            </button>
+          )}
         </div>
 
         {/* Communities worldwide */}
