@@ -64,6 +64,7 @@ export function HowItWorks() {
             initialDelay={200}
             enableSound={false}
             largeLastCommand
+            commandClassName="text-sm"
           />
         </div>
       </div>

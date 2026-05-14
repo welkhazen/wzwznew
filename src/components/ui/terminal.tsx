@@ -257,6 +257,7 @@ export interface TerminalProps {
   initialDelay?: number;
   enableSound?: boolean;
   largeLastCommand?: boolean;
+  commandClassName?: string;
 }
 export function Terminal({
   commands = ["npx shadcn@latest init"],
@@ -268,6 +269,7 @@ export function Terminal({
   initialDelay = 500,
   enableSound = true,
   largeLastCommand = false,
+  commandClassName,
 }: TerminalProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -407,7 +409,7 @@ export function Terminal({
           className="no-visible-scrollbar h-80 overflow-y-auto p-4 font-mono"
         >
           {lines.map((line, i) => (
-            <div key={i} className={cn("leading-relaxed whitespace-pre-wrap", line.isLastCommand && "text-sm")}>
+            <div key={i} className={cn("leading-relaxed whitespace-pre-wrap", line.type === "command" && commandClassName, line.isLastCommand && "text-sm")}>
               {line.type === "command" ? (
                 <span>
                   {prompt}
@@ -419,7 +421,7 @@ export function Terminal({
             </div>
           ))}
           {phase === "typing" && (
-            <div className="leading-relaxed whitespace-pre-wrap">
+            <div className={cn("leading-relaxed whitespace-pre-wrap", commandClassName)}>
               {prompt}
               <SyntaxHighlightedText text={currentText} />
               <span className="ml-0.5 inline-block h-4 w-2 bg-raw-gold align-middle" />
