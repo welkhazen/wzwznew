@@ -455,6 +455,11 @@ html.theme-light .chat-popup-input {
   animation: subtle-pulse 3s ease-in-out infinite;
 }
 
+@keyframes ctaBreath {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.018); }
+}
+
 /* Infinite scroll animation */
 @keyframes scroll {
   to {
