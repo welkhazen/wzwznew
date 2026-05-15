@@ -79,6 +79,10 @@ export function AvatarShowcaseSection() {
   }, []);
 
   const chooserAvatars = CHOOSER_AVATARS;
+  const mobileChooserColumns = [
+    chooserAvatars.slice(0, 4),
+    chooserAvatars.slice(4, 8),
+  ];
   const chooserTotal = chooserAvatars.length;
   const expandedAvatarSource = EXPANDED_AVATARS;
   const expandedAvatarTotal = expandedAvatarSource.length;
@@ -293,40 +297,51 @@ Just like in real life, every person is born with a name, an appearance, and an 
           </div>
         </div>
 
-        {/* Avatar grid — right half */}
-        <div className="flex flex-1 flex-col min-w-0 pt-1">
-          <p className="mb-3 text-center font-display text-[8px] uppercase tracking-[0.14em] text-raw-gold/70 min-[380px]:text-[9px] min-[380px]:tracking-[0.18em]">
+        {/* Avatar grid — right half, same height as phone */}
+        <div className="flex flex-1 flex-col min-w-0 pt-1 overflow-hidden" style={{ height: 646 * MOBILE_PHONE_SCALE }}>
+          <p className="mb-1 text-center font-display text-[8px] uppercase tracking-[0.14em] text-raw-gold/70">
             Choose your avatar
           </p>
           <div
             ref={scrollRef}
-            className="grid grid-flow-col grid-rows-2 gap-x-1 gap-y-3"
+            className="grid flex-1 grid-cols-2 gap-x-1"
           >
-            {chooserAvatars.map((avatar, i) => (
-              <button
-                key={i + 1}
-                type="button"
-                onClick={() => { setExtraPreviewAvatar(null); setAvatarIndex(i + 1); setPreviewIndex(i + 1); }}
-                className="flex flex-col items-center gap-0.5 outline-none"
-                aria-label={`Select ${avatar.name}`}
-                aria-pressed={avatarIndex === i + 1}
-              >
-                <div
-                  className={`rounded-full transition-all duration-200 scale-[0.72] ${avatarIndex === i + 1 ? "scale-[0.82]" : ""}`}
-                >
-                  <AvatarFigure avatarIndex={avatar.level} size="sm" selected={avatarIndex === i + 1} />
-                </div>
-                <span
-                  className="text-center font-display uppercase leading-tight transition-colors duration-200"
-                  style={{
-                    fontSize: "0.44rem",
-                    letterSpacing: "0.08em",
-                    color: avatarIndex === i + 1 ? "#F1C42D" : "rgba(255,255,255,0.4)",
-                  }}
-                >
-                  {avatar.name}
-                </span>
-              </button>
+            {mobileChooserColumns.map((column, columnIndex) => (
+              <div key={`mobile-avatar-column-${columnIndex}`} className="flex min-w-0 flex-col items-center justify-around">
+                {column.map((avatar) => {
+                  const index = chooserAvatars.indexOf(avatar) + 1;
+                  return (
+                    <button
+                      key={avatar.id}
+                      type="button"
+                      onClick={() => { setExtraPreviewAvatar(null); setAvatarIndex(index); setPreviewIndex(index); }}
+                      className="flex min-w-0 flex-col items-center gap-0.5 outline-none"
+                      aria-label={`Select ${avatar.name}`}
+                      aria-pressed={avatarIndex === index}
+                    >
+                      <div
+                        className={`rounded-full transition-all duration-200 scale-[0.72] ${avatarIndex === index ? "scale-[0.82]" : ""}`}
+                      >
+                        <AvatarFigure avatarIndex={avatar.level} size="sm" selected={avatarIndex === index} />
+                      </div>
+                      <span
+                        className="max-w-[44px] text-center font-display uppercase leading-tight transition-colors duration-200"
+                        style={{
+                          fontSize: "0.4rem",
+                          letterSpacing: "0.04em",
+                          color: avatarIndex === index
+                            ? "#F1C42D"
+                            : isLight
+                              ? "rgba(30,41,59,0.6)"
+                              : "rgba(255,255,255,0.42)",
+                        }}
+                      >
+                        {avatar.name.split(" ")[0]}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             ))}
           </div>
         </div>
