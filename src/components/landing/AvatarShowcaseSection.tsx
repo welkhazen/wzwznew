@@ -38,14 +38,6 @@ export function AvatarShowcaseSection() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const phoneRef = useRef<HTMLDivElement>(null);
 
-  const applyFullThemes = (items: AvatarCatalogItem[]) => {
-    setFullCatalog(items);
-    setAvatarThemes(items.map((item) => ({
-      bg: item.bg, figure: item.figure, ring: item.ring,
-      glow: item.glow, name: item.name, imageSrc: item.imageSrc,
-    })));
-  };
-
   const applyRangedThemes = (items: AvatarCatalogItem[]) => {
     setExpandedCatalog(items);
     if (items.length === 0) return;
@@ -66,7 +58,13 @@ export function AvatarShowcaseSection() {
 
   useEffect(() => {
     const cached = readFullAvatarCatalogLocal();
-    if (cached.length > 0) applyFullThemes(cached);
+    if (cached.length > 0) {
+      setFullCatalog(cached);
+      setAvatarThemes(cached.map((item) => ({
+        bg: item.bg, figure: item.figure, ring: item.ring,
+        glow: item.glow, name: item.name, imageSrc: item.imageSrc,
+      })));
+    }
     loadLandingNewAvatars().then(setNewAvatars).catch(() => {});
   }, []);
 
