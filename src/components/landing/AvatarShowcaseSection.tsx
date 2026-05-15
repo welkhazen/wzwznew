@@ -5,7 +5,7 @@ import { LandingSectionShell } from "@/components/landing/LandingSectionShell";
 import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { AvatarPhoneHomeScreen } from "@/components/ui/avatar-phone-home-screen";
 import { PhoneMockup } from "@/components/ui/phone-mockup";
-import { AVATARS, LEVEL_THEMES, setAvatarThemes } from "@/lib/avataridentity";
+import { LEVEL_THEMES, setAvatarThemes } from "@/lib/avataridentity";
 import { DEFAULT_AVATAR_CATALOG, loadAvatarCatalogRange, readFullAvatarCatalogLocal } from "@/lib/avatarCatalog";
 import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
 import { loadLandingNewAvatars } from "@/lib/landingNewAvatars";
@@ -31,10 +31,8 @@ export function AvatarShowcaseSection() {
   const [expandedVisibleCount, setExpandedVisibleCount] = useState(EXPANDED_AVATAR_BATCH_SIZE);
   const [showMore, setShowMore] = useState(false);
   const [extraPreviewAvatar, setExtraPreviewAvatar] = useState<LandingNewAvatar | null>(null);
-  const [catalog] = useState<AvatarCatalogItem[]>(DEFAULT_AVATAR_CATALOG);
   const [fullCatalog, setFullCatalog] = useState<AvatarCatalogItem[]>(() => readFullAvatarCatalogLocal());
   const [expandedCatalog, setExpandedCatalog] = useState<AvatarCatalogItem[]>([]);
-  const [chooserCatalog, setChooserCatalog] = useState<AvatarCatalogItem[]>([]);
   const [isLoadingExpandedAvatars, setIsLoadingExpandedAvatars] = useState(false);
   const [newAvatars, setNewAvatars] = useState<LandingNewAvatar[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -70,32 +68,10 @@ export function AvatarShowcaseSection() {
     const cached = readFullAvatarCatalogLocal();
     if (cached.length > 0) applyFullThemes(cached);
     loadLandingNewAvatars().then(setNewAvatars).catch(() => {});
-    loadAvatarCatalogRange(11, FEATURED_AVATAR_COUNT + 10)
-      .then((items) => {
-        if (items.length === 0) return;
-        setChooserCatalog(items);
-        const nextThemes = [...LEVEL_THEMES];
-        const maxLevel = items[items.length - 1]?.level ?? 0;
-        while (nextThemes.length < maxLevel) nextThemes.push({ ...nextThemes[nextThemes.length - 1] });
-        items.forEach((item) => {
-          if (item.level > 0) nextThemes[item.level - 1] = { bg: item.bg, figure: item.figure, ring: item.ring, glow: item.glow, name: item.name, imageSrc: item.imageSrc };
-        });
-        setAvatarThemes(nextThemes);
-      })
-      .catch(() => {});
   }, []);
 
-  const avatarList = catalog.length > 0 ? catalog : AVATARS;
-  const safeAvatarList = avatarList.length > 0 ? avatarList : AVATARS.slice(0, 1);
-  const baseAvatars = fullCatalog.length > 0 ? fullCatalog : safeAvatarList;
-  // chooserCatalog (levels 11-20) has real PNG artwork. If it's loaded, prefer it;
-  // otherwise fall back to baseAvatars filtered for imageSrc, then plain baseAvatars.
-  const chooserSource = chooserCatalog.length >= FEATURED_AVATAR_COUNT ? chooserCatalog : baseAvatars;
-  const avatarsWithImages = chooserSource.filter((a) => a.imageSrc);
-  const featuredAvatars = avatarsWithImages.length >= FEATURED_AVATAR_COUNT
-    ? avatarsWithImages.slice(0, FEATURED_AVATAR_COUNT)
-    : chooserSource.slice(0, FEATURED_AVATAR_COUNT);
-  const chooserAvatars = featuredAvatars.length > 0 ? featuredAvatars : baseAvatars.slice(0, 1);
+  const baseAvatars = fullCatalog.length > 0 ? fullCatalog : DEFAULT_AVATAR_CATALOG;
+  const chooserAvatars = DEFAULT_AVATAR_CATALOG;
   const chooserTotal = chooserAvatars.length;
   const expandedAvatarSource = expandedCatalog.length > 0
     ? expandedCatalog
