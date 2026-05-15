@@ -96,7 +96,12 @@ export function AvatarShowcaseSection() {
   const avatarList = catalog.length > 0 ? catalog : AVATARS;
   const safeAvatarList = avatarList.length > 0 ? avatarList : AVATARS.slice(0, 1);
   const baseAvatars = fullCatalog.length > 0 ? fullCatalog : safeAvatarList;
-  const featuredAvatars = baseAvatars.slice(0, FEATURED_AVATAR_COUNT);
+  // Prefer avatars that have real artwork images for the featured chooser.
+  // Levels 1-10 are CSS-only (no imageSrc); levels 11+ have PNG artwork.
+  const avatarsWithImages = baseAvatars.filter((a) => a.imageSrc);
+  const featuredAvatars = avatarsWithImages.length >= FEATURED_AVATAR_COUNT
+    ? avatarsWithImages.slice(0, FEATURED_AVATAR_COUNT)
+    : baseAvatars.slice(0, FEATURED_AVATAR_COUNT);
   const chooserAvatars = featuredAvatars.length > 0 ? featuredAvatars : baseAvatars.slice(0, 1);
   const chooserTotal = chooserAvatars.length;
   const expandedAvatarSource = expandedCatalog.length > 0
@@ -106,9 +111,11 @@ export function AvatarShowcaseSection() {
   const visibleExtendedAvatars = expandedAvatarSource
     .slice(0, expandedVisibleCount)
     .map((avatar) => ({ avatar, themeIndex: avatar.level }));
+  // previewAvatar must come from chooserAvatars so the phone preview matches
+  // the selected chooser item (previewIndex is 1-based position in chooserAvatars).
   const previewAvatar = useMemo(
-    () => extraPreviewAvatar ?? baseAvatars[previewIndex - 1] ?? baseAvatars[0] ?? null,
-    [baseAvatars, extraPreviewAvatar, previewIndex]
+    () => extraPreviewAvatar ?? chooserAvatars[previewIndex - 1] ?? chooserAvatars[0] ?? null,
+    [chooserAvatars, extraPreviewAvatar, previewIndex]
   );
 
   const canPrev = true;
@@ -220,7 +227,7 @@ export function AvatarShowcaseSection() {
           }`}
           style={{ transition: "transform 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}
         >
-          <AvatarFigure avatarIndex={index} size="md" selected={isSelected || isActive} />
+          <AvatarFigure avatarIndex={avatar.level} size="md" selected={isSelected || isActive} />
         </div>
 
         {/* Name */}
@@ -342,7 +349,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
                 <div
                   className={`rounded-full transition-all duration-200 scale-[0.72] ${avatarIndex === i + 1 ? "scale-[0.82]" : ""}`}
                 >
-                  <AvatarFigure avatarIndex={i + 1} size="sm" selected={avatarIndex === i + 1} />
+                  <AvatarFigure avatarIndex={avatar.level} size="sm" selected={avatarIndex === i + 1} />
                 </div>
                 <span
                   className="text-center font-display uppercase leading-tight transition-colors duration-200"
