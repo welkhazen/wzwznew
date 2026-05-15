@@ -44,4 +44,24 @@ export default defineConfig(({ mode }) => ({
   define: {
     "import.meta.env.VITE_APP_VERSION": JSON.stringify(readAppVersion()),
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("three") || id.includes("@react-three")) {
+            return "three";
+          }
+          if (id.includes("gsap") || id.includes("lenis")) {
+            return "animations";
+          }
+          if (id.includes("framer-motion") || id.includes("motion/react") || id.includes("motion/dist")) {
+            return "motion";
+          }
+          if (id.includes("node_modules/@radix-ui")) {
+            return "radix";
+          }
+        },
+      },
+    },
+  },
 }));
