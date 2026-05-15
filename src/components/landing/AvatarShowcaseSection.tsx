@@ -6,7 +6,7 @@ import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { AvatarPhoneHomeScreen } from "@/components/ui/avatar-phone-home-screen";
 import { PhoneMockup } from "@/components/ui/phone-mockup";
 import { LEVEL_THEMES, setAvatarThemes } from "@/lib/avataridentity";
-import { DEFAULT_AVATAR_CATALOG, readFullAvatarCatalogLocal } from "@/lib/avatarCatalog";
+import { DEFAULT_AVATAR_CATALOG, loadAvatarCatalogRange, readFullAvatarCatalogLocal } from "@/lib/avatarCatalog";
 import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
 import { readLandingNewAvatarsLocal } from "@/lib/landingNewAvatars";
 import type { LandingNewAvatar } from "@/lib/landingNewAvatars";
@@ -17,16 +17,10 @@ const DESKTOP_COUNT = 8;
 const FEATURED_AVATAR_COUNT = 10;
 const EXPANDED_AVATAR_BATCH_SIZE = 8;
 const MOBILE_PHONE_SCALE = 0.5;
-const CHOOSER_AVATARS: readonly AvatarCatalogItem[] = [
-  { id: "avatar-2", level: 2, name: "Chrome Ghost", price: "Free", imageSrc: "/avatars/avatar-2.svg", bg: "#0c1a24", figure: "#5ed6ff", ring: "#2ea6d6", glow: "#5ed6ff80", isActive: true },
-  { id: "avatar-7", level: 7, name: "Void Phantom", price: "0", imageSrc: "/avatars/avatar-7.svg", bg: "#150a22", figure: "#8b5cf6", ring: "#5b2aa8", glow: "#8b5cf680", isActive: true },
-  { id: "avatar-3", level: 3, name: "Iron Specter", price: "0", imageSrc: "/avatars/avatar-3.svg", bg: "#0a1124", figure: "#3f8bff", ring: "#2557c4", glow: "#3f8bff80", isActive: true },
-  { id: "avatar-8", level: 8, name: "Copper Wraith", price: "0", imageSrc: "/avatars/avatar-8.svg", bg: "#1f1208", figure: "#f97316", ring: "#b0550f", glow: "#f9731680", isActive: true },
-  { id: "avatar-5", level: 5, name: "Solar Enforcer", price: "0", imageSrc: "/avatars/avatar-5.svg", bg: "#0b1a0e", figure: "#16a34a", ring: "#0f7a36", glow: "#16a34a80", isActive: true },
-  { id: "avatar-9", level: 9, name: "Inferno Shade", price: "0", imageSrc: "/avatars/avatar-9.svg", bg: "#1f0a0a", figure: "#dc2626", ring: "#8a1515", glow: "#dc262680", isActive: true },
-  { id: "avatar-6", level: 6, name: "Neon Oracle", price: "0", imageSrc: "/avatars/avatar-6.svg", bg: "#1f0d18", figure: "#ec4899", ring: "#a6235f", glow: "#ec489980", isActive: true },
-  { id: "avatar-10", level: 10, name: "Golden Reaper", price: "0", imageSrc: "/avatars/avatar-10.svg", bg: "#1f1705", figure: "#facc15", ring: "#b8900b", glow: "#facc1590", isActive: true },
-];
+const CHOOSER_LEVEL_ORDER = [2, 7, 3, 8, 5, 9, 6, 10] as const;
+const CHOOSER_AVATARS: readonly AvatarCatalogItem[] = CHOOSER_LEVEL_ORDER
+  .map((level) => DEFAULT_AVATAR_CATALOG.find((a) => a.level === level))
+  .filter((a): a is AvatarCatalogItem => Boolean(a));
 const EXPANDED_AVATARS: readonly AvatarCatalogItem[] = [
   { id: "cyber-blue", level: 11, name: "Cyberblue", price: "0", imageSrc: "/avatars/img_4395_2_avatar_08_60x60.png", bg: "#06151e", figure: "#22d3ee", ring: "#0891b2", glow: "#22d3ee80", isActive: true },
   { id: "shadow-crown", level: 12, name: "Shadow Crown", price: "0", imageSrc: "/avatars/img_4395_2_avatar_09_60x60.png", bg: "#160b18", figure: "#fb7185", ring: "#be185d", glow: "#fb718580", isActive: true },
@@ -57,6 +51,7 @@ export function AvatarShowcaseSection() {
   const [desktopStart, setDesktopStart] = useState(0);
   const [showAll, setShowAll] = useState(false);
   const [showExpandGrid, setShowExpandGrid] = useState(false);
+  const [expandedLoaded, setExpandedLoaded] = useState(false);
   const [expandedVisibleCount, setExpandedVisibleCount] = useState(EXPANDED_AVATAR_BATCH_SIZE);
   const [showMore, setShowMore] = useState(false);
   const [extraPreviewAvatar, setExtraPreviewAvatar] = useState<LandingNewAvatar | null>(null);
@@ -107,7 +102,7 @@ export function AvatarShowcaseSection() {
   const baseAvatars = fullCatalog.length > 0 ? fullCatalog : DEFAULT_AVATAR_CATALOG;
   const chooserAvatars = CHOOSER_AVATARS;
   const chooserTotal = chooserAvatars.length;
-  const expandedAvatarSource = EXPANDED_AVATARS;
+  const [expandedAvatarSource, setExpandedAvatarSource] = useState<AvatarCatalogItem[]>([...EXPANDED_AVATARS]);
   const expandedAvatarTotal = expandedAvatarSource.length;
   const visibleExtendedAvatars = expandedAvatarSource
     .slice(0, expandedVisibleCount)
@@ -156,7 +151,16 @@ export function AvatarShowcaseSection() {
   }, [expandedAvatarTotal, showExpandGrid]);
 
   function handleToggleExpandGrid() {
-    setShowExpandGrid((open) => !open);
+    setShowExpandGrid((open) => {
+      const opening = !open;
+      if (opening && !expandedLoaded) {
+        void loadAvatarCatalogRange(11, 30).then((rows) => {
+          if (rows.length > 0) setExpandedAvatarSource(rows);
+          setExpandedLoaded(true);
+        }).catch(() => setExpandedLoaded(true));
+      }
+      return opening;
+    });
   }
 
   function prev() {
@@ -443,7 +447,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
         <button
           type="button"
           onClick={handleToggleExpandGrid}
-          className="group relative flex min-w-[168px] animate-[ctaBreath_3.4s_ease-in-out_infinite] flex-col items-center gap-1 overflow-hidden rounded-full border border-white/12 bg-black/35 px-7 py-3 text-raw-silver/55 outline-none backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.035] hover:border-white/30 hover:bg-black/45 hover:text-white/85 active:translate-y-0 active:scale-[0.99] focus-visible:border-white/35"
+          className="group relative flex min-w-[168px] animate-[cta-breath_3.4s_ease-in-out_infinite] flex-col items-center gap-1 overflow-hidden rounded-full border border-white/12 bg-black/35 px-7 py-3 text-raw-silver/55 outline-none backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.035] hover:border-white/30 hover:bg-black/45 hover:text-white/85 active:translate-y-0 active:scale-[0.99] focus-visible:border-white/35"
           aria-label={showExpandGrid ? "Collapse avatar grid" : "Expand avatar grid"}
         >
           <span className="pointer-events-none absolute inset-x-4 top-1 h-1/2 rounded-full bg-white/[0.055] blur-[1px]" />
