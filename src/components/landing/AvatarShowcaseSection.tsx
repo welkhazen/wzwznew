@@ -320,14 +320,14 @@ Just like in real life, every person is born with a name, an appearance, and an 
                       aria-pressed={avatarIndex === index}
                     >
                       <div
-                        className={`rounded-full transition-all duration-200 scale-[0.62] ${avatarIndex === index ? "scale-[0.72]" : ""}`}
+                        className={`rounded-full transition-all duration-200 scale-[0.72] ${avatarIndex === index ? "scale-[0.82]" : ""}`}
                       >
                         <AvatarFigure avatarIndex={avatar.level} size="sm" selected={avatarIndex === index} />
                       </div>
                       <span
-                        className="max-w-[38px] text-center font-display uppercase leading-tight transition-colors duration-200"
+                        className="max-w-[44px] text-center font-display uppercase leading-tight transition-colors duration-200"
                         style={{
-                          fontSize: "0.38rem",
+                          fontSize: "0.4rem",
                           letterSpacing: "0.04em",
                           color: avatarIndex === index
                             ? "#F1C42D"
@@ -336,7 +336,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
                               : "rgba(255,255,255,0.42)",
                         }}
                       >
-                        {avatar.name}
+                        {avatar.name.split(" ")[0]}
                       </span>
                     </button>
                   );
