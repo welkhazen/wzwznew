@@ -34,6 +34,7 @@ export function AvatarShowcaseSection() {
   const [catalog, setCatalog] = useState<AvatarCatalogItem[]>([]);
   const [fullCatalog, setFullCatalog] = useState<AvatarCatalogItem[]>(() => readFullAvatarCatalogLocal());
   const [expandedCatalog, setExpandedCatalog] = useState<AvatarCatalogItem[]>([]);
+  const [chooserCatalog, setChooserCatalog] = useState<AvatarCatalogItem[]>([]);
   const [isLoadingExpandedAvatars, setIsLoadingExpandedAvatars] = useState(false);
   const [newAvatars, setNewAvatars] = useState<LandingNewAvatar[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -88,6 +89,23 @@ export function AvatarShowcaseSection() {
     // is fetched lazily in handleToggleExpandGrid when the user opens "explore all".
     loadAvatarCatalog().then(applyThemes).catch(() => {});
     loadLandingNewAvatars().then(setNewAvatars).catch(() => {});
+    // Fetch artwork avatars (levels 11-20) for the chooser. The active catalog
+    // only returns levels 1-10 (CSS-only), so we need this targeted range fetch
+    // to show real PNG artwork in the CHOOSE YOUR AVATAR section.
+    loadAvatarCatalogRange(11, FEATURED_AVATAR_COUNT + 10)
+      .then((items) => {
+        if (items.length === 0) return;
+        setChooserCatalog(items);
+        // Extend LEVEL_THEMES so AvatarFigure can resolve these levels.
+        const nextThemes = [...LEVEL_THEMES];
+        const maxLevel = items[items.length - 1]?.level ?? 0;
+        while (nextThemes.length < maxLevel) nextThemes.push({ ...nextThemes[nextThemes.length - 1] });
+        items.forEach((item) => {
+          if (item.level > 0) nextThemes[item.level - 1] = { bg: item.bg, figure: item.figure, ring: item.ring, glow: item.glow, name: item.name, imageSrc: item.imageSrc };
+        });
+        setAvatarThemes(nextThemes);
+      })
+      .catch(() => {});
     const handler = () => applyThemes(readAvatarCatalogLocal());
     window.addEventListener("raw:avatar-catalog-updated", handler);
     return () => window.removeEventListener("raw:avatar-catalog-updated", handler);
@@ -96,12 +114,13 @@ export function AvatarShowcaseSection() {
   const avatarList = catalog.length > 0 ? catalog : AVATARS;
   const safeAvatarList = avatarList.length > 0 ? avatarList : AVATARS.slice(0, 1);
   const baseAvatars = fullCatalog.length > 0 ? fullCatalog : safeAvatarList;
-  // Prefer avatars that have real artwork images for the featured chooser.
-  // Levels 1-10 are CSS-only (no imageSrc); levels 11+ have PNG artwork.
-  const avatarsWithImages = baseAvatars.filter((a) => a.imageSrc);
+  // chooserCatalog (levels 11-20) has real PNG artwork. If it's loaded, prefer it;
+  // otherwise fall back to baseAvatars filtered for imageSrc, then plain baseAvatars.
+  const chooserSource = chooserCatalog.length >= FEATURED_AVATAR_COUNT ? chooserCatalog : baseAvatars;
+  const avatarsWithImages = chooserSource.filter((a) => a.imageSrc);
   const featuredAvatars = avatarsWithImages.length >= FEATURED_AVATAR_COUNT
     ? avatarsWithImages.slice(0, FEATURED_AVATAR_COUNT)
-    : baseAvatars.slice(0, FEATURED_AVATAR_COUNT);
+    : chooserSource.slice(0, FEATURED_AVATAR_COUNT);
   const chooserAvatars = featuredAvatars.length > 0 ? featuredAvatars : baseAvatars.slice(0, 1);
   const chooserTotal = chooserAvatars.length;
   const expandedAvatarSource = expandedCatalog.length > 0
