@@ -474,12 +474,12 @@ Just like in real life, every person is born with a name, an appearance, and an 
                 style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 0 40px rgba(0,0,0,0.3)" }}
               >
                 <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/30 to-transparent" />
-                <p className="mb-6 text-center font-display text-[10px] uppercase tracking-[0.28em] text-raw-gold/60">
+                <p className="mb-5 text-center font-display text-[10px] uppercase tracking-[0.28em] text-raw-gold/60 sm:mb-6">
                   All Avatars
                 </p>
                 {visibleExtendedAvatars.length > 0 ? (
                   <>
-                    <div className="flex flex-wrap items-start justify-center gap-x-5 gap-y-5">
+                    <div className="flex flex-wrap items-start justify-center gap-x-3 gap-y-4 sm:gap-x-5 sm:gap-y-5">
                       {visibleExtendedAvatars.map(({ avatar, themeIndex }) => (
                         <button
                           key={avatar.id ?? themeIndex}
@@ -492,17 +492,31 @@ Just like in real life, every person is born with a name, an appearance, and an 
                           }}
                           onMouseEnter={() => setPreviewIndex(themeIndex)}
                           onMouseLeave={() => setPreviewIndex(avatarIndex)}
-                          className="group flex w-16 flex-col items-center gap-1.5 outline-none [content-visibility:auto] [contain-intrinsic-size:84px]"
+                          className="group flex w-12 flex-col items-center gap-1 outline-none sm:w-16 sm:gap-1.5 [content-visibility:auto] [contain-intrinsic-size:76px]"
                           aria-label={`Select ${avatar.name}`}
                         >
                           <div
-                            className="rounded-full transition-all duration-300 group-hover:scale-105"
+                            className={`relative h-11 w-11 overflow-hidden rounded-full transition-all duration-300 group-hover:scale-105 sm:h-14 sm:w-14 ${
+                              avatarIndex === themeIndex ? "ring-1 ring-raw-gold/80" : "ring-1 ring-white/10"
+                            }`}
                             style={{ transition: "transform 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}
                           >
-                            <AvatarFigure avatarIndex={themeIndex} size="md" selected={avatarIndex === themeIndex} />
+                            {avatar.imageSrc ? (
+                              <img
+                                src={avatar.imageSrc}
+                                alt={avatar.name}
+                                loading="lazy"
+                                decoding="async"
+                                draggable={false}
+                                className="h-full w-full object-cover"
+                                style={{ objectPosition: "center 35%" }}
+                              />
+                            ) : (
+                              <AvatarFigure avatarIndex={themeIndex} size="sm" selected={avatarIndex === themeIndex} />
+                            )}
                           </div>
                           <span
-                            className="min-h-[1.5rem] text-center font-display text-[7px] uppercase leading-[1.15] tracking-wide transition-colors duration-200"
+                            className="min-h-[1.35rem] text-center font-display text-[6px] uppercase leading-[1.15] tracking-wide transition-colors duration-200 sm:min-h-[1.5rem] sm:text-[7px]"
                             style={{ color: avatarIndex === themeIndex ? "#F1C42D" : "rgba(255,255,255,0.3)" }}
                           >
                             {avatar.name}
