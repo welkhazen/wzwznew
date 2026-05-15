@@ -6,7 +6,7 @@ import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { AvatarPhoneHomeScreen } from "@/components/ui/avatar-phone-home-screen";
 import { PhoneMockup } from "@/components/ui/phone-mockup";
 import { AVATARS, LEVEL_THEMES, setAvatarThemes } from "@/lib/avataridentity";
-import { loadAvatarCatalog, loadAvatarCatalogRange, readAvatarCatalogLocal, readFullAvatarCatalogLocal } from "@/lib/avatarCatalog";
+import { DEFAULT_AVATAR_CATALOG, loadAvatarCatalogRange, readFullAvatarCatalogLocal } from "@/lib/avatarCatalog";
 import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
 import { loadLandingNewAvatars } from "@/lib/landingNewAvatars";
 import type { LandingNewAvatar } from "@/lib/landingNewAvatars";
@@ -31,7 +31,7 @@ export function AvatarShowcaseSection() {
   const [expandedVisibleCount, setExpandedVisibleCount] = useState(EXPANDED_AVATAR_BATCH_SIZE);
   const [showMore, setShowMore] = useState(false);
   const [extraPreviewAvatar, setExtraPreviewAvatar] = useState<LandingNewAvatar | null>(null);
-  const [catalog, setCatalog] = useState<AvatarCatalogItem[]>([]);
+  const [catalog] = useState<AvatarCatalogItem[]>(DEFAULT_AVATAR_CATALOG);
   const [fullCatalog, setFullCatalog] = useState<AvatarCatalogItem[]>(() => readFullAvatarCatalogLocal());
   const [expandedCatalog, setExpandedCatalog] = useState<AvatarCatalogItem[]>([]);
   const [chooserCatalog, setChooserCatalog] = useState<AvatarCatalogItem[]>([]);
@@ -67,36 +67,13 @@ export function AvatarShowcaseSection() {
   };
 
   useEffect(() => {
-    // Seed LEVEL_THEMES from localStorage cache immediately so avatars render
-    // on the first paint without waiting for a Supabase round-trip.
     const cached = readFullAvatarCatalogLocal();
     if (cached.length > 0) applyFullThemes(cached);
-
-    const applyThemes = (items: AvatarCatalogItem[]) => {
-      setCatalog(items);
-      // Never downgrade LEVEL_THEMES to a smaller set once the full catalog
-      // has been loaded — this prevents the race where loadAvatarCatalogSupabaseOnly
-      // (active-only, ~10 items) resolves after loadFullAvatarCatalog (70+ items)
-      // and resets all avatars back to the blue fallback.
-      if (items.length >= LEVEL_THEMES.length) {
-        setAvatarThemes(items.map((item) => ({
-          bg: item.bg, figure: item.figure, ring: item.ring,
-          glow: item.glow, name: item.name, imageSrc: item.imageSrc,
-        })));
-      }
-    };
-    // Single round-trip for the visible catalog. Expanded range (levels 11-30)
-    // is fetched lazily in handleToggleExpandGrid when the user opens "explore all".
-    loadAvatarCatalog().then(applyThemes).catch(() => {});
     loadLandingNewAvatars().then(setNewAvatars).catch(() => {});
-    // Fetch artwork avatars (levels 11-20) for the chooser. The active catalog
-    // only returns levels 1-10 (CSS-only), so we need this targeted range fetch
-    // to show real PNG artwork in the CHOOSE YOUR AVATAR section.
     loadAvatarCatalogRange(11, FEATURED_AVATAR_COUNT + 10)
       .then((items) => {
         if (items.length === 0) return;
         setChooserCatalog(items);
-        // Extend LEVEL_THEMES so AvatarFigure can resolve these levels.
         const nextThemes = [...LEVEL_THEMES];
         const maxLevel = items[items.length - 1]?.level ?? 0;
         while (nextThemes.length < maxLevel) nextThemes.push({ ...nextThemes[nextThemes.length - 1] });
@@ -106,9 +83,6 @@ export function AvatarShowcaseSection() {
         setAvatarThemes(nextThemes);
       })
       .catch(() => {});
-    const handler = () => applyThemes(readAvatarCatalogLocal());
-    window.addEventListener("raw:avatar-catalog-updated", handler);
-    return () => window.removeEventListener("raw:avatar-catalog-updated", handler);
   }, []);
 
   const avatarList = catalog.length > 0 ? catalog : AVATARS;
