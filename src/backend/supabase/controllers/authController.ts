@@ -100,3 +100,30 @@ export async function getSession(): Promise<AuthUser | null> {
     return null;
   }
 }
+
+export async function changePassword(
+  userId: string,
+  oldPassword: string,
+  newPassword: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const { data, error } = await supabase.rpc('change_password', {
+    p_user_id: userId,
+    p_old_password: oldPassword,
+    p_new_password: newPassword,
+  });
+  if (error) return { ok: false, error: error.message };
+  return (data as { ok: boolean; error?: string }) ?? { ok: true };
+}
+
+export async function deleteAccount(
+  userId: string,
+  password: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const { data, error } = await supabase.rpc('delete_account', {
+    p_user_id: userId,
+    p_password: password,
+  });
+  if (error) return { ok: false, error: error.message };
+  clearSession();
+  return (data as { ok: boolean; error?: string }) ?? { ok: true };
+}

@@ -222,6 +222,7 @@ export default function Dashboard({
         return (
           <DashboardSectionShell>
             <DashboardProfile
+              userId={user.id}
               username={user.username}
               avatarLevel={avatarLevel}
               onAvatarChange={setAvatarLevel}
@@ -230,6 +231,7 @@ export default function Dashboard({
               avatarPricesByLevel={avatarPricesByLevel}
               pollsAnswered={votedPolls.size}
               xp={progress?.xp ?? 0}
+              onLogout={onLogout}
             />
           </DashboardSectionShell>
         );
