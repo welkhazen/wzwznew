@@ -178,3 +178,30 @@ export async function getSession(): Promise<AuthUser | null> {
     return null;
   }
 }
+
+export function changePassword(
+  userId: string,
+  oldPassword: string,
+  newPassword: string,
+): { ok: boolean; error?: string } {
+  const users = readLocalUsers();
+  const idx = users.findIndex((u) => u.id === userId);
+  if (idx === -1) return { ok: false, error: 'User not found' };
+  if (users[idx].password !== oldPassword) return { ok: false, error: 'Incorrect current password' };
+  users[idx] = { ...users[idx], password: newPassword };
+  writeLocalUsers(users);
+  return { ok: true };
+}
+
+export function deleteAccount(
+  userId: string,
+  password: string,
+): { ok: boolean; error?: string } {
+  const users = readLocalUsers();
+  const user = users.find((u) => u.id === userId);
+  if (!user) return { ok: false, error: 'User not found' };
+  if (user.password !== password) return { ok: false, error: 'Incorrect password' };
+  writeLocalUsers(users.filter((u) => u.id !== userId));
+  clearSession();
+  return { ok: true };
+}
