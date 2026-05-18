@@ -1,10 +1,10 @@
-// swift-tools-version: 5.9
+// swift-tools-version: 5.5
 import PackageDescription
 
 let package = Package(
     name: "RAW",
     platforms: [
-        .iOS("16.0")
+        .iOS("15.2")
     ],
     products: [
         .iOSApplication(
@@ -14,8 +14,8 @@ let package = Package(
             teamIdentifier: "",
             displayVersion: "1.0",
             bundleVersion: "1",
-            appIcon: .asset("AppIcon"),
-            accentColor: .asset("AccentColor"),
+            iconAssetName: "AppIcon",
+            accentColorAssetName: "AccentColor",
             supportedDeviceFamilies: [
                 .pad,
                 .phone
