@@ -19,7 +19,7 @@ export const LEVEL_THRESHOLDS = [0, 0, 500, 1500, 3500, 7000, 12000, 19000, 2800
 const LOCAL_PROGRESS_KEY_PREFIX = "raw.local-user-progress.";
 const LOCAL_CLAIMS_KEY_PREFIX = "raw.local-user-xp-claims.";
 const LOCAL_LOGIN_DAYS_KEY_PREFIX = "raw.local-login-days.";
-const USE_LOCAL_XP_ONLY = true;
+const USE_LOCAL_XP_ONLY = false;
 
 export function xpForLevel(level: number): number {
   return LEVEL_THRESHOLDS[Math.min(level, LEVEL_THRESHOLDS.length - 1)] ?? Infinity;
