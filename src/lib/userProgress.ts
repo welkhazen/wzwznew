@@ -85,9 +85,15 @@ export interface AwardXPResult {
 export async function loadUserProgress(userId: string): Promise<UserProgress | null> {
   if (USE_LOCAL_XP_ONLY) return readLocalProgress(userId);
 
-  const { data, error } = await supabase.rpc("get_user_progress", {
-    p_user_id: userId,
-  }).catch(() => ({ data: null, error: true }));
+  let data: unknown = null;
+  let error: unknown = null;
+  try {
+    const result = await supabase.rpc("get_user_progress", { p_user_id: userId });
+    data = result.data;
+    error = result.error;
+  } catch {
+    error = true;
+  }
 
   if (error || !data) return readLocalProgress(userId);
   const progress = data as { xp: number; level: number; total_polls_answered: number; streak_days: number };
@@ -105,10 +111,15 @@ export async function awardXP(
 ): Promise<AwardXPResult | null> {
   if (USE_LOCAL_XP_ONLY) return awardLocalXP(userId, amount);
 
-  const { data, error } = await supabase.rpc("award_xp", {
-    p_user_id: userId,
-    p_amount: amount,
-  }).catch(() => ({ data: null, error: true }));
+  let data: unknown = null;
+  let error: unknown = null;
+  try {
+    const result = await supabase.rpc("award_xp", { p_user_id: userId, p_amount: amount });
+    data = result.data;
+    error = result.error;
+  } catch {
+    error = true;
+  }
 
   if (error || !data) return awardLocalXP(userId, amount);
   return {
@@ -136,12 +147,20 @@ export async function awardXPOnce(
     return { ...awardLocalXP(userId, amount), awarded: true };
   }
 
-  const { data, error } = await supabase.rpc("award_xp_once", {
-    p_user_id: userId,
-    p_source: source,
-    p_claim_key: claimKey,
-    p_amount: amount,
-  }).catch(() => ({ data: null, error: true }));
+  let data: unknown = null;
+  let error: unknown = null;
+  try {
+    const result = await supabase.rpc("award_xp_once", {
+      p_user_id: userId,
+      p_source: source,
+      p_claim_key: claimKey,
+      p_amount: amount,
+    });
+    data = result.data;
+    error = result.error;
+  } catch {
+    error = true;
+  }
 
   if (error || !data) {
     const claims = new Set(loadLocalXPClaimKeys(userId, source));
@@ -166,10 +185,15 @@ export async function awardXPOnce(
 export async function loadUserXPClaimKeys(userId: string, source: string): Promise<string[]> {
   if (USE_LOCAL_XP_ONLY) return loadLocalXPClaimKeys(userId, source);
 
-  const { data, error } = await supabase.rpc("get_user_xp_claim_keys", {
-    p_user_id: userId,
-    p_source: source,
-  }).catch(() => ({ data: null, error: true }));
+  let data: unknown = null;
+  let error: unknown = null;
+  try {
+    const result = await supabase.rpc("get_user_xp_claim_keys", { p_user_id: userId, p_source: source });
+    data = result.data;
+    error = result.error;
+  } catch {
+    error = true;
+  }
 
   if (error || !data) return loadLocalXPClaimKeys(userId, source);
   return data as string[];
