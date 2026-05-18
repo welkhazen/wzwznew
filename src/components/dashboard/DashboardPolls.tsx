@@ -6,19 +6,13 @@ import { addPollComment, fetchPollComments } from "@/utils/supabasePolls";
 import { isNoPollOption, isYesPollOption } from "@/lib/polls/normalizePollOptionText";
 import {
   BarChart3,
-  BookOpen,
-  Brain,
   ChevronLeft,
   ChevronRight,
-  CircleGauge,
   Coins,
-  Fingerprint,
   Lock,
-  Map,
   MessageCircle,
   SendHorizontal,
   Users,
-  WandSparkles,
 } from "lucide-react";
 
 function getNextUnlockTime(): string {
@@ -141,7 +135,6 @@ export function DashboardPolls({
   const [commentDraft, setCommentDraft] = useState("");
   const [currentPollIndex, setCurrentPollIndex] = useState(0);
   const [hasSeenVoteHint, setHasSeenVoteHint] = useState(false);
-  const [lockedInsightMessage, setLockedInsightMessage] = useState<string | null>(null);
   const [lockedPollId, setLockedPollId] = useState<string | null>(null);
 
   const commentsEndRef = useRef<HTMLDivElement>(null);
@@ -262,69 +255,6 @@ export function DashboardPolls({
     [polls]
   );
 
-  const pollsAnswered = Math.max(votedPolls.size, Object.keys(answerHistory).length);
-
-  const insightsProgress = [
-    {
-      id: "myers-briggs",
-      name: "Myers-Briggs",
-      icon: Brain,
-      description: "Discover your personality type across 4 key dimensions of how you see the world.",
-      requiredPolls: 10,
-      tokenPrice: 10,
-      unlocked: false,
-    },
-    {
-      id: "big-five-profile",
-      name: "Big Five Profile",
-      icon: Fingerprint,
-      description:
-        "Measure your openness, conscientiousness, extraversion, agreeableness, and emotional range.",
-      requiredPolls: 30,
-      tokenPrice: 30,
-      unlocked: false,
-    },
-    {
-      id: "emotional-intelligence",
-      name: "Emotional Intelligence",
-      icon: CircleGauge,
-      description:
-        "Understand how you process emotions, empathy, and interpersonal cues under pressure.",
-      requiredPolls: 70,
-      tokenPrice: 70,
-      unlocked: false,
-    },
-    {
-      id: "shadow-self",
-      name: "Shadow Self",
-      icon: WandSparkles,
-      description:
-        "Reveal hidden patterns, blind spots, and traits that surface in difficult moments.",
-      requiredPolls: 100,
-      tokenPrice: 100,
-      unlocked: false,
-    },
-    {
-      id: "attachment-style",
-      name: "Attachment Style",
-      icon: BookOpen,
-      description: "Understand your patterns in relationships and emotional bonding with others.",
-      requiredPolls: 150,
-      tokenPrice: 150,
-      unlocked: false,
-    },
-    {
-      id: "cognitive-bias-map",
-      name: "Cognitive Bias Map",
-      icon: Map,
-      description: "Identify the mental shortcuts and biases that shape your decisions and thinking.",
-      requiredPolls: 200,
-      tokenPrice: 200,
-      unlocked: false,
-    },
-  ];
-
-  const unlockedReports = insightsProgress.filter((item) => item.unlocked).length;
   const showMorePollsPaywall = isDailyPollLimitReached && dailyPollLimit > 0;
 
   const handleVote = (pollId: string, optionId: string) => {
@@ -339,23 +269,6 @@ export function DashboardPolls({
     if (!votedPolls.has(pollId)) {
       onVote(pollId, optionId);
     }
-  };
-
-  const handleInsightClick = (item: (typeof insightsProgress)[number]) => {
-    if (item.unlocked) return;
-
-    const remainingPolls = Math.max(0, item.requiredPolls - pollsAnswered);
-    const requirements = [
-      `Can only be unlocked after ${item.requiredPolls} polls answered.`,
-      remainingPolls > 0 ? `Answer ${remainingPolls} more polls to generate this report.` : "You have enough poll data, but generation is not enabled yet.",
-      `Generation price: ${item.tokenPrice} tokens.`,
-    ];
-
-    if (tokenBalance < item.tokenPrice) {
-      requirements.push(`Current balance: ${tokenBalance} tokens.`);
-    }
-
-    setLockedInsightMessage(requirements.join(" "));
   };
 
   const handleCommentAdd = async () => {
@@ -403,41 +316,6 @@ export function DashboardPolls({
 
   return (
     <div className="flex flex-col gap-6 sm:gap-8">
-      {lockedInsightMessage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm" onClick={() => setLockedInsightMessage(null)}>
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="locked-insight-title"
-            onClick={(e) => e.stopPropagation()}
-            className={`w-full max-w-sm border p-5 shadow-[0_18px_70px_rgba(0,0,0,0.45)] ${
-              isLightMode ? "border-slate-300 bg-white text-slate-900" : "border-raw-gold/35 bg-raw-black text-raw-text"
-            }`}
-          >
-            <div className="flex items-start gap-3">
-              <span className={`mt-0.5 inline-flex size-8 items-center justify-center rounded-full border ${
-                isLightMode ? "border-amber-600/40 bg-amber-100 text-amber-700" : "border-raw-gold/45 bg-raw-gold/10 text-raw-gold"
-              }`}>
-                <Lock className="size-4" />
-              </span>
-              <div className="min-w-0">
-                <h3 id="locked-insight-title" className="font-display text-base">Insight locked</h3>
-                <p className={`mt-2 text-sm leading-relaxed ${isLightMode ? "text-slate-600" : "text-raw-silver/65"}`}>
-                  {lockedInsightMessage}
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => setLockedInsightMessage(null)}
-              className="mt-5 w-full border border-raw-gold/55 bg-raw-gold px-4 py-2.5 text-xs font-semibold text-raw-ink hover:bg-raw-gold/90"
-            >
-              Got it
-            </button>
-          </div>
-        </div>
-      )}
-
       <header>
         <h1 className="font-display text-xl tracking-wide text-raw-text sm:text-2xl">Polls</h1>
         <p className="mt-2 text-xs text-raw-silver/45 sm:text-sm">
@@ -603,102 +481,6 @@ export function DashboardPolls({
         )}
       </section>
 
-      <section className="flex flex-col gap-3">
-        <div className="flex items-end justify-between gap-3">
-          <div className="min-w-0">
-            <h2 className="font-display text-lg text-raw-text sm:text-xl">Personality Insights</h2>
-            <div className={`mt-1 h-1.5 w-28 overflow-hidden rounded-full ${isLightMode ? "bg-slate-300/70" : "bg-raw-border/40"}`}>
-              <span
-                className="block h-full rounded-full bg-raw-gold"
-                style={{ width: `${Math.min(100, Math.max(8, (unlockedReports / insightsProgress.length) * 100))}%` }}
-              />
-            </div>
-          </div>
-          <p className={`shrink-0 text-[11px] ${isLightMode ? "text-slate-600" : "text-raw-silver/55"}`}>
-            {pollsAnswered} polls answered
-          </p>
-        </div>
-
-        <div className="grid grid-cols-2 gap-2.5">
-          {insightsProgress.map((item) => (
-            <article
-              key={item.id}
-              role="button"
-              tabIndex={0}
-              onClick={() => handleInsightClick(item)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") {
-                  event.preventDefault();
-                  handleInsightClick(item);
-                }
-              }}
-              className={`flex flex-col overflow-hidden rounded-xl border p-3 ${
-                isLightMode ? "border-slate-300/80 bg-white/85" : "border-raw-gold/30 bg-raw-black/35 backdrop-blur-sm"
-              } ${item.unlocked ? "" : "cursor-pointer"}`}
-            >
-              <div className="flex items-start justify-between gap-1.5">
-                <div className="flex min-w-0 items-center gap-1.5">
-                  <item.icon className={`mt-0.5 size-3.5 shrink-0 ${isLightMode ? "text-amber-700" : "text-raw-gold/85"}`} />
-                  <p className="font-display text-sm leading-snug text-raw-text">{item.name}</p>
-                </div>
-                <span
-                  className={`shrink-0 rounded-full border px-2 py-0.5 text-[9px] ${
-                    isLightMode
-                      ? "border-amber-600/45 bg-amber-50 text-amber-700"
-                      : "border-raw-gold/35 bg-raw-gold/10 text-raw-gold/85"
-                  }`}
-                >
-                  {item.unlocked ? "Unlocked" : "Locked"}
-                </span>
-              </div>
-
-              <div className={`flex-1 ${!item.unlocked ? "pointer-events-none select-none blur-[2px]" : ""}`}>
-                <p className={`mt-1.5 text-[11px] leading-relaxed ${isLightMode ? "text-slate-600" : "text-raw-silver/55"}`}>
-                  {item.description}
-                </p>
-                <button
-                  type="button"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    handleInsightClick(item);
-                  }}
-                  className={`mt-3 w-full rounded-lg border px-2 py-1.5 text-[11px] transition ${
-                    item.unlocked
-                      ? "border-emerald-400/35 bg-emerald-500/12 text-emerald-100 hover:bg-emerald-500/20"
-                      : isLightMode
-                        ? "border-slate-300 bg-slate-100 text-slate-500 hover:border-amber-500/60 hover:text-amber-700"
-                        : "border-raw-border/40 bg-raw-black/35 text-raw-silver/45 hover:border-raw-gold/45 hover:text-raw-gold/80"
-                  }`}
-                >
-                  {item.unlocked ? "Open report" : "Generate report"}
-                </button>
-              </div>
-
-              {!item.unlocked && (
-                <div className="-mx-3 -mb-3 mt-2.5 flex items-center justify-between border-t border-dashed border-raw-border/40 px-2.5 py-1.5 text-[9px]">
-                  <span className={isLightMode ? "text-slate-600" : "text-raw-silver/55"}>
-                    {item.requiredPolls} polls req.
-                  </span>
-                  <span
-                    className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 ${
-                      isLightMode
-                        ? "border-amber-600/40 bg-amber-100 text-amber-700"
-                        : "border-raw-gold/40 bg-raw-gold/10 text-raw-gold/85"
-                    }`}
-                  >
-                    <Lock className="size-2" />
-                    {item.tokenPrice} tokens
-                  </span>
-                </div>
-              )}
-            </article>
-          ))}
-        </div>
-
-        <p className={`text-center text-xs ${isLightMode ? "text-slate-500" : "text-raw-silver/45"}`}>
-          Answer more polls to unlock deeper reports.
-        </p>
-      </section>
     </div>
   );
 }

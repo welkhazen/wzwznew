@@ -11,6 +11,8 @@ const EXTRA_BATCH_SIZE = 7;
 const UNLOCK_TOKEN_COST = 10;
 const GUEST_TOKEN_BALANCE = 0;
 const TOKEN_BALANCE_STORAGE_KEY = "raw.polls.token-balance";
+const TOKEN_BALANCE_UPDATED_EVENT = "raw:token-balance-updated";
+const USE_LOCAL_TOKENS_ONLY = true;
 
 const INITIAL_POLLS: Poll[] = POLL_QUESTION_SEEDS.map((poll, index) => ({
   id: poll.id,
@@ -56,6 +58,12 @@ function readStoredExtraBatches(storageKey: string, answeredStorageKey: string):
   } catch {
     return 0;
   }
+}
+
+function emitTokenBalanceUpdated(storageKey: string, balance: number): void {
+  window.dispatchEvent(new CustomEvent(TOKEN_BALANCE_UPDATED_EVENT, {
+    detail: { storageKey, balance },
+  }));
 }
 
 export function usePolls(isLoggedIn: boolean, userId?: string) {
@@ -104,14 +112,29 @@ export function usePolls(isLoggedIn: boolean, userId?: string) {
     }
   }, [EXTRA_BATCHES_KEY, extraBatchesUnlocked, loadedExtraBatchesKey]);
 
+  useEffect(() => {
+    const handleTokenBalanceUpdated = (event: Event) => {
+      const customEvent = event as CustomEvent<{ storageKey?: string; balance?: number }>;
+      if (customEvent.detail?.storageKey !== TOKEN_BALANCE_KEY) return;
+      const nextBalance = Number(customEvent.detail.balance);
+      if (!Number.isFinite(nextBalance)) return;
+      setTokenBalance(nextBalance);
+    };
+
+    window.addEventListener(TOKEN_BALANCE_UPDATED_EVENT, handleTokenBalanceUpdated);
+    return () => window.removeEventListener(TOKEN_BALANCE_UPDATED_EVENT, handleTokenBalanceUpdated);
+  }, [TOKEN_BALANCE_KEY]);
+
   // Sync token balance from Supabase when logged in
   useEffect(() => {
+    if (USE_LOCAL_TOKENS_ONLY) return;
     if (!isLoggedIn || !userId) return;
     fetchTokenBalance(userId)
       .then((balance) => {
         setTokenBalance(balance);
         try {
           window.localStorage.setItem(TOKEN_BALANCE_KEY, String(balance));
+          emitTokenBalanceUpdated(TOKEN_BALANCE_KEY, balance);
         } catch {
           // ignore
         }
@@ -167,7 +190,7 @@ export function usePolls(isLoggedIn: boolean, userId?: string) {
   const unlockExtraPolls = useCallback(async () => {
     if (tokenBalance < UNLOCK_TOKEN_COST) return;
 
-    if (isLoggedIn && userId) {
+    if (!USE_LOCAL_TOKENS_ONLY && isLoggedIn && userId) {
       // Optimistically update, then confirm with Supabase
       setTokenBalance((prev) => prev - UNLOCK_TOKEN_COST);
       setExtraBatchesUnlocked((prev) => prev + 1);
@@ -176,6 +199,7 @@ export function usePolls(isLoggedIn: boolean, userId?: string) {
         setTokenBalance(newBalance);
         try {
           window.localStorage.setItem(TOKEN_BALANCE_KEY, String(newBalance));
+          emitTokenBalanceUpdated(TOKEN_BALANCE_KEY, newBalance);
         } catch {
           // ignore
         }
@@ -185,10 +209,33 @@ export function usePolls(isLoggedIn: boolean, userId?: string) {
         setExtraBatchesUnlocked((prev) => prev - 1);
       }
     } else {
-      setTokenBalance((prev) => prev - UNLOCK_TOKEN_COST);
+      setTokenBalance((prev) => {
+        const next = prev - UNLOCK_TOKEN_COST;
+        try {
+          window.localStorage.setItem(TOKEN_BALANCE_KEY, String(next));
+          emitTokenBalanceUpdated(TOKEN_BALANCE_KEY, next);
+        } catch {
+          // ignore storage errors
+        }
+        return next;
+      });
       setExtraBatchesUnlocked((prev) => prev + 1);
     }
   }, [TOKEN_BALANCE_KEY, tokenBalance, isLoggedIn, userId]);
+
+  const addTokens = useCallback((amount: number) => {
+    const safeAmount = Math.max(0, amount);
+    setTokenBalance((previous) => {
+      const next = previous + safeAmount;
+      try {
+        window.localStorage.setItem(TOKEN_BALANCE_KEY, String(next));
+        emitTokenBalanceUpdated(TOKEN_BALANCE_KEY, next);
+      } catch {
+        // ignore storage errors
+      }
+      return next;
+    });
+  }, [TOKEN_BALANCE_KEY]);
 
   const vote = useCallback((pollId: string, optionId: string) => {
     const currentDay = getTodayKey();
@@ -231,10 +278,11 @@ export function usePolls(isLoggedIn: boolean, userId?: string) {
     votedPolls,
     freeVotesUsed,
     vote,
+    addTokens,
     unlockExtraPolls,
     tokenBalance,
     dailyAnsweredCount: dailyAnsweredPollIds.size,
     dailyPollLimit: effectiveDailyLimit,
     isDailyPollLimitReached: dailyAnsweredPollIds.size >= effectiveDailyLimit,
-  }), [dailyAnsweredPollIds.size, effectiveDailyLimit, freeVotesUsed, polls, tokenBalance, unlockExtraPolls, vote, votedPolls]);
+  }), [addTokens, dailyAnsweredPollIds.size, effectiveDailyLimit, freeVotesUsed, polls, tokenBalance, unlockExtraPolls, vote, votedPolls]);
 }

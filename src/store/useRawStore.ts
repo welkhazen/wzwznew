@@ -44,6 +44,7 @@ export function useRawStore() {
     dailyPollLimit: polls.dailyPollLimit,
     isDailyPollLimitReached: polls.isDailyPollLimitReached,
     tokenBalance: polls.tokenBalance,
+    addTokens: polls.addTokens,
     unlockExtraPolls: polls.unlockExtraPolls,
     completeOnboarding: onboarding.completeOnboarding,
     resetOnboardingProgress: onboarding.resetOnboardingProgress,

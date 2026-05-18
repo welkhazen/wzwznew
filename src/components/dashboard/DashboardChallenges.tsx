@@ -12,7 +12,7 @@ import {
 import { useEffect, useState } from "react";
 import { DashboardDailySpin } from "@/components/dashboard/DashboardDailySpin";
 import { getTodayKey } from "@/store/useRawStore.storage";
-import { loadUserXPClaimKeys } from "@/lib/userProgress";
+import { loadLocalLoginDays, loadUserXPClaimKeys } from "@/lib/userProgress";
 
 interface DashboardChallengesProps {
   userId: string;
@@ -23,34 +23,55 @@ interface DashboardChallengesProps {
   dailyPollLimit: number;
   onAwardXP?: (amount: number) => Promise<void>;
   onClaimXP?: (source: string, claimKey: string, amount: number) => Promise<boolean>;
+  onAwardTokens?: (amount: number) => void;
+}
+
+type ChallengeReset = "daily" | "weekly" | "monthly";
+
+interface ChallengeDefinition {
+  id: string;
+  title: string;
+  description: string;
+  target: number;
+  rewardXP: number;
+  rewardTokens?: number;
+  reset: ChallengeReset;
+  progressKey: "dailyPolls" | "totalPolls" | "streakDays" | "avatarLevel";
+  accent: string;
+  Icon: typeof Calendar;
 }
 
 const challengeDefinitions = [
   {
-    id: "first-session",
-    title: "First Session",
-    description: "Book your first session with any instructor",
-    target: 1,
-    reward: 50,
+    id: "daily-7-polls",
+    title: "Daily Voice",
+    description: "Answer 7 polls today",
+    target: 7,
+    rewardXP: 50,
+    reset: "daily",
+    progressKey: "dailyPolls",
     accent: "from-sky-500/35 via-blue-500/20 to-transparent",
-    Icon: Calendar,
+    Icon: MessageCircle,
   },
   {
     id: "weekly-warrior",
     title: "Weekly Warrior",
-    description: "Complete 3 sessions this week",
-    target: 3,
-    reward: 100,
+    description: "Answer 21 polls this week",
+    target: 21,
+    rewardXP: 150,
+    reset: "weekly",
+    progressKey: "totalPolls",
     accent: "from-amber-500/35 via-orange-500/20 to-transparent",
     Icon: Trophy,
-    deadline: "5 days",
   },
   {
-    id: "voice-your-opinion",
-    title: "Voice Your Opinion",
-    description: "Answer 5 polls in The Cumulative Mind",
-    target: 5,
-    reward: 15,
+    id: "monthly-70-polls",
+    title: "70 Poll Deep Dive",
+    description: "Answer 70 polls this month",
+    target: 70,
+    rewardXP: 500,
+    reset: "monthly",
+    progressKey: "totalPolls",
     accent: "from-violet-500/35 via-fuchsia-500/20 to-transparent",
     Icon: MessageCircle,
   },
@@ -59,16 +80,33 @@ const challengeDefinitions = [
     title: "7-Day Streak",
     description: "Open the app 7 days in a row",
     target: 7,
-    reward: 50,
+    rewardXP: 100,
+    rewardTokens: 20,
+    reset: "weekly",
+    progressKey: "streakDays",
     accent: "from-orange-500/35 via-rose-500/20 to-transparent",
     Icon: Sparkles,
+  },
+  {
+    id: "thirty-day-streak",
+    title: "30-Day Streak",
+    description: "Open the app 30 days in a row",
+    target: 30,
+    rewardXP: 300,
+    rewardTokens: 20,
+    reset: "monthly",
+    progressKey: "streakDays",
+    accent: "from-raw-gold/30 via-amber-400/15 to-transparent",
+    Icon: Flame,
   },
   {
     id: "review-master",
     title: "Review Master",
     description: "Leave a review after your session",
     target: 1,
-    reward: 10,
+    rewardXP: 50,
+    reset: "monthly",
+    progressKey: "totalPolls",
     accent: "from-indigo-500/35 via-violet-500/20 to-transparent",
     Icon: Star,
   },
@@ -77,7 +115,9 @@ const challengeDefinitions = [
     title: "Refer a Friend",
     description: "Invite a friend who books their first session",
     target: 1,
-    reward: 75,
+    rewardXP: 150,
+    reset: "monthly",
+    progressKey: "totalPolls",
     accent: "from-emerald-500/35 via-teal-500/20 to-transparent",
     Icon: UserPlus,
   },
@@ -86,11 +126,51 @@ const challengeDefinitions = [
     title: "Signal Builder",
     description: "Reach avatar level 5",
     target: 5,
-    reward: 50,
+    rewardXP: 100,
+    reset: "monthly",
+    progressKey: "avatarLevel",
     accent: "from-cyan-500/35 via-sky-500/20 to-transparent",
     Icon: Flame,
   },
-];
+] satisfies ChallengeDefinition[];
+
+function getWeekKey(): string {
+  const now = new Date();
+  const start = new Date(now);
+  const day = start.getDay() || 7;
+  start.setDate(start.getDate() - day + 1);
+  return `${start.getFullYear()}-W${String(Math.ceil((((start.getTime() - new Date(start.getFullYear(), 0, 1).getTime()) / 86400000) + 1) / 7)).padStart(2, "0")}`;
+}
+
+function getMonthKey(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function getResetKey(reset: ChallengeReset): string {
+  if (reset === "weekly") return getWeekKey();
+  if (reset === "monthly") return getMonthKey();
+  return getTodayKey();
+}
+
+function getResetLabel(reset: ChallengeReset): string {
+  if (reset === "weekly") return "Resets next week";
+  if (reset === "monthly") return "Resets next month";
+  return "Resets tomorrow";
+}
+
+function countConsecutiveDays(dayKeys: string[]): number {
+  const days = new Set(dayKeys);
+  const cursor = new Date();
+  let streak = 0;
+
+  while (true) {
+    const key = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}-${String(cursor.getDate()).padStart(2, "0")}`;
+    if (!days.has(key)) return streak;
+    streak += 1;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+}
 
 export function DashboardChallenges({
   userId,
@@ -101,36 +181,51 @@ export function DashboardChallenges({
   dailyPollLimit,
   onAwardXP,
   onClaimXP,
+  onAwardTokens,
 }: DashboardChallengesProps) {
   const [claimedChallenges, setClaimedChallenges] = useState<Set<string>>(new Set());
-  const progressMap: Record<string, number> = {
-    "first-session": pollsAnswered > 0 ? 1 : 0,
-    "weekly-warrior": Math.min(3, Math.floor(pollsAnswered / 3)),
-    "voice-your-opinion": dailyAnsweredCount,
-    "seven-day-streak": Math.min(7, Math.max(1, avatarLevel + 1)),
-    "review-master": pollsAnswered >= 8 ? 1 : 0,
-    "refer-a-friend": 0,
-    "signal-builder": avatarLevel,
+  const [dailyLoginClaimKeys, setDailyLoginClaimKeys] = useState<string[]>([]);
+  const [testProgress, setTestProgress] = useState<Record<string, number>>({});
+  const streakDays = countConsecutiveDays(dailyLoginClaimKeys);
+  const progressSourceMap: Record<ChallengeDefinition["progressKey"], number> = {
+    dailyPolls: dailyAnsweredCount,
+    totalPolls: pollsAnswered,
+    streakDays,
+    avatarLevel,
   };
 
   useEffect(() => {
     loadUserXPClaimKeys(userId, "challenge").then((claimKeys) => {
       setClaimedChallenges(new Set(claimKeys));
     });
+    setDailyLoginClaimKeys(loadLocalLoginDays(userId));
   }, [userId]);
 
   const completedCount = challengeDefinitions.filter((challenge) => {
-    const current = progressMap[challenge.id] ?? 0;
+    const current = testProgress[challenge.id] ?? progressSourceMap[challenge.progressKey] ?? 0;
     return current >= challenge.target;
   }).length;
 
-  const handleClaimChallenge = (challengeId: string, reward: number) => {
-    const claimKey = `${challengeId}:${getTodayKey()}`;
-    if (claimedChallenges.has(claimKey)) return;
+  const handleClaimChallenge = (challenge: ChallengeDefinition) => {
+    const claimKey = `${challenge.id}:${getResetKey(challenge.reset)}`;
+    if (!isAdmin && claimedChallenges.has(claimKey)) return;
+
+    const awardTokens = () => {
+      if (challenge.rewardTokens && onAwardTokens) {
+        onAwardTokens(challenge.rewardTokens);
+      }
+    };
+
+    if (isAdmin && onAwardXP) {
+      awardTokens();
+      void onAwardXP(challenge.rewardXP);
+      return;
+    }
 
     if (onClaimXP) {
-      void onClaimXP("challenge", claimKey, reward).then((awarded) => {
+      void onClaimXP("challenge", claimKey, challenge.rewardXP).then((awarded) => {
         if (awarded) {
+          awardTokens();
           setClaimedChallenges((previous) => new Set(previous).add(claimKey));
         }
       });
@@ -138,7 +233,8 @@ export function DashboardChallenges({
     }
 
     if (onAwardXP) {
-      void onAwardXP(reward).then(() => {
+      void onAwardXP(challenge.rewardXP).then(() => {
+        awardTokens();
         setClaimedChallenges((previous) => new Set(previous).add(claimKey));
       });
     }
@@ -161,21 +257,23 @@ export function DashboardChallenges({
           <div>
             <p className="text-xs uppercase tracking-[0.22em] text-raw-gold/65">Challenge Board</p>
             <p className="mt-1 text-sm text-raw-silver/70">
-              {completedCount}/{challengeDefinitions.length} completed today
+              {completedCount}/{challengeDefinitions.length} ready to claim
             </p>
           </div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-raw-gold/30 bg-raw-gold/[0.08] px-3 py-1.5 text-xs text-raw-gold/85">
-            <Flame className="h-3.5 w-3.5" />
-            {dailyAnsweredCount}/{dailyPollLimit} daily polls answered
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="inline-flex items-center gap-2 rounded-full border border-raw-gold/30 bg-raw-gold/[0.08] px-3 py-1.5 text-xs text-raw-gold/85">
+              <Flame className="h-3.5 w-3.5" />
+              {dailyAnsweredCount}/{dailyPollLimit} daily polls answered
+            </div>
           </div>
         </div>
       </section>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-1">
         {challengeDefinitions.map((challenge) => {
-          const current = progressMap[challenge.id] ?? 0;
+          const current = testProgress[challenge.id] ?? progressSourceMap[challenge.progressKey] ?? 0;
           const done = current >= challenge.target;
-          const claimKey = `${challenge.id}:${getTodayKey()}`;
+          const claimKey = `${challenge.id}:${getResetKey(challenge.reset)}`;
           const claimed = claimedChallenges.has(claimKey);
           const pct = Math.min(100, Math.round((Math.min(current, challenge.target) / challenge.target) * 100));
           const Icon = challenge.Icon;
@@ -200,7 +298,7 @@ export function DashboardChallenges({
                 </div>
                 <div className="relative shrink-0 inline-flex items-center gap-0.5 rounded-full border border-raw-border/45 bg-raw-black/55 px-2 py-0.5 text-xs text-raw-text">
                   <Flame className="h-3 w-3 text-raw-gold/80" />
-                  +{challenge.reward}
+                  +{challenge.rewardXP} XP{challenge.rewardTokens ? ` / +${challenge.rewardTokens} tokens` : ""}
                 </div>
               </div>
 
@@ -214,16 +312,25 @@ export function DashboardChallenges({
               <div className="relative mt-2 flex items-center justify-between gap-2">
                 <div className="inline-flex items-center gap-1 rounded-full border border-raw-border/40 bg-raw-black/45 px-2 py-0.5 text-[10px] text-raw-silver/70">
                   {done ? <CheckCircle2 className="h-3 w-3 text-emerald-300" /> : <Lock className="h-3 w-3 text-raw-silver/55" />}
-                  {done ? "Done" : "In Progress"}
+                  {done ? getResetLabel(challenge.reset) : getResetLabel(challenge.reset)}
                 </div>
+                {isAdmin && !done ? (
+                  <button
+                    type="button"
+                    onClick={() => setTestProgress((previous) => ({ ...previous, [challenge.id]: challenge.target }))}
+                    className="rounded-full border border-raw-gold/35 bg-raw-gold/10 px-2.5 py-0.5 text-[10px] font-medium text-raw-gold transition hover:bg-raw-gold/20"
+                  >
+                    Test Complete
+                  </button>
+                ) : null}
                 {done ? (
                   <button
                     type="button"
-                    onClick={() => handleClaimChallenge(challenge.id, challenge.reward)}
-                    disabled={claimed}
+                    onClick={() => handleClaimChallenge(challenge)}
+                    disabled={claimed && !isAdmin}
                     className="rounded-full border border-emerald-300/35 bg-emerald-400/20 px-2.5 py-0.5 text-[10px] font-medium text-emerald-100 transition hover:bg-emerald-400/30 disabled:cursor-default disabled:opacity-55"
                   >
-                    {claimed ? "Claimed" : "Claim"}
+                    {claimed && !isAdmin ? "Claimed" : "Claim"}
                   </button>
                 ) : (
                   <div className="inline-flex items-center gap-1 text-[10px] text-raw-silver/55">

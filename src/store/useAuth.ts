@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { identify, reset, track } from "@/lib/analytics";
-import { awardXPOnce, XP_REWARDS } from "@/lib/userProgress";
+import { awardXPOnce, recordLocalLoginDay, XP_REWARDS } from "@/lib/userProgress";
 import { getTodayKey } from "@/store/useRawStore.storage";
 import type { AuthResult, User } from "@/store/types";
 import {
@@ -28,7 +28,9 @@ function toUser(a: AuthUser): User {
 }
 
 function awardDailyLoginXP(userId: string): void {
-  void awardXPOnce(userId, "daily-login", getTodayKey(), XP_REWARDS.DAILY_LOGIN);
+  const todayKey = getTodayKey();
+  recordLocalLoginDay(userId, todayKey);
+  void awardXPOnce(userId, "daily-login", todayKey, XP_REWARDS.DAILY_LOGIN);
 }
 
 export function useAuth() {

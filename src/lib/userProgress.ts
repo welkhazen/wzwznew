@@ -18,6 +18,7 @@ export const XP_REWARDS = {
 export const LEVEL_THRESHOLDS = [0, 0, 500, 1500, 3500, 7000, 12000, 19000, 28000, 38000, 50000, Infinity];
 const LOCAL_PROGRESS_KEY_PREFIX = "raw.local-user-progress.";
 const LOCAL_CLAIMS_KEY_PREFIX = "raw.local-user-xp-claims.";
+const LOCAL_LOGIN_DAYS_KEY_PREFIX = "raw.local-login-days.";
 const USE_LOCAL_XP_ONLY = true;
 
 export function xpForLevel(level: number): number {
@@ -189,4 +190,34 @@ function loadLocalXPClaimKeys(userId: string, source: string): string[] {
 function writeLocalXPClaimKeys(userId: string, source: string, claimKeys: string[]): void {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(`${LOCAL_CLAIMS_KEY_PREFIX}${userId}.${source}`, JSON.stringify(claimKeys));
+}
+
+export function recordLocalLoginDay(userId: string, dayKey: string): string[] {
+  if (typeof window === "undefined") return [dayKey];
+
+  const key = `${LOCAL_LOGIN_DAYS_KEY_PREFIX}${userId}`;
+  try {
+    const raw = window.localStorage.getItem(key);
+    const parsed = raw ? JSON.parse(raw) : [];
+    const days = new Set(Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : []);
+    days.add(dayKey);
+    const next = [...days].sort();
+    window.localStorage.setItem(key, JSON.stringify(next));
+    return next;
+  } catch {
+    window.localStorage.setItem(key, JSON.stringify([dayKey]));
+    return [dayKey];
+  }
+}
+
+export function loadLocalLoginDays(userId: string): string[] {
+  if (typeof window === "undefined") return [];
+
+  try {
+    const raw = window.localStorage.getItem(`${LOCAL_LOGIN_DAYS_KEY_PREFIX}${userId}`);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
+  } catch {
+    return [];
+  }
 }

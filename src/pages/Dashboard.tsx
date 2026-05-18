@@ -38,6 +38,7 @@ interface DashboardProps {
   dailyPollLimit: number;
   isDailyPollLimitReached: boolean;
   tokenBalance: number;
+  addTokens: (amount: number) => void;
   unlockExtraPolls: () => void;
   vote: (pollId: string, optionId: string) => void;
   onLogout: () => void;
@@ -57,6 +58,7 @@ export default function Dashboard({
   dailyPollLimit,
   isDailyPollLimitReached,
   tokenBalance,
+  addTokens,
   unlockExtraPolls,
   vote,
   onLogout,
@@ -203,6 +205,7 @@ export default function Dashboard({
               dailyPollLimit={dailyPollLimit}
               onAwardXP={handleDailySpinAward}
               onClaimXP={(source, claimKey, amount) => awardOnce(source, claimKey, amount)}
+              onAwardTokens={(amount) => addTokens(amount)}
             />
           </DashboardSectionShell>
         );
