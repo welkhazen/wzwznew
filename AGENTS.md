@@ -120,3 +120,13 @@ Repo is configured as single-context. See `docs/agents/domain.md`.
 ## Assistant interaction preference
 
 When responding, proactively suggest better alternatives that could make the workflow smoother when appropriate.
+
+## Code review and quality workflow
+
+For consistent quality and smoother delivery, follow `docs/agents/code-review-and-quality-workflow.md` on every implementation/review task.
+
+Minimum requirements per task:
+- State assumptions + a short goal-driven plan with verification checks.
+- Propose at least one better alternative before implementation (or explicitly say none exists).
+- Keep changes surgical and run targeted verification commands.
+- End with summary, test evidence, risks, and a suggested next best step.
