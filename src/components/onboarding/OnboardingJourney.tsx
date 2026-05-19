@@ -141,7 +141,7 @@ const ONBOARDING_COMMUNITIES = [
     description: "A space for Lebanese change-makers, community builders, and people driving impact inside Lebanon and across the diaspora.",
     members: "0",
     activeNow: "Early Access",
-    image: "https://images.unsplash.com/photo-1549895885-2e9af1a79571?auto=format&fit=crop&w=900&q=80",
+    image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=900&q=80",
   },
 ];
 
