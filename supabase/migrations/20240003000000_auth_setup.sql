@@ -1,4 +1,5 @@
 -- Allow a user to insert their own profile row (auth.uid() must match id)
+DROP POLICY IF EXISTS "users_insert_self" ON public.users;
 CREATE POLICY "users_insert_self" ON public.users
   FOR INSERT WITH CHECK (auth.uid() = id);
 
