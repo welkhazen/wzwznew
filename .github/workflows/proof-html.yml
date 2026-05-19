@@ -1,0 +1,19 @@
+name: HTML Proofer
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  proof-html:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run HTML Proofer
+        uses: anishathalye/proof-html@v2
+        with:
+          directory: ./site
