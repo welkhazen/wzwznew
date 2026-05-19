@@ -8,6 +8,7 @@ import { installGlobalCrashAlerts } from "@/lib/crashAlerts";
 import { initSentry } from "@/lib/sentry";
 import App from "./App.tsx";
 import "./index.css";
+import "./styles/raw-reveal-button.css";
 
 const queryClient = new QueryClient();
 
