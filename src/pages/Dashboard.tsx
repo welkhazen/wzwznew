@@ -17,6 +17,7 @@ import { DashboardProfile } from "@/components/dashboard/DashboardProfile";
 import { DashboardWallet } from "@/components/dashboard/DashboardWallet";
 import { DashboardInventory } from "@/components/dashboard/DashboardInventory";
 import { DashboardSectionShell } from "@/components/dashboard/DashboardSectionShell";
+import { NotificationConsentPrompt } from "@/components/notifications/NotificationConsentPrompt";
 import { LevelUpCelebration } from "@/components/ui/LevelUpCelebration";
 import { useUserProgress } from "@/store/useUserProgress";
 import { XP_REWARDS } from "@/lib/userProgress";
@@ -245,6 +246,7 @@ export default function Dashboard({
         return (
           <DashboardSectionShell>
             <DashboardProfile
+              userId={user.id}
               username={user.username}
               avatarLevel={avatarLevel}
               onAvatarChange={setAvatarLevel}
@@ -254,6 +256,7 @@ export default function Dashboard({
               pollsAnswered={votedPolls.size}
               xp={progress?.xp ?? 0}
               xpLevel={progress?.level ?? 1}
+              onLogout={onLogout}
             />
           </DashboardSectionShell>
         );
@@ -285,6 +288,7 @@ export default function Dashboard({
       {leveledUpTo !== null && (
         <LevelUpCelebration newLevel={leveledUpTo} onClose={clearLevelUp} />
       )}
+      <NotificationConsentPrompt userId={user.id} />
       <DashboardNav
         username={user.username}
         avatarLevel={avatarLevel}

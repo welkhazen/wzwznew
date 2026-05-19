@@ -18,6 +18,7 @@ If any check fails, fix before committing.
 - Prefer small, scoped commits over one large dump.
 - Use imperative commit messages (e.g., `Add poll voting edge-case guard`).
 - Include docs/config updates in the same commit when behavior changes.
+- Update `CHANGELOG.md` for production-impacting changes.
 
 ## 4) Pull request prep
 - Summarize what changed and why.

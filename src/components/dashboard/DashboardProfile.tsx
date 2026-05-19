@@ -3,17 +3,22 @@ import {
   Award,
   Calendar,
   Flame,
+  KeyRound,
   MessageCircle,
   Target,
+  Trash2,
   TrendingUp,
   Trophy,
 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { changePassword, deleteAccount } from "@/backend/supabase/controllers/authController";
 
 import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { LevelProgressBanner } from "@/components/dashboard/LevelProgressBanner";
 import { LEVEL_THEMES, MAX_LEVEL, getAvatar } from "@/lib/avataridentity";
 
 interface DashboardProfileProps {
+  userId: string;
   username: string;
   avatarLevel: number;
   onAvatarChange: (level: number) => void;
@@ -23,6 +28,7 @@ interface DashboardProfileProps {
   pollsAnswered: number;
   xp?: number;
   xpLevel?: number;
+  onLogout: () => void;
 }
 
 const stats = [
@@ -43,6 +49,7 @@ const badges = [
 ];
 
 export function DashboardProfile({
+  userId,
   username,
   avatarLevel,
   onAvatarChange,
@@ -52,9 +59,53 @@ export function DashboardProfile({
   pollsAnswered,
   xp = 0,
   xpLevel = 1,
+  onLogout,
 }: DashboardProfileProps) {
+  const { toast } = useToast();
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [unlockingLevel, setUnlockingLevel] = useState<number | null>(null);
+
+  const [pwOpen, setPwOpen] = useState(false);
+  const [oldPw, setOldPw] = useState("");
+  const [newPw, setNewPw] = useState("");
+  const [confirmPw, setConfirmPw] = useState("");
+  const [pwLoading, setPwLoading] = useState(false);
+
+  const [delOpen, setDelOpen] = useState(false);
+  const [delPw, setDelPw] = useState("");
+  const [delLoading, setDelLoading] = useState(false);
+
+  async function handleChangePassword() {
+    if (newPw.length < 6) {
+      toast({ title: "Password too short", description: "New password must be at least 6 characters." });
+      return;
+    }
+    if (newPw !== confirmPw) {
+      toast({ title: "Passwords don't match", description: "New password and confirmation must match." });
+      return;
+    }
+    setPwLoading(true);
+    const result = await changePassword(userId, oldPw, newPw);
+    setPwLoading(false);
+    if (!result.ok) {
+      toast({ title: "Could not change password", description: result.error ?? "Please try again." });
+      return;
+    }
+    toast({ title: "Password changed", description: "Your password has been updated." });
+    setOldPw(""); setNewPw(""); setConfirmPw(""); setPwOpen(false);
+  }
+
+  async function handleDeleteAccount() {
+    setDelLoading(true);
+    const result = await deleteAccount(userId, delPw);
+    setDelLoading(false);
+    if (!result.ok) {
+      toast({ title: "Could not delete account", description: result.error ?? "Please try again." });
+      return;
+    }
+    onLogout();
+  }
+
   const displayIndex = hoveredIndex ?? avatarLevel;
   const theme = getAvatar(displayIndex);
 
@@ -157,6 +208,90 @@ export function DashboardProfile({
             </div>
           );
         })}
+      </div>
+
+      {/* Account Settings */}
+      <div className="space-y-2">
+        <div className="rounded-2xl border border-raw-border/30 bg-raw-surface/30 overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setPwOpen((v) => !v)}
+            className="flex w-full items-center justify-between px-4 py-3.5 text-left"
+          >
+            <div className="flex items-center gap-2.5">
+              <KeyRound className="h-4 w-4 text-raw-gold/50" />
+              <span className="text-sm font-medium text-raw-text">Change Password</span>
+            </div>
+            <span className="text-xs text-raw-silver/30">{pwOpen ? "Cancel" : "Edit"}</span>
+          </button>
+          {pwOpen && (
+            <div className="border-t border-raw-border/20 px-4 pb-4 pt-3 space-y-2.5">
+              <input
+                type="password"
+                placeholder="Current password"
+                value={oldPw}
+                onChange={(e) => setOldPw(e.target.value)}
+                className="w-full rounded-xl border border-raw-border/30 bg-raw-black/40 px-3 py-2.5 text-sm text-raw-text placeholder:text-raw-silver/25 focus:border-raw-gold/40 focus:outline-none"
+              />
+              <input
+                type="password"
+                placeholder="New password"
+                value={newPw}
+                onChange={(e) => setNewPw(e.target.value)}
+                className="w-full rounded-xl border border-raw-border/30 bg-raw-black/40 px-3 py-2.5 text-sm text-raw-text placeholder:text-raw-silver/25 focus:border-raw-gold/40 focus:outline-none"
+              />
+              <input
+                type="password"
+                placeholder="Confirm new password"
+                value={confirmPw}
+                onChange={(e) => setConfirmPw(e.target.value)}
+                className="w-full rounded-xl border border-raw-border/30 bg-raw-black/40 px-3 py-2.5 text-sm text-raw-text placeholder:text-raw-silver/25 focus:border-raw-gold/40 focus:outline-none"
+              />
+              <button
+                type="button"
+                onClick={handleChangePassword}
+                disabled={pwLoading || !oldPw || !newPw || !confirmPw}
+                className="w-full rounded-xl bg-raw-gold px-4 py-2.5 text-sm font-semibold text-raw-ink disabled:opacity-40"
+              >
+                {pwLoading ? "Saving…" : "Update Password"}
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-2xl border border-red-500/20 bg-raw-surface/30 overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setDelOpen((v) => !v)}
+            className="flex w-full items-center justify-between px-4 py-3.5 text-left"
+          >
+            <div className="flex items-center gap-2.5">
+              <Trash2 className="h-4 w-4 text-red-400/60" />
+              <span className="text-sm font-medium text-red-400/80">Delete Account</span>
+            </div>
+            <span className="text-xs text-raw-silver/30">{delOpen ? "Cancel" : "Danger"}</span>
+          </button>
+          {delOpen && (
+            <div className="border-t border-red-500/10 px-4 pb-4 pt-3 space-y-2.5">
+              <p className="text-xs text-raw-silver/40">This is permanent. All your data will be deleted and cannot be recovered.</p>
+              <input
+                type="password"
+                placeholder="Enter your password to confirm"
+                value={delPw}
+                onChange={(e) => setDelPw(e.target.value)}
+                className="w-full rounded-xl border border-red-500/20 bg-raw-black/40 px-3 py-2.5 text-sm text-raw-text placeholder:text-raw-silver/25 focus:border-red-400/40 focus:outline-none"
+              />
+              <button
+                type="button"
+                onClick={handleDeleteAccount}
+                disabled={delLoading || !delPw}
+                className="w-full rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-2.5 text-sm font-semibold text-red-400 disabled:opacity-40"
+              >
+                {delLoading ? "Deleting…" : "Permanently Delete My Account"}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Badges */}
