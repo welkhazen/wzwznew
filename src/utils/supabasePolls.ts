@@ -54,14 +54,16 @@ export async function fetchSupabasePolls(limit = 10): Promise<Poll[]> {
     .filter((poll) => poll.question?.trim().length > 5 && poll.options.length >= 2);
 }
 
-export async function submitPollVote(pollId: string, optionId: string, userId: string): Promise<void> {
-  const { error } = await supabase
-    .from("poll_votes")
-    .upsert(
-      { poll_id: pollId, option_id: optionId, user_id: userId, surface: "app" },
-      { onConflict: "poll_id,user_id" }
-    );
-  if (error) throw error;
+export async function submitPollVote(pollId: string, optionId: string, _userId: string): Promise<void> {
+  const response = await fetch(`/api/polls/${encodeURIComponent(pollId)}/vote`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ optionId }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to submit poll vote");
+  }
 }
 
 export async function fetchPollComments(pollId: string): Promise<PollCommentRow[]> {
@@ -86,22 +88,41 @@ export async function addPollComment(pollId: string, text: string): Promise<Poll
 }
 
 export async function fetchTokenBalance(userId: string): Promise<number> {
-  const { data, error } = await supabase
-    .from("users")
-    .select("token_balance")
-    .eq("id", userId)
-    .single();
-  if (error || !data) throw error ?? new Error("Failed to fetch token balance");
-  return (data as { token_balance: number }).token_balance;
+  const response = await fetch(`/api/users/${encodeURIComponent(userId)}/tokens`);
+  if (!response.ok) throw new Error("Failed to fetch token balance");
+
+  const payload = (await response.json()) as { balance?: unknown };
+  const balance = Number(payload.balance);
+  if (!Number.isFinite(balance)) throw new Error("Invalid token balance response");
+  return balance;
 }
 
 export async function spendTokens(userId: string, amount: number): Promise<number> {
-  const { data, error } = await supabase.rpc("spend_tokens", {
-    p_user_id: userId,
-    p_amount: amount,
+  const response = await fetch(`/api/users/${encodeURIComponent(userId)}/tokens`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ amount }),
   });
-  if (error) throw error;
-  const result = data as { ok: boolean; balance?: number; error?: string };
-  if (!result.ok) throw new Error(result.error ?? "Failed to spend tokens");
-  return result.balance!;
+
+  const payload = (await response.json().catch(() => null)) as { balance?: unknown; error?: string } | null;
+  if (!response.ok) throw new Error(payload?.error ?? "Failed to spend tokens");
+
+  const balance = Number(payload?.balance);
+  if (!Number.isFinite(balance)) throw new Error("Invalid token spend response");
+  return balance;
+}
+
+export async function addTokensToBalance(userId: string, amount: number): Promise<number> {
+  const response = await fetch(`/api/users/${encodeURIComponent(userId)}/tokens`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ action: "add", amount }),
+  });
+
+  const payload = (await response.json().catch(() => null)) as { balance?: unknown; error?: string } | null;
+  if (!response.ok) throw new Error(payload?.error ?? "Failed to add tokens");
+
+  const balance = Number(payload?.balance);
+  if (!Number.isFinite(balance)) throw new Error("Invalid token add response");
+  return balance;
 }

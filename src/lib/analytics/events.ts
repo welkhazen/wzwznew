@@ -322,7 +322,7 @@ export type AppEvent =
   | {
       name: "push_prompt_shown";
       properties: {
-        provider: "onesignal";
+        provider: "apple-native" | "browser" | "onesignal";
       };
     }
 

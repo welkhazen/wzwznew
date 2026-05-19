@@ -35,6 +35,7 @@ struct AppWebView: UIViewRepresentable {
         let config = WKWebViewConfiguration()
         config.allowsInlineMediaPlayback = true
         config.mediaTypesRequiringUserActionForPlayback = []
+        config.userContentController.add(context.coordinator, name: "rawNotifications")
 
         let wv = WKWebView(frame: .zero, configuration: config)
         wv.navigationDelegate = context.coordinator
@@ -62,7 +63,7 @@ struct AppWebView: UIViewRepresentable {
 
     // MARK: Coordinator
 
-    final class Coordinator: NSObject, WKNavigationDelegate {
+    final class Coordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
         let viewModel: WebViewModel
         var refreshControl: UIRefreshControl?
         var progressObserver: NSKeyValueObservation?
@@ -71,6 +72,11 @@ struct AppWebView: UIViewRepresentable {
 
         @objc func handleRefresh(_ sender: UIRefreshControl) {
             viewModel.webView?.reload()
+        }
+
+        func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+            guard message.name == "rawNotifications" else { return }
+            NotificationPermissionCoordinator.request(webView: viewModel.webView)
         }
 
         func webView(_ webView: WKWebView, didStartProvisionalNavigation _: WKNavigation!) {

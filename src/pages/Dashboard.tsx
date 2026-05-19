@@ -17,6 +17,7 @@ import { DashboardProfile } from "@/components/dashboard/DashboardProfile";
 import { DashboardWallet } from "@/components/dashboard/DashboardWallet";
 import { DashboardInventory } from "@/components/dashboard/DashboardInventory";
 import { DashboardSectionShell } from "@/components/dashboard/DashboardSectionShell";
+import { NotificationConsentPrompt } from "@/components/notifications/NotificationConsentPrompt";
 import { LevelUpCelebration } from "@/components/ui/LevelUpCelebration";
 import { useUserProgress } from "@/store/useUserProgress";
 import { XP_REWARDS } from "@/lib/userProgress";
@@ -287,6 +288,7 @@ export default function Dashboard({
       {leveledUpTo !== null && (
         <LevelUpCelebration newLevel={leveledUpTo} onClose={clearLevelUp} />
       )}
+      <NotificationConsentPrompt userId={user.id} />
       <DashboardNav
         username={user.username}
         avatarLevel={avatarLevel}

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchSupabasePolls, fetchTokenBalance, spendTokens, submitPollVote } from "@/utils/supabasePolls";
+import { addTokensToBalance, fetchSupabasePolls, fetchTokenBalance, spendTokens, submitPollVote } from "@/utils/supabasePolls";
 import { track } from "@/lib/analytics";
 import type { Poll } from "@/store/types";
 import { getTodayKey } from "@/store/useRawStore.storage";
@@ -12,7 +12,6 @@ const UNLOCK_TOKEN_COST = 10;
 const GUEST_TOKEN_BALANCE = 0;
 const TOKEN_BALANCE_STORAGE_KEY = "raw.polls.token-balance";
 const TOKEN_BALANCE_UPDATED_EVENT = "raw:token-balance-updated";
-const USE_LOCAL_TOKENS_ONLY = true;
 
 const INITIAL_POLLS: Poll[] = POLL_QUESTION_SEEDS.map((poll, index) => ({
   id: poll.id,
@@ -127,7 +126,6 @@ export function usePolls(isLoggedIn: boolean, userId?: string) {
 
   // Sync token balance from Supabase when logged in
   useEffect(() => {
-    if (USE_LOCAL_TOKENS_ONLY) return;
     if (!isLoggedIn || !userId) return;
     fetchTokenBalance(userId)
       .then((balance) => {
@@ -190,8 +188,7 @@ export function usePolls(isLoggedIn: boolean, userId?: string) {
   const unlockExtraPolls = useCallback(async () => {
     if (tokenBalance < UNLOCK_TOKEN_COST) return;
 
-    if (!USE_LOCAL_TOKENS_ONLY && isLoggedIn && userId) {
-      // Optimistically update, then confirm with Supabase
+    if (isLoggedIn && userId) {
       setTokenBalance((prev) => prev - UNLOCK_TOKEN_COST);
       setExtraBatchesUnlocked((prev) => prev + 1);
       try {
@@ -225,6 +222,45 @@ export function usePolls(isLoggedIn: boolean, userId?: string) {
 
   const addTokens = useCallback((amount: number) => {
     const safeAmount = Math.max(0, amount);
+    if (safeAmount === 0) return;
+
+    if (isLoggedIn && userId) {
+      setTokenBalance((previous) => {
+        const next = previous + safeAmount;
+        try {
+          window.localStorage.setItem(TOKEN_BALANCE_KEY, String(next));
+          emitTokenBalanceUpdated(TOKEN_BALANCE_KEY, next);
+        } catch {
+          // ignore storage errors
+        }
+        return next;
+      });
+
+      addTokensToBalance(userId, safeAmount)
+        .then((balance) => {
+          setTokenBalance(balance);
+          try {
+            window.localStorage.setItem(TOKEN_BALANCE_KEY, String(balance));
+            emitTokenBalanceUpdated(TOKEN_BALANCE_KEY, balance);
+          } catch {
+            // ignore storage errors
+          }
+        })
+        .catch(() => {
+          setTokenBalance((previous) => {
+            const next = Math.max(0, previous - safeAmount);
+            try {
+              window.localStorage.setItem(TOKEN_BALANCE_KEY, String(next));
+              emitTokenBalanceUpdated(TOKEN_BALANCE_KEY, next);
+            } catch {
+              // ignore storage errors
+            }
+            return next;
+          });
+        });
+      return;
+    }
+
     setTokenBalance((previous) => {
       const next = previous + safeAmount;
       try {
@@ -235,7 +271,7 @@ export function usePolls(isLoggedIn: boolean, userId?: string) {
       }
       return next;
     });
-  }, [TOKEN_BALANCE_KEY]);
+  }, [TOKEN_BALANCE_KEY, isLoggedIn, userId]);
 
   const vote = useCallback((pollId: string, optionId: string) => {
     const currentDay = getTodayKey();
