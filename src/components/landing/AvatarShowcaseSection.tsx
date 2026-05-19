@@ -10,6 +10,7 @@ import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
 import type { LandingNewAvatar } from "@/lib/landingNewAvatars";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 import { useTheme } from "@/providers/useTheme";
+import { RawRevealButton } from "../../../components/raw-reveal-button";
 
 const VISIBLE_COUNT = 4;
 const DESKTOP_COUNT = 8;
@@ -428,29 +429,13 @@ Just like in real life, every person is born with a name, an appearance, and an 
 
       {/* ── Expand: full avatar grid ── */}
       <div className="mx-auto mt-6 w-full max-w-5xl flex flex-col items-center">
-        <button
-          type="button"
+        <RawRevealButton
+          size="default"
+          state={showExpandGrid ? "hover" : "scroll"}
+          label={showExpandGrid ? "HIDE" : "CLICK TO REVEAL MORE"}
           onClick={handleToggleExpandGrid}
-          className="group relative flex min-w-[168px] animate-[cta-breath_3.4s_ease-in-out_infinite] flex-col items-center gap-1 overflow-hidden rounded-full border border-white/12 bg-black/35 px-7 py-3 text-raw-silver/55 outline-none backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.035] hover:border-white/30 hover:bg-black/45 hover:text-white/85 active:translate-y-0 active:scale-[0.99] focus-visible:border-white/35"
-          aria-label={showExpandGrid ? "Collapse avatar grid" : "Expand avatar grid"}
-        >
-          <span className="pointer-events-none absolute inset-x-4 top-1 h-1/2 rounded-full bg-white/[0.055] blur-[1px]" />
-          <span className="pointer-events-none absolute inset-0 -translate-x-[140%] bg-[linear-gradient(105deg,transparent_0%,rgba(255,255,255,0.02)_35%,rgba(255,255,255,0.22)_50%,rgba(255,255,255,0.03)_65%,transparent_100%)] transition-transform duration-1000 ease-out group-hover:translate-x-[140%]" />
-          <span className="pointer-events-none absolute inset-x-3 bottom-1 h-px bg-gradient-to-r from-transparent via-white/18 to-transparent opacity-60" />
-          <span className="relative text-[10px] uppercase tracking-[0.26em] transition-all duration-300 group-hover:tracking-[0.3em] group-hover:text-white">
-            {showExpandGrid ? "hide" : "click to reveal more"}
-          </span>
-          <motion.div
-            className="relative"
-            animate={{ y: showExpandGrid ? 0 : [0, 3, 0] }}
-            whileHover={{ y: showExpandGrid ? 0 : 6 }}
-            transition={{ duration: showExpandGrid ? 0.24 : 1.15, ease: "easeInOut", repeat: showExpandGrid ? 0 : Infinity }}
-          >
-            <motion.div animate={{ rotate: showExpandGrid ? 180 : 0 }} transition={{ duration: 0.3 }}>
-              <ChevronDown className="h-4 w-4 text-current opacity-80 transition-opacity duration-300 group-hover:opacity-100" />
-            </motion.div>
-          </motion.div>
-        </button>
+          className="animate-[cta-breath_3.4s_ease-in-out_infinite]"
+        />
 
         <AnimatePresence>
           {showExpandGrid && (
