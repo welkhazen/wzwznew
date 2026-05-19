@@ -1,6 +1,7 @@
 import { useState } from "react";
 import * as Sentry from "@sentry/react";
 import { track } from "@/lib/analytics";
+import { sendCrashAlert } from "@/lib/crashAlerts";
 
 const diagnosticsEnabled =
   import.meta.env.DEV ||
@@ -25,6 +26,11 @@ export function DiagnosticsProbe() {
     Sentry.captureException(new Error(`Diagnostics probe test error @ ${now}`), {
       tags: { source: "diagnostics_probe", env_mode: import.meta.env.MODE },
       level: "error",
+    });
+
+    void sendCrashAlert({
+      message: `Diagnostics probe test error @ ${now}`,
+      source: "diagnostics_probe",
     });
 
     setFiredAt(now);

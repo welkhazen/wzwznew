@@ -1,6 +1,7 @@
 import { Component, ErrorInfo, ReactNode } from "react";
 import * as Sentry from "@sentry/react";
 import { track } from "@/lib/analytics";
+import { sendCrashAlert } from "@/lib/crashAlerts";
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -43,6 +44,14 @@ export class ErrorBoundary extends Component<
     Sentry.captureException(error, {
       tags: { route },
       extra: { componentStack: info.componentStack },
+    });
+
+    void sendCrashAlert({
+      message: error.message,
+      stack: error.stack,
+      componentStack: info.componentStack ?? undefined,
+      route,
+      source: "error_boundary",
     });
 
     track("error_boundary_triggered", {

@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { track } from "@/lib/analytics";
+import { installGlobalCrashAlerts } from "@/lib/crashAlerts";
 import { initSentry } from "@/lib/sentry";
 import App from "./App.tsx";
 import "./index.css";
@@ -11,6 +12,7 @@ import "./index.css";
 const queryClient = new QueryClient();
 
 initSentry();
+installGlobalCrashAlerts();
 
 if (typeof window !== "undefined") {
   const originalWarn = console.warn;

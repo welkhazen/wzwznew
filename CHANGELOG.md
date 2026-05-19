@@ -11,6 +11,7 @@ This project uses a simple release discipline:
 ## Unreleased
 
 ### Added
+- Add crash email alerting via a Vercel monitoring endpoint and Resend.
 - Add screenshot-based issue reporting from the dashboard menu with an admin review queue.
 - Add Apple APNs server sender scaffold and push notification setup documentation.
 - Add notification consent recording and platform-specific Apple/Samsung permission prompts.
