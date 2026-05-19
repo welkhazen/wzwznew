@@ -45,6 +45,8 @@ const envSchema = z.object({
   OPENAI_MODEL: z.string().min(3).default("gpt-4o-mini"),
   ADMIN_USERNAMES: z.preprocess(emptyToUndefined, z.string().optional()),
   SIGNUP_INVITE_ONLY: z.preprocess(emptyToUndefined, z.enum(["true", "false"]).optional()),
+  SUPABASE_URL: z.preprocess(emptyToUndefined, z.string().url().optional()),
+  SUPABASE_SERVICE_ROLE_KEY: z.preprocess(emptyToUndefined, z.string().min(20).optional()),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);
