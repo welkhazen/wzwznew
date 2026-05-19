@@ -32,6 +32,7 @@ import {
 } from "@/lib/landingNewAvatars";
 import { supabase } from "@/lib/supabase";
 import { awardXP } from "@/lib/userProgress";
+import { apiFetch } from "@/lib/http";
 import { WheelOfFortune, type WheelPrize } from "@/components/wheel/WheelOfFortune";
 import {
   createAdminPoll,
@@ -41,15 +42,18 @@ import {
   readChatReports,
   readCommunityJoinRequests,
   readCommunityRequests,
+  readIssueReports,
   readPersistedUsers,
   updateUserModerationStatus,
   writeChatReports,
   writeCommunityJoinRequests,
   writeCommunityRequests,
+  writeIssueReports,
   type AdminPollRecord,
   type ChatReportRecord,
   type CommunityJoinRequestRecord,
   type CommunityRequestRecord,
+  type IssueReportRecord,
   type PersistedUserRecord,
 } from "@/lib/adminData";
 import { approveCommunityJoinRequest, createCommunityFromApprovedRequest } from "@/lib/communityChat";
@@ -95,6 +99,7 @@ export default function Admin() {
   const [users, setUsers] = useState<PersistedUserRecord[]>([]);
   const [communityRequests, setCommunityRequests] = useState<CommunityRequestRecord[]>([]);
   const [chatReports, setChatReports] = useState<ChatReportRecord[]>([]);
+  const [issueReports, setIssueReports] = useState<IssueReportRecord[]>([]);
   const [communityJoinRequests, setCommunityJoinRequests] = useState<CommunityJoinRequestRecord[]>([]);
   const [adminPolls, setAdminPolls] = useState<AdminPollRecord[]>([]);
   const [pollQuestion, setPollQuestion] = useState("");
@@ -159,6 +164,16 @@ export default function Admin() {
     setUsers(readPersistedUsers());
     setChatReports(readChatReports());
     setCommunityJoinRequests(readCommunityJoinRequests());
+    try {
+      const response = await apiFetch("/api/moderation/issue-reports");
+      if (!response.ok) {
+        throw new Error("Issue reports API failed");
+      }
+      const body = (await response.json()) as { reports?: IssueReportRecord[] };
+      setIssueReports(body.reports ?? []);
+    } catch {
+      setIssueReports(readIssueReports());
+    }
     try {
       const requests = await fetchCommunityRequests();
       setCommunityRequests(requests);
@@ -239,6 +254,7 @@ export default function Admin() {
   }, [revokeSlicedAvatarUrls]);
 
   const openReports = useMemo(() => chatReports.filter((report) => report.status === "open"), [chatReports]);
+  const openIssueReports = useMemo(() => issueReports.filter((report) => report.status === "open"), [issueReports]);
   const parsedNames = useMemo(
     () => namesInput.split("\n").map((line) => line.trim()).filter((line) => line.length > 0),
     [namesInput]
@@ -680,6 +696,43 @@ export default function Admin() {
     toast({
       title: action === "dismissed" ? "Report dismissed" : action === "warned" ? "User warned" : "User banned",
       description: `${targetReport.reportedUsername} has been reviewed by admin.`,
+    });
+  };
+
+  const handleIssueReportStatus = async (reportId: string, status: "dismissed" | "reviewed") => {
+    const targetReport = issueReports.find((report) => report.id === reportId);
+    if (!targetReport) {
+      return;
+    }
+
+    const nextReports = issueReports.map((report) =>
+      report.id === reportId
+        ? {
+            ...report,
+            status,
+            resolvedAt: new Date().toISOString(),
+            resolvedBy: user.username,
+          }
+        : report
+    );
+
+    setIssueReports(nextReports);
+    try {
+      const response = await apiFetch("/api/moderation/issue-reports", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ id: reportId, status, resolvedBy: user.username }),
+      });
+      if (!response.ok) {
+        throw new Error("Issue report update failed");
+      }
+    } catch {
+      writeIssueReports(nextReports);
+    }
+    track("admin_action_performed", { action: status === "reviewed" ? "review_issue_report" : "dismiss_issue_report", resource_id: reportId });
+    toast({
+      title: status === "reviewed" ? "Issue marked reviewed" : "Issue dismissed",
+      description: `${targetReport.issueType} report from @${targetReport.reporterName} was updated.`,
     });
   };
 
@@ -1714,11 +1767,12 @@ export default function Admin() {
       </div>
 
       <main className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 sm:py-8 sm:space-y-8">
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-6">
           <SummaryCard label="Users" value={users.length} hint="All locally registered accounts, including admin and reported aliases." />
           <SummaryCard label="Pending Requests" value={pendingRequests.length} hint="Community creation requests waiting for admin approval." />
           <SummaryCard label="Join Requests" value={pendingJoinRequests.length} hint="Pending requests to join locked communities." />
           <SummaryCard label="Open Reports" value={openReports.length} hint="Chat reports still awaiting a moderation decision." />
+          <SummaryCard label="Issue Reports" value={openIssueReports.length} hint="Screenshot reports sent from the dashboard menu." />
           <SummaryCard label="Banned Users" value={bannedUsers.length} hint="Accounts currently blocked from chatting after review." />
         </div>
 
@@ -2972,6 +3026,80 @@ export default function Admin() {
                 CREATE TABLE landing_new_avatars (id text PRIMARY KEY, name text NOT NULL, image_src text NOT NULL DEFAULT &apos;&apos;, position integer NOT NULL DEFAULT 0);
               </code>
             </p>
+          </div>
+        </section>
+
+        <section className="rounded-2xl border border-raw-border/30 bg-raw-surface/20 p-4 sm:rounded-3xl sm:p-6">
+          <div className="flex items-center gap-3">
+            <Upload className="h-5 w-5 text-raw-gold/70" />
+            <div>
+              <h2 className="font-display text-xl tracking-wide">Screenshot reports</h2>
+              <p className="mt-1 text-sm text-raw-silver/45">Review user-submitted screenshots and issue notes from the dashboard menu.</p>
+            </div>
+          </div>
+
+          <div className="mt-5 space-y-3">
+            {issueReports.length === 0 ? (
+              <div className="rounded-2xl border border-raw-border/20 bg-raw-black/35 p-4 text-sm text-raw-silver/45">No screenshot reports yet.</div>
+            ) : (
+              issueReports.map((report) => (
+                <div key={report.id} className="rounded-2xl border border-raw-border/20 bg-raw-black/35 p-5">
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                      <p className="font-display text-lg text-raw-text">{report.issueType}</p>
+                      <p className="mt-1 text-sm text-raw-silver/45">
+                        Sent by @{report.reporterName} · {formatAdminTimestamp(report.createdAt)}
+                      </p>
+                    </div>
+                    <span className={`rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.15em] ${
+                      report.status === "open"
+                        ? "border-amber-400/20 bg-amber-400/[0.08] text-amber-200"
+                        : report.status === "reviewed"
+                          ? "border-emerald-400/20 bg-emerald-400/[0.08] text-emerald-200"
+                          : "border-raw-border/30 bg-raw-surface/20 text-raw-silver/60"
+                    }`}>
+                      {report.status}
+                    </span>
+                  </div>
+
+                  {report.screenshotDataUrl ? (
+                    <div className="mt-4 overflow-hidden rounded-2xl border border-raw-border/20 bg-raw-surface/20">
+                      <img src={report.screenshotDataUrl} alt={report.screenshotName ?? "Reported screenshot"} className="max-h-[420px] w-full object-contain" />
+                    </div>
+                  ) : (
+                    <div className="mt-4 rounded-2xl border border-raw-border/20 bg-raw-surface/20 p-4 text-sm text-raw-silver/45">
+                      No screenshot attached.
+                    </div>
+                  )}
+
+                  <div className="mt-4 grid gap-4 md:grid-cols-2">
+                    <div>
+                      <p className="text-[11px] uppercase tracking-[0.15em] text-raw-silver/35">Reporter note</p>
+                      <p className="mt-2 text-sm text-raw-silver/60">{report.details || "No extra context provided."}</p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] uppercase tracking-[0.15em] text-raw-silver/35">Page</p>
+                      <p className="mt-2 break-all text-sm text-raw-silver/60">{report.pageUrl || "Unknown page"}</p>
+                    </div>
+                  </div>
+
+                  {report.status === "open" ? (
+                    <div className="mt-4 flex flex-wrap gap-3">
+                      <Button onClick={() => handleIssueReportStatus(report.id, "dismissed")} variant="outline" className="rounded-xl border-raw-border/30 bg-transparent text-raw-silver/70 hover:bg-raw-surface/30 hover:text-raw-text">
+                        <XCircle className="h-4 w-4" /> Dismiss
+                      </Button>
+                      <Button onClick={() => handleIssueReportStatus(report.id, "reviewed")} className="rounded-xl bg-raw-gold px-4 text-raw-ink hover:bg-raw-gold/90">
+                        <CheckCircle2 className="h-4 w-4" /> Mark reviewed
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="mt-4 text-xs text-raw-silver/40">
+                      Reviewed by @{report.resolvedBy ?? "admin"}{report.resolvedAt ? ` · ${formatAdminTimestamp(report.resolvedAt)}` : ""}
+                    </p>
+                  )}
+                </div>
+              ))
+            )}
           </div>
         </section>
 

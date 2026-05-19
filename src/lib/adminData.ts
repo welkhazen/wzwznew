@@ -2,6 +2,7 @@ export type UserRole = "member" | "admin";
 export type ModerationStatus = "active" | "warned" | "banned";
 export type CommunityRequestStatus = "pending" | "approved" | "rejected";
 export type ChatReportStatus = "open" | "dismissed" | "warned" | "banned";
+export type IssueReportStatus = "open" | "dismissed" | "reviewed";
 
 export interface PersistedUserRecord {
   id: string;
@@ -61,11 +62,28 @@ export interface CommunityJoinRequestRecord {
   reviewedBy?: string;
 }
 
+export interface IssueReportRecord {
+  id: string;
+  reporterId: string;
+  reporterName: string;
+  issueType: string;
+  details: string;
+  screenshotDataUrl?: string;
+  screenshotName?: string;
+  pageUrl: string;
+  userAgent: string;
+  createdAt: string;
+  status: IssueReportStatus;
+  resolvedAt?: string;
+  resolvedBy?: string;
+}
+
 const USER_STORAGE_KEY = "raw.users.v1";
 const AUTH_SESSION_STORAGE_KEY = "raw.auth-session.v1";
 export const COMMUNITY_REQUESTS_STORAGE_KEY = "raw.community-requests.v1";
 export const CHAT_REPORTS_STORAGE_KEY = "raw.chat-reports.v1";
 export const COMMUNITY_JOIN_REQUESTS_STORAGE_KEY = "raw.community-join-requests.v1";
+export const ISSUE_REPORTS_STORAGE_KEY = "raw.issue-reports.v1";
 
 const ADMIN_USERNAMES = new Set(["admin", "rawadmin", "founder", "owner"]);
 
@@ -231,6 +249,19 @@ export function readCommunityJoinRequests(): CommunityJoinRequestRecord[] {
 
 export function writeCommunityJoinRequests(requests: CommunityJoinRequestRecord[]): void {
   writeJsonArray(COMMUNITY_JOIN_REQUESTS_STORAGE_KEY, requests);
+}
+
+export function readIssueReports(): IssueReportRecord[] {
+  try {
+    const raw = localStorage.getItem(ISSUE_REPORTS_STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as IssueReportRecord[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function writeIssueReports(reports: IssueReportRecord[]): void {
+  localStorage.setItem(ISSUE_REPORTS_STORAGE_KEY, JSON.stringify(reports));
 }
 
 const ADMIN_POLLS_STORAGE_KEY = "raw.admin.polls.v1";

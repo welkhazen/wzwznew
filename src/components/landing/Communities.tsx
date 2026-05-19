@@ -1,9 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Lock } from "lucide-react";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 import { getMessagesForCommunity, type ChatMessage } from "@/lib/communityMessages";
-import { useTheme } from "@/providers/useTheme";
 import isItJustMeVideo from "@/assets/itisjustme.webm";
 import lebanonVideo from "@/assets/LB.mp4";
 import speakYourTruthVideo from "@/assets/speakyourheart.webm";
@@ -30,7 +28,7 @@ const communities = [
   },
   {
     title: "Lebanon Initiatives",
-    description: "Coming soon.",
+    description: "Sign up to join the waitlist.",
     badge: "Waitlist",
     video: lebanonVideo,
     videoType: "video/mp4",
@@ -44,14 +42,13 @@ interface CommunitiesProps {
 
 export function Communities({ onSignupClick }: CommunitiesProps) {
   const sectionRef = useTrackSectionView("communities");
-  const { mode } = useTheme();
-  const isLight = mode === "light";
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [previewOpen, setPreviewOpen] = useState(false);
   const [selectedCommunity, setSelectedCommunity] = useState<string | null>(null);
   const [clickedCardRect, setClickedCardRect] = useState<DOMRect | null>(null);
   const [visibleMessages, setVisibleMessages] = useState<number>(0);
   const [anonInput, setAnonInput] = useState("");
+  const [joinedWaitlistCommunities, setJoinedWaitlistCommunities] = useState<Set<string>>(new Set());
 
   // Per-open random message pool (3 messages)
   const [selectedMessages, setSelectedMessages] = useState<ChatMessage[]>([]);
@@ -115,6 +112,15 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
     setAnonInput("");
   }
 
+  function handleWaitlistClick(communityTitle: string) {
+    if (joinedWaitlistCommunities.has(communityTitle)) {
+      onSignupClick();
+      return;
+    }
+
+    setJoinedWaitlistCommunities((previous) => new Set(previous).add(communityTitle));
+  }
+
   return (
     <section
       ref={sectionRef as React.RefObject<HTMLElement>}
@@ -139,67 +145,24 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
           </div>
 
           <div className="grid gap-4 sm:gap-6 grid-cols-2 md:grid-cols-4">
-          {communities.map((c) => (
-            <div
-              key={c.title}
-              onClick={(e) => { if (!c.waitlist) openCommunityPreview(e, c); }}
-              className="cursor-pointer"
-            >
+          {communities.map((c) => {
+            const hasJoinedWaitlist = joinedWaitlistCommunities.has(c.title);
+
+            return (
+              <div
+                key={c.title}
+                onClick={(e) => { if (!c.waitlist) openCommunityPreview(e, c); }}
+                className="cursor-pointer"
+              >
               <div
                 className={
                   `rounded-2xl p-5 sm:p-6 relative overflow-visible transition-colors duration-200 ` +
-                  (c.waitlist
-                    ? isLight
-                      ? "bg-white border border-slate-200 shadow-sm overflow-hidden"
-                      : "bg-transparent border-0 shadow-none"
-                    : c.video
+                  (c.video
                       ? "bg-transparent border-0 shadow-none"
                       : "border border-raw-border/50 bg-raw-surface/50 overflow-hidden")
                 }
               >
-                {c.waitlist ? (
-                  <div className="text-center">
-                    <div className="relative flex h-40 flex-col items-center justify-center overflow-hidden rounded-xl">
-                      {c.video && (
-                        <video
-                          className="absolute inset-0 h-full w-full object-cover"
-                          autoPlay
-                          loop
-                          muted
-                          playsInline
-                          preload="metadata"
-                        >
-                          <source src={c.video} type={c.videoType ?? "video/webm"} />
-                        </video>
-                      )}
-                      <div className={`absolute inset-0 ${isLight ? "bg-black/45" : "bg-raw-black/30"}`} />
-                      <div className="relative z-10 flex flex-col items-center justify-center gap-3">
-                        <span className={`flex h-9 w-9 items-center justify-center rounded-full ${isLight ? "bg-white/90 shadow-md" : "bg-white/10 backdrop-blur-sm"}`}>
-                          <Lock className={`h-4 w-4 ${isLight ? "text-slate-700" : "text-white/80"}`} strokeWidth={2} />
-                        </span>
-                      </div>
-                    </div>
-                    <div className="mt-4 flex flex-col items-center gap-2">
-                      <h3 className={`font-display text-sm tracking-wide text-center ${isLight ? "text-slate-900" : "text-raw-text"}`}>{c.title}</h3>
-                      <p className={`max-w-[200px] text-xs leading-relaxed text-center ${isLight ? "text-slate-500" : "text-raw-silver/60"}`}>
-                        Sign up to join the waitlist.
-                      </p>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onSignupClick();
-                        }}
-                        className={
-                          isLight
-                            ? "mt-1 rounded-full border border-slate-300 bg-white px-5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-700 shadow-sm transition hover:bg-slate-50 hover:border-slate-400"
-                            : "mt-1 rounded-full border border-raw-gold/35 bg-raw-gold/5 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-raw-gold/80 transition hover:bg-raw-gold/10 hover:text-raw-gold"
-                        }
-                      >
-                        Join waitlist
-                      </button>
-                    </div>
-                  </div>
-                ) : c.video ? (
+                {c.video ? (
                   <>
                     <video
                       className="rounded-xl w-full h-32 object-cover mb-3"
@@ -213,7 +176,9 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
                       Your browser does not support this video format.
                     </video>
                     <h3 className="font-display text-sm tracking-wide text-raw-text">{c.title}</h3>
-                    <p className={`mt-2 text-xs leading-relaxed text-raw-silver/50 md:line-clamp-none${expandedCards.has(c.title) ? "" : " line-clamp-2"}`}>{c.description}</p>
+                    <p className={`mt-2 text-xs leading-relaxed text-raw-silver/50 md:line-clamp-none${expandedCards.has(c.title) ? "" : " line-clamp-2"}`}>
+                      {c.waitlist && hasJoinedWaitlist ? "Sign up to claim your place." : c.description}
+                    </p>
                     {!expandedCards.has(c.title) && (
                       <button
                         type="button"
@@ -221,6 +186,18 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
                         className="mt-1 text-[10px] text-raw-gold/60 hover:text-raw-gold md:hidden"
                       >
                         more
+                      </button>
+                    )}
+                    {c.waitlist && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleWaitlistClick(c.title);
+                        }}
+                        className="mt-3 rounded-full border border-raw-gold/35 bg-raw-gold/5 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-raw-gold/80 transition hover:bg-raw-gold/10 hover:text-raw-gold"
+                      >
+                        {hasJoinedWaitlist ? "Sign up" : "Join waitlist"}
                       </button>
                     )}
                   </>
@@ -244,7 +221,8 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
                 )}
               </div>
             </div>
-          ))}
+            );
+          })}
           </div>
 
         </div>

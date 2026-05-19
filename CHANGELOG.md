@@ -11,6 +11,8 @@ This project uses a simple release discipline:
 ## Unreleased
 
 ### Added
+- Add screenshot-based issue reporting from the dashboard menu with an admin review queue.
+- Add Apple APNs server sender scaffold and push notification setup documentation.
 - Add notification consent recording and platform-specific Apple/Samsung permission prompts.
 - Route logged-in token balance reads, token awards, and poll-unlock token spending through a Vercel API endpoint.
 - Persist poll votes through the Vercel `/api/polls/[pollId]/vote` endpoint.

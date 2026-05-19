@@ -1,11 +1,13 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { track } from "@/lib/analytics";
 import { readCommunityChats } from "@/lib/communityChat";
 import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
 import {
   ArrowLeft,
   Bell,
+  Camera,
   Check,
+  Flag,
   LogOut,
   Moon,
   Palette,
@@ -18,9 +20,20 @@ import {
 import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { LevelProgressBanner } from "@/components/dashboard/LevelProgressBanner";
 import { TokenBalanceButton } from "@/components/ui/TokenBalanceButton";
+import { apiFetch } from "@/lib/http";
 import { cn } from "@/lib/utils";
+import { readIssueReports, writeIssueReports, type IssueReportRecord } from "@/lib/adminData";
 import { useTheme } from "@/providers/useTheme";
 import { THEME_MODE_LABELS, type AccentPresetId, type ThemeMode } from "@/providers/theme-context";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,11 +41,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/components/ui/use-toast";
 import { ChevronDown } from "lucide-react";
 
 export type DashboardTab = "home" | "polls" | "challenges" | "daily-spin" | "communities" | "profile" | "wallet" | "inventory";
 
 interface DashboardNavProps {
+  userId: string;
   username: string;
   avatarLevel: number;
   showAdminLink?: boolean;
@@ -47,12 +64,20 @@ interface DashboardNavProps {
   level?: number;
 }
 
-export function DashboardNav({ username, avatarLevel, showAdminLink = false, onAddTestXP, onProfileClick, onBillingClick, onLogout, communityTitle, onBack, communities: propCommunities, xp = 0, level = 1 }: DashboardNavProps) {
+const ISSUE_TYPE_OPTIONS = ["Harmful content", "Bug or broken screen", "Account or billing", "Other"];
+const MAX_SCREENSHOT_SIZE = 2 * 1024 * 1024;
+
+export function DashboardNav({ userId, username, avatarLevel, showAdminLink = false, onAddTestXP, onProfileClick, onBillingClick, onLogout, communityTitle, onBack, communities: propCommunities, xp = 0, level = 1 }: DashboardNavProps) {
   const { mode, accent, accentPresets, setMode, setAccent } = useTheme();
   const [hoveredMode, setHoveredMode] = useState<ThemeMode | null>(null);
   const [hoveredAccent, setHoveredAccent] = useState<AccentPresetId | null>(null);
   const [notifOpen, setNotifOpen] = useState(false);
   const [appearanceOpen, setAppearanceOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [issueType, setIssueType] = useState(ISSUE_TYPE_OPTIONS[0]);
+  const [issueDetails, setIssueDetails] = useState("");
+  const [screenshotName, setScreenshotName] = useState("");
+  const [screenshotDataUrl, setScreenshotDataUrl] = useState("");
   const notifRef = useRef<HTMLDivElement>(null);
 
   const notifications = useMemo(() => {
@@ -80,6 +105,80 @@ export function DashboardNav({ username, avatarLevel, showAdminLink = false, onA
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [notifOpen]);
+
+  const handleScreenshotChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      setScreenshotName("");
+      setScreenshotDataUrl("");
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Screenshot must be an image", description: "Upload a PNG, JPG, or screenshot image file." });
+      event.target.value = "";
+      return;
+    }
+
+    if (file.size > MAX_SCREENSHOT_SIZE) {
+      toast({ title: "Screenshot too large", description: "Use an image under 2MB for the report." });
+      event.target.value = "";
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setScreenshotName(file.name);
+      setScreenshotDataUrl(typeof reader.result === "string" ? reader.result : "");
+    };
+    reader.onerror = () => {
+      toast({ title: "Could not read screenshot", description: "Try another image file." });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSubmitIssueReport = async () => {
+    const details = issueDetails.trim();
+    if (!details && !screenshotDataUrl) {
+      toast({ title: "Add report details", description: "Write a short note or attach a screenshot before sending." });
+      return;
+    }
+
+    const report: IssueReportRecord = {
+      id: `issue-report-${Date.now()}`,
+      reporterId: userId,
+      reporterName: username,
+      issueType,
+      details,
+      screenshotDataUrl: screenshotDataUrl || undefined,
+      screenshotName: screenshotName || undefined,
+      pageUrl: typeof window !== "undefined" ? window.location.href : "",
+      userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "",
+      createdAt: new Date().toISOString(),
+      status: "open",
+    };
+
+    try {
+      const response = await apiFetch("/api/moderation/issue-reports", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(report),
+      });
+      if (!response.ok) {
+        throw new Error("Issue report API failed");
+      }
+    } catch {
+      writeIssueReports([report, ...readIssueReports()]);
+    }
+
+    setIssueDetails("");
+    setScreenshotName("");
+    setScreenshotDataUrl("");
+    setIssueType(ISSUE_TYPE_OPTIONS[0]);
+    setReportOpen(false);
+    toast({ title: "Report sent", description: "Admin can review it with the screenshot in the admin queue." });
+  };
+
   const effectiveMode = hoveredMode ?? mode;
   const effectiveAccent = hoveredAccent ?? accent;
   const isEffectiveLight = effectiveMode === "light";
@@ -324,6 +423,17 @@ export function DashboardNav({ username, avatarLevel, showAdminLink = false, onA
                 </DropdownMenuItem>
               ) : null}
 
+              <DropdownMenuItem
+                onSelect={(event) => {
+                  event.preventDefault();
+                  setReportOpen(true);
+                }}
+                className={cn("cursor-pointer rounded-lg px-3 py-2.5 text-sm focus:text-raw-text", isEffectiveLight ? "text-slate-700 focus:bg-slate-100" : "text-raw-silver/80 focus:bg-raw-surface/80")}
+              >
+                <Flag className="mr-3 h-4 w-4" />
+                Report an issue
+              </DropdownMenuItem>
+
               <button
                 type="button"
                 onClick={() => setAppearanceOpen((o) => !o)}
@@ -436,6 +546,68 @@ export function DashboardNav({ username, avatarLevel, showAdminLink = false, onA
           </DropdownMenu>
         </div>
       </div>
+
+      <Dialog open={reportOpen} onOpenChange={setReportOpen}>
+        <DialogContent className="border-raw-border/40 bg-raw-black text-raw-text sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="font-display text-xl tracking-wide">Report an issue</DialogTitle>
+            <DialogDescription className="text-raw-silver/50">
+              Send a screenshot and note to admin for review.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <label className="block">
+              <span className="text-[11px] uppercase tracking-[0.16em] text-raw-silver/40">Type</span>
+              <select
+                value={issueType}
+                onChange={(event) => setIssueType(event.target.value)}
+                className="mt-2 w-full rounded-xl border border-raw-border/30 bg-raw-surface/35 px-3 py-2.5 text-sm text-raw-text outline-none focus:border-raw-gold/45"
+              >
+                {ISSUE_TYPE_OPTIONS.map((option) => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </select>
+            </label>
+
+            <label className="block">
+              <span className="text-[11px] uppercase tracking-[0.16em] text-raw-silver/40">Screenshot</span>
+              <div className="mt-2 rounded-2xl border border-dashed border-raw-border/35 bg-raw-surface/20 p-4">
+                <Input type="file" accept="image/*" onChange={handleScreenshotChange} className="border-raw-border/30 bg-raw-black/35 text-raw-silver/70" />
+                {screenshotDataUrl ? (
+                  <div className="mt-3 overflow-hidden rounded-xl border border-raw-border/25 bg-raw-black/45">
+                    <img src={screenshotDataUrl} alt="Issue screenshot preview" className="max-h-48 w-full object-contain" />
+                  </div>
+                ) : (
+                  <div className="mt-3 flex items-center gap-2 text-xs text-raw-silver/40">
+                    <Camera className="h-4 w-4" />
+                    Add the screenshot that shows the problem.
+                  </div>
+                )}
+              </div>
+            </label>
+
+            <label className="block">
+              <span className="text-[11px] uppercase tracking-[0.16em] text-raw-silver/40">What happened?</span>
+              <Textarea
+                value={issueDetails}
+                onChange={(event) => setIssueDetails(event.target.value)}
+                placeholder="Tell admin what content, screen, or behavior should be reviewed."
+                className="mt-2 min-h-[110px] border-raw-border/30 bg-raw-surface/25 text-raw-text placeholder:text-raw-silver/30"
+              />
+            </label>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReportOpen(false)} className="rounded-xl border-raw-border/30 bg-transparent text-raw-silver/70 hover:bg-raw-surface/30 hover:text-raw-text">
+              Cancel
+            </Button>
+            <Button onClick={handleSubmitIssueReport} className="rounded-xl bg-red-400 px-4 text-raw-ink hover:bg-red-300">
+              Send report
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </nav>
   );
 }

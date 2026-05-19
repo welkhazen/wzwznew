@@ -290,6 +290,7 @@ export default function Dashboard({
       )}
       <NotificationConsentPrompt userId={user.id} />
       <DashboardNav
+        userId={user.id}
         username={user.username}
         avatarLevel={avatarLevel}
         showAdminLink={user.role === "admin"}
