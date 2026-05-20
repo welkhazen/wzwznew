@@ -16,10 +16,8 @@ const VISIBLE_COUNT = 4;
 const DESKTOP_COUNT = 8;
 const MOBILE_PHONE_SCALE = 0.5;
 const CHOOSER_AVATARS: readonly AvatarCatalogItem[] = [
-  { id: "shadow", level: 1, name: "Shadow", price: "0", bg: "#1a1a1a", figure: "#c8c8c8", ring: "#c8c8c8", glow: "none", isActive: true, rarity: "common" },
   { id: "ember", level: 2, name: "Ember", price: "0", imageSrc: "/avatars/avatar-2.svg", bg: "#0c1a24", figure: "#5ed6ff", ring: "#5ed6ff", glow: "#5ed6ff80", isActive: true, rarity: "common" },
   { id: "verdant", level: 3, name: "Verdant", price: "0", imageSrc: "/avatars/avatar-3.svg", bg: "#0a1124", figure: "#3f8bff", ring: "#3f8bff", glow: "#3f8bff80", isActive: true, rarity: "common" },
-  { id: "ice", level: 4, name: "Ice", price: "0", bg: "#0f1f12", figure: "#4ade80", ring: "#4ade80", glow: "#4ade8080", isActive: true, rarity: "common" },
   { id: "horned", level: 5, name: "Horned", price: "0", imageSrc: "/avatars/avatar-5.svg", bg: "#0b1a0e", figure: "#16a34a", ring: "#16a34a", glow: "#16a34a80", isActive: true, rarity: "common" },
   { id: "pharaoh", level: 6, name: "Pharaoh", price: "0", imageSrc: "/avatars/avatar-6.svg", bg: "#1f0d18", figure: "#ec4899", ring: "#ec4899", glow: "#ec489980", isActive: true, rarity: "common" },
   { id: "violet", level: 7, name: "Violet", price: "0", imageSrc: "/avatars/avatar-7.svg", bg: "#150a22", figure: "#8b5cf6", ring: "#8b5cf6", glow: "#8b5cf680", isActive: true, rarity: "common" },
@@ -96,24 +94,20 @@ export function AvatarShowcaseSection() {
     setShowExpandGrid((open) => !open);
   }
 
+  // Per-image scale to normalise inner-circle size — each source PNG has
+  // different transparent padding around the avatar circle.
   function getRevealAvatarImageStyle(avatarId?: string): React.CSSProperties {
     switch (avatarId) {
-      case "reveal-1":
-        return { transform: "scale(1.42)", objectPosition: "center 50%" };
-      case "reveal-2":
-        return { transform: "scale(2.6)", objectPosition: "center 58%" };
-      case "reveal-3":
-        return { transform: "scale(2.55)", objectPosition: "center 58%" };
-      case "reveal-4":
-        return { transform: "scale(2.55)", objectPosition: "center 58%" };
-      case "reveal-5":
-        return { transform: "scale(2.55)", objectPosition: "center 58%" };
-      case "reveal-7":
-        return { transform: "scale(2.55)", objectPosition: "center 58%" };
-      case "reveal-8":
-        return { transform: "scale(2.55)", objectPosition: "center 58%" };
-      default:
-        return { transform: "scale(1)", objectPosition: "center" };
+      case "reveal-2": // Neon Lynx
+      case "reveal-3": // Blue Signal
+      case "reveal-4": // Violet Mask
+      case "reveal-5": // Horned Iron
+      case "reveal-7": // Solar Flame
+        return { transform: "scale(1.45)" };
+      case "reveal-8": // Pink Circuit
+        return { transform: "scale(1.05)" };
+      default: // reveal-1 (Silver Void) and reveal-6 (Crimson Muse) already fill
+        return undefined as unknown as React.CSSProperties;
     }
   }
 
