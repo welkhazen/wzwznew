@@ -49,6 +49,7 @@ const STEP_LABELS: Record<OnboardingStep, string> = {
 };
 const FREE_ONBOARDING_AVATAR_COUNT = 10;
 const AVATAR_PAGE_SIZE = 10;
+const AGE_GATE_STORAGE_PREFIX = "raw.age-gate.verified";
 
 function fallbackAvatarCatalog(): AvatarCatalogItem[] {
   return AVATARS.filter(Boolean).map((avatar, index) => ({
@@ -223,6 +224,7 @@ export function OnboardingJourney({
 const [pollStats, setPollStats] = useState<Record<string, Record<string, number>>>({});
   const [currentPollIndex, setCurrentPollIndex] = useState(0);
   const [enterRawOpen, setEnterRawOpen] = useState(false);
+  const [isAgeVerified, setIsAgeVerified] = useState(false);
   const [onboardingAvatars, setOnboardingAvatars] = useState<AvatarCatalogItem[]>(() => {
     const cached = readFullAvatarCatalogLocal();
     return cached.length > 0 ? cached : fallbackAvatarCatalog();
@@ -261,6 +263,11 @@ const [pollStats, setPollStats] = useState<Record<string, Record<string, number>
   const previewAvatarChoices = onboardingAvatars.slice(FREE_ONBOARDING_AVATAR_COUNT);
   const previewAvatarPageCount = Math.max(1, Math.ceil(previewAvatarChoices.length / AVATAR_PAGE_SIZE));
   const visiblePreviewAvatarChoices = previewAvatarChoices.slice(avatarPage * AVATAR_PAGE_SIZE, (avatarPage + 1) * AVATAR_PAGE_SIZE);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setIsAgeVerified(window.localStorage.getItem(`${AGE_GATE_STORAGE_PREFIX}.${user.id}`) === "1");
+  }, [user.id]);
 
   useEffect(() => {
     const cached = readFullAvatarCatalogLocal();
@@ -524,6 +531,36 @@ const [pollStats, setPollStats] = useState<Record<string, Record<string, number>
 
           {onboardingStep === "polls" && (
             <section>
+              {!isAgeVerified ? (
+                <div className="rounded-2xl border border-raw-border/40 bg-raw-black/55 p-4 sm:p-6">
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-raw-gold/70">Age confirmation</p>
+                  <h2 className="mt-2 font-display text-base tracking-wide text-raw-text sm:text-xl">Are you over 18?</h2>
+                  <p className="mt-2 text-xs text-raw-silver/60 sm:text-sm">You need to confirm this before answering onboarding polls.</p>
+
+                  <div className="mt-4 flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (typeof window !== "undefined") {
+                          window.localStorage.setItem(`${AGE_GATE_STORAGE_PREFIX}.${user.id}`, "1");
+                        }
+                        setIsAgeVerified(true);
+                      }}
+                      className="rounded-xl bg-raw-gold px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-raw-ink transition hover:opacity-90"
+                    >
+                      Yes, I am 18+
+                    </button>
+                    <button
+                      type="button"
+                      onClick={onLogout}
+                      className="rounded-xl border border-raw-border/45 bg-raw-surface/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-raw-silver/70 transition hover:border-raw-gold/35 hover:text-raw-text"
+                    >
+                      No
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
               <div className="flex flex-wrap items-center justify-between gap-2 sm:items-end sm:gap-4">
                 <div className="min-w-0 flex-1">
                   <h2 className="font-display text-base tracking-wide text-raw-text sm:text-xl">2. Answer 3 launch polls</h2>
@@ -641,6 +678,8 @@ const [pollStats, setPollStats] = useState<Record<string, Record<string, number>
                   Continue to communities →
                 </button>
               </div>
+                </>
+              )}
             </section>
           )}
 
