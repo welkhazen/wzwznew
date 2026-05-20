@@ -50,7 +50,7 @@ const challengeDefinitions = [
     rewardXP: 50,
     reset: "daily",
     progressKey: "dailyPolls",
-    accent: "from-sky-500/35 via-blue-500/20 to-transparent",
+    accent: "from-[#F1C42D]/22 via-[#D9D9D9]/14 to-transparent",
     Icon: MessageCircle,
   },
   {
@@ -61,7 +61,7 @@ const challengeDefinitions = [
     rewardXP: 150,
     reset: "weekly",
     progressKey: "totalPolls",
-    accent: "from-amber-500/35 via-orange-500/20 to-transparent",
+    accent: "from-[#F1C42D]/28 via-[#B82E2E]/12 to-transparent",
     Icon: Trophy,
   },
   {
@@ -72,7 +72,7 @@ const challengeDefinitions = [
     rewardXP: 500,
     reset: "monthly",
     progressKey: "totalPolls",
-    accent: "from-violet-500/35 via-fuchsia-500/20 to-transparent",
+    accent: "from-[#D9D9D9]/24 via-[#F1C42D]/10 to-transparent",
     Icon: MessageCircle,
   },
   {
@@ -84,7 +84,7 @@ const challengeDefinitions = [
     rewardTokens: 20,
     reset: "weekly",
     progressKey: "streakDays",
-    accent: "from-orange-500/35 via-rose-500/20 to-transparent",
+    accent: "from-[#B82E2E]/18 via-[#F1C42D]/20 to-transparent",
     Icon: Sparkles,
   },
   {
@@ -96,7 +96,7 @@ const challengeDefinitions = [
     rewardTokens: 20,
     reset: "monthly",
     progressKey: "streakDays",
-    accent: "from-raw-gold/30 via-amber-400/15 to-transparent",
+    accent: "from-[#F1C42D]/26 via-[#EBEBEB]/10 to-transparent",
     Icon: Flame,
   },
   {
@@ -107,7 +107,7 @@ const challengeDefinitions = [
     rewardXP: 50,
     reset: "monthly",
     progressKey: "totalPolls",
-    accent: "from-indigo-500/35 via-violet-500/20 to-transparent",
+    accent: "from-[#D9D9D9]/18 via-[#B82E2E]/10 to-transparent",
     Icon: Star,
   },
   {
@@ -118,7 +118,7 @@ const challengeDefinitions = [
     rewardXP: 150,
     reset: "monthly",
     progressKey: "totalPolls",
-    accent: "from-emerald-500/35 via-teal-500/20 to-transparent",
+    accent: "from-[#EBEBEB]/16 via-[#F1C42D]/14 to-transparent",
     Icon: UserPlus,
   },
   {
@@ -129,7 +129,7 @@ const challengeDefinitions = [
     rewardXP: 100,
     reset: "monthly",
     progressKey: "avatarLevel",
-    accent: "from-cyan-500/35 via-sky-500/20 to-transparent",
+    accent: "from-[#F1C42D]/16 via-[#D9D9D9]/18 to-transparent",
     Icon: Flame,
   },
 ] satisfies ChallengeDefinition[];
