@@ -1,13 +1,16 @@
 # Push Notifications Setup
 
-The repo now has the notification consent flow and Apple APNs sender scaffold. Full production delivery is disabled until provider credentials are configured.
+The repo now has the notification consent flow, OneSignal Web Push delivery, and an Apple APNs sender scaffold. Full production delivery requires provider credentials in the deployed environment.
 
 ## Current Architecture
 
 - The app shows an in-app consent prompt before requesting platform permission.
 - Apple/iOS uses the Swift Playgrounds wrapper to request native notification permission and capture the APNs device token.
-- Samsung/Android currently uses the web/PWA path through OneSignal or browser notifications because this repo does not include a native Android project.
+- iPhone/iPad web push uses the PWA path: iOS 16.4+ users must add the site to the Home Screen and allow notifications.
+- Samsung/Android and desktop use the web/PWA path through OneSignal.
 - Consent and device tokens are stored in `notification_consents`.
+- OneSignal users are identified with the app user id as `external_id`, so the backend can send to the same user across desktop, Samsung, and supported iPhone PWA installs.
+- Community mentions, message likes, and newly approved communities call `POST /api/notifications/community-push`, which sends a OneSignal push by external id.
 - Server-side Apple delivery is scaffolded at `POST /api/notifications/send`.
 
 ## Required Environment Variables
@@ -27,6 +30,11 @@ Existing client-side variables:
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_PUBLISHABLE_KEY`
 - `VITE_ONESIGNAL_APP_ID` for Samsung/web push path when available.
+
+OneSignal server variables:
+
+- `ONESIGNAL_APP_ID`
+- `ONESIGNAL_REST_API_KEY`
 
 ## Apple Developer Steps Later
 
@@ -53,6 +61,15 @@ curl -X POST https://YOUR_DOMAIN/api/notifications/send \
 
 If Apple env vars are missing, the route returns `503 apple_apns_not_configured` by design.
 
+## OneSignal Web/PWA Requirements
+
+1. In OneSignal, configure the Web platform with the deployed site origin.
+2. Set the service worker path to `/push/onesignal/`.
+3. Set the worker filename to `OneSignalSDKWorker.js`.
+4. Set the worker registration scope to `/push/onesignal/`.
+5. Add `VITE_ONESIGNAL_APP_ID`, `ONESIGNAL_APP_ID`, and `ONESIGNAL_REST_API_KEY` to production env.
+6. On iPhone/iPad, users must install the site to Home Screen before iOS web push can appear outside the browser.
+
 ## Remaining Native Samsung Work
 
-True native Samsung push needs an Android project and FCM configuration. Until then, Samsung-compatible notification consent is handled through the browser/PWA/OneSignal path.
+True native Samsung push needs an Android project and FCM configuration. Until then, Samsung-compatible closed-browser notifications are handled through the browser/PWA/OneSignal path.

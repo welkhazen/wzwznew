@@ -32,7 +32,7 @@ export function NotificationConsentPrompt({ userId }: NotificationConsentPromptP
           </div>
           <DialogTitle>Turn on {platformLabel(platform)}</DialogTitle>
           <DialogDescription className="text-raw-silver/60">
-            Get alerts for community replies, mentions, streak reminders, and important account updates. You can turn this off from your device settings.
+            Get alerts for likes, mentions, new communities, streak reminders, and important account updates. On iPhone, install raW to your Home Screen first for full push alerts.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
