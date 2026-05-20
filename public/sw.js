@@ -1,4 +1,4 @@
-const CACHE = 'raw-v1';
+const CACHE = 'raw-v2';
 const STATIC = [
   '/',
   '/raw-logo-96.png',
@@ -40,6 +40,14 @@ self.addEventListener('fetch', (event) => {
 
   // Cache-first for hashed static assets
   if (url.pathname.startsWith('/assets/')) {
+    event.respondWith(
+      caches.match(request).then((hit) => hit ?? fetchAndCache(request))
+    );
+    return;
+  }
+
+  // Cache-first for avatars and 3D models (rarely change)
+  if (url.pathname.startsWith('/avatars/') || url.pathname.startsWith('/models/')) {
     event.respondWith(
       caches.match(request).then((hit) => hit ?? fetchAndCache(request))
     );
