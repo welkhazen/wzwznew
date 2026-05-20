@@ -13,7 +13,7 @@ import { useTheme } from "@/providers/useTheme";
 import { RawRevealButton } from "../../../components/raw-reveal-button";
 
 const VISIBLE_COUNT = 4;
-const DESKTOP_COUNT = 10;
+const DESKTOP_COUNT = 8;
 const MOBILE_PHONE_SCALE = 0.5;
 const CHOOSER_AVATARS: readonly AvatarCatalogItem[] = [
   { id: "shadow", level: 1, name: "Shadow", price: "0", bg: "#1a1a1a", figure: "#c8c8c8", ring: "#c8c8c8", glow: "none", isActive: true, rarity: "common" },
@@ -51,6 +51,7 @@ export function AvatarShowcaseSection() {
   const [showExpandGrid, setShowExpandGrid] = useState(false);
   const [expandedVisibleCount, setExpandedVisibleCount] = useState(CHOOSER_AVATARS.length);
   const [showMore, setShowMore] = useState(false);
+  const [themeVersion, setThemeVersion] = useState(0);
   const [extraPreviewAvatar, setExtraPreviewAvatar] = useState<LandingNewAvatar | null>(null);
   const [newAvatars] = useState<LandingNewAvatar[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -69,6 +70,7 @@ export function AvatarShowcaseSection() {
       };
     });
     setAvatarThemes(nextThemes);
+    setThemeVersion((version) => version + 1);
   }, []);
 
   const chooserAvatars = CHOOSER_AVATARS;
@@ -180,7 +182,7 @@ export function AvatarShowcaseSection() {
           className={`relative rounded-full transition-all duration-300 ${scaleClass}`}
           style={{ transition: "transform 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}
         >
-          <AvatarFigure avatarIndex={avatar.level} size="md" selected={isSelected || isActive} />
+          <AvatarFigure key={`${avatar.level}-${themeVersion}`} avatarIndex={avatar.level} size="md" selected={isSelected || isActive} />
         </div>
 
         {/* Name */}
@@ -311,7 +313,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
                   <div
                     className={`rounded-full transition-all duration-200 ${scaleClass}`}
                   >
-                    <AvatarFigure avatarIndex={avatar.level} size="sm" selected={avatarIndex === index} />
+                    <AvatarFigure key={`${avatar.level}-${themeVersion}`} avatarIndex={avatar.level} size="sm" selected={avatarIndex === index} />
                   </div>
                   <span
                     className="max-w-[46px] text-center font-display uppercase leading-tight transition-colors duration-200"
@@ -377,7 +379,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
         </div>
       </div>
 
-      {/* ── Desktop (lg+): large phone left + 2×4 grid right ── */}
+      {/* ── Desktop (lg+): large phone left + 4x2 chooser grid right ── */}
       <div className="mx-auto hidden w-full max-w-5xl flex-row items-stretch gap-10 lg:flex">
 
         <div className="flex shrink-0 justify-center">
@@ -402,7 +404,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -24 }}
                 transition={{ duration: 0.22 }}
-                className="grid flex-1 grid-cols-2 grid-rows-5 grid-flow-col place-items-center gap-x-4 gap-y-2"
+                className="grid flex-1 grid-cols-4 grid-rows-2 place-items-center gap-x-4 gap-y-2"
               >
                 {desktopAvatars.map(({ avatar, index }) => (
                   <AvatarButton key={`${desktopStart}-${index}`} index={index} avatar={avatar} />
@@ -475,7 +477,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
                                 style={getRevealAvatarImageStyle(avatar.id)}
                               />
                             ) : (
-                              <AvatarFigure avatarIndex={themeIndex} size="sm" selected={avatarIndex === themeIndex} />
+                              <AvatarFigure key={`${themeIndex}-${themeVersion}`} avatarIndex={themeIndex} size="sm" selected={avatarIndex === themeIndex} />
                             )}
                           </div>
                           <span
