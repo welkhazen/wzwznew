@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Michroma&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -939,7 +941,6 @@ html.theme-light .landing-page-shell footer {
   }
 }
 
-@import url("https://fonts.googleapis.com/css2?family=Michroma&display=swap");
 
 :root {
   --raw-gold: #f1c42d;
