@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 import { getMessagesForCommunity, type ChatMessage } from "@/lib/communityMessages";
 import isItJustMeVideo from "@/assets/itisjustme.webm";
-import lebanonVideo from "@/assets/LB.mp4";
+import lebanonImage from "@/assets/LB.webp";
 import speakYourTruthVideo from "@/assets/speakyourheart.webm";
 import lateNightTalksVideo from "@/assets/2026-04-18 10_10_00.webm";
 
@@ -30,8 +30,7 @@ const communities = [
     title: "Lebanon Initiatives",
     description: "Sign up to join the waitlist.",
     badge: "Waitlist",
-    video: lebanonVideo,
-    videoType: "video/mp4",
+    image: lebanonImage,
     waitlist: true,
   },
 ];
@@ -162,19 +161,29 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
                       : "border border-raw-border/50 bg-raw-surface/50 overflow-hidden")
                 }
               >
-                {c.video ? (
+                {c.video || c.image ? (
                   <>
-                    <video
-                      className="rounded-xl w-full h-32 object-cover mb-3"
-                      autoPlay
-                      loop
-                      muted
-                      playsInline
-                      preload="metadata"
-                    >
-                      <source src={c.video} type={c.videoType ?? "video/webm"} />
-                      Your browser does not support this video format.
-                    </video>
+                    {c.video ? (
+                      <video
+                        className="rounded-xl w-full h-32 object-cover mb-3"
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        preload="metadata"
+                      >
+                        <source src={c.video} type={c.videoType ?? "video/webm"} />
+                        Your browser does not support this video format.
+                      </video>
+                    ) : (
+                      <img
+                        src={c.image}
+                        alt={`${c.title} cover`}
+                        className="rounded-xl w-full h-32 object-cover mb-3"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    )}
                     <h3 className="font-display text-sm tracking-wide text-raw-text">{c.title}</h3>
                     <p className={`mt-2 text-xs leading-relaxed text-raw-silver/50 md:line-clamp-none${expandedCards.has(c.title) ? "" : " line-clamp-2"}`}>
                       {c.waitlist && hasJoinedWaitlist ? "Sign up to claim your place." : c.description}

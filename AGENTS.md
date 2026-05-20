@@ -121,6 +121,12 @@ Repo is configured as single-context. See `docs/agents/domain.md`.
 
 When responding, proactively suggest better alternatives that could make the workflow smoother when appropriate.
 
+## Pull request workflow
+
+When asked to create a PR, create matching PRs for both repositories:
+- `welkhazen/wzwz`
+- `welkhazen/wzwznew`
+
 ## Code review and quality workflow
 
 For consistent quality and smoother delivery, follow `docs/agents/code-review-and-quality-workflow.md` on every implementation/review task.
