@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { Router } from "express";
+import rateLimit from "express-rate-limit";
 import { z } from "zod";
 import { audit } from "../lib/audit";
 import { applyVote, buildBootstrap, canVote, recordPollVote } from "../lib/store";
@@ -21,6 +22,14 @@ function getSessionData(req: Request): AuthSessionData {
 
 export const pollsRouter = Router();
 const userRepository = getUserRepository();
+
+const voteLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 40,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many vote attempts. Please slow down." },
+});
 
 pollsRouter.get("/bootstrap", async (req, res) => {
   const sessionData = getSessionData(req);
@@ -113,5 +122,5 @@ async function handleVote(req: Request, res: Response) {
 
 pollsRouter.get("/polls/random", handleRandomPolls);
 pollsRouter.get("/v2/polls/random", handleRandomPolls);
-pollsRouter.post("/polls/:pollId/vote", handleVote);
-pollsRouter.post("/v2/polls/:pollId/vote", handleVote);
+pollsRouter.post("/polls/:pollId/vote", voteLimiter, handleVote);
+pollsRouter.post("/v2/polls/:pollId/vote", voteLimiter, handleVote);

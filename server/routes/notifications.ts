@@ -71,7 +71,13 @@ async function sendOneSignalPush(params: z.infer<typeof communityPushSchema>) {
   return { ok: true as const };
 }
 
+
 notificationsRouter.post("/community-push", async (req, res) => {
+  const userId = getUserId(req);
+  if (!userId || !(await isUserAdmin(userId))) {
+    return res.status(403).json({ error: "Admin permissions required." });
+  }
+
   const parsed = communityPushSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: "Invalid push payload." });

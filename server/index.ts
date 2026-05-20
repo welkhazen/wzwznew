@@ -13,6 +13,7 @@ import { notificationsRouter } from "./routes/notifications";
 import { pollsRouter } from "./routes/polls";
 import { usersRouter } from "./routes/users";
 import { runStreakResetAtUtc, sendStreakAtRiskEmailsUtc } from "./lib/streakCron";
+import { requireTrustedOrigin } from "./middleware/requireTrustedOrigin";
 
 const app = express();
 const isProduction = env.NODE_ENV === "production";
@@ -55,6 +56,7 @@ app.use(
 
 app.use(express.json({ limit: "16kb" }));
 app.use(cookieParser());
+app.use("/api", requireTrustedOrigin);
 
 app.use(
   session({

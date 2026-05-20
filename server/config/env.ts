@@ -58,4 +58,21 @@ if (!parsedEnv.success) {
   process.exit(1);
 }
 
+if (parsedEnv.data.NODE_ENV === "production") {
+  if (parsedEnv.data.SESSION_SECRET === "dev-session-secret-change-me-32chars") {
+    console.error("[startup] SESSION_SECRET must be set to a unique value in production.");
+    process.exit(1);
+  }
+
+  if (parsedEnv.data.PHONE_HMAC_KEY === "dev-phone-hmac-key-change-me-32chars") {
+    console.error("[startup] PHONE_HMAC_KEY must be set to a unique value in production.");
+    process.exit(1);
+  }
+
+  if (parsedEnv.data.AUTH_PASSWORD_PEPPER === "dev-pepper-16chars") {
+    console.error("[startup] AUTH_PASSWORD_PEPPER must be set to a unique value in production.");
+    process.exit(1);
+  }
+}
+
 export const env = parsedEnv.data;
