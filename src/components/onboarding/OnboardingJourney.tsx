@@ -49,7 +49,6 @@ const STEP_LABELS: Record<OnboardingStep, string> = {
 };
 const FREE_ONBOARDING_AVATAR_COUNT = 10;
 const AVATAR_PAGE_SIZE = 10;
-const AGE_GATE_STORAGE_PREFIX = "raw.age-gate.verified";
 
 function fallbackAvatarCatalog(): AvatarCatalogItem[] {
   return AVATARS.filter(Boolean).map((avatar, index) => ({

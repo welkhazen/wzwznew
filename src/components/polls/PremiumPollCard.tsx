@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { HoverGradientVoteButton } from "@/components/polls/HoverGradientVoteButton";
 import { useTheme } from "@/providers/useTheme";
@@ -61,6 +61,18 @@ export function PremiumPollCard({
   const secondaryPercent = getPercent(secondaryVotes, totalVotes, secondarySelected);
 
   const voteLocked = useRef(false);
+
+  const [shareExpanded, setShareExpanded] = useState(false);
+
+  const sharePayload = useMemo(() => {
+    const url = typeof window !== "undefined" ? window.location.href : "";
+    const text = `${question} — vote on raW`;
+    return {
+      whatsapp: `https://wa.me/?text=${encodeURIComponent(`${text} ${url}`.trim())}`,
+      facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+      instagram: `https://www.instagram.com/`,
+    };
+  }, [question]);
 
   useEffect(() => {
     voteLocked.current = false;
@@ -129,7 +141,24 @@ export function PremiumPollCard({
             </div>
 
             {showHint && !isAnswered && (
-              <p className="mt-4 text-center text-[10px] uppercase tracking-[0.2em]" style={{ color: "rgb(var(--raw-accent) / 0.75)" }}>tap to vote</p>
+              <div className="mt-4 flex flex-col items-center">
+                <p className="text-center text-[10px] uppercase tracking-[0.2em]" style={{ color: "rgb(var(--raw-accent) / 0.75)" }}>tap to vote</p>
+                <button
+                  type="button"
+                  onClick={() => setShareExpanded((open) => !open)}
+                  className="mt-2 rounded-full border border-raw-gold/40 bg-raw-gold/10 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-raw-gold transition hover:bg-raw-gold/15"
+                  aria-expanded={shareExpanded}
+                >
+                  Share
+                </button>
+                <div
+                  className={`mt-2 flex items-center gap-1.5 overflow-hidden transition-all duration-300 ${shareExpanded ? "max-h-10 opacity-100" : "max-h-0 opacity-0"}`}
+                >
+                  <a href={sharePayload.whatsapp} target="_blank" rel="noreferrer" className="rounded-full border border-raw-border/45 px-2 py-1 text-[9px] uppercase tracking-[0.12em] text-raw-silver/80 transition hover:border-raw-gold/45 hover:text-raw-gold">WhatsApp</a>
+                  <a href={sharePayload.instagram} target="_blank" rel="noreferrer" className="rounded-full border border-raw-border/45 px-2 py-1 text-[9px] uppercase tracking-[0.12em] text-raw-silver/80 transition hover:border-raw-gold/45 hover:text-raw-gold">Instagram</a>
+                  <a href={sharePayload.facebook} target="_blank" rel="noreferrer" className="rounded-full border border-raw-border/45 px-2 py-1 text-[9px] uppercase tracking-[0.12em] text-raw-silver/80 transition hover:border-raw-gold/45 hover:text-raw-gold">Facebook</a>
+                </div>
+              </div>
             )}
 
             <h2 className={`mt-4 flex min-h-[5.5rem] items-center text-center font-display text-[clamp(1rem,4.6vw,1.46rem)] leading-[1.4] [text-wrap:balance] sm:mt-5 sm:min-h-[7.75rem] ${isLight ? "text-[#2a2000]" : "text-[#dedede]"}`}>
