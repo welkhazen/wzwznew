@@ -1,6 +1,6 @@
 import { toUserId, type CommunityRequestRecord } from "@/lib/adminData";
-import LNTLogo from "@/assets/LNT.png";
-import SYTLogo from "@/assets/logospeak.png";
+import LNTLogo from "@/assets/LNT.webp";
+import SYTLogo from "@/assets/logospeak.webp";
 import type {
   JoinCommunityInput,
   PersistedCommunityRecord,

@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import logoSpeak from "@/assets/logospeak.png";
-import tokensImage from "@/assets/tokens.png";
-import avatarsCollage from "@/assets/Extra avatars they can pick (5).png";
-import warBadges from "@/assets/war-level-badges.png";
-import chromeAvatar from "@/assets/01_chrome.png";
-import cyborgPurple from "@/assets/02_cyborg_purple.png";
-import steampunkAvatar from "@/assets/03_steampunk.png";
-import solarAvatar from "@/assets/04_solar.png";
+import logoSpeak from "@/assets/logospeak.webp";
+import tokensImage from "@/assets/tokens.webp";
+import avatarsCollage from "@/assets/Extra avatars they can pick (5).webp";
+import warBadges from "@/assets/war-level-badges.webp";
+import chromeAvatar from "@/assets/01_chrome.webp";
+import cyborgPurple from "@/assets/02_cyborg_purple.webp";
+import steampunkAvatar from "@/assets/03_steampunk.webp";
+import solarAvatar from "@/assets/04_solar.webp";
 
 type SlideTheme = "gold" | "violet" | "teal";
 
