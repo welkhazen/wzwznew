@@ -300,6 +300,7 @@ export default function Dashboard({
         onLogout={onLogout}
         communityTitle={activeCommunityTitle}
         onBack={handleBackToCommunities}
+        communities={dashboardCommunities.length > 0 ? dashboardCommunities : undefined}
         xp={progress?.xp ?? 0}
         level={progress?.level ?? 1}
       />

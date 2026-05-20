@@ -45,6 +45,7 @@ import {
   COMMUNITY_COVER_IMAGES,
   COMMUNITY_COVER_VIDEOS,
 } from "@/lib/communityConstants";
+import { sendCommunityPushNotification } from "@/lib/communityPushNotifications";
 import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
 import {
   loadCommunityAccess,
@@ -453,6 +454,14 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       }
 
       try {
+        const mentionRecipientIds = selectedCommunity.members
+          .filter((member) =>
+            member.userId !== user.id &&
+            member.notificationsEnabled &&
+            new RegExp(`(^|\\s)@${member.username}\\b`, "i").test(trimmedMessage)
+          )
+          .map((member) => member.userId);
+
         if (!isJoined) {
           await joinCommunitySupabase(selectedCommunity.id, user.id, user.username);
           lastTouchedCommunityRef.current = `${selectedCommunity.id}:${user.id}`;
@@ -466,8 +475,36 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         await reloadChatData();
         setMessageDraft("");
         setMentionQuery(null);
+        void sendCommunityPushNotification({
+          recipientUserIds: mentionRecipientIds,
+          title: `@${user.username} mentioned you`,
+          body: `${selectedCommunity.title}: ${trimmedMessage}`,
+          url: `${window.location.origin}/dashboard/communities/${selectedCommunity.id}`,
+        });
       } catch {
         toast({ title: "Failed to send message", description: "Please try again." });
+      }
+    };
+
+    const handleLikeMessage = async (message: CommunityChatMessageRecord) => {
+      const likedBy = message.likedBy ?? [];
+      const isAddingLike = !likedBy.includes(user.id);
+      try {
+        await likeMessage(message.id, user.id);
+        await reloadChatData();
+        if (isAddingLike && message.senderId !== user.id && message.senderName !== user.username) {
+          const recipient = selectedCommunity?.members.find((member) => member.userId === message.senderId);
+          if (recipient?.notificationsEnabled) {
+            void sendCommunityPushNotification({
+              recipientUserIds: [message.senderId],
+              title: `${user.username} liked your message`,
+              body: `${selectedCommunity?.title ?? "Community"}: ${message.text}`,
+              url: `${window.location.origin}/dashboard/communities/${message.communityId}`,
+            });
+          }
+        }
+      } catch {
+        toast({ title: "Failed to update like", description: "Please try again." });
       }
     };
 
@@ -1038,7 +1075,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                         </p>
                         {!message.deletedAt && (
                           <button
-                            onClick={() => { likeMessage(message.id, user.id).then(() => reloadChatData()).catch(() => {}); }}
+                            onClick={() => { void handleLikeMessage(message); }}
                             className={`absolute right-2.5 top-1/2 -translate-y-1/2 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] transition-all ${alreadyLiked ? "border-raw-gold/45 bg-raw-gold/10 text-raw-gold opacity-100" : "border-raw-border/20 text-raw-silver/40 opacity-0 group-hover/msg:opacity-100"}`}
                           >
                             <Heart className={`h-2.5 w-2.5 ${alreadyLiked ? "fill-current" : ""}`} />

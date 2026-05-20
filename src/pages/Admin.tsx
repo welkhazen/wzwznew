@@ -33,6 +33,7 @@ import {
 import { supabase } from "@/lib/supabase";
 import { awardXP } from "@/lib/userProgress";
 import { apiFetch } from "@/lib/http";
+import { sendCommunityPushNotification } from "@/lib/communityPushNotifications";
 import { WheelOfFortune, type WheelPrize } from "@/components/wheel/WheelOfFortune";
 import {
   createAdminPoll,
@@ -616,6 +617,12 @@ export default function Admin() {
       if (status === "approved") {
         const approvedRequest = { ...target, status, reviewedAt: new Date().toISOString(), reviewedBy: user.username };
         await createCommunityFromRequest(approvedRequest);
+        void sendCommunityPushNotification({
+          recipientUserIds: users.map((entry) => entry.id).filter((id) => id !== user.id),
+          title: "New community created",
+          body: `${target.communityName} is now live on raW.`,
+          url: `${window.location.origin}/dashboard/communities/request-${target.id}`,
+        });
         track("admin_action_performed", { action: "approve_community", resource_id: requestId });
       } else {
         track("admin_action_performed", { action: "reject_community", resource_id: requestId });

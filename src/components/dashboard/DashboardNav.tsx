@@ -66,6 +66,22 @@ interface DashboardNavProps {
 
 const ISSUE_TYPE_OPTIONS = ["Harmful content", "Bug or broken screen", "Account or billing", "Other"];
 const MAX_SCREENSHOT_SIZE = 2 * 1024 * 1024;
+const DELIVERED_NOTIFICATIONS_PREFIX = "raw.delivered-notifications";
+
+type DashboardNotification = {
+  id: string;
+  type: "mention" | "like" | "community";
+  title: string;
+  communityTitle: string;
+  senderName?: string;
+  text: string;
+  createdAt: string;
+  likeCount?: number;
+};
+
+function deliveredNotificationsKey(userId: string) {
+  return `${DELIVERED_NOTIFICATIONS_PREFIX}.${userId}`;
+}
 
 export function DashboardNav({ userId, username, avatarLevel, showAdminLink = false, onAddTestXP, onProfileClick, onBillingClick, onLogout, communityTitle, onBack, communities: propCommunities, xp = 0, level = 1 }: DashboardNavProps) {
   const { mode, accent, accentPresets, setMode, setAccent } = useTheme();
@@ -80,22 +96,82 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
   const [screenshotDataUrl, setScreenshotDataUrl] = useState("");
   const notifRef = useRef<HTMLDivElement>(null);
 
-  const notifications = useMemo(() => {
+  const notifications = useMemo<DashboardNotification[]>(() => {
     const communities = propCommunities ?? readCommunityChats();
     const tag = `@${username}`.toLowerCase();
-    const results: { type: "mention" | "like"; communityTitle: string; senderName: string; text: string; createdAt: string; likeCount?: number }[] = [];
+    const results: DashboardNotification[] = [];
     for (const community of communities) {
+      if (community.createdBy && community.createdBy !== userId) {
+        results.push({
+          id: `community:${community.id}:${community.createdAt}`,
+          type: "community",
+          title: "New community created",
+          communityTitle: community.title,
+          text: community.description,
+          createdAt: community.createdAt,
+        });
+      }
+
       for (const msg of community.messages) {
         if (msg.text.toLowerCase().includes(tag) && msg.senderName !== username) {
-          results.push({ type: "mention", communityTitle: community.title, senderName: msg.senderName, text: msg.text, createdAt: msg.createdAt });
+          results.push({
+            id: `mention:${msg.id}:${userId}`,
+            type: "mention",
+            title: `@${msg.senderName} mentioned you`,
+            communityTitle: community.title,
+            senderName: msg.senderName,
+            text: msg.text,
+            createdAt: msg.createdAt,
+          });
         }
-        if ((msg.senderId === username || msg.senderName === username) && (msg.likedBy?.length ?? 0) > 0) {
-          results.push({ type: "like", communityTitle: community.title, senderName: msg.senderName, text: msg.text, createdAt: msg.createdAt, likeCount: msg.likedBy?.length });
+        if ((msg.senderId === userId || msg.senderName === username) && (msg.likedBy?.length ?? 0) > 0) {
+          const likeCount = msg.likedBy?.length ?? 0;
+          results.push({
+            id: `like:${msg.id}:${likeCount}`,
+            type: "like",
+            title: `${likeCount} like${likeCount > 1 ? "s" : ""} on your post`,
+            communityTitle: community.title,
+            senderName: msg.senderName,
+            text: msg.text,
+            createdAt: msg.createdAt,
+            likeCount,
+          });
         }
       }
     }
     return results.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  }, [username, propCommunities]);
+  }, [userId, username, propCommunities]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !("Notification" in window) || Notification.permission !== "granted") {
+      return;
+    }
+
+    const key = deliveredNotificationsKey(userId);
+    const stored = window.localStorage.getItem(key);
+    const deliveredIds = new Set<string>(stored ? JSON.parse(stored) as string[] : []);
+
+    if (!stored) {
+      window.localStorage.setItem(key, JSON.stringify(notifications.map((notification) => notification.id)));
+      return;
+    }
+
+    const unseen = notifications.filter((notification) => !deliveredIds.has(notification.id));
+    for (const notification of unseen.slice(0, 4)) {
+      const browserNotification = new Notification(notification.title, {
+        body: `${notification.communityTitle}: ${notification.text}`,
+        icon: "/raw-logo-192.png",
+        tag: notification.id,
+      });
+      browserNotification.onclick = () => {
+        window.focus();
+      };
+    }
+
+    if (unseen.length > 0) {
+      window.localStorage.setItem(key, JSON.stringify(notifications.map((notification) => notification.id)));
+    }
+  }, [notifications, userId]);
 
   useEffect(() => {
     if (!notifOpen) return;
@@ -282,7 +358,7 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
                     <div key={i} className={cn("border-b px-4 py-3 last:border-0", isEffectiveLight ? "border-slate-100" : "border-raw-border/15")}>
                       <div className="flex items-center gap-2">
                         <span className={`text-[9px] uppercase tracking-wider font-semibold rounded-full px-2 py-0.5 ${n.type === "like" ? "bg-raw-gold/15 text-raw-gold" : "bg-raw-silver/10 text-raw-silver/60"}`}>
-                          {n.type === "like" ? `♥ ${n.likeCount} like${(n.likeCount ?? 0) > 1 ? "s" : ""}` : "@ mention"}
+                          {n.type === "like" ? `♥ ${n.likeCount} like${(n.likeCount ?? 0) > 1 ? "s" : ""}` : n.type === "community" ? "New community" : "@ mention"}
                         </span>
                         <p className={cn("text-[10px]", isEffectiveLight ? "text-slate-500" : "text-raw-silver/40")}>{n.communityTitle}</p>
                       </div>
