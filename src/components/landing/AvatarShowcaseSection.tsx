@@ -13,7 +13,7 @@ import { useTheme } from "@/providers/useTheme";
 import { RawRevealButton } from "../../../components/raw-reveal-button";
 
 const VISIBLE_COUNT = 4;
-const DESKTOP_COUNT = 8;
+const DESKTOP_COUNT = 10;
 const MOBILE_PHONE_SCALE = 0.5;
 const CHOOSER_AVATARS: readonly AvatarCatalogItem[] = [
   { id: "shadow", level: 1, name: "Shadow", price: "0", bg: "#1a1a1a", figure: "#c8c8c8", ring: "#c8c8c8", glow: "none", isActive: true, rarity: "common" },
@@ -27,7 +27,17 @@ const CHOOSER_AVATARS: readonly AvatarCatalogItem[] = [
   { id: "black", level: 9, name: "Black", price: "0", imageSrc: "/avatars/avatar-9.svg", bg: "#1f0a0a", figure: "#dc2626", ring: "#dc2626", glow: "#dc262680", isActive: true, rarity: "common" },
   { id: "blue", level: 10, name: "Blue", price: "0", imageSrc: "/avatars/avatar-10.svg", bg: "#1f1705", figure: "#facc15", ring: "#facc15", glow: "#facc1590", isActive: true, rarity: "common" },
 ];
-const LANDING_AVATARS: readonly AvatarCatalogItem[] = CHOOSER_AVATARS;
+const REVEAL_AVATARS: readonly AvatarCatalogItem[] = [
+  { id: "reveal-1", level: 11, name: "Silver Void", price: "0", imageSrc: "/avatars/1.png", bg: "#111827", figure: "#cbd5e1", ring: "#cbd5e1", glow: "#cbd5e180", isActive: true, rarity: "common" },
+  { id: "reveal-2", level: 12, name: "Neon Lynx", price: "0", imageSrc: "/avatars/2.png", bg: "#170f2e", figure: "#a855f7", ring: "#c084fc", glow: "#a855f780", isActive: true, rarity: "common" },
+  { id: "reveal-3", level: 13, name: "Blue Signal", price: "0", imageSrc: "/avatars/3.png", bg: "#06131f", figure: "#22d3ee", ring: "#22d3ee", glow: "#22d3ee80", isActive: true, rarity: "common" },
+  { id: "reveal-4", level: 14, name: "Violet Mask", price: "0", imageSrc: "/avatars/4.png", bg: "#1a1028", figure: "#d946ef", ring: "#d946ef", glow: "#d946ef80", isActive: true, rarity: "common" },
+  { id: "reveal-5", level: 15, name: "Horned Iron", price: "0", imageSrc: "/avatars/5.png", bg: "#1f0a05", figure: "#fb923c", ring: "#fb923c", glow: "#fb923c80", isActive: true, rarity: "common" },
+  { id: "reveal-6", level: 16, name: "Crimson Muse", price: "0", imageSrc: "/avatars/6.png", bg: "#2a0b0b", figure: "#f97316", ring: "#f97316", glow: "#f9731680", isActive: true, rarity: "common" },
+  { id: "reveal-7", level: 17, name: "Solar Flame", price: "0", imageSrc: "/avatars/7.png", bg: "#241005", figure: "#facc15", ring: "#facc15", glow: "#facc1590", isActive: true, rarity: "common" },
+  { id: "reveal-8", level: 18, name: "Pink Circuit", price: "0", imageSrc: "/avatars/8.png", bg: "#2a0b1c", figure: "#fb7185", ring: "#fb7185", glow: "#fb718580", isActive: true, rarity: "common" },
+];
+const LANDING_AVATARS: readonly AvatarCatalogItem[] = [...CHOOSER_AVATARS, ...REVEAL_AVATARS];
 
 export function AvatarShowcaseSection() {
   const sectionRef = useTrackSectionView("avatar");
@@ -63,7 +73,7 @@ export function AvatarShowcaseSection() {
 
   const chooserAvatars = CHOOSER_AVATARS;
   const chooserTotal = chooserAvatars.length;
-  const expandedAvatarSource = CHOOSER_AVATARS;
+  const expandedAvatarSource = REVEAL_AVATARS;
   const expandedAvatarTotal = expandedAvatarSource.length;
   const visibleExtendedAvatars = expandedAvatarSource
     .slice(0, expandedVisibleCount)
@@ -82,6 +92,27 @@ export function AvatarShowcaseSection() {
 
   function handleToggleExpandGrid() {
     setShowExpandGrid((open) => !open);
+  }
+
+  function getRevealAvatarImageStyle(avatarId?: string): React.CSSProperties {
+    switch (avatarId) {
+      case "reveal-1":
+        return { transform: "scale(1.42)", objectPosition: "center 50%" };
+      case "reveal-2":
+        return { transform: "scale(2.6)", objectPosition: "center 58%" };
+      case "reveal-3":
+        return { transform: "scale(2.55)", objectPosition: "center 58%" };
+      case "reveal-4":
+        return { transform: "scale(2.55)", objectPosition: "center 58%" };
+      case "reveal-5":
+        return { transform: "scale(2.55)", objectPosition: "center 58%" };
+      case "reveal-7":
+        return { transform: "scale(2.55)", objectPosition: "center 58%" };
+      case "reveal-8":
+        return { transform: "scale(2.55)", objectPosition: "center 58%" };
+      default:
+        return { transform: "scale(1)", objectPosition: "center" };
+    }
   }
 
   function prev() {
@@ -371,7 +402,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -24 }}
                 transition={{ duration: 0.22 }}
-                className="grid flex-1 grid-cols-2 grid-rows-4 grid-flow-col place-items-center gap-x-4 gap-y-2"
+                className="grid flex-1 grid-cols-2 grid-rows-5 grid-flow-col place-items-center gap-x-4 gap-y-2"
               >
                 {desktopAvatars.map(({ avatar, index }) => (
                   <AvatarButton key={`${desktopStart}-${index}`} index={index} avatar={avatar} />
@@ -411,7 +442,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
                 </p>
                 {visibleExtendedAvatars.length > 0 ? (
                   <>
-                    <div className="grid grid-cols-5 place-items-start justify-items-center gap-x-2 gap-y-4 sm:gap-x-5 sm:gap-y-5">
+                    <div className="grid grid-cols-4 place-items-start justify-items-center gap-x-3 gap-y-4 sm:gap-x-5 sm:gap-y-5">
                       {visibleExtendedAvatars.map(({ avatar, themeIndex }) => (
                         <button
                           key={avatar.id ?? themeIndex}
@@ -441,7 +472,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
                                 decoding="async"
                                 draggable={false}
                                 className="h-full w-full object-cover"
-                                style={{ objectPosition: "center 35%" }}
+                                style={getRevealAvatarImageStyle(avatar.id)}
                               />
                             ) : (
                               <AvatarFigure avatarIndex={themeIndex} size="sm" selected={avatarIndex === themeIndex} />
