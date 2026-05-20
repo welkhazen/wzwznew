@@ -14,7 +14,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "cap:sync": "npm run build && npx cap sync"
+    "cap:sync": "npm run build && npx cap sync",
+    "test:load:local": "node scripts/load-test.js"
   },
   "dependencies": {
     "@capacitor/cli": "^8.3.1",
