@@ -265,6 +265,11 @@ const [pollStats, setPollStats] = useState<Record<string, Record<string, number>
 
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    setIsAgeVerified(window.localStorage.getItem(`${AGE_GATE_STORAGE_PREFIX}.${user.id}`) === "1");
+  }, [user.id]);
+
+  useEffect(() => {
     const cached = readFullAvatarCatalogLocal();
     if (cached.length > 0) {
       setOnboardingAvatars(cached);

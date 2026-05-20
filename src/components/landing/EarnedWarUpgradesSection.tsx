@@ -1,4 +1,4 @@
-import warLevelBadgesImage from "@/assets/war-level-badges.png";
+import warLevelBadgesImage from "@/assets/war-level-badges.webp";
 
 export function EarnedWarUpgradesSection() {
   return (

@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import LNTLogo from "@/assets/LNT.png";
-import SYTLogo from "@/assets/logospeak.png";
-import IIJMLogo from "@/assets/itisjustme.png";
+import LNTLogo from "@/assets/LNT.webp";
+import SYTLogo from "@/assets/logospeak.webp";
+import IIJMLogo from "@/assets/itisjustme.webp";
 import { AlertTriangle, ArrowLeft, Bell, BellOff, Heart, ImagePlus, Lock, Plus, Search, Send, Users, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";

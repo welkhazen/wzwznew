@@ -25,7 +25,7 @@ export function AvatarPhoneHomeScreen({ avatarIndex, compact = false, previewAva
       loading="eager"
       decoding="async"
       draggable={false}
-      className={`relative h-full w-full animate-[iconPop_420ms_ease-out] ${compact ? "object-contain p-2" : "object-cover"}`}
+      className={`relative h-full w-full animate-[iconPop_420ms_ease-out] object-contain ${compact ? "p-1.5" : "p-2"}`}
       style={{ objectPosition: "center 35%" }}
     />
   ) : (

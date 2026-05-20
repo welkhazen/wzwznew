@@ -1,13 +1,13 @@
-import lvl1 from "@/assets/lvl-1.png";
-import lvl2 from "@/assets/lvl-2.png";
-import lvl3 from "@/assets/lvl-3.png";
-import lvl4 from "@/assets/lvl-4.png";
-import lvl5 from "@/assets/lvl-5.png";
-import lvl6 from "@/assets/lvl-6.png";
-import lvl7 from "@/assets/lvl-7.png";
-import lvl8 from "@/assets/lvl-8.png";
-import lvl9 from "@/assets/lvl-9.png";
-import lvl10 from "@/assets/lvl-10.png";
+import lvl1 from "@/assets/lvl-1.webp";
+import lvl2 from "@/assets/lvl-2.webp";
+import lvl3 from "@/assets/lvl-3.webp";
+import lvl4 from "@/assets/lvl-4.webp";
+import lvl5 from "@/assets/lvl-5.webp";
+import lvl6 from "@/assets/lvl-6.webp";
+import lvl7 from "@/assets/lvl-7.webp";
+import lvl8 from "@/assets/lvl-8.webp";
+import lvl9 from "@/assets/lvl-9.webp";
+import lvl10 from "@/assets/lvl-10.webp";
 import { cn } from "@/lib/utils";
 import { xpProgressInLevel } from "@/lib/userProgress";
 
