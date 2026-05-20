@@ -274,15 +274,15 @@ export function DashboardHome({
         </div>
       </section>
 
-      {/* Communities for You */}
+      {/* Recommended Rooms */}
       <section className={`space-y-5 border-t pt-10 ${isLight ? "border-slate-200" : "border-white/5"}`}>
         <div className="flex justify-between items-end">
           <div className="space-y-0.5">
             <div className="flex items-center gap-2">
               <Users className="size-4 text-raw-gold" />
-              <h2 className={`text-xl font-bold tracking-tight ${isLight ? "text-slate-950" : "text-white"}`}>Communities for You</h2>
+              <h2 className={`text-xl font-bold tracking-tight ${isLight ? "text-slate-950" : "text-white"}`}>Recommended Rooms</h2>
             </div>
-            <p className={`text-[13px] ${isLight ? "text-slate-500" : "text-white/40"}`}>Fresh rooms being shaped for the next drop.</p>
+            <p className={`text-[13px] ${isLight ? "text-slate-500" : "text-white/40"}`}>Recommended Rooms are specifically selected for you based on our raW matchmaker engine. How it works explained in FAQ.</p>
           </div>
         </div>
         <UpcomingCommunitiesPreview isLight={isLight} />
