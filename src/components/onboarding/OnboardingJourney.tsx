@@ -49,6 +49,7 @@ const STEP_LABELS: Record<OnboardingStep, string> = {
 };
 const FREE_ONBOARDING_AVATAR_COUNT = 10;
 const AVATAR_PAGE_SIZE = 10;
+const AGE_GATE_STORAGE_PREFIX = "raw.age-gate.verified";
 
 function fallbackAvatarCatalog(): AvatarCatalogItem[] {
   return AVATARS.filter(Boolean).map((avatar, index) => ({
@@ -263,6 +264,11 @@ const [pollStats, setPollStats] = useState<Record<string, Record<string, number>
   const previewAvatarPageCount = Math.max(1, Math.ceil(previewAvatarChoices.length / AVATAR_PAGE_SIZE));
   const visiblePreviewAvatarChoices = previewAvatarChoices.slice(avatarPage * AVATAR_PAGE_SIZE, (avatarPage + 1) * AVATAR_PAGE_SIZE);
 
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setIsAgeVerified(window.localStorage.getItem(`${AGE_GATE_STORAGE_PREFIX}.${user.id}`) === "1");
+  }, [user.id]);
 
   useEffect(() => {
     const cached = readFullAvatarCatalogLocal();

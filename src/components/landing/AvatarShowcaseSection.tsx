@@ -418,9 +418,9 @@ Just like in real life, every person is born with a name, an appearance, and an 
         <RawRevealButton
           size="default"
           state={showExpandGrid ? "hover" : "scroll"}
-          label={showExpandGrid ? "HIDE" : "CLICK TO REVEAL MORE"}
+          label={showExpandGrid ? "HIDE" : "EXPLORE MORE"}
           onClick={handleToggleExpandGrid}
-          className="animate-[cta-breath_3.4s_ease-in-out_infinite]"
+          className="animate-[cta-breath_3.4s_ease-in-out_infinite] !text-white"
         />
 
         <AnimatePresence>
