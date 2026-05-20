@@ -24,7 +24,7 @@ export function NotificationConsentPrompt({ userId }: NotificationConsentPromptP
   const { dismiss, platform, requestPermission, shouldPrompt } = useNotificationConsent(userId);
 
   return (
-    <Dialog open={shouldPrompt}>
+    <Dialog open={shouldPrompt} onOpenChange={(open) => { if (!open) void dismiss(); }}>
       <DialogContent className="border-raw-border bg-raw-surface text-raw-text">
         <DialogHeader>
           <div className="mb-2 flex h-10 w-10 items-center justify-center border border-raw-gold/30 bg-raw-gold/10 text-raw-gold">

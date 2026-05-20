@@ -57,11 +57,17 @@ async function saveConsent(
 export function useNotificationConsent(userId?: string) {
   const platform = useMemo(() => detectPlatform(), []);
   const [status, setStatus] = useState<ConsentStatus | null>(null);
+  const [hasLoadedStoredConsent, setHasLoadedStoredConsent] = useState(false);
 
   useEffect(() => {
-    if (!userId) return;
+    setHasLoadedStoredConsent(false);
+    if (!userId) {
+      setStatus(null);
+      return;
+    }
     const stored = window.localStorage.getItem(storageKey(userId, platform)) as ConsentStatus | null;
-    if (stored) setStatus(stored);
+    setStatus(stored);
+    setHasLoadedStoredConsent(true);
   }, [platform, userId]);
 
   const persist = useCallback(
@@ -104,6 +110,7 @@ export function useNotificationConsent(userId?: string) {
     if (!userId) return;
 
     if (platform === "apple-ios" && hasAppleBridge()) {
+      await persist("dismissed", "apple-native");
       window.webkit?.messageHandlers?.rawNotifications?.postMessage({ userId });
       track("push_prompt_shown", { provider: "apple-native" });
       return;
@@ -139,7 +146,7 @@ export function useNotificationConsent(userId?: string) {
     dismiss,
     platform,
     requestPermission,
-    shouldPrompt: Boolean(userId && !status),
+    shouldPrompt: Boolean(userId && hasLoadedStoredConsent && !status),
     status,
   };
 }

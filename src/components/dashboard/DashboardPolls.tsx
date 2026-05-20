@@ -6,12 +6,16 @@ import { addPollComment, fetchPollComments } from "@/utils/supabasePolls";
 import { isNoPollOption, isYesPollOption } from "@/lib/polls/normalizePollOptionText";
 import {
   BarChart3,
+  Check,
   ChevronLeft,
   ChevronRight,
   Coins,
-  Lock,
+  Copy,
+  Facebook,
+  Instagram,
   MessageCircle,
   SendHorizontal,
+  Share2,
   Users,
 } from "lucide-react";
 
@@ -102,6 +106,11 @@ function PollStat({
   );
 }
 
+function optionPercent(optionVotes: number, totalVotes: number): number {
+  if (totalVotes <= 0) return 0;
+  return Math.round((optionVotes / totalVotes) * 100);
+}
+
 function readStoredAnswerHistory(storageKey: string): Record<string, string> {
   try {
     const raw = window.localStorage.getItem(storageKey);
@@ -110,6 +119,17 @@ function readStoredAnswerHistory(storageKey: string): Record<string, string> {
   } catch {
     return {};
   }
+}
+
+function buildPollShareText(poll: Poll): string {
+  return `Vote anonymously on raW: ${poll.question}`;
+}
+
+function buildPollShareUrl(pollId: string): string {
+  const url = new URL(window.location.href);
+  url.pathname = "/dashboard";
+  url.searchParams.set("poll", pollId);
+  return url.toString();
 }
 
 export function DashboardPolls({
@@ -136,6 +156,7 @@ export function DashboardPolls({
   const [currentPollIndex, setCurrentPollIndex] = useState(0);
   const [hasSeenVoteHint, setHasSeenVoteHint] = useState(false);
   const [lockedPollId, setLockedPollId] = useState<string | null>(null);
+  const [shareCopied, setShareCopied] = useState(false);
 
   const commentsEndRef = useRef<HTMLDivElement>(null);
 
@@ -183,6 +204,10 @@ export function DashboardPolls({
   const answeredPolls = useMemo(
     () => polls.filter((p) => answerHistory[p.id]),
     [polls, answerHistory]
+  );
+  const answeredPollHistory = useMemo(
+    () => answeredPolls.slice().reverse(),
+    [answeredPolls]
   );
 
   // Once the daily limit is hit, show today's answered polls (capped at dailyPollLimit).
@@ -306,6 +331,37 @@ export function DashboardPolls({
     handleCommentAdd();
   };
 
+  const copyShareLink = async (poll: Poll) => {
+    const text = `${buildPollShareText(poll)}\n${buildPollShareUrl(poll.id)}`;
+    await navigator.clipboard?.writeText(text);
+    setShareCopied(true);
+    window.setTimeout(() => setShareCopied(false), 1600);
+  };
+
+  const handleShare = async (poll: Poll) => {
+    const shareData = {
+      title: "raW poll",
+      text: buildPollShareText(poll),
+      url: buildPollShareUrl(poll.id),
+    };
+
+    if (navigator.share) {
+      await navigator.share(shareData).catch(() => undefined);
+      return;
+    }
+
+    await copyShareLink(poll);
+  };
+
+  const handleFacebookShare = (poll: Poll) => {
+    const url = encodeURIComponent(buildPollShareUrl(poll.id));
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, "_blank", "noopener,noreferrer");
+  };
+
+  const handleInstagramShare = async (poll: Poll) => {
+    await handleShare(poll);
+  };
+
 
   if (!currentPoll) {
     return (
@@ -408,6 +464,40 @@ export function DashboardPolls({
             />
           )}
 
+          <div className="mt-4 grid grid-cols-4 gap-2">
+            <button
+              type="button"
+              onClick={() => handleShare(currentPoll)}
+              className="col-span-2 inline-flex items-center justify-center gap-2 border border-raw-gold/45 bg-raw-gold/10 px-3 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-raw-gold transition hover:bg-raw-gold/15"
+            >
+              <Share2 className="size-3.5" />
+              Share
+            </button>
+            <button
+              type="button"
+              onClick={() => handleFacebookShare(currentPoll)}
+              className="inline-flex items-center justify-center border border-raw-border/35 bg-raw-surface/25 px-3 py-2.5 text-raw-silver/70 transition hover:border-raw-gold/45 hover:text-raw-gold"
+              aria-label="Share on Facebook"
+            >
+              <Facebook className="size-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => handleInstagramShare(currentPoll)}
+              className="inline-flex items-center justify-center border border-raw-border/35 bg-raw-surface/25 px-3 py-2.5 text-raw-silver/70 transition hover:border-raw-gold/45 hover:text-raw-gold"
+              aria-label="Share to Instagram"
+            >
+              <Instagram className="size-4" />
+            </button>
+          </div>
+
+          {shareCopied && (
+            <p className="mt-2 flex items-center justify-center gap-1.5 text-[11px] text-raw-gold/75">
+              <Check className="size-3" />
+              Copied share text
+            </p>
+          )}
+
           <button
             onClick={() => { setLockedPollId(null); setCurrentPollIndex((previous) => Math.min(displayPolls.length - 1, previous + 1)); }}
             disabled={currentPollIndex === displayPolls.length - 1}
@@ -478,6 +568,70 @@ export function DashboardPolls({
                 <SendHorizontal className="size-3.5" />
               </button>
             </form>
+          </div>
+        )}
+      </section>
+
+      <section className="border border-raw-border/30 bg-raw-black/35 p-4 sm:p-5">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.18em] text-raw-gold/65">Answer history</p>
+            <h2 className="mt-1 font-display text-base tracking-wide text-raw-text">Polls you answered</h2>
+          </div>
+          <span className="shrink-0 border border-raw-gold/35 bg-raw-gold/10 px-3 py-1 text-[11px] text-raw-gold/80">
+            {answeredPollHistory.length}
+          </span>
+        </div>
+
+        {answeredPollHistory.length === 0 ? (
+          <p className="mt-4 text-sm text-raw-silver/45">
+            Answer a poll and it will appear here.
+          </p>
+        ) : (
+          <div className="mt-4 grid gap-3">
+            {answeredPollHistory.map((poll) => {
+              const selectedId = answerHistory[poll.id];
+              const selectedOption = poll.options.find((option) => option.id === selectedId);
+              const totalVotes = poll.options.reduce((sum, option) => sum + option.votes, 0);
+              const percent = selectedOption ? optionPercent(selectedOption.votes, totalVotes) : 0;
+
+              return (
+                <article
+                  key={poll.id}
+                  className="border border-raw-border/25 bg-raw-surface/20 p-3 sm:p-4"
+                >
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium leading-relaxed text-raw-text">
+                        {poll.question}
+                      </p>
+                      <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-raw-silver/45">
+                        <span className="border border-raw-gold/25 bg-raw-gold/10 px-2 py-1 text-raw-gold/80">
+                          You answered: {selectedOption?.text ?? "Unknown"}
+                        </span>
+                        <span>{percent}% picked this</span>
+                        <span>{totalVotes.toLocaleString()} votes</span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setLockedPollId(poll.id)}
+                      className="shrink-0 border border-raw-border/35 px-3 py-2 text-[11px] uppercase tracking-[0.12em] text-raw-silver/65 transition hover:border-raw-gold/45 hover:text-raw-gold"
+                    >
+                      Review
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => copyShareLink(poll)}
+                      className="inline-flex shrink-0 items-center justify-center gap-2 border border-raw-border/35 px-3 py-2 text-[11px] uppercase tracking-[0.12em] text-raw-silver/65 transition hover:border-raw-gold/45 hover:text-raw-gold"
+                    >
+                      <Copy className="size-3" />
+                      Share
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         )}
       </section>

@@ -13,6 +13,7 @@ export interface WheelPrize {
 interface WheelOfFortuneProps {
   prizes: WheelPrize[];
   onSpinEnd: (prize: WheelPrize) => void;
+  onSpinStart?: () => void;
   disabled?: boolean;
   prizeWeights?: Partial<Record<string, number>>;
   forcedPrizeId?: string | null;
@@ -66,7 +67,7 @@ function getLabelLines(label: string): string[] {
   return [parts.slice(0, midpoint).join(" "), parts.slice(midpoint).join(" ")];
 }
 
-export function WheelOfFortune({ prizes, onSpinEnd, disabled = false, prizeWeights, forcedPrizeId = null, radius: radiusProp = 200 }: WheelOfFortuneProps) {
+export function WheelOfFortune({ prizes, onSpinEnd, onSpinStart, disabled = false, prizeWeights, forcedPrizeId = null, radius: radiusProp = 200 }: WheelOfFortuneProps) {
   const { mode } = useTheme();
   const pointerId = useId().replace(/:/g, "");
   const [rotation, setRotation] = useState(0);
@@ -88,6 +89,7 @@ export function WheelOfFortune({ prizes, onSpinEnd, disabled = false, prizeWeigh
     }
 
     setIsSpinning(true);
+    onSpinStart?.();
 
     let prizeIndex = Math.floor(Math.random() * total);
 
@@ -130,7 +132,7 @@ export function WheelOfFortune({ prizes, onSpinEnd, disabled = false, prizeWeigh
     const finalRotation = rotation + fullRotations + deltaToTarget;
 
     setRotation(finalRotation);
-  }, [disabled, forcedPrizeId, isSpinning, prizeWeights, prizes, rotation, total]);
+  }, [disabled, forcedPrizeId, isSpinning, onSpinStart, prizeWeights, prizes, rotation, total]);
 
   useEffect(() => {
     if (!isSpinning) {

@@ -9,12 +9,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { getTodayKey } from "@/store/useRawStore.storage";
 import {
   loadDailySpinPoolFromSupabase,
   readDailySpinAvatarPool,
   type DailySpinAvatarPoolItem,
 } from "@/lib/dailySpinAvatarPool";
+
+const SPIN_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
 interface DashboardDailySpinProps {
   userId: string;
@@ -102,18 +103,23 @@ export function DashboardDailySpin({ userId, isAdmin = false, onAwardXP }: Dashb
     ],
     [],
   );
-  const [todayKey, setTodayKey] = useState(() => getTodayKey());
   const [selectedRewardId, setSelectedRewardId] = useState<string | null>(null);
-  const [hasSpunToday, setHasSpunToday] = useState(() => {
+  const [lastSpinAt, setLastSpinAt] = useState<number | null>(() => {
     try {
       const stored = localStorage.getItem(storageKey);
-      if (!stored) return false;
-      const parsed = JSON.parse(stored) as { date: string };
-      return parsed.date === getTodayKey();
+      if (!stored) return null;
+      const parsed = JSON.parse(stored) as { spunAt?: unknown; date?: unknown };
+      if (typeof parsed.spunAt === "number") return parsed.spunAt;
+      if (typeof parsed.date === "string") {
+        const legacyDate = new Date(parsed.date);
+        return Number.isNaN(legacyDate.getTime()) ? null : legacyDate.getTime();
+      }
+      return null;
     } catch {
-      return false;
+      return null;
     }
   });
+  const [isCooldownActive, setIsCooldownActive] = useState(false);
   const [countdown, setCountdown] = useState("");
   const [prizeModal, setPrizeModal] = useState<WheelPrize | null>(null);
   const [adminSelectedRewardId, setAdminSelectedRewardId] = useState<string>("random");
@@ -121,18 +127,19 @@ export function DashboardDailySpin({ userId, isAdmin = false, onAwardXP }: Dashb
   const [themeRewardPool, setThemeRewardPool] = useState<DailySpinAvatarPoolItem[]>(() => readDailySpinAvatarPool());
 
   useEffect(() => {
-    const timer = window.setInterval(() => {
-      const nextKey = getTodayKey();
-      setTodayKey((previous) => (previous === nextKey ? previous : nextKey));
-    }, 60000);
-
-    return () => window.clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
-    setHasSpunToday(false);
+    try {
+      const stored = localStorage.getItem(storageKey);
+      if (!stored) {
+        setLastSpinAt(null);
+        return;
+      }
+      const parsed = JSON.parse(stored) as { spunAt?: unknown };
+      setLastSpinAt(typeof parsed.spunAt === "number" ? parsed.spunAt : null);
+    } catch {
+      setLastSpinAt(null);
+    }
     setSelectedRewardId(null);
-  }, [todayKey, userId]);
+  }, [storageKey]);
 
   useEffect(() => {
     loadDailySpinPoolFromSupabase()
@@ -141,24 +148,45 @@ export function DashboardDailySpin({ userId, isAdmin = false, onAwardXP }: Dashb
   }, []);
 
   const updateCountdown = useCallback(() => {
-    const now = new Date();
-    const midnight = new Date();
-    midnight.setHours(24, 0, 0, 0);
-    const diff = midnight.getTime() - now.getTime();
+    if (!lastSpinAt) {
+      setCountdown("");
+      setIsCooldownActive(false);
+      return;
+    }
+
+    const diff = lastSpinAt + SPIN_COOLDOWN_MS - Date.now();
+    if (diff <= 0) {
+      setCountdown("");
+      setIsCooldownActive(false);
+      return;
+    }
+
+    setIsCooldownActive(true);
     const h = Math.floor(diff / 3_600_000);
     const m = Math.floor((diff % 3_600_000) / 60_000);
     const s = Math.floor((diff % 60_000) / 1_000);
     setCountdown(`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`);
-  }, []);
+  }, [lastSpinAt]);
 
   useEffect(() => {
-    if (!hasSpunToday) return;
     updateCountdown();
     const timer = window.setInterval(updateCountdown, 1000);
     return () => window.clearInterval(timer);
-  }, [hasSpunToday, updateCountdown]);
+  }, [updateCountdown]);
 
   const selectedPrize = prizes.find((prize) => prize.id === selectedRewardId) ?? null;
+
+  const handleSpinStart = useCallback(() => {
+    if (isAdmin) return;
+    const spunAt = Date.now();
+    setLastSpinAt(spunAt);
+    setIsCooldownActive(true);
+    try {
+      localStorage.setItem(storageKey, JSON.stringify({ spunAt }));
+    } catch {
+      // noop
+    }
+  }, [isAdmin, storageKey]);
 
   const handleSpinEnd = (prize: WheelPrize) => {
     if (prize.id === "theme") {
@@ -174,9 +202,7 @@ export function DashboardDailySpin({ userId, isAdmin = false, onAwardXP }: Dashb
     }
 
     setSelectedRewardId(prize.id);
-    setHasSpunToday(true);
     setPrizeModal(prize);
-    try { localStorage.setItem(storageKey, JSON.stringify({ date: getTodayKey() })); } catch { /* noop */ }
 
     const xpMatch = prize.id.match(/^xp-(\d+)/);
     if (xpMatch && onAwardXP) {
@@ -200,7 +226,7 @@ export function DashboardDailySpin({ userId, isAdmin = false, onAwardXP }: Dashb
   const ModalIcon = modalMessage?.icon ?? Gift;
   const isWin = prizeModal ? !prizeModal.id.startsWith("try") : false;
   const isJackpot = prizeModal?.id === "xp-500";
-  const isSpinDisabled = !isAdmin && hasSpunToday;
+  const isSpinDisabled = !isAdmin && isCooldownActive;
   const forcedPrizeId = isAdmin && adminSelectedRewardId !== "random" ? adminSelectedRewardId : null;
 
   return (
@@ -245,6 +271,7 @@ export function DashboardDailySpin({ userId, isAdmin = false, onAwardXP }: Dashb
           <WheelOfFortune
             prizes={prizes}
             onSpinEnd={handleSpinEnd}
+            onSpinStart={handleSpinStart}
             disabled={isSpinDisabled}
             prizeWeights={PRIZE_WEIGHTS}
             forcedPrizeId={forcedPrizeId}
@@ -253,10 +280,12 @@ export function DashboardDailySpin({ userId, isAdmin = false, onAwardXP }: Dashb
         </div>
       </div>
 
-      {hasSpunToday && selectedPrize && selectedMessage && (
+      {(isCooldownActive || (isAdmin && selectedPrize)) && (
         <div className="mx-auto max-w-sm rounded-2xl border border-raw-border/40 bg-raw-surface/40 p-5 text-center">
           <p className="mb-1 text-xs text-raw-silver/40">Today&apos;s Result</p>
-          <p className="font-display text-sm tracking-wide text-raw-gold">{selectedMessage.title}</p>
+          <p className="font-display text-sm tracking-wide text-raw-gold">
+            {selectedMessage?.title ?? "Spin complete"}
+          </p>
           {isAdmin ? (
             <p className="mt-2 text-xs text-raw-silver/30">Admin test mode: spin infinitely and force rewards one by one.</p>
           ) : (

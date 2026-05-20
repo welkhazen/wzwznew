@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { HoverGradientVoteButton } from "@/components/polls/HoverGradientVoteButton";
 import { useTheme } from "@/providers/useTheme";
-import brainPollArt from "@/assets/BRAIN.png";
+import brainPollArt from "@/assets/BRAIN.webp";
 
 export interface PremiumPollOption {
   id: string;
