@@ -14,50 +14,32 @@ import { RawRevealButton } from "../../../components/raw-reveal-button";
 
 const VISIBLE_COUNT = 4;
 const DESKTOP_COUNT = 8;
-const FEATURED_AVATAR_COUNT = 10;
-const EXPANDED_AVATAR_BATCH_SIZE = 8;
 const MOBILE_PHONE_SCALE = 0.5;
 const CHOOSER_AVATARS: readonly AvatarCatalogItem[] = [
-  { id: "avatar-2", level: 2, name: "Chrome Ghost", price: "Free", imageSrc: "/avatars/avatar-2.svg", bg: "#0c1a24", figure: "#5ed6ff", ring: "#2ea6d6", glow: "#5ed6ff80", isActive: true, rarity: "common" },
-  { id: "avatar-7", level: 7, name: "Void Phantom", price: "0", imageSrc: "/avatars/avatar-7.svg", bg: "#150a22", figure: "#8b5cf6", ring: "#5b2aa8", glow: "#8b5cf680", isActive: true, rarity: "common" },
-  { id: "avatar-3", level: 3, name: "Iron Specter", price: "0", imageSrc: "/avatars/avatar-3.svg", bg: "#0a1124", figure: "#3f8bff", ring: "#2557c4", glow: "#3f8bff80", isActive: true, rarity: "common" },
-  { id: "avatar-8", level: 8, name: "Copper Wraith", price: "0", imageSrc: "/avatars/avatar-8.svg", bg: "#1f1208", figure: "#f97316", ring: "#b0550f", glow: "#f9731680", isActive: true, rarity: "common" },
-  { id: "avatar-5", level: 5, name: "Solar Enforcer", price: "0", imageSrc: "/avatars/avatar-5.svg", bg: "#0b1a0e", figure: "#16a34a", ring: "#0f7a36", glow: "#16a34a80", isActive: true, rarity: "common" },
-  { id: "avatar-9", level: 9, name: "Inferno Shade", price: "0", imageSrc: "/avatars/avatar-9.svg", bg: "#1f0a0a", figure: "#dc2626", ring: "#8a1515", glow: "#dc262680", isActive: true, rarity: "common" },
-  { id: "avatar-6", level: 6, name: "Neon Oracle", price: "0", imageSrc: "/avatars/avatar-6.svg", bg: "#1f0d18", figure: "#ec4899", ring: "#a6235f", glow: "#ec489980", isActive: true, rarity: "common" },
-  { id: "avatar-10", level: 10, name: "Golden Reaper", price: "0", imageSrc: "/avatars/avatar-10.svg", bg: "#1f1705", figure: "#facc15", ring: "#b8900b", glow: "#facc1590", isActive: true, rarity: "common" },
+  { id: "shadow", level: 1, name: "Shadow", price: "0", bg: "#1a1a1a", figure: "#c8c8c8", ring: "#c8c8c8", glow: "none", isActive: true, rarity: "common" },
+  { id: "ember", level: 2, name: "Ember", price: "0", imageSrc: "/avatars/avatar-2.svg", bg: "#0c1a24", figure: "#5ed6ff", ring: "#5ed6ff", glow: "#5ed6ff80", isActive: true, rarity: "common" },
+  { id: "verdant", level: 3, name: "Verdant", price: "0", imageSrc: "/avatars/avatar-3.svg", bg: "#0a1124", figure: "#3f8bff", ring: "#3f8bff", glow: "#3f8bff80", isActive: true, rarity: "common" },
+  { id: "ice", level: 4, name: "Ice", price: "0", bg: "#0f1f12", figure: "#4ade80", ring: "#4ade80", glow: "#4ade8080", isActive: true, rarity: "common" },
+  { id: "horned", level: 5, name: "Horned", price: "0", imageSrc: "/avatars/avatar-5.svg", bg: "#0b1a0e", figure: "#16a34a", ring: "#16a34a", glow: "#16a34a80", isActive: true, rarity: "common" },
+  { id: "pharaoh", level: 6, name: "Pharaoh", price: "0", imageSrc: "/avatars/avatar-6.svg", bg: "#1f0d18", figure: "#ec4899", ring: "#ec4899", glow: "#ec489980", isActive: true, rarity: "common" },
+  { id: "violet", level: 7, name: "Violet", price: "0", imageSrc: "/avatars/avatar-7.svg", bg: "#150a22", figure: "#8b5cf6", ring: "#8b5cf6", glow: "#8b5cf680", isActive: true, rarity: "common" },
+  { id: "rose", level: 8, name: "Rose", price: "0", imageSrc: "/avatars/avatar-8.svg", bg: "#1f1208", figure: "#f97316", ring: "#f97316", glow: "#f9731680", isActive: true, rarity: "common" },
+  { id: "black", level: 9, name: "Black", price: "0", imageSrc: "/avatars/avatar-9.svg", bg: "#1f0a0a", figure: "#dc2626", ring: "#dc2626", glow: "#dc262680", isActive: true, rarity: "common" },
+  { id: "blue", level: 10, name: "Blue", price: "0", imageSrc: "/avatars/avatar-10.svg", bg: "#1f1705", figure: "#facc15", ring: "#facc15", glow: "#facc1590", isActive: true, rarity: "common" },
 ];
-const EXPANDED_AVATARS: readonly AvatarCatalogItem[] = [
-  { id: "shadow-lynx", level: 11, name: "Shadow Lynx", price: "0", imageSrc: "/avatars/kling_20260513_IMAGE_A_circular_2794_0_2.webp", bg: "#12091d", figure: "#d946ef", ring: "#9333ea", glow: "none", isActive: true, rarity: "common" },
-  { id: "ember-helm", level: 12, name: "Ember Helm", price: "0", imageSrc: "/avatars/sheet2_helmeted_avatars_01.webp", bg: "#17110a", figure: "#f97316", ring: "#c2410c", glow: "none", isActive: true, rarity: "common" },
-  { id: "verdant-skull", level: 13, name: "Verdant Skull", price: "0", imageSrc: "/avatars/sheet2_helmeted_avatars_02.webp", bg: "#0f1a08", figure: "#84cc16", ring: "#4d7c0f", glow: "none", isActive: true, rarity: "common" },
-  { id: "ice-crown", level: 14, name: "Ice Crown", price: "0", imageSrc: "/avatars/sheet2_helmeted_avatars_03.webp", bg: "#06131f", figure: "#38bdf8", ring: "#0284c7", glow: "none", isActive: true, rarity: "common" },
-  { id: "horned-skull", level: 15, name: "Horned Skull", price: "0", imageSrc: "/avatars/sheet2_helmeted_avatars_04.webp", bg: "#1f0a05", figure: "#fb923c", ring: "#ea580c", glow: "none", isActive: true, rarity: "common" },
-  { id: "pharaoh-skull", level: 16, name: "Pharaoh Skull", price: "0", imageSrc: "/avatars/sheet2_helmeted_avatars_05.webp", bg: "#161507", figure: "#fde047", ring: "#ca8a04", glow: "none", isActive: true, rarity: "common" },
-  { id: "violet-hood", level: 17, name: "Violet Hood", price: "0", imageSrc: "/avatars/sheet2_helmeted_avatars_06.webp", bg: "#150a22", figure: "#a855f7", ring: "#7e22ce", glow: "none", isActive: true, rarity: "common" },
-  { id: "rose-agent", level: 18, name: "Rose Agent", price: "0", imageSrc: "/avatars/sheet2_helmeted_avatars_07.webp", bg: "#1f0d18", figure: "#ec4899", ring: "#be185d", glow: "none", isActive: true, rarity: "common" },
-  { id: "black-visor", level: 19, name: "Black Visor", price: "0", imageSrc: "/avatars/sheet2_helmeted_avatars_08.webp", bg: "#17110a", figure: "#f97316", ring: "#c2410c", glow: "none", isActive: true, rarity: "common" },
-  { id: "blue-warden", level: 20, name: "Blue Warden", price: "0", imageSrc: "/avatars/sheet2_helmeted_avatars_09.webp", bg: "#06131f", figure: "#38bdf8", ring: "#0284c7", glow: "none", isActive: true, rarity: "common" },
-  { id: "star-suit", level: 21, name: "Star Suit", price: "0", imageSrc: "/avatars/sheet2_helmeted_avatars_10.webp", bg: "#12091d", figure: "#d946ef", ring: "#9333ea", glow: "none", isActive: true, rarity: "common" },
-  { id: "fire-matron", level: 22, name: "Fire Matron", price: "0", imageSrc: "/avatars/sheet2_helmeted_avatars_11.webp", bg: "#1f0a05", figure: "#fb923c", ring: "#ea580c", glow: "none", isActive: true, rarity: "common" },
-  { id: "night-violet", level: 23, name: "Night Violet", price: "0", imageSrc: "/avatars/sheet2_helmeted_avatars_12.webp", bg: "#150a22", figure: "#a855f7", ring: "#7e22ce", glow: "none", isActive: true, rarity: "common" },
-  { id: "lava-skull", level: 24, name: "Lava Skull", price: "0", imageSrc: "/avatars/sheet2_helmeted_avatars_13.webp", bg: "#1f0a05", figure: "#fb923c", ring: "#ea580c", glow: "none", isActive: true, rarity: "common" },
-  { id: "pink-crown", level: 25, name: "Pink Crown", price: "0", imageSrc: "/avatars/sheet2_helmeted_avatars_15.webp", bg: "#1f0d18", figure: "#ec4899", ring: "#be185d", glow: "none", isActive: true, rarity: "common" },
-  { id: "gold-samurai", level: 26, name: "Gold Samurai", price: "0", imageSrc: "/avatars/sheet2_helmeted_avatars_16.webp", bg: "#1f1705", figure: "#facc15", ring: "#b8900b", glow: "none", isActive: true, rarity: "common" },
-];
-const LANDING_AVATARS: readonly AvatarCatalogItem[] = [...CHOOSER_AVATARS, ...EXPANDED_AVATARS];
+const LANDING_AVATARS: readonly AvatarCatalogItem[] = CHOOSER_AVATARS;
 
 export function AvatarShowcaseSection() {
   const sectionRef = useTrackSectionView("avatar");
   const { mode } = useTheme();
   const isLight = mode === "light";
-  const [avatarIndex, setAvatarIndex] = useState(1);
-  const [previewIndex, setPreviewIndex] = useState(1);
+  const [avatarIndex, setAvatarIndex] = useState(CHOOSER_AVATARS[0].level);
+  const [previewIndex, setPreviewIndex] = useState(CHOOSER_AVATARS[0].level);
   const [startIndex, setStartIndex] = useState(0);
   const [desktopStart, setDesktopStart] = useState(0);
   const [showAll, setShowAll] = useState(false);
   const [showExpandGrid, setShowExpandGrid] = useState(false);
-  const [expandedVisibleCount, setExpandedVisibleCount] = useState(EXPANDED_AVATAR_BATCH_SIZE);
+  const [expandedVisibleCount, setExpandedVisibleCount] = useState(CHOOSER_AVATARS.length);
   const [showMore, setShowMore] = useState(false);
   const [extraPreviewAvatar, setExtraPreviewAvatar] = useState<LandingNewAvatar | null>(null);
   const [newAvatars] = useState<LandingNewAvatar[]>([]);
@@ -80,20 +62,14 @@ export function AvatarShowcaseSection() {
   }, []);
 
   const chooserAvatars = CHOOSER_AVATARS;
-  const mobileChooserColumns = [
-    chooserAvatars.slice(0, 4),
-    chooserAvatars.slice(4, 8),
-  ];
   const chooserTotal = chooserAvatars.length;
-  const expandedAvatarSource = EXPANDED_AVATARS;
+  const expandedAvatarSource = CHOOSER_AVATARS;
   const expandedAvatarTotal = expandedAvatarSource.length;
   const visibleExtendedAvatars = expandedAvatarSource
     .slice(0, expandedVisibleCount)
     .map((avatar) => ({ avatar, themeIndex: avatar.level }));
-  // previewAvatar must come from chooserAvatars so the phone preview matches
-  // the selected chooser item (previewIndex is 1-based position in chooserAvatars).
   const previewAvatar = useMemo(
-    () => extraPreviewAvatar ?? chooserAvatars[previewIndex - 1] ?? LANDING_AVATARS.find((avatar) => avatar.level === previewIndex) ?? chooserAvatars[0] ?? null,
+    () => extraPreviewAvatar ?? LANDING_AVATARS.find((avatar) => avatar.level === previewIndex) ?? chooserAvatars[0] ?? null,
     [chooserAvatars, extraPreviewAvatar, previewIndex]
   );
 
@@ -101,36 +77,7 @@ export function AvatarShowcaseSection() {
   const canNext = true;
 
   useEffect(() => {
-    if (!showExpandGrid) {
-      setExpandedVisibleCount(EXPANDED_AVATAR_BATCH_SIZE);
-      return;
-    }
-
-    setExpandedVisibleCount(EXPANDED_AVATAR_BATCH_SIZE);
-    let cancelled = false;
-    let timer: number | undefined;
-
-    const loadNextBatch = () => {
-      timer = window.setTimeout(() => {
-        if (cancelled) return;
-        setExpandedVisibleCount((current) => {
-          const next = Math.min(current + EXPANDED_AVATAR_BATCH_SIZE, expandedAvatarTotal);
-          if (next < expandedAvatarTotal) {
-            loadNextBatch();
-          }
-          return next;
-        });
-      }, 40);
-    };
-
-    if (expandedAvatarTotal > EXPANDED_AVATAR_BATCH_SIZE) {
-      loadNextBatch();
-    }
-
-    return () => {
-      cancelled = true;
-      if (timer) window.clearTimeout(timer);
-    };
+    setExpandedVisibleCount(expandedAvatarTotal);
   }, [expandedAvatarTotal, showExpandGrid]);
 
   function handleToggleExpandGrid() {
@@ -155,12 +102,12 @@ export function AvatarShowcaseSection() {
 
   const visibleAvatars = Array.from({ length: VISIBLE_COUNT }, (_, i) => {
     const idx = (startIndex + i) % chooserTotal;
-    return { avatar: chooserAvatars[idx], index: idx + 1 };
+    return { avatar: chooserAvatars[idx], index: chooserAvatars[idx].level };
   });
 
   const desktopAvatars = Array.from({ length: DESKTOP_COUNT }, (_, i) => {
     const idx = (desktopStart + i) % chooserTotal;
-    return { avatar: chooserAvatars[idx], index: idx + 1 };
+    return { avatar: chooserAvatars[idx], index: chooserAvatars[idx].level };
   });
 
   function AvatarButton({
@@ -174,6 +121,13 @@ export function AvatarShowcaseSection() {
   }) {
     const isActive = index === previewIndex;
     const isSelected = index === avatarIndex;
+    const scaleClass = !avatar.imageSrc
+      ? isActive
+        ? "scale-[1.22]"
+        : "scale-[1.12] group-hover:scale-[1.17]"
+      : isActive
+        ? "scale-110"
+        : "scale-100 group-hover:scale-105";
 
     return (
       <button
@@ -192,9 +146,7 @@ export function AvatarShowcaseSection() {
         aria-pressed={isSelected}
       >
         <div
-          className={`relative rounded-full transition-all duration-300 ${
-            isActive ? "scale-110" : "scale-100 group-hover:scale-105"
-          }`}
+          className={`relative rounded-full transition-all duration-300 ${scaleClass}`}
           style={{ transition: "transform 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}
         >
           <AvatarFigure avatarIndex={avatar.level} size="md" selected={isSelected || isActive} />
@@ -305,45 +257,48 @@ Just like in real life, every person is born with a name, an appearance, and an 
           </p>
           <div
             ref={scrollRef}
-            className="grid flex-1 grid-cols-2 gap-x-1"
+            className="grid flex-1 grid-cols-2 grid-rows-5 place-items-center gap-x-1 gap-y-0"
           >
-            {mobileChooserColumns.map((column, columnIndex) => (
-              <div key={`mobile-avatar-column-${columnIndex}`} className="flex min-w-0 flex-col items-center justify-around">
-                {column.map((avatar) => {
-                  const index = chooserAvatars.indexOf(avatar) + 1;
-                  return (
-                    <button
-                      key={avatar.id}
-                      type="button"
-                      onClick={() => { setExtraPreviewAvatar(null); setAvatarIndex(index); setPreviewIndex(index); }}
-                      className="flex min-w-0 flex-col items-center gap-0.5 outline-none"
-                      aria-label={`Select ${avatar.name}`}
-                      aria-pressed={avatarIndex === index}
-                    >
-                      <div
-                        className={`rounded-full transition-all duration-200 scale-[0.72] ${avatarIndex === index ? "scale-[0.82]" : ""}`}
-                      >
-                        <AvatarFigure avatarIndex={avatar.level} size="sm" selected={avatarIndex === index} />
-                      </div>
-                      <span
-                        className="max-w-[44px] text-center font-display uppercase leading-tight transition-colors duration-200"
-                        style={{
-                          fontSize: "0.4rem",
-                          letterSpacing: "0.04em",
-                          color: avatarIndex === index
-                            ? "#F1C42D"
-                            : isLight
-                              ? "rgba(30,41,59,0.6)"
-                              : "rgba(255,255,255,0.42)",
-                        }}
-                      >
-                        {avatar.name.split(" ")[0]}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            ))}
+            {chooserAvatars.map((avatar) => {
+              const index = avatar.level;
+              const scaleClass = !avatar.imageSrc
+                ? avatarIndex === index
+                  ? "scale-[0.82]"
+                  : "scale-[0.72]"
+                : avatarIndex === index
+                  ? "scale-[0.7]"
+                  : "scale-[0.6]";
+              return (
+                <button
+                  key={avatar.id}
+                  type="button"
+                  onClick={() => { setExtraPreviewAvatar(null); setAvatarIndex(index); setPreviewIndex(index); }}
+                  className="flex min-w-0 flex-col items-center gap-0 outline-none"
+                  aria-label={`Select ${avatar.name}`}
+                  aria-pressed={avatarIndex === index}
+                >
+                  <div
+                    className={`rounded-full transition-all duration-200 ${scaleClass}`}
+                  >
+                    <AvatarFigure avatarIndex={avatar.level} size="sm" selected={avatarIndex === index} />
+                  </div>
+                  <span
+                    className="max-w-[46px] text-center font-display uppercase leading-tight transition-colors duration-200"
+                    style={{
+                      fontSize: "0.38rem",
+                      letterSpacing: "0.02em",
+                      color: avatarIndex === index
+                        ? "#F1C42D"
+                        : isLight
+                          ? "rgba(30,41,59,0.6)"
+                          : "rgba(255,255,255,0.42)",
+                    }}
+                  >
+                    {avatar.name.split(" ")[0]}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -456,7 +411,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
                 </p>
                 {visibleExtendedAvatars.length > 0 ? (
                   <>
-                    <div className="flex flex-wrap items-start justify-center gap-x-3 gap-y-4 sm:gap-x-5 sm:gap-y-5">
+                    <div className="grid grid-cols-5 place-items-start justify-items-center gap-x-2 gap-y-4 sm:gap-x-5 sm:gap-y-5">
                       {visibleExtendedAvatars.map(({ avatar, themeIndex }) => (
                         <button
                           key={avatar.id ?? themeIndex}
