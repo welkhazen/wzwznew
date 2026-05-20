@@ -1,7 +1,7 @@
 import { toUserId } from "@/lib/adminData";
 import type { CommunityChatMemberRecord, CommunityChatMessageRecord, PersistedCommunityRecord } from "./communityChat.types";
-import LNTLogo from "@/assets/LNT.png";
-import SYTLogo from "@/assets/logospeak.png";
+import LNTLogo from "@/assets/LNT.webp";
+import SYTLogo from "@/assets/logospeak.webp";
 
 function createSeedMessage(
   communityId: string,

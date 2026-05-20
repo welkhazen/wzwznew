@@ -1,15 +1,6 @@
 import { useEffect } from "react";
 import { track } from "@/lib/analytics";
 
-declare global {
-  interface Window {
-    OneSignal?: {
-      init: (options: Record<string, unknown>) => Promise<void>;
-      showSlidedownPrompt: () => void;
-    };
-  }
-}
-
 export function useWebPush(isLoggedIn: boolean) {
   useEffect(() => {
     if (!isLoggedIn) {
@@ -23,9 +14,11 @@ export function useWebPush(isLoggedIn: boolean) {
           appId: oneSignalAppId,
           notifyButton: { enable: true },
           allowLocalhostAsSecureOrigin: true,
+          serviceWorkerPath: "push/onesignal/OneSignalSDKWorker.js",
+          serviceWorkerParam: { scope: "/push/onesignal/" },
         })
         .then(() => {
-          window.OneSignal?.showSlidedownPrompt();
+          window.OneSignal?.showSlidedownPrompt?.();
           track("push_prompt_shown", { provider: "onesignal" });
         });
     }

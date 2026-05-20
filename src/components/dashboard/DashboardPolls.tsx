@@ -6,14 +6,160 @@ import { addPollComment, fetchPollComments } from "@/utils/supabasePolls";
 import { isNoPollOption, isYesPollOption } from "@/lib/polls/normalizePollOptionText";
 import {
   BarChart3,
+  Check,
   ChevronLeft,
   ChevronRight,
   Coins,
-  Lock,
+  Copy,
+  Facebook,
+  Instagram,
   MessageCircle,
   SendHorizontal,
+  Share2,
   Users,
 } from "lucide-react";
+
+function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
+  const words = text.split(" ");
+  const lines: string[] = [];
+  let line = "";
+  for (const word of words) {
+    const test = line ? `${line} ${word}` : word;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = test;
+    }
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
+async function generatePollImage(question: string, opt1: string, opt2: string, url: string): Promise<Blob> {
+  const W = 1080, H = 1920;
+  const canvas = document.createElement("canvas");
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext("2d")!;
+
+  // Background
+  ctx.fillStyle = "#050505";
+  ctx.fillRect(0, 0, W, H);
+
+  // Dot grid
+  ctx.fillStyle = "rgba(235,235,235,0.07)";
+  for (let x = 18; x < W; x += 18) {
+    for (let y = 18; y < H; y += 18) {
+      ctx.beginPath();
+      ctx.arc(x, y, 1.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // Gold top accent
+  const topGrad = ctx.createLinearGradient(0, 0, W, 0);
+  topGrad.addColorStop(0, "rgba(241,196,45,0)");
+  topGrad.addColorStop(0.3, "#F1C42D");
+  topGrad.addColorStop(0.7, "#F1C42D");
+  topGrad.addColorStop(1, "rgba(241,196,45,0)");
+  ctx.fillStyle = topGrad;
+  ctx.fillRect(0, 0, W, 6);
+
+  // "raW" brand
+  ctx.fillStyle = "#F1C42D";
+  ctx.font = "bold 90px Arial, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("raW", W / 2, 170);
+
+  ctx.fillStyle = "rgba(241,196,45,0.6)";
+  ctx.font = "38px Arial, sans-serif";
+  ctx.fillText("Community Poll", W / 2, 255);
+
+  // Divider
+  const divGrad = ctx.createLinearGradient(120, 0, W - 120, 0);
+  divGrad.addColorStop(0, "rgba(241,196,45,0)");
+  divGrad.addColorStop(0.3, "rgba(241,196,45,0.4)");
+  divGrad.addColorStop(0.7, "rgba(241,196,45,0.4)");
+  divGrad.addColorStop(1, "rgba(241,196,45,0)");
+  ctx.strokeStyle = divGrad;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(120, 310);
+  ctx.lineTo(W - 120, 310);
+  ctx.stroke();
+
+  // Question
+  ctx.fillStyle = "#EBEBEB";
+  ctx.font = "bold 64px Arial, sans-serif";
+  ctx.textAlign = "center";
+  const qLines = wrapText(ctx, question, 860);
+  const qStartY = 520 - ((qLines.length - 1) * 84) / 2;
+  qLines.forEach((line, i) => ctx.fillText(line, W / 2, qStartY + i * 84));
+
+  const optY = qStartY + qLines.length * 84 + 100;
+  const btnW = 450, btnH = 130, gap = 36;
+  const btn1X = (W - btnW * 2 - gap) / 2;
+  const btn2X = btn1X + btnW + gap;
+
+  // Option 1 (neutral/silver)
+  ctx.fillStyle = "rgba(180,180,180,0.15)";
+  ctx.strokeStyle = "rgba(180,180,180,0.55)";
+  ctx.lineWidth = 3;
+  roundRect(ctx, btn1X, optY, btnW, btnH, 14);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = "#EBEBEB";
+  ctx.font = "bold 52px Arial, sans-serif";
+  ctx.textBaseline = "middle";
+  ctx.fillText(opt1, btn1X + btnW / 2, optY + btnH / 2);
+
+  // Option 2 (gold)
+  ctx.fillStyle = "rgba(241,196,45,0.15)";
+  ctx.strokeStyle = "rgba(241,196,45,0.8)";
+  roundRect(ctx, btn2X, optY, btnW, btnH, 14);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = "#F1C42D";
+  ctx.fillText(opt2, btn2X + btnW / 2, optY + btnH / 2);
+
+  // "Vote anonymously" text
+  ctx.fillStyle = "rgba(235,235,235,0.35)";
+  ctx.font = "36px Arial, sans-serif";
+  ctx.textBaseline = "middle";
+  ctx.fillText("Vote anonymously — see what everyone thinks", W / 2, optY + btnH + 80);
+
+  // URL at bottom
+  ctx.fillStyle = "rgba(241,196,45,0.55)";
+  ctx.font = "38px Arial, sans-serif";
+  ctx.fillText(url, W / 2, H - 110);
+
+  // Gold bottom accent
+  ctx.fillStyle = topGrad;
+  ctx.fillRect(0, H - 6, W, 6);
+
+  return new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (blob) resolve(blob);
+      else reject(new Error("Canvas toBlob failed"));
+    }, "image/png");
+  });
+}
 
 function getNextUnlockTime(): string {
   const now = new Date();
@@ -102,6 +248,11 @@ function PollStat({
   );
 }
 
+function optionPercent(optionVotes: number, totalVotes: number): number {
+  if (totalVotes <= 0) return 0;
+  return Math.round((optionVotes / totalVotes) * 100);
+}
+
 function readStoredAnswerHistory(storageKey: string): Record<string, string> {
   try {
     const raw = window.localStorage.getItem(storageKey);
@@ -110,6 +261,17 @@ function readStoredAnswerHistory(storageKey: string): Record<string, string> {
   } catch {
     return {};
   }
+}
+
+function buildPollShareText(poll: Poll): string {
+  return `Vote anonymously on raW: ${poll.question}`;
+}
+
+function buildPollShareUrl(pollId: string): string {
+  const url = new URL(window.location.href);
+  url.pathname = "/dashboard";
+  url.searchParams.set("poll", pollId);
+  return url.toString();
 }
 
 export function DashboardPolls({
@@ -136,8 +298,22 @@ export function DashboardPolls({
   const [currentPollIndex, setCurrentPollIndex] = useState(0);
   const [hasSeenVoteHint, setHasSeenVoteHint] = useState(false);
   const [lockedPollId, setLockedPollId] = useState<string | null>(null);
+  const [shareCopied, setShareCopied] = useState(false);
+  const [sharePickerOpen, setSharePickerOpen] = useState(false);
 
   const commentsEndRef = useRef<HTMLDivElement>(null);
+  const sharePickerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!sharePickerOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (sharePickerRef.current && !sharePickerRef.current.contains(e.target as Node)) {
+        setSharePickerOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [sharePickerOpen]);
 
   useEffect(() => {
     setLoadedAnswersStorageKey(answersStorageKey);
@@ -183,6 +359,10 @@ export function DashboardPolls({
   const answeredPolls = useMemo(
     () => polls.filter((p) => answerHistory[p.id]),
     [polls, answerHistory]
+  );
+  const answeredPollHistory = useMemo(
+    () => answeredPolls.slice().reverse(),
+    [answeredPolls]
   );
 
   // Once the daily limit is hit, show today's answered polls (capped at dailyPollLimit).
@@ -306,6 +486,58 @@ export function DashboardPolls({
     handleCommentAdd();
   };
 
+  const copyShareLink = async (poll: Poll) => {
+    const text = `${buildPollShareText(poll)}\n${buildPollShareUrl(poll.id)}`;
+    await navigator.clipboard?.writeText(text);
+    setShareCopied(true);
+    window.setTimeout(() => setShareCopied(false), 1600);
+  };
+
+  const handleShare = async (poll: Poll) => {
+    const shareData = {
+      title: "raW poll",
+      text: buildPollShareText(poll),
+      url: buildPollShareUrl(poll.id),
+    };
+
+    if (navigator.share) {
+      await navigator.share(shareData).catch(() => undefined);
+      return;
+    }
+
+    await copyShareLink(poll);
+  };
+
+  const handleFacebookShare = (poll: Poll) => {
+    const url = encodeURIComponent(buildPollShareUrl(poll.id));
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, "_blank", "noopener,noreferrer");
+  };
+
+  const handleInstagramShare = async (poll: Poll) => {
+    const resolved = resolveYesNoOptions(poll);
+    const opt1 = resolved?.yesOption.text ?? poll.options[0]?.text ?? "";
+    const opt2 = resolved?.noOption.text ?? poll.options[1]?.text ?? "";
+    const shareUrl = buildPollShareUrl(poll.id);
+
+    try {
+      const blob = await generatePollImage(poll.question, opt1, opt2, shareUrl);
+      const file = new File([blob], "raw-poll.png", { type: "image/png" });
+      if (navigator.share && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: "raW Poll", text: poll.question });
+        return;
+      }
+      // Fallback: download the image
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = "raw-poll.png";
+      a.click();
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      await handleShare(poll);
+    }
+  };
+
 
   if (!currentPoll) {
     return (
@@ -408,6 +640,52 @@ export function DashboardPolls({
             />
           )}
 
+          <div ref={sharePickerRef} className="relative mt-4">
+            <button
+              type="button"
+              onClick={() => setSharePickerOpen((v) => !v)}
+              className="w-full inline-flex items-center justify-center gap-2 border border-raw-gold/45 bg-raw-gold/10 px-3 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-raw-gold transition hover:bg-raw-gold/15"
+            >
+              <Share2 className="size-3.5" />
+              Share
+            </button>
+
+            {sharePickerOpen && (
+              <div className="absolute bottom-full mb-1 left-0 right-0 z-30 border border-raw-border/55 bg-[#0a0a0a] flex flex-col">
+                <button
+                  type="button"
+                  onClick={() => { copyShareLink(currentPoll); setSharePickerOpen(false); }}
+                  className="flex items-center gap-2.5 px-4 py-3 text-[11px] uppercase tracking-[0.14em] text-raw-silver/75 transition hover:bg-raw-surface/30 hover:text-raw-gold"
+                >
+                  <Copy className="size-3.5" /> Copy Link
+                </button>
+                <div className="h-px bg-raw-border/25" />
+                <button
+                  type="button"
+                  onClick={() => { handleFacebookShare(currentPoll); setSharePickerOpen(false); }}
+                  className="flex items-center gap-2.5 px-4 py-3 text-[11px] uppercase tracking-[0.14em] text-raw-silver/75 transition hover:bg-raw-surface/30 hover:text-raw-gold"
+                >
+                  <Facebook className="size-3.5" /> Facebook
+                </button>
+                <div className="h-px bg-raw-border/25" />
+                <button
+                  type="button"
+                  onClick={() => { handleInstagramShare(currentPoll); setSharePickerOpen(false); }}
+                  className="flex items-center gap-2.5 px-4 py-3 text-[11px] uppercase tracking-[0.14em] text-raw-silver/75 transition hover:bg-raw-surface/30 hover:text-raw-gold"
+                >
+                  <Instagram className="size-3.5" /> Instagram Story
+                </button>
+              </div>
+            )}
+
+            {shareCopied && (
+              <p className="mt-2 flex items-center justify-center gap-1.5 text-[11px] text-raw-gold/75">
+                <Check className="size-3" />
+                Copied share text
+              </p>
+            )}
+          </div>
+
           <button
             onClick={() => { setLockedPollId(null); setCurrentPollIndex((previous) => Math.min(displayPolls.length - 1, previous + 1)); }}
             disabled={currentPollIndex === displayPolls.length - 1}
@@ -478,6 +756,70 @@ export function DashboardPolls({
                 <SendHorizontal className="size-3.5" />
               </button>
             </form>
+          </div>
+        )}
+      </section>
+
+      <section className="border border-raw-border/30 bg-raw-black/35 p-4 sm:p-5">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.18em] text-raw-gold/65">Answer history</p>
+            <h2 className="mt-1 font-display text-base tracking-wide text-raw-text">Polls you answered</h2>
+          </div>
+          <span className="shrink-0 border border-raw-gold/35 bg-raw-gold/10 px-3 py-1 text-[11px] text-raw-gold/80">
+            {answeredPollHistory.length}
+          </span>
+        </div>
+
+        {answeredPollHistory.length === 0 ? (
+          <p className="mt-4 text-sm text-raw-silver/45">
+            Answer a poll and it will appear here.
+          </p>
+        ) : (
+          <div className="mt-4 grid gap-3">
+            {answeredPollHistory.map((poll) => {
+              const selectedId = answerHistory[poll.id];
+              const selectedOption = poll.options.find((option) => option.id === selectedId);
+              const totalVotes = poll.options.reduce((sum, option) => sum + option.votes, 0);
+              const percent = selectedOption ? optionPercent(selectedOption.votes, totalVotes) : 0;
+
+              return (
+                <article
+                  key={poll.id}
+                  className="border border-raw-border/25 bg-raw-surface/20 p-3 sm:p-4"
+                >
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium leading-relaxed text-raw-text">
+                        {poll.question}
+                      </p>
+                      <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-raw-silver/45">
+                        <span className="border border-raw-gold/25 bg-raw-gold/10 px-2 py-1 text-raw-gold/80">
+                          You answered: {selectedOption?.text ?? "Unknown"}
+                        </span>
+                        <span>{percent}% picked this</span>
+                        <span>{totalVotes.toLocaleString()} votes</span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setLockedPollId(poll.id)}
+                      className="shrink-0 border border-raw-border/35 px-3 py-2 text-[11px] uppercase tracking-[0.12em] text-raw-silver/65 transition hover:border-raw-gold/45 hover:text-raw-gold"
+                    >
+                      Review
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => copyShareLink(poll)}
+                      className="inline-flex shrink-0 items-center justify-center gap-2 border border-raw-border/35 px-3 py-2 text-[11px] uppercase tracking-[0.12em] text-raw-silver/65 transition hover:border-raw-gold/45 hover:text-raw-gold"
+                    >
+                      <Copy className="size-3" />
+                      Share
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         )}
       </section>

@@ -1,6 +1,5 @@
 import { useState } from "react";
 import {
-  Award,
   Calendar,
   Flame,
   KeyRound,
@@ -8,7 +7,6 @@ import {
   Target,
   Trash2,
   TrendingUp,
-  Trophy,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { changePassword, deleteAccount } from "@/backend/supabase/controllers/authController";
@@ -37,15 +35,6 @@ const stats = [
   { icon: Flame, label: "Day Streak", value: "—", key: "streak" },
   { icon: TrendingUp, label: "XP Earned", value: "—", key: "xp" },
   { icon: Calendar, label: "Member Since", value: "—", key: "member" },
-  { icon: Award, label: "Badges", value: "—", key: "badges" },
-];
-
-const badges = [
-  { name: "Founding Member", desc: "Joined during the founding era", earned: true },
-  { name: "First Vote", desc: "Answered your first poll", earned: true },
-  { name: "Week Warrior", desc: "7-day activity streak", earned: true },
-  { name: "Voice of Reason", desc: "50 community messages", earned: false },
-  { name: "Gold Standard", desc: "Reach Level 10", earned: false },
 ];
 
 export function DashboardProfile({
@@ -291,52 +280,6 @@ export function DashboardProfile({
               </button>
             </div>
           )}
-        </div>
-      </div>
-
-      {/* Badges */}
-      <div className="rounded-2xl border border-raw-border/30 bg-raw-surface/30 p-4 sm:p-5">
-        <h3 className="mb-3 font-display text-sm tracking-wide text-raw-text">
-          Badges
-        </h3>
-        <div className="space-y-2">
-          {badges.map((badge) => (
-            <div
-              key={badge.name}
-              className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 transition-all ${
-                badge.earned
-                  ? "border-raw-gold/15 bg-raw-gold/[0.03]"
-                  : "border-raw-border/15 bg-raw-black/20 opacity-40"
-              }`}
-            >
-              <div
-                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${
-                  badge.earned ? "bg-raw-gold/10" : "bg-raw-surface/50"
-                }`}
-              >
-                <Trophy
-                  className={`h-3.5 w-3.5 ${
-                    badge.earned ? "text-raw-gold/60" : "text-raw-silver/20"
-                  }`}
-                />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p
-                  className={`text-xs font-medium ${
-                    badge.earned ? "text-raw-text" : "text-raw-silver/30"
-                  }`}
-                >
-                  {badge.name}
-                </p>
-                <p className="text-[10px] text-raw-silver/25">{badge.desc}</p>
-              </div>
-              {badge.earned && (
-                <span className="shrink-0 text-[9px] font-medium text-raw-gold/50">
-                  Earned
-                </span>
-              )}
-            </div>
-          ))}
         </div>
       </div>
     </div>

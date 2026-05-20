@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { track } from "@/lib/analytics";
+import { supabase } from "@/lib/supabase";
 
 type NotificationPlatform = "apple-ios" | "samsung-android" | "web";
 type ConsentStatus = "granted" | "denied" | "dismissed" | "unsupported";
@@ -8,12 +9,22 @@ type NativeNotificationBridge = {
   postMessage: (message: Record<string, unknown>) => void;
 };
 
+type OneSignalSdk = {
+  init: (options: Record<string, unknown>) => Promise<void>;
+  login?: (externalId: string) => Promise<void>;
+  showSlidedownPrompt?: () => void;
+  Notifications?: {
+    requestPermission?: () => Promise<boolean>;
+  };
+  User?: {
+    addTags?: (tags: Record<string, string>) => Promise<void>;
+  };
+};
+
 declare global {
   interface Window {
-    OneSignal?: {
-      init: (options: Record<string, unknown>) => Promise<void>;
-      showSlidedownPrompt: () => void;
-    };
+    OneSignal?: OneSignalSdk;
+    OneSignalDeferred?: Array<(OneSignal: OneSignalSdk) => void | Promise<void>>;
     webkit?: {
       messageHandlers?: {
         rawNotifications?: NativeNotificationBridge;
@@ -23,6 +34,7 @@ declare global {
 }
 
 const CONSENT_STORAGE_PREFIX = "raw.notification-consent";
+let oneSignalInitPromise: Promise<void> | null = null;
 
 function detectPlatform(): NotificationPlatform {
   const ua = navigator.userAgent;
@@ -40,6 +52,56 @@ function storageKey(userId: string, platform: NotificationPlatform): string {
   return `${CONSENT_STORAGE_PREFIX}.${userId}.${platform}`;
 }
 
+async function withOneSignal(callback: (OneSignal: OneSignalSdk) => void | Promise<void>): Promise<void> {
+  if (window.OneSignal) {
+    await callback(window.OneSignal);
+    return;
+  }
+
+  window.OneSignalDeferred = window.OneSignalDeferred ?? [];
+  await new Promise<void>((resolve, reject) => {
+    const timeout = window.setTimeout(() => reject(new Error("OneSignal SDK did not load.")), 8000);
+    window.OneSignalDeferred?.push(async (OneSignal) => {
+      window.clearTimeout(timeout);
+      try {
+        await callback(OneSignal);
+        resolve();
+      } catch (error) {
+        reject(error);
+      }
+    });
+  });
+}
+
+function initOneSignal(appId: string): Promise<void> {
+  if (!oneSignalInitPromise) {
+    oneSignalInitPromise = withOneSignal((OneSignal) =>
+      OneSignal.init({
+        appId,
+        allowLocalhostAsSecureOrigin: true,
+        serviceWorkerPath: "push/onesignal/OneSignalSDKWorker.js",
+        serviceWorkerParam: { scope: "/push/onesignal/" },
+      })
+    );
+  }
+
+  return oneSignalInitPromise;
+}
+
+async function identifyOneSignalUser(userId: string, platform: NotificationPlatform): Promise<void> {
+  const oneSignalAppId = import.meta.env.VITE_ONESIGNAL_APP_ID as string | undefined;
+  if (!oneSignalAppId) return;
+
+  await initOneSignal(oneSignalAppId);
+  await withOneSignal(async (OneSignal) => {
+    await OneSignal.login?.(userId);
+    await OneSignal.User?.addTags?.({
+      raw_user_id: userId,
+      platform,
+    });
+  });
+}
+
 async function saveConsent(
   userId: string,
   platform: NotificationPlatform,
@@ -47,21 +109,32 @@ async function saveConsent(
   provider: string,
   deviceToken?: string,
 ): Promise<void> {
-  await fetch(`/api/users/${encodeURIComponent(userId)}/notification-consent`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ platform, status, provider, deviceToken }),
+  await supabase.from("notification_consents").upsert({
+    user_id: userId,
+    platform,
+    status,
+    provider,
+    device_token: deviceToken,
+    updated_at: new Date().toISOString(),
+  }, {
+    onConflict: "user_id,platform",
   });
 }
 
 export function useNotificationConsent(userId?: string) {
   const platform = useMemo(() => detectPlatform(), []);
   const [status, setStatus] = useState<ConsentStatus | null>(null);
+  const [hasLoadedStoredConsent, setHasLoadedStoredConsent] = useState(false);
 
   useEffect(() => {
-    if (!userId) return;
+    setHasLoadedStoredConsent(false);
+    if (!userId) {
+      setStatus(null);
+      return;
+    }
     const stored = window.localStorage.getItem(storageKey(userId, platform)) as ConsentStatus | null;
-    if (stored) setStatus(stored);
+    setStatus(stored);
+    setHasLoadedStoredConsent(true);
   }, [platform, userId]);
 
   const persist = useCallback(
@@ -88,6 +161,11 @@ export function useNotificationConsent(userId?: string) {
   }, [persist, platform, userId]);
 
   useEffect(() => {
+    if (!userId) return;
+    void identifyOneSignalUser(userId, platform).catch(() => undefined);
+  }, [platform, userId]);
+
+  useEffect(() => {
     if (!userId || platform !== "apple-ios") return;
 
     const handleAppleDeviceToken = (event: Event) => {
@@ -104,22 +182,30 @@ export function useNotificationConsent(userId?: string) {
     if (!userId) return;
 
     if (platform === "apple-ios" && hasAppleBridge()) {
+      await persist("dismissed", "apple-native");
       window.webkit?.messageHandlers?.rawNotifications?.postMessage({ userId });
       track("push_prompt_shown", { provider: "apple-native" });
       return;
     }
 
     const oneSignalAppId = import.meta.env.VITE_ONESIGNAL_APP_ID as string | undefined;
-    if (oneSignalAppId && window.OneSignal) {
-      await window.OneSignal.init({
-        appId: oneSignalAppId,
-        notifyButton: { enable: true },
-        allowLocalhostAsSecureOrigin: true,
-      });
-      window.OneSignal.showSlidedownPrompt();
-      track("push_prompt_shown", { provider: "onesignal" });
-      await persist("granted", "onesignal");
-      return;
+    if (oneSignalAppId) {
+      try {
+        await identifyOneSignalUser(userId, platform);
+        await withOneSignal(async (OneSignal) => {
+          if (OneSignal.Notifications?.requestPermission) {
+            await OneSignal.Notifications.requestPermission();
+            return;
+          }
+
+          OneSignal.showSlidedownPrompt?.();
+        });
+        track("push_prompt_shown", { provider: "onesignal" });
+        await persist("granted", "onesignal");
+        return;
+      } catch {
+        // Fall back to the browser permission API if OneSignal is blocked or unavailable.
+      }
     }
 
     if (!("Notification" in window)) {
@@ -139,7 +225,7 @@ export function useNotificationConsent(userId?: string) {
     dismiss,
     platform,
     requestPermission,
-    shouldPrompt: Boolean(userId && !status),
+    shouldPrompt: Boolean(userId && hasLoadedStoredConsent && !status),
     status,
   };
 }

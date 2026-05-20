@@ -22,6 +22,8 @@ const DEFAULT_LOCAL_USERS: LocalAuthUser[] = [
   },
 ];
 
+const DEFAULT_ADMIN_USER = DEFAULT_LOCAL_USERS[0];
+
 interface LocalAuthUser extends AuthUser {
   password: string;
 }
@@ -92,11 +94,33 @@ function toAuthUser(user: LocalAuthUser): AuthUser {
   };
 }
 
+function normalizeLocalAuthUser(user: LocalAuthUser): LocalAuthUser {
+  if (user.username.toLowerCase() !== DEFAULT_ADMIN_USER.username) return user;
+  return {
+    ...user,
+    id: DEFAULT_ADMIN_USER.id,
+    role: DEFAULT_ADMIN_USER.role,
+    status: DEFAULT_ADMIN_USER.status,
+    avatar_level: user.avatar_level || DEFAULT_ADMIN_USER.avatar_level,
+  };
+}
+
+function normalizeAuthUser(user: AuthUser): AuthUser {
+  if (user.username.toLowerCase() !== DEFAULT_ADMIN_USER.username) return user;
+  return {
+    ...user,
+    id: DEFAULT_ADMIN_USER.id,
+    role: DEFAULT_ADMIN_USER.role,
+    status: DEFAULT_ADMIN_USER.status,
+    avatar_level: user.avatar_level || DEFAULT_ADMIN_USER.avatar_level,
+  };
+}
+
 function readLocalUsers(): LocalAuthUser[] {
   try {
     const raw = localStorage.getItem(LOCAL_USERS_KEY);
     const parsed = raw ? (JSON.parse(raw) as LocalAuthUser[]) : [];
-    const users = Array.isArray(parsed) ? parsed : [];
+    const users = Array.isArray(parsed) ? parsed.map(normalizeLocalAuthUser) : [];
     const hasAdmin = users.some((user) => user.username.toLowerCase() === 'admin');
     return hasAdmin ? users : [...DEFAULT_LOCAL_USERS, ...users];
   } catch {
@@ -173,7 +197,10 @@ export async function signOut(): Promise<void> {
 export async function getSession(): Promise<AuthUser | null> {
   try {
     const raw = localStorage.getItem(SESSION_KEY);
-    return raw ? (JSON.parse(raw) as AuthUser) : null;
+    if (!raw) return null;
+    const user = normalizeAuthUser(JSON.parse(raw) as AuthUser);
+    saveSession(user);
+    return user;
   } catch {
     return null;
   }

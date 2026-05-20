@@ -47,6 +47,8 @@ const envSchema = z.object({
   SIGNUP_INVITE_ONLY: z.preprocess(emptyToUndefined, z.enum(["true", "false"]).optional()),
   SUPABASE_URL: z.preprocess(emptyToUndefined, z.string().url().optional()),
   SUPABASE_SERVICE_ROLE_KEY: z.preprocess(emptyToUndefined, z.string().min(20).optional()),
+  ONESIGNAL_APP_ID: z.preprocess(emptyToUndefined, z.string().min(8).optional()),
+  ONESIGNAL_REST_API_KEY: z.preprocess(emptyToUndefined, z.string().min(20).optional()),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

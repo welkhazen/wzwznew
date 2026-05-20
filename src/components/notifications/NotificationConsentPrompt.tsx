@@ -24,7 +24,7 @@ export function NotificationConsentPrompt({ userId }: NotificationConsentPromptP
   const { dismiss, platform, requestPermission, shouldPrompt } = useNotificationConsent(userId);
 
   return (
-    <Dialog open={shouldPrompt}>
+    <Dialog open={shouldPrompt} onOpenChange={(open) => { if (!open) void dismiss(); }}>
       <DialogContent className="border-raw-border bg-raw-surface text-raw-text">
         <DialogHeader>
           <div className="mb-2 flex h-10 w-10 items-center justify-center border border-raw-gold/30 bg-raw-gold/10 text-raw-gold">
@@ -32,7 +32,7 @@ export function NotificationConsentPrompt({ userId }: NotificationConsentPromptP
           </div>
           <DialogTitle>Turn on {platformLabel(platform)}</DialogTitle>
           <DialogDescription className="text-raw-silver/60">
-            Get alerts for community replies, mentions, streak reminders, and important account updates. You can turn this off from your device settings.
+            Get alerts for likes, mentions, new communities, streak reminders, and important account updates. On iPhone, install raW to your Home Screen first for full push alerts.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
