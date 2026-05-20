@@ -5,7 +5,7 @@ import { WheelOfFortune, type WheelPrize } from "@/components/wheel/WheelOfFortu
 import { RARITY_CONFIG, RARITY_ORDER } from "@/lib/avatarRarity";
 import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
 import type { Poll } from "@/store/useRawStore";
-import TokenImage from "@/assets/tokens.png";
+import TokenImage from "@/assets/tokens.webp";
 
 interface DashboardInventoryProps {
   polls: Poll[];

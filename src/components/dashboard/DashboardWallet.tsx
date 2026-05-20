@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { CheckCircle2, Zap } from "lucide-react";
-import TokenImage from "@/assets/tokens.png";
+import TokenImage from "@/assets/tokens.webp";
 import { useRawStore } from "@/store/useRawStore";
 
 const PACKAGES = [

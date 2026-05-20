@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import tokenImg from "@/assets/tokens.png";
+import tokenImg from "@/assets/tokens.webp";
 import { useRawStore } from "@/store/useRawStore";
 import { useTheme } from "@/providers/useTheme";
 
