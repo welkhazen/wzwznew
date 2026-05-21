@@ -2,22 +2,9 @@ import { supabase } from '../client';
 import type { PersistedCommunityRecord, CommunityChatMessageRecord, CommunityChatMemberRecord } from '@/lib/communityChat.types';
 import type { CommunityRequestRecord } from '@/lib/adminData';
 import { buildCommunityAbbr } from '@/lib/communityChat.utils';
+import { mapCommunityMessage, type DbCommunityMessage } from './chatController';
 
-type DbMessage = {
-  id: string;
-  community_id: string;
-  sender_id: string;
-  sender_name: string;
-  text: string;
-  created_at: string;
-  pinned: boolean;
-  reply_to_message_id: string | null;
-  reply_to_sender_name: string | null;
-  reply_to_text: string | null;
-  deleted_at: string | null;
-  deleted_by_user_id: string | null;
-  liked_by: string[];
-};
+type DbMessage = DbCommunityMessage;
 
 type DbMember = {
   community_id: string;
@@ -44,24 +31,6 @@ type DbCommunity = {
   community_messages: DbMessage[];
 };
 
-function mapMessage(m: DbMessage): CommunityChatMessageRecord {
-  return {
-    id: m.id,
-    communityId: m.community_id,
-    senderId: m.sender_id,
-    senderName: m.sender_name,
-    text: m.text,
-    createdAt: m.created_at,
-    pinned: m.pinned,
-    replyToMessageId: m.reply_to_message_id ?? undefined,
-    replyToSenderName: m.reply_to_sender_name ?? undefined,
-    replyToText: m.reply_to_text ?? undefined,
-    deletedAt: m.deleted_at ?? undefined,
-    deletedByUserId: m.deleted_by_user_id ?? undefined,
-    likedBy: m.liked_by ?? [],
-  };
-}
-
 function mapMember(m: DbMember): CommunityChatMemberRecord {
   return {
     userId: m.user_id,
@@ -87,7 +56,7 @@ function mapCommunity(c: DbCommunity): PersistedCommunityRecord {
     createdBy: c.created_by ?? undefined,
     members: (c.community_members ?? []).map(mapMember),
     messages: (c.community_messages ?? [])
-      .map(mapMessage)
+      .map(mapCommunityMessage)
       .sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
   };
 }
