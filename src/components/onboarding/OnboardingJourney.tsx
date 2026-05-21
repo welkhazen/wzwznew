@@ -85,6 +85,21 @@ function applyAvatarThemes(items: AvatarCatalogItem[]): void {
   })));
 }
 
+function getPreviewOnlyAvatarImageScale(avatarId: string): React.CSSProperties | undefined {
+  switch (avatarId) {
+    case "neon-lynx":
+    case "blue-signal":
+    case "violet-mask":
+    case "horned-iron":
+    case "solar-flame":
+      return { transform: "scale(1.45)" };
+    case "pink-circuit":
+      return { transform: "scale(1.08)" };
+    default:
+      return undefined;
+  }
+}
+
 const FALLBACK_POLLS: OnboardingPoll[] = [
   {
     id: "core-safety",
@@ -396,7 +411,7 @@ export function OnboardingJourney({
                     <p className="mb-3 text-center font-display text-[9px] uppercase tracking-[0.2em] text-raw-gold/70">
                       Free avatars
                     </p>
-                    <div className="mx-auto grid w-full max-w-[15rem] grid-cols-2 gap-x-3 gap-y-3 min-[420px]:max-w-[22rem] min-[420px]:grid-cols-3 sm:max-w-[30rem] sm:grid-cols-5 sm:gap-x-3 sm:gap-y-4 md:mx-0">
+                    <div className="mx-auto grid w-full max-w-[24rem] grid-cols-4 gap-x-3 gap-y-3 sm:gap-x-3 sm:gap-y-4 md:mx-0">
                     {freeAvatarChoices.map((avatar, i) => {
                       const index = i + 1;
                       const isFree = true;
@@ -475,7 +490,7 @@ export function OnboardingJourney({
                       </button>
                     </div>
 
-                    <div className="mx-auto grid w-full max-w-[15rem] grid-cols-2 gap-x-3 gap-y-3 min-[420px]:max-w-[22rem] min-[420px]:grid-cols-3 sm:max-w-[30rem] sm:grid-cols-5 sm:gap-x-3 sm:gap-y-4 md:mx-0">
+                    <div className="mx-auto grid w-full max-w-[24rem] grid-cols-4 gap-x-3 gap-y-3 sm:gap-x-3 sm:gap-y-4 md:mx-0">
                       {isLoadingPreviewAvatars && visiblePreviewAvatarChoices.length === 0
                         ? Array.from({ length: AVATAR_PAGE_SIZE }).map((_, i) => (
                             <div key={i} className="flex flex-col items-center gap-1 p-1.5">
@@ -502,8 +517,22 @@ export function OnboardingJourney({
                             <div className={`relative rounded-full transition-all duration-300 ${
                               isPreviewed ? "scale-100 opacity-100" : "opacity-80 group-hover:opacity-100 group-hover:scale-105"
                             }`}>
-                              <AvatarFigure avatarIndex={index} size="sm" selected={isPreviewed} className="sm:hidden" rarity={avatar.rarity} />
-                              <AvatarFigure avatarIndex={index} size="md" selected={isPreviewed} className="hidden sm:block" rarity={avatar.rarity} />
+                              <AvatarFigure
+                                avatarIndex={index}
+                                size="sm"
+                                selected={isPreviewed}
+                                className="sm:hidden"
+                                rarity={avatar.rarity}
+                                style={getPreviewOnlyAvatarImageScale(avatar.id)}
+                              />
+                              <AvatarFigure
+                                avatarIndex={index}
+                                size="md"
+                                selected={isPreviewed}
+                                className="hidden sm:block"
+                                rarity={avatar.rarity}
+                                style={getPreviewOnlyAvatarImageScale(avatar.id)}
+                              />
                             </div>
                             <span className={`max-w-full truncate text-center font-display text-[7px] leading-tight tracking-[0.08em] transition-colors sm:text-[8px] ${
                               isPreviewed ? "text-raw-gold/80" : "text-raw-silver/45 group-hover:text-raw-silver/80"
