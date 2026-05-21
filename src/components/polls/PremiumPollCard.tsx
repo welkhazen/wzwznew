@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
+import { AtSign, Facebook, Link2, MessageCircle, Share2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { HoverGradientVoteButton } from "@/components/polls/HoverGradientVoteButton";
 import { useTheme } from "@/providers/useTheme";
+import { ShareButton } from "@/components/ui/share-button";
 import brainPollArt from "@/assets/BRAIN.webp";
 
 export interface PremiumPollOption {
@@ -62,18 +64,6 @@ export function PremiumPollCard({
 
   const voteLocked = useRef(false);
 
-  const [shareExpanded, setShareExpanded] = useState(false);
-
-  const sharePayload = useMemo(() => {
-    const url = typeof window !== "undefined" ? window.location.href : "";
-    const text = `${question} — vote on raW`;
-    return {
-      whatsapp: `https://wa.me/?text=${encodeURIComponent(`${text} ${url}`.trim())}`,
-      facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
-      instagram: `https://www.instagram.com/`,
-    };
-  }, [question]);
-
   useEffect(() => {
     voteLocked.current = false;
   }, [question]);
@@ -87,6 +77,26 @@ export function PremiumPollCard({
     },
     [disabled, isAnswered, onHintSeen, onVote]
   );
+
+  const shareText = `${question} — vote on raW`;
+  const shareUrl = typeof window !== "undefined" ? window.location.href : "";
+
+  const handleWhatsAppShare = () => {
+    const text = encodeURIComponent(`${shareText} ${shareUrl}`.trim());
+    window.open(`https://wa.me/?text=${text}`, "_blank", "noopener,noreferrer");
+  };
+
+  const handleInstagramShare = () => {
+    window.open("https://www.instagram.com/", "_blank", "noopener,noreferrer");
+  };
+
+  const handleFacebookShare = () => {
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, "_blank", "noopener,noreferrer");
+  };
+
+  const handleCopyLink = async () => {
+    await navigator.clipboard?.writeText(shareUrl);
+  };
 
   return (
     <article className={cn("relative mx-auto w-full max-w-[22rem] select-none", className)} aria-label={question}>
@@ -143,21 +153,18 @@ export function PremiumPollCard({
             {showHint && !isAnswered && (
               <div className="mt-4 flex flex-col items-center">
                 <p className="text-center text-[10px] uppercase tracking-[0.2em]" style={{ color: "rgb(var(--raw-accent) / 0.75)" }}>tap to vote</p>
-                <button
-                  type="button"
-                  onClick={() => setShareExpanded((open) => !open)}
-                  className="mt-2 rounded-full border border-raw-gold/40 bg-raw-gold/10 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-raw-gold transition hover:bg-raw-gold/15"
-                  aria-expanded={shareExpanded}
+                <ShareButton
+                  links={[
+                    { icon: MessageCircle, onClick: handleWhatsAppShare, label: "Share on WhatsApp" },
+                    { icon: AtSign, onClick: handleInstagramShare, label: "Share on Instagram" },
+                    { icon: Facebook, onClick: handleFacebookShare, label: "Share on Facebook" },
+                    { icon: Link2, onClick: handleCopyLink, label: "Copy link" },
+                  ]}
+                  className="mt-2 min-w-28 border-raw-gold/40 bg-raw-gold/10 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-raw-gold hover:bg-raw-gold/15 dark:border-raw-gold/40 dark:bg-raw-gold/10 dark:text-raw-gold dark:hover:bg-raw-gold/15"
                 >
+                  <Share2 className="size-3" />
                   Share
-                </button>
-                <div
-                  className={`mt-2 flex items-center gap-1.5 overflow-hidden transition-all duration-300 ${shareExpanded ? "max-h-10 opacity-100" : "max-h-0 opacity-0"}`}
-                >
-                  <a href={sharePayload.whatsapp} target="_blank" rel="noreferrer" className="rounded-full border border-raw-border/45 px-2 py-1 text-[9px] uppercase tracking-[0.12em] text-raw-silver/80 transition hover:border-raw-gold/45 hover:text-raw-gold">WhatsApp</a>
-                  <a href={sharePayload.instagram} target="_blank" rel="noreferrer" className="rounded-full border border-raw-border/45 px-2 py-1 text-[9px] uppercase tracking-[0.12em] text-raw-silver/80 transition hover:border-raw-gold/45 hover:text-raw-gold">Instagram</a>
-                  <a href={sharePayload.facebook} target="_blank" rel="noreferrer" className="rounded-full border border-raw-border/45 px-2 py-1 text-[9px] uppercase tracking-[0.12em] text-raw-silver/80 transition hover:border-raw-gold/45 hover:text-raw-gold">Facebook</a>
-                </div>
+                </ShareButton>
               </div>
             )}
 
