@@ -26,11 +26,13 @@ import {
   countOnlineMembers,
   formatChatDayLabel,
   formatChatTimestamp,
+  leaveCommunityChat,
   updateCommunityPresentation,
 } from "@/lib/communityChat";
 import {
   fetchCommunities,
   joinCommunity as joinCommunitySupabase,
+  leaveCommunity as leaveCommunitySupabase,
   touchMemberActivity,
   markCommunityRead as markCommunityReadSupabase,
   setCommunityNotifications as setCommunityNotificationsSupabase,
@@ -186,6 +188,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
   const [waitlistJoiningId, setWaitlistJoiningId] = useState<string | null>(null);
   const [communityAccess, setCommunityAccess] = useState<CommunityAccess>({ hasSubscription: false, unlockedIds: new Set<string>() });
   const [unlockingId, setUnlockingId] = useState<string | null>(null);
+  const [leavingCommunityId, setLeavingCommunityId] = useState<string | null>(null);
   const [messageDraft, setMessageDraft] = useState("");
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [mentionIndex, setMentionIndex] = useState(0);
@@ -342,6 +345,32 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         }
       } catch {
         toast({ title: "Failed to join", description: "Please try again." });
+      }
+    };
+
+    const handleLeaveCommunity = async () => {
+      if (!selectedCommunity || !isJoined || leavingCommunityId) {
+        return;
+      }
+
+      const communityId = selectedCommunity.id;
+      const communityTitle = selectedCommunity.title;
+      setLeavingCommunityId(communityId);
+
+      try {
+        await leaveCommunitySupabase(communityId, user.id);
+        leaveCommunityChat(communityId, user.id);
+        lastTouchedCommunityRef.current = "";
+        await reloadChatData();
+        onBackToCommunities?.();
+        toast({
+          title: `Left ${communityTitle}`,
+          description: "This change was saved to your community membership.",
+        });
+      } catch {
+        toast({ title: "Failed to leave", description: "Please try again." });
+      } finally {
+        setLeavingCommunityId(null);
       }
     };
 
@@ -948,6 +977,15 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                   className="rounded-full border border-raw-border/30 px-3 py-1.5 text-[11px] text-raw-silver/55 transition-colors hover:border-raw-gold/20 hover:text-raw-gold"
                 >
                   Edit Group
+                </button>
+              )}
+              {isJoined && (
+                <button
+                  onClick={handleLeaveCommunity}
+                  disabled={leavingCommunityId === selectedCommunity.id}
+                  className="rounded-full border border-red-400/25 bg-red-500/[0.06] px-3 py-1.5 text-[11px] font-semibold text-red-200/80 transition-colors hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {leavingCommunityId === selectedCommunity.id ? "Leaving..." : "Leave"}
                 </button>
               )}
               <button

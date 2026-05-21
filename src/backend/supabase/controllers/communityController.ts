@@ -112,6 +112,15 @@ export async function joinCommunity(communityId: string, userId: string, usernam
   if (error) throw error;
 }
 
+export async function leaveCommunity(communityId: string, userId: string): Promise<void> {
+  const { error } = await supabase
+    .from('community_members')
+    .delete()
+    .eq('community_id', communityId)
+    .eq('user_id', userId);
+  if (error) throw error;
+}
+
 export async function touchMemberActivity(communityId: string, userId: string, username: string): Promise<void> {
   const { error } = await supabase
     .from('community_members')

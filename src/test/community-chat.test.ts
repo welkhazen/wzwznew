@@ -5,6 +5,7 @@ import {
   createCommunityFromApprovedRequest,
   deleteCommunityMessage,
   joinCommunityChat,
+  leaveCommunityChat,
   markCommunityRead,
   readCommunityChats,
   sendCommunityMessage,
@@ -30,6 +31,17 @@ describe("community chat storage", () => {
 
     expect(updatedCommunity?.members.some((member) => member.userId === "user-alice")).toBe(true);
     expect(updatedCommunity?.messages.at(-1)?.text).toBe("hello everyone");
+  });
+
+  it("leaves a community and persists membership removal", () => {
+    const community = readCommunityChats()[0];
+
+    joinCommunityChat(community.id, { userId: "user-alice", username: "alice" });
+    leaveCommunityChat(community.id, "user-alice");
+
+    const updatedCommunity = readCommunityChats().find((entry) => entry.id === community.id);
+
+    expect(updatedCommunity?.members.some((member) => member.userId === "user-alice")).toBe(false);
   });
 
   it("stores reply metadata and supports deleting own messages", () => {
