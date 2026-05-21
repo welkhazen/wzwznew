@@ -58,7 +58,7 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(request)
       .then((res) => {
-        if (res.ok) {
+        if (canCache(request, res)) {
           const clone = res.clone();
           caches.open(CACHE).then((c) => c.put(request, clone));
         }
@@ -70,10 +70,14 @@ self.addEventListener('fetch', (event) => {
 
 function fetchAndCache(request) {
   return fetch(request).then((res) => {
-    if (res.ok) {
+    if (canCache(request, res)) {
       const clone = res.clone();
       caches.open(CACHE).then((c) => c.put(request, clone));
     }
     return res;
   });
+}
+
+function canCache(request, response) {
+  return response.ok && response.status !== 206 && !request.headers.has('range');
 }
