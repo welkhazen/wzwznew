@@ -65,12 +65,34 @@ import {
 } from "@/lib/communityAccess";
 
 const WAITLIST_UNLOCK_THRESHOLD = 200;
+const COMMUNITIES_CACHE_KEY = "raw.dashboard.communities.v1";
+
+function readCachedCommunities(): PersistedCommunityRecord[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.sessionStorage.getItem(COMMUNITIES_CACHE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeCachedCommunities(communities: PersistedCommunityRecord[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.setItem(COMMUNITIES_CACHE_KEY, JSON.stringify(communities));
+  } catch {
+    // ignore storage write errors
+  }
+}
 
 export function DashboardCommunities(props) {
       // Main search query state (fix ReferenceError)
       const [searchQuery, setSearchQuery] = useState("");
     // Main community state (fix ReferenceError)
-    const [communities, setCommunities] = useState([]);
+    const [communities, setCommunities] = useState<PersistedCommunityRecord[]>(() => readCachedCommunities());
   // Destructure props for clarity and to avoid ReferenceError
   const {
     user,
@@ -83,6 +105,7 @@ export function DashboardCommunities(props) {
   const [showRequestButton, setShowRequestButton] = useState(false);
   const [requestBtnText, setRequestBtnText] = useState("Didn't find your community?");
   const [mobileRequestExpanded, setMobileRequestExpanded] = useState(false);
+  const [isInitialCommunitiesLoading, setIsInitialCommunitiesLoading] = useState(() => readCachedCommunities().length === 0);
 
   // Show button after scrolling 400px
   useEffect(() => {
@@ -210,20 +233,25 @@ const COMMUNITY_LOGOS: Record<string, string> = {
   const messageInputRef = useRef<HTMLInputElement | null>(null);
 
     const reloadChatData = useCallback(async () => {
-      const [communitiesData, requestsData, waitlistData, accessData] = await Promise.all([
-        fetchCommunities(),
-        fetchCommunityRequests(user.id),
-        fetchWaitlistSummary(user.id).catch(() => createEmptyWaitlistSummary()),
-        loadCommunityAccess(user.id).catch(() => ({ hasSubscription: false, unlockedIds: new Set<string>() })),
-      ]);
-      setCommunities(communitiesData);
-      onCommunitiesChange?.(communitiesData);
-      setCommunityRequests(requestsData);
-      setChatReports(readChatReports());
-      setCommunityJoinRequests(readCommunityJoinRequests());
-      setWaitlistCounts(waitlistData.counts);
-      setWaitlistJoinedIds(waitlistData.joinedCommunityIds);
-      setCommunityAccess(accessData);
+      try {
+        const [communitiesData, requestsData, waitlistData, accessData] = await Promise.all([
+          fetchCommunities(),
+          fetchCommunityRequests(user.id),
+          fetchWaitlistSummary(user.id).catch(() => createEmptyWaitlistSummary()),
+          loadCommunityAccess(user.id).catch(() => ({ hasSubscription: false, unlockedIds: new Set<string>() })),
+        ]);
+        setCommunities(communitiesData);
+        writeCachedCommunities(communitiesData);
+        onCommunitiesChange?.(communitiesData);
+        setCommunityRequests(requestsData);
+        setChatReports(readChatReports());
+        setCommunityJoinRequests(readCommunityJoinRequests());
+        setWaitlistCounts(waitlistData.counts);
+        setWaitlistJoinedIds(waitlistData.joinedCommunityIds);
+        setCommunityAccess(accessData);
+      } finally {
+        setIsInitialCommunitiesLoading(false);
+      }
     }, [onCommunitiesChange, user.id]);
 
     const selectedCommunity = useMemo(
@@ -1414,6 +1442,14 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         </div>
       );
     };
+
+    if (activeCommunityId && isInitialCommunitiesLoading) {
+      return (
+        <div className="rounded-3xl border border-raw-border/30 bg-raw-surface/20 p-8 text-center text-raw-silver/50">
+          <p className="font-display text-lg text-raw-text">Loading community…</p>
+        </div>
+      );
+    }
 
     if (activeCommunityId && !selectedCommunity) {
       return (
