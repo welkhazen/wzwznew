@@ -8,6 +8,7 @@ interface AvatarFigureProps {
   selected?: boolean;
   className?: string;
   rarity?: AvatarRarity;
+  disableRarityGlow?: boolean;
   style?: CSSProperties;
 }
 
@@ -18,7 +19,7 @@ const sizes = {
   xl: { outer: 180, inner: 148, face: 0.65 },
 };
 
-export function AvatarFigure({ avatarIndex, size = "md", selected = false, className = "", rarity, style }: AvatarFigureProps) {
+export function AvatarFigure({ avatarIndex, size = "md", selected = false, className = "", rarity, disableRarityGlow = false, style }: AvatarFigureProps) {
   const theme = LEVEL_THEMES[avatarIndex - 1] || LEVEL_THEMES[0];
   const [imageFailed, setImageFailed] = useState(false);
   const useImage = !!theme.imageSrc && !imageFailed;
