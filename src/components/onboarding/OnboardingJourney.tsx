@@ -18,6 +18,8 @@ import { EnterRawModal } from "./EnterRawModal";
 import type { OnboardingStep, Poll, User } from "@/store/useRawStore";
 import { track } from "@/lib/analytics";
 
+const AGE_GATE_STORAGE_PREFIX = "raw.age-gate";
+
 type OnboardingPoll = {
   id: string;
   question: string;
