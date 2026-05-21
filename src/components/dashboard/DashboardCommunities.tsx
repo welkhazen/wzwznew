@@ -67,6 +67,7 @@ import {
 
 const WAITLIST_UNLOCK_THRESHOLD = 200;
 const COMMUNITIES_CACHE_KEY = "raw.dashboard.communities.v1";
+const MAX_COMMUNITY_MESSAGE_LENGTH = 150;
 
 function readCachedCommunities(): PersistedCommunityRecord[] {
   if (typeof window === "undefined") return [];
@@ -89,11 +90,19 @@ function writeCachedCommunities(communities: PersistedCommunityRecord[]): void {
   }
 }
 
+function normalizeCommunitiesForDashboard(communities: PersistedCommunityRecord[]): PersistedCommunityRecord[] {
+  return communities.map((community) => (
+    community.id === "lnt"
+      ? { ...community, messages: [] }
+      : community
+  ));
+}
+
 export function DashboardCommunities(props) {
       // Main search query state (fix ReferenceError)
       const [searchQuery, setSearchQuery] = useState("");
     // Main community state (fix ReferenceError)
-    const [communities, setCommunities] = useState<PersistedCommunityRecord[]>(() => readCachedCommunities());
+    const [communities, setCommunities] = useState<PersistedCommunityRecord[]>(() => normalizeCommunitiesForDashboard(readCachedCommunities()));
   // Destructure props for clarity and to avoid ReferenceError
   const {
     user,
@@ -242,9 +251,10 @@ const COMMUNITY_LOGOS: Record<string, string> = {
           fetchWaitlistSummary(user.id).catch(() => createEmptyWaitlistSummary()),
           loadCommunityAccess(user.id).catch(() => ({ hasSubscription: false, unlockedIds: new Set<string>() })),
         ]);
-        setCommunities(communitiesData);
-        writeCachedCommunities(communitiesData);
-        onCommunitiesChange?.(communitiesData);
+        const normalizedCommunities = normalizeCommunitiesForDashboard(communitiesData);
+        setCommunities(normalizedCommunities);
+        writeCachedCommunities(normalizedCommunities);
+        onCommunitiesChange?.(normalizedCommunities);
         setCommunityRequests(requestsData);
         setChatReports(readChatReports());
         setCommunityJoinRequests(readCommunityJoinRequests());
@@ -256,7 +266,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       }
     }, [onCommunitiesChange, user.id]);
 
-    const fallbackCommunities = useMemo(() => buildDefaultCommunities(), []);
+    const fallbackCommunities = useMemo(() => normalizeCommunitiesForDashboard(buildDefaultCommunities()), []);
     const selectedCommunity = useMemo(() => {
       if (!activeCommunityId) return null;
       return (
@@ -639,6 +649,10 @@ const COMMUNITY_LOGOS: Record<string, string> = {
 
       const trimmedMessage = messageDraft.trim();
       if (!trimmedMessage) {
+        return;
+      }
+      if (trimmedMessage.length > MAX_COMMUNITY_MESSAGE_LENGTH) {
+        toast({ title: "Message too long", description: `Max ${MAX_COMMUNITY_MESSAGE_LENGTH} characters.` });
         return;
       }
 
@@ -1410,6 +1424,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                 <input
                   ref={messageInputRef}
                   value={messageDraft}
+                  maxLength={MAX_COMMUNITY_MESSAGE_LENGTH}
                   onChange={(event) => {
                     const val = event.target.value;
                     setMessageDraft(val);
