@@ -9,11 +9,17 @@ import { initSentry } from "@/lib/sentry";
 import App from "./App.tsx";
 import "./index.css";
 import "./styles/raw-reveal-button.css";
+import posthog from "posthog-js";
 
 const queryClient = new QueryClient();
 
 initSentry();
 installGlobalCrashAlerts();
+
+posthog.init(import.meta.env.VITE_POSTHOG_KEY, {
+  api_host: import.meta.env.VITE_POSTHOG_HOST || "https://us.i.posthog.com",
+  capture_pageview: true,
+});
 
 if (typeof window !== "undefined") {
   const originalWarn = console.warn;
