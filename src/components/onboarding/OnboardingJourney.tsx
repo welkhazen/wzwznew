@@ -5,11 +5,11 @@ import isItJustMeVideo from "@/assets/itisjustme.webm";
 import speakYourTruthVideo from "@/assets/speakyourheart.webm";
 import lntVideo from "@/assets/2026-04-18 10_10_00.webm";
 import { AvatarFigure } from "@/components/ui/avatar-figure";
-import { AVATARS, setAvatarThemes } from "@/lib/avataridentity";
+import { setAvatarThemes } from "@/lib/avataridentity";
 import { AvatarPhoneHomeScreen } from "@/components/ui/avatar-phone-home-screen";
 import { PhoneMockup } from "@/components/ui/phone-mockup";
 import { fetchSupabasePolls } from "@/utils/supabasePolls";
-import { loadFullAvatarCatalog, readFullAvatarCatalogLocal, type AvatarCatalogItem } from "@/lib/avatarCatalog";
+import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -47,23 +47,31 @@ const STEP_LABELS: Record<OnboardingStep, string> = {
   marketplace: "insights",
   ready: "ready",
 };
-const FREE_ONBOARDING_AVATAR_COUNT = 10;
+const FREE_ONBOARDING_AVATAR_COUNT = 8;
 const AVATAR_PAGE_SIZE = 10;
 const AGE_GATE_STORAGE_PREFIX = "raw.ageGateVerified";
 
+const LANDING_ONBOARDING_AVATARS: readonly AvatarCatalogItem[] = [
+  { id: "ember", level: 1, name: "Ember", price: "Free", imageSrc: "/avatars/avatar-2.svg", bg: "#0c1a24", figure: "#5ed6ff", ring: "#5ed6ff", glow: "#5ed6ff80", isActive: true, rarity: "common" },
+  { id: "verdant", level: 2, name: "Verdant", price: "Free", imageSrc: "/avatars/avatar-3.svg", bg: "#0a1124", figure: "#3f8bff", ring: "#3f8bff", glow: "#3f8bff80", isActive: true, rarity: "common" },
+  { id: "horned", level: 3, name: "Horned", price: "Free", imageSrc: "/avatars/avatar-5.svg", bg: "#0b1a0e", figure: "#16a34a", ring: "#16a34a", glow: "#16a34a80", isActive: true, rarity: "common" },
+  { id: "pharaoh", level: 4, name: "Pharaoh", price: "Free", imageSrc: "/avatars/avatar-6.svg", bg: "#1f0d18", figure: "#ec4899", ring: "#ec4899", glow: "#ec489980", isActive: true, rarity: "common" },
+  { id: "violet", level: 5, name: "Violet", price: "Free", imageSrc: "/avatars/avatar-7.svg", bg: "#150a22", figure: "#8b5cf6", ring: "#8b5cf6", glow: "#8b5cf680", isActive: true, rarity: "common" },
+  { id: "rose", level: 6, name: "Rose", price: "Free", imageSrc: "/avatars/avatar-8.svg", bg: "#1f1208", figure: "#f97316", ring: "#f97316", glow: "#f9731680", isActive: true, rarity: "common" },
+  { id: "black", level: 7, name: "Black", price: "Free", imageSrc: "/avatars/avatar-9.svg", bg: "#1f0a0a", figure: "#dc2626", ring: "#dc2626", glow: "#dc262680", isActive: true, rarity: "common" },
+  { id: "blue", level: 8, name: "Blue", price: "Free", imageSrc: "/avatars/avatar-10.svg", bg: "#1f1705", figure: "#facc15", ring: "#facc15", glow: "#facc1590", isActive: true, rarity: "common" },
+  { id: "silver-void", level: 9, name: "Silver Void", price: "Locked", imageSrc: "/avatars/1.webp", bg: "#111827", figure: "#cbd5e1", ring: "#cbd5e1", glow: "#cbd5e180", isActive: true, rarity: "common" },
+  { id: "neon-lynx", level: 10, name: "Neon Lynx", price: "Locked", imageSrc: "/avatars/2.webp", bg: "#170f2e", figure: "#a855f7", ring: "#c084fc", glow: "#a855f780", isActive: true, rarity: "common" },
+  { id: "blue-signal", level: 11, name: "Blue Signal", price: "Locked", imageSrc: "/avatars/3.webp", bg: "#06131f", figure: "#22d3ee", ring: "#22d3ee", glow: "#22d3ee80", isActive: true, rarity: "common" },
+  { id: "violet-mask", level: 12, name: "Violet Mask", price: "Locked", imageSrc: "/avatars/4.webp", bg: "#1a1028", figure: "#d946ef", ring: "#d946ef", glow: "#d946ef80", isActive: true, rarity: "common" },
+  { id: "horned-iron", level: 13, name: "Horned Iron", price: "Locked", imageSrc: "/avatars/5.webp", bg: "#1f0a05", figure: "#fb923c", ring: "#fb923c", glow: "#fb923c80", isActive: true, rarity: "common" },
+  { id: "crimson-muse", level: 14, name: "Crimson Muse", price: "Locked", imageSrc: "/avatars/6.webp", bg: "#2a0b0b", figure: "#f97316", ring: "#f97316", glow: "#f9731680", isActive: true, rarity: "common" },
+  { id: "solar-flame", level: 15, name: "Solar Flame", price: "Locked", imageSrc: "/avatars/7.webp", bg: "#241005", figure: "#facc15", ring: "#facc15", glow: "#facc1590", isActive: true, rarity: "common" },
+  { id: "pink-circuit", level: 16, name: "Pink Circuit", price: "Locked", imageSrc: "/avatars/8.webp", bg: "#2a0b1c", figure: "#fb7185", ring: "#fb7185", glow: "#fb718580", isActive: true, rarity: "common" },
+];
+
 function fallbackAvatarCatalog(): AvatarCatalogItem[] {
-  return AVATARS.filter(Boolean).map((avatar, index) => ({
-    id: `avatar-${index + 1}`,
-    level: index + 1,
-    name: avatar.name || `Avatar ${index + 1}`,
-    price: index < FREE_ONBOARDING_AVATAR_COUNT ? "Free" : "Locked",
-    imageSrc: avatar.imageSrc,
-    bg: avatar.bg,
-    figure: avatar.figure,
-    ring: avatar.ring,
-    glow: avatar.glow,
-    isActive: index < FREE_ONBOARDING_AVATAR_COUNT,
-  }));
+  return LANDING_ONBOARDING_AVATARS.map((avatar) => ({ ...avatar }));
 }
 
 function applyAvatarThemes(items: AvatarCatalogItem[]): void {
@@ -75,6 +83,21 @@ function applyAvatarThemes(items: AvatarCatalogItem[]): void {
     name: item.name,
     imageSrc: item.imageSrc,
   })));
+}
+
+function getPreviewOnlyAvatarImageScale(avatarId: string): React.CSSProperties | undefined {
+  switch (avatarId) {
+    case "neon-lynx":
+    case "blue-signal":
+    case "violet-mask":
+    case "horned-iron":
+    case "solar-flame":
+      return { transform: "scale(1.45)" };
+    case "pink-circuit":
+      return { transform: "scale(1.08)" };
+    default:
+      return undefined;
+  }
 }
 
 const FALLBACK_POLLS: OnboardingPoll[] = [
@@ -226,11 +249,8 @@ export function OnboardingJourney({
   const [enterRawOpen, setEnterRawOpen] = useState(false);
   const [isAgeVerified, setIsAgeVerified] = useState(false);
   const [isAgeVerifiedLoaded, setIsAgeVerifiedLoaded] = useState(false);
-  const [onboardingAvatars, setOnboardingAvatars] = useState<AvatarCatalogItem[]>(() => {
-    const cached = readFullAvatarCatalogLocal();
-    return cached.length > 0 ? cached : fallbackAvatarCatalog();
-  });
-  const [isLoadingPreviewAvatars, setIsLoadingPreviewAvatars] = useState(() => readFullAvatarCatalogLocal().length === 0);
+  const [onboardingAvatars] = useState<AvatarCatalogItem[]>(() => fallbackAvatarCatalog());
+  const [isLoadingPreviewAvatars] = useState(false);
   const [previewAvatarIndex, setPreviewAvatarIndex] = useState(() => Math.min(Math.max(avatarIndex, 1), Math.max(1, onboardingAvatars.length)));
   const [avatarPage, setAvatarPage] = useState(() => Math.floor((Math.min(Math.max(avatarIndex, 1), Math.max(1, onboardingAvatars.length)) - 1) / AVATAR_PAGE_SIZE));
   const answeredCount = onboardingPolls.filter((poll) => onboardingAnsweredPollIds.has(poll.id)).length;
@@ -280,27 +300,8 @@ export function OnboardingJourney({
   };
 
   useEffect(() => {
-    const cached = readFullAvatarCatalogLocal();
-    if (cached.length > 0) {
-      setOnboardingAvatars(cached);
-      applyAvatarThemes(cached);
-      setIsLoadingPreviewAvatars(false);
-    }
-
-    let cancelled = false;
-    loadFullAvatarCatalog()
-      .then((items) => {
-        if (cancelled || items.length === 0) return;
-        setOnboardingAvatars(items);
-        applyAvatarThemes(items);
-      })
-      .catch(() => {})
-      .finally(() => { if (!cancelled) setIsLoadingPreviewAvatars(false); });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    applyAvatarThemes(onboardingAvatars);
+  }, [onboardingAvatars]);
 
   useEffect(() => {
     setAvatarPage((page) => Math.min(page, previewAvatarPageCount - 1));
@@ -410,7 +411,7 @@ export function OnboardingJourney({
                     <p className="mb-3 text-center font-display text-[9px] uppercase tracking-[0.2em] text-raw-gold/70">
                       Free avatars
                     </p>
-                    <div className="mx-auto grid w-full max-w-[15rem] grid-cols-2 gap-x-3 gap-y-3 min-[420px]:max-w-[22rem] min-[420px]:grid-cols-3 sm:max-w-[30rem] sm:grid-cols-5 sm:gap-x-3 sm:gap-y-4 md:mx-0">
+                    <div className="mx-auto grid w-full max-w-[24rem] grid-cols-4 gap-x-3 gap-y-3 sm:gap-x-3 sm:gap-y-4 md:mx-0">
                     {freeAvatarChoices.map((avatar, i) => {
                       const index = i + 1;
                       const isFree = true;
@@ -489,7 +490,7 @@ export function OnboardingJourney({
                       </button>
                     </div>
 
-                    <div className="mx-auto grid w-full max-w-[15rem] grid-cols-2 gap-x-3 gap-y-3 min-[420px]:max-w-[22rem] min-[420px]:grid-cols-3 sm:max-w-[30rem] sm:grid-cols-5 sm:gap-x-3 sm:gap-y-4 md:mx-0">
+                    <div className="mx-auto grid w-full max-w-[24rem] grid-cols-4 gap-x-3 gap-y-3 sm:gap-x-3 sm:gap-y-4 md:mx-0">
                       {isLoadingPreviewAvatars && visiblePreviewAvatarChoices.length === 0
                         ? Array.from({ length: AVATAR_PAGE_SIZE }).map((_, i) => (
                             <div key={i} className="flex flex-col items-center gap-1 p-1.5">
@@ -516,8 +517,22 @@ export function OnboardingJourney({
                             <div className={`relative rounded-full transition-all duration-300 ${
                               isPreviewed ? "scale-100 opacity-100" : "opacity-80 group-hover:opacity-100 group-hover:scale-105"
                             }`}>
-                              <AvatarFigure avatarIndex={index} size="sm" selected={isPreviewed} className="sm:hidden" rarity={avatar.rarity} />
-                              <AvatarFigure avatarIndex={index} size="md" selected={isPreviewed} className="hidden sm:block" rarity={avatar.rarity} />
+                              <AvatarFigure
+                                avatarIndex={index}
+                                size="sm"
+                                selected={isPreviewed}
+                                className="sm:hidden"
+                                rarity={avatar.rarity}
+                                style={getPreviewOnlyAvatarImageScale(avatar.id)}
+                              />
+                              <AvatarFigure
+                                avatarIndex={index}
+                                size="md"
+                                selected={isPreviewed}
+                                className="hidden sm:block"
+                                rarity={avatar.rarity}
+                                style={getPreviewOnlyAvatarImageScale(avatar.id)}
+                              />
                             </div>
                             <span className={`max-w-full truncate text-center font-display text-[7px] leading-tight tracking-[0.08em] transition-colors sm:text-[8px] ${
                               isPreviewed ? "text-raw-gold/80" : "text-raw-silver/45 group-hover:text-raw-silver/80"
