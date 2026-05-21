@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { Poll } from "@/store/useRawStore";
 import { useTheme } from "@/providers/useTheme";
 import { PremiumPollCard } from "@/components/polls/PremiumPollCard";
+import { ShareButton } from "@/components/ui/share-button";
 import { addPollComment, fetchPollComments } from "@/utils/supabasePolls";
 import { isNoPollOption, isYesPollOption } from "@/lib/polls/normalizePollOptionText";
 import {
@@ -12,11 +13,14 @@ import {
   Coins,
   Copy,
   Facebook,
+  Link2,
   Instagram,
   MessageCircle,
   SendHorizontal,
   Share2,
+  Smartphone,
   Users,
+  AtSign,
 } from "lucide-react";
 
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
@@ -303,18 +307,6 @@ export function DashboardPolls({
   const [expandedSharePollId, setExpandedSharePollId] = useState<string | null>(null);
 
   const commentsEndRef = useRef<HTMLDivElement>(null);
-  const sharePickerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!sharePickerOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (sharePickerRef.current && !sharePickerRef.current.contains(e.target as Node)) {
-        setSharePickerOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [sharePickerOpen]);
 
   useEffect(() => {
     setLoadedAnswersStorageKey(answersStorageKey);
@@ -646,51 +638,27 @@ export function DashboardPolls({
             />
           )}
 
-          <div ref={sharePickerRef} className="relative mt-4">
-            <button
-              type="button"
-              onClick={() => setSharePickerOpen((v) => !v)}
-              className="w-full inline-flex items-center justify-center gap-2 border border-raw-gold/45 bg-raw-gold/10 px-3 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-raw-gold transition hover:bg-raw-gold/15"
+          <div className="mt-4 flex justify-center">
+            <ShareButton
+              links={[
+                { icon: Smartphone, onClick: () => handleWhatsAppShare(currentPoll), label: "Share on WhatsApp" },
+                { icon: AtSign, onClick: () => handleInstagramShare(currentPoll), label: "Share on Instagram" },
+                { icon: Facebook, onClick: () => handleFacebookShare(currentPoll), label: "Share on Facebook" },
+                { icon: Link2, onClick: () => copyShareLink(currentPoll), label: "Copy link" },
+              ]}
+              className="w-full border-raw-gold/45 bg-raw-gold/10 text-[11px] font-semibold uppercase tracking-[0.16em] text-raw-gold hover:bg-raw-gold/15 dark:border-raw-gold/45 dark:bg-raw-gold/10 dark:text-raw-gold dark:hover:bg-raw-gold/15"
             >
               <Share2 className="size-3.5" />
               Share
-            </button>
-
-            {sharePickerOpen && (
-              <div className="absolute bottom-full mb-1 left-0 right-0 z-30 border border-raw-border/55 bg-[#0a0a0a] flex flex-col">
-                <button
-                  type="button"
-                  onClick={() => { copyShareLink(currentPoll); setSharePickerOpen(false); }}
-                  className="flex items-center gap-2.5 px-4 py-3 text-[11px] uppercase tracking-[0.14em] text-raw-silver/75 transition hover:bg-raw-surface/30 hover:text-raw-gold"
-                >
-                  <Copy className="size-3.5" /> Copy Link
-                </button>
-                <div className="h-px bg-raw-border/25" />
-                <button
-                  type="button"
-                  onClick={() => { handleFacebookShare(currentPoll); setSharePickerOpen(false); }}
-                  className="flex items-center gap-2.5 px-4 py-3 text-[11px] uppercase tracking-[0.14em] text-raw-silver/75 transition hover:bg-raw-surface/30 hover:text-raw-gold"
-                >
-                  <Facebook className="size-3.5" /> Facebook
-                </button>
-                <div className="h-px bg-raw-border/25" />
-                <button
-                  type="button"
-                  onClick={() => { handleInstagramShare(currentPoll); setSharePickerOpen(false); }}
-                  className="flex items-center gap-2.5 px-4 py-3 text-[11px] uppercase tracking-[0.14em] text-raw-silver/75 transition hover:bg-raw-surface/30 hover:text-raw-gold"
-                >
-                  <Instagram className="size-3.5" /> Instagram Story
-                </button>
-              </div>
-            )}
-
-            {shareCopied && (
-              <p className="mt-2 flex items-center justify-center gap-1.5 text-[11px] text-raw-gold/75">
-                <Check className="size-3" />
-                Copied share text
-              </p>
-            )}
+            </ShareButton>
           </div>
+
+          {shareCopied && (
+            <p className="mt-2 flex items-center justify-center gap-1.5 text-[11px] text-raw-gold/75">
+              <Check className="size-3" />
+              Copied share text
+            </p>
+          )}
 
           <button
             onClick={() => { setLockedPollId(null); setCurrentPollIndex((previous) => Math.min(displayPolls.length - 1, previous + 1)); }}
