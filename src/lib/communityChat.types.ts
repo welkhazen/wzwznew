@@ -23,6 +23,7 @@ export interface CommunityChatMessageRecord {
   deletedAt?: string;
   deletedByUserId?: string;
   likedBy?: string[];
+  deliveryStatus?: "sending" | "failed";
 }
 
 export interface PersistedCommunityRecord {
