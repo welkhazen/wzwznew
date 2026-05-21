@@ -424,15 +424,10 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
           <DropdownMenu onOpenChange={(open) => { if (!open) setAppearanceOpen(false); }}>
             <DropdownMenuTrigger asChild>
               <button
-                className={cn(
-                  "flex items-center gap-2.5 rounded-full border p-0.5 transition-colors",
-                  isEffectiveLight
-                    ? "border-slate-200 bg-white shadow-[0_6px_18px_rgba(15,23,42,0.10)] hover:border-raw-gold/35"
-                    : "border-raw-border/40 bg-raw-surface/35 hover:border-raw-gold/35",
-                )}
+                className="flex items-center transition-opacity hover:opacity-80"
                 aria-label="Open profile menu"
               >
-                <AvatarFigure avatarIndex={avatarLevel} size="sm" selected />
+                <AvatarFigure avatarIndex={avatarLevel} size="md" selected />
               </button>
             </DropdownMenuTrigger>
 
