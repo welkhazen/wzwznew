@@ -92,6 +92,23 @@ export function joinCommunityChat(communityId: string, { userId, username }: Joi
   return nextCommunities.find((community) => community.id === communityId) ?? null;
 }
 
+export function leaveCommunityChat(communityId: string, userId: string): PersistedCommunityRecord | null {
+  const communities = readCommunityChats();
+  const nextCommunities = communities.map((community) => {
+    if (community.id !== communityId) {
+      return community;
+    }
+
+    return {
+      ...community,
+      members: community.members.filter((member) => member.userId !== userId),
+    };
+  });
+
+  writeCommunityChats(nextCommunities);
+  return nextCommunities.find((community) => community.id === communityId) ?? null;
+}
+
 export function touchCommunityMemberActivity(communityId: string, { userId, username }: JoinCommunityInput): PersistedCommunityRecord | null {
   const communities = readCommunityChats();
   let didUpdate = false;
