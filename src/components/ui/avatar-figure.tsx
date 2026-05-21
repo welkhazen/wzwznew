@@ -24,7 +24,7 @@ export function AvatarFigure({ avatarIndex, size = "md", selected = false, class
   const useImage = !!theme.imageSrc && !imageFailed;
   const s = sizes[size];
 
-  const rarityStyle = rarity && rarity !== "common"
+  const rarityStyle = !disableRarityGlow && rarity && rarity !== "common"
     ? {
         boxShadow: `0 0 0 2px ${RARITY_CONFIG[rarity].color}, 0 0 8px ${RARITY_CONFIG[rarity].glow}`,
         borderRadius: "50%",
