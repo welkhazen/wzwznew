@@ -17,6 +17,8 @@ import {
   getPersistedUserById,
   readChatReports,
   readCommunityJoinRequests,
+  type ChatReportRecord,
+  type CommunityJoinRequestRecord,
   writeChatReports,
   writeCommunityJoinRequests,
 } from "@/lib/adminData";
@@ -37,7 +39,13 @@ import {
   markCommunityRead as markCommunityReadSupabase,
   setCommunityNotifications as setCommunityNotificationsSupabase,
 } from "@/backend/supabase/controllers/communityController";
-import { sendMessage as sendMessageSupabase, likeMessage } from "@/backend/supabase/controllers/chatController";
+import {
+  sendMessage as sendMessageSupabase,
+  likeMessage,
+  mapCommunityMessage,
+  type DbCommunityMessage,
+} from "@/backend/supabase/controllers/chatController";
+import { supabase } from "@/backend/supabase/client";
 import {
   fetchCommunityPolls,
   createCommunityPoll,
@@ -56,7 +64,7 @@ import {
 } from "@/lib/communityConstants";
 import { buildDefaultCommunities } from "@/lib/communityChat.seed";
 import { sendCommunityPushNotification } from "@/lib/communityPushNotifications";
-import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
+import type { CommunityChatMessageRecord, PersistedCommunityRecord } from "@/lib/communityChat.types";
 import {
   loadCommunityAccess,
   unlockCommunity,
@@ -64,6 +72,7 @@ import {
   COMMUNITY_UNLOCK_TOKEN_COST,
   type CommunityAccess,
 } from "@/lib/communityAccess";
+import type { User } from "@/store/types";
 
 const WAITLIST_UNLOCK_THRESHOLD = 200;
 const COMMUNITIES_CACHE_KEY = "raw.dashboard.communities.v1";
@@ -88,6 +97,69 @@ function writeCachedCommunities(communities: PersistedCommunityRecord[]): void {
   } catch {
     // ignore storage write errors
   }
+}
+
+function mergeCommunityMessages(
+  messages: CommunityChatMessageRecord[],
+  incoming: CommunityChatMessageRecord,
+): CommunityChatMessageRecord[] {
+  const withoutSameId = messages.filter((message) => message.id !== incoming.id);
+  const pendingIndex = withoutSameId.findIndex((message) =>
+    message.deliveryStatus === "sending" &&
+    message.senderId === incoming.senderId &&
+    message.text === incoming.text
+  );
+
+  const nextMessages = [...withoutSameId];
+  if (pendingIndex >= 0) {
+    nextMessages[pendingIndex] = incoming;
+  } else {
+    nextMessages.push(incoming);
+  }
+
+  return nextMessages.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+}
+
+function upsertCommunityMessage(
+  communities: PersistedCommunityRecord[],
+  communityId: string,
+  message: CommunityChatMessageRecord,
+): PersistedCommunityRecord[] {
+  return communities.map((community) =>
+    community.id === communityId
+      ? { ...community, messages: mergeCommunityMessages(community.messages, message) }
+      : community
+  );
+}
+
+function replaceCommunityMessage(
+  communities: PersistedCommunityRecord[],
+  communityId: string,
+  previousId: string,
+  message: CommunityChatMessageRecord,
+): PersistedCommunityRecord[] {
+  return communities.map((community) => {
+    if (community.id !== communityId) return community;
+    const withoutPrevious = community.messages.filter((entry) => entry.id !== previousId);
+    return { ...community, messages: mergeCommunityMessages(withoutPrevious, message) };
+  });
+}
+
+function markCommunityMessageFailed(
+  communities: PersistedCommunityRecord[],
+  communityId: string,
+  messageId: string,
+): PersistedCommunityRecord[] {
+  return communities.map((community) =>
+    community.id === communityId
+      ? {
+          ...community,
+          messages: community.messages.map((message) =>
+            message.id === messageId ? { ...message, deliveryStatus: "failed" } : message
+          ),
+        }
+      : community
+  );
 }
 
 export function DashboardCommunities(props) {
@@ -234,6 +306,15 @@ const COMMUNITY_LOGOS: Record<string, string> = {
   const lastTouchedCommunityRef = useRef<string>("");
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const messageInputRef = useRef<HTMLInputElement | null>(null);
+
+    const updateCommunities = useCallback((updater: (communities: PersistedCommunityRecord[]) => PersistedCommunityRecord[]) => {
+      setCommunities((previous) => {
+        const next = updater(previous);
+        writeCachedCommunities(next);
+        onCommunitiesChange?.(next);
+        return next;
+      });
+    }, [onCommunitiesChange]);
 
     const reloadChatData = useCallback(async () => {
       try {
@@ -455,6 +536,36 @@ const COMMUNITY_LOGOS: Record<string, string> = {
     }, [reloadChatData]);
 
     useEffect(() => {
+      if (!activeCommunityId) {
+        return;
+      }
+
+      const channel = supabase
+        .channel(`room:${activeCommunityId}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "community_messages",
+            filter: `community_id=eq.${activeCommunityId}`,
+          },
+          (payload) => {
+            const nextMessage = mapCommunityMessage(payload.new as DbCommunityMessage);
+            if (nextMessage.communityId !== activeCommunityId) {
+              return;
+            }
+            updateCommunities((current) => upsertCommunityMessage(current, activeCommunityId, nextMessage));
+          },
+        )
+        .subscribe();
+
+      return () => {
+        void supabase.removeChannel(channel);
+      };
+    }, [activeCommunityId, updateCommunities]);
+
+    useEffect(() => {
       if (!selectedCommunity || !isJoined) {
         return;
       }
@@ -626,6 +737,57 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       }
     };
 
+    const sendOptimisticMessage = useCallback(async (trimmedMessage: string, retryMessage?: CommunityChatMessageRecord) => {
+      if (!selectedCommunity) return;
+      const optimisticMessage: CommunityChatMessageRecord = retryMessage
+        ? { ...retryMessage, deliveryStatus: "sending", createdAt: new Date().toISOString() }
+        : {
+            id: `pending-${selectedCommunity.id}-${Date.now()}`,
+            communityId: selectedCommunity.id,
+            senderId: user.id,
+            senderName: user.username,
+            text: trimmedMessage,
+            createdAt: new Date().toISOString(),
+            likedBy: [],
+            deliveryStatus: "sending",
+          };
+
+      updateCommunities((current) => upsertCommunityMessage(current, selectedCommunity.id, optimisticMessage));
+
+      try {
+        const mentionRecipientIds = selectedCommunity.members
+          .filter((member) =>
+            member.userId !== user.id &&
+            member.notificationsEnabled &&
+            new RegExp(`(^|\\s)@${member.username}\\b`, "i").test(trimmedMessage)
+          )
+          .map((member) => member.userId);
+
+        if (!isJoined) {
+          await joinCommunitySupabase(selectedCommunity.id, user.id, user.username);
+          lastTouchedCommunityRef.current = `${selectedCommunity.id}:${user.id}`;
+        }
+
+        const savedMessage = await sendMessageSupabase(selectedCommunity.id, {
+          senderId: user.id,
+          senderName: user.username,
+          text: trimmedMessage,
+        });
+        updateCommunities((current) => replaceCommunityMessage(current, selectedCommunity.id, optimisticMessage.id, savedMessage));
+        setMessageDraft("");
+        setMentionQuery(null);
+        void sendCommunityPushNotification({
+          recipientUserIds: mentionRecipientIds,
+          title: `@${user.username} mentioned you`,
+          body: `${selectedCommunity.title}: ${trimmedMessage}`,
+          url: `${window.location.origin}/dashboard/communities/${selectedCommunity.id}`,
+        });
+      } catch {
+        updateCommunities((current) => markCommunityMessageFailed(current, selectedCommunity.id, optimisticMessage.id));
+        toast({ title: "Failed to send message", description: "Please try again." });
+      }
+    }, [isJoined, selectedCommunity, updateCommunities, user.id, user.username]);
+
     const handleSendMessage = async () => {
       if (!selectedCommunity) {
         return;
@@ -647,42 +809,12 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         toast({ title: "Message too long", description: `Max ${MAX_COMMUNITY_MESSAGE_LENGTH} characters.` });
         return;
       }
-      if (isReadOnlyCommunity) {
-        toast({ title: "Read-only community", description: "Messaging is disabled in Late Night Talk." });
-        return;
-      }
+      await sendOptimisticMessage(trimmedMessage);
+    };
 
-      try {
-        const mentionRecipientIds = selectedCommunity.members
-          .filter((member) =>
-            member.userId !== user.id &&
-            member.notificationsEnabled &&
-            new RegExp(`(^|\\s)@${member.username}\\b`, "i").test(trimmedMessage)
-          )
-          .map((member) => member.userId);
-
-        if (!isJoined) {
-          await joinCommunitySupabase(selectedCommunity.id, user.id, user.username);
-          lastTouchedCommunityRef.current = `${selectedCommunity.id}:${user.id}`;
-        }
-
-        await sendMessageSupabase(selectedCommunity.id, {
-          senderId: user.id,
-          senderName: user.username,
-          text: trimmedMessage,
-        });
-        await reloadChatData();
-        setMessageDraft("");
-        setMentionQuery(null);
-        void sendCommunityPushNotification({
-          recipientUserIds: mentionRecipientIds,
-          title: `@${user.username} mentioned you`,
-          body: `${selectedCommunity.title}: ${trimmedMessage}`,
-          url: `${window.location.origin}/dashboard/communities/${selectedCommunity.id}`,
-        });
-      } catch {
-        toast({ title: "Failed to send message", description: "Please try again." });
-      }
+    const handleRetryMessage = async (message: CommunityChatMessageRecord) => {
+      if (message.deliveryStatus !== "failed") return;
+      await sendOptimisticMessage(message.text, message);
     };
 
     const handleLikeMessage = async (message: CommunityChatMessageRecord) => {
@@ -1344,8 +1476,18 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                           </span>
                           <span className="ml-2 text-[9px] text-raw-silver/25">{formatChatTimestamp(message.createdAt)}</span>
                           {message.pinned && <span className="ml-1 text-[9px] text-raw-gold/60">· Pinned</span>}
+                          {message.deliveryStatus === "sending" && <span className="ml-1 text-[9px] text-raw-silver/35">· Sending</span>}
+                          {message.deliveryStatus === "failed" && <span className="ml-1 text-[9px] text-red-300/80">· Failed</span>}
                         </p>
-                        {!message.deletedAt && (
+                        {message.deliveryStatus === "failed" && (
+                          <button
+                            onClick={() => { void handleRetryMessage(message); }}
+                            className="mt-1 text-[10px] font-semibold text-red-200/90 underline-offset-2 hover:underline"
+                          >
+                            Retry
+                          </button>
+                        )}
+                        {!message.deletedAt && !message.deliveryStatus && (
                           <button
                             onClick={() => { void handleLikeMessage(message); }}
                             className={`absolute right-2.5 top-1/2 -translate-y-1/2 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] transition-all ${alreadyLiked ? "border-raw-gold/45 bg-raw-gold/10 text-raw-gold opacity-100" : "border-raw-border/20 text-raw-silver/40 opacity-0 group-hover/msg:opacity-100"}`}
