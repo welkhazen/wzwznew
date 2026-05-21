@@ -1,16 +1,14 @@
-"use client";
-
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import type { LucideIcon } from "lucide-react";
+import { Link2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 interface ShareLink {
   icon: LucideIcon;
-  href?: string;
-  onClick?: () => void;
-  label?: string;
+  onClick: () => void;
+  label: string;
 }
 
 interface ShareButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -18,26 +16,35 @@ interface ShareButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement>
   children: React.ReactNode;
 }
 
-const ShareButton = ({ className, links, children, ...props }: ShareButtonProps) => {
-  const [isHovered, setIsHovered] = useState(false);
+export function ShareButton({ className, links, children, ...props }: ShareButtonProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const onPointerDown = (event: MouseEvent | TouchEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("touchstart", onPointerDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("touchstart", onPointerDown);
+    };
+  }, [isOpen]);
 
   return (
-    <div
-      className="relative"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
+    <div ref={containerRef} className="relative inline-flex h-10">
       <Button
+        type="button"
         className={cn(
-          "relative min-w-40 rounded-3xl",
-          "bg-white dark:bg-black",
-          "hover:bg-gray-50 dark:hover:bg-gray-950",
-          "text-black dark:text-white",
-          "border border-black/10 dark:border-white/10",
-          "transition-all duration-300",
-          isHovered ? "opacity-0" : "opacity-100",
+          "relative h-10 min-w-40 rounded-3xl border border-black/10 bg-white text-black transition-all duration-300 hover:bg-gray-50 dark:border-white/10 dark:bg-black dark:text-white dark:hover:bg-gray-950",
+          isOpen ? "pointer-events-none opacity-0" : "opacity-100",
           className,
         )}
+        onClick={() => setIsOpen(true)}
         {...props}
       >
         <span className="flex items-center gap-2">{children}</span>
@@ -49,35 +56,37 @@ const ShareButton = ({ className, links, children, ...props }: ShareButtonProps)
           return (
             <button
               type="button"
-              key={index}
-              onClick={link.onClick}
+              key={link.label}
+              onClick={() => {
+                link.onClick();
+                setIsOpen(false);
+              }}
+              aria-label={link.label}
+              title={link.label}
               className={cn(
-                "h-10",
-                "w-10",
-                "flex items-center justify-center",
-                "bg-black dark:bg-white",
-                "text-white dark:text-black",
-                "transition-all duration-300",
+                "flex h-10 w-10 items-center justify-center bg-black text-white transition-all duration-200 hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100",
                 index === 0 && "rounded-l-3xl",
                 index === links.length - 1 && "rounded-r-3xl",
                 "border-r border-white/10 last:border-r-0 dark:border-black/10",
-                "hover:bg-gray-900 dark:hover:bg-gray-100",
-                isHovered ? "translate-x-0 opacity-100" : "-translate-x-full opacity-0",
-                index === 0 && "transition-all duration-200",
-                index === 1 && "delay-[50ms] transition-all duration-200",
-                index === 2 && "transition-all delay-100 duration-200",
-                index === 3 && "transition-all delay-150 duration-200",
+                isOpen ? "translate-x-0 opacity-100" : "-translate-x-full opacity-0",
               )}
-              aria-label={link.label}
-              title={link.label}
             >
               <Icon className="size-4" />
             </button>
           );
         })}
+        <button
+          type="button"
+          onClick={() => setIsOpen(false)}
+          aria-label="Close share options"
+          className={cn(
+            "ml-1 flex h-10 w-10 items-center justify-center rounded-full border border-raw-border/35 bg-raw-black/80 text-raw-silver/80 transition-all duration-200 hover:border-raw-gold/45 hover:text-raw-gold",
+            isOpen ? "translate-x-0 opacity-100" : "translate-x-2 opacity-0 pointer-events-none",
+          )}
+        >
+          <Link2 className="size-4" />
+        </button>
       </div>
     </div>
   );
-};
-
-export default ShareButton;
+}

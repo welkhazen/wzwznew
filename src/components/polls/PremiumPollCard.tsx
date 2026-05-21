@@ -3,7 +3,7 @@ import { AtSign, Facebook, Link2, MessageCircle, Share2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { HoverGradientVoteButton } from "@/components/polls/HoverGradientVoteButton";
 import { useTheme } from "@/providers/useTheme";
-import ShareButton from "@/components/ui/share-button";
+import { ShareButton } from "@/components/ui/share-button";
 import brainPollArt from "@/assets/BRAIN.webp";
 
 export interface PremiumPollOption {
