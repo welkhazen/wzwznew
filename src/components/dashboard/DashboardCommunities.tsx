@@ -54,6 +54,7 @@ import {
   COMMUNITY_COVER_IMAGES,
   COMMUNITY_COVER_VIDEOS,
 } from "@/lib/communityConstants";
+import { buildDefaultCommunities } from "@/lib/communityChat.seed";
 import { sendCommunityPushNotification } from "@/lib/communityPushNotifications";
 import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
 import {
@@ -224,6 +225,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
   const [mentionIndex, setMentionIndex] = useState(0);
   const [expandedDescs, setExpandedDescs] = useState<Set<string>>(new Set());
   const [communityPolls, setCommunityPolls] = useState<CommunityPollRecord[]>([]);
+  const [communityPollsAvailable, setCommunityPollsAvailable] = useState(true);
   const [pollComposerOpen, setPollComposerOpen] = useState(false);
   const [pollQuestion, setPollQuestion] = useState("");
   const [pollOptionDrafts, setPollOptionDrafts] = useState<string[]>(["", ""]);
@@ -254,10 +256,15 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       }
     }, [onCommunitiesChange, user.id]);
 
-    const selectedCommunity = useMemo(
-      () => activeCommunityId ? communities.find((community) => community.id === activeCommunityId) ?? null : null,
-      [activeCommunityId, communities]
-    );
+    const fallbackCommunities = useMemo(() => buildDefaultCommunities(), []);
+    const selectedCommunity = useMemo(() => {
+      if (!activeCommunityId) return null;
+      return (
+        communities.find((community) => community.id === activeCommunityId)
+        ?? fallbackCommunities.find((community) => community.id === activeCommunityId)
+        ?? null
+      );
+    }, [activeCommunityId, communities, fallbackCommunities]);
     const userRequests = useMemo(
       () => communityRequests.filter((request) => request.requesterId === user.id),
       [communityRequests, user.id]
@@ -317,7 +324,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
     }, [activeCommunityId]);
 
     const reloadCommunityPolls = useCallback(async () => {
-      if (!activeCommunityId) {
+      if (!activeCommunityId || !communityPollsAvailable) {
         setCommunityPolls([]);
         return;
       }
@@ -325,9 +332,15 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         const polls = await fetchCommunityPolls(activeCommunityId, user.id);
         setCommunityPolls(polls);
       } catch (error) {
+        const status = typeof error === "object" && error !== null && "status" in error ? Number((error as { status?: number }).status) : null;
+        if (status === 404) {
+          setCommunityPollsAvailable(false);
+          setCommunityPolls([]);
+          return;
+        }
         console.error("Failed to load community polls", error);
       }
-    }, [activeCommunityId, user.id]);
+    }, [activeCommunityId, communityPollsAvailable, user.id]);
 
     useEffect(() => {
       void reloadCommunityPolls();
