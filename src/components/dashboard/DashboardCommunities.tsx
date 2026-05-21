@@ -1471,6 +1471,14 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       );
     };
 
+    if (activeCommunityId && isInitialCommunitiesLoading) {
+      return (
+        <div className="rounded-3xl border border-raw-border/30 bg-raw-surface/20 p-8 text-center text-raw-silver/50">
+          <p className="font-display text-lg text-raw-text">Loading community…</p>
+        </div>
+      );
+    }
+
     if (activeCommunityId && !selectedCommunity) {
       return (
         <div className="rounded-3xl border border-raw-border/30 bg-raw-surface/20 p-8 text-center text-raw-silver/50">
