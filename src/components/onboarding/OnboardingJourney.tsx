@@ -516,8 +516,8 @@ export function OnboardingJourney({
                             <div className={`relative rounded-full transition-all duration-300 ${
                               isPreviewed ? "scale-100 opacity-100" : "opacity-80 group-hover:opacity-100 group-hover:scale-105"
                             }`}>
-                              <AvatarFigure avatarIndex={index} size="sm" selected={isPreviewed} className="sm:hidden" rarity={avatar.rarity} />
-                              <AvatarFigure avatarIndex={index} size="md" selected={isPreviewed} className="hidden sm:block" rarity={avatar.rarity} />
+                              <AvatarFigure avatarIndex={index} size="sm" selected={isPreviewed} className="sm:hidden" rarity={avatar.rarity} disableRarityGlow />
+                              <AvatarFigure avatarIndex={index} size="md" selected={isPreviewed} className="hidden sm:block" rarity={avatar.rarity} disableRarityGlow />
                             </div>
                             <span className={`max-w-full truncate text-center font-display text-[7px] leading-tight tracking-[0.08em] transition-colors sm:text-[8px] ${
                               isPreviewed ? "text-raw-gold/80" : "text-raw-silver/45 group-hover:text-raw-silver/80"

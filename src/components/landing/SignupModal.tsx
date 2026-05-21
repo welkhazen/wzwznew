@@ -30,36 +30,6 @@ function maskPhone(phone: string): string {
   return `${phone.slice(0, 4)}${"•".repeat(phone.length - 7)}${phone.slice(-3)}`;
 }
 
-function getPasswordChecks(password: string) {
-  return {
-    length: password.length >= 8,
-    uppercase: /[A-Z]/.test(password),
-    lowercase: /[a-z]/.test(password),
-    number: /\d/.test(password),
-    symbol: /[^A-Za-z0-9]/.test(password),
-  };
-}
-
-function getPasswordStrength(password: string) {
-  const checks = getPasswordChecks(password);
-  const passedChecks = Object.values(checks).filter(Boolean).length;
-
-  if (password.length === 0) {
-    return { label: "Add a stronger password", tone: "text-raw-silver/40", checks };
-  }
-
-  if (passedChecks <= 2) {
-    return { label: "Weak", tone: "text-red-300", checks };
-  }
-
-  if (passedChecks <= 4) {
-    return { label: "Medium", tone: "text-amber-300", checks };
-  }
-
-  return { label: "Strong", tone: "text-emerald-300", checks };
-}
-
-
 export function SignupModal({ open, onClose, onRequestSignupOtp, onVerifySignupOtp, onLogin, source }: SignupModalProps) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -116,15 +86,8 @@ export function SignupModal({ open, onClose, onRequestSignupOtp, onVerifySignupO
     const normalizedUsername = normalizePlainText(sanitizeUsernameInput(username));
     const normalizedPassword = sanitizePasswordInput(password).trim();
     const normalizedConfirmPassword = sanitizePasswordInput(confirmPassword).trim();
-    const checks = getPasswordChecks(normalizedPassword);
-
-    if (!isValidUsername(normalizedUsername) || normalizedPassword.length < 8) {
-      setError("Use a 3-24 character username and an 8+ character password.");
-      return;
-    }
-
-    if (Object.values(checks).some((isValid) => !isValid)) {
-      setError("Password must include upper/lowercase letters, a number, and a symbol.");
+    if (!isValidUsername(normalizedUsername) || normalizedPassword.length === 0) {
+      setError("Use a 3-24 character username and enter a password.");
       return;
     }
 
@@ -176,7 +139,7 @@ export function SignupModal({ open, onClose, onRequestSignupOtp, onVerifySignupO
     const normalizedUsername = normalizePlainText(sanitizeUsernameInput(username));
     const normalizedPassword = sanitizePasswordInput(password).trim();
 
-    if (!isValidUsername(normalizedUsername) || normalizedPassword.length < 8) {
+    if (!isValidUsername(normalizedUsername) || normalizedPassword.length === 0) {
       setError("Enter your username and password.");
       return;
     }
@@ -199,7 +162,6 @@ export function SignupModal({ open, onClose, onRequestSignupOtp, onVerifySignupO
   };
 
   const isSignup = mode === "signup";
-  const passwordStrength = getPasswordStrength(password);
   const channelSummary =
     sentChannels.length > 0
       ? sentChannels.map((channel) => channel === "whatsapp" ? "WhatsApp" : "SMS").join(" + ")
@@ -288,7 +250,6 @@ export function SignupModal({ open, onClose, onRequestSignupOtp, onVerifySignupO
                   value={password}
                   onChange={(event) => setPassword(sanitizePasswordInput(event.target.value))}
                   placeholder="Create a password"
-                  minLength={8}
                   maxLength={128}
                   autoComplete="new-password"
                   className="w-full rounded-xl border border-raw-border bg-raw-black/50 px-4 py-3 pr-12 text-sm text-raw-text placeholder:text-raw-silver/25 transition-all focus:border-raw-gold/30 focus:outline-none focus:ring-1 focus:ring-raw-gold/20"
@@ -302,19 +263,6 @@ export function SignupModal({ open, onClose, onRequestSignupOtp, onVerifySignupO
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
-              <div className="mt-2 rounded-xl border border-raw-border/50 bg-raw-black/30 px-3 py-2.5">
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-raw-silver/45">Password strength</span>
-                  <span className={passwordStrength.tone}>{passwordStrength.label}</span>
-                </div>
-                <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-[10px] text-raw-silver/35">
-                  <span className={passwordStrength.checks.length ? "text-emerald-300" : undefined}>8+ characters</span>
-                  <span className={passwordStrength.checks.uppercase ? "text-emerald-300" : undefined}>Uppercase letter</span>
-                  <span className={passwordStrength.checks.lowercase ? "text-emerald-300" : undefined}>Lowercase letter</span>
-                  <span className={passwordStrength.checks.number ? "text-emerald-300" : undefined}>Number</span>
-                  <span className={passwordStrength.checks.symbol ? "text-emerald-300" : undefined}>Special character</span>
-                </div>
-              </div>
             </div>
 
             <div>
@@ -325,7 +273,6 @@ export function SignupModal({ open, onClose, onRequestSignupOtp, onVerifySignupO
                   value={confirmPassword}
                   onChange={(event) => setConfirmPassword(sanitizePasswordInput(event.target.value))}
                   placeholder="Confirm your password"
-                  minLength={8}
                   maxLength={128}
                   autoComplete="new-password"
                   className="w-full rounded-xl border border-raw-border bg-raw-black/50 px-4 py-3 pr-12 text-sm text-raw-text placeholder:text-raw-silver/25 transition-all focus:border-raw-gold/30 focus:outline-none focus:ring-1 focus:ring-raw-gold/20"
@@ -379,7 +326,6 @@ export function SignupModal({ open, onClose, onRequestSignupOtp, onVerifySignupO
                   value={password}
                   onChange={(event) => setPassword(sanitizePasswordInput(event.target.value))}
                   placeholder="Enter your password"
-                  minLength={8}
                   maxLength={128}
                   autoComplete="current-password"
                   className="w-full rounded-xl border border-raw-border bg-raw-black/50 px-4 py-3 pr-12 text-sm text-raw-text placeholder:text-raw-silver/25 transition-all focus:border-raw-gold/30 focus:outline-none focus:ring-1 focus:ring-raw-gold/20"
