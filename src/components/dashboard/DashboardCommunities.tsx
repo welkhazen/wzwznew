@@ -90,19 +90,11 @@ function writeCachedCommunities(communities: PersistedCommunityRecord[]): void {
   }
 }
 
-function normalizeCommunitiesForDashboard(communities: PersistedCommunityRecord[]): PersistedCommunityRecord[] {
-  return communities.map((community) => (
-    community.id === "lnt"
-      ? { ...community, messages: [] }
-      : community
-  ));
-}
-
 export function DashboardCommunities(props) {
       // Main search query state (fix ReferenceError)
       const [searchQuery, setSearchQuery] = useState("");
     // Main community state (fix ReferenceError)
-    const [communities, setCommunities] = useState<PersistedCommunityRecord[]>(() => normalizeCommunitiesForDashboard(readCachedCommunities()));
+    const [communities, setCommunities] = useState<PersistedCommunityRecord[]>(() => readCachedCommunities());
   // Destructure props for clarity and to avoid ReferenceError
   const {
     user,
@@ -251,10 +243,9 @@ const COMMUNITY_LOGOS: Record<string, string> = {
           fetchWaitlistSummary(user.id).catch(() => createEmptyWaitlistSummary()),
           loadCommunityAccess(user.id).catch(() => ({ hasSubscription: false, unlockedIds: new Set<string>() })),
         ]);
-        const normalizedCommunities = normalizeCommunitiesForDashboard(communitiesData);
-        setCommunities(normalizedCommunities);
-        writeCachedCommunities(normalizedCommunities);
-        onCommunitiesChange?.(normalizedCommunities);
+        setCommunities(communitiesData);
+        writeCachedCommunities(communitiesData);
+        onCommunitiesChange?.(communitiesData);
         setCommunityRequests(requestsData);
         setChatReports(readChatReports());
         setCommunityJoinRequests(readCommunityJoinRequests());
@@ -266,7 +257,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       }
     }, [onCommunitiesChange, user.id]);
 
-    const fallbackCommunities = useMemo(() => normalizeCommunitiesForDashboard(buildDefaultCommunities()), []);
+    const fallbackCommunities = useMemo(() => buildDefaultCommunities(), []);
     const selectedCommunity = useMemo(() => {
       if (!activeCommunityId) return null;
       return (
@@ -284,6 +275,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
     const isUserBanned = (currentUserRecord?.moderationStatus ?? user.moderationStatus) === "banned";
     const warningCount = currentUserRecord?.warnings ?? user.warnings;
     const currentMember = selectedCommunity?.members.find((member) => member.userId === user.id) ?? null;
+    const isReadOnlyCommunity = selectedCommunity?.id === "lnt";
     const isJoined = Boolean(currentMember);
     const canEditSelectedCommunity = selectedCommunity ? canManageCommunity(selectedCommunity, user.id, user.username) : false;
     const isGlobalAdmin = user.role === "admin";
@@ -653,6 +645,10 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       }
       if (trimmedMessage.length > MAX_COMMUNITY_MESSAGE_LENGTH) {
         toast({ title: "Message too long", description: `Max ${MAX_COMMUNITY_MESSAGE_LENGTH} characters.` });
+        return;
+      }
+      if (isReadOnlyCommunity) {
+        toast({ title: "Read-only community", description: "Messaging is disabled in Late Night Talk." });
         return;
       }
 
@@ -1331,7 +1327,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                             <p className="mt-0.5 truncate">{message.replyToText}</p>
                           </div>
                         )}
-                        <p className={`text-sm leading-snug ${message.deletedAt ? "italic text-raw-silver/45" : ""}`}>
+                        <p className={`break-words [overflow-wrap:anywhere] text-sm leading-snug ${message.deletedAt ? "italic text-raw-silver/45" : ""}`}>
                           <span
                             className="mr-0.5 font-semibold uppercase tracking-wide text-[11px]"
                             style={{ color: isOwnMessage ? "rgb(var(--raw-accent))" : "rgb(var(--raw-accent) / 0.65)" }}
@@ -1452,13 +1448,13 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                     }
                     if (event.key === "Enter") handleSendMessage();
                   }}
-                  placeholder="Type a message..."
-                  disabled={isUserBanned}
+                  placeholder={isReadOnlyCommunity ? "Messaging is disabled in this community." : "Type a message..."}
+                  disabled={isUserBanned || isReadOnlyCommunity}
                   className="flex-1 rounded-xl border border-raw-border/30 bg-raw-surface/30 px-4 py-2.5 text-sm text-raw-text placeholder:text-raw-silver/25 focus:border-raw-gold/25 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
                 />
                 <button
                   onClick={handleSendMessage}
-                  disabled={isUserBanned}
+                  disabled={isUserBanned || isReadOnlyCommunity}
                   className="flex items-center gap-1.5 rounded-xl bg-raw-gold px-4 py-2.5 text-sm font-semibold text-raw-ink disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <Send className="h-4 w-4" />
