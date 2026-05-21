@@ -65,12 +65,34 @@ import {
 } from "@/lib/communityAccess";
 
 const WAITLIST_UNLOCK_THRESHOLD = 200;
+const COMMUNITIES_CACHE_KEY = "raw.dashboard.communities.v1";
+
+function readCachedCommunities(): PersistedCommunityRecord[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.sessionStorage.getItem(COMMUNITIES_CACHE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeCachedCommunities(communities: PersistedCommunityRecord[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.setItem(COMMUNITIES_CACHE_KEY, JSON.stringify(communities));
+  } catch {
+    // ignore storage write errors
+  }
+}
 
 export function DashboardCommunities(props) {
       // Main search query state (fix ReferenceError)
       const [searchQuery, setSearchQuery] = useState("");
     // Main community state (fix ReferenceError)
-    const [communities, setCommunities] = useState([]);
+    const [communities, setCommunities] = useState<PersistedCommunityRecord[]>(() => readCachedCommunities());
   // Destructure props for clarity and to avoid ReferenceError
   const {
     user,
@@ -83,7 +105,7 @@ export function DashboardCommunities(props) {
   const [showRequestButton, setShowRequestButton] = useState(false);
   const [requestBtnText, setRequestBtnText] = useState("Didn't find your community?");
   const [mobileRequestExpanded, setMobileRequestExpanded] = useState(false);
-  const [isInitialCommunitiesLoading, setIsInitialCommunitiesLoading] = useState(true);
+  const [isInitialCommunitiesLoading, setIsInitialCommunitiesLoading] = useState(() => readCachedCommunities().length === 0);
 
   // Show button after scrolling 400px
   useEffect(() => {
@@ -219,6 +241,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
           loadCommunityAccess(user.id).catch(() => ({ hasSubscription: false, unlockedIds: new Set<string>() })),
         ]);
         setCommunities(communitiesData);
+        writeCachedCommunities(communitiesData);
         onCommunitiesChange?.(communitiesData);
         setCommunityRequests(requestsData);
         setChatReports(readChatReports());
