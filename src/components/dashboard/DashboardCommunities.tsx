@@ -62,6 +62,7 @@ import {
   COMMUNITY_COVER_IMAGES,
   COMMUNITY_COVER_VIDEOS,
 } from "@/lib/communityConstants";
+import { buildDefaultCommunities } from "@/lib/communityChat.seed";
 import { sendCommunityPushNotification } from "@/lib/communityPushNotifications";
 import type { CommunityChatMessageRecord, PersistedCommunityRecord } from "@/lib/communityChat.types";
 import {
@@ -74,6 +75,29 @@ import {
 import type { User } from "@/store/types";
 
 const WAITLIST_UNLOCK_THRESHOLD = 200;
+const COMMUNITIES_CACHE_KEY = "raw.dashboard.communities.v1";
+const MAX_COMMUNITY_MESSAGE_LENGTH = 150;
+
+function readCachedCommunities(): PersistedCommunityRecord[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.sessionStorage.getItem(COMMUNITIES_CACHE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeCachedCommunities(communities: PersistedCommunityRecord[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.setItem(COMMUNITIES_CACHE_KEY, JSON.stringify(communities));
+  } catch {
+    // ignore storage write errors
+  }
+}
 
 function mergeCommunityMessages(
   messages: CommunityChatMessageRecord[],
@@ -142,7 +166,7 @@ export function DashboardCommunities(props) {
       // Main search query state (fix ReferenceError)
       const [searchQuery, setSearchQuery] = useState("");
     // Main community state (fix ReferenceError)
-    const [communities, setCommunities] = useState([]);
+    const [communities, setCommunities] = useState<PersistedCommunityRecord[]>(() => readCachedCommunities());
   // Destructure props for clarity and to avoid ReferenceError
   const {
     user,
@@ -155,6 +179,7 @@ export function DashboardCommunities(props) {
   const [showRequestButton, setShowRequestButton] = useState(false);
   const [requestBtnText, setRequestBtnText] = useState("Didn't find your community?");
   const [mobileRequestExpanded, setMobileRequestExpanded] = useState(false);
+  const [isInitialCommunitiesLoading, setIsInitialCommunitiesLoading] = useState(() => readCachedCommunities().length === 0);
 
   // Show button after scrolling 400px
   useEffect(() => {
@@ -273,6 +298,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
   const [mentionIndex, setMentionIndex] = useState(0);
   const [expandedDescs, setExpandedDescs] = useState<Set<string>>(new Set());
   const [communityPolls, setCommunityPolls] = useState<CommunityPollRecord[]>([]);
+  const [communityPollsAvailable, setCommunityPollsAvailable] = useState(true);
   const [pollComposerOpen, setPollComposerOpen] = useState(false);
   const [pollQuestion, setPollQuestion] = useState("");
   const [pollOptionDrafts, setPollOptionDrafts] = useState<string[]>(["", ""]);
@@ -291,26 +317,36 @@ const COMMUNITY_LOGOS: Record<string, string> = {
     }, [onCommunitiesChange]);
 
     const reloadChatData = useCallback(async () => {
-      const [communitiesData, requestsData, waitlistData, accessData] = await Promise.all([
-        fetchCommunities(),
-        fetchCommunityRequests(user.id),
-        fetchWaitlistSummary(user.id).catch(() => createEmptyWaitlistSummary()),
-        loadCommunityAccess(user.id).catch(() => ({ hasSubscription: false, unlockedIds: new Set<string>() })),
-      ]);
-      setCommunities(communitiesData);
-      onCommunitiesChange?.(communitiesData);
-      setCommunityRequests(requestsData);
-      setChatReports(readChatReports());
-      setCommunityJoinRequests(readCommunityJoinRequests());
-      setWaitlistCounts(waitlistData.counts);
-      setWaitlistJoinedIds(waitlistData.joinedCommunityIds);
-      setCommunityAccess(accessData);
+      try {
+        const [communitiesData, requestsData, waitlistData, accessData] = await Promise.all([
+          fetchCommunities(),
+          fetchCommunityRequests(user.id),
+          fetchWaitlistSummary(user.id).catch(() => createEmptyWaitlistSummary()),
+          loadCommunityAccess(user.id).catch(() => ({ hasSubscription: false, unlockedIds: new Set<string>() })),
+        ]);
+        setCommunities(communitiesData);
+        writeCachedCommunities(communitiesData);
+        onCommunitiesChange?.(communitiesData);
+        setCommunityRequests(requestsData);
+        setChatReports(readChatReports());
+        setCommunityJoinRequests(readCommunityJoinRequests());
+        setWaitlistCounts(waitlistData.counts);
+        setWaitlistJoinedIds(waitlistData.joinedCommunityIds);
+        setCommunityAccess(accessData);
+      } finally {
+        setIsInitialCommunitiesLoading(false);
+      }
     }, [onCommunitiesChange, user.id]);
 
-    const selectedCommunity = useMemo(
-      () => activeCommunityId ? communities.find((community) => community.id === activeCommunityId) ?? null : null,
-      [activeCommunityId, communities]
-    );
+    const fallbackCommunities = useMemo(() => buildDefaultCommunities(), []);
+    const selectedCommunity = useMemo(() => {
+      if (!activeCommunityId) return null;
+      return (
+        communities.find((community) => community.id === activeCommunityId)
+        ?? fallbackCommunities.find((community) => community.id === activeCommunityId)
+        ?? null
+      );
+    }, [activeCommunityId, communities, fallbackCommunities]);
     const userRequests = useMemo(
       () => communityRequests.filter((request) => request.requesterId === user.id),
       [communityRequests, user.id]
@@ -320,6 +356,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
     const isUserBanned = (currentUserRecord?.moderationStatus ?? user.moderationStatus) === "banned";
     const warningCount = currentUserRecord?.warnings ?? user.warnings;
     const currentMember = selectedCommunity?.members.find((member) => member.userId === user.id) ?? null;
+    const isReadOnlyCommunity = selectedCommunity?.id === "lnt";
     const isJoined = Boolean(currentMember);
     const canEditSelectedCommunity = selectedCommunity ? canManageCommunity(selectedCommunity, user.id, user.username) : false;
     const isGlobalAdmin = user.role === "admin";
@@ -370,7 +407,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
     }, [activeCommunityId]);
 
     const reloadCommunityPolls = useCallback(async () => {
-      if (!activeCommunityId) {
+      if (!activeCommunityId || !communityPollsAvailable) {
         setCommunityPolls([]);
         return;
       }
@@ -378,9 +415,15 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         const polls = await fetchCommunityPolls(activeCommunityId, user.id);
         setCommunityPolls(polls);
       } catch (error) {
+        const status = typeof error === "object" && error !== null && "status" in error ? Number((error as { status?: number }).status) : null;
+        if (status === 404) {
+          setCommunityPollsAvailable(false);
+          setCommunityPolls([]);
+          return;
+        }
         console.error("Failed to load community polls", error);
       }
-    }, [activeCommunityId, user.id]);
+    }, [activeCommunityId, communityPollsAvailable, user.id]);
 
     useEffect(() => {
       void reloadCommunityPolls();
@@ -1416,7 +1459,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                             <p className="mt-0.5 truncate">{message.replyToText}</p>
                           </div>
                         )}
-                        <p className={`text-sm leading-snug ${message.deletedAt ? "italic text-raw-silver/45" : ""}`}>
+                        <p className={`break-words [overflow-wrap:anywhere] text-sm leading-snug ${message.deletedAt ? "italic text-raw-silver/45" : ""}`}>
                           <span
                             className="mr-0.5 font-semibold uppercase tracking-wide text-[11px]"
                             style={{ color: isOwnMessage ? "rgb(var(--raw-accent))" : "rgb(var(--raw-accent) / 0.65)" }}
@@ -1519,6 +1562,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                 <input
                   ref={messageInputRef}
                   value={messageDraft}
+                  maxLength={MAX_COMMUNITY_MESSAGE_LENGTH}
                   onChange={(event) => {
                     const val = event.target.value;
                     setMessageDraft(val);
@@ -1546,13 +1590,13 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                     }
                     if (event.key === "Enter") handleSendMessage();
                   }}
-                  placeholder="Type a message..."
-                  disabled={isUserBanned}
+                  placeholder={isReadOnlyCommunity ? "Messaging is disabled in this community." : "Type a message..."}
+                  disabled={isUserBanned || isReadOnlyCommunity}
                   className="flex-1 rounded-xl border border-raw-border/30 bg-raw-surface/30 px-4 py-2.5 text-sm text-raw-text placeholder:text-raw-silver/25 focus:border-raw-gold/25 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
                 />
                 <button
                   onClick={handleSendMessage}
-                  disabled={isUserBanned}
+                  disabled={isUserBanned || isReadOnlyCommunity}
                   className="flex items-center gap-1.5 rounded-xl bg-raw-gold px-4 py-2.5 text-sm font-semibold text-raw-ink disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <Send className="h-4 w-4" />
@@ -1564,6 +1608,14 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         </div>
       );
     };
+
+    if (activeCommunityId && isInitialCommunitiesLoading) {
+      return (
+        <div className="rounded-3xl border border-raw-border/30 bg-raw-surface/20 p-8 text-center text-raw-silver/50">
+          <p className="font-display text-lg text-raw-text">Loading community…</p>
+        </div>
+      );
+    }
 
     if (activeCommunityId && !selectedCommunity) {
       return (
