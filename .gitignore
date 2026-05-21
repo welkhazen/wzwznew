@@ -26,3 +26,4 @@ dist-ssr
 
 # Vite local dependency cache
 .vite-local-cache
+.env
