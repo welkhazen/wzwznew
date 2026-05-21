@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { LEVEL_THEMES } from "@/lib/avataridentity";
 import { RARITY_CONFIG, type AvatarRarity } from "@/lib/avatarRarity";
 
@@ -8,6 +8,7 @@ interface AvatarFigureProps {
   selected?: boolean;
   className?: string;
   rarity?: AvatarRarity;
+  style?: CSSProperties;
 }
 
 const sizes = {
@@ -17,13 +18,13 @@ const sizes = {
   xl: { outer: 180, inner: 148, face: 0.65 },
 };
 
-export function AvatarFigure({ avatarIndex, size = "md", selected = false, className = "", rarity }: AvatarFigureProps) {
+export function AvatarFigure({ avatarIndex, size = "md", selected = false, className = "", rarity, style }: AvatarFigureProps) {
   const theme = LEVEL_THEMES[avatarIndex - 1] || LEVEL_THEMES[0];
   const [imageFailed, setImageFailed] = useState(false);
   const useImage = !!theme.imageSrc && !imageFailed;
   const s = sizes[size];
 
-  const rarityStyle = rarity && rarity !== "common"
+  const rarityStyle = !disableRarityGlow && rarity && rarity !== "common"
     ? {
         boxShadow: `0 0 0 2px ${RARITY_CONFIG[rarity].color}, 0 0 8px ${RARITY_CONFIG[rarity].glow}`,
         borderRadius: "50%",
@@ -34,7 +35,7 @@ export function AvatarFigure({ avatarIndex, size = "md", selected = false, class
     return (
       <div
         className={`relative inline-flex items-center justify-center ${className}`}
-        style={{ width: s.outer, height: s.outer }}
+        style={{ width: s.outer, height: s.outer, ...style }}
       >
         <div
           className="relative h-full w-full overflow-hidden rounded-full"
@@ -71,7 +72,7 @@ export function AvatarFigure({ avatarIndex, size = "md", selected = false, class
   const eyeGap = r * faceScale * 0.12;
 
   return (
-    <div className={`relative inline-flex items-center justify-center ${className}`} style={rarityStyle}>
+    <div className={`relative inline-flex items-center justify-center ${className}`} style={{ ...rarityStyle, ...style }}>
       <svg width={s.outer} height={s.outer} viewBox={`0 0 ${s.outer} ${s.outer}`}>
         <circle cx={cx} cy={cy} r={r} fill={theme.bg} />
 

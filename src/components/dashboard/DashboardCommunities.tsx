@@ -83,6 +83,7 @@ export function DashboardCommunities(props) {
   const [showRequestButton, setShowRequestButton] = useState(false);
   const [requestBtnText, setRequestBtnText] = useState("Didn't find your community?");
   const [mobileRequestExpanded, setMobileRequestExpanded] = useState(false);
+  const [isInitialCommunitiesLoading, setIsInitialCommunitiesLoading] = useState(true);
 
   // Show button after scrolling 400px
   useEffect(() => {
@@ -210,20 +211,24 @@ const COMMUNITY_LOGOS: Record<string, string> = {
   const messageInputRef = useRef<HTMLInputElement | null>(null);
 
     const reloadChatData = useCallback(async () => {
-      const [communitiesData, requestsData, waitlistData, accessData] = await Promise.all([
-        fetchCommunities(),
-        fetchCommunityRequests(user.id),
-        fetchWaitlistSummary(user.id).catch(() => createEmptyWaitlistSummary()),
-        loadCommunityAccess(user.id).catch(() => ({ hasSubscription: false, unlockedIds: new Set<string>() })),
-      ]);
-      setCommunities(communitiesData);
-      onCommunitiesChange?.(communitiesData);
-      setCommunityRequests(requestsData);
-      setChatReports(readChatReports());
-      setCommunityJoinRequests(readCommunityJoinRequests());
-      setWaitlistCounts(waitlistData.counts);
-      setWaitlistJoinedIds(waitlistData.joinedCommunityIds);
-      setCommunityAccess(accessData);
+      try {
+        const [communitiesData, requestsData, waitlistData, accessData] = await Promise.all([
+          fetchCommunities(),
+          fetchCommunityRequests(user.id),
+          fetchWaitlistSummary(user.id).catch(() => createEmptyWaitlistSummary()),
+          loadCommunityAccess(user.id).catch(() => ({ hasSubscription: false, unlockedIds: new Set<string>() })),
+        ]);
+        setCommunities(communitiesData);
+        onCommunitiesChange?.(communitiesData);
+        setCommunityRequests(requestsData);
+        setChatReports(readChatReports());
+        setCommunityJoinRequests(readCommunityJoinRequests());
+        setWaitlistCounts(waitlistData.counts);
+        setWaitlistJoinedIds(waitlistData.joinedCommunityIds);
+        setCommunityAccess(accessData);
+      } finally {
+        setIsInitialCommunitiesLoading(false);
+      }
     }, [onCommunitiesChange, user.id]);
 
     const selectedCommunity = useMemo(
@@ -1414,6 +1419,14 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         </div>
       );
     };
+
+    if (activeCommunityId && isInitialCommunitiesLoading) {
+      return (
+        <div className="rounded-3xl border border-raw-border/30 bg-raw-surface/20 p-8 text-center text-raw-silver/50">
+          <p className="font-display text-lg text-raw-text">Loading community…</p>
+        </div>
+      );
+    }
 
     if (activeCommunityId && !selectedCommunity) {
       return (
