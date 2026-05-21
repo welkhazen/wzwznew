@@ -356,7 +356,6 @@ const COMMUNITY_LOGOS: Record<string, string> = {
     const isUserBanned = (currentUserRecord?.moderationStatus ?? user.moderationStatus) === "banned";
     const warningCount = currentUserRecord?.warnings ?? user.warnings;
     const currentMember = selectedCommunity?.members.find((member) => member.userId === user.id) ?? null;
-    const isReadOnlyCommunity = selectedCommunity?.id === "lnt";
     const isJoined = Boolean(currentMember);
     const canEditSelectedCommunity = selectedCommunity ? canManageCommunity(selectedCommunity, user.id, user.username) : false;
     const isGlobalAdmin = user.role === "admin";
@@ -737,23 +736,27 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       }
     };
 
-    const sendOptimisticMessage = useCallback(async (trimmedMessage: string, retryMessage?: CommunityChatMessageRecord) => {
-      if (!selectedCommunity) return;
-      const optimisticMessage: CommunityChatMessageRecord = retryMessage
-        ? { ...retryMessage, deliveryStatus: "sending", createdAt: new Date().toISOString() }
-        : {
-            id: `pending-${selectedCommunity.id}-${Date.now()}`,
-            communityId: selectedCommunity.id,
-            senderId: user.id,
-            senderName: user.username,
-            text: trimmedMessage,
-            createdAt: new Date().toISOString(),
-            likedBy: [],
-            deliveryStatus: "sending",
-          };
+    const handleSendMessage = async () => {
+      if (!selectedCommunity) {
+        return;
+      }
 
-      updateCommunities((current) => upsertCommunityMessage(current, selectedCommunity.id, optimisticMessage));
+      if (isUserBanned) {
+        toast({
+          title: "Chat access restricted",
+          description: "Your account is currently banned from posting while admin review remains in effect.",
+        });
+        return;
+      }
 
+      const trimmedMessage = messageDraft.trim();
+      if (!trimmedMessage) {
+        return;
+      }
+      if (trimmedMessage.length > MAX_COMMUNITY_MESSAGE_LENGTH) {
+        toast({ title: "Message too long", description: `Max ${MAX_COMMUNITY_MESSAGE_LENGTH} characters.` });
+        return;
+      }
       try {
         const mentionRecipientIds = selectedCommunity.members
           .filter((member) =>
@@ -1590,13 +1593,13 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                     }
                     if (event.key === "Enter") handleSendMessage();
                   }}
-                  placeholder={isReadOnlyCommunity ? "Messaging is disabled in this community." : "Type a message..."}
-                  disabled={isUserBanned || isReadOnlyCommunity}
+                  placeholder="Type a message..."
+                  disabled={isUserBanned}
                   className="flex-1 rounded-xl border border-raw-border/30 bg-raw-surface/30 px-4 py-2.5 text-sm text-raw-text placeholder:text-raw-silver/25 focus:border-raw-gold/25 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
                 />
                 <button
                   onClick={handleSendMessage}
-                  disabled={isUserBanned || isReadOnlyCommunity}
+                  disabled={isUserBanned}
                   className="flex items-center gap-1.5 rounded-xl bg-raw-gold px-4 py-2.5 text-sm font-semibold text-raw-ink disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <Send className="h-4 w-4" />
