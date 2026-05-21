@@ -223,7 +223,7 @@ export function OnboardingJourney({
     return toOnboardingPolls(polls);
   }, [supabasePolls, polls]);
   const [pollSelections, setPollSelections] = useState<Record<string, string>>({});
-const [pollStats, setPollStats] = useState<Record<string, Record<string, number>>>({});
+  const [pollStats, setPollStats] = useState<Record<string, Record<string, number>>>({});
   const [currentPollIndex, setCurrentPollIndex] = useState(0);
   const [enterRawOpen, setEnterRawOpen] = useState(false);
   const [isAgeVerified, setIsAgeVerified] = useState(false);
@@ -317,7 +317,7 @@ const [pollStats, setPollStats] = useState<Record<string, Record<string, number>
   }, [avatarIndex]);
 
   // Initialize poll stats with mock data
-  useMemo(() => {
+  useEffect(() => {
     const stats: Record<string, Record<string, number>> = {};
     onboardingPolls.forEach((poll) => {
       stats[poll.id] = {};
