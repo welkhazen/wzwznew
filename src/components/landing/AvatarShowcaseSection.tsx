@@ -390,7 +390,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
           <p className="mb-5 text-center font-display text-xs uppercase tracking-[0.25em] text-raw-gold/70">
             Choose your avatar
           </p>
-          <div className="flex flex-1 flex-col">
+          <div className="flex flex-col">
             <AnimatePresence mode="wait">
               <motion.div
                 key={desktopStart}
@@ -398,7 +398,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -24 }}
                 transition={{ duration: 0.22 }}
-                className="grid flex-1 grid-cols-4 grid-rows-2 place-items-center gap-x-4 gap-y-2"
+           className="grid grid-cols-4 grid-rows-2 place-items-start justify-items-center content-start gap-x-4 gap-y-0"
               >
                 {desktopAvatars.map(({ avatar, index }) => (
                   <AvatarButton key={`${desktopStart}-${index}`} index={index} avatar={avatar} />
