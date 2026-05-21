@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import LNTLogo from "@/assets/LNT.webp";
 import SYTLogo from "@/assets/logospeak.webp";
 import IIJMLogo from "@/assets/itisjustme.webp";
-import { AlertTriangle, ArrowLeft, Bell, BellOff, Heart, ImagePlus, Lock, Plus, Search, Send, Users, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, BarChart3, Bell, BellOff, Heart, ImagePlus, Lock, Plus, Search, Send, Trash2, Users, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,6 +38,13 @@ import {
   setCommunityNotifications as setCommunityNotificationsSupabase,
 } from "@/backend/supabase/controllers/communityController";
 import { sendMessage as sendMessageSupabase, likeMessage } from "@/backend/supabase/controllers/chatController";
+import {
+  fetchCommunityPolls,
+  createCommunityPoll,
+  voteOnCommunityPoll,
+  deleteCommunityPoll,
+} from "@/backend/supabase/controllers/communityPollController";
+import type { CommunityPollRecord } from "@/backend/supabase/models/community-poll";
 import { submitCommunityRequest, fetchCommunityRequests } from "@/backend/supabase/controllers/communityRequestController";
 import {
   fetchWaitlistSummary,
@@ -193,6 +200,11 @@ const COMMUNITY_LOGOS: Record<string, string> = {
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [mentionIndex, setMentionIndex] = useState(0);
   const [expandedDescs, setExpandedDescs] = useState<Set<string>>(new Set());
+  const [communityPolls, setCommunityPolls] = useState<CommunityPollRecord[]>([]);
+  const [pollComposerOpen, setPollComposerOpen] = useState(false);
+  const [pollQuestion, setPollQuestion] = useState("");
+  const [pollOptionDrafts, setPollOptionDrafts] = useState<string[]>(["", ""]);
+  const [pollSubmitting, setPollSubmitting] = useState(false);
   const lastTouchedCommunityRef = useRef<string>("");
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const messageInputRef = useRef<HTMLInputElement | null>(null);
@@ -229,6 +241,8 @@ const COMMUNITY_LOGOS: Record<string, string> = {
     const currentMember = selectedCommunity?.members.find((member) => member.userId === user.id) ?? null;
     const isJoined = Boolean(currentMember);
     const canEditSelectedCommunity = selectedCommunity ? canManageCommunity(selectedCommunity, user.id, user.username) : false;
+    const isGlobalAdmin = user.role === "admin";
+    const canManagePolls = canEditSelectedCommunity || isGlobalAdmin;
     const onlineNow = selectedCommunity ? countOnlineMembers(selectedCommunity) : 0;
     const visibleMembers = selectedCommunity?.members.slice(0, 5) ?? [];
     const unreadCount = selectedCommunity && isJoined ? countUnreadMessages(selectedCommunity, user.id) : 0;
@@ -273,6 +287,111 @@ const COMMUNITY_LOGOS: Record<string, string> = {
     useEffect(() => {
       setSearchQuery("");
     }, [activeCommunityId]);
+
+    const reloadCommunityPolls = useCallback(async () => {
+      if (!activeCommunityId) {
+        setCommunityPolls([]);
+        return;
+      }
+      try {
+        const polls = await fetchCommunityPolls(activeCommunityId, user.id);
+        setCommunityPolls(polls);
+      } catch (error) {
+        console.error("Failed to load community polls", error);
+      }
+    }, [activeCommunityId, user.id]);
+
+    useEffect(() => {
+      void reloadCommunityPolls();
+    }, [reloadCommunityPolls]);
+
+    const handleOpenPollComposer = useCallback(() => {
+      setPollQuestion("");
+      setPollOptionDrafts(["", ""]);
+      setPollComposerOpen(true);
+    }, []);
+
+    const handleAddPollOption = useCallback(() => {
+      setPollOptionDrafts((drafts) => (drafts.length >= 6 ? drafts : [...drafts, ""]));
+    }, []);
+
+    const handleRemovePollOption = useCallback((index: number) => {
+      setPollOptionDrafts((drafts) => (drafts.length <= 2 ? drafts : drafts.filter((_, i) => i !== index)));
+    }, []);
+
+    const handleUpdatePollOption = useCallback((index: number, value: string) => {
+      setPollOptionDrafts((drafts) => drafts.map((draft, i) => (i === index ? value : draft)));
+    }, []);
+
+    const handleSubmitPoll = useCallback(async () => {
+      if (!selectedCommunity || !canManagePolls) return;
+      const trimmedOptions = pollOptionDrafts.map((option) => option.trim()).filter(Boolean);
+      if (!pollQuestion.trim()) {
+        toast({ title: "Add a question", description: "Polls need a question to ask the room." });
+        return;
+      }
+      if (trimmedOptions.length < 2) {
+        toast({ title: "Add at least two options", description: "Members need something to choose between." });
+        return;
+      }
+
+      setPollSubmitting(true);
+      try {
+        await createCommunityPoll({
+          communityId: selectedCommunity.id,
+          question: pollQuestion.trim(),
+          options: trimmedOptions,
+          createdByUserId: user.id,
+          createdByUsername: user.username,
+        });
+        setPollComposerOpen(false);
+        await reloadCommunityPolls();
+        toast({ title: "Poll posted", description: "Your poll is live in the room." });
+      } catch (error) {
+        console.error("Failed to create poll", error);
+        toast({ title: "Couldn't post poll", description: "Please try again in a moment." });
+      } finally {
+        setPollSubmitting(false);
+      }
+    }, [canManagePolls, pollOptionDrafts, pollQuestion, reloadCommunityPolls, selectedCommunity, user.id, user.username]);
+
+    const handleVoteOnPoll = useCallback(async (pollId: string, optionId: string) => {
+      const previous = communityPolls;
+      // Optimistic update: shift the vote count.
+      setCommunityPolls((polls) => polls.map((poll) => {
+        if (poll.id !== pollId) return poll;
+        const wasOption = poll.userVoteOptionId;
+        if (wasOption === optionId) return poll;
+        const nextOptions = poll.options.map((option) => {
+          if (option.id === optionId) return { ...option, votes: option.votes + 1 };
+          if (option.id === wasOption) return { ...option, votes: Math.max(0, option.votes - 1) };
+          return option;
+        });
+        const totalVotes = wasOption ? poll.totalVotes : poll.totalVotes + 1;
+        return { ...poll, options: nextOptions, userVoteOptionId: optionId, totalVotes };
+      }));
+
+      try {
+        await voteOnCommunityPoll(pollId, optionId, user.id);
+      } catch (error) {
+        console.error("Failed to vote on poll", error);
+        setCommunityPolls(previous);
+        toast({ title: "Couldn't record vote", description: "Please try again in a moment." });
+      }
+    }, [communityPolls, user.id]);
+
+    const handleDeletePoll = useCallback(async (pollId: string) => {
+      if (!canManagePolls) return;
+      const previous = communityPolls;
+      setCommunityPolls((polls) => polls.filter((poll) => poll.id !== pollId));
+      try {
+        await deleteCommunityPoll(pollId);
+      } catch (error) {
+        console.error("Failed to delete poll", error);
+        setCommunityPolls(previous);
+        toast({ title: "Couldn't delete poll", description: "Please try again in a moment." });
+      }
+    }, [canManagePolls, communityPolls]);
 
     useEffect(() => {
       reloadChatData();
@@ -1064,6 +1183,70 @@ const COMMUNITY_LOGOS: Record<string, string> = {
 
             {/* Messages */}
             <div ref={messagesContainerRef} className="flex-1 space-y-3 overflow-y-auto p-4">
+              {communityPolls.map((poll) => {
+                const totalVotes = poll.totalVotes;
+                return (
+                  <div
+                    key={`poll-${poll.id}`}
+                    className="rounded-2xl border border-raw-gold/30 bg-raw-gold/5 p-4 backdrop-blur-sm"
+                  >
+                    <div className="mb-2 flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-[10px] uppercase tracking-[0.18em] text-raw-gold/70">
+                          <BarChart3 className="mr-1 inline h-3 w-3" />
+                          Poll · Pinned
+                        </p>
+                        <p className="mt-1 text-sm font-semibold text-raw-text">{poll.question}</p>
+                        <p className="mt-0.5 text-[10px] text-raw-silver/45">
+                          by {poll.createdByUsername} · {formatChatTimestamp(poll.createdAt)}
+                        </p>
+                      </div>
+                      {canManagePolls && (
+                        <button
+                          onClick={() => { void handleDeletePoll(poll.id); }}
+                          className="rounded-full border border-raw-border/30 p-1.5 text-raw-silver/45 hover:border-red-400/40 hover:text-red-300"
+                          aria-label="Delete poll"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      {poll.options.map((option) => {
+                        const isSelected = poll.userVoteOptionId === option.id;
+                        const pct = totalVotes === 0 ? 0 : Math.round((option.votes / totalVotes) * 100);
+                        return (
+                          <button
+                            key={option.id}
+                            onClick={() => { void handleVoteOnPoll(poll.id, option.id); }}
+                            className={`relative w-full overflow-hidden rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
+                              isSelected
+                                ? "border-raw-gold/60 bg-raw-gold/15 text-raw-text"
+                                : "border-raw-border/25 bg-raw-black/30 text-raw-silver/80 hover:border-raw-gold/40"
+                            }`}
+                          >
+                            <div
+                              className="absolute inset-y-0 left-0 bg-raw-gold/15"
+                              style={{ width: `${pct}%` }}
+                              aria-hidden
+                            />
+                            <div className="relative flex items-center justify-between gap-2">
+                              <span className="font-medium">{option.text}</span>
+                              <span className="text-[11px] text-raw-silver/55">
+                                {option.votes} · {pct}%
+                              </span>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <p className="mt-2 text-[10px] text-raw-silver/40">
+                      {totalVotes} {totalVotes === 1 ? "vote" : "votes"}
+                      {poll.userVoteOptionId ? " · You voted" : " · Tap an option to vote"}
+                    </p>
+                  </div>
+                );
+              })}
               {groupedMessages.map((group) => (
                 <div key={group.label} className="space-y-3">
                   <div className="sticky top-0 z-10 flex justify-center py-1">
@@ -1172,6 +1355,17 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                 );
               })()}
               <div className="flex gap-2">
+                {canManagePolls && (
+                  <button
+                    onClick={handleOpenPollComposer}
+                    disabled={isUserBanned}
+                    title="Post a poll"
+                    aria-label="Post a poll"
+                    className="flex items-center justify-center rounded-xl border border-raw-border/30 bg-raw-surface/30 px-3 py-2.5 text-raw-silver/70 hover:border-raw-gold/40 hover:text-raw-gold disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <BarChart3 className="h-4 w-4" />
+                  </button>
+                )}
                 <input
                   ref={messageInputRef}
                   value={messageDraft}
@@ -1534,6 +1728,85 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                 </Button>
                 <Button onClick={handleSubmitReport} className="rounded-xl bg-red-400 px-4 text-raw-ink hover:bg-red-300">
                   Submit report
+                </Button>
+              </div>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={pollComposerOpen} onOpenChange={setPollComposerOpen}>
+          <DialogContent className="border-raw-border/30 bg-raw-black/95 sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-raw-text">Post a poll to the room</DialogTitle>
+              <DialogDescription className="text-raw-silver/60">
+                Only the community owner and admins can post polls. Members get one vote each.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs uppercase tracking-[0.16em] text-raw-silver/55">Question</label>
+                <Input
+                  value={pollQuestion}
+                  onChange={(event) => setPollQuestion(event.target.value)}
+                  placeholder="What do you want to ask the room?"
+                  maxLength={200}
+                  className="border-raw-border/30 bg-raw-surface/30 text-raw-text"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs uppercase tracking-[0.16em] text-raw-silver/55">Options</label>
+                <div className="space-y-2">
+                  {pollOptionDrafts.map((option, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <Input
+                        value={option}
+                        onChange={(event) => handleUpdatePollOption(index, event.target.value)}
+                        placeholder={`Option ${index + 1}`}
+                        maxLength={80}
+                        className="flex-1 border-raw-border/30 bg-raw-surface/30 text-raw-text"
+                      />
+                      {pollOptionDrafts.length > 2 && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemovePollOption(index)}
+                          className="rounded-full border border-raw-border/30 p-1.5 text-raw-silver/50 hover:border-red-400/40 hover:text-red-300"
+                          aria-label="Remove option"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                {pollOptionDrafts.length < 6 && (
+                  <button
+                    type="button"
+                    onClick={handleAddPollOption}
+                    className="text-xs font-semibold uppercase tracking-[0.18em] text-raw-gold/80 hover:text-raw-gold"
+                  >
+                    + Add another option
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <DialogFooter>
+              <div className="flex w-full justify-end gap-2">
+                <Button
+                  variant="ghost"
+                  onClick={() => setPollComposerOpen(false)}
+                  className="rounded-xl text-raw-silver/70 hover:text-raw-text"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => { void handleSubmitPoll(); }}
+                  disabled={pollSubmitting}
+                  className="rounded-xl bg-raw-gold px-4 text-raw-ink hover:bg-raw-gold/90"
+                >
+                  {pollSubmitting ? "Posting…" : "Post poll"}
                 </Button>
               </div>
             </DialogFooter>
