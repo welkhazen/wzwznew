@@ -2,8 +2,6 @@ import { useEffect, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { LandingSectionShell } from "@/components/landing/LandingSectionShell";
 import { WheelOfFortune, type WheelPrize } from "@/components/wheel/WheelOfFortune";
-import { loadDailySpinPoolFromSupabase, readDailySpinAvatarPool } from "@/lib/dailySpinAvatarPool";
-import { AVATARS } from "@/lib/avataridentity";
 import { useTheme } from "@/providers/useTheme";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 import { track } from "@/lib/analytics";
@@ -12,10 +10,19 @@ const TRANSPARENT_REWARDS_IMAGE_SRC = "/images/avatar-rarity-chart.png";
 
 type PoolEntry = { id: string; name: string; imageSrc: string };
 
+const WHEEL_REWARD_POOL: readonly PoolEntry[] = [
+  { id: "wheel-avatar-1", name: "Silver Void", imageSrc: "/avatars/1.webp" },
+  { id: "wheel-avatar-2", name: "Neon Lynx", imageSrc: "/avatars/2.webp" },
+  { id: "wheel-avatar-3", name: "Blue Signal", imageSrc: "/avatars/3.webp" },
+  { id: "wheel-avatar-4", name: "Violet Mask", imageSrc: "/avatars/04.webp" },
+  { id: "wheel-avatar-5", name: "Horned Iron", imageSrc: "/avatars/5.webp" },
+  { id: "wheel-avatar-6", name: "Crimson Muse", imageSrc: "/avatars/6.webp" },
+  { id: "wheel-avatar-7", name: "Solar Flame", imageSrc: "/avatars/07.webp" },
+  { id: "wheel-avatar-8", name: "Pink Circuit", imageSrc: "/avatars/08.webp" },
+];
+
 function getPool(): PoolEntry[] {
-  const spin = readDailySpinAvatarPool();
-  if (spin.length > 0) return spin;
-  return AVATARS.map((a, i) => ({ id: `avatar-${i + 1}`, name: a.name, imageSrc: a.imageSrc ?? "" }));
+  return WHEEL_REWARD_POOL.map((entry) => ({ ...entry }));
 }
 
 function buildPrizes(pool: PoolEntry[], isLight: boolean): WheelPrize[] {
@@ -46,15 +53,6 @@ export function WheelReward({ onSignupClick }: WheelRewardProps) {
 
   useEffect(() => {
     function refresh() { setPool(getPool()); }
-    loadDailySpinPoolFromSupabase()
-      .then((items) => {
-        if (items.length > 0) {
-          setPool(items);
-        }
-      })
-      .catch(() => {
-        refresh();
-      });
     window.addEventListener("raw:avatar-catalog-updated", refresh);
     return () => window.removeEventListener("raw:avatar-catalog-updated", refresh);
   }, []);
