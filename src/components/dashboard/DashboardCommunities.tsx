@@ -491,18 +491,36 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       void reloadCommunityPolls();
     }, [reloadCommunityPolls]);
 
+    useEffect(() => {
+      if (!activeCommunityId || !communityPollsAvailable) return;
+      const channel = supabase
+        .channel(`community-polls:${activeCommunityId}`)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "community_polls", filter: `community_id=eq.${activeCommunityId}` },
+          () => { void reloadCommunityPolls(); },
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "community_poll_votes" },
+          () => { void reloadCommunityPolls(); },
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "community_poll_options" },
+          () => { void reloadCommunityPolls(); },
+        )
+        .subscribe();
+
+      return () => {
+        void supabase.removeChannel(channel);
+      };
+    }, [activeCommunityId, communityPollsAvailable, reloadCommunityPolls]);
+
     const handleOpenPollComposer = useCallback(() => {
       setPollQuestion("");
       setPollOptionDrafts(["", ""]);
       setPollComposerOpen(true);
-    }, []);
-
-    const handleAddPollOption = useCallback(() => {
-      setPollOptionDrafts((drafts) => (drafts.length >= 6 ? drafts : [...drafts, ""]));
-    }, []);
-
-    const handleRemovePollOption = useCallback((index: number) => {
-      setPollOptionDrafts((drafts) => (drafts.length <= 2 ? drafts : drafts.filter((_, i) => i !== index)));
     }, []);
 
     const handleUpdatePollOption = useCallback((index: number, value: string) => {
@@ -559,12 +577,13 @@ const COMMUNITY_LOGOS: Record<string, string> = {
 
       try {
         await voteOnCommunityPoll(pollId, optionId, user.id);
+        await reloadCommunityPolls();
       } catch (error) {
         console.error("Failed to vote on poll", error);
         setCommunityPolls(previous);
         toast({ title: "Couldn't record vote", description: "Please try again in a moment." });
       }
-    }, [communityPolls, user.id]);
+    }, [communityPolls, reloadCommunityPolls, user.id]);
 
     const handleDeletePoll = useCallback(async (pollId: string) => {
       if (!canManagePolls) return;
@@ -2087,36 +2106,16 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                 <label className="text-xs uppercase tracking-[0.16em] text-raw-silver/55">Options</label>
                 <div className="space-y-2">
                   {pollOptionDrafts.map((option, index) => (
-                    <div key={index} className="flex items-center gap-2">
-                      <Input
-                        value={option}
-                        onChange={(event) => handleUpdatePollOption(index, event.target.value)}
-                        placeholder={`Option ${index + 1}`}
-                        maxLength={80}
-                        className="flex-1 border-raw-border/30 bg-raw-surface/30 text-raw-text"
-                      />
-                      {pollOptionDrafts.length > 2 && (
-                        <button
-                          type="button"
-                          onClick={() => handleRemovePollOption(index)}
-                          className="rounded-full border border-raw-border/30 p-1.5 text-raw-silver/50 hover:border-red-400/40 hover:text-red-300"
-                          aria-label="Remove option"
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </button>
-                      )}
-                    </div>
+                    <Input
+                      key={index}
+                      value={option}
+                      onChange={(event) => handleUpdatePollOption(index, event.target.value)}
+                      placeholder={`Option ${index + 1}`}
+                      maxLength={80}
+                      className="border-raw-border/30 bg-raw-surface/30 text-raw-text"
+                    />
                   ))}
                 </div>
-                {pollOptionDrafts.length < 6 && (
-                  <button
-                    type="button"
-                    onClick={handleAddPollOption}
-                    className="text-xs font-semibold uppercase tracking-[0.18em] text-raw-gold/80 hover:text-raw-gold"
-                  >
-                    + Add another option
-                  </button>
-                )}
               </div>
             </div>
 
