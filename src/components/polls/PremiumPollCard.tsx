@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
-import { AtSign, Facebook, Link2, MessageCircle, Share2 } from "lucide-react";
+import { Facebook, Instagram, Link2, MessageCircle, SendHorizontal, Share2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { HoverGradientVoteButton } from "@/components/polls/HoverGradientVoteButton";
 import { useTheme } from "@/providers/useTheme";
@@ -94,6 +94,14 @@ export function PremiumPollCard({
     window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, "_blank", "noopener,noreferrer");
   };
 
+  const handleNativeShare = async () => {
+    if (navigator.share) {
+      await navigator.share({ title: "raW Poll", text: shareText, url: shareUrl }).catch(() => undefined);
+      return;
+    }
+    await handleCopyLink();
+  };
+
   const handleCopyLink = async () => {
     await navigator.clipboard?.writeText(shareUrl);
   };
@@ -156,8 +164,9 @@ export function PremiumPollCard({
                 <ShareButton
                   links={[
                     { icon: MessageCircle, onClick: handleWhatsAppShare, label: "Share on WhatsApp" },
-                    { icon: AtSign, onClick: handleInstagramShare, label: "Share on Instagram" },
+                    { icon: Instagram, onClick: handleInstagramShare, label: "Share on Instagram" },
                     { icon: Facebook, onClick: handleFacebookShare, label: "Share on Facebook" },
+                    { icon: SendHorizontal, onClick: handleNativeShare, label: "More apps" },
                     { icon: Link2, onClick: handleCopyLink, label: "Copy link" },
                   ]}
                   className="mt-2 min-w-28 border-raw-gold/40 bg-raw-gold/10 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-raw-gold hover:bg-raw-gold/15 dark:border-raw-gold/40 dark:bg-raw-gold/10 dark:text-raw-gold dark:hover:bg-raw-gold/15"

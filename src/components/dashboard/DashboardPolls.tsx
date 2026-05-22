@@ -20,7 +20,6 @@ import {
   Share2,
   Smartphone,
   Users,
-  AtSign,
 } from "lucide-react";
 
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
@@ -302,6 +301,7 @@ export function DashboardPolls({
   const [currentPollIndex, setCurrentPollIndex] = useState(0);
   const [hasSeenVoteHint, setHasSeenVoteHint] = useState(false);
   const [lockedPollId, setLockedPollId] = useState<string | null>(null);
+  const [sharedPollId, setSharedPollId] = useState<string | null>(null);
   const [shareCopied, setShareCopied] = useState(false);
   const [sharePickerOpen, setSharePickerOpen] = useState(false);
   const [expandedSharePollId, setExpandedSharePollId] = useState<string | null>(null);
@@ -375,6 +375,24 @@ export function DashboardPolls({
     }
   }, [currentPollIndex, displayPolls.length]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const nextSharedPollId = new URLSearchParams(window.location.search).get("poll");
+    setSharedPollId(nextSharedPollId);
+    if (!nextSharedPollId) return;
+
+    const displayIndex = displayPolls.findIndex((poll) => poll.id === nextSharedPollId);
+    if (displayIndex >= 0) {
+      setLockedPollId(null);
+      setCurrentPollIndex(displayIndex);
+      return;
+    }
+
+    if (polls.some((poll) => poll.id === nextSharedPollId)) {
+      setLockedPollId(nextSharedPollId);
+    }
+  }, [displayPolls, polls]);
+
 
   const rawCurrentPoll = lockedPollId
     ? (polls.find((p) => p.id === lockedPollId) ?? displayPolls[currentPollIndex])
@@ -417,6 +435,7 @@ export function DashboardPolls({
 
   const selectedOptionId = currentPoll ? answerHistory[currentPoll.id] : undefined;
   const hasVotedCurrent = Boolean(selectedOptionId);
+  const showSharedPollAnswerPrompt = Boolean(sharedPollId && currentPoll?.id === sharedPollId && hasVotedCurrent);
   const currentComments = currentPoll ? historyComments[currentPoll.id] ?? [] : [];
   const currentOptions = currentPoll ? resolveYesNoOptions(currentPoll) : null;
   const showVoteHint = currentPollIndex === 0 && !hasVotedCurrent && !hasSeenVoteHint;
@@ -642,8 +661,9 @@ export function DashboardPolls({
             <ShareButton
               links={[
                 { icon: Smartphone, onClick: () => handleWhatsAppShare(currentPoll), label: "Share on WhatsApp" },
-                { icon: AtSign, onClick: () => handleInstagramShare(currentPoll), label: "Share on Instagram" },
+                { icon: Instagram, onClick: () => handleInstagramShare(currentPoll), label: "Share on Instagram" },
                 { icon: Facebook, onClick: () => handleFacebookShare(currentPoll), label: "Share on Facebook" },
+                { icon: SendHorizontal, onClick: () => handleShare(currentPoll), label: "More apps" },
                 { icon: Link2, onClick: () => copyShareLink(currentPoll), label: "Copy link" },
               ]}
               className="w-full border-raw-gold/45 bg-raw-gold/10 text-[11px] font-semibold uppercase tracking-[0.16em] text-raw-gold hover:bg-raw-gold/15 dark:border-raw-gold/45 dark:bg-raw-gold/10 dark:text-raw-gold dark:hover:bg-raw-gold/15"
@@ -658,6 +678,17 @@ export function DashboardPolls({
               <Check className="size-3" />
               Copied share text
             </p>
+          )}
+
+          {showSharedPollAnswerPrompt && (
+            <div className="mt-3 border border-raw-gold/30 bg-raw-gold/10 px-4 py-3 text-center shadow-[0_0_24px_rgba(241,196,45,0.08)]">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-raw-gold/80">
+                Answer saved
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-raw-silver/65">
+                Sign in to answer more polls, keep your streak, and unlock your profile rewards.
+              </p>
+            </div>
           )}
 
           <button
