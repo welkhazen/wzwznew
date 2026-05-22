@@ -57,7 +57,10 @@ export function useRewards(user: User | null) {
       const state = await loadUserAvatarState(requestUserId, avatarCatalog);
       if (cancelled || requestUserId !== activeUserIdRef.current) return;
 
-      setOwnedAvatarIds(state.ownedAvatarIds);
+      const ownedIds = user.role === "admin"
+        ? avatarCatalog.map((item) => item.id)
+        : state.ownedAvatarIds;
+      setOwnedAvatarIds(ownedIds);
       const index = avatarCatalog.findIndex((item) => item.id === state.selectedAvatarId);
       setAvatarLevelState(index >= 0 ? index + 1 : 1);
       setInventoryLoaded(true);
