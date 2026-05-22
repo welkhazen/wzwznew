@@ -370,7 +370,10 @@ function selectedKey(userId: string): string {
 }
 
 function defaultOwnedIds(catalog: AvatarCatalogItem[]): string[] {
-  return catalog.length > 0 ? [catalog[0].id] : [];
+  const freeIds = catalog
+    .filter((item) => item.price === "Free" || item.price === "0" || Number(item.price) === 0)
+    .map((item) => item.id);
+  return freeIds.length > 0 ? freeIds : catalog.length > 0 ? [catalog[0].id] : [];
 }
 
 export function readOwnedAvatarIdsLocal(userId: string, catalog: AvatarCatalogItem[]): string[] {
@@ -436,7 +439,7 @@ export async function loadUserAvatarState(
 
     const allowed = new Set(catalog.map((item) => item.id));
     const serverOwned = (inventoryRows ?? []).map((row) => row.avatar_id).filter((id) => allowed.has(id));
-    const ownedAvatarIds = serverOwned.length > 0 ? Array.from(new Set(serverOwned)) : localOwned;
+    const ownedAvatarIds = Array.from(new Set([...defaultOwnedIds(catalog), ...localOwned, ...serverOwned]));
     const selectedCandidate = selectedRow?.avatar_id ?? localSelected;
     const selectedAvatarId = ownedAvatarIds.includes(selectedCandidate) ? selectedCandidate : ownedAvatarIds[0] ?? localSelected;
 
