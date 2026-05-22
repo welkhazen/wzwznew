@@ -80,42 +80,19 @@ import {
   type CommunityAccess,
 } from "@/lib/communityAccess";
 import { readAvatarCatalogLocal } from "@/lib/avatarCatalog";
+import {
+  getCommunitySenderBlockKey,
+  readBlockedCommunitySenders,
+  writeBlockedCommunitySenders,
+} from "@/lib/blockedCommunitySenders";
 import type { User } from "@/store/types";
 
 const WAITLIST_UNLOCK_THRESHOLD = 200;
 const COMMUNITIES_CACHE_KEY = "raw.dashboard.communities.v1";
-const BLOCKED_COMMUNITY_SENDERS_KEY = "raw.community.blocked-senders.v1";
 const MAX_COMMUNITY_MESSAGE_LENGTH = 150;
 
 function getMessageSenderBlockKey(message: Pick<CommunityChatMessageRecord, "senderId" | "senderName">): string {
-  return (message.senderId || message.senderName).trim().toLowerCase();
-}
-
-function readBlockedCommunitySenders(userId: string): string[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.localStorage.getItem(BLOCKED_COMMUNITY_SENDERS_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    const blocked = parsed?.[userId];
-    return Array.isArray(blocked) ? blocked.filter((id): id is string => typeof id === "string") : [];
-  } catch {
-    return [];
-  }
-}
-
-function writeBlockedCommunitySenders(userId: string, blockedSenderKeys: string[]): void {
-  if (typeof window === "undefined") return;
-  try {
-    const raw = window.localStorage.getItem(BLOCKED_COMMUNITY_SENDERS_KEY);
-    const parsed = raw ? JSON.parse(raw) : {};
-    window.localStorage.setItem(
-      BLOCKED_COMMUNITY_SENDERS_KEY,
-      JSON.stringify({ ...parsed, [userId]: blockedSenderKeys })
-    );
-  } catch {
-    // ignore storage write errors
-  }
+  return getCommunitySenderBlockKey(message.senderId, message.senderName);
 }
 
 function readCachedCommunities(): PersistedCommunityRecord[] {
