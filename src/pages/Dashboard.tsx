@@ -33,6 +33,7 @@ interface DashboardProps {
   setAvatarLevel: (level: number) => void;
   ownedAvatarLevels: Set<number>;
   unlockAvatarLevel: (level: number) => Promise<boolean>;
+  markAvatarOwned: (level: number) => void;
   avatarPricesByLevel: Record<number, string>;
   avatarCatalog: AvatarCatalogItem[];
   dailyAnsweredCount: number;
@@ -53,6 +54,7 @@ export default function Dashboard({
   setAvatarLevel,
   ownedAvatarLevels,
   unlockAvatarLevel,
+  markAvatarOwned,
   avatarPricesByLevel,
   avatarCatalog,
   dailyAnsweredCount,
@@ -230,6 +232,7 @@ export default function Dashboard({
               avatarLevel={avatarLevel}
               ownedAvatarLevels={ownedAvatarLevels}
               onUnlockAvatar={unlockAvatarLevel}
+              onAvatarPurchased={markAvatarOwned}
               avatarPricesByLevel={avatarPricesByLevel}
               avatarCatalog={avatarCatalog}
               tokenBalance={tokenBalance}
