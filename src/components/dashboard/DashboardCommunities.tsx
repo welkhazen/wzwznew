@@ -162,6 +162,22 @@ function markCommunityMessageFailed(
   );
 }
 
+function appendOptimisticMessage(
+  communities: PersistedCommunityRecord[],
+  communityId: string,
+  message: CommunityChatMessageRecord,
+): PersistedCommunityRecord[] {
+  return communities.map((community) => {
+    if (community.id !== communityId) return community;
+    const withoutExisting = community.messages.filter((entry) => entry.id !== message.id);
+    return {
+      ...community,
+      messages: [...withoutExisting, { ...message, deliveryStatus: "sending" }]
+        .sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
+    };
+  });
+}
+
 export function DashboardCommunities(props) {
       // Main search query state (fix ReferenceError)
       const [searchQuery, setSearchQuery] = useState("");
@@ -748,7 +764,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         senderName: user.username,
         text: trimmedMessage,
         createdAt: new Date().toISOString(),
-        deliveryStatus: "pending" as const,
+        deliveryStatus: "sending" as const,
         likedBy: [],
       };
 
