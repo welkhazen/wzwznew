@@ -6,6 +6,7 @@ import { RARITY_CONFIG, RARITY_ORDER } from "@/lib/avatarRarity";
 import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
 import type { Poll } from "@/store/useRawStore";
 import TokenImage from "@/assets/tokens.webp";
+import { spendTokens } from "@/utils/supabasePolls";
 
 interface DashboardInventoryProps {
   polls: Poll[];
@@ -13,10 +14,22 @@ interface DashboardInventoryProps {
   avatarLevel: number;
   ownedAvatarLevels: Set<number>;
   onUnlockAvatar: (level: number) => Promise<boolean>;
+  onAvatarPurchased: (level: number) => void;
   avatarPricesByLevel: Record<number, string>;
   avatarCatalog: AvatarCatalogItem[];
   tokenBalance: number;
   userId: string;
+}
+
+const AVATAR_SHOP_PRICE = 50;
+const TOKEN_BALANCE_STORAGE_PREFIX = "raw.polls.token-balance";
+const TOKEN_BALANCE_UPDATED_EVENT = "raw:token-balance-updated";
+
+function updateTokenBalanceCache(userId: string, balance: number): void {
+  if (typeof window === "undefined") return;
+  const key = `${TOKEN_BALANCE_STORAGE_PREFIX}.${userId}`;
+  window.localStorage.setItem(key, String(balance));
+  window.dispatchEvent(new CustomEvent(TOKEN_BALANCE_UPDATED_EVENT, { detail: { storageKey: key, balance } }));
 }
 
 const PERSONALITY_INSIGHTS = [
@@ -192,7 +205,10 @@ function AvatarShop({
   ownedAvatarLevels,
   onUnlockAvatar,
   avatarPricesByLevel,
-}: Pick<DashboardInventoryProps, "avatarCatalog" | "ownedAvatarLevels" | "onUnlockAvatar" | "avatarPricesByLevel">) {
+  tokenBalance,
+  userId,
+  onAvatarPurchased,
+}: Pick<DashboardInventoryProps, "avatarCatalog" | "ownedAvatarLevels" | "onUnlockAvatar" | "avatarPricesByLevel" | "tokenBalance" | "userId" | "onAvatarPurchased">) {
   const [unlocking, setUnlocking] = useState<number | null>(null);
 
   const purchasable = avatarCatalog.filter(
@@ -211,7 +227,8 @@ function AvatarShop({
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
       {purchasable.map((avatar) => {
         const owned = ownedAvatarLevels.has(avatar.level);
-        const price = avatarPricesByLevel[avatar.level] ?? avatar.price;
+        const price = Number(avatarPricesByLevel[avatar.level] ?? avatar.price) || AVATAR_SHOP_PRICE;
+        const canBuy = tokenBalance >= price;
         const rarity = avatar.rarity ?? "common";
         const rarityConfig = RARITY_CONFIG[rarity];
 
@@ -245,14 +262,23 @@ function AvatarShop({
               <button
                 onClick={async () => {
                   setUnlocking(avatar.level);
-                  await onUnlockAvatar(avatar.level).catch(() => null);
+                  try {
+                    const balance = await spendTokens(userId, price);
+                    const ok = await onUnlockAvatar(avatar.level);
+                    if (ok) {
+                      updateTokenBalanceCache(userId, balance);
+                      onAvatarPurchased(avatar.level);
+                    }
+                  } catch {
+                    // Keep shop state unchanged on payment or unlock failure.
+                  }
                   setUnlocking(null);
                 }}
-                disabled={unlocking === avatar.level}
+                disabled={unlocking === avatar.level || !canBuy}
                 className="relative flex items-center gap-1.5 rounded-full border border-raw-gold/35 bg-raw-gold/10 px-3 py-1 text-[10px] text-raw-gold transition hover:bg-raw-gold/20 disabled:opacity-50"
               >
                 <img src={TokenImage} alt="" className="h-3 w-3 object-contain" />
-                {unlocking === avatar.level ? "..." : price}
+                {unlocking === avatar.level ? "..." : `${price} tokens`}
               </button>
             )}
           </div>
@@ -340,9 +366,11 @@ export function DashboardInventory({
   votedPolls,
   ownedAvatarLevels,
   onUnlockAvatar,
+  onAvatarPurchased,
   avatarPricesByLevel,
   avatarCatalog,
   tokenBalance,
+  userId,
 }: DashboardInventoryProps) {
   const pollsAnswered = votedPolls.size;
 
@@ -365,7 +393,10 @@ export function DashboardInventory({
           avatarCatalog={avatarCatalog}
           ownedAvatarLevels={ownedAvatarLevels}
           onUnlockAvatar={onUnlockAvatar}
+          onAvatarPurchased={onAvatarPurchased}
           avatarPricesByLevel={avatarPricesByLevel}
+          tokenBalance={tokenBalance}
+          userId={userId}
         />
       </section>
 

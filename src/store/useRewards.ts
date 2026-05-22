@@ -111,6 +111,12 @@ export function useRewards(user: User | null) {
     }
   }, [avatarCatalog, inventoryLoaded, ownedAvatarIds, user]);
 
+  const markAvatarOwned = useCallback((level: number) => {
+    const candidate = avatarCatalog[level - 1];
+    if (!candidate) return;
+    setOwnedAvatarIds((previous) => (previous.includes(candidate.id) ? previous : [...previous, candidate.id]));
+  }, [avatarCatalog]);
+
   const ownedAvatarLevels = useMemo(() => {
     if (ownedAvatarIds.length === 0) {
       return new Set<number>(avatarCatalog.length > 0 ? [1] : []);
@@ -149,6 +155,7 @@ export function useRewards(user: User | null) {
     avatarCatalog,
     ownedAvatarLevels,
     unlockAvatarLevel,
+    markAvatarOwned,
     avatarPricesByLevel,
-  }), [avatarCatalog, avatarLevel, avatarPricesByLevel, changeAvatarLevel, ownedAvatarLevels, selectAvatarForOnboarding, setAvatarLevel, unlockAvatarLevel]);
+  }), [avatarCatalog, avatarLevel, avatarPricesByLevel, changeAvatarLevel, markAvatarOwned, ownedAvatarLevels, selectAvatarForOnboarding, setAvatarLevel, unlockAvatarLevel]);
 }

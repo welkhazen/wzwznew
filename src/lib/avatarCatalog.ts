@@ -57,14 +57,14 @@ export const DEFAULT_AVATAR_CATALOG: readonly AvatarCatalogItem[] = [
   { id: "rose", level: 6, name: "Rose", price: "Free", imageSrc: "/avatars/avatar-8.svg", bg: "#1f1208", figure: "#f97316", ring: "#f97316", glow: "#f9731680", isActive: true, showIn: "both", rarity: "common" },
   { id: "black", level: 7, name: "Black", price: "Free", imageSrc: "/avatars/avatar-9.svg", bg: "#1f0a0a", figure: "#dc2626", ring: "#dc2626", glow: "#dc262680", isActive: true, showIn: "both", rarity: "common" },
   { id: "blue", level: 8, name: "Blue", price: "Free", imageSrc: "/avatars/avatar-10.svg", bg: "#1f1705", figure: "#facc15", ring: "#facc15", glow: "#facc1590", isActive: true, showIn: "both", rarity: "common" },
-  { id: "silver-void", level: 9, name: "Silver Void", price: "Wheel", imageSrc: "/avatars/1.webp", bg: "#111827", figure: "#cbd5e1", ring: "#cbd5e1", glow: "#cbd5e180", isActive: true, showIn: "both", rarity: "common" },
-  { id: "neon-lynx", level: 10, name: "Neon Lynx", price: "Wheel", imageSrc: "/avatars/2.webp", bg: "#170f2e", figure: "#a855f7", ring: "#c084fc", glow: "#a855f780", isActive: true, showIn: "both", rarity: "common" },
-  { id: "blue-signal", level: 11, name: "Blue Signal", price: "Wheel", imageSrc: "/avatars/3.webp", bg: "#06131f", figure: "#22d3ee", ring: "#22d3ee", glow: "#22d3ee80", isActive: true, showIn: "both", rarity: "common" },
-  { id: "violet-mask", level: 12, name: "Violet Mask", price: "Wheel", imageSrc: "/avatars/4.webp", bg: "#1a1028", figure: "#d946ef", ring: "#d946ef", glow: "#d946ef80", isActive: true, showIn: "both", rarity: "common" },
-  { id: "horned-iron", level: 13, name: "Horned Iron", price: "Wheel", imageSrc: "/avatars/5.webp", bg: "#1f0a05", figure: "#fb923c", ring: "#fb923c", glow: "#fb923c80", isActive: true, showIn: "both", rarity: "common" },
-  { id: "crimson-muse", level: 14, name: "Crimson Muse", price: "Wheel", imageSrc: "/avatars/6.webp", bg: "#2a0b0b", figure: "#f97316", ring: "#f97316", glow: "#f9731680", isActive: true, showIn: "both", rarity: "common" },
-  { id: "solar-flame", level: 15, name: "Solar Flame", price: "Wheel", imageSrc: "/avatars/7.webp", bg: "#241005", figure: "#facc15", ring: "#facc15", glow: "#facc1590", isActive: true, showIn: "both", rarity: "common" },
-  { id: "pink-circuit", level: 16, name: "Pink Circuit", price: "Wheel", imageSrc: "/avatars/8.webp", bg: "#2a0b1c", figure: "#fb7185", ring: "#fb7185", glow: "#fb718580", isActive: true, showIn: "both", rarity: "common" },
+  { id: "silver-void", level: 9, name: "Silver Void", price: "50", imageSrc: "/avatars/1.webp", bg: "#111827", figure: "#cbd5e1", ring: "#cbd5e1", glow: "#cbd5e180", isActive: true, showIn: "both", rarity: "common" },
+  { id: "neon-lynx", level: 10, name: "Neon Lynx", price: "50", imageSrc: "/avatars/2.webp", bg: "#170f2e", figure: "#a855f7", ring: "#c084fc", glow: "#a855f780", isActive: true, showIn: "both", rarity: "common" },
+  { id: "blue-signal", level: 11, name: "Blue Signal", price: "50", imageSrc: "/avatars/3.webp", bg: "#06131f", figure: "#22d3ee", ring: "#22d3ee", glow: "#22d3ee80", isActive: true, showIn: "both", rarity: "common" },
+  { id: "violet-mask", level: 12, name: "Violet Mask", price: "50", imageSrc: "/avatars/04.webp", bg: "#1a1028", figure: "#d946ef", ring: "#d946ef", glow: "#d946ef80", isActive: true, showIn: "both", rarity: "common" },
+  { id: "horned-iron", level: 13, name: "Horned Iron", price: "50", imageSrc: "/avatars/5.webp", bg: "#1f0a05", figure: "#fb923c", ring: "#fb923c", glow: "#fb923c80", isActive: true, showIn: "both", rarity: "common" },
+  { id: "crimson-muse", level: 14, name: "Crimson Muse", price: "50", imageSrc: "/avatars/6.webp", bg: "#2a0b0b", figure: "#f97316", ring: "#f97316", glow: "#f9731680", isActive: true, showIn: "both", rarity: "common" },
+  { id: "solar-flame", level: 15, name: "Solar Flame", price: "50", imageSrc: "/avatars/07.webp", bg: "#241005", figure: "#facc15", ring: "#facc15", glow: "#facc1590", isActive: true, showIn: "both", rarity: "common" },
+  { id: "pink-circuit", level: 16, name: "Pink Circuit", price: "50", imageSrc: "/avatars/08.webp", bg: "#2a0b1c", figure: "#fb7185", ring: "#fb7185", glow: "#fb718580", isActive: true, showIn: "both", rarity: "common" },
 ];
 
 const WHEEL_AVATAR_IDS = new Set([

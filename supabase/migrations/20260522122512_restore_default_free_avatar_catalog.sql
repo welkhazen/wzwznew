@@ -20,14 +20,14 @@ INSERT INTO public.avatar_catalog (
   ('rose', 6, 'Rose', 'Free', '/avatars/avatar-8.svg', '#1f1208', '#f97316', '#f97316', '#f9731680', true, false, 'both'),
   ('black', 7, 'Black', 'Free', '/avatars/avatar-9.svg', '#1f0a0a', '#dc2626', '#dc2626', '#dc262680', true, false, 'both'),
   ('blue', 8, 'Blue', 'Free', '/avatars/avatar-10.svg', '#1f1705', '#facc15', '#facc15', '#facc1590', true, false, 'both'),
-  ('silver-void', 9, 'Silver Void', 'Wheel', '/avatars/1.webp', '#111827', '#cbd5e1', '#cbd5e1', '#cbd5e180', true, false, 'both'),
-  ('neon-lynx', 10, 'Neon Lynx', 'Wheel', '/avatars/2.webp', '#170f2e', '#a855f7', '#c084fc', '#a855f780', true, false, 'both'),
-  ('blue-signal', 11, 'Blue Signal', 'Wheel', '/avatars/3.webp', '#06131f', '#22d3ee', '#22d3ee', '#22d3ee80', true, false, 'both'),
-  ('violet-mask', 12, 'Violet Mask', 'Wheel', '/avatars/4.webp', '#1a1028', '#d946ef', '#d946ef', '#d946ef80', true, false, 'both'),
-  ('horned-iron', 13, 'Horned Iron', 'Wheel', '/avatars/5.webp', '#1f0a05', '#fb923c', '#fb923c', '#fb923c80', true, false, 'both'),
-  ('crimson-muse', 14, 'Crimson Muse', 'Wheel', '/avatars/6.webp', '#2a0b0b', '#f97316', '#f97316', '#f9731680', true, false, 'both'),
-  ('solar-flame', 15, 'Solar Flame', 'Wheel', '/avatars/7.webp', '#241005', '#facc15', '#facc15', '#facc1590', true, false, 'both'),
-  ('pink-circuit', 16, 'Pink Circuit', 'Wheel', '/avatars/8.webp', '#2a0b1c', '#fb7185', '#fb7185', '#fb718580', true, false, 'both')
+  ('silver-void', 9, 'Silver Void', '50', '/avatars/1.webp', '#111827', '#cbd5e1', '#cbd5e1', '#cbd5e180', true, false, 'both'),
+  ('neon-lynx', 10, 'Neon Lynx', '50', '/avatars/2.webp', '#170f2e', '#a855f7', '#c084fc', '#a855f780', true, false, 'both'),
+  ('blue-signal', 11, 'Blue Signal', '50', '/avatars/3.webp', '#06131f', '#22d3ee', '#22d3ee', '#22d3ee80', true, false, 'both'),
+  ('violet-mask', 12, 'Violet Mask', '50', '/avatars/04.webp', '#1a1028', '#d946ef', '#d946ef', '#d946ef80', true, false, 'both'),
+  ('horned-iron', 13, 'Horned Iron', '50', '/avatars/5.webp', '#1f0a05', '#fb923c', '#fb923c', '#fb923c80', true, false, 'both'),
+  ('crimson-muse', 14, 'Crimson Muse', '50', '/avatars/6.webp', '#2a0b0b', '#f97316', '#f97316', '#f9731680', true, false, 'both'),
+  ('solar-flame', 15, 'Solar Flame', '50', '/avatars/07.webp', '#241005', '#facc15', '#facc15', '#facc1590', true, false, 'both'),
+  ('pink-circuit', 16, 'Pink Circuit', '50', '/avatars/08.webp', '#2a0b1c', '#fb7185', '#fb7185', '#fb718580', true, false, 'both')
 ON CONFLICT (id) DO UPDATE SET
   level = excluded.level,
   name = excluded.name,
