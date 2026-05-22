@@ -5,6 +5,7 @@ import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
 import {
   ArrowLeft,
   Bell,
+  Ban,
   Camera,
   Check,
   Flag,
@@ -23,6 +24,7 @@ import { TokenBalanceButton } from "@/components/ui/TokenBalanceButton";
 import { apiFetch } from "@/lib/http";
 import { cn } from "@/lib/utils";
 import { readIssueReports, writeIssueReports, type IssueReportRecord } from "@/lib/adminData";
+import { readBlockedCommunitySenders, writeBlockedCommunitySenders } from "@/lib/blockedCommunitySenders";
 import { useTheme } from "@/providers/useTheme";
 import { THEME_MODE_LABELS, type AccentPresetId, type ThemeMode } from "@/providers/theme-context";
 import { Button } from "@/components/ui/button";
@@ -116,6 +118,8 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
   const [seenNotificationIds, setSeenNotificationIds] = useState<string[]>(() => readSeenNotificationIds(userId));
   const [appearanceOpen, setAppearanceOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [blockedUsersOpen, setBlockedUsersOpen] = useState(false);
+  const [blockedSenderKeys, setBlockedSenderKeys] = useState<string[]>(() => readBlockedCommunitySenders(userId));
   const [issueType, setIssueType] = useState(ISSUE_TYPE_OPTIONS[0]);
   const [issueDetails, setIssueDetails] = useState("");
   const [screenshotName, setScreenshotName] = useState("");
@@ -174,7 +178,31 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
 
   useEffect(() => {
     setSeenNotificationIds(readSeenNotificationIds(userId));
+    setBlockedSenderKeys(readBlockedCommunitySenders(userId));
   }, [userId]);
+
+  const blockedSenderLabels = useMemo(() => {
+    const communities = propCommunities ?? readCommunityChats();
+    const labels = new Map<string, string>();
+    for (const community of communities) {
+      for (const message of community.messages) {
+        const key = (message.senderId || message.senderName).trim().toLowerCase();
+        if (blockedSenderKeys.includes(key)) labels.set(key, message.senderName);
+      }
+      for (const member of community.members) {
+        const key = (member.userId || member.username).trim().toLowerCase();
+        if (blockedSenderKeys.includes(key)) labels.set(key, member.username);
+      }
+    }
+    return blockedSenderKeys.map((key) => ({ key, label: labels.get(key) ?? key }));
+  }, [blockedSenderKeys, propCommunities]);
+
+  const handleUnblockSender = (senderKey: string) => {
+    const next = blockedSenderKeys.filter((key) => key !== senderKey);
+    setBlockedSenderKeys(next);
+    writeBlockedCommunitySenders(userId, next);
+    window.dispatchEvent(new StorageEvent("storage", { key: "raw.community.blocked-senders.v1" }));
+  };
 
   useEffect(() => {
     if (!notifOpen || notifications.length === 0) return;
@@ -527,6 +555,18 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
                 Billing
               </DropdownMenuItem>
 
+              <DropdownMenuItem
+                onSelect={(event) => {
+                  event.preventDefault();
+                  setBlockedSenderKeys(readBlockedCommunitySenders(userId));
+                  setBlockedUsersOpen(true);
+                }}
+                className={cn("cursor-pointer rounded-lg px-3 py-2.5 text-sm focus:text-raw-text", isEffectiveLight ? "text-slate-700 focus:bg-slate-100" : "text-raw-silver/80 focus:bg-raw-surface/80")}
+              >
+                <Ban className="mr-3 h-4 w-4" />
+                Blocked users
+              </DropdownMenuItem>
+
               <DropdownMenuSeparator className={cn("my-2", isEffectiveLight ? "bg-slate-200" : "bg-raw-border/30")} />
 
               {showAdminLink ? (
@@ -719,6 +759,54 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
             </Button>
             <Button onClick={handleSubmitIssueReport} className="rounded-xl bg-red-400 px-4 text-raw-ink hover:bg-red-300">
               Send report
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={blockedUsersOpen} onOpenChange={setBlockedUsersOpen}>
+        <DialogContent className="border-raw-border/40 bg-raw-black text-raw-text sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display text-xl tracking-wide">Blocked users</DialogTitle>
+            <DialogDescription className="text-raw-silver/50">
+              Unblock someone to show their community messages again.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-2">
+            {blockedSenderLabels.length === 0 ? (
+              <p className="rounded-2xl border border-raw-border/25 bg-raw-surface/20 px-4 py-6 text-center text-sm text-raw-silver/40">
+                You have not blocked anyone yet.
+              </p>
+            ) : blockedSenderLabels.map((sender) => (
+              <div
+                key={sender.key}
+                className="flex items-center justify-between gap-3 rounded-2xl border border-raw-border/25 bg-raw-surface/25 px-4 py-3"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-raw-text">@{sender.label}</p>
+                  <p className="truncate text-[10px] text-raw-silver/35">{sender.key}</p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => handleUnblockSender(sender.key)}
+                  className="shrink-0 rounded-xl border-raw-gold/30 bg-raw-gold/10 px-3 text-xs text-raw-gold hover:bg-raw-gold/15 hover:text-raw-gold"
+                >
+                  Unblock
+                </Button>
+              </div>
+            ))}
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setBlockedUsersOpen(false)}
+              className="rounded-xl text-raw-silver/70 hover:text-raw-text"
+            >
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>
