@@ -452,37 +452,38 @@ export function OnboardingJourney({
                     </div>
                   </div>
 
-                  <div>
-                    <div className="mx-auto mb-3 flex w-full max-w-[15rem] items-center justify-between gap-3 min-[420px]:max-w-[22rem] sm:max-w-[30rem] md:mx-0">
-                      <button
-                        type="button"
-                        onClick={() => setAvatarPage((page) => Math.max(0, page - 1))}
-                        disabled={avatarPage === 0}
-                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-raw-border/45 bg-raw-black/70 text-raw-gold transition hover:border-raw-gold/45 disabled:cursor-not-allowed disabled:opacity-25 sm:h-10 sm:w-10"
-                        aria-label="Previous preview avatars"
-                      >
-                        <ChevronLeft className="h-5 w-5" />
-                      </button>
-                      <div className="text-center">
-                        <p className="font-display text-[9px] uppercase tracking-[0.2em] text-raw-gold/70">
-                          Preview only
-                        </p>
-                        <p className="mt-1 text-[10px] text-raw-silver/40">
-                          Page {avatarPage + 1} / {previewAvatarPageCount}
-                        </p>
+                  {previewAvatarChoices.length > 0 ? (
+                    <div>
+                      <div className="mx-auto mb-3 flex w-full max-w-[15rem] items-center justify-between gap-3 min-[420px]:max-w-[22rem] sm:max-w-[30rem] md:mx-0">
+                        <button
+                          type="button"
+                          onClick={() => setAvatarPage((page) => Math.max(0, page - 1))}
+                          disabled={avatarPage === 0}
+                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-raw-border/45 bg-raw-black/70 text-raw-gold transition hover:border-raw-gold/45 disabled:cursor-not-allowed disabled:opacity-25 sm:h-10 sm:w-10"
+                          aria-label="Previous preview avatars"
+                        >
+                          <ChevronLeft className="h-5 w-5" />
+                        </button>
+                        <div className="text-center">
+                          <p className="font-display text-[9px] uppercase tracking-[0.2em] text-raw-gold/70">
+                            Preview only
+                          </p>
+                          <p className="mt-1 text-[10px] text-raw-silver/40">
+                            Page {avatarPage + 1} / {previewAvatarPageCount}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setAvatarPage((page) => Math.min(previewAvatarPageCount - 1, page + 1))}
+                          disabled={avatarPage >= previewAvatarPageCount - 1}
+                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-raw-border/45 bg-raw-black/70 text-raw-gold transition hover:border-raw-gold/45 disabled:cursor-not-allowed disabled:opacity-25 sm:h-10 sm:w-10"
+                          aria-label="Next preview avatars"
+                        >
+                          <ChevronRight className="h-5 w-5" />
+                        </button>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => setAvatarPage((page) => Math.min(previewAvatarPageCount - 1, page + 1))}
-                        disabled={avatarPage >= previewAvatarPageCount - 1}
-                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-raw-border/45 bg-raw-black/70 text-raw-gold transition hover:border-raw-gold/45 disabled:cursor-not-allowed disabled:opacity-25 sm:h-10 sm:w-10"
-                        aria-label="Next preview avatars"
-                      >
-                        <ChevronRight className="h-5 w-5" />
-                      </button>
-                    </div>
 
-                    <div className="mx-auto grid w-full max-w-[24rem] grid-cols-4 gap-x-3 gap-y-3 sm:gap-x-3 sm:gap-y-4 md:mx-0">
+                      <div className="mx-auto grid w-full max-w-[24rem] grid-cols-4 gap-x-3 gap-y-3 sm:gap-x-3 sm:gap-y-4 md:mx-0">
                       {isLoadingPreviewAvatars && visiblePreviewAvatarChoices.length === 0
                         ? Array.from({ length: AVATAR_PAGE_SIZE }).map((_, i) => (
                             <div key={i} className="flex flex-col items-center gap-1 p-1.5">
@@ -537,8 +538,9 @@ export function OnboardingJourney({
                           </button>
                         );
                       })}
+                      </div>
                     </div>
-                  </div>
+                  ) : null}
                 </div>
 
                 <div className="order-first flex flex-col items-center justify-start md:order-none md:justify-center">
@@ -561,7 +563,7 @@ export function OnboardingJourney({
                     </PhoneMockup>
                   </div>
                   <p className="mt-3 text-center text-[10px] uppercase tracking-[0.18em] text-raw-silver/40">
-                    {previewAvatarIndex <= FREE_ONBOARDING_AVATAR_COUNT ? "Pick this starter" : "Preview only"}
+                    {previewAvatarChoices.length === 0 || previewAvatarIndex <= FREE_ONBOARDING_AVATAR_COUNT ? "Pick this starter" : "Preview only"}
                   </p>
                 </div>
               </div>
