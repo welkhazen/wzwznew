@@ -67,6 +67,7 @@ interface DashboardNavProps {
 const ISSUE_TYPE_OPTIONS = ["Harmful content", "Bug or broken screen", "Account or billing", "Other"];
 const MAX_SCREENSHOT_SIZE = 2 * 1024 * 1024;
 const DELIVERED_NOTIFICATIONS_PREFIX = "raw.delivered-notifications";
+const SEEN_NOTIFICATIONS_PREFIX = "raw.seen-notifications";
 
 type DashboardNotification = {
   id: string;
@@ -83,11 +84,36 @@ function deliveredNotificationsKey(userId: string) {
   return `${DELIVERED_NOTIFICATIONS_PREFIX}.${userId}`;
 }
 
+function notificationDayKey(date = new Date()): string {
+  return date.toISOString().slice(0, 10);
+}
+
+function seenNotificationsKey(userId: string) {
+  return `${SEEN_NOTIFICATIONS_PREFIX}.${userId}.${notificationDayKey()}`;
+}
+
+function readSeenNotificationIds(userId: string): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(seenNotificationsKey(userId));
+    const parsed = raw ? JSON.parse(raw) as string[] : [];
+    return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeSeenNotificationIds(userId: string, ids: string[]): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(seenNotificationsKey(userId), JSON.stringify(Array.from(new Set(ids))));
+}
+
 export function DashboardNav({ userId, username, avatarLevel, showAdminLink = false, onAddTestXP, onProfileClick, onBillingClick, onLogout, communityTitle, onBack, communities: propCommunities, xp = 0, level = 1 }: DashboardNavProps) {
   const { mode, accent, accentPresets, setMode, setAccent } = useTheme();
   const [hoveredMode, setHoveredMode] = useState<ThemeMode | null>(null);
   const [hoveredAccent, setHoveredAccent] = useState<AccentPresetId | null>(null);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [seenNotificationIds, setSeenNotificationIds] = useState<string[]>(() => readSeenNotificationIds(userId));
   const [appearanceOpen, setAppearanceOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [issueType, setIssueType] = useState(ISSUE_TYPE_OPTIONS[0]);
@@ -141,6 +167,24 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
     }
     return results.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }, [userId, username, propCommunities]);
+  const unseenNotificationCount = useMemo(() => {
+    const seen = new Set(seenNotificationIds);
+    return notifications.filter((notification) => !seen.has(notification.id)).length;
+  }, [notifications, seenNotificationIds]);
+
+  useEffect(() => {
+    setSeenNotificationIds(readSeenNotificationIds(userId));
+  }, [userId]);
+
+  useEffect(() => {
+    if (!notifOpen || notifications.length === 0) return;
+    const ids = notifications.map((notification) => notification.id);
+    setSeenNotificationIds((previous) => {
+      const next = Array.from(new Set([...previous, ...ids]));
+      writeSeenNotificationIds(userId, next);
+      return next;
+    });
+  }, [notifOpen, notifications, userId]);
 
   useEffect(() => {
     if (typeof window === "undefined" || !("Notification" in window) || Notification.permission !== "granted") {
@@ -334,9 +378,9 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
               aria-label="Notifications"
             >
               <Bell className="h-5 w-5" />
-              {notifications.length > 0 && (
+              {unseenNotificationCount > 0 && (
                 <div className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-raw-gold px-1 text-[9px] font-bold text-raw-ink">
-                  {notifications.length > 99 ? "99+" : notifications.length}
+                  {unseenNotificationCount > 99 ? "99+" : unseenNotificationCount}
                 </div>
               )}
             </button>
