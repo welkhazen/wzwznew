@@ -491,6 +491,32 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       void reloadCommunityPolls();
     }, [reloadCommunityPolls]);
 
+    useEffect(() => {
+      if (!activeCommunityId || !communityPollsAvailable) return;
+      const channel = supabase
+        .channel(`community-polls:${activeCommunityId}`)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "community_polls", filter: `community_id=eq.${activeCommunityId}` },
+          () => { void reloadCommunityPolls(); },
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "community_poll_votes" },
+          () => { void reloadCommunityPolls(); },
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "community_poll_options" },
+          () => { void reloadCommunityPolls(); },
+        )
+        .subscribe();
+
+      return () => {
+        void supabase.removeChannel(channel);
+      };
+    }, [activeCommunityId, communityPollsAvailable, reloadCommunityPolls]);
+
     const handleOpenPollComposer = useCallback(() => {
       setPollQuestion("");
       setPollOptionDrafts(["", ""]);
@@ -551,12 +577,13 @@ const COMMUNITY_LOGOS: Record<string, string> = {
 
       try {
         await voteOnCommunityPoll(pollId, optionId, user.id);
+        await reloadCommunityPolls();
       } catch (error) {
         console.error("Failed to vote on poll", error);
         setCommunityPolls(previous);
         toast({ title: "Couldn't record vote", description: "Please try again in a moment." });
       }
-    }, [communityPolls, user.id]);
+    }, [communityPolls, reloadCommunityPolls, user.id]);
 
     const handleDeletePoll = useCallback(async (pollId: string) => {
       if (!canManagePolls) return;
