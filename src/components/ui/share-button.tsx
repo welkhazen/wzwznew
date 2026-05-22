@@ -39,7 +39,7 @@ export function ShareButton({ className, links, children, ...props }: ShareButto
     <div ref={containerRef} className="relative inline-flex h-10">
       <div
         className={cn(
-          "pointer-events-none absolute bottom-[calc(100%+0.7rem)] left-1/2 z-30 flex -translate-x-1/2 items-end justify-center gap-2 rounded-full border border-raw-gold/25 bg-raw-black/90 px-2.5 py-2 shadow-[0_0_28px_rgba(234,179,8,0.18)] backdrop-blur-md transition-all duration-200",
+          "pointer-events-none absolute bottom-[calc(100%+0.7rem)] left-1/2 z-30 flex -translate-x-1/2 items-end justify-center gap-1.5 rounded-2xl border border-raw-gold/25 bg-raw-black/90 px-2.5 py-2 shadow-[0_0_28px_rgba(234,179,8,0.18)] backdrop-blur-md transition-all duration-200",
           "before:absolute before:-bottom-1.5 before:left-1/2 before:h-3 before:w-3 before:-translate-x-1/2 before:rotate-45 before:border-b before:border-r before:border-raw-gold/25 before:bg-raw-black/90",
           isOpen ? "translate-y-0 scale-100 opacity-100" : "translate-y-2 scale-95 opacity-0",
         )}
@@ -47,6 +47,11 @@ export function ShareButton({ className, links, children, ...props }: ShareButto
       >
         {links.map((link, index) => {
           const Icon = link.icon;
+          const shortLabel = link.label
+            .replace(/^Share on /, "")
+            .replace(/^Copy link$/, "Copy")
+            .replace(/^More apps$/, "More");
+
           return (
             <button
               type="button"
@@ -59,14 +64,14 @@ export function ShareButton({ className, links, children, ...props }: ShareButto
               title={link.label}
               tabIndex={isOpen ? 0 : -1}
               className={cn(
-                "pointer-events-auto group relative flex h-10 w-10 items-center justify-center rounded-full border border-raw-border/35 bg-raw-surface text-raw-silver transition-all duration-200 hover:-translate-y-1 hover:border-raw-gold/65 hover:bg-raw-gold/15 hover:text-raw-gold focus:outline-none focus:ring-2 focus:ring-raw-gold/45",
+                "pointer-events-auto relative flex h-14 min-w-14 flex-col items-center justify-center gap-1 rounded-xl border border-raw-border/35 bg-raw-surface px-2 text-raw-silver transition-all duration-200 hover:-translate-y-1 hover:border-raw-gold/65 hover:bg-raw-gold/15 hover:text-raw-gold focus:outline-none focus:ring-2 focus:ring-raw-gold/45",
                 !isOpen && "pointer-events-none",
               )}
               style={{ transitionDelay: isOpen ? `${index * 28}ms` : "0ms" }}
             >
               <Icon className="size-4" />
-              <span className="pointer-events-none absolute bottom-[calc(100%+0.4rem)] left-1/2 hidden -translate-x-1/2 whitespace-nowrap rounded-full border border-raw-border/25 bg-raw-black/95 px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-raw-silver/80 shadow-lg group-hover:block">
-                {link.label.replace(/^Share on /, "")}
+              <span className="max-w-16 truncate text-[8px] font-semibold uppercase tracking-[0.08em]">
+                {shortLabel}
               </span>
             </button>
           );
