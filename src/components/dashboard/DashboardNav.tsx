@@ -471,7 +471,7 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
                 className="flex items-center transition-opacity hover:opacity-80"
                 aria-label="Open profile menu"
               >
-                <AvatarFigure avatarIndex={avatarLevel} size="md" selected />
+                <AvatarFigure avatarIndex={avatarLevel} size="sm" selected />
               </button>
             </DropdownMenuTrigger>
 

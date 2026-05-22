@@ -187,6 +187,7 @@ export default function Dashboard({
           <DashboardSectionShell className="p-2 sm:p-3">
             <DashboardCommunities
               user={user}
+              avatarLevel={avatarLevel}
               activeCommunityId={activeCommunityId}
               onOpenCommunity={handleOpenCommunity}
               onBackToCommunities={handleBackToCommunities}

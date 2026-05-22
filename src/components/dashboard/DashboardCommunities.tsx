@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
 import { CommunityBadge } from "@/components/dashboard/CommunityBadge";
+import { AvatarFigure } from "@/components/ui/avatar-figure";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -78,6 +79,7 @@ import {
   COMMUNITY_UNLOCK_TOKEN_COST,
   type CommunityAccess,
 } from "@/lib/communityAccess";
+import { readAvatarCatalogLocal } from "@/lib/avatarCatalog";
 import type { User } from "@/store/types";
 
 const WAITLIST_UNLOCK_THRESHOLD = 200;
@@ -224,6 +226,7 @@ export function DashboardCommunities(props) {
   // Destructure props for clarity and to avoid ReferenceError
   const {
     user,
+    avatarLevel = 1,
     activeCommunityId = null,
     onOpenCommunity,
     onBackToCommunities,
@@ -358,6 +361,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
   const [pollOptionDrafts, setPollOptionDrafts] = useState<string[]>(["", ""]);
   const [pollSubmitting, setPollSubmitting] = useState(false);
   const [blockedSenderKeys, setBlockedSenderKeys] = useState<string[]>(() => readBlockedCommunitySenders(user.id));
+  const [senderAvatarLevels, setSenderAvatarLevels] = useState<Record<string, number>>({});
   const lastTouchedCommunityRef = useRef<string>("");
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const messageInputRef = useRef<HTMLInputElement | null>(null);
@@ -428,6 +432,50 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       () => (selectedCommunity?.messages ?? []).filter((message) => !blockedSenderKeySet.has(getMessageSenderBlockKey(message))),
       [blockedSenderKeySet, selectedCommunity]
     );
+    const messageSenderIds = useMemo(() => {
+      const ids = new Set<string>();
+      activeMessages.forEach((message) => {
+        if (message.senderId) ids.add(message.senderId);
+      });
+      return Array.from(ids).sort();
+    }, [activeMessages]);
+
+    useEffect(() => {
+      const catalog = readAvatarCatalogLocal();
+      const levelsById: Record<string, number> = { [user.id]: avatarLevel };
+      for (const senderId of messageSenderIds) {
+        try {
+          const selectedId = window.localStorage.getItem(`raw.avatar.selected.v1.${senderId}`);
+          const index = selectedId ? catalog.findIndex((item) => item.id === selectedId) : -1;
+          if (index >= 0) levelsById[senderId] = index + 1;
+        } catch {
+          // Keep default avatar if local selection cannot be read.
+        }
+      }
+      setSenderAvatarLevels(levelsById);
+
+      const lookupIds = messageSenderIds.filter((senderId) => senderId !== user.id);
+      if (lookupIds.length === 0) return;
+      let cancelled = false;
+      void supabase
+        .from("user_avatar_selection")
+        .select("user_id, avatar_id")
+        .in("user_id", lookupIds)
+        .then(({ data }) => {
+          if (cancelled || !data) return;
+          setSenderAvatarLevels((previous) => {
+            const next = { ...previous, [user.id]: avatarLevel };
+            data.forEach((row) => {
+              const index = catalog.findIndex((item) => item.id === row.avatar_id);
+              if (index >= 0) next[row.user_id] = index + 1;
+            });
+            return next;
+          });
+        });
+      return () => {
+        cancelled = true;
+      };
+    }, [avatarLevel, messageSenderIds, user.id]);
     const filteredMessages = useMemo(() => {
       const query = searchQuery.trim().toLowerCase();
       if (!query) {
@@ -1553,6 +1601,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                   </div>
                   {group.messages.map((message) => {
                     const isOwnMessage = message.senderId === user.id || message.senderName === user.username;
+                    const senderAvatarLevel = senderAvatarLevels[message.senderId] ?? 1;
                     const likedBy = message.likedBy ?? [];
                     const alreadyLiked = likedBy.includes(user.id);
                     const likeCount = likedBy.length;
@@ -1567,13 +1616,22 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                           border: "1px solid rgba(255,255,255,0.07)",
                         }}
                       >
+                        <div className="absolute left-2.5 top-2.5">
+                          <AvatarFigure
+                            avatarIndex={senderAvatarLevel}
+                            size="sm"
+                            selected={isOwnMessage}
+                            className="opacity-90"
+                            style={{ width: 28, height: 28 }}
+                          />
+                        </div>
                         {message.replyToText && (
-                          <div className="mb-1.5 rounded-lg border border-raw-border/20 bg-raw-black/20 px-2.5 py-1.5 text-xs text-raw-silver/55">
+                          <div className="mb-1.5 ml-9 rounded-lg border border-raw-border/20 bg-raw-black/20 px-2.5 py-1.5 text-xs text-raw-silver/55">
                             <p className="font-medium text-raw-gold/75">↩ {message.replyToSenderName}</p>
                             <p className="mt-0.5 truncate">{message.replyToText}</p>
                           </div>
                         )}
-                        <p className={`break-words [overflow-wrap:anywhere] text-sm leading-snug ${message.deletedAt ? "italic text-raw-silver/45" : ""}`}>
+                        <p className={`ml-9 break-words pr-16 [overflow-wrap:anywhere] text-sm leading-snug ${message.deletedAt ? "italic text-raw-silver/45" : ""}`}>
                           <span
                             className="mr-0.5 font-semibold uppercase tracking-wide text-[11px]"
                             style={{ color: isOwnMessage ? "rgb(var(--raw-accent))" : "rgb(var(--raw-accent) / 0.65)" }}
