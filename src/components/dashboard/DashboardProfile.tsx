@@ -43,8 +43,6 @@ export function DashboardProfile({
   avatarLevel,
   onAvatarChange,
   ownedAvatarLevels,
-  onUnlockAvatar,
-  avatarPricesByLevel,
   pollsAnswered,
   xp = 0,
   xpLevel = 1,
@@ -52,7 +50,6 @@ export function DashboardProfile({
 }: DashboardProfileProps) {
   const { toast } = useToast();
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  const [unlockingLevel, setUnlockingLevel] = useState<number | null>(null);
 
   const [pwOpen, setPwOpen] = useState(false);
   const [oldPw, setOldPw] = useState("");
@@ -97,6 +94,8 @@ export function DashboardProfile({
 
   const displayIndex = hoveredIndex ?? avatarLevel;
   const theme = getAvatar(displayIndex);
+  const ownedLevels = Array.from({ length: LEVEL_THEMES.length }, (_, i) => i + 1)
+    .filter((lvl) => ownedAvatarLevels.has(lvl));
 
   return (
     <div className="space-y-5">
@@ -128,33 +127,19 @@ export function DashboardProfile({
             gridTemplateColumns: `repeat(${Math.ceil(MAX_LEVEL / 2)}, minmax(0, 1fr))`,
           }}
         >
-          {Array.from({ length: LEVEL_THEMES.length }, (_, i) => i + 1).map(
+          {ownedLevels.map(
             (lvl) => (
               <button
                 key={lvl}
                 type="button"
                 onClick={() => {
-                  if (ownedAvatarLevels.has(lvl)) {
-                    onAvatarChange(lvl);
-                    return;
-                  }
-
-                  setUnlockingLevel(lvl);
-                  void onUnlockAvatar(lvl).then((ok) => {
-                    if (ok) onAvatarChange(lvl);
-                  }).catch(() => {
-                    // Keep current selection if unlock fails.
-                  }).finally(() => {
-                    setUnlockingLevel((previous) => (previous === lvl ? null : previous));
-                  });
+                  onAvatarChange(lvl);
                 }}
                 onMouseEnter={() => setHoveredIndex(lvl)}
                 onMouseLeave={() => setHoveredIndex(null)}
                 onFocus={() => setHoveredIndex(lvl)}
                 onBlur={() => setHoveredIndex(null)}
-                className={`relative flex h-10 w-10 items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/40 ${
-                  ownedAvatarLevels.has(lvl) ? "" : "opacity-75"
-                }`}
+                className="relative flex h-10 w-10 items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/40"
                 aria-label={`Preview level ${lvl}`}
                 aria-pressed={lvl === avatarLevel}
               >
@@ -163,11 +148,6 @@ export function DashboardProfile({
                   size="sm"
                   selected={lvl === avatarLevel}
                 />
-                {!ownedAvatarLevels.has(lvl) && (
-                  <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap text-[9px] text-raw-silver/40">
-                    {unlockingLevel === lvl ? "Unlocking..." : (avatarPricesByLevel[lvl] || "Locked")}
-                  </span>
-                )}
               </button>
             )
           )}
