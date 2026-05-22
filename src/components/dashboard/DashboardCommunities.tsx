@@ -736,27 +736,23 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       }
     };
 
-    const handleSendMessage = async () => {
+    const sendOptimisticMessage = useCallback(async (trimmedMessage: string, retryingMessage?: CommunityChatMessageRecord) => {
       if (!selectedCommunity) {
         return;
       }
 
-      if (isUserBanned) {
-        toast({
-          title: "Chat access restricted",
-          description: "Your account is currently banned from posting while admin review remains in effect.",
-        });
-        return;
-      }
+      const optimisticMessage = retryingMessage ?? {
+        id: `optimistic-${Date.now()}`,
+        communityId: selectedCommunity.id,
+        senderId: user.id,
+        senderName: user.username,
+        text: trimmedMessage,
+        createdAt: new Date().toISOString(),
+        deliveryStatus: "pending" as const,
+        likedBy: [],
+      };
 
-      const trimmedMessage = messageDraft.trim();
-      if (!trimmedMessage) {
-        return;
-      }
-      if (trimmedMessage.length > MAX_COMMUNITY_MESSAGE_LENGTH) {
-        toast({ title: "Message too long", description: `Max ${MAX_COMMUNITY_MESSAGE_LENGTH} characters.` });
-        return;
-      }
+      updateCommunities((current) => appendOptimisticMessage(current, selectedCommunity.id, optimisticMessage));
       try {
         const mentionRecipientIds = selectedCommunity.members
           .filter((member) =>
