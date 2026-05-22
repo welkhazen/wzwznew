@@ -88,6 +88,15 @@ import {
 import type { User } from "@/store/types";
 
 const WAITLIST_UNLOCK_THRESHOLD = 200;
+const TOKEN_BALANCE_STORAGE_PREFIX = "raw.polls.token-balance";
+const TOKEN_BALANCE_UPDATED_EVENT = "raw:token-balance-updated";
+
+function updateTokenBalanceCache(userId: string, balance: number): void {
+  if (typeof window === "undefined") return;
+  const key = `${TOKEN_BALANCE_STORAGE_PREFIX}.${userId}`;
+  window.localStorage.setItem(key, String(balance));
+  window.dispatchEvent(new CustomEvent(TOKEN_BALANCE_UPDATED_EVENT, { detail: { storageKey: key, balance } }));
+}
 const COMMUNITIES_CACHE_KEY = "raw.dashboard.communities.v1";
 const MAX_COMMUNITY_MESSAGE_LENGTH = 150;
 
@@ -204,6 +213,7 @@ export function DashboardCommunities(props) {
   const {
     user,
     avatarLevel = 1,
+    tokenBalance = 0,
     activeCommunityId = null,
     onOpenCommunity,
     onBackToCommunities,
@@ -251,6 +261,7 @@ export function DashboardCommunities(props) {
 
 interface DashboardCommunitiesProps {
   user: User;
+  tokenBalance?: number;
   activeCommunityId?: string | null;
   onOpenCommunity: (communityId: string) => void;
   onBackToCommunities?: () => void;
@@ -727,6 +738,49 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       }
     };
 
+    const handlePaidJoinCommunity = async (communityId: string, shouldOpenPage = false) => {
+      const targetCommunity = communities.find((community) => community.id === communityId);
+      if (!targetCommunity || unlockingId === communityId) {
+        return;
+      }
+
+      if (tokenBalance < COMMUNITY_UNLOCK_TOKEN_COST) {
+        toast({
+          title: "Not enough tokens",
+          description: `Joining ${targetCommunity.title} costs ${COMMUNITY_UNLOCK_TOKEN_COST} tokens.`,
+        });
+        return;
+      }
+
+      const confirmed = window.confirm(`Join ${targetCommunity.title} for ${COMMUNITY_UNLOCK_TOKEN_COST} tokens?`);
+      if (!confirmed) {
+        return;
+      }
+
+      setUnlockingId(communityId);
+      try {
+        const result = await unlockCommunity(user.id, communityId);
+        if (!result.ok) {
+          toast({
+            title: result.error === "insufficient_tokens" ? "Not enough tokens" : "Could not unlock group",
+            description: result.error === "insufficient_tokens"
+              ? `You need ${COMMUNITY_UNLOCK_TOKEN_COST} tokens to join.`
+              : "Please try again.",
+          });
+          return;
+        }
+
+        updateTokenBalanceCache(user.id, result.balance);
+        setCommunityAccess((prev) => ({
+          ...prev,
+          unlockedIds: new Set([...prev.unlockedIds, communityId]),
+        }));
+        await handleJoinCommunity(communityId, shouldOpenPage);
+      } finally {
+        setUnlockingId(null);
+      }
+    };
+
     const handleLeaveCommunity = async () => {
       if (!selectedCommunity || !isJoined || leavingCommunityId) {
         return;
@@ -815,6 +869,21 @@ const COMMUNITY_LOGOS: Record<string, string> = {
 
     const handleUnlockCommunity = async (communityId: string) => {
       if (unlockingId === communityId) return;
+      const targetCommunity = communities.find((community) => community.id === communityId);
+      const isAlreadyUnlocked = communityAccess.hasSubscription || communityAccess.unlockedIds.has(communityId);
+      if (!isAlreadyUnlocked) {
+        if (tokenBalance < COMMUNITY_UNLOCK_TOKEN_COST) {
+          toast({
+            title: "Not enough tokens",
+            description: `You need ${COMMUNITY_UNLOCK_TOKEN_COST} tokens to unlock this group.`,
+          });
+          return;
+        }
+        const confirmed = window.confirm(
+          `Unlock ${targetCommunity?.title ?? "this group"} for ${COMMUNITY_UNLOCK_TOKEN_COST} tokens?`,
+        );
+        if (!confirmed) return;
+      }
       setUnlockingId(communityId);
       try {
         const result = await unlockCommunity(user.id, communityId);
@@ -827,17 +896,17 @@ const COMMUNITY_LOGOS: Record<string, string> = {
             return;
           }
           // RPC missing or network error — open anyway, access check will re-run on next load
-          onOpenCommunity(communityId);
+          toast({ title: "Could not unlock group", description: "Please try again." });
           return;
         }
+        updateTokenBalanceCache(user.id, result.balance);
         setCommunityAccess((prev) => ({
           ...prev,
           unlockedIds: new Set([...prev.unlockedIds, communityId]),
         }));
         onOpenCommunity(communityId);
       } catch {
-        // Fallback: open the community rather than blocking the user
-        onOpenCommunity(communityId);
+        toast({ title: "Could not unlock group", description: "Please try again." });
       } finally {
         setUnlockingId(null);
       }
@@ -1255,10 +1324,10 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                       if (joinReq?.status === "approved") {
                         return (
                           <Button
-                            onClick={() => handleJoinCommunity(community.id, true)}
+                            onClick={() => handlePaidJoinCommunity(community.id, true)}
                             className="w-full rounded-xl bg-raw-gold px-2 py-2 text-xs text-raw-ink hover:bg-raw-gold/90"
                           >
-                            Open Chat
+                            Join Group - {COMMUNITY_UNLOCK_TOKEN_COST} tokens
                           </Button>
                         );
                       }
@@ -1283,7 +1352,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                       );
                     })() : (() => {
                       const isUnlocked = joined || communityAccess.hasSubscription || communityAccess.unlockedIds.has(community.id);
-                      const canGetFree = !isUnlocked && effectiveUnlockCount < FREE_COMMUNITY_SLOTS;
+                      const canGetFree = false;
                       const freeRemaining = Math.max(0, FREE_COMMUNITY_SLOTS - effectiveUnlockCount);
                       const isUnlocking = unlockingId === community.id;
                       if (isUnlocked) {
@@ -1370,10 +1439,10 @@ const COMMUNITY_LOGOS: Record<string, string> = {
               )}
               {!isJoined && !selectedCommunity.locked && (
                 <button
-                  onClick={() => handleJoinCommunity(selectedCommunity.id)}
+                  onClick={() => handlePaidJoinCommunity(selectedCommunity.id)}
                   className="flex items-center gap-2 rounded-full bg-raw-gold px-3 py-1.5 text-[11px] font-semibold text-raw-ink transition-colors hover:bg-raw-gold/90"
                 >
-                  Join Group
+                  Join Group - {COMMUNITY_UNLOCK_TOKEN_COST} tokens
                 </button>
               )}
               {!isJoined && selectedCommunity.locked && (() => {
@@ -1383,10 +1452,10 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                 if (joinReq?.status === "approved") {
                   return (
                     <button
-                      onClick={() => handleJoinCommunity(selectedCommunity.id)}
+                      onClick={() => handlePaidJoinCommunity(selectedCommunity.id)}
                       className="flex items-center gap-2 rounded-full bg-raw-gold px-3 py-1.5 text-[11px] font-semibold text-raw-ink transition-colors hover:bg-raw-gold/90"
                     >
-                      Join Group
+                      Join Group - {COMMUNITY_UNLOCK_TOKEN_COST} tokens
                     </button>
                   );
                 }

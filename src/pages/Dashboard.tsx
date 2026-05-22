@@ -190,6 +190,7 @@ export default function Dashboard({
             <DashboardCommunities
               user={user}
               avatarLevel={avatarLevel}
+              tokenBalance={tokenBalance}
               activeCommunityId={activeCommunityId}
               onOpenCommunity={handleOpenCommunity}
               onBackToCommunities={handleBackToCommunities}
