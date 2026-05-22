@@ -20,7 +20,6 @@ import {
   Share2,
   Smartphone,
   Users,
-  AtSign,
 } from "lucide-react";
 
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
@@ -642,8 +641,9 @@ export function DashboardPolls({
             <ShareButton
               links={[
                 { icon: Smartphone, onClick: () => handleWhatsAppShare(currentPoll), label: "Share on WhatsApp" },
-                { icon: AtSign, onClick: () => handleInstagramShare(currentPoll), label: "Share on Instagram" },
+                { icon: Instagram, onClick: () => handleInstagramShare(currentPoll), label: "Share on Instagram" },
                 { icon: Facebook, onClick: () => handleFacebookShare(currentPoll), label: "Share on Facebook" },
+                { icon: SendHorizontal, onClick: () => handleShare(currentPoll), label: "More apps" },
                 { icon: Link2, onClick: () => copyShareLink(currentPoll), label: "Copy link" },
               ]}
               className="w-full border-raw-gold/45 bg-raw-gold/10 text-[11px] font-semibold uppercase tracking-[0.16em] text-raw-gold hover:bg-raw-gold/15 dark:border-raw-gold/45 dark:bg-raw-gold/10 dark:text-raw-gold dark:hover:bg-raw-gold/15"
