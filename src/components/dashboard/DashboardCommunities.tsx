@@ -3,13 +3,19 @@ import { motion, AnimatePresence } from "framer-motion";
 import LNTLogo from "@/assets/LNT.webp";
 import SYTLogo from "@/assets/logospeak.webp";
 import IIJMLogo from "@/assets/itisjustme.webp";
-import { AlertTriangle, ArrowLeft, BarChart3, Bell, BellOff, Heart, ImagePlus, Lock, Plus, Search, Send, Trash2, Users, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Ban, BarChart3, Bell, BellOff, Heart, ImagePlus, Lock, MoreHorizontal, Plus, Search, Send, Trash2, Users, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
 import { CommunityBadge } from "@/components/dashboard/CommunityBadge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 import {
   ensureUserRecord,
@@ -76,7 +82,39 @@ import type { User } from "@/store/types";
 
 const WAITLIST_UNLOCK_THRESHOLD = 200;
 const COMMUNITIES_CACHE_KEY = "raw.dashboard.communities.v1";
+const BLOCKED_COMMUNITY_SENDERS_KEY = "raw.community.blocked-senders.v1";
 const MAX_COMMUNITY_MESSAGE_LENGTH = 150;
+
+function getMessageSenderBlockKey(message: Pick<CommunityChatMessageRecord, "senderId" | "senderName">): string {
+  return (message.senderId || message.senderName).trim().toLowerCase();
+}
+
+function readBlockedCommunitySenders(userId: string): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(BLOCKED_COMMUNITY_SENDERS_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    const blocked = parsed?.[userId];
+    return Array.isArray(blocked) ? blocked.filter((id): id is string => typeof id === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeBlockedCommunitySenders(userId: string, blockedSenderKeys: string[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    const raw = window.localStorage.getItem(BLOCKED_COMMUNITY_SENDERS_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    window.localStorage.setItem(
+      BLOCKED_COMMUNITY_SENDERS_KEY,
+      JSON.stringify({ ...parsed, [userId]: blockedSenderKeys })
+    );
+  } catch {
+    // ignore storage write errors
+  }
+}
 
 function readCachedCommunities(): PersistedCommunityRecord[] {
   if (typeof window === "undefined") return [];
@@ -319,6 +357,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
   const [pollQuestion, setPollQuestion] = useState("");
   const [pollOptionDrafts, setPollOptionDrafts] = useState<string[]>(["", ""]);
   const [pollSubmitting, setPollSubmitting] = useState(false);
+  const [blockedSenderKeys, setBlockedSenderKeys] = useState<string[]>(() => readBlockedCommunitySenders(user.id));
   const lastTouchedCommunityRef = useRef<string>("");
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const messageInputRef = useRef<HTMLInputElement | null>(null);
@@ -380,7 +419,15 @@ const COMMUNITY_LOGOS: Record<string, string> = {
     const visibleMembers = selectedCommunity?.members.slice(0, 5) ?? [];
     const unreadCount = selectedCommunity && isJoined ? countUnreadMessages(selectedCommunity, user.id) : 0;
 
-    const activeMessages = useMemo(() => selectedCommunity?.messages ?? [], [selectedCommunity]);
+    useEffect(() => {
+      setBlockedSenderKeys(readBlockedCommunitySenders(user.id));
+    }, [user.id]);
+
+    const blockedSenderKeySet = useMemo(() => new Set(blockedSenderKeys), [blockedSenderKeys]);
+    const activeMessages = useMemo(
+      () => (selectedCommunity?.messages ?? []).filter((message) => !blockedSenderKeySet.has(getMessageSenderBlockKey(message))),
+      [blockedSenderKeySet, selectedCommunity]
+    );
     const filteredMessages = useMemo(() => {
       const query = searchQuery.trim().toLowerCase();
       if (!query) {
@@ -938,6 +985,39 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       toast({
         title: "Report sent for review",
         description: `The message from ${nextReport.reportedUsername} is now in the admin review queue.`,
+      });
+    };
+
+    const handleOpenMessageReport = (message: CommunityChatMessageRecord) => {
+      if (!selectedCommunity) return;
+      setReportTarget({
+        communityId: selectedCommunity.id,
+        communityTitle: selectedCommunity.title,
+        message,
+      });
+      setReportDraft(INITIAL_REPORT_DRAFT);
+      setReportDialogOpen(true);
+    };
+
+    const handleBlockMessageSender = (message: CommunityChatMessageRecord) => {
+      if (message.senderId === user.id || message.senderName === user.username) {
+        toast({
+          title: "Can't block yourself",
+          description: "This menu only blocks messages from other members.",
+        });
+        return;
+      }
+
+      const senderKey = getMessageSenderBlockKey(message);
+      setBlockedSenderKeys((previous) => {
+        if (previous.includes(senderKey)) return previous;
+        const next = [...previous, senderKey];
+        writeBlockedCommunitySenders(user.id, next);
+        return next;
+      });
+      toast({
+        title: `${message.senderName} blocked`,
+        description: "Their messages are hidden from your community chat view.",
       });
     };
 
@@ -1503,13 +1583,44 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                           </button>
                         )}
                         {!message.deletedAt && !message.deliveryStatus && (
-                          <button
-                            onClick={() => { void handleLikeMessage(message); }}
-                            className={`absolute right-2.5 top-1/2 -translate-y-1/2 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] transition-all ${alreadyLiked ? "border-raw-gold/45 bg-raw-gold/10 text-raw-gold opacity-100" : "border-raw-border/20 text-raw-silver/40 opacity-0 group-hover/msg:opacity-100"}`}
-                          >
-                            <Heart className={`h-2.5 w-2.5 ${alreadyLiked ? "fill-current" : ""}`} />
-                            {likeCount > 0 && <span>{likeCount}</span>}
-                          </button>
+                          <div className="absolute right-2.5 top-1/2 flex -translate-y-1/2 items-center gap-1">
+                            <button
+                              onClick={() => { void handleLikeMessage(message); }}
+                              className={`inline-flex min-h-6 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] transition-all ${alreadyLiked ? "border-raw-gold/45 bg-raw-gold/10 text-raw-gold opacity-100" : "border-raw-border/20 text-raw-silver/40 opacity-0 group-hover/msg:opacity-100"}`}
+                              aria-label={alreadyLiked ? "Unlike message" : "Like message"}
+                            >
+                              <Heart className={`h-2.5 w-2.5 ${alreadyLiked ? "fill-current" : ""}`} />
+                              {likeCount > 0 && <span>{likeCount}</span>}
+                            </button>
+                            {!isOwnMessage && (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <button
+                                    className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-raw-border/20 text-raw-silver/45 opacity-0 transition-all hover:border-raw-gold/35 hover:bg-raw-gold/10 hover:text-raw-gold group-hover/msg:opacity-100 data-[state=open]:opacity-100"
+                                    aria-label="Message actions"
+                                  >
+                                    <MoreHorizontal className="h-3.5 w-3.5" />
+                                  </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="min-w-32 border-raw-border/30 bg-raw-black/95 text-raw-silver shadow-xl shadow-black/40">
+                                  <DropdownMenuItem
+                                    className="cursor-pointer gap-2 text-xs focus:bg-raw-surface/80 focus:text-raw-text"
+                                    onClick={() => handleOpenMessageReport(message)}
+                                  >
+                                    <AlertTriangle className="h-3.5 w-3.5 text-raw-gold/80" />
+                                    Report
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    className="cursor-pointer gap-2 text-xs text-red-200/90 focus:bg-red-500/10 focus:text-red-100"
+                                    onClick={() => handleBlockMessageSender(message)}
+                                  >
+                                    <Ban className="h-3.5 w-3.5" />
+                                    Block
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            )}
+                          </div>
                         )}
                       </div>
                     );
