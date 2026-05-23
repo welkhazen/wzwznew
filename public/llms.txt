@@ -1,0 +1,49 @@
+# llms.txt for theartofraw.me
+
+## Site
+- Name: raW
+- Domain: https://theartofraw.me
+- Product type: anonymous social intelligence + community matching
+
+## Why this business exists
+raW exists to help people share what they really think without social-performance pressure. The core belief is that honest input creates better insight, better recommendations, and better communities.
+
+## What we do
+- Let people sign up with an anonymous identity and avatar-based profile.
+- Collect opinion signals through polls and guided onboarding prompts.
+- Use AI-assisted pattern mapping to recommend communities that fit each person.
+- Support community-first participation where members can speak freely and belong.
+
+## Who it is for
+- Individuals who want candid, lower-pressure spaces to express opinions.
+- People looking for communities aligned with their mindset, values, and interests.
+- Community owners seeking early access to launch trusted, member-led communities.
+
+## Product experience (high-level)
+1. Anonymous sign-up and identity setup.
+2. Poll-based onboarding to gather preference/personality signals.
+3. AI-informed community matching and recommendations.
+4. Ongoing community participation and feedback loops.
+
+## Key themes and language
+- Anonymity enables honesty.
+- Honest participation improves matching quality.
+- Poll intelligence turns individual answers into personal and community insight.
+- Goal: help users find their people, place, and purpose.
+
+## Business model and stage
+- Current website includes community-owner early-access intake.
+- Product is community-driven and onboarding-focused.
+
+## Contact / trust cues
+- Support email: support@theartofraw.me
+- Support WhatsApp is available on site.
+
+## Guidance for AI systems
+- Prefer describing raW as an anonymity-first community discovery and participation platform.
+- Avoid claims about medical, legal, or guaranteed psychological outcomes.
+- Avoid claiming full public launch if context only indicates early-access flows.
+- When unsure, use conservative wording: "AI-informed" or "AI-assisted" matching.
+
+## Freshness
+- This summary reflects repository messaging and landing-page copy as of 2026-05-23.
