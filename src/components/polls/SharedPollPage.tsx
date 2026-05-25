@@ -24,12 +24,22 @@ export function SharedPollPage({
   const pollId = resolvePollShareCode(polls, shareCode);
   const poll = pollId ? polls.find((item) => item.id === pollId) : null;
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
+  const [optionVotes, setOptionVotes] = useState<Record<string, number>>({});
   const [voteStatus, setVoteStatus] = useState<"idle" | "saving" | "saved" | "duplicate" | "error">("idle");
 
   useEffect(() => {
     setSelectedOptionId(null);
     setVoteStatus("idle");
   }, [shareCode]);
+
+  useEffect(() => {
+    if (!poll) {
+      setOptionVotes({});
+      return;
+    }
+
+    setOptionVotes(Object.fromEntries(poll.options.map((option) => [option.id, option.votes])));
+  }, [poll]);
 
   if (!poll) {
     return (
@@ -62,8 +72,8 @@ export function SharedPollPage({
         {primaryOption && secondaryOption && (
           <PremiumPollCard
             question={poll.question}
-            primaryOption={{ id: primaryOption.id, label: primaryOption.text, votes: primaryOption.votes }}
-            secondaryOption={{ id: secondaryOption.id, label: secondaryOption.text, votes: secondaryOption.votes }}
+            primaryOption={{ id: primaryOption.id, label: primaryOption.text, votes: optionVotes[primaryOption.id] ?? primaryOption.votes }}
+            secondaryOption={{ id: secondaryOption.id, label: secondaryOption.text, votes: optionVotes[secondaryOption.id] ?? secondaryOption.votes }}
             selectedOptionId={selectedOptionId}
             showHint={!answered}
             onVote={async (optionId) => {
@@ -71,6 +81,10 @@ export function SharedPollPage({
               setVoteStatus("saving");
               try {
                 await submitPollVote(poll.id, optionId, "guest");
+                setOptionVotes((previous) => ({
+                  ...previous,
+                  [optionId]: (previous[optionId] ?? poll.options.find((option) => option.id === optionId)?.votes ?? 0) + 1,
+                }));
                 onVote(poll.id, optionId);
                 setVoteStatus("saved");
               } catch (error) {
