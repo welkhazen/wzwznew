@@ -109,9 +109,16 @@ export default async function handler(request: Request): Promise<Response> {
   }
 
   const voterKey = await getVoterKey(request, pollId);
-  const { error: insertError } = await supabase
+  let { error: insertError } = await supabase
     .from("poll_votes")
     .insert({ poll_id: pollId, option_id: optionId, voter_key: voterKey });
+
+  if (insertError && insertError.code === "PGRST204") {
+    const fallbackResult = await supabase
+      .from("poll_votes")
+      .insert({ poll_id: pollId, option_id: optionId });
+    insertError = fallbackResult.error;
+  }
 
   if (insertError) {
     if (insertError.code === "23505") {
