@@ -81,18 +81,18 @@ export function SharedPollPage({
         )}
 
         {answered && (
-          <div className="w-full border border-raw-gold/25 bg-raw-gold/10 px-4 py-4 text-center">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-raw-gold/80">Answer saved</p>
-            <p className="mt-2 text-sm leading-relaxed text-raw-silver/65">
+          <div className="relative z-10 w-full border border-raw-gold/45 bg-raw-black/95 px-4 py-4 text-center shadow-[0_18px_45px_rgba(0,0,0,0.65),0_0_28px_rgba(241,196,45,0.12)]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-raw-gold">Answer saved</p>
+            <p className="mt-2 text-sm font-medium leading-relaxed text-raw-text">
               {voteStatus === "duplicate"
                 ? "Looks like this device or network already answered this poll."
                 : "Create an anonymous profile to answer more polls and find your communities."}
             </p>
             <div className="mt-4 grid gap-2 sm:grid-cols-2">
-              <Button onClick={onSignup} className="rounded-none bg-raw-gold text-raw-ink hover:bg-raw-gold/90">
+              <Button onClick={onSignup} className="rounded-none bg-raw-gold font-semibold text-raw-ink hover:bg-raw-gold/90">
                 Sign up
               </Button>
-              <Button asChild variant="outline" className="rounded-none border-raw-border/45 bg-transparent text-raw-silver hover:text-raw-gold">
+              <Button asChild variant="outline" className="rounded-none border-raw-gold/45 bg-raw-surface/40 font-semibold text-raw-text hover:bg-raw-gold/10 hover:text-raw-gold">
                 <Link to="/">Explore raW</Link>
               </Button>
             </div>
