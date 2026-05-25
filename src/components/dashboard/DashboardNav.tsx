@@ -508,7 +508,7 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
               sideOffset={10}
               collisionPadding={12}
               className={cn(
-                "max-h-[min(78dvh,620px)] w-[min(22rem,calc(100vw-1rem))] overflow-y-auto overscroll-contain rounded-2xl p-2 text-raw-text",
+                "max-h-[min(var(--radix-dropdown-menu-content-available-height),calc(100dvh-11.5rem),34rem)] w-[min(21rem,calc(100vw-1.25rem))] overflow-y-auto overscroll-contain rounded-2xl p-1.5 text-raw-text sm:max-h-[min(78dvh,620px)] sm:w-[min(22rem,calc(100vw-1rem))] sm:p-2",
                 isEffectiveLight
                   ? "border border-slate-300/80 bg-[linear-gradient(160deg,rgba(255,255,255,0.97),rgba(242,247,255,0.96))] shadow-[0_20px_50px_rgba(28,38,58,0.18)]"
                   : "border border-raw-border/40 bg-[linear-gradient(160deg,rgba(17,17,17,0.96),rgba(9,9,9,0.98))] shadow-[0_20px_50px_rgba(0,0,0,0.55)]",
@@ -517,7 +517,7 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
               <button
                 onClick={onProfileClick}
                 className={cn(
-                  "mb-1 flex w-full items-center gap-3 rounded-xl border px-3 py-2 text-left transition-colors",
+                  "mb-1 flex w-full items-center gap-3 rounded-xl border px-3 py-1.5 text-left transition-colors sm:py-2",
                   isEffectiveLight
                     ? "border-raw-gold/25 bg-raw-gold/[0.12] hover:bg-raw-gold/[0.2]"
                     : "border-raw-gold/20 bg-raw-gold/[0.08] hover:bg-raw-gold/[0.12]",
@@ -605,13 +605,13 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
               </button>
 
               {appearanceOpen && (
-                <div className={cn("mx-1 mb-1 rounded-xl border p-2.5 sm:p-3", isEffectiveLight ? "border-slate-200 bg-white/85" : "border-raw-border/30 bg-raw-surface/25")}>
-                  <div className={cn("mb-3 flex items-center gap-2 text-xs uppercase tracking-[0.16em]", isEffectiveLight ? "text-slate-500" : "text-raw-silver/45")}>
+                <div className={cn("mx-1 mb-1 rounded-xl border p-2 sm:p-3", isEffectiveLight ? "border-slate-200 bg-white/85" : "border-raw-border/30 bg-raw-surface/25")}>
+                  <div className={cn("mb-2 flex items-center gap-2 text-[11px] uppercase tracking-[0.16em] sm:mb-3 sm:text-xs", isEffectiveLight ? "text-slate-500" : "text-raw-silver/45")}>
                     <Palette className="h-3.5 w-3.5" />
                     Theme Studio
                   </div>
 
-                  <div className={cn("rounded-lg border px-2.5 py-2 sm:px-3", isEffectiveLight ? "border-slate-200 bg-slate-50" : "border-raw-border/25 bg-raw-black/25")}>
+                  <div className={cn("rounded-lg border px-2.5 py-1.5 sm:px-3 sm:py-2", isEffectiveLight ? "border-slate-200 bg-slate-50" : "border-raw-border/25 bg-raw-black/25")}>
                     <div className="flex items-center justify-between gap-3">
                       <span className={cn("text-[10px] uppercase tracking-[0.16em]", isEffectiveLight ? "text-slate-500" : "text-raw-silver/45")}>Mode</span>
                       <span className={cn("text-[10px] uppercase tracking-[0.16em]", isEffectiveLight ? "text-slate-600" : "text-raw-silver/65")}>{THEME_MODE_LABELS[effectiveMode]}</span>
@@ -637,7 +637,7 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
                             type="button"
                             onClick={() => { setMode(option.mode); setHoveredMode(null); }}
                             className={cn(
-                              "relative z-10 flex h-8 items-center justify-center rounded-full px-2 transition-all duration-200 active:scale-95 sm:h-9",
+                              "relative z-10 flex h-7 items-center justify-center rounded-full px-2 transition-all duration-200 active:scale-95 sm:h-9",
                               selected
                                 ? option.mode === "light"
                                   ? "text-slate-900"
@@ -661,7 +661,7 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
 
                   <div className="mt-3">
                     <p className={cn("mb-2 text-[10px] uppercase tracking-[0.16em]", isEffectiveLight ? "text-slate-500" : "text-raw-silver/45")}>Accent</p>
-                    <div className="grid grid-cols-5 gap-2">
+                    <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
                       {accentPresets.map((preset) => {
                         const selected = preset.id === effectiveAccent;
                         return (
@@ -669,7 +669,7 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
                             key={preset.id}
                             onClick={() => { setAccent(preset.id); setHoveredAccent(null); }}
                             className={cn(
-                              "relative h-8 rounded-lg border transition-all sm:h-10",
+                              "relative h-7 rounded-lg border transition-all sm:h-10",
                               selected ? "border-raw-text shadow-[0_0_0_1px_rgb(var(--raw-text)/0.3)]" : "border-raw-border/35 hover:border-raw-silver/35",
                             )}
                             style={{ backgroundColor: `rgb(${preset.rgb})` }}
