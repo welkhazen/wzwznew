@@ -6,7 +6,6 @@ import { SharedPollPage } from "@/components/polls/SharedPollPage";
 import { SignupModal } from "@/components/landing/SignupModal";
 import { POLL_SHARE_PARAM } from "@/lib/pollShare";
 import { useRawStore } from "@/store/useRawStore";
-import { joinCommunityChat } from "@/lib/communityChat";
 import { awardXP, XP_REWARDS } from "@/lib/userProgress";
 
 const LandingShellLazy = lazy(() => import("@/components/landing/LandingShell"));
@@ -138,9 +137,6 @@ const Index = () => {
             });
           }}
           onCompleteOnboarding={() => {
-            onboardingSelectedCommunityIds.forEach((communityId) => {
-              joinCommunityChat(communityId, { userId: user.id, username: user.username });
-            });
             completeOnboarding();
             void awardXP(user.id, XP_REWARDS.ONBOARDING_COMPLETE);
           }}

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import LNTLogo from "@/assets/LNT.webp";
 import SYTLogo from "@/assets/logospeak.webp";
 import IIJMLogo from "@/assets/itisjustme.webp";
-import { AlertTriangle, ArrowLeft, Ban, BarChart3, Bell, BellOff, Heart, ImagePlus, Lock, MoreHorizontal, Plus, Search, Send, Trash2, Users, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Ban, BarChart3, Bell, BellOff, Heart, ImagePlus, Lock, MoreHorizontal, Plus, Search, Send, Trash2, UserMinus, Users, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -344,6 +344,9 @@ const COMMUNITY_LOGOS: Record<string, string> = {
   const [expandedDescs, setExpandedDescs] = useState<Set<string>>(new Set());
   const [communityPolls, setCommunityPolls] = useState<CommunityPollRecord[]>([]);
   const [communityPollsAvailable, setCommunityPollsAvailable] = useState(true);
+  const [communityPollsExpanded, setCommunityPollsExpanded] = useState(false);
+  const [hiddenAnsweredPollIds, setHiddenAnsweredPollIds] = useState<Set<string>>(new Set());
+  const [membersDialogOpen, setMembersDialogOpen] = useState(false);
   const [pollComposerOpen, setPollComposerOpen] = useState(false);
   const [pollQuestion, setPollQuestion] = useState("");
   const [pollOptionDrafts, setPollOptionDrafts] = useState<string[]>(["", ""]);
@@ -508,6 +511,8 @@ const COMMUNITY_LOGOS: Record<string, string> = {
 
     useEffect(() => {
       setSearchQuery("");
+      setCommunityPollsExpanded(false);
+      setHiddenAnsweredPollIds(new Set());
     }, [activeCommunityId]);
 
     const reloadCommunityPolls = useCallback(async () => {
@@ -620,6 +625,9 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       try {
         await voteOnCommunityPoll(pollId, optionId, user.id);
         await reloadCommunityPolls();
+        window.setTimeout(() => {
+          setHiddenAnsweredPollIds((previous) => new Set([...previous, pollId]));
+        }, 4500);
       } catch (error) {
         console.error("Failed to vote on poll", error);
         setCommunityPolls(previous);
@@ -639,6 +647,25 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         toast({ title: "Couldn't delete poll", description: "Please try again in a moment." });
       }
     }, [canManagePolls, communityPolls]);
+
+    const visibleCommunityPolls = useMemo(
+      () => communityPolls.filter((poll) => !hiddenAnsweredPollIds.has(poll.id)),
+      [communityPolls, hiddenAnsweredPollIds],
+    );
+
+    const handleKickMember = useCallback(async (memberId: string, memberName: string) => {
+      if (!selectedCommunity || !canManagePolls || memberId === user.id) return;
+      const confirmed = window.confirm(`Remove ${memberName} from ${selectedCommunity.title}?`);
+      if (!confirmed) return;
+
+      try {
+        await leaveCommunitySupabase(selectedCommunity.id, memberId);
+        await reloadChatData();
+        toast({ title: "Member removed", description: `${memberName} was removed from the group.` });
+      } catch {
+        toast({ title: "Could not remove member", description: "Please try again." });
+      }
+    }, [canManagePolls, reloadChatData, selectedCommunity, user.id]);
 
     useEffect(() => {
       reloadChatData();
@@ -1485,6 +1512,19 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                 );
               })()}
               {canEditSelectedCommunity && (
+                <>
+                <button
+                  onClick={() => setMembersDialogOpen(true)}
+                  className="flex items-center gap-2 rounded-full border border-raw-border/30 px-3 py-1.5 text-[11px] text-raw-silver/55 transition-colors hover:border-raw-gold/20 hover:text-raw-gold"
+                >
+                  <Users className="h-3.5 w-3.5" /> Members
+                </button>
+                <button
+                  onClick={() => setCommunityPollsExpanded((expanded) => !expanded)}
+                  className="flex items-center gap-2 rounded-full border border-raw-border/30 px-3 py-1.5 text-[11px] text-raw-silver/55 transition-colors hover:border-raw-gold/20 hover:text-raw-gold"
+                >
+                  <BarChart3 className="h-3.5 w-3.5" /> Poll Results
+                </button>
                 <button
                   onClick={() => {
                     setCommunitySettingsDraft({
@@ -1497,6 +1537,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                 >
                   Edit Group
                 </button>
+                </>
               )}
               {isJoined && (
                 <button
@@ -1565,6 +1606,80 @@ const COMMUNITY_LOGOS: Record<string, string> = {
 
           {(!selectedCommunity.locked || isJoined) && (
           <div className="flex flex-1 min-h-0 flex-col overflow-hidden sm:rounded-2xl sm:border sm:border-raw-border/20 sm:bg-raw-black/35 sm:flex-none sm:h-[calc(100dvh_-_260px)] sm:min-h-[360px]">
+            {visibleCommunityPolls.length > 0 && (
+              <div className="border-b border-raw-border/15 px-4 py-3">
+                <button
+                  type="button"
+                  onClick={() => setCommunityPollsExpanded((expanded) => !expanded)}
+                  className="flex w-full items-center justify-between gap-3 rounded-xl border border-raw-gold/25 bg-raw-gold/[0.04] px-3 py-2 text-left"
+                  aria-expanded={communityPollsExpanded}
+                >
+                  <span className="min-w-0">
+                    <span className="block text-[10px] uppercase tracking-[0.18em] text-raw-gold/75">
+                      Polls · Pinned
+                    </span>
+                    <span className="block truncate text-sm font-semibold text-raw-text">
+                      {visibleCommunityPolls.length === 1 ? visibleCommunityPolls[0].question : `${visibleCommunityPolls.length} active polls`}
+                    </span>
+                  </span>
+                  <span className="shrink-0 rounded-full border border-raw-border/30 px-2 py-0.5 text-[10px] text-raw-silver/55">
+                    {communityPollsExpanded ? "Hide" : "Answer"}
+                  </span>
+                </button>
+
+                {communityPollsExpanded && (
+                  <div className="mt-3 max-h-72 space-y-3 overflow-y-auto pr-1">
+                    {visibleCommunityPolls.map((poll) => {
+                      const totalVotes = poll.totalVotes;
+                      return (
+                        <div key={`poll-panel-${poll.id}`} className="rounded-2xl border border-raw-gold/25 p-3">
+                          <div className="mb-2 flex items-start justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-semibold text-raw-text">{poll.question}</p>
+                              <p className="mt-0.5 text-[10px] text-raw-silver/45">
+                                {totalVotes} {totalVotes === 1 ? "vote" : "votes"} · anonymous results only
+                              </p>
+                            </div>
+                            {canManagePolls && (
+                              <button
+                                onClick={() => { void handleDeletePoll(poll.id); }}
+                                className="rounded-full border border-raw-border/30 p-1.5 text-raw-silver/45 hover:border-red-400/40 hover:text-red-300"
+                                aria-label="Archive poll"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            )}
+                          </div>
+                          <div className="space-y-2">
+                            {poll.options.map((option) => {
+                              const isSelected = poll.userVoteOptionId === option.id;
+                              const pct = totalVotes === 0 ? 0 : Math.round((option.votes / totalVotes) * 100);
+                              return (
+                                <button
+                                  key={option.id}
+                                  onClick={() => { void handleVoteOnPoll(poll.id, option.id); }}
+                                  className={`relative w-full overflow-hidden rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
+                                    isSelected
+                                      ? "border-raw-gold/60 bg-raw-gold/15 text-raw-text"
+                                      : "border-raw-border/25 bg-raw-black/30 text-raw-silver/80 hover:border-raw-gold/40"
+                                  }`}
+                                >
+                                  <div className="absolute inset-y-0 left-0 bg-raw-gold/15" style={{ width: `${pct}%` }} aria-hidden />
+                                  <div className="relative flex items-center justify-between gap-2">
+                                    <span className="font-medium">{option.text}</span>
+                                    <span className="text-[11px] text-raw-silver/55">{option.votes} · {pct}%</span>
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
             {/* Search bar */}
             <div className="flex items-center gap-3 border-b border-raw-border/15 px-4 py-2.5">
               <Search className="h-4 w-4 shrink-0 text-raw-silver/35" />
@@ -1583,7 +1698,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
 
             {/* Messages */}
             <div ref={messagesContainerRef} className="flex-1 space-y-3 overflow-y-auto p-4">
-              {communityPolls.map((poll) => {
+              {false && communityPolls.map((poll) => {
                 const totalVotes = poll.totalVotes;
                 return (
                   <div
@@ -2006,6 +2121,38 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                 </Button>
               </div>
             </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={membersDialogOpen} onOpenChange={setMembersDialogOpen}>
+          <DialogContent className="border border-raw-border/40 bg-raw-black p-0 text-raw-text sm:max-w-lg sm:rounded-3xl">
+            <div className="border-b border-raw-border/20 bg-gradient-to-br from-raw-gold/[0.08] via-raw-black to-raw-black px-6 py-6">
+              <DialogHeader className="space-y-2 text-left">
+                <DialogTitle className="font-display text-xl tracking-wide text-raw-text">Group members</DialogTitle>
+                <DialogDescription className="text-sm leading-relaxed text-raw-silver/45">
+                  Admin and group owners can remove members. Poll answers stay anonymous.
+                </DialogDescription>
+              </DialogHeader>
+            </div>
+            <div className="max-h-[60vh] space-y-2 overflow-y-auto px-6 py-5">
+              {(selectedCommunity?.members ?? []).map((member) => (
+                <div key={member.userId} className="flex items-center justify-between gap-3 rounded-xl border border-raw-border/20 bg-raw-surface/20 px-3 py-2.5">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-raw-text">@{member.username}</p>
+                    <p className="text-[10px] text-raw-silver/40">Joined {formatChatTimestamp(member.joinedAt)}</p>
+                  </div>
+                  {canManagePolls && member.userId !== user.id && (
+                    <button
+                      type="button"
+                      onClick={() => { void handleKickMember(member.userId, member.username); }}
+                      className="flex shrink-0 items-center gap-1.5 rounded-full border border-red-400/25 px-2.5 py-1 text-[10px] font-semibold text-red-200/80 hover:bg-red-500/10"
+                    >
+                      <UserMinus className="h-3.5 w-3.5" /> Kick
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
           </DialogContent>
         </Dialog>
 
