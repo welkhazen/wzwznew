@@ -225,13 +225,13 @@ export function DashboardHome({
       {/* ── Hero ── */}
       <section className="relative">
         <div className="relative z-10">
-          <h1 className={`font-display text-3xl md:text-4xl max-w-2xl leading-[1.15] ${isLight ? "text-slate-950" : "text-white"}`}>
+          <h1 className={`font-display max-w-2xl text-2xl leading-[1.08] sm:text-3xl md:text-4xl md:leading-[1.15] ${isLight ? "text-slate-950" : "text-white"}`}>
             Stay{" "}
             <Suspense fallback={<span className="text-raw-gold italic">anonymous</span>}>
               <ContainerTextFlipLazy
                 words={["anonymous", "connected", "growing", "raW"]}
                 interval={2800}
-                className="!text-3xl md:!text-4xl"
+                className="!text-2xl sm:!text-3xl md:!text-4xl"
               />
             </Suspense>
             . Speak your truth without identity.

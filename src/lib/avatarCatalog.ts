@@ -469,6 +469,10 @@ export async function loadUserAvatarState(
 
     writeOwnedAvatarIdsLocal(userId, ownedAvatarIds);
     writeSelectedAvatarIdLocal(userId, selectedAvatarId);
+    if (!selectedRow?.avatar_id) {
+      const selectedLevel = catalog.findIndex((item) => item.id === selectedAvatarId) + 1;
+      void persistSelectedAvatarForUser(userId, selectedAvatarId, selectedLevel > 0 ? selectedLevel : 1);
+    }
 
     return { ownedAvatarIds, selectedAvatarId };
   } catch {
@@ -508,10 +512,19 @@ export async function equipAvatarForUser(userId: string, avatarId: string): Prom
     return;
   }
 
+  const catalog = readAvatarCatalogLocal();
+  const selectedLevel = catalog.findIndex((item) => item.id === avatarId) + 1;
+  await persistSelectedAvatarForUser(userId, avatarId, selectedLevel > 0 ? selectedLevel : 1);
+}
+
+async function persistSelectedAvatarForUser(userId: string, avatarId: string, avatarLevel: number): Promise<void> {
   try {
-    const { error } = await supabase.from("user_avatar_selection").upsert({ user_id: userId, avatar_id: avatarId }, { onConflict: "user_id" });
-    if (error) {
-      markBackendMissingIfNeeded(error);
+    const [{ error: selectionError }, { error: userError }] = await Promise.all([
+      supabase.from("user_avatar_selection").upsert({ user_id: userId, avatar_id: avatarId }, { onConflict: "user_id" }),
+      supabase.from("users").update({ avatar_level: avatarLevel }).eq("id", userId),
+    ]);
+    if (selectionError || userError) {
+      markBackendMissingIfNeeded(selectionError ?? userError);
     }
   } catch {
     // Local save already completed.

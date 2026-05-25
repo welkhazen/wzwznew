@@ -65,7 +65,8 @@ export async function fetchCommunities(): Promise<PersistedCommunityRecord[]> {
   const { data, error } = await supabase
     .from('communities')
     .select('*, community_members(*), community_messages(*)')
-    .order('created_at', { ascending: true });
+    .order('created_at', { ascending: true })
+    .order('created_at', { referencedTable: 'community_messages', ascending: true });
 
   if (error) throw error;
   return (data as DbCommunity[]).map(mapCommunity);

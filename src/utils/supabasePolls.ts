@@ -54,16 +54,40 @@ export async function fetchSupabasePolls(limit = 10): Promise<Poll[]> {
     .filter((poll) => poll.question?.trim().length > 5 && poll.options.length >= 2);
 }
 
-export async function submitPollVote(pollId: string, optionId: string, _userId: string): Promise<void> {
+export interface PollVoteResult {
+  optionVotes: Record<string, number>;
+}
+
+function parseOptionVotes(value: unknown): Record<string, number> {
+  if (!value || typeof value !== "object") return {};
+
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>)
+      .map(([key, count]) => [key, Number(count)])
+      .filter(([, count]) => Number.isFinite(count) && count >= 0)
+  );
+}
+
+export async function submitPollVote(pollId: string, optionId: string, _userId: string): Promise<PollVoteResult> {
   const response = await fetch(`/api/polls/${encodeURIComponent(pollId)}/vote`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ optionId }),
   });
 
+  const payload = (await response.json().catch(() => null)) as { optionVotes?: unknown } | null;
+
   if (!response.ok) {
+    if (response.status === 409) {
+      const error = new Error("already_voted") as Error & PollVoteResult;
+      error.optionVotes = parseOptionVotes(payload?.optionVotes);
+      throw error;
+    }
+
     throw new Error("Failed to submit poll vote");
   }
+
+  return { optionVotes: parseOptionVotes(payload?.optionVotes) };
 }
 
 export async function fetchPollComments(pollId: string): Promise<PollCommentRow[]> {
@@ -89,7 +113,15 @@ export async function addPollComment(pollId: string, text: string): Promise<Poll
 
 export async function fetchTokenBalance(userId: string): Promise<number> {
   const response = await fetch(`/api/users/${encodeURIComponent(userId)}/tokens`);
-  if (!response.ok) throw new Error("Failed to fetch token balance");
+  if (!response.ok) {
+    const { data, error } = await supabase
+      .from("users")
+      .select("token_balance")
+      .eq("id", userId)
+      .single();
+    if (error || !data) throw new Error("Failed to fetch token balance");
+    return Number((data as { token_balance?: unknown }).token_balance ?? 0);
+  }
 
   const payload = (await response.json()) as { balance?: unknown };
   const balance = Number(payload.balance);
@@ -105,7 +137,17 @@ export async function spendTokens(userId: string, amount: number): Promise<numbe
   });
 
   const payload = (await response.json().catch(() => null)) as { balance?: unknown; error?: string } | null;
-  if (!response.ok) throw new Error(payload?.error ?? "Failed to spend tokens");
+  if (!response.ok) {
+    const { data, error } = await supabase.rpc("spend_tokens", {
+      p_user_id: userId,
+      p_amount: amount,
+    });
+    const result = data as { ok?: boolean; balance?: unknown; error?: string } | null;
+    if (error || !result?.ok) throw new Error(result?.error ?? payload?.error ?? "Failed to spend tokens");
+    const fallbackBalance = Number(result.balance);
+    if (!Number.isFinite(fallbackBalance)) throw new Error("Invalid token spend response");
+    return fallbackBalance;
+  }
 
   const balance = Number(payload?.balance);
   if (!Number.isFinite(balance)) throw new Error("Invalid token spend response");
@@ -120,7 +162,22 @@ export async function addTokensToBalance(userId: string, amount: number): Promis
   });
 
   const payload = (await response.json().catch(() => null)) as { balance?: unknown; error?: string } | null;
-  if (!response.ok) throw new Error(payload?.error ?? "Failed to add tokens");
+  if (!response.ok) {
+    const { data: current, error: readError } = await supabase
+      .from("users")
+      .select("token_balance")
+      .eq("id", userId)
+      .single();
+    if (readError || !current) throw new Error(payload?.error ?? "Failed to add tokens");
+
+    const nextBalance = Number((current as { token_balance?: unknown }).token_balance ?? 0) + amount;
+    const { error: updateError } = await supabase
+      .from("users")
+      .update({ token_balance: nextBalance })
+      .eq("id", userId);
+    if (updateError) throw new Error(payload?.error ?? "Failed to add tokens");
+    return nextBalance;
+  }
 
   const balance = Number(payload?.balance);
   if (!Number.isFinite(balance)) throw new Error("Invalid token add response");
