@@ -25,10 +25,21 @@ function normalizeAuthUser(user: AuthUser): AuthUser {
 }
 
 export async function signUp(username: string, password: string): Promise<RpcResult> {
-  const { data, error } = await supabase.rpc('signup_user', {
+ let data = null;
+let error = null;
+
+try {
+  const response = await supabase.rpc('signup_user', {
     p_username: username,
     p_password: password,
-  }).catch(() => ({ data: null, error: true }));
+  });
+
+  data = response.data;
+  error = response.error;
+} catch (err) {
+  data = null;
+  error = err;
+}
   if (error || !data) return { ok: false, error: 'Could not create account. Please try again.' };
   const result = data as RpcResult;
   if (result.ok && result.user) saveSession(result.user);
