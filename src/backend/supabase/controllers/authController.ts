@@ -10,7 +10,7 @@ export interface AuthUser {
 
 const SESSION_KEY = 'raw.auth.session.v2';
 const LOCAL_USERS_KEY = 'raw.auth.local-users.v1';
-const USE_LOCAL_AUTH_ONLY = true;
+const USE_LOCAL_AUTH_ONLY = false;
 const DEFAULT_LOCAL_USERS: LocalAuthUser[] = [
   {
     id: '00000000-0000-0000-0000-000000000001',
