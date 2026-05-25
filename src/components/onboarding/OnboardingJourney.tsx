@@ -406,13 +406,13 @@ export function OnboardingJourney({
                 Your avatar is your public signal. You can evolve it later, but choose your starting form now.
               </p>
 
-              <div className="mt-5 grid grid-cols-1 gap-6 md:mt-8 md:grid-cols-[minmax(0,1fr)_18rem] md:items-center md:gap-8">
+              <div className="mt-5 grid grid-cols-[minmax(0,1fr)_8.75rem] gap-3 sm:gap-6 md:mt-8 md:grid-cols-[minmax(0,1fr)_18rem] md:items-center md:gap-8">
                 <div className="flex min-w-0 flex-col gap-5">
-                  <div>
+                  <div className="min-w-0">
                     <p className="mb-3 text-center font-display text-[9px] uppercase tracking-[0.2em] text-raw-gold/70">
                       Free avatars
                     </p>
-                    <div className="mx-auto grid w-full max-w-[24rem] grid-cols-4 gap-x-3 gap-y-3 sm:gap-x-3 sm:gap-y-4 md:mx-0">
+                    <div className="mx-auto grid w-full max-w-[12rem] grid-cols-2 gap-x-2 gap-y-3 min-[390px]:max-w-[14rem] min-[390px]:gap-x-3 sm:max-w-[24rem] sm:grid-cols-4 sm:gap-x-3 sm:gap-y-4 md:mx-0">
                     {freeAvatarChoices.map((avatar, i) => {
                       const index = i + 1;
                       const isFree = true;
@@ -462,7 +462,7 @@ export function OnboardingJourney({
                   </div>
 
                   {previewAvatarChoices.length > 0 ? (
-                    <div>
+                    <div className="col-span-2 md:col-span-1">
                       <div className="mx-auto mb-3 flex w-full max-w-[15rem] items-center justify-between gap-3 min-[420px]:max-w-[22rem] sm:max-w-[30rem] md:mx-0">
                         <button
                           type="button"
@@ -552,14 +552,15 @@ export function OnboardingJourney({
                   ) : null}
                 </div>
 
-                <div className="order-first flex flex-col items-center justify-start md:order-none md:justify-center">
-                  <div className="h-[360px] w-[157px] overflow-visible md:hidden">
+                <div className="flex flex-col items-center justify-start md:justify-center">
+                  <div className="h-[322px] w-[140px] overflow-visible min-[390px]:h-[360px] min-[390px]:w-[157px] md:hidden">
                     <div
                       style={{
                         width: 280,
-                        transform: "scale(0.56)",
+                        transform: "scale(0.5)",
                         transformOrigin: "top left",
                       }}
+                      className="min-[390px]:[transform:scale(0.56)!important]"
                     >
                       <PhoneMockup className="w-[280px]" showStatusBar={false}>
                         <AvatarPhoneHomeScreen avatarIndex={previewAvatarIndex} compact previewAvatar={previewAvatar} />
