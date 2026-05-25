@@ -47,11 +47,24 @@ try {
 }
 
 export async function signIn(username: string, password: string): Promise<RpcResult> {
-  const { data, error } = await supabase.rpc('login_user', {
-    p_username: username,
-    p_password: password,
-  }).catch(() => ({ data: null, error: true }));
+  let data = null;
+  let error = null;
+
+  try {
+    const response = await supabase.rpc('login_user', {
+      p_username: username,
+      p_password: password,
+    });
+
+    data = response.data;
+    error = response.error;
+  } catch (err) {
+    data = null;
+    error = err;
+  }
+
   if (error || !data) return { ok: false, error: 'Could not sign in. Please try again.' };
+
   const result = data as RpcResult;
   if (result.ok && result.user) saveSession(result.user);
   return result;
