@@ -24,6 +24,31 @@ function getPollId(request: Request): string | null {
   return match ? decodeURIComponent(match[1]) : null;
 }
 
+function getClientIp(request: Request): string {
+  const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  return (
+    request.headers.get("x-real-ip")
+    ?? request.headers.get("cf-connecting-ip")
+    ?? forwarded
+    ?? "unknown-ip"
+  );
+}
+
+async function sha256Base64Url(value: string): Promise<string> {
+  const data = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  const bytes = Array.from(new Uint8Array(digest));
+  const base64 = btoa(String.fromCharCode(...bytes));
+  return base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+async function getVoterKey(request: Request, pollId: string): Promise<string> {
+  const ip = getClientIp(request);
+  const userAgent = request.headers.get("user-agent") ?? "unknown-agent";
+  const acceptLanguage = request.headers.get("accept-language") ?? "unknown-language";
+  return sha256Base64Url(`${pollId}:${ip}:${userAgent}:${acceptLanguage}`);
+}
+
 export default async function handler(request: Request): Promise<Response> {
   if (request.method !== "POST") {
     return json({ error: "method_not_allowed" }, 405);
@@ -69,11 +94,16 @@ export default async function handler(request: Request): Promise<Response> {
     return json({ error: "invalid_poll_option" }, 404);
   }
 
+  const voterKey = await getVoterKey(request, pollId);
   const { error: insertError } = await supabase
     .from("poll_votes")
-    .insert({ poll_id: pollId, option_id: optionId });
+    .insert({ poll_id: pollId, option_id: optionId, voter_key: voterKey });
 
   if (insertError) {
+    if (insertError.code === "23505") {
+      return json({ error: "already_voted" }, 409);
+    }
+
     return json({ error: "failed_to_save_vote" }, 500);
   }
 

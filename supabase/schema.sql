@@ -57,8 +57,13 @@ CREATE TABLE IF NOT EXISTS public.poll_votes (
   id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   poll_id    TEXT NOT NULL REFERENCES public.polls(id) ON DELETE CASCADE,
   option_id  TEXT NOT NULL,
+  voter_key  TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS poll_votes_poll_voter_key_unique
+  ON public.poll_votes (poll_id, voter_key)
+  WHERE voter_key IS NOT NULL;
 
 -- Poll comments
 CREATE TABLE IF NOT EXISTS public.poll_comments (

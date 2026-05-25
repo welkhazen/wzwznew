@@ -62,6 +62,10 @@ export async function submitPollVote(pollId: string, optionId: string, _userId: 
   });
 
   if (!response.ok) {
+    if (response.status === 409) {
+      throw new Error("already_voted");
+    }
+
     throw new Error("Failed to submit poll vote");
   }
 }
