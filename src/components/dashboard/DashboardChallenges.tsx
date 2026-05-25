@@ -9,8 +9,9 @@ import {
   Trophy,
   UserPlus,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { DashboardDailySpin } from "@/components/dashboard/DashboardDailySpin";
+import { toast } from "@/components/ui/use-toast";
 import { getTodayKey } from "@/store/useRawStore.storage";
 import { loadLocalLoginDays, loadUserXPClaimKeys } from "@/lib/userProgress";
 
@@ -186,6 +187,7 @@ export function DashboardChallenges({
   const [claimedChallenges, setClaimedChallenges] = useState<Set<string>>(new Set());
   const [dailyLoginClaimKeys, setDailyLoginClaimKeys] = useState<string[]>([]);
   const [testProgress, setTestProgress] = useState<Record<string, number>>({});
+  const autoClaimingRef = useRef<Set<string>>(new Set());
   const streakDays = countConsecutiveDays(dailyLoginClaimKeys);
   const progressSourceMap: Record<ChallengeDefinition["progressKey"], number> = {
     dailyPolls: dailyAnsweredCount,
@@ -208,7 +210,8 @@ export function DashboardChallenges({
 
   const handleClaimChallenge = (challenge: ChallengeDefinition) => {
     const claimKey = `${challenge.id}:${getResetKey(challenge.reset)}`;
-    if (!isAdmin && claimedChallenges.has(claimKey)) return;
+    if (!isAdmin && (claimedChallenges.has(claimKey) || autoClaimingRef.current.has(claimKey))) return;
+    autoClaimingRef.current.add(claimKey);
 
     const awardTokens = () => {
       if (challenge.rewardTokens && onAwardTokens) {
@@ -218,7 +221,9 @@ export function DashboardChallenges({
 
     if (isAdmin && onAwardXP) {
       awardTokens();
-      void onAwardXP(challenge.rewardXP);
+      void onAwardXP(challenge.rewardXP).finally(() => {
+        autoClaimingRef.current.delete(claimKey);
+      });
       return;
     }
 
@@ -227,7 +232,13 @@ export function DashboardChallenges({
         if (awarded) {
           awardTokens();
           setClaimedChallenges((previous) => new Set(previous).add(claimKey));
+          toast({
+            title: `${challenge.title} complete`,
+            description: `+${challenge.rewardXP} XP${challenge.rewardTokens ? ` and +${challenge.rewardTokens} tokens` : ""} claimed automatically.`,
+          });
         }
+      }).finally(() => {
+        autoClaimingRef.current.delete(claimKey);
       });
       return;
     }
@@ -236,9 +247,30 @@ export function DashboardChallenges({
       void onAwardXP(challenge.rewardXP).then(() => {
         awardTokens();
         setClaimedChallenges((previous) => new Set(previous).add(claimKey));
+        toast({
+          title: `${challenge.title} complete`,
+          description: `+${challenge.rewardXP} XP${challenge.rewardTokens ? ` and +${challenge.rewardTokens} tokens` : ""} claimed automatically.`,
+        });
+      }).finally(() => {
+        autoClaimingRef.current.delete(claimKey);
       });
+      return;
     }
+
+    autoClaimingRef.current.delete(claimKey);
   };
+
+  useEffect(() => {
+    if (isAdmin) return;
+
+    challengeDefinitions.forEach((challenge) => {
+      const current = testProgress[challenge.id] ?? progressSourceMap[challenge.progressKey] ?? 0;
+      const claimKey = `${challenge.id}:${getResetKey(challenge.reset)}`;
+      if (current >= challenge.target && !claimedChallenges.has(claimKey)) {
+        handleClaimChallenge(challenge);
+      }
+    });
+  }, [avatarLevel, claimedChallenges, dailyAnsweredCount, isAdmin, pollsAnswered, streakDays, testProgress]);
 
   return (
     <div className="space-y-5">
