@@ -27,6 +27,7 @@ import { readIssueReports, writeIssueReports, type IssueReportRecord } from "@/l
 import { readBlockedCommunitySenders, writeBlockedCommunitySenders } from "@/lib/blockedCommunitySenders";
 import { useTheme } from "@/providers/useTheme";
 import { THEME_MODE_LABELS, type AccentPresetId, type ThemeMode } from "@/providers/theme-context";
+import { xpProgressInLevel } from "@/lib/userProgress";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -337,6 +338,7 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
   ];
   const modeIndex = modeOptions.findIndex((option) => option.mode === mode);
   const effectiveModeIndex = modeOptions.findIndex((option) => option.mode === effectiveMode);
+  const mobileXpProgress = xpProgressInLevel(xp, level);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -508,7 +510,7 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
               sideOffset={10}
               collisionPadding={12}
               className={cn(
-                "max-h-[min(78dvh,620px)] w-[min(22rem,calc(100vw-1rem))] overflow-y-auto overscroll-contain rounded-2xl p-2 text-raw-text",
+                "w-[min(21rem,calc(100vw-1.25rem))] overflow-visible rounded-2xl p-1.5 text-raw-text sm:max-h-[min(78dvh,620px)] sm:w-[min(22rem,calc(100vw-1rem))] sm:overflow-y-auto sm:overscroll-contain sm:p-2",
                 isEffectiveLight
                   ? "border border-slate-300/80 bg-[linear-gradient(160deg,rgba(255,255,255,0.97),rgba(242,247,255,0.96))] shadow-[0_20px_50px_rgba(28,38,58,0.18)]"
                   : "border border-raw-border/40 bg-[linear-gradient(160deg,rgba(17,17,17,0.96),rgba(9,9,9,0.98))] shadow-[0_20px_50px_rgba(0,0,0,0.55)]",
@@ -517,7 +519,7 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
               <button
                 onClick={onProfileClick}
                 className={cn(
-                  "mb-1 flex w-full items-center gap-3 rounded-xl border px-3 py-2 text-left transition-colors",
+                  "mb-1 flex w-full items-center gap-2 rounded-xl border px-2 py-1 text-left transition-colors sm:gap-3 sm:px-3 sm:py-2",
                   isEffectiveLight
                     ? "border-raw-gold/25 bg-raw-gold/[0.12] hover:bg-raw-gold/[0.2]"
                     : "border-raw-gold/20 bg-raw-gold/[0.08] hover:bg-raw-gold/[0.12]",
@@ -530,11 +532,24 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
                 </div>
               </button>
 
+              <div className={cn("mx-1 mb-1 rounded-lg border px-2 py-1.5 sm:hidden", isEffectiveLight ? "border-slate-200 bg-slate-50" : "border-raw-border/25 bg-raw-black/30")}>
+                <div className="mb-1 flex items-center justify-between gap-2">
+                  <span className="font-display text-[10px] tracking-wide text-[#8f96ff]">Lvl {level}</span>
+                  <span className={cn("text-[9px]", isEffectiveLight ? "text-slate-500" : "text-raw-silver/55")}>{xp.toLocaleString()} XP</span>
+                </div>
+                <div className="h-1.5 overflow-hidden rounded-full bg-raw-border/20">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-raw-gold/75 to-raw-gold"
+                    style={{ width: `${mobileXpProgress.pct}%` }}
+                  />
+                </div>
+              </div>
+
               <LevelProgressBanner
                 xp={xp}
                 level={level}
                 compact
-                className={cn("mx-1 mb-1", isEffectiveLight ? "border-slate-200 bg-slate-50" : "border-raw-border/25 bg-raw-black/30")}
+                className={cn("mx-1 mb-1 hidden sm:block", isEffectiveLight ? "border-slate-200 bg-slate-50" : "border-raw-border/25 bg-raw-black/30")}
               />
 
               {showAdminLink && onAddTestXP ? (
@@ -549,7 +564,7 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
 
               <DropdownMenuItem
                 onClick={onBillingClick}
-                className={cn("cursor-pointer rounded-lg px-3 py-2.5 text-sm focus:text-raw-text", isEffectiveLight ? "text-slate-700 focus:bg-slate-100" : "text-raw-silver/80 focus:bg-raw-surface/80")}
+                className={cn("cursor-pointer rounded-lg px-2 py-1.5 text-xs focus:text-raw-text sm:px-3 sm:py-2.5 sm:text-sm", isEffectiveLight ? "text-slate-700 focus:bg-slate-100" : "text-raw-silver/80 focus:bg-raw-surface/80")}
               >
                 <Receipt className="mr-3 h-4 w-4" />
                 Billing
@@ -561,13 +576,13 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
                   setBlockedSenderKeys(readBlockedCommunitySenders(userId));
                   setBlockedUsersOpen(true);
                 }}
-                className={cn("cursor-pointer rounded-lg px-3 py-2.5 text-sm focus:text-raw-text", isEffectiveLight ? "text-slate-700 focus:bg-slate-100" : "text-raw-silver/80 focus:bg-raw-surface/80")}
+                className={cn("cursor-pointer rounded-lg px-2 py-1.5 text-xs focus:text-raw-text sm:px-3 sm:py-2.5 sm:text-sm", isEffectiveLight ? "text-slate-700 focus:bg-slate-100" : "text-raw-silver/80 focus:bg-raw-surface/80")}
               >
                 <Ban className="mr-3 h-4 w-4" />
                 Blocked users
               </DropdownMenuItem>
 
-              <DropdownMenuSeparator className={cn("my-2", isEffectiveLight ? "bg-slate-200" : "bg-raw-border/30")} />
+              <DropdownMenuSeparator className={cn("my-1 sm:my-2", isEffectiveLight ? "bg-slate-200" : "bg-raw-border/30")} />
 
               {showAdminLink ? (
                 <DropdownMenuItem asChild className={cn("rounded-lg px-3 py-2.5 text-sm focus:text-raw-text", isEffectiveLight ? "text-slate-700 focus:bg-slate-100" : "text-raw-silver/80 focus:bg-raw-surface/80")}>
@@ -583,7 +598,7 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
                   event.preventDefault();
                   setReportOpen(true);
                 }}
-                className={cn("cursor-pointer rounded-lg px-3 py-2.5 text-sm focus:text-raw-text", isEffectiveLight ? "text-slate-700 focus:bg-slate-100" : "text-raw-silver/80 focus:bg-raw-surface/80")}
+                className={cn("cursor-pointer rounded-lg px-2 py-1.5 text-xs focus:text-raw-text sm:px-3 sm:py-2.5 sm:text-sm", isEffectiveLight ? "text-slate-700 focus:bg-slate-100" : "text-raw-silver/80 focus:bg-raw-surface/80")}
               >
                 <Flag className="mr-3 h-4 w-4" />
                 Report an issue
@@ -593,7 +608,7 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
                 type="button"
                 onClick={() => setAppearanceOpen((o) => !o)}
                 className={cn(
-                  "flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm transition-colors",
+                  "flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-xs transition-colors sm:px-3 sm:py-2.5 sm:text-sm",
                   isEffectiveLight ? "text-slate-700 hover:bg-slate-100" : "text-raw-silver/80 hover:bg-raw-surface/80",
                 )}
               >
@@ -605,13 +620,13 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
               </button>
 
               {appearanceOpen && (
-                <div className={cn("mx-1 mb-1 rounded-xl border p-2.5 sm:p-3", isEffectiveLight ? "border-slate-200 bg-white/85" : "border-raw-border/30 bg-raw-surface/25")}>
-                  <div className={cn("mb-3 flex items-center gap-2 text-xs uppercase tracking-[0.16em]", isEffectiveLight ? "text-slate-500" : "text-raw-silver/45")}>
+                <div className={cn("mx-1 mb-1 rounded-xl border p-1.5 sm:p-3", isEffectiveLight ? "border-slate-200 bg-white/85" : "border-raw-border/30 bg-raw-surface/25")}>
+                  <div className={cn("mb-1 hidden items-center gap-2 uppercase tracking-[0.16em] sm:mb-3 sm:flex sm:text-xs", isEffectiveLight ? "text-slate-500" : "text-raw-silver/45")}>
                     <Palette className="h-3.5 w-3.5" />
                     Theme Studio
                   </div>
 
-                  <div className={cn("rounded-lg border px-2.5 py-2 sm:px-3", isEffectiveLight ? "border-slate-200 bg-slate-50" : "border-raw-border/25 bg-raw-black/25")}>
+                  <div className={cn("rounded-lg border px-2 py-1 sm:px-3 sm:py-2", isEffectiveLight ? "border-slate-200 bg-slate-50" : "border-raw-border/25 bg-raw-black/25")}>
                     <div className="flex items-center justify-between gap-3">
                       <span className={cn("text-[10px] uppercase tracking-[0.16em]", isEffectiveLight ? "text-slate-500" : "text-raw-silver/45")}>Mode</span>
                       <span className={cn("text-[10px] uppercase tracking-[0.16em]", isEffectiveLight ? "text-slate-600" : "text-raw-silver/65")}>{THEME_MODE_LABELS[effectiveMode]}</span>
@@ -619,7 +634,7 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
                     <div className={cn("relative mt-2 grid grid-cols-3 rounded-full border p-1", isEffectiveLight ? "border-slate-200 bg-white" : "border-raw-border/25 bg-raw-black/35")}>
                       <span
                         className={cn(
-                          "pointer-events-none absolute left-1 top-1 h-9 w-[calc((100%_-_0.5rem)/3)] rounded-full border transition-transform duration-300 ease-out",
+                          "pointer-events-none absolute left-1 top-1 h-6 w-[calc((100%_-_0.5rem)/3)] rounded-full border transition-transform duration-300 ease-out sm:h-9",
                           effectiveMode === "light"
                             ? "border-slate-200 bg-white shadow-[0_3px_10px_rgba(15,23,42,0.12)]"
                             : effectiveMode === "dusk"
@@ -637,7 +652,7 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
                             type="button"
                             onClick={() => { setMode(option.mode); setHoveredMode(null); }}
                             className={cn(
-                              "relative z-10 flex h-8 items-center justify-center rounded-full px-2 transition-all duration-200 active:scale-95 sm:h-9",
+                              "relative z-10 flex h-6 items-center justify-center rounded-full px-2 transition-all duration-200 active:scale-95 sm:h-9",
                               selected
                                 ? option.mode === "light"
                                   ? "text-slate-900"
@@ -659,9 +674,9 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
                     </div>
                   </div>
 
-                  <div className="mt-3">
-                    <p className={cn("mb-2 text-[10px] uppercase tracking-[0.16em]", isEffectiveLight ? "text-slate-500" : "text-raw-silver/45")}>Accent</p>
-                    <div className="grid grid-cols-5 gap-2">
+                  <div className="mt-1.5 sm:mt-3">
+                    <p className={cn("mb-1 text-[9px] uppercase tracking-[0.16em] sm:mb-2 sm:text-[10px]", isEffectiveLight ? "text-slate-500" : "text-raw-silver/45")}>Accent</p>
+                    <div className="grid grid-cols-5 gap-1 sm:gap-2">
                       {accentPresets.map((preset) => {
                         const selected = preset.id === effectiveAccent;
                         return (
@@ -669,7 +684,7 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
                             key={preset.id}
                             onClick={() => { setAccent(preset.id); setHoveredAccent(null); }}
                             className={cn(
-                              "relative h-8 rounded-lg border transition-all sm:h-10",
+                              "relative h-5 rounded-md border transition-all sm:h-10 sm:rounded-lg",
                               selected ? "border-raw-text shadow-[0_0_0_1px_rgb(var(--raw-text)/0.3)]" : "border-raw-border/35 hover:border-raw-silver/35",
                             )}
                             style={{ backgroundColor: `rgb(${preset.rgb})` }}
@@ -685,14 +700,14 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
                 </div>
               )}
 
-              <DropdownMenuSeparator className={cn("my-2", isEffectiveLight ? "bg-slate-200" : "bg-raw-border/30")} />
+              <DropdownMenuSeparator className={cn("my-1 sm:my-2", isEffectiveLight ? "bg-slate-200" : "bg-raw-border/30")} />
 
               <DropdownMenuItem
                 onClick={() => {
                   track("logout_clicked", {});
                   onLogout();
                 }}
-                className={cn("rounded-lg px-3 py-2.5 text-sm focus:bg-red-500/15 focus:text-red-200", isEffectiveLight ? "text-slate-700" : "text-raw-silver/80")}
+                className={cn("rounded-lg px-2 py-1.5 text-xs focus:bg-red-500/15 focus:text-red-200 sm:px-3 sm:py-2.5 sm:text-sm", isEffectiveLight ? "text-slate-700" : "text-raw-silver/80")}
               >
                 <LogOut className="mr-3 h-4 w-4" />
                 Log Out
