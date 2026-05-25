@@ -412,7 +412,7 @@ export function OnboardingJourney({
                     <p className="mb-3 text-center font-display text-[9px] uppercase tracking-[0.2em] text-raw-gold/70">
                       Free avatars
                     </p>
-                    <div className="mx-auto grid w-full max-w-[12rem] grid-cols-2 gap-x-2 gap-y-3 min-[390px]:max-w-[14rem] min-[390px]:gap-x-3 sm:max-w-[24rem] sm:grid-cols-4 sm:gap-x-3 sm:gap-y-4 md:mx-0">
+                    <div className="mx-auto grid w-full max-w-[11rem] grid-cols-2 gap-x-1 gap-y-2 min-[390px]:max-w-[12rem] min-[390px]:gap-x-2 sm:max-w-[24rem] sm:grid-cols-4 sm:gap-x-3 sm:gap-y-4 md:mx-0">
                     {freeAvatarChoices.map((avatar, i) => {
                       const index = i + 1;
                       const isFree = true;
@@ -432,7 +432,7 @@ export function OnboardingJourney({
                               track("onboarding_avatar_selected", { avatar_level: index, attempts: 1 });
                             }
                           }}
-                          className="group relative flex min-w-0 flex-col items-center gap-1 rounded-xl p-1.5 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/50"
+                          className="group relative flex min-w-0 flex-col items-center gap-0.5 rounded-xl p-1 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/50 sm:gap-1 sm:p-1.5"
                           aria-label={`Select ${avatar.name}`}
                           aria-pressed={isActive}
                         >
@@ -461,7 +461,34 @@ export function OnboardingJourney({
                     </div>
                   </div>
 
-                  {previewAvatarChoices.length > 0 ? (
+                </div>
+
+                <div className="flex flex-col items-center justify-start md:justify-center">
+                  <div className="h-[322px] w-[140px] overflow-visible min-[390px]:h-[360px] min-[390px]:w-[157px] md:hidden">
+                    <div
+                      style={{
+                        width: 280,
+                        transform: "scale(0.5)",
+                        transformOrigin: "top left",
+                      }}
+                      className="min-[390px]:[transform:scale(0.56)!important]"
+                    >
+                      <PhoneMockup className="w-[280px]" showStatusBar={false}>
+                        <AvatarPhoneHomeScreen avatarIndex={previewAvatarIndex} compact previewAvatar={previewAvatar} />
+                      </PhoneMockup>
+                    </div>
+                  </div>
+                  <div className="hidden w-full max-w-[290px] md:block">
+                    <PhoneMockup className="w-full" showStatusBar={false}>
+                      <AvatarPhoneHomeScreen avatarIndex={previewAvatarIndex} compact={false} previewAvatar={previewAvatar} />
+                    </PhoneMockup>
+                  </div>
+                  <p className="mt-3 text-center text-[10px] uppercase tracking-[0.18em] text-raw-silver/40">
+                    {previewAvatarChoices.length === 0 || previewAvatarIndex <= FREE_ONBOARDING_AVATAR_COUNT ? "Pick this starter" : "Preview only"}
+                  </p>
+                </div>
+
+                {previewAvatarChoices.length > 0 ? (
                     <div className="col-span-2 md:col-span-1">
                       <div className="mx-auto mb-3 flex w-full max-w-[15rem] items-center justify-between gap-3 min-[420px]:max-w-[22rem] sm:max-w-[30rem] md:mx-0">
                         <button
@@ -550,32 +577,6 @@ export function OnboardingJourney({
                       </div>
                     </div>
                   ) : null}
-                </div>
-
-                <div className="flex flex-col items-center justify-start md:justify-center">
-                  <div className="h-[322px] w-[140px] overflow-visible min-[390px]:h-[360px] min-[390px]:w-[157px] md:hidden">
-                    <div
-                      style={{
-                        width: 280,
-                        transform: "scale(0.5)",
-                        transformOrigin: "top left",
-                      }}
-                      className="min-[390px]:[transform:scale(0.56)!important]"
-                    >
-                      <PhoneMockup className="w-[280px]" showStatusBar={false}>
-                        <AvatarPhoneHomeScreen avatarIndex={previewAvatarIndex} compact previewAvatar={previewAvatar} />
-                      </PhoneMockup>
-                    </div>
-                  </div>
-                  <div className="hidden w-full max-w-[290px] md:block">
-                    <PhoneMockup className="w-full" showStatusBar={false}>
-                      <AvatarPhoneHomeScreen avatarIndex={previewAvatarIndex} compact={false} previewAvatar={previewAvatar} />
-                    </PhoneMockup>
-                  </div>
-                  <p className="mt-3 text-center text-[10px] uppercase tracking-[0.18em] text-raw-silver/40">
-                    {previewAvatarChoices.length === 0 || previewAvatarIndex <= FREE_ONBOARDING_AVATAR_COUNT ? "Pick this starter" : "Preview only"}
-                  </p>
-                </div>
               </div>
 
               <div className="mt-6 flex justify-end sm:mt-8">
