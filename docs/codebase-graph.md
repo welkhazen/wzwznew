@@ -1,6 +1,6 @@
 # Codebase dependency graph
 
-Generated from `src` on 2026-05-22T17:28:07.513Z.
+Generated from `src` on 2026-05-23T08:49:57.252Z.
 
 ```mermaid
 graph LR
@@ -46,3 +46,4 @@ graph LR
 ```
 
 > Regenerate with `node scripts/graphify.mjs .`.
+> Export callflow HTML with `node scripts/graphify.mjs export callflow-html .`.
