@@ -12,7 +12,6 @@ import {
   resolvePollShareCode,
 } from "@/lib/pollShare";
 import {
-  BarChart3,
   Check,
   ChevronLeft,
   ChevronRight,
@@ -21,11 +20,9 @@ import {
   Facebook,
   Link2,
   Instagram,
-  MessageCircle,
   SendHorizontal,
   Share2,
   Smartphone,
-  Users,
 } from "lucide-react";
 
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
@@ -239,24 +236,6 @@ function resolveYesNoOptions(poll: Poll) {
   return yesOption && noOption ? { yesOption, noOption } : null;
 }
 
-function PollStat({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: typeof BarChart3;
-  label: string;
-  value: string | number;
-}) {
-  return (
-    <div className="border border-raw-border/35 bg-raw-surface/25 p-3 text-center sm:p-4">
-      <Icon className="mx-auto mb-2 size-4 text-raw-gold/45" />
-      <p className="text-lg font-semibold text-raw-text">{value}</p>
-      <p className="text-[10px] uppercase tracking-[0.16em] text-raw-silver/35">{label}</p>
-    </div>
-  );
-}
-
 function optionPercent(optionVotes: number, totalVotes: number): number {
   if (totalVotes <= 0) return 0;
   return Math.round((optionVotes / totalVotes) * 100);
@@ -460,11 +439,6 @@ export function DashboardPolls({
     ? Math.min(currentPollIndex, dailyPollLimit - 1)
     : Math.min(dailyAnsweredCount + currentPollIndex, dailyPollLimit - 1);
 
-  const totalResponses = useMemo(
-    () => polls.reduce((sum, poll) => sum + poll.options.reduce((acc, option) => acc + option.votes, 0), 0),
-    [polls]
-  );
-
   const showMorePollsPaywall = isDailyPollLimitReached && dailyPollLimit > 0;
 
   const handleVote = (pollId: string, optionId: string) => {
@@ -590,12 +564,6 @@ export function DashboardPolls({
         </p>
       </header>
 
-      <section className="grid grid-cols-3 gap-2 sm:gap-3">
-        <PollStat icon={BarChart3} label="Live Polls" value={polls.length} />
-        <PollStat icon={Users} label="Total Votes" value={totalResponses.toLocaleString()} />
-        <PollStat icon={MessageCircle} label="Daily Progress" value={`${dailyAnsweredCount}/${dailyPollLimit}`} />
-      </section>
-
       {showMorePollsPaywall && (
         <section className="border border-raw-gold/35 bg-gradient-to-r from-raw-gold/12 via-raw-black/60 to-raw-black/60 p-4 sm:p-5">
           <div className="flex flex-col gap-4">
@@ -627,8 +595,21 @@ export function DashboardPolls({
         </section>
       )}
 
-      <section className="mx-auto flex w-full max-w-[460px] flex-col items-center gap-5 px-1">
-        <div className="w-full border border-raw-gold/20 bg-black/35 px-4 py-3 shadow-[inset_0_0_0_1px_rgba(241,196,45,0.08)]">
+      <section className="mx-auto flex w-full max-w-[460px] flex-col items-center gap-3 px-1 sm:gap-5">
+        <div className="flex w-full items-center justify-between gap-3 border border-raw-gold/25 bg-black/30 px-3 py-2 sm:hidden">
+          <p className="font-display text-[11px] uppercase tracking-[0.16em] text-raw-silver/75">Answer polls</p>
+          <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
+            <div className="h-1 w-full max-w-24 overflow-hidden bg-raw-border/50">
+              <div
+                className="h-full bg-[#F1C42D] shadow-[0_0_10px_rgba(241,196,45,0.45)]"
+                style={{ width: `${Math.min(100, Math.max(0, (dailyAnsweredCount / Math.max(1, dailyPollLimit)) * 100))}%` }}
+              />
+            </div>
+            <span className="shrink-0 text-[11px] font-semibold text-[#F1C42D]">{dailyAnsweredCount}/{dailyPollLimit}</span>
+          </div>
+        </div>
+
+        <div className="hidden w-full border border-raw-gold/20 bg-black/35 px-4 py-3 shadow-[inset_0_0_0_1px_rgba(241,196,45,0.08)] sm:block">
           <div className="flex items-center justify-between gap-3">
             <h3 className="min-w-0 font-display text-sm uppercase tracking-[0.18em] text-[#EBEBEB] sm:text-base">
               2. Answer 7 polls
