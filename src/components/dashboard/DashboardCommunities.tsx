@@ -695,12 +695,15 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         .on(
           "postgres_changes",
           {
-            event: "INSERT",
+            event: "*",
             schema: "public",
             table: "community_messages",
             filter: `community_id=eq.${activeCommunityId}`,
           },
           (payload) => {
+            if (payload.eventType === "DELETE") {
+              return;
+            }
             const nextMessage = mapCommunityMessage(payload.new as DbCommunityMessage);
             if (nextMessage.communityId !== activeCommunityId) {
               return;
