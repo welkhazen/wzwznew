@@ -6,6 +6,12 @@ import { ShareButton } from "@/components/ui/share-button";
 import { addPollComment, fetchPollComments } from "@/utils/supabasePolls";
 import { isNoPollOption, isYesPollOption } from "@/lib/polls/normalizePollOptionText";
 import {
+  getPollShareCode,
+  LEGACY_POLL_SHARE_PARAM,
+  POLL_SHARE_PARAM,
+  resolvePollShareCode,
+} from "@/lib/pollShare";
+import {
   BarChart3,
   Check,
   ChevronLeft,
@@ -273,7 +279,8 @@ function buildPollShareText(poll: Poll): string {
 function buildPollShareUrl(pollId: string): string {
   const url = new URL(window.location.href);
   url.pathname = "/dashboard";
-  url.searchParams.set("poll", pollId);
+  url.search = "";
+  url.searchParams.set(POLL_SHARE_PARAM, getPollShareCode(pollId));
   return url.toString();
 }
 
@@ -377,9 +384,19 @@ export function DashboardPolls({
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const nextSharedPollId = new URLSearchParams(window.location.search).get("poll");
+    const searchParams = new URLSearchParams(window.location.search);
+    const shareCode = searchParams.get(POLL_SHARE_PARAM);
+    const legacyPollId = searchParams.get(LEGACY_POLL_SHARE_PARAM);
+    const nextSharedPollId = resolvePollShareCode(polls, shareCode) ?? legacyPollId;
     setSharedPollId(nextSharedPollId);
     if (!nextSharedPollId) return;
+
+    if (legacyPollId || searchParams.has(LEGACY_POLL_SHARE_PARAM)) {
+      const cleanUrl = new URL(window.location.href);
+      cleanUrl.search = "";
+      cleanUrl.searchParams.set(POLL_SHARE_PARAM, getPollShareCode(nextSharedPollId));
+      window.history.replaceState(null, "", cleanUrl.toString());
+    }
 
     const displayIndex = displayPolls.findIndex((poll) => poll.id === nextSharedPollId);
     if (displayIndex >= 0) {

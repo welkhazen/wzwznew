@@ -499,6 +499,12 @@ const COMMUNITY_LOGOS: Record<string, string> = {
     const directoryCommunities = useMemo(() => {
       return communities;
     }, [communities]);
+    const joinedCommunityCount = useMemo(
+      () => directoryCommunities.filter((community) => community.members.some((member) => member.userId === user.id)).length,
+      [directoryCommunities, user.id]
+    );
+    const effectiveUnlockCount = Math.max(communityAccess.unlockedIds.size, joinedCommunityCount);
+    const freeCommunitySlotsRemaining = Math.max(0, FREE_COMMUNITY_SLOTS - effectiveUnlockCount);
 
     useEffect(() => {
       setSearchQuery("");
@@ -744,7 +750,9 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         return;
       }
 
-      if (tokenBalance < COMMUNITY_UNLOCK_TOKEN_COST) {
+      const canJoinFree = freeCommunitySlotsRemaining > 0;
+
+      if (!canJoinFree && tokenBalance < COMMUNITY_UNLOCK_TOKEN_COST) {
         toast({
           title: "Not enough tokens",
           description: `Joining ${targetCommunity.title} costs ${COMMUNITY_UNLOCK_TOKEN_COST} tokens.`,
@@ -752,9 +760,11 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         return;
       }
 
-      const confirmed = window.confirm(`Join ${targetCommunity.title} for ${COMMUNITY_UNLOCK_TOKEN_COST} tokens?`);
-      if (!confirmed) {
-        return;
+      if (!canJoinFree) {
+        const confirmed = window.confirm(`Join ${targetCommunity.title} for ${COMMUNITY_UNLOCK_TOKEN_COST} tokens?`);
+        if (!confirmed) {
+          return;
+        }
       }
 
       setUnlockingId(communityId);
@@ -872,17 +882,20 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       const targetCommunity = communities.find((community) => community.id === communityId);
       const isAlreadyUnlocked = communityAccess.hasSubscription || communityAccess.unlockedIds.has(communityId);
       if (!isAlreadyUnlocked) {
-        if (tokenBalance < COMMUNITY_UNLOCK_TOKEN_COST) {
+        const canUnlockFree = freeCommunitySlotsRemaining > 0;
+        if (!canUnlockFree && tokenBalance < COMMUNITY_UNLOCK_TOKEN_COST) {
           toast({
             title: "Not enough tokens",
             description: `You need ${COMMUNITY_UNLOCK_TOKEN_COST} tokens to unlock this group.`,
           });
           return;
         }
-        const confirmed = window.confirm(
-          `Unlock ${targetCommunity?.title ?? "this group"} for ${COMMUNITY_UNLOCK_TOKEN_COST} tokens?`,
-        );
-        if (!confirmed) return;
+        if (!canUnlockFree) {
+          const confirmed = window.confirm(
+            `Unlock ${targetCommunity?.title ?? "this group"} for ${COMMUNITY_UNLOCK_TOKEN_COST} tokens?`,
+          );
+          if (!confirmed) return;
+        }
       }
       setUnlockingId(communityId);
       try {
@@ -1240,9 +1253,6 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         <div className="grid grid-cols-2 items-stretch gap-4 sm:gap-5 lg:grid-cols-2 xl:grid-cols-3">
           {directoryCommunities.map((community) => {
             const joined = community.members.some((member) => member.userId === user.id);
-            // Count joined communities toward free quota so existing members don't get unlimited free slots on new communities
-            const joinedCount = directoryCommunities.filter(c => c.members.some(m => m.userId === user.id)).length;
-            const effectiveUnlockCount = Math.max(communityAccess.unlockedIds.size, joinedCount);
             const communityUnreadCount = joined ? countUnreadMessages(community, user.id) : 0;
             const coverImage = COMMUNITY_COVER_IMAGES[community.id] ?? community.logoUrl;
             const coverVideo = COMMUNITY_COVER_VIDEOS[community.id];
@@ -1352,8 +1362,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                       );
                     })() : (() => {
                       const isUnlocked = joined || communityAccess.hasSubscription || communityAccess.unlockedIds.has(community.id);
-                      const canGetFree = false;
-                      const freeRemaining = Math.max(0, FREE_COMMUNITY_SLOTS - effectiveUnlockCount);
+                      const canGetFree = freeCommunitySlotsRemaining > 0;
                       const isUnlocking = unlockingId === community.id;
                       if (isUnlocked) {
                         return (
@@ -1376,7 +1385,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                               {isUnlocking ? "Opening…" : "Open Chat — Free"}
                             </Button>
                             <p className="text-center text-[10px] text-raw-silver/40">
-                              {freeRemaining} free slot{freeRemaining === 1 ? "" : "s"} remaining
+                              {freeCommunitySlotsRemaining} free slot{freeCommunitySlotsRemaining === 1 ? "" : "s"} remaining
                             </p>
                           </div>
                         );
