@@ -2,6 +2,9 @@ import { Suspense, lazy, useEffect } from "react";
 import { OnboardingJourney } from "@/components/onboarding/OnboardingJourney";
 import { useHostMode } from "@/hooks/use-host-mode";
 import Dashboard from "@/pages/Dashboard";
+import { SharedPollPage } from "@/components/polls/SharedPollPage";
+import { SignupModal } from "@/components/landing/SignupModal";
+import { POLL_SHARE_PARAM } from "@/lib/pollShare";
 import { useRawStore } from "@/store/useRawStore";
 import { joinCommunityChat } from "@/lib/communityChat";
 import { awardXP, XP_REWARDS } from "@/lib/userProgress";
@@ -48,6 +51,9 @@ const Index = () => {
     logout,
   } = useRawStore();
   const { hostname, isTheRawMe } = useHostMode();
+  const sharedPollRef = typeof window !== "undefined"
+    ? new URLSearchParams(window.location.search).get(POLL_SHARE_PARAM)
+    : null;
 
   useEffect(() => {
     if (!isLoggedIn || !user || !isTheRawMe || typeof window === "undefined") {
@@ -68,6 +74,28 @@ const Index = () => {
           <p className="mt-3 text-sm">Taking you to myraw.app...</p>
         </div>
       </div>
+    );
+  }
+
+  if (!isLoggedIn && sharedPollRef) {
+    return (
+      <>
+        <SharedPollPage
+          polls={polls}
+          shareCode={sharedPollRef}
+          votedPolls={votedPolls}
+          onVote={vote}
+          onSignup={() => setShowSignup(true)}
+        />
+        <SignupModal
+          open={showSignup}
+          onClose={() => setShowSignup(false)}
+          onRequestSignupOtp={requestSignupOtp}
+          onVerifySignupOtp={verifySignupOtp}
+          onLogin={login}
+          source="shared-poll"
+        />
+      </>
     );
   }
 
