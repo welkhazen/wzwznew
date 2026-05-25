@@ -24,12 +24,22 @@ export function SharedPollPage({
   const pollId = resolvePollShareCode(polls, shareCode);
   const poll = pollId ? polls.find((item) => item.id === pollId) : null;
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
+  const [optionVotes, setOptionVotes] = useState<Record<string, number>>({});
   const [voteStatus, setVoteStatus] = useState<"idle" | "saving" | "saved" | "duplicate" | "error">("idle");
 
   useEffect(() => {
     setSelectedOptionId(null);
     setVoteStatus("idle");
   }, [shareCode]);
+
+  useEffect(() => {
+    if (!poll) {
+      setOptionVotes({});
+      return;
+    }
+
+    setOptionVotes(Object.fromEntries(poll.options.map((option) => [option.id, option.votes])));
+  }, [poll]);
 
   if (!poll) {
     return (
@@ -62,8 +72,8 @@ export function SharedPollPage({
         {primaryOption && secondaryOption && (
           <PremiumPollCard
             question={poll.question}
-            primaryOption={{ id: primaryOption.id, label: primaryOption.text, votes: primaryOption.votes }}
-            secondaryOption={{ id: secondaryOption.id, label: secondaryOption.text, votes: secondaryOption.votes }}
+            primaryOption={{ id: primaryOption.id, label: primaryOption.text, votes: optionVotes[primaryOption.id] ?? primaryOption.votes }}
+            secondaryOption={{ id: secondaryOption.id, label: secondaryOption.text, votes: optionVotes[secondaryOption.id] ?? secondaryOption.votes }}
             selectedOptionId={selectedOptionId}
             showHint={!answered}
             onVote={async (optionId) => {
@@ -71,6 +81,10 @@ export function SharedPollPage({
               setVoteStatus("saving");
               try {
                 await submitPollVote(poll.id, optionId, "guest");
+                setOptionVotes((previous) => ({
+                  ...previous,
+                  [optionId]: (previous[optionId] ?? poll.options.find((option) => option.id === optionId)?.votes ?? 0) + 1,
+                }));
                 onVote(poll.id, optionId);
                 setVoteStatus("saved");
               } catch (error) {
@@ -81,18 +95,18 @@ export function SharedPollPage({
         )}
 
         {answered && (
-          <div className="w-full border border-raw-gold/25 bg-raw-gold/10 px-4 py-4 text-center">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-raw-gold/80">Answer saved</p>
-            <p className="mt-2 text-sm leading-relaxed text-raw-silver/65">
+          <div className="relative z-10 w-full border border-raw-gold/45 bg-raw-black/95 px-4 py-4 text-center shadow-[0_18px_45px_rgba(0,0,0,0.65),0_0_28px_rgba(241,196,45,0.12)]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-raw-gold">Answer saved</p>
+            <p className="mt-2 text-sm font-medium leading-relaxed text-raw-text">
               {voteStatus === "duplicate"
                 ? "Looks like this device or network already answered this poll."
                 : "Create an anonymous profile to answer more polls and find your communities."}
             </p>
             <div className="mt-4 grid gap-2 sm:grid-cols-2">
-              <Button onClick={onSignup} className="rounded-none bg-raw-gold text-raw-ink hover:bg-raw-gold/90">
+              <Button onClick={onSignup} className="rounded-none bg-raw-gold font-semibold text-raw-ink hover:bg-raw-gold/90">
                 Sign up
               </Button>
-              <Button asChild variant="outline" className="rounded-none border-raw-border/45 bg-transparent text-raw-silver hover:text-raw-gold">
+              <Button asChild variant="outline" className="rounded-none border-raw-gold/45 bg-raw-surface/40 font-semibold text-raw-text hover:bg-raw-gold/10 hover:text-raw-gold">
                 <Link to="/">Explore raW</Link>
               </Button>
             </div>
