@@ -59,7 +59,7 @@ export function SharedPollPage({
 
   const primaryOption = poll.options[0];
   const secondaryOption = poll.options[1];
-  const answered = Boolean(selectedOptionId || votedPolls.has(poll.id) || voteStatus === "duplicate");
+  const answered = Boolean(selectedOptionId || votedPolls.has(poll.id));
 
   return (
     <main className="dashboard-enhanced-bg min-h-screen bg-raw-black px-5 py-10 text-raw-text">
@@ -76,27 +76,34 @@ export function SharedPollPage({
             secondaryOption={{ id: secondaryOption.id, label: secondaryOption.text, votes: optionVotes[secondaryOption.id] ?? secondaryOption.votes }}
             selectedOptionId={selectedOptionId}
             showHint={!answered}
+            disabled={voteStatus === "saving" || voteStatus === "duplicate"}
             onVote={async (optionId) => {
-              setSelectedOptionId(optionId);
               setVoteStatus("saving");
               try {
-                await submitPollVote(poll.id, optionId, "guest");
-                setOptionVotes((previous) => ({
-                  ...previous,
-                  [optionId]: (previous[optionId] ?? poll.options.find((option) => option.id === optionId)?.votes ?? 0) + 1,
-                }));
+                const result = await submitPollVote(poll.id, optionId, "guest");
+                setOptionVotes((previous) => ({ ...previous, ...result.optionVotes }));
+                setSelectedOptionId(optionId);
                 onVote(poll.id, optionId);
                 setVoteStatus("saved");
               } catch (error) {
-                setVoteStatus(error instanceof Error && error.message === "already_voted" ? "duplicate" : "error");
+                if (error instanceof Error && error.message === "already_voted") {
+                  const optionVotes = (error as Error & { optionVotes?: Record<string, number> }).optionVotes;
+                  if (optionVotes) setOptionVotes((previous) => ({ ...previous, ...optionVotes }));
+                  setVoteStatus("duplicate");
+                  return;
+                }
+
+                setVoteStatus("error");
               }
             }}
           />
         )}
 
-        {answered && (
+        {(answered || voteStatus === "duplicate") && (
           <div className="relative z-10 w-full border border-raw-gold/45 bg-raw-black/95 px-4 py-4 text-center shadow-[0_18px_45px_rgba(0,0,0,0.65),0_0_28px_rgba(241,196,45,0.12)]">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-raw-gold">Answer saved</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-raw-gold">
+              {voteStatus === "duplicate" ? "Already answered" : "Answer saved"}
+            </p>
             <p className="mt-2 text-sm font-medium leading-relaxed text-raw-text">
               {voteStatus === "duplicate"
                 ? "Looks like this device or network already answered this poll."

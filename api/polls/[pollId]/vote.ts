@@ -49,6 +49,20 @@ async function getVoterKey(request: Request, pollId: string): Promise<string> {
   return sha256Base64Url(`${pollId}:${ip}:${userAgent}:${acceptLanguage}`);
 }
 
+async function getPollVoteCounts(pollId: string): Promise<Record<string, number>> {
+  if (!supabase) return {};
+
+  const { data } = await supabase
+    .from("poll_votes")
+    .select("option_id")
+    .eq("poll_id", pollId);
+
+  return (data ?? []).reduce<Record<string, number>>((counts, row) => {
+    if (row.option_id) counts[row.option_id] = (counts[row.option_id] ?? 0) + 1;
+    return counts;
+  }, {});
+}
+
 export default async function handler(request: Request): Promise<Response> {
   if (request.method !== "POST") {
     return json({ error: "method_not_allowed" }, 405);
@@ -101,11 +115,11 @@ export default async function handler(request: Request): Promise<Response> {
 
   if (insertError) {
     if (insertError.code === "23505") {
-      return json({ error: "already_voted" }, 409);
+      return json({ error: "already_voted", optionVotes: await getPollVoteCounts(pollId) }, 409);
     }
 
     return json({ error: "failed_to_save_vote" }, 500);
   }
 
-  return json({ ok: true });
+  return json({ ok: true, optionVotes: await getPollVoteCounts(pollId) });
 }

@@ -54,20 +54,40 @@ export async function fetchSupabasePolls(limit = 10): Promise<Poll[]> {
     .filter((poll) => poll.question?.trim().length > 5 && poll.options.length >= 2);
 }
 
-export async function submitPollVote(pollId: string, optionId: string, _userId: string): Promise<void> {
+export interface PollVoteResult {
+  optionVotes: Record<string, number>;
+}
+
+function parseOptionVotes(value: unknown): Record<string, number> {
+  if (!value || typeof value !== "object") return {};
+
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>)
+      .map(([key, count]) => [key, Number(count)])
+      .filter(([, count]) => Number.isFinite(count) && count >= 0)
+  );
+}
+
+export async function submitPollVote(pollId: string, optionId: string, _userId: string): Promise<PollVoteResult> {
   const response = await fetch(`/api/polls/${encodeURIComponent(pollId)}/vote`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ optionId }),
   });
 
+  const payload = (await response.json().catch(() => null)) as { optionVotes?: unknown } | null;
+
   if (!response.ok) {
     if (response.status === 409) {
-      throw new Error("already_voted");
+      const error = new Error("already_voted") as Error & PollVoteResult;
+      error.optionVotes = parseOptionVotes(payload?.optionVotes);
+      throw error;
     }
 
     throw new Error("Failed to submit poll vote");
   }
+
+  return { optionVotes: parseOptionVotes(payload?.optionVotes) };
 }
 
 export async function fetchPollComments(pollId: string): Promise<PollCommentRow[]> {
