@@ -508,7 +508,7 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
               sideOffset={10}
               collisionPadding={12}
               className={cn(
-                "w-[285px] max-w-[calc(100vw-1rem)] rounded-2xl p-2 text-raw-text",
+                "max-h-[min(78dvh,620px)] w-[min(22rem,calc(100vw-1rem))] overflow-y-auto overscroll-contain rounded-2xl p-2 text-raw-text",
                 isEffectiveLight
                   ? "border border-slate-300/80 bg-[linear-gradient(160deg,rgba(255,255,255,0.97),rgba(242,247,255,0.96))] shadow-[0_20px_50px_rgba(28,38,58,0.18)]"
                   : "border border-raw-border/40 bg-[linear-gradient(160deg,rgba(17,17,17,0.96),rgba(9,9,9,0.98))] shadow-[0_20px_50px_rgba(0,0,0,0.55)]",
@@ -605,13 +605,13 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
               </button>
 
               {appearanceOpen && (
-                <div className={cn("mx-1 mb-1 rounded-xl border p-3", isEffectiveLight ? "border-slate-200 bg-white/85" : "border-raw-border/30 bg-raw-surface/25")}>
+                <div className={cn("mx-1 mb-1 rounded-xl border p-2.5 sm:p-3", isEffectiveLight ? "border-slate-200 bg-white/85" : "border-raw-border/30 bg-raw-surface/25")}>
                   <div className={cn("mb-3 flex items-center gap-2 text-xs uppercase tracking-[0.16em]", isEffectiveLight ? "text-slate-500" : "text-raw-silver/45")}>
                     <Palette className="h-3.5 w-3.5" />
                     Theme Studio
                   </div>
 
-                  <div className={cn("rounded-lg border px-3 py-2", isEffectiveLight ? "border-slate-200 bg-slate-50" : "border-raw-border/25 bg-raw-black/25")}>
+                  <div className={cn("rounded-lg border px-2.5 py-2 sm:px-3", isEffectiveLight ? "border-slate-200 bg-slate-50" : "border-raw-border/25 bg-raw-black/25")}>
                     <div className="flex items-center justify-between gap-3">
                       <span className={cn("text-[10px] uppercase tracking-[0.16em]", isEffectiveLight ? "text-slate-500" : "text-raw-silver/45")}>Mode</span>
                       <span className={cn("text-[10px] uppercase tracking-[0.16em]", isEffectiveLight ? "text-slate-600" : "text-raw-silver/65")}>{THEME_MODE_LABELS[effectiveMode]}</span>
@@ -637,7 +637,7 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
                             type="button"
                             onClick={() => { setMode(option.mode); setHoveredMode(null); }}
                             className={cn(
-                              "relative z-10 flex h-9 items-center justify-center rounded-full px-2 transition-all duration-200 active:scale-95",
+                              "relative z-10 flex h-8 items-center justify-center rounded-full px-2 transition-all duration-200 active:scale-95 sm:h-9",
                               selected
                                 ? option.mode === "light"
                                   ? "text-slate-900"
@@ -669,7 +669,7 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
                             key={preset.id}
                             onClick={() => { setAccent(preset.id); setHoveredAccent(null); }}
                             className={cn(
-                              "relative h-10 rounded-lg border transition-all",
+                              "relative h-8 rounded-lg border transition-all sm:h-10",
                               selected ? "border-raw-text shadow-[0_0_0_1px_rgb(var(--raw-text)/0.3)]" : "border-raw-border/35 hover:border-raw-silver/35",
                             )}
                             style={{ backgroundColor: `rgb(${preset.rgb})` }}
