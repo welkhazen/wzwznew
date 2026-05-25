@@ -165,6 +165,7 @@ const ONBOARDING_COMMUNITIES = [
     description: "A space for Lebanese change-makers, community builders, and people driving impact inside Lebanon and across the diaspora.",
     members: "0",
     activeNow: "Early Access",
+    locked: true,
     image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=900&q=80",
   },
 ];
@@ -726,11 +727,13 @@ export function OnboardingJourney({
               <div className="mt-5 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
                 {ONBOARDING_COMMUNITIES.map((community) => {
                   const isSelected = selectedCommunityIds.includes(community.id);
+                  const isLocked = community.locked === true;
 
                   return (
                     <button
                       key={community.id}
                       onClick={() => {
+                        if (isLocked) return;
                         if (!isSelected && selectedCommunityIds.length >= 1) {
                           onToggleCommunity(selectedCommunityIds[0]);
                         }
@@ -742,14 +745,17 @@ export function OnboardingJourney({
                         }
                         onToggleCommunity(community.id);
                       }}
-                      className={`group relative overflow-hidden rounded-2xl border text-left transition-all duration-300 ${
+                      disabled={isLocked}
+                      className={`group relative overflow-hidden rounded-2xl border bg-transparent text-left transition-all duration-300 disabled:cursor-not-allowed ${
                         isSelected
                           ? "border-raw-gold/70 shadow-[0_0_0_1px_rgba(241,196,45,0.25),0_12px_28px_rgba(241,196,45,0.15)]"
-                          : "border-raw-border/35 hover:border-raw-gold/40 hover:shadow-[0_8px_20px_rgba(0,0,0,0.4)]"
+                          : isLocked
+                            ? "border-raw-border/25 opacity-60"
+                            : "border-raw-border/35 hover:border-raw-gold/40 hover:shadow-[0_8px_20px_rgba(0,0,0,0.4)]"
                       }`}
                     >
                       {/* Media */}
-                      <div className="relative h-28 overflow-hidden sm:h-36">
+                      <div className="relative h-32 overflow-hidden sm:h-36">
                         {community.video ? (
                           <video
                             src={community.video}
@@ -775,6 +781,12 @@ export function OnboardingJourney({
                           </div>
                         )}
 
+                        {isLocked && (
+                          <div className="absolute right-2 top-2 rounded-full border border-white/15 bg-black/65 px-2 py-0.5 text-[9px] uppercase tracking-[0.12em] text-white/70">
+                            Locked
+                          </div>
+                        )}
+
                         {/* Active badge */}
                         <div className="absolute bottom-2 left-2 rounded-full border border-white/15 bg-black/60 px-2 py-0.5 backdrop-blur-sm">
                           <p className="text-[9px] uppercase tracking-[0.1em] text-white/70">
@@ -785,7 +797,7 @@ export function OnboardingJourney({
                       </div>
 
                       {/* Info */}
-                      <div className={`p-3 sm:p-4 transition-colors ${isSelected ? "bg-raw-gold/[0.06]" : "bg-raw-surface/40"}`}>
+                      <div className="p-3 transition-colors sm:p-4">
                         <p className="font-display text-[13px] leading-tight text-raw-text sm:text-base">{community.title}</p>
                         <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-raw-silver/50 sm:text-xs">{community.description}</p>
 
