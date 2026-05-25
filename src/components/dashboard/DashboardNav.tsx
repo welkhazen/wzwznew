@@ -368,7 +368,7 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
           : "border-raw-border/50 bg-raw-black/90",
       )}
     >
-      <div className="flex h-14 items-center justify-between px-4 sm:px-6">
+      <div className="flex h-14 items-center justify-between px-3 sm:px-6">
         {/* Logo — hidden on mobile when inside a community */}
         <a href="/" className={cn("font-display text-base tracking-[0.3em] shrink-0 sm:text-lg", isEffectiveLight ? "text-slate-950" : "text-raw-text", communityTitle ? "hidden sm:block" : "")}>
           ra<span className="text-raw-gold">W</span>
@@ -391,7 +391,7 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
         )}
 
         {/* Right: token + bell + avatar */}
-        <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
+        <div className="flex shrink-0 items-center gap-1 sm:gap-3">
           <TokenBalanceButton />
           <div className="relative" ref={notifRef}>
             <button
@@ -445,7 +445,7 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
           {/* Three-state theme switcher */}
           <div
             className={cn(
-              "relative grid h-9 w-[104px] grid-cols-3 rounded-full border p-1 backdrop-blur-md transition-colors",
+              "relative hidden h-9 w-[104px] grid-cols-3 rounded-full border p-1 backdrop-blur-md transition-colors sm:grid",
               isEffectiveLight
                 ? "border-slate-200 bg-white/80 text-slate-500 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)]"
                 : "border-white/10 bg-white/[0.045] text-white/42 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]",
