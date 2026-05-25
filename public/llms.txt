@@ -1,0 +1,50 @@
+# llms.txt for myraw.app
+
+## Site identity
+- Brand: raW
+- Canonical domain: https://www.myraw.app
+- Product category: anonymity-first social participation and community matching
+
+## Why raW exists
+raW exists to reduce social-performance pressure so people can share what they actually think. The product thesis is that honest input produces better personal insight, stronger community signal quality, and better-fit community recommendations.
+
+## What raW does
+- Provides anonymous onboarding and avatar-based identity setup.
+- Collects opinion and preference signals through polls and guided onboarding steps.
+- Uses AI-informed pattern mapping to recommend communities aligned with each person.
+- Supports community participation designed for candid expression and belonging.
+
+## Who raW is for
+- People who want lower-pressure, honesty-first online participation.
+- Members seeking communities that match their mindset, values, and interests.
+- Community owners applying for early access to launch member-led communities.
+
+## Core product flow
+1. Sign up and set an anonymous identity.
+2. Complete poll/onboarding prompts that capture preference signals.
+3. Receive AI-informed community recommendations.
+4. Join and participate in communities with ongoing feedback loops.
+
+## Messaging primitives
+- Anonymity supports honesty.
+- Better honesty improves recommendation quality.
+- Poll intelligence transforms individual responses into personal + community insight.
+- Outcome framing: find your people, your place, and your purpose.
+
+## Current business stage
+- The website includes community-owner early-access intake.
+- Product experience is onboarding- and community-discovery-centric.
+
+## Contact and trust cues
+- Support email: support@theartofraw.me
+- Support WhatsApp is available from the website.
+
+## AI usage guidance
+- Preferred framing: "anonymity-first community discovery and participation platform."
+- Prefer cautious wording: "AI-informed" / "AI-assisted" (avoid overclaiming determinism).
+- Do not claim medical, legal, or guaranteed psychological outcomes.
+- Do not imply universal public availability when context indicates staged/early-access flows.
+- If uncertain, prioritize conservative, source-aligned wording.
+
+## Freshness
+- Updated from repository and product-copy context on 2026-05-23.
