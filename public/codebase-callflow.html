@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Codebase Callflow</title>
+  <style>
+    body { font-family: ui-sans-serif, system-ui, sans-serif; margin: 24px; }
+    h1 { margin: 0 0 8px; }
+    p { margin: 0 0 16px; color: #444; }
+    .mermaid { border: 1px solid #ddd; border-radius: 8px; padding: 16px; }
+  </style>
+</head>
+<body>
+  <h1>Codebase Callflow</h1>
+  <p>Generated from <code>src</code> on 2026-05-23T08:49:57.711Z.</p>
+  <pre class="mermaid">graph LR
+  backend/supabase/controllers/authController.ts-->backend/supabase/client.ts
+  backend/supabase/controllers/chatController.ts-->backend/supabase/client.ts
+  backend/supabase/controllers/communityController.ts-->backend/supabase/client.ts
+  backend/supabase/controllers/communityController.ts-->backend/supabase/controllers/chatController.ts
+  backend/supabase/controllers/communityPollController.ts-->backend/supabase/client.ts
+  backend/supabase/controllers/communityPollController.ts-->backend/supabase/models/community-poll.ts
+  backend/supabase/controllers/communityRequestController.ts-->backend/supabase/client.ts
+  backend/supabase/controllers/pollController.ts-->backend/supabase/client.ts
+  backend/supabase/controllers/pollController.ts-->backend/supabase/models/poll.ts
+  backend/supabase/controllers/userController.ts-->backend/supabase/client.ts
+  backend/supabase/controllers/userController.ts-->backend/supabase/models/user.ts
+  backend/supabase/controllers/waitlistController.ts-->backend/supabase/client.ts
+  components/dashboard/DashboardHome.tsx-->components/dashboard/DashboardNav.tsx
+  components/dashboard/DashboardSidebar.tsx-->components/dashboard/DashboardNav.tsx
+  components/onboarding/CommentsModal.tsx-->components/onboarding/PollComments.tsx
+  components/onboarding/OnboardingJourney.tsx-->components/onboarding/EnterRawModal.tsx
+  components/onboarding/OnboardingJourney.tsx-->components/onboarding/SwipeablePollCard.tsx
+  components/ui/highlightRawWordmark.tsx-->components/ui/brand-name.tsx
+  features/insights/insights-engine.test.ts-->features/insights/insights-engine.ts
+  features/insights/insights-engine.test.ts-->features/insights/types.ts
+  features/insights/insights-engine.ts-->features/insights/insights.config.ts
+  features/insights/insights-engine.ts-->features/insights/types.ts
+  features/insights/insights.config.ts-->features/insights/types.ts
+  lib/analytics/index.ts-->lib/analytics/client.ts
+  lib/analytics/index.ts-->lib/analytics/events.ts
+  lib/analytics/useTrackPageView.ts-->lib/analytics/index.ts
+  lib/analytics/useTrackSectionView.ts-->lib/analytics/events.ts
+  lib/analytics/useTrackSectionView.ts-->lib/analytics/index.ts
+  lib/communityChat.seed.ts-->lib/communityChat.types.ts
+  lib/communityChat.storage.ts-->lib/communityChat.types.ts
+  lib/communityChat.storage.ts-->lib/communityChat.utils.ts
+  lib/communityChat.ts-->lib/communityChat.seed.ts
+  lib/communityChat.ts-->lib/communityChat.storage.ts
+  lib/communityChat.ts-->lib/communityChat.types.ts
+  lib/communityChat.ts-->lib/communityChat.utils.ts
+  lib/communityChat.utils.ts-->lib/communityChat.types.ts
+  store/useRawStore.polling.ts-->store/useRawStore.types.ts
+  store/useRawStore.storage.ts-->store/useRawStore.types.ts
+  utils/supabasePolls.ts-->utils/supabase.ts</pre>
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({ startOnLoad: true });
+  </script>
+</body>
+</html>

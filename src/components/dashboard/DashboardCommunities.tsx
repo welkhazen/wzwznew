@@ -49,9 +49,8 @@ import {
 import {
   sendMessage as sendMessageSupabase,
   likeMessage,
-  mapCommunityMessage,
-  type DbCommunityMessage,
 } from "@/backend/supabase/controllers/chatController";
+import { mapCommunityMessage, type DbCommunityMessage } from "@/backend/supabase/mappers/communityMessageMapper";
 import { supabase } from "@/backend/supabase/client";
 import {
   fetchCommunityPolls,
