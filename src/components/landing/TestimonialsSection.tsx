@@ -13,74 +13,20 @@ type Testimonial = {
 };
 
 const testimonials: Testimonial[] = [
-  {
-    name: "Ava Green",
-    username: "@ava",
-    body: "Cascade AI made my workflow 10x faster!",
-    img: "https://images.unsplash.com/photo-1494790108377-be9c29b29330",
-    country: "🇦🇺 Australia",
-  },
-  {
-    name: "Ana Miller",
-    username: "@ana",
-    body: "Vertical marquee is a game changer!",
-    img: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80",
-    country: "🇩🇪 Germany",
-  },
-  {
-    name: "Mateo Rossi",
-    username: "@mat",
-    body: "Animations are buttery smooth!",
-    img: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e",
-    country: "🇮🇹 Italy",
-  },
-  {
-    name: "Maya Patel",
-    username: "@maya",
-    body: "Setup was a breeze!",
-    img: "https://images.unsplash.com/photo-1544005313-94ddf0286df2",
-    country: "🇮🇳 India",
-  },
-  {
-    name: "Noah Smith",
-    username: "@noah",
-    body: "Best marquee component!",
-    img: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d",
-    country: "🇺🇸 USA",
-  },
-  {
-    name: "Lucas Stone",
-    username: "@luc",
-    body: "Very customizable and smooth.",
-    img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d",
-    country: "🇫🇷 France",
-  },
-  {
-    name: "Haruto Sato",
-    username: "@haru",
-    body: "Impressive performance on mobile!",
-    img: "https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f",
-    country: "🇯🇵 Japan",
-  },
-  {
-    name: "Emma Lee",
-    username: "@emma",
-    body: "Love the pause on hover feature!",
-    img: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f",
-    country: "🇨🇦 Canada",
-  },
-  {
-    name: "Carlos Ray",
-    username: "@carl",
-    body: "Great for testimonials and logos.",
-    img: "https://images.unsplash.com/photo-1504257432389-52343af06ae3",
-    country: "🇪🇸 Spain",
-  },
+  { name: "Ava Green", username: "@ava", body: "Cascade AI made my workflow 10x faster!", img: "https://images.unsplash.com/photo-1494790108377-be9c29b29330", country: "🇦🇺 Australia" },
+  { name: "Ana Miller", username: "@ana", body: "Vertical marquee is a game changer!", img: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80", country: "🇩🇪 Germany" },
+  { name: "Mateo Rossi", username: "@mat", body: "Animations are buttery smooth!", img: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e", country: "🇮🇹 Italy" },
+  { name: "Maya Patel", username: "@maya", body: "Setup was a breeze!", img: "https://images.unsplash.com/photo-1544005313-94ddf0286df2", country: "🇮🇳 India" },
+  { name: "Noah Smith", username: "@noah", body: "Best marquee component!", img: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d", country: "🇺🇸 USA" },
+  { name: "Lucas Stone", username: "@luc", body: "Very customizable and smooth.", img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d", country: "🇫🇷 France" },
+  { name: "Haruto Sato", username: "@haru", body: "Impressive performance on mobile!", img: "https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f", country: "🇯🇵 Japan" },
+  { name: "Emma Lee", username: "@emma", body: "Love the pause on hover feature!", img: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f", country: "🇨🇦 Canada" },
+  { name: "Carlos Ray", username: "@carl", body: "Great for testimonials and logos.", img: "https://images.unsplash.com/photo-1504257432389-52343af06ae3", country: "🇪🇸 Spain" },
 ];
 
 function TestimonialCard({ img, name, username, body, country }: Testimonial) {
   return (
-    <Card className="w-50">
+    <Card className="w-52">
       <CardContent>
         <div className="flex items-center gap-2.5">
           <Avatar className="size-9">
@@ -112,19 +58,14 @@ export function TestimonialsSection() {
 
         <div
           ref={dragConstraintsRef}
-          className="relative mx-auto h-[350px] w-[600px] max-w-full overflow-hidden rounded-[1.25rem] border border-raw-border/45 bg-raw-black/45 [perspective:300px]"
+          className="relative mx-auto h-[350px] w-[600px] max-w-full overflow-hidden rounded-[1.25rem] border border-raw-border/45 bg-raw-black/45"
         >
-          <div className="absolute inset-0 pointer-events-none border border-white/5 rounded-[1.25rem]" />
           <motion.div
             drag
-            dragDirectionLock
             dragMomentum={false}
-            dragElastic={0.08}
+            dragElastic={0.06}
             dragConstraints={dragConstraintsRef}
-            className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 cursor-grab flex-row items-center gap-4 touch-none active:cursor-grabbing"
-            style={{
-              transform: "translateZ(-100px) rotateX(20deg) rotateY(-10deg) rotateZ(20deg)",
-            }}
+            className="absolute inset-0 flex cursor-grab items-center justify-center gap-4 p-4 touch-none active:cursor-grabbing"
           >
             <Marquee vertical pauseOnHover repeat={3} className="[--duration:40s]">
               {testimonials.map((review) => (
@@ -136,20 +77,6 @@ export function TestimonialsSection() {
                 <TestimonialCard key={`b-${review.username}`} {...review} />
               ))}
             </Marquee>
-            <Marquee vertical pauseOnHover repeat={3} className="[--duration:40s]">
-              {testimonials.map((review) => (
-                <TestimonialCard key={`c-${review.username}`} {...review} />
-              ))}
-            </Marquee>
-            <Marquee vertical pauseOnHover reverse repeat={3} className="[--duration:40s]">
-              {testimonials.map((review) => (
-                <TestimonialCard key={`d-${review.username}`} {...review} />
-              ))}
-            </Marquee>
-            <div className="pointer-events-none absolute inset-x-0 top-0 h-1/4 bg-gradient-to-b from-background" />
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-background" />
-            <div className="pointer-events-none absolute inset-y-0 left-0 w-1/4 bg-gradient-to-r from-background" />
-            <div className="pointer-events-none absolute inset-y-0 right-0 w-1/4 bg-gradient-to-l from-background" />
           </motion.div>
         </div>
       </div>
