@@ -67,6 +67,7 @@ export function DashboardProfile({
 
   const [identityOpen, setIdentityOpen] = useState(false);
   const [aliasNames, setAliasNames] = useState<string[]>([username]);
+  const [aliasAvatarLevels, setAliasAvatarLevels] = useState<number[]>([avatarLevel]);
   const [publicAliasIndex, setPublicAliasIndex] = useState(0);
   const [aliasDraft, setAliasDraft] = useState("");
   const [aliasLoading, setAliasLoading] = useState(false);
@@ -82,11 +83,13 @@ export function DashboardProfile({
         if (cancelled) return;
         if (rows.length === 0) {
           setAliasNames([username]);
+          setAliasAvatarLevels([avatarLevel]);
           setPublicAliasIndex(0);
           return;
         }
 
         setAliasNames(rows.map((row) => row.alias));
+        setAliasAvatarLevels(rows.map((row) => row.avatar_level || avatarLevel));
         setPublicAliasIndex(Math.max(0, rows.findIndex((row) => row.is_public)));
       } catch (error) {
         if (!cancelled) {
@@ -105,19 +108,30 @@ export function DashboardProfile({
     return () => {
       cancelled = true;
     };
-  }, [toast, userId, username]);
+  }, [avatarLevel, toast, userId, username]);
 
   const cleanAliasNames = aliasNames.map((name) => name.trim()).filter(Boolean);
+  const normalizedAliasNames = cleanAliasNames.map((name) => name.toLowerCase());
+  const aliasNamesAreUnique = new Set(normalizedAliasNames).size === normalizedAliasNames.length;
+  const aliasAvatarsAreUnique = new Set(aliasAvatarLevels).size === aliasAvatarLevels.length;
   const aliasesAreValid =
-    cleanAliasNames.length > 0 && cleanAliasNames.every((name) => name.length >= 3 && name.length <= 32);
+    cleanAliasNames.length > 0 &&
+    cleanAliasNames.every((name) => name.length >= 3 && name.length <= 32) &&
+    aliasNamesAreUnique &&
+    aliasAvatarsAreUnique;
   const publicAlias = aliasNames[publicAliasIndex]?.trim() || username;
 
   function updateAlias(index: number, value: string) {
     setAliasNames((names) => names.map((name, nameIndex) => (nameIndex === index ? value : name)));
   }
 
+  function updateAliasAvatar(index: number, level: number) {
+    setAliasAvatarLevels((levels) => levels.map((currentLevel, levelIndex) => (levelIndex === index ? level : currentLevel)));
+  }
+
   function removeAlias(index: number) {
     setAliasNames((names) => names.filter((_, nameIndex) => nameIndex !== index));
+    setAliasAvatarLevels((levels) => levels.filter((_, levelIndex) => levelIndex !== index));
     setPublicAliasIndex((current) => {
       if (index === current) return 0;
       return index < current ? current - 1 : current;
@@ -136,12 +150,23 @@ export function DashboardProfile({
     }
 
     setAliasNames((names) => [...names, nextAlias]);
+    const usedLevels = new Set(aliasAvatarLevels);
+    const nextLevel = Array.from({ length: MAX_LEVEL }, (_, index) => index + 1).find((level) => !usedLevels.has(level)) ?? avatarLevel;
+    setAliasAvatarLevels((levels) => [...levels, nextLevel]);
     setAliasDraft("");
   }
 
   async function handleSaveAliases() {
     if (!aliasesAreValid) {
       toast({ title: "Check your names", description: "Each saved name needs 3-32 characters." });
+      return;
+    }
+    if (!aliasNamesAreUnique) {
+      toast({ title: "Name already exists", description: "Every identity name must be different." });
+      return;
+    }
+    if (!aliasAvatarsAreUnique) {
+      toast({ title: "Choose different avatars", description: "Two identities cannot use the same avatar." });
       return;
     }
 
@@ -164,12 +189,15 @@ export function DashboardProfile({
         userId,
         deduped.map((alias, index) => ({
           alias,
+          avatarLevel: aliasAvatarLevels[index] ?? avatarLevel,
           isPublic: index === nextPublicIndex,
         }))
       );
 
       setAliasNames(rows.map((row) => row.alias));
+      setAliasAvatarLevels(rows.map((row) => row.avatar_level || avatarLevel));
       setPublicAliasIndex(Math.max(0, rows.findIndex((row) => row.is_public)));
+      window.dispatchEvent(new CustomEvent("raw:user-aliases-updated", { detail: { userId } }));
       toast({ title: "Names saved", description: "Your public and private names are updated." });
     } catch (error) {
       toast({
@@ -355,10 +383,42 @@ export function DashboardProfile({
                           </button>
                         )}
                       </div>
+                      <div className="mt-2 flex items-center gap-1.5 overflow-x-auto pb-1">
+                        {ownedLevels.map((level) => {
+                          const isUsedByOther = aliasAvatarLevels.some((usedLevel, usedIndex) => usedIndex !== index && usedLevel === level);
+                          const isSelected = aliasAvatarLevels[index] === level;
+                          return (
+                            <button
+                              key={level}
+                              type="button"
+                              onClick={() => updateAliasAvatar(index, level)}
+                              disabled={isUsedByOther}
+                              className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/40 disabled:opacity-25"
+                              aria-label={`Use avatar ${level} for ${name || "identity"}`}
+                              aria-pressed={isSelected}
+                              title={isUsedByOther ? "Used by another name" : `Use avatar ${level}`}
+                            >
+                              <AvatarFigure
+                                avatarIndex={level}
+                                size="sm"
+                                selected={isSelected}
+                                className="scale-75"
+                              />
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
                   );
                 })}
               </div>
+
+              {!aliasNamesAreUnique && (
+                <p className="text-xs text-red-300/80">Each identity needs a different name.</p>
+              )}
+              {!aliasAvatarsAreUnique && (
+                <p className="text-xs text-red-300/80">Each identity needs a different avatar.</p>
+              )}
 
               <div className="flex flex-col gap-2 sm:flex-row">
                 <input

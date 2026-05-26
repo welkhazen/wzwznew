@@ -352,8 +352,20 @@ export function OnboardingJourney({
 
     try {
       const uniqueNames = new Set<string>();
+      const usedAvatarLevels = new Set<number>();
       const aliases = identityNames
-        .map((name, index) => ({ alias: name.trim(), isPublic: index === publicIdentityIndex }))
+        .map((name, index) => {
+          const preferredLevel = index === 0 ? avatarIndex : Math.min(FREE_ONBOARDING_AVATAR_COUNT, index + 1);
+          const avatarLevel = usedAvatarLevels.has(preferredLevel)
+            ? Array.from({ length: FREE_ONBOARDING_AVATAR_COUNT }, (_, levelIndex) => levelIndex + 1).find((level) => !usedAvatarLevels.has(level)) ?? preferredLevel
+            : preferredLevel;
+          usedAvatarLevels.add(avatarLevel);
+          return {
+            alias: name.trim(),
+            avatarLevel,
+            isPublic: index === publicIdentityIndex,
+          };
+        })
         .filter((item) => item.alias.length > 0)
         .filter((item) => {
           const key = item.alias.toLowerCase();
