@@ -50,6 +50,8 @@ import {
   sendMessage as sendMessageSupabase,
   likeMessage,
 } from "@/backend/supabase/controllers/chatController";
+import { fetchUserAliases } from "@/backend/supabase/controllers/userAliasController";
+import type { UserAliasRow } from "@/backend/supabase/models/user-alias";
 import { mapCommunityMessage, type DbCommunityMessage } from "@/backend/supabase/mappers/communityMessageMapper";
 import { supabase } from "@/backend/supabase/client";
 import {
@@ -203,6 +205,8 @@ function appendOptimisticMessage(
   });
 }
 
+type ChatIdentity = Pick<UserAliasRow, "alias" | "avatar_level" | "is_public">;
+
 export function DashboardCommunities(props) {
       // Main search query state (fix ReferenceError)
       const [searchQuery, setSearchQuery] = useState("");
@@ -338,6 +342,10 @@ const COMMUNITY_LOGOS: Record<string, string> = {
   const [unlockingId, setUnlockingId] = useState<string | null>(null);
   const [leavingCommunityId, setLeavingCommunityId] = useState<string | null>(null);
   const [messageDraft, setMessageDraft] = useState("");
+  const [chatIdentities, setChatIdentities] = useState<ChatIdentity[]>([
+    { alias: user.username, avatar_level: avatarLevel, is_public: true },
+  ]);
+  const [selectedChatIdentityIndex, setSelectedChatIdentityIndex] = useState(0);
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [mentionIndex, setMentionIndex] = useState(0);
   const [expandedDescs, setExpandedDescs] = useState<Set<string>>(new Set());
@@ -466,6 +474,54 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         cancelled = true;
       };
     }, [avatarLevel, messageSenderIds, user.id]);
+
+    useEffect(() => {
+      let cancelled = false;
+
+      async function loadChatIdentities() {
+        try {
+          const aliases = await fetchUserAliases(user.id);
+          if (cancelled) return;
+
+          if (aliases.length === 0) {
+            setChatIdentities([{ alias: user.username, avatar_level: avatarLevel, is_public: true }]);
+            setSelectedChatIdentityIndex(0);
+            return;
+          }
+
+          setChatIdentities(aliases.map((alias) => ({
+            alias: alias.alias,
+            avatar_level: alias.avatar_level || avatarLevel,
+            is_public: alias.is_public,
+          })));
+          setSelectedChatIdentityIndex(Math.max(0, aliases.findIndex((alias) => alias.is_public)));
+        } catch {
+          if (!cancelled) {
+            setChatIdentities([{ alias: user.username, avatar_level: avatarLevel, is_public: true }]);
+            setSelectedChatIdentityIndex(0);
+          }
+        }
+      }
+
+      void loadChatIdentities();
+      const reloadAliases = (event: Event) => {
+        const updatedUserId = (event as CustomEvent<{ userId?: string }>).detail?.userId;
+        if (!updatedUserId || updatedUserId === user.id) void loadChatIdentities();
+      };
+      window.addEventListener("raw:user-aliases-updated", reloadAliases);
+
+      return () => {
+        cancelled = true;
+        window.removeEventListener("raw:user-aliases-updated", reloadAliases);
+      };
+    }, [avatarLevel, user.id, user.username]);
+
+    const selectedChatIdentity = chatIdentities[selectedChatIdentityIndex] ?? chatIdentities[0] ?? {
+      alias: user.username,
+      avatar_level: avatarLevel,
+      is_public: true,
+    };
+
     const filteredMessages = useMemo(() => {
       const query = searchQuery.trim().toLowerCase();
       if (!query) {
@@ -963,7 +1019,8 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         id: `optimistic-${Date.now()}`,
         communityId: selectedCommunity.id,
         senderId: user.id,
-        senderName: user.username,
+        senderName: selectedChatIdentity.alias,
+        senderAvatarLevel: selectedChatIdentity.avatar_level,
         text: trimmedMessage,
         createdAt: new Date().toISOString(),
         deliveryStatus: "sending" as const,
@@ -987,7 +1044,8 @@ const COMMUNITY_LOGOS: Record<string, string> = {
 
         const savedMessage = await sendMessageSupabase(selectedCommunity.id, {
           senderId: user.id,
-          senderName: user.username,
+          senderName: selectedChatIdentity.alias,
+          senderAvatarLevel: selectedChatIdentity.avatar_level,
           text: trimmedMessage,
         });
         updateCommunities((current) => replaceCommunityMessage(current, selectedCommunity.id, optimisticMessage.id, savedMessage));
@@ -995,7 +1053,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         setMentionQuery(null);
         void sendCommunityPushNotification({
           recipientUserIds: mentionRecipientIds,
-          title: `@${user.username} mentioned you`,
+          title: `@${selectedChatIdentity.alias} mentioned you`,
           body: `${selectedCommunity.title}: ${trimmedMessage}`,
           url: `${window.location.origin}/dashboard/communities/${selectedCommunity.id}`,
         });
@@ -1003,7 +1061,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         updateCommunities((current) => markCommunityMessageFailed(current, selectedCommunity.id, optimisticMessage.id));
         toast({ title: "Failed to send message", description: "Please try again." });
       }
-    }, [isJoined, selectedCommunity, updateCommunities, user.id, user.username]);
+    }, [isJoined, selectedChatIdentity.alias, selectedChatIdentity.avatar_level, selectedCommunity, updateCommunities, user.id, user.username]);
 
     const handleSendMessage = async () => {
       if (!selectedCommunity) {
@@ -1773,7 +1831,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                   </div>
                   {group.messages.map((message) => {
                     const isOwnMessage = message.senderId === user.id || message.senderName === user.username;
-                    const senderAvatarLevel = senderAvatarLevels[message.senderId] ?? 1;
+                    const senderAvatarLevel = message.senderAvatarLevel ?? senderAvatarLevels[message.senderId] ?? 1;
                     const likedBy = message.likedBy ?? [];
                     const alreadyLiked = likedBy.includes(user.id);
                     const likeCount = likedBy.length;
@@ -1922,6 +1980,34 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                   </div>
                 );
               })()}
+              <div className="mb-2 flex items-center gap-2 overflow-x-auto pb-1">
+                {chatIdentities.map((identity, index) => {
+                  const selected = index === selectedChatIdentityIndex;
+                  return (
+                    <button
+                      key={`${identity.alias}-${identity.avatar_level}`}
+                      type="button"
+                      onClick={() => setSelectedChatIdentityIndex(index)}
+                      className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-2.5 py-1.5 text-xs transition-all ${
+                        selected
+                          ? "border-raw-gold/45 bg-raw-gold/10 text-raw-gold"
+                          : "border-raw-border/25 bg-raw-surface/25 text-raw-silver/55 hover:border-raw-gold/30 hover:text-raw-gold"
+                      }`}
+                      aria-pressed={selected}
+                      title={`Text as ${identity.alias}`}
+                    >
+                      <AvatarFigure
+                        avatarIndex={identity.avatar_level}
+                        size="sm"
+                        selected={selected}
+                        className="scale-75"
+                      />
+                      <span className="max-w-28 truncate">@{identity.alias}</span>
+                      {identity.is_public && <span className="text-[9px] uppercase tracking-[0.16em] opacity-70">Public</span>}
+                    </button>
+                  );
+                })}
+              </div>
               <div className="flex gap-2">
                 {canManagePolls && (
                   <button

@@ -4,7 +4,7 @@ import type { SaveUserAliasInput, UserAliasRow } from '../models/user-alias';
 export async function fetchUserAliases(userId: string): Promise<UserAliasRow[]> {
   const { data, error } = await supabase
     .from('user_aliases')
-    .select('id, user_id, alias, is_public, created_at, updated_at')
+    .select('id, user_id, alias, is_public, avatar_level, created_at, updated_at')
     .eq('user_id', userId)
     .order('is_public', { ascending: false })
     .order('created_at', { ascending: true });
@@ -15,7 +15,7 @@ export async function fetchUserAliases(userId: string): Promise<UserAliasRow[]> 
 
 export async function saveUserAliases(userId: string, aliases: SaveUserAliasInput[]): Promise<UserAliasRow[]> {
   const cleaned = aliases
-    .map((item) => ({ alias: item.alias.trim(), is_public: item.isPublic }))
+    .map((item) => ({ alias: item.alias.trim(), is_public: item.isPublic, avatar_level: item.avatarLevel }))
     .filter((item) => item.alias.length > 0);
 
   if (cleaned.length === 0) {
@@ -30,6 +30,7 @@ export async function saveUserAliases(userId: string, aliases: SaveUserAliasInpu
   const rows = cleaned.map((item, index) => ({
     user_id: userId,
     alias: item.alias,
+    avatar_level: item.avatar_level,
     is_public: index === publicIndex,
   }));
 
@@ -43,7 +44,7 @@ export async function saveUserAliases(userId: string, aliases: SaveUserAliasInpu
   const { data, error } = await supabase
     .from('user_aliases')
     .insert(rows)
-    .select('id, user_id, alias, is_public, created_at, updated_at');
+    .select('id, user_id, alias, is_public, avatar_level, created_at, updated_at');
 
   if (error) throw error;
   return (data ?? []) as UserAliasRow[];
