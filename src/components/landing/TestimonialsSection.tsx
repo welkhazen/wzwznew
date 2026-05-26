@@ -104,7 +104,7 @@ export function TestimonialsSection() {
   const dragConstraintsRef = useRef<HTMLDivElement | null>(null);
 
   return (
-    <section className="landing-section relative px-4 py-14 sm:px-6 sm:py-20">
+    <section className="landing-section relative z-0 px-4 py-14 sm:px-6 sm:py-20">
       <div className="relative w-full overflow-hidden rounded-2xl border border-raw-border/40 bg-raw-surface/20 px-6 py-10 sm:px-10 sm:py-14">
         <p className="mb-10 text-center font-display text-[10px] uppercase tracking-[0.3em] text-raw-silver/40 sm:mb-12">
           From the community

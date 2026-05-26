@@ -18,20 +18,11 @@ export async function saveUserAliases(userId: string, aliases: SaveUserAliasInpu
     .map((item) => ({ alias: item.alias.trim(), is_public: item.isPublic, avatar_level: item.avatarLevel }))
     .filter((item) => item.alias.length > 0);
 
-  if (cleaned.length === 0) {
-    throw new Error('Add at least one identity name.');
-  }
-
-  if (!cleaned.some((item) => item.is_public)) {
-    cleaned[0].is_public = true;
-  }
-
-  const publicIndex = cleaned.findIndex((item) => item.is_public);
-  const rows = cleaned.map((item, index) => ({
+  const rows = cleaned.map((item) => ({
     user_id: userId,
     alias: item.alias,
     avatar_level: item.avatar_level,
-    is_public: index === publicIndex,
+    is_public: item.is_public,
   }));
 
   const { error: deleteError } = await supabase
@@ -40,6 +31,10 @@ export async function saveUserAliases(userId: string, aliases: SaveUserAliasInpu
     .eq('user_id', userId);
 
   if (deleteError) throw deleteError;
+
+  if (rows.length === 0) {
+    return [];
+  }
 
   const { data, error } = await supabase
     .from('user_aliases')
