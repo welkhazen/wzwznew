@@ -170,7 +170,7 @@ function LockedPreview({ insight }: { insight: InsightPreview }) {
   const accent = { color: insight.accentColor };
 
   return (
-    <div className="mt-5 rounded-xl border border-white/10 bg-black/30 p-3 blur-[1.8px]">
+    <div className="mt-5 rounded-xl border border-white/10 bg-black/30 p-3 blur-[1px]">
       {insight.previewVariant === "radar" && (
         <div className="space-y-2">
           <div className="h-24 rounded-lg border border-white/10 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.1),transparent_70%)]" />
@@ -378,11 +378,7 @@ export function PersonalityInsightsSection() {
                     <p className="mt-3 text-xs leading-relaxed text-raw-silver/50">{insight.description}</p>
                     <LockedPreview insight={insight} />
                   </div>
-                  <div className="absolute inset-0 z-20 flex items-center justify-center">
-                    <div className="rounded-full border border-white/20 bg-black/70 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/80">
-                      Locked · Preview Sample
-                    </div>
-                  </div>
+                  <div className="pointer-events-none absolute right-4 top-4 z-20 rounded-full border border-white/20 bg-black/60 px-3 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-white/85 backdrop-blur-sm">Locked · Sample</div>
                 </GlareCard>
               </button>
             );
