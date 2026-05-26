@@ -72,7 +72,7 @@ import {
 } from "@/lib/communityConstants";
 import { buildDefaultCommunities } from "@/lib/communityChat.seed";
 import { sendCommunityPushNotification } from "@/lib/communityPushNotifications";
-import { IDENTITY_SELECTION_EVENT, readSelectedIdentityAlias, writeSelectedIdentityAlias } from "@/lib/identitySelection";
+import { IDENTITY_SELECTION_EVENT, readSelectedIdentityAlias } from "@/lib/identitySelection";
 import type { CommunityChatMessageRecord, PersistedCommunityRecord } from "@/lib/communityChat.types";
 import {
   loadCommunityAccess,
@@ -1989,37 +1989,6 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                   </div>
                 );
               })()}
-              <div className="mb-2 flex items-center gap-2 overflow-x-auto pb-1">
-                {chatIdentities.map((identity, index) => {
-                  const selected = identity.alias === selectedChatIdentity.alias;
-                  return (
-                    <button
-                      key={`${identity.alias}-${identity.avatar_level}`}
-                      type="button"
-                      onClick={() => {
-                        setSelectedChatIdentityAlias(identity.alias);
-                        writeSelectedIdentityAlias(user.id, identity.alias);
-                      }}
-                      className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-2.5 py-1.5 text-xs transition-all ${
-                        selected
-                          ? "border-raw-gold/45 bg-raw-gold/10 text-raw-gold"
-                          : "border-raw-border/25 bg-raw-surface/25 text-raw-silver/55 hover:border-raw-gold/30 hover:text-raw-gold"
-                      }`}
-                      aria-pressed={selected}
-                      title={`Text as ${identity.alias}`}
-                    >
-                      <AvatarFigure
-                        avatarIndex={identity.avatar_level}
-                        size="sm"
-                        selected={selected}
-                        className="scale-75"
-                      />
-                      <span className="max-w-28 truncate">@{identity.alias}</span>
-                      {identity.is_public && <span className="text-[9px] uppercase tracking-[0.16em] opacity-70">Public</span>}
-                    </button>
-                  );
-                })}
-              </div>
               <div className="flex gap-2">
                 {canManagePolls && (
                   <button
