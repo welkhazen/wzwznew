@@ -45,9 +45,17 @@ function normalize(p) {
 }
 
 function resolveImport(fromFile, spec) {
-  if (!spec.startsWith('.')) return null;
-  const base = path.resolve(path.dirname(fromFile), spec);
+  let base = null;
+  if (spec.startsWith('.')) {
+    base = path.resolve(path.dirname(fromFile), spec);
+  } else if (spec.startsWith('@/')) {
+    base = path.join(srcRoot, spec.slice(2));
+  }
+
+  if (!base) return null;
+
   const candidates = [
+    base,
     `${base}.ts`,
     `${base}.tsx`,
     path.join(base, 'index.ts'),
@@ -171,8 +179,9 @@ await walk(srcRoot);
 const edges = new Set();
 for (const file of files) {
   const text = await fs.readFile(file, 'utf8');
-  const matches = text.matchAll(/from\s+['\"]([^'\"]+)['\"]/g);
-  for (const m of matches) {
+  const staticImports = text.matchAll(/from\s+['\"]([^'\"]+)['\"]/g);
+  const dynamicImports = text.matchAll(/import\(\s*['\"]([^'\"]+)['\"]\s*\)/g);
+  for (const m of [...staticImports, ...dynamicImports]) {
     const target = resolveImport(file, m[1]);
     if (!target) continue;
     edges.add(`${normalize(file)}-->${normalize(target)}`);
