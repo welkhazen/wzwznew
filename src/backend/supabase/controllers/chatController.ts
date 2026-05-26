@@ -4,7 +4,7 @@ import { mapCommunityMessage, type DbCommunityMessage } from '../mappers/communi
 
 export async function sendMessage(
   communityId: string,
-  { senderId, senderName, text, replyToMessage }: SendCommunityMessageInput
+  { senderId, senderName, senderAvatarLevel, text, replyToMessage }: SendCommunityMessageInput
 ): Promise<CommunityChatMessageRecord> {
   const { data, error } = await supabase
     .from('community_messages')
@@ -12,6 +12,7 @@ export async function sendMessage(
       community_id: communityId,
       sender_id: senderId,
       sender_name: senderName,
+      sender_avatar_level: senderAvatarLevel ?? null,
       text,
       reply_to_message_id: replyToMessage?.id ?? null,
       reply_to_sender_name: replyToMessage?.senderName ?? null,

@@ -64,8 +64,28 @@ function resolveImport(fromFile, spec) {
   return candidates.find((c) => files.includes(c)) ?? null;
 }
 
+function escapeMermaidLabel(value) {
+  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+}
+
 function buildMermaid(edges) {
-  return ['graph LR', ...edges.map((edge) => `  ${edge}`)].join('\n');
+  const nodeIds = new Map();
+
+  function getNodeId(node) {
+    if (!nodeIds.has(node)) {
+      nodeIds.set(node, `n${nodeIds.size}`);
+    }
+    return nodeIds.get(node);
+  }
+
+  const graphEdges = edges.map((edge) => {
+    const [from, to] = edge.split('-->');
+    return `  ${getNodeId(from)}-->${getNodeId(to)}`;
+  });
+
+  const graphNodes = [...nodeIds.entries()].map(([node, id]) => `  ${id}["${escapeMermaidLabel(node)}"]`);
+
+  return ['graph LR', ...graphNodes, ...graphEdges].join('\n');
 }
 
 function buildMarkdown(mermaid) {

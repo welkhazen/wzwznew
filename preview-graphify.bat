@@ -10,9 +10,9 @@ echo [2/3] Generating callflow html...
 node scripts\graphify.mjs export callflow-html .
 if errorlevel 1 goto :fail
 
-echo [3/3] Starting local server on http://localhost:8767 ...
-start "" http://localhost:8767/graphify-out/graph.html
-python -m http.server 8767
+echo [3/3] Starting local server on http://127.0.0.1:4173 ...
+start "" http://127.0.0.1:4173/docs/callflow.html
+python -m http.server 4173 --bind 127.0.0.1
 exit /b 0
 
 :fail
