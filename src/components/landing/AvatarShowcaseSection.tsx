@@ -34,6 +34,7 @@ const REVEAL_AVATARS: readonly AvatarCatalogItem[] = [
   { id: "reveal-6", level: 16, name: "Crimson Muse", price: "0", imageSrc: "/avatars/6.webp", bg: "#2a0b0b", figure: "#f97316", ring: "#f97316", glow: "#f9731680", isActive: true, rarity: "common" },
   { id: "reveal-7", level: 17, name: "Solar Flame", price: "0", imageSrc: "/avatars/7.webp", bg: "#241005", figure: "#facc15", ring: "#facc15", glow: "#facc1590", isActive: true, rarity: "common" },
   { id: "reveal-8", level: 18, name: "Pink Circuit", price: "0", imageSrc: "/avatars/8.webp", bg: "#2a0b1c", figure: "#fb7185", ring: "#fb7185", glow: "#fb718580", isActive: true, rarity: "common" },
+  { id: "reveal-9", level: 19, name: "Golden Muse", price: "0", imageSrc: "/avatars/9.png", bg: "#201604", figure: "#facc15", ring: "#facc15", glow: "#facc1590", isActive: true, rarity: "common" },
 ];
 const LANDING_AVATARS: readonly AvatarCatalogItem[] = [...CHOOSER_AVATARS, ...REVEAL_AVATARS];
 
@@ -104,6 +105,8 @@ export function AvatarShowcaseSection() {
       case "reveal-5": // Horned Iron
       case "reveal-7": // Solar Flame
         return { transform: "scale(1.45)" };
+      case "reveal-9": // Golden Muse
+        return { transform: "scale(1.35)" };
       case "reveal-8": // Pink Circuit
         return { transform: "scale(1.05)" };
       default: // reveal-1 (Silver Void) and reveal-6 (Crimson Muse) already fill
@@ -438,7 +441,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
                 </p>
                 {visibleExtendedAvatars.length > 0 ? (
                   <>
-                    <div className="grid grid-cols-4 place-items-start justify-items-center gap-x-3 gap-y-4 sm:gap-x-5 sm:gap-y-5">
+                    <div className="grid grid-cols-3 place-items-start justify-items-center gap-x-3 gap-y-4 sm:grid-cols-4 sm:gap-x-5 sm:gap-y-5">
                       {visibleExtendedAvatars.map(({ avatar, themeIndex }) => (
                         <button
                           key={avatar.id ?? themeIndex}
