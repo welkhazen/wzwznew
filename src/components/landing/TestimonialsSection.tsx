@@ -1,8 +1,18 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Marquee } from "@/components/ui/3d-testimonails";
+import { motion } from "framer-motion";
+import { useRef } from "react";
 
-const testimonials = [
+type Testimonial = {
+  name: string;
+  username: string;
+  body: string;
+  img: string;
+  country: string;
+};
+
+const testimonials: Testimonial[] = [
   {
     name: "Ava Green",
     username: "@ava",
@@ -68,7 +78,7 @@ const testimonials = [
   },
 ];
 
-function TestimonialCard({ img, name, username, body, country }: (typeof testimonials)[number]) {
+function TestimonialCard({ img, name, username, body, country }: Testimonial) {
   return (
     <Card className="w-50">
       <CardContent>
@@ -91,6 +101,8 @@ function TestimonialCard({ img, name, username, body, country }: (typeof testimo
 }
 
 export function TestimonialsSection() {
+  const dragConstraintsRef = useRef<HTMLDivElement | null>(null);
+
   return (
     <section className="landing-section relative px-4 py-14 sm:px-6 sm:py-20">
       <div className="relative w-full overflow-hidden rounded-2xl border border-raw-border/40 bg-raw-surface/20 px-6 py-10 sm:px-10 sm:py-14">
@@ -98,12 +110,20 @@ export function TestimonialsSection() {
           From the community
         </p>
 
-        <div className="relative mx-auto flex h-96 w-full max-w-[800px] flex-row items-center justify-center overflow-hidden gap-1.5 rounded-lg border border-border [perspective:300px]">
-          <div
-            className="flex flex-row items-center gap-4"
+        <div
+          ref={dragConstraintsRef}
+          className="relative mx-auto h-[350px] w-[600px] max-w-full overflow-hidden rounded-[1.25rem] border border-raw-border/45 bg-raw-black/45 [perspective:300px]"
+        >
+          <div className="absolute inset-0 pointer-events-none border border-white/5 rounded-[1.25rem]" />
+          <motion.div
+            drag
+            dragDirectionLock
+            dragMomentum={false}
+            dragElastic={0.08}
+            dragConstraints={dragConstraintsRef}
+            className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 cursor-grab flex-row items-center gap-4 touch-none active:cursor-grabbing"
             style={{
-              transform:
-                "translateX(-100px) translateY(0px) translateZ(-100px) rotateX(20deg) rotateY(-10deg) rotateZ(20deg)",
+              transform: "translateZ(-100px) rotateX(20deg) rotateY(-10deg) rotateZ(20deg)",
             }}
           >
             <Marquee vertical pauseOnHover repeat={3} className="[--duration:40s]">
@@ -130,7 +150,7 @@ export function TestimonialsSection() {
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-background" />
             <div className="pointer-events-none absolute inset-y-0 left-0 w-1/4 bg-gradient-to-r from-background" />
             <div className="pointer-events-none absolute inset-y-0 right-0 w-1/4 bg-gradient-to-l from-background" />
-          </div>
+          </motion.div>
         </div>
       </div>
     </section>
