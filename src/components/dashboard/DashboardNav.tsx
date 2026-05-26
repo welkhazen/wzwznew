@@ -48,6 +48,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
 import { ChevronDown } from "lucide-react";
+import { spendTokens } from "@/utils/supabasePolls";
 
 export type DashboardTab = "home" | "polls" | "challenges" | "daily-spin" | "communities" | "profile" | "wallet" | "inventory";
 
@@ -71,6 +72,10 @@ const ISSUE_TYPE_OPTIONS = ["Harmful content", "Bug or broken screen", "Account 
 const MAX_SCREENSHOT_SIZE = 2 * 1024 * 1024;
 const DELIVERED_NOTIFICATIONS_PREFIX = "raw.delivered-notifications";
 const SEEN_NOTIFICATIONS_PREFIX = "raw.seen-notifications";
+const TOKEN_BALANCE_UPDATED_EVENT = "raw:token-balance-updated";
+const TOKEN_BALANCE_STORAGE_KEY = "raw.polls.token-balance";
+const ACCENT_UNLOCK_COST = 10;
+const LOCKED_ACCENT_IDS: AccentPresetId[] = ["cyan", "emerald", "lime"];
 
 type DashboardNotification = {
   id: string;
@@ -82,6 +87,8 @@ type DashboardNotification = {
   createdAt: string;
   likeCount?: number;
 };
+
+type NavIdentity = Pick<UserAliasRow, "alias" | "avatar_level" | "is_public">;
 
 function deliveredNotificationsKey(userId: string) {
   return `${DELIVERED_NOTIFICATIONS_PREFIX}.${userId}`;
@@ -111,6 +118,17 @@ function writeSeenNotificationIds(userId: string, ids: string[]): void {
   window.localStorage.setItem(seenNotificationsKey(userId), JSON.stringify(Array.from(new Set(ids))));
 }
 
+function readStoredTokenBalance(userId: string): number {
+  if (typeof window === "undefined") return 0;
+  try {
+    const raw = window.localStorage.getItem(`${TOKEN_BALANCE_STORAGE_KEY}.${userId}`);
+    const parsed = raw !== null ? Number(raw) : 0;
+    return Number.isFinite(parsed) ? parsed : 0;
+  } catch {
+    return 0;
+  }
+}
+
 export function DashboardNav({ userId, username, avatarLevel, showAdminLink = false, onAddTestXP, onProfileClick, onBillingClick, onLogout, communityTitle, onBack, communities: propCommunities, xp = 0, level = 1 }: DashboardNavProps) {
   const { mode, accent, accentPresets, setMode, setAccent } = useTheme();
   const [hoveredMode, setHoveredMode] = useState<ThemeMode | null>(null);
@@ -121,11 +139,31 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
   const [reportOpen, setReportOpen] = useState(false);
   const [blockedUsersOpen, setBlockedUsersOpen] = useState(false);
   const [blockedSenderKeys, setBlockedSenderKeys] = useState<string[]>(() => readBlockedCommunitySenders(userId));
+  const [identityPickerOpen, setIdentityPickerOpen] = useState(false);
   const [issueType, setIssueType] = useState(ISSUE_TYPE_OPTIONS[0]);
   const [issueDetails, setIssueDetails] = useState("");
   const [screenshotName, setScreenshotName] = useState("");
   const [screenshotDataUrl, setScreenshotDataUrl] = useState("");
+  const [unlockingAccentId, setUnlockingAccentId] = useState<AccentPresetId | null>(null);
+  const [tokenBalanceForUnlocks, setTokenBalanceForUnlocks] = useState<number>(() => readStoredTokenBalance(userId));
   const notifRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setTokenBalanceForUnlocks(readStoredTokenBalance(userId));
+  }, [userId]);
+
+  useEffect(() => {
+    const storageKey = `${TOKEN_BALANCE_STORAGE_KEY}.${userId}`;
+    const onTokenBalanceUpdated = (event: Event) => {
+      const detail = (event as CustomEvent<{ storageKey?: string; balance?: number }>).detail;
+      if (detail?.storageKey !== storageKey) return;
+      const nextBalance = Number(detail.balance);
+      if (!Number.isFinite(nextBalance)) return;
+      setTokenBalanceForUnlocks(nextBalance);
+    };
+    window.addEventListener(TOKEN_BALANCE_UPDATED_EVENT, onTokenBalanceUpdated);
+    return () => window.removeEventListener(TOKEN_BALANCE_UPDATED_EVENT, onTokenBalanceUpdated);
+  }, [userId]);
 
   const notifications = useMemo<DashboardNotification[]>(() => {
     const communities = propCommunities ?? readCommunityChats();
@@ -203,6 +241,33 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
     setBlockedSenderKeys(next);
     writeBlockedCommunitySenders(userId, next);
     window.dispatchEvent(new StorageEvent("storage", { key: "raw.community.blocked-senders.v1" }));
+  };
+
+  const handleAccentClick = async (presetId: AccentPresetId) => {
+    if (!LOCKED_ACCENT_IDS.includes(presetId)) {
+      setAccent(presetId);
+      setHoveredAccent(null);
+      return;
+    }
+    if (unlockingAccentId) return;
+    if (tokenBalanceForUnlocks < ACCENT_UNLOCK_COST) {
+      toast({ title: "Not enough tokens", description: `You need ${ACCENT_UNLOCK_COST} tokens to unlock this theme.` });
+      return;
+    }
+    setUnlockingAccentId(presetId);
+    try {
+      const balance = await spendTokens(userId, ACCENT_UNLOCK_COST);
+      const storageKey = `${TOKEN_BALANCE_STORAGE_KEY}.${userId}`;
+      window.localStorage.setItem(storageKey, String(balance));
+      window.dispatchEvent(new CustomEvent(TOKEN_BALANCE_UPDATED_EVENT, { detail: { storageKey, balance } }));
+      setAccent(presetId);
+      setHoveredAccent(null);
+      toast({ title: "Theme unlocked", description: `${ACCENT_UNLOCK_COST} tokens spent.` });
+    } catch {
+      toast({ title: "Unlock failed", description: "Please try again." });
+    } finally {
+      setUnlockingAccentId(null);
+    }
   };
 
   useEffect(() => {
@@ -501,7 +566,7 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
                 className="flex items-center transition-opacity hover:opacity-80"
                 aria-label="Open profile menu"
               >
-                <AvatarFigure avatarIndex={avatarLevel} size="sm" selected />
+                <AvatarFigure avatarIndex={selectedIdentity.avatar_level} size="sm" selected />
               </button>
             </DropdownMenuTrigger>
 
@@ -525,12 +590,63 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
                     : "border-raw-gold/20 bg-raw-gold/[0.08] hover:bg-raw-gold/[0.12]",
                 )}
               >
-                <AvatarFigure avatarIndex={avatarLevel} size="sm" selected />
+                <AvatarFigure avatarIndex={selectedIdentity.avatar_level} size="sm" selected />
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-raw-text">View Profile</p>
-                  <p className={cn("truncate text-xs", isEffectiveLight ? "text-slate-600" : "text-raw-silver/50")}>@{username}</p>
+                  <p className={cn("truncate text-xs", isEffectiveLight ? "text-slate-600" : "text-raw-silver/50")}>@{selectedIdentity.alias}</p>
                 </div>
               </button>
+
+              <div className={cn("mx-1 mb-1 rounded-xl border p-2", isEffectiveLight ? "border-slate-200 bg-slate-50" : "border-raw-border/25 bg-raw-black/25")}>
+                <button
+                  type="button"
+                  onClick={() => setIdentityPickerOpen((open) => !open)}
+                  className="flex w-full items-center gap-2 rounded-lg border border-raw-gold/35 bg-raw-gold/10 px-2 py-1.5 text-left text-raw-gold transition-colors hover:bg-raw-gold/15"
+                  aria-expanded={identityPickerOpen}
+                >
+                  <AvatarFigure avatarIndex={selectedIdentity.avatar_level} size="sm" selected className="scale-75" />
+                  <span className="min-w-0 flex-1">
+                    <span className={cn("block text-[10px] uppercase tracking-[0.16em]", isEffectiveLight ? "text-slate-500" : "text-raw-silver/45")}>
+                      Talk as
+                    </span>
+                    <span className="block truncate text-xs font-semibold">@{selectedIdentity.alias}</span>
+                  </span>
+                  <span className="text-[9px] uppercase tracking-[0.14em] opacity-70">
+                    {selectedIdentity.is_public ? "Public" : "Private"}
+                  </span>
+                  <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", identityPickerOpen ? "rotate-180" : "")} />
+                </button>
+
+                {identityPickerOpen && (
+                  <div className="mt-1.5 space-y-1.5">
+                    {identities
+                      .filter((identity) => identity.alias !== selectedIdentity.alias)
+                      .map((identity) => (
+                        <button
+                          key={`${identity.alias}-${identity.avatar_level}`}
+                          type="button"
+                          onClick={() => {
+                            setSelectedIdentityAlias(identity.alias);
+                            writeSelectedIdentityAlias(userId, identity.alias);
+                            setIdentityPickerOpen(false);
+                          }}
+                          className={cn(
+                            "flex w-full items-center gap-2 rounded-lg border px-2 py-1.5 text-left transition-colors",
+                            isEffectiveLight
+                              ? "border-slate-200 bg-white/70 text-slate-600 hover:border-raw-gold/30 hover:text-raw-gold"
+                              : "border-raw-border/20 bg-raw-black/20 text-raw-silver/60 hover:border-raw-gold/30 hover:text-raw-gold"
+                          )}
+                        >
+                          <AvatarFigure avatarIndex={identity.avatar_level} size="sm" selected={false} className="scale-75" />
+                          <span className="min-w-0 flex-1 truncate text-xs font-semibold">@{identity.alias}</span>
+                          <span className="text-[9px] uppercase tracking-[0.14em] opacity-70">
+                            {identity.is_public ? "Public" : "Private"}
+                          </span>
+                        </button>
+                      ))}
+                  </div>
+                )}
+              </div>
 
               <div className={cn("mx-1 mb-1 rounded-lg border px-2 py-1.5 sm:hidden", isEffectiveLight ? "border-slate-200 bg-slate-50" : "border-raw-border/25 bg-raw-black/30")}>
                 <div className="mb-1 flex items-center justify-between gap-2">
@@ -679,18 +795,28 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
                     <div className="grid grid-cols-5 gap-1 sm:gap-2">
                       {accentPresets.map((preset) => {
                         const selected = preset.id === effectiveAccent;
+                        const locked = LOCKED_ACCENT_IDS.includes(preset.id);
+                        const unlocking = unlockingAccentId === preset.id;
                         return (
                           <button
                             key={preset.id}
-                            onClick={() => { setAccent(preset.id); setHoveredAccent(null); }}
+                            onClick={() => { void handleAccentClick(preset.id); }}
                             className={cn(
-                              "relative h-5 rounded-md border transition-all sm:h-10 sm:rounded-lg",
+                              "relative h-5 overflow-hidden rounded-md border transition-all sm:h-10 sm:rounded-lg",
                               selected ? "border-raw-text shadow-[0_0_0_1px_rgb(var(--raw-text)/0.3)]" : "border-raw-border/35 hover:border-raw-silver/35",
                             )}
                             style={{ backgroundColor: `rgb(${preset.rgb})` }}
-                            aria-label={`Use ${preset.label} accent`}
-                            title={preset.label}
+                            aria-label={locked ? `Unlock ${preset.label} for ${ACCENT_UNLOCK_COST} tokens` : `Use ${preset.label} accent`}
+                            title={locked ? `${preset.label} • ${ACCENT_UNLOCK_COST} tokens` : preset.label}
                           >
+                            {locked && (
+                              <>
+                                <span className="absolute inset-0 bg-black/30 backdrop-blur-[2px]" />
+                                <span className="absolute inset-x-0 bottom-0 z-10 border-t border-white/20 bg-black/55 px-1 py-[1px] text-[8px] uppercase tracking-[0.14em] text-white/90 sm:text-[9px]">
+                                  {unlocking ? "Unlocking..." : `Unlock • ${ACCENT_UNLOCK_COST}`}
+                                </span>
+                              </>
+                            )}
                             {selected ? <Check className="mx-auto h-3.5 w-3.5 text-raw-ink" /> : null}
                           </button>
                         );

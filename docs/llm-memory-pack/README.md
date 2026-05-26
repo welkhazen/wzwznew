@@ -11,6 +11,7 @@ Use this folder to export the highest-signal project memory from Codex/ChatGPT a
 - `04_timeline.md`: Date-based milestones.
 - `05_glossary.md`: Terms and abbreviations.
 - `BOOTSTRAP_PROMPT.md`: Copy/paste prompt for the destination LLM.
+- `CLAUDE_EXPORT_PREVIEW.md`: Ready-to-paste filled example for Claude Code intake.
 
 ## Suggested flow (better than raw transcript dump)
 
