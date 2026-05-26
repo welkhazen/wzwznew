@@ -72,6 +72,7 @@ import {
 } from "@/lib/communityConstants";
 import { buildDefaultCommunities } from "@/lib/communityChat.seed";
 import { sendCommunityPushNotification } from "@/lib/communityPushNotifications";
+import { IDENTITY_SELECTION_EVENT, readSelectedIdentityAlias, writeSelectedIdentityAlias } from "@/lib/identitySelection";
 import type { CommunityChatMessageRecord, PersistedCommunityRecord } from "@/lib/communityChat.types";
 import {
   loadCommunityAccess,
@@ -345,7 +346,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
   const [chatIdentities, setChatIdentities] = useState<ChatIdentity[]>([
     { alias: user.username, avatar_level: avatarLevel, is_public: true },
   ]);
-  const [selectedChatIdentityIndex, setSelectedChatIdentityIndex] = useState(0);
+  const [selectedChatIdentityAlias, setSelectedChatIdentityAlias] = useState(() => readSelectedIdentityAlias(user.id) ?? user.username);
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [mentionIndex, setMentionIndex] = useState(0);
   const [expandedDescs, setExpandedDescs] = useState<Set<string>>(new Set());
@@ -484,19 +485,23 @@ const COMMUNITY_LOGOS: Record<string, string> = {
           if (cancelled) return;
 
           const privateAliases = aliases.filter((alias) => alias.alias.trim().toLowerCase() !== user.username.trim().toLowerCase());
-          setChatIdentities([
+          const nextIdentities = [
             { alias: user.username, avatar_level: avatarLevel, is_public: true },
             ...privateAliases.map((alias) => ({
               alias: alias.alias,
               avatar_level: alias.avatar_level || avatarLevel,
               is_public: false,
             })),
-          ]);
-          setSelectedChatIdentityIndex(0);
+          ];
+          setChatIdentities(nextIdentities);
+          const savedAlias = readSelectedIdentityAlias(user.id);
+          setSelectedChatIdentityAlias(
+            savedAlias && nextIdentities.some((identity) => identity.alias === savedAlias) ? savedAlias : user.username
+          );
         } catch {
           if (!cancelled) {
             setChatIdentities([{ alias: user.username, avatar_level: avatarLevel, is_public: true }]);
-            setSelectedChatIdentityIndex(0);
+            setSelectedChatIdentityAlias(user.username);
           }
         }
       }
@@ -506,15 +511,21 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         const updatedUserId = (event as CustomEvent<{ userId?: string }>).detail?.userId;
         if (!updatedUserId || updatedUserId === user.id) void loadChatIdentities();
       };
+      const syncSelectedIdentity = (event: Event) => {
+        const detail = (event as CustomEvent<{ userId?: string; alias?: string }>).detail;
+        if (detail?.userId === user.id && detail.alias) setSelectedChatIdentityAlias(detail.alias);
+      };
       window.addEventListener("raw:user-aliases-updated", reloadAliases);
+      window.addEventListener(IDENTITY_SELECTION_EVENT, syncSelectedIdentity);
 
       return () => {
         cancelled = true;
         window.removeEventListener("raw:user-aliases-updated", reloadAliases);
+        window.removeEventListener(IDENTITY_SELECTION_EVENT, syncSelectedIdentity);
       };
     }, [avatarLevel, user.id, user.username]);
 
-    const selectedChatIdentity = chatIdentities[selectedChatIdentityIndex] ?? chatIdentities[0] ?? {
+    const selectedChatIdentity = chatIdentities.find((identity) => identity.alias === selectedChatIdentityAlias) ?? chatIdentities[0] ?? {
       alias: user.username,
       avatar_level: avatarLevel,
       is_public: true,
@@ -1980,12 +1991,15 @@ const COMMUNITY_LOGOS: Record<string, string> = {
               })()}
               <div className="mb-2 flex items-center gap-2 overflow-x-auto pb-1">
                 {chatIdentities.map((identity, index) => {
-                  const selected = index === selectedChatIdentityIndex;
+                  const selected = identity.alias === selectedChatIdentity.alias;
                   return (
                     <button
                       key={`${identity.alias}-${identity.avatar_level}`}
                       type="button"
-                      onClick={() => setSelectedChatIdentityIndex(index)}
+                      onClick={() => {
+                        setSelectedChatIdentityAlias(identity.alias);
+                        writeSelectedIdentityAlias(user.id, identity.alias);
+                      }}
                       className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-2.5 py-1.5 text-xs transition-all ${
                         selected
                           ? "border-raw-gold/45 bg-raw-gold/10 text-raw-gold"
