@@ -5,6 +5,7 @@ export type DbCommunityMessage = {
   community_id: string;
   sender_id: string;
   sender_name: string;
+  sender_avatar_level: number | null;
   text: string;
   created_at: string;
   pinned: boolean;
@@ -22,6 +23,7 @@ export function mapCommunityMessage(row: DbCommunityMessage): CommunityChatMessa
     communityId: row.community_id,
     senderId: row.sender_id,
     senderName: row.sender_name,
+    senderAvatarLevel: row.sender_avatar_level ?? undefined,
     text: row.text,
     createdAt: row.created_at,
     pinned: row.pinned,

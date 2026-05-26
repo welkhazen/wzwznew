@@ -1,15 +1,18 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Calendar,
   Flame,
   KeyRound,
   MessageCircle,
+  Plus,
   Target,
   Trash2,
   TrendingUp,
+  UserRound,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { changePassword, deleteAccount } from "@/backend/supabase/controllers/authController";
+import { fetchUserAliases, saveUserAliases } from "@/backend/supabase/controllers/userAliasController";
 
 import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { LevelProgressBanner } from "@/components/dashboard/LevelProgressBanner";
@@ -60,6 +63,141 @@ export function DashboardProfile({
   const [delOpen, setDelOpen] = useState(false);
   const [delPw, setDelPw] = useState("");
   const [delLoading, setDelLoading] = useState(false);
+
+  const [identityOpen, setIdentityOpen] = useState(false);
+  const [aliasNames, setAliasNames] = useState<string[]>([]);
+  const [aliasAvatarLevels, setAliasAvatarLevels] = useState<number[]>([]);
+  const [aliasDraft, setAliasDraft] = useState("");
+  const [aliasLoading, setAliasLoading] = useState(false);
+  const [aliasSaving, setAliasSaving] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadAliases() {
+      setAliasLoading(true);
+      try {
+        const rows = await fetchUserAliases(userId);
+        if (cancelled) return;
+        const privateRows = rows.filter((row) => row.alias.trim().toLowerCase() !== username.trim().toLowerCase());
+        setAliasNames(privateRows.map((row) => row.alias));
+        setAliasAvatarLevels(privateRows.map((row) => row.avatar_level || avatarLevel));
+      } catch (error) {
+        if (!cancelled) {
+          toast({
+            title: "Could not load names",
+            description: error instanceof Error ? error.message : "Please try again.",
+          });
+        }
+      } finally {
+        if (!cancelled) setAliasLoading(false);
+      }
+    }
+
+    void loadAliases();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [avatarLevel, toast, userId, username]);
+
+  const cleanAliasNames = aliasNames.map((name) => name.trim()).filter(Boolean);
+  const normalizedAliasNames = cleanAliasNames.map((name) => name.toLowerCase());
+  const normalizedUsername = username.trim().toLowerCase();
+  const aliasNamesAreUnique = new Set(normalizedAliasNames).size === normalizedAliasNames.length;
+  const aliasNamesDoNotUsePublicName = normalizedAliasNames.every((name) => name !== normalizedUsername);
+  const aliasAvatarsAreUnique =
+    !aliasAvatarLevels.includes(avatarLevel) && new Set(aliasAvatarLevels).size === aliasAvatarLevels.length;
+  const aliasesAreValid =
+    cleanAliasNames.every((name) => name.length >= 3 && name.length <= 32) &&
+    aliasNamesAreUnique &&
+    aliasNamesDoNotUsePublicName &&
+    aliasAvatarsAreUnique;
+
+  function updateAlias(index: number, value: string) {
+    setAliasNames((names) => names.map((name, nameIndex) => (nameIndex === index ? value : name)));
+  }
+
+  function updateAliasAvatar(index: number, level: number) {
+    setAliasAvatarLevels((levels) => levels.map((currentLevel, levelIndex) => (levelIndex === index ? level : currentLevel)));
+  }
+
+  function removeAlias(index: number) {
+    setAliasNames((names) => names.filter((_, nameIndex) => nameIndex !== index));
+    setAliasAvatarLevels((levels) => levels.filter((_, levelIndex) => levelIndex !== index));
+  }
+
+  function addPrivateAlias() {
+    const nextAlias = aliasDraft.trim();
+    if (nextAlias.length < 3 || nextAlias.length > 32) {
+      toast({ title: "Name needs 3-32 characters", description: "Try a short name people can recognize." });
+      return;
+    }
+    if (aliasNames.some((name) => name.trim().toLowerCase() === nextAlias.toLowerCase())) {
+      toast({ title: "Name already exists", description: "Use a different private name." });
+      return;
+    }
+    if (nextAlias.toLowerCase() === normalizedUsername) {
+      toast({ title: "That is your public account", description: "Private identities need a different name." });
+      return;
+    }
+
+    setAliasNames((names) => [...names, nextAlias]);
+    const usedLevels = new Set([avatarLevel, ...aliasAvatarLevels]);
+    const nextLevel = Array.from({ length: MAX_LEVEL }, (_, index) => index + 1).find((level) => !usedLevels.has(level)) ?? avatarLevel;
+    setAliasAvatarLevels((levels) => [...levels, nextLevel]);
+    setAliasDraft("");
+  }
+
+  async function handleSaveAliases() {
+    if (!aliasesAreValid) {
+      toast({ title: "Check your names", description: "Each saved name needs 3-32 characters." });
+      return;
+    }
+    if (!aliasNamesAreUnique) {
+      toast({ title: "Name already exists", description: "Every identity name must be different." });
+      return;
+    }
+    if (!aliasNamesDoNotUsePublicName) {
+      toast({ title: "Public name is fixed", description: "Private identities cannot use your main account name." });
+      return;
+    }
+    if (!aliasAvatarsAreUnique) {
+      toast({ title: "Choose different avatars", description: "Your public and private identities cannot share avatars." });
+      return;
+    }
+
+    const seen = new Set<string>();
+    const deduped = cleanAliasNames.filter((name) => {
+      const key = name.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    setAliasSaving(true);
+    try {
+      const rows = await saveUserAliases(
+        userId,
+        deduped.map((alias, index) => ({
+          alias,
+          avatarLevel: aliasAvatarLevels[index] ?? avatarLevel,
+          isPublic: false,
+        }))
+      );
+
+      setAliasNames(rows.map((row) => row.alias));
+      setAliasAvatarLevels(rows.map((row) => row.avatar_level || avatarLevel));
+      window.dispatchEvent(new CustomEvent("raw:user-aliases-updated", { detail: { userId } }));
+      toast({ title: "Names saved", description: "Your public and private names are updated." });
+    } catch (error) {
+      toast({
+        title: "Could not save names",
+        description: error instanceof Error ? error.message : "Please try again.",
+      });
+    } finally {
+      setAliasSaving(false);
+    }
+  }
 
   async function handleChangePassword() {
     if (newPw.length < 6) {
@@ -115,6 +253,7 @@ export function DashboardProfile({
         <p className="mt-3 font-display text-lg tracking-wide text-raw-text">
           {username}
         </p>
+        <p className="text-[10px] uppercase tracking-[0.22em] text-raw-silver/30">Public name</p>
         <p className="text-xs text-raw-gold/60">Level {displayIndex}</p>
         <p className="text-[10px] text-raw-silver/30">{theme.name}</p>
 
@@ -181,6 +320,132 @@ export function DashboardProfile({
 
       {/* Account Settings */}
       <div className="space-y-2">
+        <div className="overflow-hidden rounded-2xl border border-raw-border/30 bg-raw-surface/30">
+          <button
+            type="button"
+            onClick={() => setIdentityOpen((v) => !v)}
+            className="flex w-full items-center justify-between px-4 py-3.5 text-left"
+          >
+            <div className="flex items-center gap-2.5">
+              <UserRound className="h-4 w-4 text-raw-gold/50" />
+              <span className="text-sm font-medium text-raw-text">Names & Privacy</span>
+            </div>
+            <span className="text-xs text-raw-silver/30">{identityOpen ? "Close" : "Manage"}</span>
+          </button>
+
+          {identityOpen && (
+            <div className="space-y-3 border-t border-raw-border/20 px-4 pb-4 pt-3">
+              <p className="text-xs leading-relaxed text-raw-silver/45">
+                Your public account is fixed. Add private identities under it and pick which one to talk as in chat.
+              </p>
+
+              <div className="rounded-xl border border-raw-gold/20 bg-raw-gold/5 p-2.5">
+                <div className="flex items-center gap-2">
+                  <AvatarFigure avatarIndex={avatarLevel} size="sm" selected />
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-raw-text">@{username}</p>
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-raw-gold/70">Public account</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                {aliasNames.map((name, index) => {
+                  return (
+                    <div key={`${index}-${name}`} className="rounded-xl border border-raw-border/25 bg-raw-black/25 p-2.5">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={name}
+                          onChange={(event) => updateAlias(index, event.target.value)}
+                          placeholder="Private name"
+                          maxLength={32}
+                          className="min-w-0 flex-1 rounded-lg border border-raw-border/25 bg-raw-black/40 px-3 py-2 text-sm text-raw-text placeholder:text-raw-silver/25 focus:border-raw-gold/40 focus:outline-none"
+                        />
+                        <span className="rounded-lg border border-raw-border/25 px-2.5 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-raw-silver/45">
+                          Private
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => removeAlias(index)}
+                          className="flex h-9 w-9 items-center justify-center rounded-lg border border-red-500/20 text-red-400/70"
+                          aria-label="Remove private name"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                      <div className="mt-2 flex items-center gap-1.5 overflow-x-auto pb-1">
+                        {ownedLevels.map((level) => {
+                          const isUsedByPublic = level === avatarLevel;
+                          const isUsedByOther = isUsedByPublic || aliasAvatarLevels.some((usedLevel, usedIndex) => usedIndex !== index && usedLevel === level);
+                          const isSelected = aliasAvatarLevels[index] === level;
+                          return (
+                            <button
+                              key={level}
+                              type="button"
+                              onClick={() => updateAliasAvatar(index, level)}
+                              disabled={isUsedByOther}
+                              className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/40 disabled:opacity-25"
+                              aria-label={`Use avatar ${level} for ${name || "identity"}`}
+                              aria-pressed={isSelected}
+                              title={isUsedByPublic ? "Used by public account" : isUsedByOther ? "Used by another private identity" : `Use avatar ${level}`}
+                            >
+                              <AvatarFigure
+                                avatarIndex={level}
+                                size="sm"
+                                selected={isSelected}
+                                className="scale-75"
+                              />
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {!aliasNamesAreUnique && (
+                <p className="text-xs text-red-300/80">Each identity needs a different name.</p>
+              )}
+              {!aliasNamesDoNotUsePublicName && (
+                <p className="text-xs text-red-300/80">Private identities cannot use your public account name.</p>
+              )}
+              {!aliasAvatarsAreUnique && (
+                <p className="text-xs text-red-300/80">Public and private identities need different avatars.</p>
+              )}
+
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <input
+                  type="text"
+                  value={aliasDraft}
+                  onChange={(event) => setAliasDraft(event.target.value)}
+                  placeholder="Add a new private name"
+                  maxLength={32}
+                  className="min-w-0 flex-1 rounded-xl border border-raw-border/30 bg-raw-black/40 px-3 py-2.5 text-sm text-raw-text placeholder:text-raw-silver/25 focus:border-raw-gold/40 focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={addPrivateAlias}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-raw-gold/25 px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.18em] text-raw-gold"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Add private
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleSaveAliases}
+                disabled={aliasLoading || aliasSaving || !aliasesAreValid}
+                className="w-full rounded-xl bg-raw-gold px-4 py-2.5 text-sm font-semibold text-raw-ink disabled:opacity-40"
+              >
+                {aliasSaving ? "Saving..." : aliasLoading ? "Loading..." : "Save Names"}
+              </button>
+            </div>
+          )}
+        </div>
+
         <div className="rounded-2xl border border-raw-border/30 bg-raw-surface/30 overflow-hidden">
           <button
             type="button"
