@@ -26,6 +26,7 @@ interface InsightPreview {
   summary: string;
   insight: string;
   traits: Trait[];
+  previewVariant: "radar" | "summary" | "pie" | "bars" | "quadrants" | "timeline";
 }
 
 const insights: InsightPreview[] = [
@@ -49,6 +50,7 @@ const insights: InsightPreview[] = [
       { label: "Thinking", value: 56 },
       { label: "Judging", value: 64 },
     ],
+    previewVariant: "quadrants",
   },
   {
     id: "big-five-profile",
@@ -71,6 +73,7 @@ const insights: InsightPreview[] = [
       { label: "Agreeableness", value: 71 },
       { label: "Emotional Stability", value: 66 },
     ],
+    previewVariant: "radar",
   },
   {
     id: "emotional-intelligence",
@@ -92,6 +95,7 @@ const insights: InsightPreview[] = [
       { label: "Empathy", value: 83 },
       { label: "Social Skill", value: 72 },
     ],
+    previewVariant: "bars",
   },
   {
     id: "shadow-self",
@@ -113,6 +117,7 @@ const insights: InsightPreview[] = [
       { label: "Defensiveness", value: 54 },
       { label: "Repair Capacity", value: 77 },
     ],
+    previewVariant: "summary",
   },
   {
     id: "attachment-style",
@@ -134,6 +139,7 @@ const insights: InsightPreview[] = [
       { label: "Avoidant", value: 78 },
       { label: "Disorganized", value: 12 },
     ],
+    previewVariant: "timeline",
   },
   {
     id: "cognitive-bias-map",
@@ -155,8 +161,85 @@ const insights: InsightPreview[] = [
       { label: "Availability", value: 51 },
       { label: "Outcome Bias", value: 45 },
     ],
+    previewVariant: "pie",
   },
 ];
+
+
+function LockedPreview({ insight }: { insight: InsightPreview }) {
+  const accent = { color: insight.accentColor };
+
+  return (
+    <div className="mt-5 rounded-xl border border-white/10 bg-black/30 p-3 blur-[1px]">
+      {insight.previewVariant === "radar" && (
+        <div className="space-y-2">
+          <div className="h-24 rounded-lg border border-white/10 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.1),transparent_70%)]" />
+          {insight.traits.slice(0, 3).map((trait) => (
+            <div key={trait.label} className="flex items-center justify-between text-[10px]">
+              <span className="text-white/80">{trait.label}</span>
+              <span style={accent}>{trait.value}%</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {insight.previewVariant === "summary" && (
+        <div className="space-y-2 text-[10px]">
+          <p className="rounded border border-white/10 bg-white/5 px-2 py-1 text-white/80">AI Analysis Summary</p>
+          <p className="rounded border border-emerald-400/30 bg-emerald-500/10 px-2 py-1 text-emerald-200">Top Strengths & Advantages</p>
+          <p className="rounded border border-amber-400/30 bg-amber-500/10 px-2 py-1 text-amber-100">Growth Opportunities</p>
+        </div>
+      )}
+
+      {insight.previewVariant === "pie" && (
+        <div className="flex items-center gap-3">
+          <div className="h-20 w-20 rounded-full border border-white/20" style={{ background: `conic-gradient(${insight.accentColor} 0 38%, rgba(255,255,255,0.18) 38% 66%, rgba(255,255,255,0.08) 66% 100%)` }} />
+          <div className="space-y-1 text-[10px]">
+            {insight.traits.slice(0, 3).map((trait) => (
+              <p key={trait.label} className="text-white/75">{trait.label}: <span style={accent}>{trait.value}%</span></p>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {insight.previewVariant === "bars" && (
+        <div className="space-y-2">
+          {insight.traits.map((trait) => (
+            <div key={trait.label}>
+              <p className="mb-1 text-[10px] text-white/80">{trait.label}</p>
+              <div className="h-1.5 rounded-full bg-white/10">
+                <div className="h-full rounded-full" style={{ width: `${trait.value}%`, backgroundColor: insight.accentColor }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {insight.previewVariant === "quadrants" && (
+        <div className="grid grid-cols-2 gap-2 text-[10px]">
+          {insight.traits.map((trait) => (
+            <div key={trait.label} className="rounded border border-white/10 bg-white/5 p-2">
+              <p className="text-white/75">{trait.label}</p>
+              <p className="mt-1 font-semibold" style={accent}>{trait.value}%</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {insight.previewVariant === "timeline" && (
+        <div className="space-y-2">
+          {insight.traits.map((trait) => (
+            <div key={trait.label} className="flex items-center gap-2 text-[10px]">
+              <div className="h-2 w-2 rounded-full" style={{ backgroundColor: insight.accentColor }} />
+              <span className="text-white/80">{trait.label}</span>
+              <span className="ml-auto" style={accent}>{trait.value}%</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function DonutPreview({ traits, color }: { traits: Trait[]; color: string }) {
   const cx = 80;
@@ -286,19 +369,16 @@ export function PersonalityInsightsSection() {
               <button key={insight.id} type="button" onClick={() => setOpenInsight(insight)} className="w-full text-left">
                 <GlareCard className={`relative border ${insight.accentBorder} bg-raw-surface/30 p-6 transition-transform duration-200 hover:scale-[1.02] sm:p-7`}>
                   {!isLight && <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${insight.glowFrom} via-transparent to-transparent`} />}
-                  <div className="relative z-10 blur-[2px]">
+                  <div className="relative z-10">
                     <div className={`mb-4 inline-flex items-center gap-1.5 rounded-full border ${insight.accentBorder} ${insight.softSurface} px-3 py-1`}>
                       <Icon className={`h-3 w-3 ${insight.accentText}`} />
                       <span className={`text-[10px] font-medium uppercase tracking-wider ${insight.accentText}`}>{insight.badge}</span>
                     </div>
                     <h3 className={`font-display text-base tracking-wide ${insight.accentText}`}>{insight.name}</h3>
                     <p className="mt-3 text-xs leading-relaxed text-raw-silver/50">{insight.description}</p>
+                    <LockedPreview insight={insight} />
                   </div>
-                  <div className="absolute inset-0 z-20 flex items-center justify-center">
-                    <div className="rounded-full border border-white/20 bg-black/70 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/80">
-                      Locked · Preview Sample
-                    </div>
-                  </div>
+                  <div className="pointer-events-none absolute right-4 top-4 z-20 rounded-full border border-white/20 bg-black/60 px-3 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-white/85 backdrop-blur-sm">Locked · Sample</div>
                 </GlareCard>
               </button>
             );
