@@ -4,7 +4,15 @@ import { Marquee } from "@/components/ui/3d-testimonails";
 import { motion } from "framer-motion";
 import { useRef } from "react";
 
-const testimonials = [
+type Testimonial = {
+  name: string;
+  username: string;
+  body: string;
+  img: string;
+  country: string;
+};
+
+const testimonials: Testimonial[] = [
   {
     name: "Ava Green",
     username: "@ava",
@@ -70,7 +78,7 @@ const testimonials = [
   },
 ];
 
-function TestimonialCard({ img, name, username, body, country }: (typeof testimonials)[number]) {
+function TestimonialCard({ img, name, username, body, country }: Testimonial) {
   return (
     <Card className="w-50">
       <CardContent>
@@ -104,14 +112,16 @@ export function TestimonialsSection() {
 
         <div
           ref={dragConstraintsRef}
-          className="relative mx-auto h-[350px] w-full max-w-[600px] overflow-hidden rounded-[1.25rem] border border-raw-border/45 bg-raw-black/45 [perspective:300px]"
+          className="relative mx-auto h-[350px] w-[600px] max-w-full overflow-hidden rounded-[1.25rem] border border-raw-border/45 bg-raw-black/45 [perspective:300px]"
         >
+          <div className="absolute inset-0 pointer-events-none border border-white/5 rounded-[1.25rem]" />
           <motion.div
             drag
+            dragDirectionLock
             dragMomentum={false}
             dragElastic={0.08}
             dragConstraints={dragConstraintsRef}
-            className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 cursor-grab flex-row items-center gap-4 active:cursor-grabbing"
+            className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 cursor-grab flex-row items-center gap-4 touch-none active:cursor-grabbing"
             style={{
               transform: "translateZ(-100px) rotateX(20deg) rotateY(-10deg) rotateZ(20deg)",
             }}
