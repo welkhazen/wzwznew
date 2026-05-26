@@ -20,6 +20,10 @@ const root = path.resolve(process.cwd(), rootArg);
 const srcRoot = path.join(root, 'src');
 const graphMdFile = path.join(root, 'docs', 'codebase-graph.md');
 const callflowHtmlFile = path.join(root, 'docs', 'callflow.html');
+const graphOutDir = path.join(root, 'graphify-out');
+const graphOutHtmlFile = path.join(graphOutDir, 'graph.html');
+const graphOutJsonFile = path.join(graphOutDir, 'graph.json');
+const graphOutReportFile = path.join(graphOutDir, 'GRAPH_REPORT.md');
 
 const files = [];
 
@@ -98,6 +102,66 @@ function buildCallflowHtml(mermaid) {
 `;
 }
 
+function classifyNode(name) {
+  if (name === 'cn') return 'core-utility';
+  if (name === 'track' || name === 'useTrackSectionView') return 'analytics-core';
+  if (name === 'useTheme') return 'theme-core';
+  if (name.startsWith('src/')) return 'source';
+  return 'other';
+}
+
+function buildGraphJson(edges) {
+  const degree = new Map();
+  const nodes = new Set();
+  for (const edge of edges) {
+    const [from, to] = edge.split('-->');
+    nodes.add(from);
+    nodes.add(to);
+    degree.set(from, (degree.get(from) ?? 0) + 1);
+    degree.set(to, (degree.get(to) ?? 0) + 1);
+  }
+
+  const nodeList = [...nodes].map((id) => ({
+    id,
+    degree: degree.get(id) ?? 0,
+    class: classifyNode(id),
+  }));
+
+  return {
+    generatedAt: new Date().toISOString(),
+    root: path.relative(root, srcRoot),
+    summary: {
+      nodeCount: nodeList.length,
+      edgeCount: edges.length,
+    },
+    nodes: nodeList,
+    edges: edges.map((edge) => {
+      const [from, to] = edge.split('-->');
+      return { from, to };
+    }),
+  };
+}
+
+function buildReport(graph) {
+  const top = [...graph.nodes].sort((a, b) => b.degree - a.degree).slice(0, 10);
+  return [
+    '# Graph Report',
+    '',
+    `Generated: ${graph.generatedAt}`,
+    `Nodes: ${graph.summary.nodeCount}`,
+    `Edges: ${graph.summary.edgeCount}`,
+    '',
+    '## Top connected nodes',
+    '',
+    ...top.map((n) => `- ${n.id} — degree ${n.degree} (${n.class})`),
+    '',
+    '## Scoring notes',
+    '',
+    '- `core-utility`, `analytics-core`, and `theme-core` are intentional primitives and should be deprioritized in risk triage.',
+    '- Focus architecture follow-up on high-degree `source` nodes with unexpected cross-feature imports.',
+  ].join('\n');
+}
+
 if (command !== 'generate' && command !== 'export') {
   throw new Error(`Unsupported command: ${command}`);
 }
@@ -124,9 +188,17 @@ if (command === 'generate') {
 }
 
 if (command === 'export') {
-  if (format !== 'callflow-html') {
+  if (format === 'callflow-html') {
+    await fs.writeFile(callflowHtmlFile, buildCallflowHtml(mermaid));
+    console.log(`Wrote ${path.relative(root, callflowHtmlFile)} with ${sortedEdges.length} edges.`);
+  } else if (format === 'preview-bundle') {
+    await fs.mkdir(graphOutDir, { recursive: true });
+    await fs.writeFile(graphOutHtmlFile, buildCallflowHtml(mermaid));
+    const graph = buildGraphJson(sortedEdges);
+    await fs.writeFile(graphOutJsonFile, JSON.stringify(graph, null, 2));
+    await fs.writeFile(graphOutReportFile, buildReport(graph));
+    console.log(`Wrote ${path.relative(root, graphOutHtmlFile)}, ${path.relative(root, graphOutReportFile)}, ${path.relative(root, graphOutJsonFile)}.`);
+  } else {
     throw new Error(`Unsupported export format: ${format}`);
   }
-  await fs.writeFile(callflowHtmlFile, buildCallflowHtml(mermaid));
-  console.log(`Wrote ${path.relative(root, callflowHtmlFile)} with ${sortedEdges.length} edges.`);
 }
