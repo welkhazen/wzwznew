@@ -72,6 +72,7 @@ import {
 } from "@/lib/communityConstants";
 import { buildDefaultCommunities } from "@/lib/communityChat.seed";
 import { sendCommunityPushNotification } from "@/lib/communityPushNotifications";
+import { IDENTITY_SELECTION_EVENT, readSelectedIdentityAlias } from "@/lib/identitySelection";
 import type { CommunityChatMessageRecord, PersistedCommunityRecord } from "@/lib/communityChat.types";
 import {
   loadCommunityAccess,
@@ -345,7 +346,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
   const [chatIdentities, setChatIdentities] = useState<ChatIdentity[]>([
     { alias: user.username, avatar_level: avatarLevel, is_public: true },
   ]);
-  const [selectedChatIdentityIndex, setSelectedChatIdentityIndex] = useState(0);
+  const [selectedChatIdentityAlias, setSelectedChatIdentityAlias] = useState(() => readSelectedIdentityAlias(user.id) ?? user.username);
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [mentionIndex, setMentionIndex] = useState(0);
   const [expandedDescs, setExpandedDescs] = useState<Set<string>>(new Set());
@@ -483,22 +484,24 @@ const COMMUNITY_LOGOS: Record<string, string> = {
           const aliases = await fetchUserAliases(user.id);
           if (cancelled) return;
 
-          if (aliases.length === 0) {
-            setChatIdentities([{ alias: user.username, avatar_level: avatarLevel, is_public: true }]);
-            setSelectedChatIdentityIndex(0);
-            return;
-          }
-
-          setChatIdentities(aliases.map((alias) => ({
-            alias: alias.alias,
-            avatar_level: alias.avatar_level || avatarLevel,
-            is_public: alias.is_public,
-          })));
-          setSelectedChatIdentityIndex(Math.max(0, aliases.findIndex((alias) => alias.is_public)));
+          const privateAliases = aliases.filter((alias) => alias.alias.trim().toLowerCase() !== user.username.trim().toLowerCase());
+          const nextIdentities = [
+            { alias: user.username, avatar_level: avatarLevel, is_public: true },
+            ...privateAliases.map((alias) => ({
+              alias: alias.alias,
+              avatar_level: alias.avatar_level || avatarLevel,
+              is_public: false,
+            })),
+          ];
+          setChatIdentities(nextIdentities);
+          const savedAlias = readSelectedIdentityAlias(user.id);
+          setSelectedChatIdentityAlias(
+            savedAlias && nextIdentities.some((identity) => identity.alias === savedAlias) ? savedAlias : user.username
+          );
         } catch {
           if (!cancelled) {
             setChatIdentities([{ alias: user.username, avatar_level: avatarLevel, is_public: true }]);
-            setSelectedChatIdentityIndex(0);
+            setSelectedChatIdentityAlias(user.username);
           }
         }
       }
@@ -508,15 +511,21 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         const updatedUserId = (event as CustomEvent<{ userId?: string }>).detail?.userId;
         if (!updatedUserId || updatedUserId === user.id) void loadChatIdentities();
       };
+      const syncSelectedIdentity = (event: Event) => {
+        const detail = (event as CustomEvent<{ userId?: string; alias?: string }>).detail;
+        if (detail?.userId === user.id && detail.alias) setSelectedChatIdentityAlias(detail.alias);
+      };
       window.addEventListener("raw:user-aliases-updated", reloadAliases);
+      window.addEventListener(IDENTITY_SELECTION_EVENT, syncSelectedIdentity);
 
       return () => {
         cancelled = true;
         window.removeEventListener("raw:user-aliases-updated", reloadAliases);
+        window.removeEventListener(IDENTITY_SELECTION_EVENT, syncSelectedIdentity);
       };
     }, [avatarLevel, user.id, user.username]);
 
-    const selectedChatIdentity = chatIdentities[selectedChatIdentityIndex] ?? chatIdentities[0] ?? {
+    const selectedChatIdentity = chatIdentities.find((identity) => identity.alias === selectedChatIdentityAlias) ?? chatIdentities[0] ?? {
       alias: user.username,
       avatar_level: avatarLevel,
       is_public: true,
@@ -1980,34 +1989,6 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                   </div>
                 );
               })()}
-              <div className="mb-2 flex items-center gap-2 overflow-x-auto pb-1">
-                {chatIdentities.map((identity, index) => {
-                  const selected = index === selectedChatIdentityIndex;
-                  return (
-                    <button
-                      key={`${identity.alias}-${identity.avatar_level}`}
-                      type="button"
-                      onClick={() => setSelectedChatIdentityIndex(index)}
-                      className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-2.5 py-1.5 text-xs transition-all ${
-                        selected
-                          ? "border-raw-gold/45 bg-raw-gold/10 text-raw-gold"
-                          : "border-raw-border/25 bg-raw-surface/25 text-raw-silver/55 hover:border-raw-gold/30 hover:text-raw-gold"
-                      }`}
-                      aria-pressed={selected}
-                      title={`Text as ${identity.alias}`}
-                    >
-                      <AvatarFigure
-                        avatarIndex={identity.avatar_level}
-                        size="sm"
-                        selected={selected}
-                        className="scale-75"
-                      />
-                      <span className="max-w-28 truncate">@{identity.alias}</span>
-                      {identity.is_public && <span className="text-[9px] uppercase tracking-[0.16em] opacity-70">Public</span>}
-                    </button>
-                  );
-                })}
-              </div>
               <div className="flex gap-2">
                 {canManagePolls && (
                   <button

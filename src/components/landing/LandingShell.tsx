@@ -14,6 +14,7 @@ import { AvatarShowcaseSection } from "@/components/landing/AvatarShowcaseSectio
 import { LandingPollsSection } from "@/components/landing/LandingPollsSection";
 import { WheelReward } from "@/components/landing/WheelReward";
 import { WhyAnonymity } from "@/components/landing/WhyAnonymity";
+import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
 import { EarnedWarUpgradesSection } from "@/components/landing/EarnedWarUpgradesSection";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import PerforatedBackground from "@/components/ui/perforated-background";
@@ -77,6 +78,7 @@ export default function LandingShell({
             <EarnedWarUpgradesSection />
             <WheelReward onSignupClick={() => setShowSignup(true)} />
             <WhyAnonymity />
+            <TestimonialsSection />
             <LandingFooter />
           </div>
         </motion.div>
