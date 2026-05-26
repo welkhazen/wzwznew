@@ -27,3 +27,11 @@ dist-ssr
 # Vite local dependency cache
 .vite-local-cache
 .env
+
+# Local Graphify assistant install/runtime files
+.agents/skills/graphify/
+.codex/hooks.json
+graphify-out/manifest.json
+graphify-out/cost.json
+graphify-out/cache/
+graphify-out/.graphify_*

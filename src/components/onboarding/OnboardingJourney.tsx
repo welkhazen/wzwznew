@@ -68,6 +68,7 @@ const LANDING_ONBOARDING_AVATARS: readonly AvatarCatalogItem[] = [
   { id: "preview-crimson-muse", level: 14, name: "Crimson Muse", price: "Preview", imageSrc: "/avatars/6.webp", bg: "#2a0b0b", figure: "#f97316", ring: "#f97316", glow: "#f9731680", isActive: true, rarity: "common" },
   { id: "preview-solar-flame", level: 15, name: "Solar Flame", price: "Preview", imageSrc: "/avatars/7.webp", bg: "#241005", figure: "#facc15", ring: "#facc15", glow: "#facc1590", isActive: true, rarity: "common" },
   { id: "preview-pink-circuit", level: 16, name: "Pink Circuit", price: "Preview", imageSrc: "/avatars/8.webp", bg: "#2a0b1c", figure: "#fb7185", ring: "#fb7185", glow: "#fb718580", isActive: true, rarity: "common" },
+  { id: "preview-golden-muse", level: 17, name: "Golden Muse", price: "Preview", imageSrc: "/avatars/9.png", bg: "#201604", figure: "#facc15", ring: "#facc15", glow: "#facc1590", isActive: true, rarity: "common" },
 ];
 
 function fallbackAvatarCatalog(): AvatarCatalogItem[] {
@@ -93,6 +94,8 @@ function getPreviewOnlyAvatarImageScale(avatarId: string): React.CSSProperties |
     case "preview-horned-iron":
     case "preview-solar-flame":
       return { transform: "scale(1.45)" };
+    case "preview-golden-muse":
+      return { transform: "scale(1.35)" };
     case "preview-pink-circuit":
       return { transform: "scale(1.08)" };
     default:
@@ -443,8 +446,8 @@ export function OnboardingJourney({
                                 ? "scale-100 opacity-100"
                                 : "opacity-80 group-hover:opacity-100 group-hover:scale-105"
                           }`}>
-                            <AvatarFigure avatarIndex={index} size="sm" selected={isActive || isPreviewed} className="sm:hidden" rarity={avatar.rarity} />
-                            <AvatarFigure avatarIndex={index} size="md" selected={isActive || isPreviewed} className="hidden sm:block" rarity={avatar.rarity} />
+                            <AvatarFigure avatarIndex={index} size="sm" selected={isActive || isPreviewed} className="sm:hidden" rarity={avatar.rarity} themeOverride={avatar} />
+                            <AvatarFigure avatarIndex={index} size="md" selected={isActive || isPreviewed} className="hidden sm:block" rarity={avatar.rarity} themeOverride={avatar} />
                           </div>
                           <span className={`max-w-full truncate text-center font-display text-[7px] leading-tight tracking-[0.08em] transition-colors sm:text-[8px] ${
                             isActive
@@ -553,6 +556,7 @@ export function OnboardingJourney({
                                 className="sm:hidden"
                                 rarity={avatar.rarity}
                                 style={getPreviewOnlyAvatarImageScale(avatar.id)}
+                                themeOverride={avatar}
                               />
                               <AvatarFigure
                                 avatarIndex={index}
@@ -561,6 +565,7 @@ export function OnboardingJourney({
                                 className="hidden sm:block"
                                 rarity={avatar.rarity}
                                 style={getPreviewOnlyAvatarImageScale(avatar.id)}
+                                themeOverride={avatar}
                               />
                             </div>
                             <span className={`max-w-full truncate text-center font-display text-[7px] leading-tight tracking-[0.08em] transition-colors sm:text-[8px] ${
