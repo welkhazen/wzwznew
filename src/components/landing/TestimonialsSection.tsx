@@ -92,15 +92,15 @@ function TestimonialCard({ img, name, username, body, country }: (typeof testimo
 
 export function TestimonialsSection() {
   return (
-    <section className="landing-section relative px-4 py-14 sm:px-6 sm:py-20">
+    <section className="landing-section relative z-0 px-4 py-14 sm:px-6 sm:py-20">
       <div className="relative w-full overflow-hidden rounded-2xl border border-raw-border/40 bg-raw-surface/20 px-6 py-10 sm:px-10 sm:py-14">
         <p className="mb-10 text-center font-display text-[10px] uppercase tracking-[0.3em] text-raw-silver/40 sm:mb-12">
           From the community
         </p>
 
-        <div className="relative mx-auto flex h-96 w-full max-w-[800px] flex-row items-center justify-center overflow-hidden gap-1.5 rounded-lg border border-border [perspective:300px]">
+        <div className="relative mx-auto flex h-[24rem] w-full max-w-[800px] flex-row items-center justify-center overflow-hidden gap-1.5 rounded-lg border border-border [perspective:300px]">
           <div
-            className="flex flex-row items-center gap-4"
+            className="flex flex-row items-center gap-4 will-change-transform"
             style={{
               transform:
                 "translateX(-100px) translateY(0px) translateZ(-100px) rotateX(20deg) rotateY(-10deg) rotateZ(20deg)",
