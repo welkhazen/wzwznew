@@ -292,9 +292,9 @@ export function OnboardingJourney({
   }, [onboardingStep]);
 
   const canContinueFromAvatar = avatarIndex >= 1 && avatarIndex <= FREE_ONBOARDING_AVATAR_COUNT;
-  const filledIdentityNames = identityNames.map((name) => name.trim()).filter(Boolean);
+  const filledIdentityNames = identityNames.slice(1).map((name) => name.trim()).filter(Boolean);
   const identityNamesAreValid = filledIdentityNames.every((name) => name.length >= 3 && name.length <= 32);
-  const canContinueFromIdentity = filledIdentityNames.length >= 1 && identityNamesAreValid && !!identityNames[publicIdentityIndex]?.trim();
+  const canContinueFromIdentity = identityNamesAreValid;
   const canContinueFromPolls = answeredCount >= onboardingPolls.length;
   const canContinueFromCommunities = selectedCommunityIds.length >= 1;
   const previewAvatar = onboardingAvatars[previewAvatarIndex - 1] ?? onboardingAvatars[0];
@@ -355,6 +355,7 @@ export function OnboardingJourney({
       const usedAvatarLevels = new Set<number>();
       const aliases = identityNames
         .map((name, index) => {
+          if (index === 0) return null;
           const preferredLevel = index === 0 ? avatarIndex : Math.min(FREE_ONBOARDING_AVATAR_COUNT, index + 1);
           const avatarLevel = usedAvatarLevels.has(preferredLevel)
             ? Array.from({ length: FREE_ONBOARDING_AVATAR_COUNT }, (_, levelIndex) => levelIndex + 1).find((level) => !usedAvatarLevels.has(level)) ?? preferredLevel
@@ -363,9 +364,10 @@ export function OnboardingJourney({
           return {
             alias: name.trim(),
             avatarLevel,
-            isPublic: index === publicIdentityIndex,
+            isPublic: false,
           };
         })
+        .filter((item): item is { alias: string; avatarLevel: number; isPublic: boolean } => item !== null)
         .filter((item) => item.alias.length > 0)
         .filter((item) => {
           const key = item.alias.toLowerCase();
@@ -660,11 +662,11 @@ export function OnboardingJourney({
                 <div>
                   <h2 className="font-display text-lg tracking-wide text-raw-text sm:text-xl">2. Create your names</h2>
                   <p className="mt-2 max-w-2xl text-xs leading-relaxed text-raw-silver/50 sm:text-sm">
-                    Your public name is what communities see. Private names stay saved to your account so later you can switch which identity is public without changing who owns the account.
+                    Your public account name stays fixed. Add private identities connected to the same account, then choose which identity talks in chat.
                   </p>
                 </div>
                 <span className="w-fit rounded-full border border-raw-gold/35 px-3 py-1 text-[10px] uppercase tracking-[0.14em] text-raw-gold/75">
-                  1 public
+                  1 public account
                 </span>
               </div>
 
@@ -689,35 +691,29 @@ export function OnboardingJourney({
                           <input
                             value={name}
                             onChange={(event) => {
+                              if (index === 0) return;
                               const next = [...identityNames];
                               next[index] = event.target.value;
                               setIdentityNames(next);
                             }}
+                            readOnly={index === 0}
                             maxLength={32}
                             placeholder={index === 0 ? user.username : "Create another name"}
                             className="w-full rounded-xl border border-raw-border/45 bg-raw-black/60 px-3 py-2 text-sm text-raw-text outline-none transition placeholder:text-raw-silver/25 focus:border-raw-gold/60"
                           />
                         </label>
 
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (!identityNames[index]?.trim()) return;
-                            setPublicIdentityIndex(index);
-                          }}
-                          disabled={!identityNames[index]?.trim()}
-                          className={`shrink-0 rounded-xl border px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] transition disabled:cursor-not-allowed disabled:opacity-35 ${
-                            isPublic
-                              ? "border-raw-gold bg-raw-gold text-raw-ink"
-                              : "border-raw-border/45 text-raw-silver/60 hover:border-raw-gold/45 hover:text-raw-gold"
-                          }`}
-                        >
-                          {isPublic ? "Public" : "Make public"}
-                        </button>
+                        <span className={`shrink-0 rounded-xl border px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] ${
+                          isPublic
+                            ? "border-raw-gold bg-raw-gold text-raw-ink"
+                            : "border-raw-border/45 text-raw-silver/60"
+                        }`}>
+                          {isPublic ? "Public" : "Private"}
+                        </span>
                       </div>
 
                       <p className="mt-2 text-[11px] text-raw-silver/40">
-                        {isPublic ? "This name is visible in public spaces." : "This name stays private until you choose to make it public."}
+                        {isPublic ? "This is your main public account." : "This is a private identity you can choose when sending chat messages."}
                       </p>
                     </div>
                   );

@@ -483,18 +483,16 @@ const COMMUNITY_LOGOS: Record<string, string> = {
           const aliases = await fetchUserAliases(user.id);
           if (cancelled) return;
 
-          if (aliases.length === 0) {
-            setChatIdentities([{ alias: user.username, avatar_level: avatarLevel, is_public: true }]);
-            setSelectedChatIdentityIndex(0);
-            return;
-          }
-
-          setChatIdentities(aliases.map((alias) => ({
-            alias: alias.alias,
-            avatar_level: alias.avatar_level || avatarLevel,
-            is_public: alias.is_public,
-          })));
-          setSelectedChatIdentityIndex(Math.max(0, aliases.findIndex((alias) => alias.is_public)));
+          const privateAliases = aliases.filter((alias) => alias.alias.trim().toLowerCase() !== user.username.trim().toLowerCase());
+          setChatIdentities([
+            { alias: user.username, avatar_level: avatarLevel, is_public: true },
+            ...privateAliases.map((alias) => ({
+              alias: alias.alias,
+              avatar_level: alias.avatar_level || avatarLevel,
+              is_public: false,
+            })),
+          ]);
+          setSelectedChatIdentityIndex(0);
         } catch {
           if (!cancelled) {
             setChatIdentities([{ alias: user.username, avatar_level: avatarLevel, is_public: true }]);
