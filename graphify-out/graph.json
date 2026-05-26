@@ -1,0 +1,373 @@
+{
+  "generatedAt": "2026-05-26T06:55:10.722Z",
+  "root": "src",
+  "summary": {
+    "nodeCount": 41,
+    "edgeCount": 39
+  },
+  "nodes": [
+    {
+      "id": "backend/supabase/controllers/authController.ts",
+      "degree": 1,
+      "class": "other"
+    },
+    {
+      "id": "backend/supabase/client.ts",
+      "degree": 8,
+      "class": "other"
+    },
+    {
+      "id": "backend/supabase/controllers/chatController.ts",
+      "degree": 2,
+      "class": "other"
+    },
+    {
+      "id": "backend/supabase/controllers/communityController.ts",
+      "degree": 2,
+      "class": "other"
+    },
+    {
+      "id": "backend/supabase/controllers/communityPollController.ts",
+      "degree": 2,
+      "class": "other"
+    },
+    {
+      "id": "backend/supabase/models/community-poll.ts",
+      "degree": 1,
+      "class": "other"
+    },
+    {
+      "id": "backend/supabase/controllers/communityRequestController.ts",
+      "degree": 1,
+      "class": "other"
+    },
+    {
+      "id": "backend/supabase/controllers/pollController.ts",
+      "degree": 2,
+      "class": "other"
+    },
+    {
+      "id": "backend/supabase/models/poll.ts",
+      "degree": 1,
+      "class": "other"
+    },
+    {
+      "id": "backend/supabase/controllers/userController.ts",
+      "degree": 2,
+      "class": "other"
+    },
+    {
+      "id": "backend/supabase/models/user.ts",
+      "degree": 1,
+      "class": "other"
+    },
+    {
+      "id": "backend/supabase/controllers/waitlistController.ts",
+      "degree": 1,
+      "class": "other"
+    },
+    {
+      "id": "components/dashboard/DashboardHome.tsx",
+      "degree": 1,
+      "class": "other"
+    },
+    {
+      "id": "components/dashboard/DashboardNav.tsx",
+      "degree": 2,
+      "class": "other"
+    },
+    {
+      "id": "components/dashboard/DashboardSidebar.tsx",
+      "degree": 1,
+      "class": "other"
+    },
+    {
+      "id": "components/onboarding/CommentsModal.tsx",
+      "degree": 1,
+      "class": "other"
+    },
+    {
+      "id": "components/onboarding/PollComments.tsx",
+      "degree": 1,
+      "class": "other"
+    },
+    {
+      "id": "components/onboarding/OnboardingJourney.tsx",
+      "degree": 2,
+      "class": "other"
+    },
+    {
+      "id": "components/onboarding/EnterRawModal.tsx",
+      "degree": 1,
+      "class": "other"
+    },
+    {
+      "id": "components/onboarding/SwipeablePollCard.tsx",
+      "degree": 1,
+      "class": "other"
+    },
+    {
+      "id": "components/ui/highlightRawWordmark.tsx",
+      "degree": 1,
+      "class": "other"
+    },
+    {
+      "id": "components/ui/brand-name.tsx",
+      "degree": 1,
+      "class": "other"
+    },
+    {
+      "id": "features/insights/insights-engine.test.ts",
+      "degree": 2,
+      "class": "other"
+    },
+    {
+      "id": "features/insights/insights-engine.ts",
+      "degree": 3,
+      "class": "other"
+    },
+    {
+      "id": "features/insights/types.ts",
+      "degree": 3,
+      "class": "other"
+    },
+    {
+      "id": "features/insights/insights.config.ts",
+      "degree": 2,
+      "class": "other"
+    },
+    {
+      "id": "lib/analytics/index.ts",
+      "degree": 4,
+      "class": "other"
+    },
+    {
+      "id": "lib/analytics/client.ts",
+      "degree": 1,
+      "class": "other"
+    },
+    {
+      "id": "lib/analytics/events.ts",
+      "degree": 2,
+      "class": "other"
+    },
+    {
+      "id": "lib/analytics/useTrackPageView.ts",
+      "degree": 1,
+      "class": "other"
+    },
+    {
+      "id": "lib/analytics/useTrackSectionView.ts",
+      "degree": 2,
+      "class": "other"
+    },
+    {
+      "id": "lib/communityChat.seed.ts",
+      "degree": 2,
+      "class": "other"
+    },
+    {
+      "id": "lib/communityChat.types.ts",
+      "degree": 4,
+      "class": "other"
+    },
+    {
+      "id": "lib/communityChat.storage.ts",
+      "degree": 3,
+      "class": "other"
+    },
+    {
+      "id": "lib/communityChat.utils.ts",
+      "degree": 3,
+      "class": "other"
+    },
+    {
+      "id": "lib/communityChat.ts",
+      "degree": 4,
+      "class": "other"
+    },
+    {
+      "id": "store/useRawStore.polling.ts",
+      "degree": 1,
+      "class": "other"
+    },
+    {
+      "id": "store/useRawStore.types.ts",
+      "degree": 2,
+      "class": "other"
+    },
+    {
+      "id": "store/useRawStore.storage.ts",
+      "degree": 1,
+      "class": "other"
+    },
+    {
+      "id": "utils/supabasePolls.ts",
+      "degree": 1,
+      "class": "other"
+    },
+    {
+      "id": "utils/supabase.ts",
+      "degree": 1,
+      "class": "other"
+    }
+  ],
+  "edges": [
+    {
+      "from": "backend/supabase/controllers/authController.ts",
+      "to": "backend/supabase/client.ts"
+    },
+    {
+      "from": "backend/supabase/controllers/chatController.ts",
+      "to": "backend/supabase/client.ts"
+    },
+    {
+      "from": "backend/supabase/controllers/communityController.ts",
+      "to": "backend/supabase/client.ts"
+    },
+    {
+      "from": "backend/supabase/controllers/communityController.ts",
+      "to": "backend/supabase/controllers/chatController.ts"
+    },
+    {
+      "from": "backend/supabase/controllers/communityPollController.ts",
+      "to": "backend/supabase/client.ts"
+    },
+    {
+      "from": "backend/supabase/controllers/communityPollController.ts",
+      "to": "backend/supabase/models/community-poll.ts"
+    },
+    {
+      "from": "backend/supabase/controllers/communityRequestController.ts",
+      "to": "backend/supabase/client.ts"
+    },
+    {
+      "from": "backend/supabase/controllers/pollController.ts",
+      "to": "backend/supabase/client.ts"
+    },
+    {
+      "from": "backend/supabase/controllers/pollController.ts",
+      "to": "backend/supabase/models/poll.ts"
+    },
+    {
+      "from": "backend/supabase/controllers/userController.ts",
+      "to": "backend/supabase/client.ts"
+    },
+    {
+      "from": "backend/supabase/controllers/userController.ts",
+      "to": "backend/supabase/models/user.ts"
+    },
+    {
+      "from": "backend/supabase/controllers/waitlistController.ts",
+      "to": "backend/supabase/client.ts"
+    },
+    {
+      "from": "components/dashboard/DashboardHome.tsx",
+      "to": "components/dashboard/DashboardNav.tsx"
+    },
+    {
+      "from": "components/dashboard/DashboardSidebar.tsx",
+      "to": "components/dashboard/DashboardNav.tsx"
+    },
+    {
+      "from": "components/onboarding/CommentsModal.tsx",
+      "to": "components/onboarding/PollComments.tsx"
+    },
+    {
+      "from": "components/onboarding/OnboardingJourney.tsx",
+      "to": "components/onboarding/EnterRawModal.tsx"
+    },
+    {
+      "from": "components/onboarding/OnboardingJourney.tsx",
+      "to": "components/onboarding/SwipeablePollCard.tsx"
+    },
+    {
+      "from": "components/ui/highlightRawWordmark.tsx",
+      "to": "components/ui/brand-name.tsx"
+    },
+    {
+      "from": "features/insights/insights-engine.test.ts",
+      "to": "features/insights/insights-engine.ts"
+    },
+    {
+      "from": "features/insights/insights-engine.test.ts",
+      "to": "features/insights/types.ts"
+    },
+    {
+      "from": "features/insights/insights-engine.ts",
+      "to": "features/insights/insights.config.ts"
+    },
+    {
+      "from": "features/insights/insights-engine.ts",
+      "to": "features/insights/types.ts"
+    },
+    {
+      "from": "features/insights/insights.config.ts",
+      "to": "features/insights/types.ts"
+    },
+    {
+      "from": "lib/analytics/index.ts",
+      "to": "lib/analytics/client.ts"
+    },
+    {
+      "from": "lib/analytics/index.ts",
+      "to": "lib/analytics/events.ts"
+    },
+    {
+      "from": "lib/analytics/useTrackPageView.ts",
+      "to": "lib/analytics/index.ts"
+    },
+    {
+      "from": "lib/analytics/useTrackSectionView.ts",
+      "to": "lib/analytics/events.ts"
+    },
+    {
+      "from": "lib/analytics/useTrackSectionView.ts",
+      "to": "lib/analytics/index.ts"
+    },
+    {
+      "from": "lib/communityChat.seed.ts",
+      "to": "lib/communityChat.types.ts"
+    },
+    {
+      "from": "lib/communityChat.storage.ts",
+      "to": "lib/communityChat.types.ts"
+    },
+    {
+      "from": "lib/communityChat.storage.ts",
+      "to": "lib/communityChat.utils.ts"
+    },
+    {
+      "from": "lib/communityChat.ts",
+      "to": "lib/communityChat.seed.ts"
+    },
+    {
+      "from": "lib/communityChat.ts",
+      "to": "lib/communityChat.storage.ts"
+    },
+    {
+      "from": "lib/communityChat.ts",
+      "to": "lib/communityChat.types.ts"
+    },
+    {
+      "from": "lib/communityChat.ts",
+      "to": "lib/communityChat.utils.ts"
+    },
+    {
+      "from": "lib/communityChat.utils.ts",
+      "to": "lib/communityChat.types.ts"
+    },
+    {
+      "from": "store/useRawStore.polling.ts",
+      "to": "store/useRawStore.types.ts"
+    },
+    {
+      "from": "store/useRawStore.storage.ts",
+      "to": "store/useRawStore.types.ts"
+    },
+    {
+      "from": "utils/supabasePolls.ts",
+      "to": "utils/supabase.ts"
+    }
+  ]
+}
