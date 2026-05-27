@@ -120,7 +120,7 @@ export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
             <p
               className="font-display text-lg font-medium leading-relaxed text-foreground sm:text-xl md:text-2xl"
             >
-              Your new 24/7 living and ever-growing new world
+              Your new 24/7 living and ever-growing world
             </p>
             <p
               className="text-base font-semibold leading-relaxed text-primary sm:text-lg"
