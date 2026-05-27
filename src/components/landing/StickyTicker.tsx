@@ -54,7 +54,7 @@ export function StickyTicker() {
             <div className="absolute inset-0 rounded-full bg-gradient-to-r from-primary/10 via-transparent to-primary/10 animate-pulse" />
             <div className="w-2 h-2 bg-primary rounded-full animate-ping" />
             <span className="relative z-10 text-center text-[0.69rem] font-bold uppercase tracking-[0.2em] text-primary sm:text-sm sm:tracking-wider">
-              FULLY ANONYMOUS • COMMUNITY DRIVEN • IDENTITY BASED
+              ANONYMOUS  FIRST • IDENTITY  BASED • COMMUNITY  DRIVEN
             </span>
             <div className="w-2 h-2 bg-primary rounded-full animate-ping" style={{ animationDelay: "0.5s" }} />
           </div>
