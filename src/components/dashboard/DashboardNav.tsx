@@ -49,6 +49,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
 import { ChevronDown } from "lucide-react";
 import { spendTokens } from "@/utils/supabasePolls";
+import { fetchUserAliases } from "@/backend/supabase/controllers/userAliasController";
+import type { UserAliasRow } from "@/backend/supabase/models/user-alias";
+import { IDENTITY_SELECTION_EVENT, readSelectedIdentityAlias, writeSelectedIdentityAlias } from "@/lib/identitySelection";
 
 export type DashboardTab = "home" | "polls" | "challenges" | "daily-spin" | "communities" | "profile" | "wallet" | "inventory";
 
@@ -146,7 +149,65 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
   const [screenshotDataUrl, setScreenshotDataUrl] = useState("");
   const [unlockingAccentId, setUnlockingAccentId] = useState<AccentPresetId | null>(null);
   const [tokenBalanceForUnlocks, setTokenBalanceForUnlocks] = useState<number>(() => readStoredTokenBalance(userId));
+  const [identities, setIdentities] = useState<NavIdentity[]>([
+    { alias: username, avatar_level: avatarLevel, is_public: true },
+  ]);
+  const [selectedIdentityAlias, setSelectedIdentityAlias] = useState(() => readSelectedIdentityAlias(userId) ?? username);
   const notifRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadIdentities() {
+      try {
+        const aliases = await fetchUserAliases(userId);
+        if (cancelled) return;
+        const privateAliases = aliases.filter((alias) => alias.alias.trim().toLowerCase() !== username.trim().toLowerCase());
+        const nextIdentities = [
+          { alias: username, avatar_level: avatarLevel, is_public: true },
+          ...privateAliases.map((alias) => ({
+            alias: alias.alias,
+            avatar_level: alias.avatar_level || avatarLevel,
+            is_public: false,
+          })),
+        ];
+        setIdentities(nextIdentities);
+        const savedAlias = readSelectedIdentityAlias(userId);
+        setSelectedIdentityAlias(
+          savedAlias && nextIdentities.some((identity) => identity.alias === savedAlias) ? savedAlias : username
+        );
+      } catch {
+        if (!cancelled) {
+          setIdentities([{ alias: username, avatar_level: avatarLevel, is_public: true }]);
+          setSelectedIdentityAlias(username);
+        }
+      }
+    }
+
+    void loadIdentities();
+    const reloadAliases = (event: Event) => {
+      const updatedUserId = (event as CustomEvent<{ userId?: string }>).detail?.userId;
+      if (!updatedUserId || updatedUserId === userId) void loadIdentities();
+    };
+    const syncSelectedIdentity = (event: Event) => {
+      const detail = (event as CustomEvent<{ userId?: string; alias?: string }>).detail;
+      if (detail?.userId === userId && detail.alias) setSelectedIdentityAlias(detail.alias);
+    };
+
+    window.addEventListener("raw:user-aliases-updated", reloadAliases);
+    window.addEventListener(IDENTITY_SELECTION_EVENT, syncSelectedIdentity);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("raw:user-aliases-updated", reloadAliases);
+      window.removeEventListener(IDENTITY_SELECTION_EVENT, syncSelectedIdentity);
+    };
+  }, [avatarLevel, userId, username]);
+
+  const selectedIdentity = identities.find((identity) => identity.alias === selectedIdentityAlias) ?? identities[0] ?? {
+    alias: username,
+    avatar_level: avatarLevel,
+    is_public: true,
+  };
 
   useEffect(() => {
     setTokenBalanceForUnlocks(readStoredTokenBalance(userId));
