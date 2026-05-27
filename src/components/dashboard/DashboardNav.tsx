@@ -298,7 +298,7 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
     for (const notification of unseen.slice(0, 4)) {
       const browserNotification = new Notification(notification.title, {
         body: `${notification.communityTitle}: ${notification.text}`,
-        icon: "/raw-logo-192.png",
+        icon: "/android-chrome-192x192.png",
         tag: notification.id,
       });
       browserNotification.onclick = () => {
