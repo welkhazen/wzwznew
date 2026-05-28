@@ -14,6 +14,7 @@ export interface CommunityChatMessageRecord {
   communityId: string;
   senderId: string;
   senderName: string;
+  senderAvatarLevel?: number;
   text: string;
   createdAt: string;
   pinned?: boolean;
@@ -44,6 +45,7 @@ export interface PersistedCommunityRecord {
 export interface SendCommunityMessageInput {
   senderId: string;
   senderName: string;
+  senderAvatarLevel?: number;
   text: string;
   replyToMessage?: CommunityChatMessageRecord | null;
 }

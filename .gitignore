@@ -30,3 +30,10 @@ dist-ssr
 
 # understand-anything pipeline temp files
 .understand-anything/tmp/
+# Local Graphify assistant install/runtime files
+.agents/skills/graphify/
+.codex/hooks.json
+graphify-out/manifest.json
+graphify-out/cost.json
+graphify-out/cache/
+graphify-out/.graphify_*

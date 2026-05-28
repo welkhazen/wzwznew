@@ -10,6 +10,7 @@ import { AvatarPhoneHomeScreen } from "@/components/ui/avatar-phone-home-screen"
 import { PhoneMockup } from "@/components/ui/phone-mockup";
 import { fetchSupabasePolls } from "@/utils/supabasePolls";
 import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
+import { saveUserAliases } from "@/backend/supabase/controllers/userAliasController";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -39,9 +40,10 @@ interface OnboardingJourneyProps {
   onLogout: () => void;
 }
 
-const STEP_ORDER: OnboardingStep[] = ["avatar", "polls", "communities"];
+const STEP_ORDER: OnboardingStep[] = ["avatar", "identity", "polls", "communities"];
 const STEP_LABELS: Record<OnboardingStep, string> = {
   avatar: "avatar",
+  identity: "names",
   polls: "polls",
   communities: "communities",
   marketplace: "insights",
@@ -68,6 +70,7 @@ const LANDING_ONBOARDING_AVATARS: readonly AvatarCatalogItem[] = [
   { id: "preview-crimson-muse", level: 14, name: "Crimson Muse", price: "Preview", imageSrc: "/avatars/6.webp", bg: "#2a0b0b", figure: "#f97316", ring: "#f97316", glow: "#f9731680", isActive: true, rarity: "common" },
   { id: "preview-solar-flame", level: 15, name: "Solar Flame", price: "Preview", imageSrc: "/avatars/7.webp", bg: "#241005", figure: "#facc15", ring: "#facc15", glow: "#facc1590", isActive: true, rarity: "common" },
   { id: "preview-pink-circuit", level: 16, name: "Pink Circuit", price: "Preview", imageSrc: "/avatars/8.webp", bg: "#2a0b1c", figure: "#fb7185", ring: "#fb7185", glow: "#fb718580", isActive: true, rarity: "common" },
+  { id: "preview-golden-muse", level: 17, name: "Golden Muse", price: "Preview", imageSrc: "/avatars/9.png", bg: "#201604", figure: "#facc15", ring: "#facc15", glow: "#facc1590", isActive: true, rarity: "common" },
 ];
 
 function fallbackAvatarCatalog(): AvatarCatalogItem[] {
@@ -93,6 +96,8 @@ function getPreviewOnlyAvatarImageScale(avatarId: string): React.CSSProperties |
     case "preview-horned-iron":
     case "preview-solar-flame":
       return { transform: "scale(1.45)" };
+    case "preview-golden-muse":
+      return { transform: "scale(1.35)" };
     case "preview-pink-circuit":
       return { transform: "scale(1.08)" };
     default:
@@ -250,6 +255,10 @@ export function OnboardingJourney({
   const [enterRawOpen, setEnterRawOpen] = useState(false);
   const [isAgeVerified, setIsAgeVerified] = useState(false);
   const [isAgeVerifiedLoaded, setIsAgeVerifiedLoaded] = useState(false);
+  const [identityNames, setIdentityNames] = useState<string[]>(() => [user.username, "", ""]);
+  const [publicIdentityIndex, setPublicIdentityIndex] = useState(0);
+  const [identitySaveError, setIdentitySaveError] = useState<string | null>(null);
+  const [isSavingIdentities, setIsSavingIdentities] = useState(false);
   const [onboardingAvatars] = useState<AvatarCatalogItem[]>(() => fallbackAvatarCatalog());
   const [isLoadingPreviewAvatars] = useState(false);
   const [previewAvatarIndex, setPreviewAvatarIndex] = useState(() => Math.min(Math.max(avatarIndex, 1), Math.max(1, onboardingAvatars.length)));
@@ -271,12 +280,21 @@ export function OnboardingJourney({
   }, []);
 
   useEffect(() => {
+    setIdentityNames([user.username, "", ""]);
+    setPublicIdentityIndex(0);
+    setIdentitySaveError(null);
+  }, [user.id, user.username]);
+
+  useEffect(() => {
     const stepIndex = STEP_ORDER.indexOf(onboardingStep);
-    track("onboarding_step_viewed", { step: onboardingStep as "avatar" | "polls" | "communities" | "ready", step_index: stepIndex });
+    track("onboarding_step_viewed", { step: onboardingStep as "avatar" | "identity" | "polls" | "communities" | "ready", step_index: stepIndex });
     stepStartTimeRef.current = Date.now();
   }, [onboardingStep]);
 
   const canContinueFromAvatar = avatarIndex >= 1 && avatarIndex <= FREE_ONBOARDING_AVATAR_COUNT;
+  const filledIdentityNames = identityNames.slice(1).map((name) => name.trim()).filter(Boolean);
+  const identityNamesAreValid = filledIdentityNames.every((name) => name.length >= 3 && name.length <= 32);
+  const canContinueFromIdentity = identityNamesAreValid;
   const canContinueFromPolls = answeredCount >= onboardingPolls.length;
   const canContinueFromCommunities = selectedCommunityIds.length >= 1;
   const previewAvatar = onboardingAvatars[previewAvatarIndex - 1] ?? onboardingAvatars[0];
@@ -328,9 +346,54 @@ export function OnboardingJourney({
     setPollStats(stats);
   }, [onboardingPolls]);
 
-  const goToNextStep = () => {
+  const saveIdentityNamesForOnboarding = async () => {
+    setIdentitySaveError(null);
+    setIsSavingIdentities(true);
+
+    try {
+      const uniqueNames = new Set<string>();
+      const usedAvatarLevels = new Set<number>();
+      const aliases = identityNames
+        .map((name, index) => {
+          if (index === 0) return null;
+          const preferredLevel = index === 0 ? avatarIndex : Math.min(FREE_ONBOARDING_AVATAR_COUNT, index + 1);
+          const avatarLevel = usedAvatarLevels.has(preferredLevel)
+            ? Array.from({ length: FREE_ONBOARDING_AVATAR_COUNT }, (_, levelIndex) => levelIndex + 1).find((level) => !usedAvatarLevels.has(level)) ?? preferredLevel
+            : preferredLevel;
+          usedAvatarLevels.add(avatarLevel);
+          return {
+            alias: name.trim(),
+            avatarLevel,
+            isPublic: false,
+          };
+        })
+        .filter((item): item is { alias: string; avatarLevel: number; isPublic: boolean } => item !== null)
+        .filter((item) => item.alias.length > 0)
+        .filter((item) => {
+          const key = item.alias.toLowerCase();
+          if (uniqueNames.has(key)) return false;
+          uniqueNames.add(key);
+          return true;
+        });
+
+      await saveUserAliases(user.id, aliases);
+      return true;
+    } catch (error) {
+      setIdentitySaveError(error instanceof Error ? error.message : "Could not save your names. Please try again.");
+      return false;
+    } finally {
+      setIsSavingIdentities(false);
+    }
+  };
+
+  const goToNextStep = async () => {
+    if (onboardingStep === "identity") {
+      const saved = await saveIdentityNamesForOnboarding();
+      if (!saved) return;
+    }
+
     track("onboarding_step_completed", {
-      step: onboardingStep as "avatar" | "polls" | "communities" | "ready",
+      step: onboardingStep as "avatar" | "identity" | "polls" | "communities" | "ready",
       duration_ms: Date.now() - stepStartTimeRef.current,
     });
     onSetOnboardingStep(getNextStep(onboardingStep));
@@ -443,8 +506,8 @@ export function OnboardingJourney({
                                 ? "scale-100 opacity-100"
                                 : "opacity-80 group-hover:opacity-100 group-hover:scale-105"
                           }`}>
-                            <AvatarFigure avatarIndex={index} size="sm" selected={isActive || isPreviewed} className="sm:hidden" rarity={avatar.rarity} />
-                            <AvatarFigure avatarIndex={index} size="md" selected={isActive || isPreviewed} className="hidden sm:block" rarity={avatar.rarity} />
+                            <AvatarFigure avatarIndex={index} size="sm" selected={isActive || isPreviewed} className="sm:hidden" rarity={avatar.rarity} themeOverride={avatar} />
+                            <AvatarFigure avatarIndex={index} size="md" selected={isActive || isPreviewed} className="hidden sm:block" rarity={avatar.rarity} themeOverride={avatar} />
                           </div>
                           <span className={`max-w-full truncate text-center font-display text-[7px] leading-tight tracking-[0.08em] transition-colors sm:text-[8px] ${
                             isActive
@@ -553,6 +616,7 @@ export function OnboardingJourney({
                                 className="sm:hidden"
                                 rarity={avatar.rarity}
                                 style={getPreviewOnlyAvatarImageScale(avatar.id)}
+                                themeOverride={avatar}
                               />
                               <AvatarFigure
                                 avatarIndex={index}
@@ -561,6 +625,7 @@ export function OnboardingJourney({
                                 className="hidden sm:block"
                                 rarity={avatar.rarity}
                                 style={getPreviewOnlyAvatarImageScale(avatar.id)}
+                                themeOverride={avatar}
                               />
                             </div>
                             <span className={`max-w-full truncate text-center font-display text-[7px] leading-tight tracking-[0.08em] transition-colors sm:text-[8px] ${
@@ -585,7 +650,95 @@ export function OnboardingJourney({
                   disabled={!canContinueWithPreviewAvatar}
                   className="w-full rounded-xl bg-raw-gold px-5 py-3 text-sm font-semibold text-raw-ink transition-opacity disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:py-2.5"
                 >
-                  Next: Polls
+                  Next: Names
+                </button>
+              </div>
+            </section>
+          )}
+
+          {onboardingStep === "identity" && (
+            <section>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <h2 className="font-display text-lg tracking-wide text-raw-text sm:text-xl">2. Create your names</h2>
+                  <p className="mt-2 max-w-2xl text-xs leading-relaxed text-raw-silver/50 sm:text-sm">
+                    Your public account name stays fixed. Add private identities connected to the same account, then choose which identity talks in chat.
+                  </p>
+                </div>
+                <span className="w-fit rounded-full border border-raw-gold/35 px-3 py-1 text-[10px] uppercase tracking-[0.14em] text-raw-gold/75">
+                  1 public account
+                </span>
+              </div>
+
+              <div className="mt-6 grid gap-3">
+                {identityNames.map((name, index) => {
+                  const isPublic = index === publicIdentityIndex;
+
+                  return (
+                    <div
+                      key={index}
+                      className={`rounded-2xl border p-3 transition sm:p-4 ${
+                        isPublic
+                          ? "border-raw-gold/65 bg-raw-gold/10"
+                          : "border-raw-border/35 bg-raw-black/35"
+                      }`}
+                    >
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                        <label className="min-w-0 flex-1">
+                          <span className="mb-1 block text-[10px] uppercase tracking-[0.16em] text-raw-silver/45">
+                            {index === 0 ? "Default account name" : `Private name ${index}`}
+                          </span>
+                          <input
+                            value={name}
+                            onChange={(event) => {
+                              if (index === 0) return;
+                              const next = [...identityNames];
+                              next[index] = event.target.value;
+                              setIdentityNames(next);
+                            }}
+                            readOnly={index === 0}
+                            maxLength={32}
+                            placeholder={index === 0 ? user.username : "Create another name"}
+                            className="w-full rounded-xl border border-raw-border/45 bg-raw-black/60 px-3 py-2 text-sm text-raw-text outline-none transition placeholder:text-raw-silver/25 focus:border-raw-gold/60"
+                          />
+                        </label>
+
+                        <span className={`shrink-0 rounded-xl border px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] ${
+                          isPublic
+                            ? "border-raw-gold bg-raw-gold text-raw-ink"
+                            : "border-raw-border/45 text-raw-silver/60"
+                        }`}>
+                          {isPublic ? "Public" : "Private"}
+                        </span>
+                      </div>
+
+                      <p className="mt-2 text-[11px] text-raw-silver/40">
+                        {isPublic ? "This is your main public account." : "This is a private identity you can choose when sending chat messages."}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {identitySaveError ? (
+                <p className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-200">
+                  {identitySaveError}
+                </p>
+              ) : null}
+              {!identityNamesAreValid ? (
+                <p className="mt-4 rounded-xl border border-raw-border/35 bg-raw-black/35 px-3 py-2 text-xs text-raw-silver/55">
+                  Each saved name needs 3-32 characters.
+                </p>
+              ) : null}
+
+              <div className="mt-6 flex justify-end sm:mt-8">
+                <button
+                  type="button"
+                  onClick={goToNextStep}
+                  disabled={!canContinueFromIdentity || isSavingIdentities}
+                  className="w-full rounded-xl bg-raw-gold px-5 py-3 text-sm font-semibold text-raw-ink transition-opacity disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:py-2.5"
+                >
+                  {isSavingIdentities ? "Saving..." : "Save names"}
                 </button>
               </div>
             </section>
@@ -595,7 +748,7 @@ export function OnboardingJourney({
             <section>
               <div className="flex flex-wrap items-center justify-between gap-2 sm:items-end sm:gap-4">
                 <div className="min-w-0 flex-1">
-                  <h2 className="font-display text-base tracking-wide text-raw-text sm:text-xl">2. Answer 3 launch polls</h2>
+                  <h2 className="font-display text-base tracking-wide text-raw-text sm:text-xl">3. Answer 3 launch polls</h2>
                 </div>
                 <p className="shrink-0 rounded-full border border-raw-border/40 px-2.5 py-1 text-[10px] text-raw-gold/75 sm:px-3 sm:text-xs">
                   {answeredCount}/{onboardingPolls.length} completed
@@ -683,7 +836,7 @@ export function OnboardingJourney({
                             setCurrentPollIndex((i) => i + 1);
                             return;
                           }
-                          goToNextStep();
+                          void goToNextStep();
                         }}
                         disabled={currentPollIndex === onboardingPolls.length - 1 && !canContinueFromPolls}
                         aria-label={currentPollIndex < onboardingPolls.length - 1 ? "Next poll" : "Complete polls"}
@@ -716,7 +869,7 @@ export function OnboardingJourney({
           {onboardingStep === "communities" && (
             <section>
               <div className="flex items-center justify-between gap-3">
-                <h2 className="font-display text-lg tracking-wide text-raw-text sm:text-xl">3. Pick a community</h2>
+                <h2 className="font-display text-lg tracking-wide text-raw-text sm:text-xl">4. Pick a community</h2>
                 <span className={`shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
                   selectedCommunityIds.length >= 1
                     ? "border-raw-gold/60 bg-raw-gold/10 text-raw-gold"

@@ -63,7 +63,7 @@ export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
           >
             <div className="absolute inset-0 rounded-full bg-gradient-to-r from-primary/10 via-transparent to-primary/10 animate-pulse" />
             <div className="w-2 h-2 bg-primary rounded-full animate-ping" />
-            <span className="relative z-10 w-full text-center text-[0.69rem] font-bold uppercase tracking-[0.2em] text-primary sm:text-sm sm:tracking-wider">Fully Anonymous • Community Driven • Identity Based</span>
+            <span className="relative z-10 w-full text-center text-[0.69rem] font-bold uppercase tracking-[0.2em] text-primary sm:text-sm sm:tracking-wider">ANONYMOUS  FIRST • IDENTITY  BASED • COMMUNITY  DRIVEN</span>
             <div
               className="w-2 h-2 bg-primary rounded-full animate-ping"
               style={{ animationDelay: "0.5s" }}
@@ -120,7 +120,7 @@ export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
             <p
               className="font-display text-lg font-medium leading-relaxed text-foreground sm:text-xl md:text-2xl"
             >
-              Your new 24/7 living and ever-growing new world
+              Your new 24/7 living and ever-growing world
             </p>
             <p
               className="text-base font-semibold leading-relaxed text-primary sm:text-lg"
