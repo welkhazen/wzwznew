@@ -6,3 +6,10 @@
     }
   }
 }
+{
+  "mcpServers": {
+    "penpot": {
+      "url": "https://design.penpot.app/mcp/stream?userToken=eyJhbGciOiJBMjU2S1ciLCJlbmMiOiJBMjU2R0NNIn0.lv1uAxDKn6nCdE3bW8ukJevYg-Ngg26d52QyVyyoo4NaTNvy5S1oNQ.FYST72sFzd8LjWU6.ZWBGoy2PDq8uO78ooaghnhzpoIC4Os-VE1EmJ6M33Am4UtO1h-ouJ5Neci_H7pHXnPJoI3KS6aYjcMxbFeK7vUV6KOqfZvY3uV02YEr6iAYLXtdQpy5V3JIvzYRX3TyQ4B4KHM51NdhiCv1Xf5YkEAdHeD6hScLeUIP-H7hLMOX0uQWtKMuTQAo5lSk-WB5px3tAdtgMOEnA.anSiF9s29wOx4N_BL8N8Ow"
+    }
+  }
+}
