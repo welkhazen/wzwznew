@@ -1,0 +1,362 @@
+{
+  "batchIndex": 4,
+  "nodes": [
+    {
+      "id": "config:.env",
+      "type": "config",
+      "name": ".env",
+      "filePath": ".env",
+      "summary": "Local environment variables for Vite client: Supabase URL/key, OneSignal, Sentry, Google Analytics, Clarity, PostHog, support contacts, and app version.",
+      "tags": ["configuration", "environment", "secrets", "vite"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:.env.example",
+      "type": "config",
+      "name": ".env.example",
+      "filePath": ".env.example",
+      "summary": "Template documenting all expected environment variables: client-side VITE_* keys plus server-side secrets for auth, email (Resend/Postmark), Twilio Verify, OpenAI, cron, and Supabase service role.",
+      "tags": ["configuration", "environment", "documentation", "template"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:.mcp.json",
+      "type": "config",
+      "name": ".mcp.json",
+      "filePath": ".mcp.json",
+      "summary": "Model Context Protocol server registration declaring which MCP servers Claude Code should attach for this project.",
+      "tags": ["configuration", "mcp", "tooling"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:AGENTS.md",
+      "type": "document",
+      "name": "AGENTS.md",
+      "filePath": "AGENTS.md",
+      "summary": "Behavioral guidelines for AI coding agents (think-before-coding, simplicity, surgical changes, goal-driven execution) plus gstack skill list, PR workflow, and review/quality workflow.",
+      "tags": ["documentation", "agents", "guidelines", "workflow"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:CHANGELOG.md",
+      "type": "document",
+      "name": "CHANGELOG.md",
+      "filePath": "CHANGELOG.md",
+      "summary": "Project changelog following Keep-a-Changelog format tracking unreleased additions and the initial 0.0.0 release notes.",
+      "tags": ["documentation", "changelog", "release-notes"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:CLAUDE.md",
+      "type": "document",
+      "name": "CLAUDE.md",
+      "filePath": "CLAUDE.md",
+      "summary": "Claude-specific behavioral guidelines mirroring AGENTS.md: think-before-coding, simplicity, surgical changes, goal-driven execution, plus gstack skill catalog and agent skills index.",
+      "tags": ["documentation", "claude", "guidelines", "agents"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:README.md",
+      "type": "document",
+      "name": "README.md",
+      "filePath": "README.md",
+      "summary": "Lovable project overview with editing options (Lovable web UI, local IDE, GitHub Codespaces), tech stack (Vite/React/TS/shadcn/Tailwind), local env setup, and deployment instructions.",
+      "tags": ["documentation", "entry-point", "overview", "lovable"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:SECURITY.md",
+      "type": "document",
+      "name": "SECURITY.md",
+      "filePath": "SECURITY.md",
+      "summary": "Security policy declaring supported versions and the vulnerability reporting process.",
+      "tags": ["documentation", "security", "policy"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:capacitor.config.ts",
+      "type": "config",
+      "name": "capacitor.config.ts",
+      "filePath": "capacitor.config.ts",
+      "summary": "Capacitor configuration declaring the native app id, name, and web build directory used when packaging the React app as a mobile binary.",
+      "tags": ["configuration", "capacitor", "mobile", "native"],
+      "complexity": "simple"
+    },
+    {
+      "id": "pipeline:codemagic.yaml",
+      "type": "pipeline",
+      "name": "codemagic.yaml",
+      "filePath": "codemagic.yaml",
+      "summary": "Codemagic CI/CD workflow definition that builds and signs the Capacitor-wrapped iOS/Android app for App Store / Play Store delivery.",
+      "tags": ["ci-cd", "deployment", "mobile", "codemagic"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:components.json",
+      "type": "config",
+      "name": "components.json",
+      "filePath": "components.json",
+      "summary": "shadcn/ui generator configuration: style preset, TSX output, Tailwind integration, lucide icon library, and path aliases for components/hooks/lib/utils.",
+      "tags": ["configuration", "shadcn-ui", "components", "tailwind"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:eslint.config.js",
+      "type": "config",
+      "name": "eslint.config.js",
+      "filePath": "eslint.config.js",
+      "summary": "Flat ESLint config wiring TypeScript-ESLint, React Hooks, and React Refresh rules for the Vite source tree.",
+      "tags": ["configuration", "eslint", "linting", "typescript"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:index.html",
+      "type": "file",
+      "name": "index.html",
+      "filePath": "index.html",
+      "summary": "Vite HTML entry document defining the #root mount point, meta/SEO tags, and the script tag loading src/main.tsx as a module.",
+      "tags": ["entry-point", "markup", "vite", "html"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:package.json",
+      "type": "config",
+      "name": "package.json",
+      "filePath": "package.json",
+      "summary": "npm manifest declaring the wzwznew app metadata, scripts (dev/build/lint), and the full Vite + React + shadcn/Radix + Supabase + Capacitor dependency surface.",
+      "tags": ["configuration", "npm", "dependencies", "build-system"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:postcss.config.js",
+      "type": "config",
+      "name": "postcss.config.js",
+      "filePath": "postcss.config.js",
+      "summary": "Minimal PostCSS config enabling tailwindcss and autoprefixer plugins for the Vite CSS pipeline.",
+      "tags": ["configuration", "postcss", "tailwind", "build-system"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:pyproject.toml",
+      "type": "config",
+      "name": "pyproject.toml",
+      "filePath": "pyproject.toml",
+      "summary": "Python project manifest for the auxiliary tooling/scripts: setuptools build system, optional dev dependencies, and pytest/ruff/mypy tool configuration.",
+      "tags": ["configuration", "python", "tooling", "build-system"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:skills-lock.json",
+      "type": "config",
+      "name": "skills-lock.json",
+      "filePath": "skills-lock.json",
+      "summary": "Lockfile pinning gstack/Claude skill versions and source URLs so agent skills resolve deterministically across machines.",
+      "tags": ["configuration", "lockfile", "skills", "agents"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:tailwind.config.ts",
+      "type": "config",
+      "name": "tailwind.config.ts",
+      "filePath": "tailwind.config.ts",
+      "summary": "Tailwind CSS configuration with dark-mode class strategy, content globs over src/, shadcn-style theme tokens (colors, radius, keyframes), and plugin registrations.",
+      "tags": ["configuration", "tailwind", "design-system", "build-system"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:tsconfig.app.json",
+      "type": "config",
+      "name": "tsconfig.app.json",
+      "filePath": "tsconfig.app.json",
+      "summary": "TypeScript compiler options for the application source: ES2020 target, React JSX, bundler module resolution, and the @/* path alias rooted at src/.",
+      "tags": ["configuration", "typescript", "build-system", "tsconfig"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:tsconfig.json",
+      "type": "config",
+      "name": "tsconfig.json",
+      "filePath": "tsconfig.json",
+      "summary": "Root TypeScript solution config referencing tsconfig.app.json and tsconfig.node.json with loose project-wide compiler options shared by both.",
+      "tags": ["configuration", "typescript", "build-system", "tsconfig"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "config:.env",
+      "target": "file:src/main.tsx",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:.env.example",
+      "target": "config:.env",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "config:.mcp.json",
+      "target": "document:CLAUDE.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:README.md",
+      "target": "file:index.html",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:README.md",
+      "target": "config:package.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:AGENTS.md",
+      "target": "document:CLAUDE.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:CHANGELOG.md",
+      "target": "config:package.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:SECURITY.md",
+      "target": "document:README.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "config:capacitor.config.ts",
+      "target": "file:index.html",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "pipeline:codemagic.yaml",
+      "target": "config:capacitor.config.ts",
+      "type": "triggers",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "pipeline:codemagic.yaml",
+      "target": "config:package.json",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:components.json",
+      "target": "config:tailwind.config.ts",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:components.json",
+      "target": "config:tsconfig.json",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:eslint.config.js",
+      "target": "file:src/main.tsx",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:eslint.config.js",
+      "target": "file:src/App.tsx",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:index.html",
+      "target": "file:src/main.tsx",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:package.json",
+      "target": "file:src/main.tsx",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:package.json",
+      "target": "file:index.html",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:postcss.config.js",
+      "target": "config:tailwind.config.ts",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:postcss.config.js",
+      "target": "file:src/index.css",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:tailwind.config.ts",
+      "target": "file:src/index.css",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:tailwind.config.ts",
+      "target": "file:src/App.tsx",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:tsconfig.json",
+      "target": "config:tsconfig.app.json",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:tsconfig.app.json",
+      "target": "file:src/main.tsx",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:tsconfig.app.json",
+      "target": "file:src/App.tsx",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    }
+  ]
+}

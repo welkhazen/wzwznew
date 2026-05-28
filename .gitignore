@@ -28,6 +28,8 @@ dist-ssr
 .vite-local-cache
 .env
 
+# understand-anything pipeline temp files
+.understand-anything/tmp/
 # Local Graphify assistant install/runtime files
 .agents/skills/graphify/
 .codex/hooks.json

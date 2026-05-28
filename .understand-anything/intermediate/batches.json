@@ -1,0 +1,5235 @@
+{
+  "schemaVersion": 1,
+  "algorithm": "louvain",
+  "totalFiles": 421,
+  "totalBatches": 23,
+  "exportsByPath": {
+    "api/_lib/supabaseServerClient.ts": [
+      "supabaseServerClient"
+    ],
+    "api/moderation/issue-reports.ts": [
+      "config",
+      "handler"
+    ],
+    "api/monitoring/crash-alert.ts": [
+      "config",
+      "handler"
+    ],
+    "api/notifications/send.ts": [
+      "config",
+      "handler"
+    ],
+    "api/polls/[pollId]/vote.ts": [
+      "config",
+      "handler"
+    ],
+    "api/polls/random.ts": [
+      "config",
+      "handler"
+    ],
+    "api/users/[userId]/notification-consent.ts": [
+      "config",
+      "handler"
+    ],
+    "api/users/[userId]/tokens.ts": [
+      "config",
+      "handler"
+    ],
+    "api/waitlist.ts": [
+      "config",
+      "handler"
+    ],
+    "components/raw-reveal-button.tsx": [
+      "RawRevealButton",
+      "RawRevealButtonShowcase"
+    ],
+    "server/config/env.ts": [
+      "env"
+    ],
+    "server/index.ts": [],
+    "server/lib/admin.ts": [
+      "isUserAdmin",
+      "resolveUserRole"
+    ],
+    "server/lib/assistantStore.ts": [
+      "readFeedbackEntries",
+      "appendFeedbackEntry",
+      "findRelevantFeedback"
+    ],
+    "server/lib/audit.ts": [
+      "audit"
+    ],
+    "server/lib/email.ts": [
+      "sendTransactionalEmail"
+    ],
+    "server/lib/otp.ts": [
+      "sendOtp",
+      "verifyOtp"
+    ],
+    "server/lib/password.ts": [
+      "hashPassword",
+      "verifyPassword"
+    ],
+    "server/lib/phoneHash.ts": [
+      "normalizePhone",
+      "hashPhone",
+      "maskPhone"
+    ],
+    "server/lib/pollRepository.ts": [
+      "fetchActivePolls"
+    ],
+    "server/lib/store.ts": [
+      "findUserById",
+      "findUserByUsername",
+      "findUserByPhoneHash",
+      "findUserByReferralCode",
+      "createUser",
+      "usernameExists",
+      "phoneHashExists",
+      "updateUserProfile",
+      "updateUserPasswordHash",
+      "getAnonymousVotes",
+      "buildBootstrap",
+      "toPublicUser",
+      "canVote",
+      "applyVote",
+      "recordPollVote"
+    ],
+    "server/lib/streakCron.ts": [
+      "runStreakResetAtUtc",
+      "sendStreakAtRiskEmailsUtc"
+    ],
+    "server/lib/supabaseClient.ts": [
+      "supabaseAdmin"
+    ],
+    "server/lib/userRepository.ts": [
+      "getUserRepository"
+    ],
+    "server/middleware/requireAuth.ts": [
+      "requireAuth"
+    ],
+    "server/middleware/requireTrustedOrigin.ts": [
+      "requireTrustedOrigin"
+    ],
+    "server/routes/assistant.ts": [
+      "assistantRouter"
+    ],
+    "server/routes/auth.ts": [
+      "authRouter"
+    ],
+    "server/routes/cron.ts": [
+      "cronRouter"
+    ],
+    "server/routes/notifications.ts": [
+      "notificationsRouter"
+    ],
+    "server/routes/polls.ts": [
+      "pollsRouter"
+    ],
+    "server/routes/users.ts": [
+      "usersRouter"
+    ],
+    "server/types.ts": [],
+    "src/App.tsx": [],
+    "src/backend/supabase/client.ts": [
+      "supabase",
+      "testConnection"
+    ],
+    "src/backend/supabase/controllers/authController.ts": [
+      "signUp",
+      "signIn",
+      "signOut",
+      "getSession",
+      "changePassword",
+      "deleteAccount"
+    ],
+    "src/backend/supabase/controllers/chatController.ts": [
+      "sendMessage",
+      "deleteMessage",
+      "likeMessage"
+    ],
+    "src/backend/supabase/controllers/communityController.ts": [
+      "fetchCommunities",
+      "joinCommunity",
+      "leaveCommunity",
+      "touchMemberActivity",
+      "markCommunityRead",
+      "setCommunityNotifications",
+      "createCommunityFromRequest"
+    ],
+    "src/backend/supabase/controllers/communityPollController.ts": [
+      "fetchCommunityPolls",
+      "createCommunityPoll",
+      "voteOnCommunityPoll",
+      "deleteCommunityPoll"
+    ],
+    "src/backend/supabase/controllers/communityRequestController.ts": [
+      "submitCommunityRequest",
+      "fetchCommunityRequests",
+      "updateCommunityRequestStatus"
+    ],
+    "src/backend/supabase/controllers/pollController.ts": [
+      "fetchPolls",
+      "insertPoll",
+      "deletePoll"
+    ],
+    "src/backend/supabase/controllers/userController.ts": [
+      "isUsernameTaken",
+      "getUserByUsername",
+      "createUser"
+    ],
+    "src/backend/supabase/controllers/waitlistController.ts": [
+      "fetchWaitlistSummary",
+      "joinCommunityWaitlist"
+    ],
+    "src/backend/supabase/mappers/communityMessageMapper.ts": [
+      "mapCommunityMessage"
+    ],
+    "src/backend/supabase/models/community-poll.ts": [],
+    "src/backend/supabase/models/poll.ts": [],
+    "src/backend/supabase/models/user.ts": [],
+    "src/components/ErrorBoundary.tsx": [
+      "ErrorBoundary"
+    ],
+    "src/components/NavLink.tsx": [
+      "NavLink"
+    ],
+    "src/components/PasswordGate.tsx": [
+      "PasswordGate"
+    ],
+    "src/components/analytics/AnalyticsProvider.tsx": [
+      "AnalyticsProvider"
+    ],
+    "src/components/dashboard/CommunityBadge.tsx": [
+      "CommunityBadge"
+    ],
+    "src/components/dashboard/DashboardChallenges.tsx": [
+      "DashboardChallenges"
+    ],
+    "src/components/dashboard/DashboardCommunities.tsx": [
+      "DashboardCommunities"
+    ],
+    "src/components/dashboard/DashboardDailySpin.tsx": [
+      "DashboardDailySpin"
+    ],
+    "src/components/dashboard/DashboardHome.tsx": [
+      "DashboardHome"
+    ],
+    "src/components/dashboard/DashboardInventory.tsx": [
+      "DashboardInventory"
+    ],
+    "src/components/dashboard/DashboardMarketplace.tsx": [
+      "DashboardMarketplace"
+    ],
+    "src/components/dashboard/DashboardNav.tsx": [
+      "DashboardNav"
+    ],
+    "src/components/dashboard/DashboardPolls.tsx": [
+      "DashboardPolls"
+    ],
+    "src/components/dashboard/DashboardProfile.tsx": [
+      "DashboardProfile"
+    ],
+    "src/components/dashboard/DashboardSectionShell.tsx": [
+      "DashboardSectionShell"
+    ],
+    "src/components/dashboard/DashboardSidebar.tsx": [
+      "DashboardSidebar"
+    ],
+    "src/components/dashboard/DashboardWallet.tsx": [
+      "DashboardWallet"
+    ],
+    "src/components/dashboard/LevelProgressBanner.tsx": [
+      "LevelProgressBanner"
+    ],
+    "src/components/dashboard/insights/RawInsightsPanel.tsx": [
+      "RawInsightsPanel"
+    ],
+    "src/components/diagnostics/DiagnosticsProbe.tsx": [
+      "DiagnosticsProbe"
+    ],
+    "src/components/landing/AnonQuestionSection.tsx": [
+      "AnonQuestionSection"
+    ],
+    "src/components/landing/AvatarIdentity.tsx": [
+      "AvatarIdentity"
+    ],
+    "src/components/landing/AvatarProgression.tsx": [
+      "AvatarProgression"
+    ],
+    "src/components/landing/AvatarShowcaseSection.tsx": [
+      "AvatarShowcaseSection"
+    ],
+    "src/components/landing/Communities.tsx": [
+      "Communities"
+    ],
+    "src/components/landing/EarnedWarUpgradesSection.tsx": [
+      "EarnedWarUpgradesSection"
+    ],
+    "src/components/landing/EnterRawGate.tsx": [
+      "EnterRawGate"
+    ],
+    "src/components/landing/FAQSection.tsx": [
+      "FAQSection"
+    ],
+    "src/components/landing/FinalCTA.tsx": [
+      "FinalCTA"
+    ],
+    "src/components/landing/FoundingProviders.tsx": [
+      "FoundingProviders"
+    ],
+    "src/components/landing/GlobeHero.tsx": [
+      "GlobeHero"
+    ],
+    "src/components/landing/GlobeHeroTypewriterSequence.tsx": [
+      "GlobeHeroTypewriterSequence"
+    ],
+    "src/components/landing/HeroWorldTagline.tsx": [
+      "HeroWorldTagline"
+    ],
+    "src/components/landing/HowItWorks.tsx": [
+      "HowItWorks"
+    ],
+    "src/components/landing/LandingFooter.tsx": [
+      "LandingFooter"
+    ],
+    "src/components/landing/LandingPollsSection.tsx": [
+      "LandingPollsSection"
+    ],
+    "src/components/landing/LandingSectionShell.tsx": [
+      "LandingSectionShell"
+    ],
+    "src/components/landing/LandingShell.tsx": [
+      "LandingShell"
+    ],
+    "src/components/landing/Navbar.tsx": [
+      "Navbar"
+    ],
+    "src/components/landing/PersonalityInsightsSection.tsx": [
+      "PersonalityInsightsSection"
+    ],
+    "src/components/landing/PollBenefitsSection.tsx": [
+      "PollBenefitsSection"
+    ],
+    "src/components/landing/PollSection.tsx": [
+      "PollSection"
+    ],
+    "src/components/landing/PollShowcase.tsx": [
+      "PollShowcase"
+    ],
+    "src/components/landing/ProblemSection.tsx": [
+      "ProblemSection"
+    ],
+    "src/components/landing/SignupModal.tsx": [
+      "SignupModal"
+    ],
+    "src/components/landing/StickyTicker.tsx": [
+      "StickyTicker"
+    ],
+    "src/components/landing/TestimonialsSection.tsx": [
+      "TestimonialsSection"
+    ],
+    "src/components/landing/WheelReward.tsx": [
+      "WheelReward"
+    ],
+    "src/components/landing/WhyAnonymity.tsx": [
+      "WhyAnonymity"
+    ],
+    "src/components/notifications/NotificationConsentPrompt.tsx": [
+      "NotificationConsentPrompt"
+    ],
+    "src/components/onboarding/CommentsModal.tsx": [
+      "CommentsModal"
+    ],
+    "src/components/onboarding/EnterRawModal.tsx": [
+      "EnterRawModal"
+    ],
+    "src/components/onboarding/OnboardingJourney.tsx": [
+      "OnboardingJourney"
+    ],
+    "src/components/onboarding/OnboardingPollCard.tsx": [
+      "OnboardingPollCard"
+    ],
+    "src/components/onboarding/PollComments.tsx": [
+      "PollComments"
+    ],
+    "src/components/onboarding/SwipeablePollCard.tsx": [
+      "SwipeablePollCard"
+    ],
+    "src/components/polls/HoverGradientVoteButton.tsx": [
+      "HoverGradientVoteButton"
+    ],
+    "src/components/polls/PremiumPollCard.tsx": [
+      "PremiumPollCard"
+    ],
+    "src/components/polls/SharedPollPage.tsx": [
+      "SharedPollPage"
+    ],
+    "src/components/polls/useAnimatedPercent.ts": [
+      "useAnimatedPercent"
+    ],
+    "src/components/theme/ThemeCustomizer.tsx": [
+      "ThemeCustomizer"
+    ],
+    "src/components/theme/ThemeModeSwitcher.tsx": [
+      "ThemeModeSwitcher"
+    ],
+    "src/components/ui/3d-globe.tsx": [
+      "Globe3D"
+    ],
+    "src/components/ui/3d-testimonails.tsx": [
+      "Marquee"
+    ],
+    "src/components/ui/AvatarIdentity.tsx": [
+      "AvatarIdentity"
+    ],
+    "src/components/ui/LevelUpCelebration.tsx": [
+      "LevelUpCelebration"
+    ],
+    "src/components/ui/TokenBalanceButton.tsx": [
+      "TokenBalanceButton"
+    ],
+    "src/components/ui/accordion.tsx": [
+      "Accordion",
+      "AccordionItem",
+      "AccordionTrigger",
+      "AccordionContent"
+    ],
+    "src/components/ui/aceternity-input.tsx": [
+      "Input"
+    ],
+    "src/components/ui/aceternity-label.tsx": [
+      "Label"
+    ],
+    "src/components/ui/alert-dialog.tsx": [
+      "AlertDialog",
+      "AlertDialogPortal",
+      "AlertDialogOverlay",
+      "AlertDialogTrigger",
+      "AlertDialogContent",
+      "AlertDialogHeader",
+      "AlertDialogFooter",
+      "AlertDialogTitle",
+      "AlertDialogDescription",
+      "AlertDialogAction",
+      "AlertDialogCancel"
+    ],
+    "src/components/ui/alert.tsx": [
+      "Alert",
+      "AlertTitle",
+      "AlertDescription"
+    ],
+    "src/components/ui/aspect-ratio.tsx": [
+      "AspectRatio"
+    ],
+    "src/components/ui/avatar-figure.tsx": [
+      "AvatarFigure"
+    ],
+    "src/components/ui/avatar-phone-home-screen.tsx": [
+      "AvatarPhoneHomeScreen"
+    ],
+    "src/components/ui/avatar.tsx": [
+      "Avatar",
+      "AvatarImage",
+      "AvatarFallback"
+    ],
+    "src/components/ui/background-boxes.tsx": [
+      "BoxesCore",
+      "Boxes"
+    ],
+    "src/components/ui/badge-variants.ts": [
+      "badgeVariants"
+    ],
+    "src/components/ui/badge.tsx": [
+      "Badge"
+    ],
+    "src/components/ui/brand-name.tsx": [
+      "BrandName"
+    ],
+    "src/components/ui/breadcrumb.tsx": [
+      "Breadcrumb",
+      "BreadcrumbList",
+      "BreadcrumbItem",
+      "BreadcrumbLink",
+      "BreadcrumbPage",
+      "BreadcrumbSeparator",
+      "BreadcrumbEllipsis"
+    ],
+    "src/components/ui/button-variants.ts": [
+      "buttonVariants"
+    ],
+    "src/components/ui/button.tsx": [
+      "Button"
+    ],
+    "src/components/ui/calendar.tsx": [
+      "Calendar"
+    ],
+    "src/components/ui/card-stack.tsx": [
+      "CardStack"
+    ],
+    "src/components/ui/card.tsx": [
+      "Card",
+      "CardHeader",
+      "CardFooter",
+      "CardTitle",
+      "CardDescription",
+      "CardContent"
+    ],
+    "src/components/ui/carousel.tsx": [
+      "CarouselApi",
+      "Carousel",
+      "CarouselContent",
+      "CarouselItem",
+      "CarouselPrevious",
+      "CarouselNext"
+    ],
+    "src/components/ui/checkbox.tsx": [
+      "Checkbox"
+    ],
+    "src/components/ui/collapsible.tsx": [
+      "Collapsible",
+      "CollapsibleTrigger",
+      "CollapsibleContent"
+    ],
+    "src/components/ui/container-text-flip.lazy.tsx": [
+      "ContainerTextFlipLazy"
+    ],
+    "src/components/ui/container-text-flip.tsx": [
+      "ContainerTextFlip"
+    ],
+    "src/components/ui/context-menu.tsx": [
+      "ContextMenu",
+      "ContextMenuTrigger",
+      "ContextMenuContent",
+      "ContextMenuItem",
+      "ContextMenuCheckboxItem",
+      "ContextMenuRadioItem",
+      "ContextMenuLabel",
+      "ContextMenuSeparator",
+      "ContextMenuShortcut",
+      "ContextMenuGroup",
+      "ContextMenuPortal",
+      "ContextMenuSub",
+      "ContextMenuSubContent",
+      "ContextMenuSubTrigger",
+      "ContextMenuRadioGroup"
+    ],
+    "src/components/ui/demo.tsx": [
+      "SpiralDemo"
+    ],
+    "src/components/ui/diagonal-split-progress.tsx": [
+      "DiagonalSplitProgress"
+    ],
+    "src/components/ui/dialog.tsx": [
+      "Dialog",
+      "DialogPortal",
+      "DialogOverlay",
+      "DialogClose",
+      "DialogTrigger",
+      "DialogContent",
+      "DialogHeader",
+      "DialogFooter",
+      "DialogTitle",
+      "DialogDescription"
+    ],
+    "src/components/ui/dotted-surface.tsx": [
+      "DottedSurface"
+    ],
+    "src/components/ui/draggable-card.tsx": [
+      "DraggableCardBody",
+      "DraggableCardContainer"
+    ],
+    "src/components/ui/drawer.tsx": [
+      "Drawer",
+      "DrawerPortal",
+      "DrawerOverlay",
+      "DrawerTrigger",
+      "DrawerClose",
+      "DrawerContent",
+      "DrawerHeader",
+      "DrawerFooter",
+      "DrawerTitle",
+      "DrawerDescription"
+    ],
+    "src/components/ui/dropdown-menu.tsx": [
+      "DropdownMenu",
+      "DropdownMenuTrigger",
+      "DropdownMenuContent",
+      "DropdownMenuItem",
+      "DropdownMenuCheckboxItem",
+      "DropdownMenuRadioItem",
+      "DropdownMenuLabel",
+      "DropdownMenuSeparator",
+      "DropdownMenuShortcut",
+      "DropdownMenuGroup",
+      "DropdownMenuPortal",
+      "DropdownMenuSub",
+      "DropdownMenuSubContent",
+      "DropdownMenuSubTrigger",
+      "DropdownMenuRadioGroup"
+    ],
+    "src/components/ui/floating-dock.tsx": [
+      "FloatingDock"
+    ],
+    "src/components/ui/form.tsx": [
+      "Form",
+      "FormItem",
+      "FormLabel",
+      "FormControl",
+      "FormDescription",
+      "FormMessage",
+      "FormField"
+    ],
+    "src/components/ui/glare-card.tsx": [
+      "GlareCard"
+    ],
+    "src/components/ui/globe-hero.tsx": [
+      "DotGlobeHero",
+      "Globe"
+    ],
+    "src/components/ui/highlightRawWordmark.tsx": [
+      "highlightRawWordmark"
+    ],
+    "src/components/ui/hover-card.tsx": [
+      "HoverCard",
+      "HoverCardTrigger",
+      "HoverCardContent"
+    ],
+    "src/components/ui/infinite-moving-cards.tsx": [
+      "InfiniteMovingCards"
+    ],
+    "src/components/ui/input-otp.tsx": [
+      "InputOTP",
+      "InputOTPGroup",
+      "InputOTPSlot",
+      "InputOTPSeparator"
+    ],
+    "src/components/ui/input.tsx": [
+      "Input"
+    ],
+    "src/components/ui/label.tsx": [
+      "Label"
+    ],
+    "src/components/ui/logo-3d.tsx": [
+      "Logo3D"
+    ],
+    "src/components/ui/macbook-scroll.tsx": [
+      "MacbookScroll",
+      "Lid",
+      "Trackpad",
+      "Keypad",
+      "KBtn",
+      "SpeakerGrid",
+      "OptionKey"
+    ],
+    "src/components/ui/matrix-background-intro.tsx": [],
+    "src/components/ui/matrix-background.tsx": [],
+    "src/components/ui/menubar.tsx": [
+      "Menubar",
+      "MenubarMenu",
+      "MenubarTrigger",
+      "MenubarContent",
+      "MenubarItem",
+      "MenubarSeparator",
+      "MenubarLabel",
+      "MenubarCheckboxItem",
+      "MenubarRadioGroup",
+      "MenubarRadioItem",
+      "MenubarPortal",
+      "MenubarSubContent",
+      "MenubarSubTrigger",
+      "MenubarGroup",
+      "MenubarSub",
+      "MenubarShortcut"
+    ],
+    "src/components/ui/minimal-footer.tsx": [
+      "MinimalFooter"
+    ],
+    "src/components/ui/navigation-menu.tsx": [
+      "NavigationMenu",
+      "NavigationMenuList",
+      "NavigationMenuItem",
+      "NavigationMenuContent",
+      "NavigationMenuTrigger",
+      "NavigationMenuLink",
+      "NavigationMenuIndicator",
+      "NavigationMenuViewport"
+    ],
+    "src/components/ui/pagination.tsx": [
+      "Pagination",
+      "PaginationContent",
+      "PaginationEllipsis",
+      "PaginationItem",
+      "PaginationLink",
+      "PaginationNext",
+      "PaginationPrevious"
+    ],
+    "src/components/ui/perforated-background.tsx": [],
+    "src/components/ui/phone-mockup.tsx": [
+      "PhoneMockup"
+    ],
+    "src/components/ui/popover.tsx": [
+      "Popover",
+      "PopoverTrigger",
+      "PopoverContent"
+    ],
+    "src/components/ui/progress.tsx": [
+      "Progress"
+    ],
+    "src/components/ui/radial-orbital-timeline-demo.tsx": [
+      "RadialOrbitalTimelineDemo"
+    ],
+    "src/components/ui/radial-orbital-timeline.tsx": [
+      "RadialOrbitalTimeline",
+      "TimelineItem"
+    ],
+    "src/components/ui/radio-group.tsx": [
+      "RadioGroup",
+      "RadioGroupItem"
+    ],
+    "src/components/ui/resizable.tsx": [
+      "ResizablePanelGroup",
+      "ResizablePanel",
+      "ResizableHandle"
+    ],
+    "src/components/ui/scroll-area.tsx": [
+      "ScrollArea",
+      "ScrollBar"
+    ],
+    "src/components/ui/select.tsx": [
+      "Select",
+      "SelectGroup",
+      "SelectValue",
+      "SelectTrigger",
+      "SelectContent",
+      "SelectLabel",
+      "SelectItem",
+      "SelectSeparator",
+      "SelectScrollUpButton",
+      "SelectScrollDownButton"
+    ],
+    "src/components/ui/separator.tsx": [
+      "Separator"
+    ],
+    "src/components/ui/share-button.tsx": [
+      "ShareButton"
+    ],
+    "src/components/ui/sheet.tsx": [
+      "Sheet",
+      "SheetClose",
+      "SheetContent",
+      "SheetDescription",
+      "SheetFooter",
+      "SheetHeader",
+      "SheetOverlay",
+      "SheetPortal",
+      "SheetTitle",
+      "SheetTrigger"
+    ],
+    "src/components/ui/sidebar.tsx": [
+      "Sidebar",
+      "SidebarContent",
+      "SidebarFooter",
+      "SidebarGroup",
+      "SidebarGroupAction",
+      "SidebarGroupContent",
+      "SidebarGroupLabel",
+      "SidebarHeader",
+      "SidebarInput",
+      "SidebarInset",
+      "SidebarMenu",
+      "SidebarMenuAction",
+      "SidebarMenuBadge",
+      "SidebarMenuButton",
+      "SidebarMenuItem",
+      "SidebarMenuSkeleton",
+      "SidebarMenuSub",
+      "SidebarMenuSubButton",
+      "SidebarMenuSubItem",
+      "SidebarProvider",
+      "SidebarRail",
+      "SidebarSeparator",
+      "SidebarTrigger"
+    ],
+    "src/components/ui/skeleton.tsx": [
+      "Skeleton"
+    ],
+    "src/components/ui/slider.tsx": [
+      "Slider"
+    ],
+    "src/components/ui/sonner.tsx": [
+      "Toaster"
+    ],
+    "src/components/ui/spiral-animation.tsx": [
+      "SpiralAnimation"
+    ],
+    "src/components/ui/switch.tsx": [
+      "Switch"
+    ],
+    "src/components/ui/table.tsx": [
+      "Table",
+      "TableHeader",
+      "TableBody",
+      "TableFooter",
+      "TableHead",
+      "TableRow",
+      "TableCell",
+      "TableCaption"
+    ],
+    "src/components/ui/tabs-aceternity.tsx": [
+      "Tabs",
+      "FadeInDiv"
+    ],
+    "src/components/ui/tabs.tsx": [
+      "Tabs",
+      "TabsList",
+      "TabsTrigger",
+      "TabsContent"
+    ],
+    "src/components/ui/terminal.tsx": [
+      "Terminal"
+    ],
+    "src/components/ui/textarea.tsx": [
+      "Textarea"
+    ],
+    "src/components/ui/toast.tsx": [
+      "ToastProps",
+      "ToastActionElement",
+      "ToastProvider",
+      "ToastViewport",
+      "Toast",
+      "ToastTitle",
+      "ToastDescription",
+      "ToastClose",
+      "ToastAction"
+    ],
+    "src/components/ui/toaster.tsx": [
+      "Toaster"
+    ],
+    "src/components/ui/toggle-group.tsx": [
+      "ToggleGroup",
+      "ToggleGroupItem"
+    ],
+    "src/components/ui/toggle-variants.ts": [
+      "toggleVariants"
+    ],
+    "src/components/ui/toggle.tsx": [
+      "Toggle"
+    ],
+    "src/components/ui/tooltip.tsx": [
+      "Tooltip",
+      "TooltipTrigger",
+      "TooltipContent",
+      "TooltipProvider"
+    ],
+    "src/components/ui/typewriter-effect.tsx": [
+      "TypewriterEffect",
+      "TypewriterEffectSmooth"
+    ],
+    "src/components/ui/typewriter-stack.tsx": [
+      "TypewriterStack"
+    ],
+    "src/components/ui/use-toast.ts": [
+      "useToast",
+      "toast"
+    ],
+    "src/components/ui/world-map.tsx": [
+      "WorldMap"
+    ],
+    "src/components/wheel/WheelOfFortune.tsx": [
+      "WheelOfFortune"
+    ],
+    "src/features/insights/insights-engine.test.ts": [],
+    "src/features/insights/insights-engine.ts": [
+      "computeRawInsights"
+    ],
+    "src/features/insights/insights.config.ts": [
+      "RAW_INSIGHTS_UI_CONFIG",
+      "RAW_INSIGHTS_CONFIG"
+    ],
+    "src/features/insights/types.ts": [],
+    "src/features/polls/pollQuestions.ts": [
+      "POLL_QUESTION_SEEDS"
+    ],
+    "src/hooks/use-host-mode.ts": [
+      "useHostMode"
+    ],
+    "src/hooks/use-mobile.tsx": [
+      "useIsMobile"
+    ],
+    "src/hooks/use-toast.ts": [
+      "reducer",
+      "useToast",
+      "toast"
+    ],
+    "src/hooks/useFeatureExperiments.ts": [
+      "useFeatureExperiments"
+    ],
+    "src/hooks/useKeyboardOffset.ts": [
+      "useKeyboardOffset"
+    ],
+    "src/hooks/useNotificationConsent.ts": [
+      "useNotificationConsent"
+    ],
+    "src/hooks/useWebPush.ts": [
+      "useWebPush"
+    ],
+    "src/lib/adminData.ts": [
+      "COMMUNITY_REQUESTS_STORAGE_KEY",
+      "CHAT_REPORTS_STORAGE_KEY",
+      "COMMUNITY_JOIN_REQUESTS_STORAGE_KEY",
+      "ISSUE_REPORTS_STORAGE_KEY",
+      "toUserId",
+      "resolveUserRole",
+      "readPersistedUsers",
+      "writePersistedUsers",
+      "getPersistedUserById",
+      "getPersistedUserByUsername",
+      "registerOrUpdateUser",
+      "ensureUserRecord",
+      "updateUserModerationStatus",
+      "persistAuthSession",
+      "readAuthSession",
+      "clearAuthSession",
+      "readCommunityRequests",
+      "writeCommunityRequests",
+      "readChatReports",
+      "writeChatReports",
+      "readCommunityJoinRequests",
+      "writeCommunityJoinRequests",
+      "readIssueReports",
+      "writeIssueReports",
+      "readAdminPolls",
+      "writeAdminPolls",
+      "createAdminPoll",
+      "deleteAdminPoll",
+      "formatAdminTimestamp"
+    ],
+    "src/lib/analytics/client.ts": [
+      "setClient",
+      "getClient"
+    ],
+    "src/lib/analytics/events.ts": [],
+    "src/lib/analytics/index.ts": [
+      "track",
+      "trackCustom",
+      "identify",
+      "reset",
+      "group",
+      "registerSuperProps",
+      "useTrack",
+      "AppEvent",
+      "EventName",
+      "EventPropsFor"
+    ],
+    "src/lib/analytics/useTrackPageView.ts": [
+      "useTrackPageView"
+    ],
+    "src/lib/analytics/useTrackSectionView.ts": [
+      "useTrackSectionView",
+      "__resetSectionViewGuardForTests"
+    ],
+    "src/lib/api/client.ts": [
+      "ApiError",
+      "apiRequest"
+    ],
+    "src/lib/avatar-theme.ts": [
+      "AVATARS",
+      "LEVEL_THEMES",
+      "MAX_LEVEL",
+      "getAvatar",
+      "getAvatarTheme",
+      "AvatarTheme"
+    ],
+    "src/lib/avatarCatalog.ts": [
+      "consumeAvatarCatalogLocalWriteFailure",
+      "DEFAULT_AVATAR_CATALOG",
+      "getDefaultAvatarCatalog",
+      "readAvatarCatalogLocal",
+      "writeAvatarCatalogLocal",
+      "readAvatarThemesFromCache",
+      "loadAvatarCatalog",
+      "loadAvatarCatalogSupabaseOnly",
+      "readFullAvatarCatalogLocal",
+      "loadFullAvatarCatalog",
+      "loadAvatarCatalogRange",
+      "saveAvatarCatalog",
+      "deleteAvatarFromCatalog",
+      "saveAvatarCatalogSupabaseOnly",
+      "readOwnedAvatarIdsLocal",
+      "writeOwnedAvatarIdsLocal",
+      "readSelectedAvatarIdLocal",
+      "writeSelectedAvatarIdLocal",
+      "loadUserAvatarState",
+      "purchaseAvatarForUser",
+      "equipAvatarForUser"
+    ],
+    "src/lib/avatarRarity.ts": [
+      "RARITY_CONFIG",
+      "RARITY_ORDER"
+    ],
+    "src/lib/avataridentity.ts": [
+      "LEVEL_THEMES",
+      "MAX_LEVEL",
+      "setAvatarThemes",
+      "AVATARS",
+      "getAvatar",
+      "getAvatarTheme"
+    ],
+    "src/lib/blockedCommunitySenders.ts": [
+      "BLOCKED_COMMUNITY_SENDERS_KEY",
+      "getCommunitySenderBlockKey",
+      "readBlockedCommunitySenders",
+      "writeBlockedCommunitySenders"
+    ],
+    "src/lib/communityAccess.ts": [
+      "FREE_COMMUNITY_SLOTS",
+      "COMMUNITY_UNLOCK_TOKEN_COST",
+      "loadCommunityAccess",
+      "unlockCommunity"
+    ],
+    "src/lib/communityChat.seed.ts": [
+      "buildDefaultCommunities"
+    ],
+    "src/lib/communityChat.storage.ts": [
+      "normalizeMessage",
+      "normalizeMember",
+      "normalizeCommunity",
+      "readStoredCommunities",
+      "writeCommunityChats"
+    ],
+    "src/lib/communityChat.ts": [
+      "readCommunityChats",
+      "joinCommunityChat",
+      "leaveCommunityChat",
+      "touchCommunityMemberActivity",
+      "setCommunityNotifications",
+      "sendCommunityMessage",
+      "createCommunityFromApprovedRequest",
+      "updateCommunityPresentation",
+      "markCommunityRead",
+      "deleteCommunityMessage",
+      "likeCommunityMessage",
+      "approveCommunityJoinRequest",
+      "PersistedCommunityRecord",
+      "CommunityChatMessageRecord",
+      "CommunityChatMemberRecord",
+      "CommunityStatus",
+      "countOnlineMembers",
+      "countUnreadMessages",
+      "formatChatTimestamp",
+      "formatChatDayLabel",
+      "canManageCommunity"
+    ],
+    "src/lib/communityChat.types.ts": [],
+    "src/lib/communityChat.utils.ts": [
+      "toTimestamp",
+      "getLatestCommunityTimestamp",
+      "createMonotonicIsoTimestamp",
+      "buildCommunityAbbr",
+      "ensureString",
+      "ensureBoolean",
+      "countOnlineMembers",
+      "countUnreadMessages",
+      "formatChatTimestamp",
+      "formatChatDayLabel",
+      "canManageCommunity"
+    ],
+    "src/lib/communityConstants.ts": [
+      "FEATURED_COMMUNITY_IDS",
+      "FEATURED_COMMUNITY_ID_SET",
+      "COMMUNITY_COVER_IMAGES",
+      "COMMUNITY_COVER_VIDEOS"
+    ],
+    "src/lib/communityMessages.ts": [
+      "SPEAK_YOUR_TRUTH",
+      "IS_IT_JUST_ME",
+      "LATE_NIGHT_TALKS",
+      "getMessagesForCommunity"
+    ],
+    "src/lib/communityPushNotifications.ts": [
+      "sendCommunityPushNotification"
+    ],
+    "src/lib/crashAlerts.ts": [
+      "sendCrashAlert",
+      "installGlobalCrashAlerts"
+    ],
+    "src/lib/dailySpinAvatarPool.ts": [
+      "readDailySpinAvatarPool",
+      "writeDailySpinAvatarPool",
+      "upsertDailySpinAvatarPool",
+      "loadDailySpinPoolFromSupabase",
+      "saveDailySpinPoolToSupabase"
+    ],
+    "src/lib/http.ts": [
+      "apiFetch"
+    ],
+    "src/lib/inputSecurity.ts": [
+      "stripControlChars",
+      "sanitizeUsernameInput",
+      "normalizePlainText",
+      "isValidUsername",
+      "sanitizePasswordInput"
+    ],
+    "src/lib/landingNewAvatars.ts": [
+      "readLandingNewAvatarsLocal",
+      "loadLandingNewAvatars",
+      "saveLandingNewAvatars"
+    ],
+    "src/lib/matrixConstants.ts": [
+      "MATRIX_CHARS",
+      "MATRIX_CHAR_ARRAY",
+      "MATRIX_FONT_SIZE"
+    ],
+    "src/lib/pollShare.ts": [
+      "POLL_SHARE_PARAM",
+      "LEGACY_POLL_SHARE_PARAM",
+      "getPollShareCode",
+      "resolvePollShareCode"
+    ],
+    "src/lib/polls/normalizePollOptionText.ts": [
+      "normalizePollOptionText",
+      "isYesPollOption",
+      "isNoPollOption"
+    ],
+    "src/lib/sentry.ts": [
+      "initSentry"
+    ],
+    "src/lib/supabase.ts": [
+      "supabase",
+      "testConnection"
+    ],
+    "src/lib/supabasePolls.ts": [
+      "fetchPollsFromSupabase",
+      "insertPollToSupabase",
+      "deletePollFromSupabase",
+      "testSupabaseConnection"
+    ],
+    "src/lib/userProgress.ts": [
+      "XP_REWARDS",
+      "LEVEL_THRESHOLDS",
+      "xpForLevel",
+      "xpProgressInLevel",
+      "loadUserProgress",
+      "awardXP",
+      "awardXPOnce",
+      "loadUserXPClaimKeys",
+      "recordLocalLoginDay",
+      "loadLocalLoginDays"
+    ],
+    "src/lib/utils.ts": [
+      "cn"
+    ],
+    "src/main.tsx": [],
+    "src/pages/Admin.tsx": [
+      "Admin"
+    ],
+    "src/pages/AskAI.tsx": [
+      "AskAI"
+    ],
+    "src/pages/CommunitiesExplained.tsx": [
+      "CommunitiesExplained"
+    ],
+    "src/pages/Dashboard.tsx": [
+      "Dashboard"
+    ],
+    "src/pages/FAQ.tsx": [],
+    "src/pages/Index.tsx": [],
+    "src/pages/NotFound.tsx": [],
+    "src/pages/PitchSelector.tsx": [
+      "PitchSelector"
+    ],
+    "src/pages/PitchV1.tsx": [
+      "PitchV1"
+    ],
+    "src/pages/PitchV2.tsx": [
+      "PitchV2"
+    ],
+    "src/pages/PollsExplained.tsx": [
+      "PollsExplained"
+    ],
+    "src/pages/Privacy.tsx": [
+      "Privacy"
+    ],
+    "src/pages/Security.tsx": [],
+    "src/pages/Terms.tsx": [
+      "Terms"
+    ],
+    "src/pages/_TestPollOnboarding.tsx": [
+      "TestPollOnboarding"
+    ],
+    "src/providers/ThemeProvider.tsx": [
+      "ThemeProvider"
+    ],
+    "src/providers/theme-context.ts": [
+      "THEME_MODE_STORAGE_KEY",
+      "THEME_ACCENT_STORAGE_KEY",
+      "ACCENT_PRESETS",
+      "ThemeContext",
+      "THEME_MODE_ORDER",
+      "THEME_MODE_LABELS"
+    ],
+    "src/providers/useTheme.ts": [
+      "useTheme"
+    ],
+    "src/store/types.ts": [],
+    "src/store/useAuth.ts": [
+      "useAuth"
+    ],
+    "src/store/useCommunities.ts": [
+      "useCommunities"
+    ],
+    "src/store/useOnboarding.ts": [
+      "useOnboarding"
+    ],
+    "src/store/usePolls.ts": [
+      "usePolls"
+    ],
+    "src/store/useRawStore.polling.ts": [
+      "INITIAL_POLLS"
+    ],
+    "src/store/useRawStore.storage.ts": [
+      "getTodayKey",
+      "readDailyPollProgressMap",
+      "writeDailyPollProgressMap",
+      "readOnboardingMap",
+      "writeOnboardingMap"
+    ],
+    "src/store/useRawStore.ts": [
+      "AuthResult",
+      "OnboardingStep",
+      "Poll",
+      "PollOption",
+      "User",
+      "useRawStore"
+    ],
+    "src/store/useRawStore.types.ts": [
+      "DAILY_POLL_LIMIT"
+    ],
+    "src/store/useRewards.ts": [
+      "useRewards"
+    ],
+    "src/store/useUserProgress.ts": [
+      "useUserProgress"
+    ],
+    "src/test/community-chat.test.ts": [],
+    "src/test/example.test.ts": [],
+    "src/test/onboarding-persistence.test.tsx": [],
+    "src/test/onboarding-restore.test.tsx": [],
+    "src/test/poll-share.test.ts": [],
+    "src/test/setup.ts": [],
+    "src/utils/supabase.ts": [
+      "supabase"
+    ],
+    "src/utils/supabasePolls.ts": [
+      "fetchSupabasePolls",
+      "submitPollVote",
+      "fetchPollComments",
+      "addPollComment",
+      "fetchTokenBalance",
+      "spendTokens",
+      "addTokensToBalance"
+    ],
+    "src/vite-env.d.ts": []
+  },
+  "batches": [
+    {
+      "batchIndex": 1,
+      "files": [
+        {
+          "path": ".github/workflows/codacy.yml",
+          "language": "YAML",
+          "sizeLines": 61,
+          "fileCategory": "infra"
+        },
+        {
+          "path": ".github/workflows/codeql.yml",
+          "language": "YAML",
+          "sizeLines": 103,
+          "fileCategory": "infra"
+        },
+        {
+          "path": ".github/workflows/proof-html.yml",
+          "language": "YAML",
+          "sizeLines": 19,
+          "fileCategory": "infra"
+        }
+      ],
+      "batchImportData": {
+        ".github/workflows/codacy.yml": [],
+        ".github/workflows/codeql.yml": [],
+        ".github/workflows/proof-html.yml": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 2,
+      "files": [
+        {
+          "path": "supabase/migrations/20240001000000_create_polls.sql",
+          "language": "SQL",
+          "sizeLines": 13,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20240002000000_unique_username.sql",
+          "language": "SQL",
+          "sizeLines": 3,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20240002100000_create_users_table.sql",
+          "language": "SQL",
+          "sizeLines": 68,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20240003000000_auth_setup.sql",
+          "language": "SQL",
+          "sizeLines": 30,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20240004000000_custom_auth_rpcs.sql",
+          "language": "SQL",
+          "sizeLines": 68,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20240005000000_fix_auth_rpc_schema.sql",
+          "language": "SQL",
+          "sizeLines": 66,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20240006000000_communities.sql",
+          "language": "SQL",
+          "sizeLines": 111,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20240007000000_poll_options_rls.sql",
+          "language": "SQL",
+          "sizeLines": 10,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20240008000000_community_requests_update_rls.sql",
+          "language": "SQL",
+          "sizeLines": 5,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20240009000000_communities_write_access.sql",
+          "language": "SQL",
+          "sizeLines": 10,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20240010000000_backfill_approved_communities.sql",
+          "language": "SQL",
+          "sizeLines": 20,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20240011000000_community_waitlist.sql",
+          "language": "SQL",
+          "sizeLines": 51,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20240012000000_avatar_catalog_and_inventory.sql",
+          "language": "SQL",
+          "sizeLines": 81,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260503000100_avatar_catalog_inventory_selection.sql",
+          "language": "SQL",
+          "sizeLines": 105,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260504000000_poll_comments.sql",
+          "language": "SQL",
+          "sizeLines": 13,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260504000100_avatar_catalog_open_write.sql",
+          "language": "SQL",
+          "sizeLines": 10,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260504000150_avatar_catalog_fix_anon_write.sql",
+          "language": "SQL",
+          "sizeLines": 5,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260504000200_daily_spin_pool.sql",
+          "language": "SQL",
+          "sizeLines": 24,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260506000000_fix_anon_access.sql",
+          "language": "SQL",
+          "sizeLines": 44,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260506000100_avatar_storage_policies.sql",
+          "language": "SQL",
+          "sizeLines": 25,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260506000200_drop_avatar_level_unique.sql",
+          "language": "SQL",
+          "sizeLines": 4,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260506000300_poll_comments_anon_policies.sql",
+          "language": "SQL",
+          "sizeLines": 13,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260506000400_fix_avatar_catalog_policies.sql",
+          "language": "SQL",
+          "sizeLines": 24,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260507000000_cron_trim_community_messages.sql",
+          "language": "SQL",
+          "sizeLines": 36,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260508000000_landing_new_avatars.sql",
+          "language": "SQL",
+          "sizeLines": 17,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260511000000_avatar_catalog_add_is_new.sql",
+          "language": "SQL",
+          "sizeLines": 2,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260511000100_poll_votes_anon_access.sql",
+          "language": "SQL",
+          "sizeLines": 20,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260512000000_reload_pgrst_schema_cache.sql",
+          "language": "SQL",
+          "sizeLines": 4,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260512000100_fix_avatar_catalog_rls_conflict.sql",
+          "language": "SQL",
+          "sizeLines": 21,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260512000200_avatar_catalog_disable_rls.sql",
+          "language": "SQL",
+          "sizeLines": 11,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260512000300_rename_avatars_cool_names.sql",
+          "language": "SQL",
+          "sizeLines": 117,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260512000380_fix_polls_options_default.sql",
+          "language": "SQL",
+          "sizeLines": 3,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260512000400_insert_mock_polls.sql",
+          "language": "SQL",
+          "sizeLines": 76,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260512000500_insert_100_more_polls.sql",
+          "language": "SQL",
+          "sizeLines": 317,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260512000600_user_token_balance.sql",
+          "language": "SQL",
+          "sizeLines": 29,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260512000700_avatar_catalog_add_show_in.sql",
+          "language": "SQL",
+          "sizeLines": 3,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260513000000_insert_png_avatar_catalog.sql",
+          "language": "SQL",
+          "sizeLines": 99,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260513000100_avatar_catalog_rarity.sql",
+          "language": "SQL",
+          "sizeLines": 7,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260513000200_user_xp_progress.sql",
+          "language": "SQL",
+          "sizeLines": 125,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260518070732_xp_reward_claims.sql",
+          "language": "SQL",
+          "sizeLines": 164,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260518080000_community_access_subscription.sql",
+          "language": "SQL",
+          "sizeLines": 159,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260519073339_notification_consents.sql",
+          "language": "SQL",
+          "sizeLines": 34,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260519090000_issue_reports.sql",
+          "language": "SQL",
+          "sizeLines": 34,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260519100000_audit_logs.sql",
+          "language": "SQL",
+          "sizeLines": 14,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260519110000_seed_admin_xp.sql",
+          "language": "SQL",
+          "sizeLines": 12,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260520081125_new-migration.sql",
+          "language": "SQL",
+          "sizeLines": 0,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260520101528_ensure-admin-level-3-xp.sql",
+          "language": "SQL",
+          "sizeLines": 17,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260520102412_drop-obsolete-text-xp-rpcs.sql",
+          "language": "SQL",
+          "sizeLines": 7,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260521072300_allow_community_member_leave.sql",
+          "language": "SQL",
+          "sizeLines": 9,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260521090000_community_polls.sql",
+          "language": "SQL",
+          "sizeLines": 68,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260521093000_delete_lnt_messages.sql",
+          "language": "SQL",
+          "sizeLines": 3,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260521160210_add_community_messages_realtime.sql",
+          "language": "SQL",
+          "sizeLines": 12,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260522000100_reset_avatar_catalog_to_curated_8.sql",
+          "language": "SQL",
+          "sizeLines": 27,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260522090234_add_community_polls_realtime.sql",
+          "language": "SQL",
+          "sizeLines": 21,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260522122512_restore_default_free_avatar_catalog.sql",
+          "language": "SQL",
+          "sizeLines": 42,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260522124739_set_preview_avatar_shop_prices.sql",
+          "language": "SQL",
+          "sizeLines": 24,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260525072510_shared_poll_vote_guard.sql",
+          "language": "SQL",
+          "sizeLines": 6,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260525090043_fix_unlock_community_uuid_cast.sql",
+          "language": "SQL",
+          "sizeLines": 67,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/migrations/20260525145426_community_chat_performance_indexes.sql",
+          "language": "SQL",
+          "sizeLines": 9,
+          "fileCategory": "infra"
+        }
+      ],
+      "batchImportData": {
+        "supabase/migrations/20240001000000_create_polls.sql": [],
+        "supabase/migrations/20240002000000_unique_username.sql": [],
+        "supabase/migrations/20240002100000_create_users_table.sql": [],
+        "supabase/migrations/20240003000000_auth_setup.sql": [],
+        "supabase/migrations/20240004000000_custom_auth_rpcs.sql": [],
+        "supabase/migrations/20240005000000_fix_auth_rpc_schema.sql": [],
+        "supabase/migrations/20240006000000_communities.sql": [],
+        "supabase/migrations/20240007000000_poll_options_rls.sql": [],
+        "supabase/migrations/20240008000000_community_requests_update_rls.sql": [],
+        "supabase/migrations/20240009000000_communities_write_access.sql": [],
+        "supabase/migrations/20240010000000_backfill_approved_communities.sql": [],
+        "supabase/migrations/20240011000000_community_waitlist.sql": [],
+        "supabase/migrations/20240012000000_avatar_catalog_and_inventory.sql": [],
+        "supabase/migrations/20260503000100_avatar_catalog_inventory_selection.sql": [],
+        "supabase/migrations/20260504000000_poll_comments.sql": [],
+        "supabase/migrations/20260504000100_avatar_catalog_open_write.sql": [],
+        "supabase/migrations/20260504000150_avatar_catalog_fix_anon_write.sql": [],
+        "supabase/migrations/20260504000200_daily_spin_pool.sql": [],
+        "supabase/migrations/20260506000000_fix_anon_access.sql": [],
+        "supabase/migrations/20260506000100_avatar_storage_policies.sql": [],
+        "supabase/migrations/20260506000200_drop_avatar_level_unique.sql": [],
+        "supabase/migrations/20260506000300_poll_comments_anon_policies.sql": [],
+        "supabase/migrations/20260506000400_fix_avatar_catalog_policies.sql": [],
+        "supabase/migrations/20260507000000_cron_trim_community_messages.sql": [],
+        "supabase/migrations/20260508000000_landing_new_avatars.sql": [],
+        "supabase/migrations/20260511000000_avatar_catalog_add_is_new.sql": [],
+        "supabase/migrations/20260511000100_poll_votes_anon_access.sql": [],
+        "supabase/migrations/20260512000000_reload_pgrst_schema_cache.sql": [],
+        "supabase/migrations/20260512000100_fix_avatar_catalog_rls_conflict.sql": [],
+        "supabase/migrations/20260512000200_avatar_catalog_disable_rls.sql": [],
+        "supabase/migrations/20260512000300_rename_avatars_cool_names.sql": [],
+        "supabase/migrations/20260512000380_fix_polls_options_default.sql": [],
+        "supabase/migrations/20260512000400_insert_mock_polls.sql": [],
+        "supabase/migrations/20260512000500_insert_100_more_polls.sql": [],
+        "supabase/migrations/20260512000600_user_token_balance.sql": [],
+        "supabase/migrations/20260512000700_avatar_catalog_add_show_in.sql": [],
+        "supabase/migrations/20260513000000_insert_png_avatar_catalog.sql": [],
+        "supabase/migrations/20260513000100_avatar_catalog_rarity.sql": [],
+        "supabase/migrations/20260513000200_user_xp_progress.sql": [],
+        "supabase/migrations/20260518070732_xp_reward_claims.sql": [],
+        "supabase/migrations/20260518080000_community_access_subscription.sql": [],
+        "supabase/migrations/20260519073339_notification_consents.sql": [],
+        "supabase/migrations/20260519090000_issue_reports.sql": [],
+        "supabase/migrations/20260519100000_audit_logs.sql": [],
+        "supabase/migrations/20260519110000_seed_admin_xp.sql": [],
+        "supabase/migrations/20260520081125_new-migration.sql": [],
+        "supabase/migrations/20260520101528_ensure-admin-level-3-xp.sql": [],
+        "supabase/migrations/20260520102412_drop-obsolete-text-xp-rpcs.sql": [],
+        "supabase/migrations/20260521072300_allow_community_member_leave.sql": [],
+        "supabase/migrations/20260521090000_community_polls.sql": [],
+        "supabase/migrations/20260521093000_delete_lnt_messages.sql": [],
+        "supabase/migrations/20260521160210_add_community_messages_realtime.sql": [],
+        "supabase/migrations/20260522000100_reset_avatar_catalog_to_curated_8.sql": [],
+        "supabase/migrations/20260522090234_add_community_polls_realtime.sql": [],
+        "supabase/migrations/20260522122512_restore_default_free_avatar_catalog.sql": [],
+        "supabase/migrations/20260522124739_set_preview_avatar_shop_prices.sql": [],
+        "supabase/migrations/20260525072510_shared_poll_vote_guard.sql": [],
+        "supabase/migrations/20260525090043_fix_unlock_community_uuid_cast.sql": [],
+        "supabase/migrations/20260525145426_community_chat_performance_indexes.sql": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 3,
+      "files": [
+        {
+          "path": ".claude/launch.json",
+          "language": "JSON",
+          "sizeLines": 11,
+          "fileCategory": "config"
+        },
+        {
+          "path": ".claude/settings.json",
+          "language": "JSON",
+          "sizeLines": 38,
+          "fileCategory": "config"
+        },
+        {
+          "path": ".claude/settings.local.json",
+          "language": "JSON",
+          "sizeLines": 35,
+          "fileCategory": "config"
+        }
+      ],
+      "batchImportData": {
+        ".claude/launch.json": [],
+        ".claude/settings.json": [],
+        ".claude/settings.local.json": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 4,
+      "files": [
+        {
+          "path": ".env",
+          "language": "Shell",
+          "sizeLines": 11,
+          "fileCategory": "config"
+        },
+        {
+          "path": ".env.example",
+          "language": "Shell",
+          "sizeLines": 37,
+          "fileCategory": "config"
+        },
+        {
+          "path": ".mcp.json",
+          "language": "JSON",
+          "sizeLines": 7,
+          "fileCategory": "config"
+        },
+        {
+          "path": "AGENTS.md",
+          "language": "Markdown",
+          "sizeLines": 138,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "CHANGELOG.md",
+          "language": "Markdown",
+          "sizeLines": 25,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "CLAUDE.md",
+          "language": "Markdown",
+          "sizeLines": 118,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "README.md",
+          "language": "Markdown",
+          "sizeLines": 86,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "SECURITY.md",
+          "language": "Markdown",
+          "sizeLines": 21,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "capacitor.config.ts",
+          "language": "TypeScript",
+          "sizeLines": 16,
+          "fileCategory": "config"
+        },
+        {
+          "path": "codemagic.yaml",
+          "language": "YAML",
+          "sizeLines": 44,
+          "fileCategory": "config"
+        },
+        {
+          "path": "components.json",
+          "language": "JSON",
+          "sizeLines": 24,
+          "fileCategory": "config"
+        },
+        {
+          "path": "eslint.config.js",
+          "language": "JavaScript",
+          "sizeLines": 26,
+          "fileCategory": "config"
+        },
+        {
+          "path": "index.html",
+          "language": "HTML",
+          "sizeLines": 66,
+          "fileCategory": "markup"
+        },
+        {
+          "path": "package.json",
+          "language": "JSON",
+          "sizeLines": 126,
+          "fileCategory": "config"
+        },
+        {
+          "path": "postcss.config.js",
+          "language": "JavaScript",
+          "sizeLines": 6,
+          "fileCategory": "config"
+        },
+        {
+          "path": "pyproject.toml",
+          "language": "TOML",
+          "sizeLines": 35,
+          "fileCategory": "config"
+        },
+        {
+          "path": "skills-lock.json",
+          "language": "JSON",
+          "sizeLines": 101,
+          "fileCategory": "config"
+        },
+        {
+          "path": "tailwind.config.ts",
+          "language": "TypeScript",
+          "sizeLines": 129,
+          "fileCategory": "config"
+        },
+        {
+          "path": "tsconfig.app.json",
+          "language": "JSON",
+          "sizeLines": 32,
+          "fileCategory": "config"
+        },
+        {
+          "path": "tsconfig.json",
+          "language": "JSON",
+          "sizeLines": 16,
+          "fileCategory": "config"
+        }
+      ],
+      "batchImportData": {
+        ".env": [],
+        ".env.example": [],
+        ".mcp.json": [],
+        "AGENTS.md": [],
+        "CHANGELOG.md": [],
+        "CLAUDE.md": [],
+        "README.md": [],
+        "SECURITY.md": [],
+        "capacitor.config.ts": [],
+        "codemagic.yaml": [],
+        "components.json": [],
+        "eslint.config.js": [],
+        "index.html": [],
+        "package.json": [],
+        "postcss.config.js": [],
+        "pyproject.toml": [],
+        "skills-lock.json": [],
+        "tailwind.config.ts": [],
+        "tsconfig.app.json": [],
+        "tsconfig.json": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 5,
+      "files": [
+        {
+          "path": "tsconfig.node.json",
+          "language": "JSON",
+          "sizeLines": 22,
+          "fileCategory": "config"
+        },
+        {
+          "path": "vercel.json",
+          "language": "JSON",
+          "sizeLines": 79,
+          "fileCategory": "config"
+        },
+        {
+          "path": "vite.config.ts",
+          "language": "TypeScript",
+          "sizeLines": 79,
+          "fileCategory": "config"
+        },
+        {
+          "path": "vitest.config.ts",
+          "language": "TypeScript",
+          "sizeLines": 16,
+          "fileCategory": "config"
+        }
+      ],
+      "batchImportData": {
+        "tsconfig.node.json": [],
+        "vercel.json": [],
+        "vite.config.ts": [],
+        "vitest.config.ts": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 6,
+      "files": [
+        {
+          "path": "docs/agents/code-review-and-quality-workflow.md",
+          "language": "Markdown",
+          "sizeLines": 89,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/agents/domain.md",
+          "language": "Markdown",
+          "sizeLines": 8,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/agents/issue-tracker.md",
+          "language": "Markdown",
+          "sizeLines": 12,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/agents/skill-review-2026-05-20.md",
+          "language": "Markdown",
+          "sizeLines": 128,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/agents/triage-labels.md",
+          "language": "Markdown",
+          "sizeLines": 11,
+          "fileCategory": "docs"
+        }
+      ],
+      "batchImportData": {
+        "docs/agents/code-review-and-quality-workflow.md": [],
+        "docs/agents/domain.md": [],
+        "docs/agents/issue-tracker.md": [],
+        "docs/agents/skill-review-2026-05-20.md": [],
+        "docs/agents/triage-labels.md": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 7,
+      "files": [
+        {
+          "path": "docs/callflow.html",
+          "language": "HTML",
+          "sizeLines": 539,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/codebase-graph.md",
+          "language": "Markdown",
+          "sizeLines": 525,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/codebase-map.md",
+          "language": "Markdown",
+          "sizeLines": 121,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/crash-reporting-and-monitoring.md",
+          "language": "Markdown",
+          "sizeLines": 30,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/finishing-a-development-branch.md",
+          "language": "Markdown",
+          "sizeLines": 30,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/mobile-permissions-inventory.md",
+          "language": "Markdown",
+          "sizeLines": 28,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/push-notifications-setup.md",
+          "language": "Markdown",
+          "sizeLines": 75,
+          "fileCategory": "docs"
+        }
+      ],
+      "batchImportData": {
+        "docs/callflow.html": [],
+        "docs/codebase-graph.md": [],
+        "docs/codebase-map.md": [],
+        "docs/crash-reporting-and-monitoring.md": [],
+        "docs/finishing-a-development-branch.md": [],
+        "docs/mobile-permissions-inventory.md": [],
+        "docs/push-notifications-setup.md": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 8,
+      "files": [
+        {
+          "path": "docs/llm-memory-pack/00_identity.md",
+          "language": "Markdown",
+          "sizeLines": 20,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/llm-memory-pack/01_projects.md",
+          "language": "Markdown",
+          "sizeLines": 15,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/llm-memory-pack/02_decisions.md",
+          "language": "Markdown",
+          "sizeLines": 14,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/llm-memory-pack/03_open_loops.md",
+          "language": "Markdown",
+          "sizeLines": 13,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/llm-memory-pack/04_timeline.md",
+          "language": "Markdown",
+          "sizeLines": 10,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/llm-memory-pack/05_glossary.md",
+          "language": "Markdown",
+          "sizeLines": 5,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/llm-memory-pack/BOOTSTRAP_PROMPT.md",
+          "language": "Markdown",
+          "sizeLines": 24,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "docs/llm-memory-pack/README.md",
+          "language": "Markdown",
+          "sizeLines": 24,
+          "fileCategory": "docs"
+        }
+      ],
+      "batchImportData": {
+        "docs/llm-memory-pack/00_identity.md": [],
+        "docs/llm-memory-pack/01_projects.md": [],
+        "docs/llm-memory-pack/02_decisions.md": [],
+        "docs/llm-memory-pack/03_open_loops.md": [],
+        "docs/llm-memory-pack/04_timeline.md": [],
+        "docs/llm-memory-pack/05_glossary.md": [],
+        "docs/llm-memory-pack/BOOTSTRAP_PROMPT.md": [],
+        "docs/llm-memory-pack/README.md": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 9,
+      "files": [
+        {
+          "path": "graphify-out/GRAPH_REPORT.md",
+          "language": "Markdown",
+          "sizeLines": 22,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "graphify-out/graph.html",
+          "language": "HTML",
+          "sizeLines": 62,
+          "fileCategory": "markup"
+        },
+        {
+          "path": "graphify-out/graph.json",
+          "language": "JSON",
+          "sizeLines": 372,
+          "fileCategory": "data"
+        }
+      ],
+      "batchImportData": {
+        "graphify-out/GRAPH_REPORT.md": [],
+        "graphify-out/graph.html": [],
+        "graphify-out/graph.json": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 10,
+      "files": [
+        {
+          "path": "supabase/community_access_schema.sql",
+          "language": "SQL",
+          "sizeLines": 159,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/config.toml",
+          "language": "TOML",
+          "sizeLines": 408,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/full_schema_deploy.sql",
+          "language": "SQL",
+          "sizeLines": 901,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/schema.sql",
+          "language": "SQL",
+          "sizeLines": 508,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/seed.sql",
+          "language": "SQL",
+          "sizeLines": 392,
+          "fileCategory": "infra"
+        },
+        {
+          "path": "supabase/xp_schema.sql",
+          "language": "SQL",
+          "sizeLines": 181,
+          "fileCategory": "infra"
+        }
+      ],
+      "batchImportData": {
+        "supabase/community_access_schema.sql": [],
+        "supabase/config.toml": [],
+        "supabase/full_schema_deploy.sql": [],
+        "supabase/schema.sql": [],
+        "supabase/seed.sql": [],
+        "supabase/xp_schema.sql": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 11,
+      "files": [
+        {
+          "path": ".claude/hooks/check-gstack.sh",
+          "language": "Shell",
+          "sizeLines": 20,
+          "fileCategory": "config"
+        },
+        {
+          "path": ".codex/environments/environment.toml",
+          "language": "TOML",
+          "sizeLines": 11,
+          "fileCategory": "config"
+        },
+        {
+          "path": ".codex/hooks.json",
+          "language": "JSON",
+          "sizeLines": 15,
+          "fileCategory": "config"
+        },
+        {
+          "path": ".codex/hooks/check-gstack.sh",
+          "language": "Shell",
+          "sizeLines": 20,
+          "fileCategory": "config"
+        },
+        {
+          "path": ".github/copilot-instructions.md",
+          "language": "Markdown",
+          "sizeLines": 65,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".github/PULL_REQUEST_TEMPLATE.md",
+          "language": "Markdown",
+          "sizeLines": 19,
+          "fileCategory": "docs"
+        },
+        {
+          "path": ".scratch/_templates/issue.md",
+          "language": "Markdown",
+          "sizeLines": 26,
+          "fileCategory": "data"
+        },
+        {
+          "path": "api/_lib/supabaseServerClient.ts",
+          "language": "TypeScript",
+          "sizeLines": 12,
+          "fileCategory": "code"
+        },
+        {
+          "path": "api/moderation/issue-reports.ts",
+          "language": "TypeScript",
+          "sizeLines": 149,
+          "fileCategory": "code"
+        },
+        {
+          "path": "api/monitoring/crash-alert.ts",
+          "language": "TypeScript",
+          "sizeLines": 102,
+          "fileCategory": "code"
+        },
+        {
+          "path": "api/notifications/send.ts",
+          "language": "TypeScript",
+          "sizeLines": 185,
+          "fileCategory": "code"
+        },
+        {
+          "path": "api/polls/[pollId]/vote.ts",
+          "language": "TypeScript",
+          "sizeLines": 132,
+          "fileCategory": "code"
+        },
+        {
+          "path": "api/polls/random.ts",
+          "language": "TypeScript",
+          "sizeLines": 83,
+          "fileCategory": "code"
+        },
+        {
+          "path": "api/users/[userId]/notification-consent.ts",
+          "language": "TypeScript",
+          "sizeLines": 79,
+          "fileCategory": "code"
+        },
+        {
+          "path": "api/users/[userId]/tokens.ts",
+          "language": "TypeScript",
+          "sizeLines": 105,
+          "fileCategory": "code"
+        },
+        {
+          "path": "api/waitlist.ts",
+          "language": "TypeScript",
+          "sizeLines": 54,
+          "fileCategory": "code"
+        },
+        {
+          "path": "components/raw-reveal-button.tsx",
+          "language": "TypeScript",
+          "sizeLines": 90,
+          "fileCategory": "code"
+        },
+        {
+          "path": "docs/architecture/deepening-opportunities-2026-05-02.md",
+          "language": "Markdown",
+          "sizeLines": 75,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "public/codebase-callflow.html",
+          "language": "HTML",
+          "sizeLines": 62,
+          "fileCategory": "markup"
+        },
+        {
+          "path": "public/push/onesignal/OneSignalSDKUpdaterWorker.js",
+          "language": "JavaScript",
+          "sizeLines": 1,
+          "fileCategory": "script"
+        },
+        {
+          "path": "public/push/onesignal/OneSignalSDKWorker.js",
+          "language": "JavaScript",
+          "sizeLines": 1,
+          "fileCategory": "script"
+        },
+        {
+          "path": "public/sw.js",
+          "language": "JavaScript",
+          "sizeLines": 98,
+          "fileCategory": "script"
+        },
+        {
+          "path": "scripts/bootstrap-claude.sh",
+          "language": "Shell",
+          "sizeLines": 148,
+          "fileCategory": "script"
+        },
+        {
+          "path": "scripts/load-test.js",
+          "language": "JavaScript",
+          "sizeLines": 62,
+          "fileCategory": "script"
+        },
+        {
+          "path": "server/config/env.ts",
+          "language": "TypeScript",
+          "sizeLines": 78,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        ".claude/hooks/check-gstack.sh": [],
+        ".codex/environments/environment.toml": [],
+        ".codex/hooks.json": [],
+        ".codex/hooks/check-gstack.sh": [],
+        ".github/copilot-instructions.md": [],
+        ".github/PULL_REQUEST_TEMPLATE.md": [],
+        ".scratch/_templates/issue.md": [],
+        "api/_lib/supabaseServerClient.ts": [],
+        "api/moderation/issue-reports.ts": [],
+        "api/monitoring/crash-alert.ts": [],
+        "api/notifications/send.ts": [],
+        "api/polls/[pollId]/vote.ts": [],
+        "api/polls/random.ts": [
+          "api/_lib/supabaseServerClient"
+        ],
+        "api/users/[userId]/notification-consent.ts": [],
+        "api/users/[userId]/tokens.ts": [
+          "api/_lib/supabaseServerClient"
+        ],
+        "api/waitlist.ts": [],
+        "components/raw-reveal-button.tsx": [],
+        "docs/architecture/deepening-opportunities-2026-05-02.md": [],
+        "public/codebase-callflow.html": [],
+        "public/push/onesignal/OneSignalSDKUpdaterWorker.js": [],
+        "public/push/onesignal/OneSignalSDKWorker.js": [],
+        "public/sw.js": [],
+        "scripts/bootstrap-claude.sh": [],
+        "scripts/load-test.js": [],
+        "server/config/env.ts": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 12,
+      "files": [
+        {
+          "path": "server/data/assistant-feedback.json",
+          "language": "JSON",
+          "sizeLines": 0,
+          "fileCategory": "data"
+        },
+        {
+          "path": "server/index.ts",
+          "language": "TypeScript",
+          "sizeLines": 142,
+          "fileCategory": "code"
+        },
+        {
+          "path": "server/lib/admin.ts",
+          "language": "TypeScript",
+          "sizeLines": 28,
+          "fileCategory": "code"
+        },
+        {
+          "path": "server/lib/assistantStore.ts",
+          "language": "TypeScript",
+          "sizeLines": 69,
+          "fileCategory": "code"
+        },
+        {
+          "path": "server/lib/audit.ts",
+          "language": "TypeScript",
+          "sizeLines": 27,
+          "fileCategory": "code"
+        },
+        {
+          "path": "server/lib/email.ts",
+          "language": "TypeScript",
+          "sizeLines": 130,
+          "fileCategory": "code"
+        },
+        {
+          "path": "server/lib/otp.ts",
+          "language": "TypeScript",
+          "sizeLines": 68,
+          "fileCategory": "code"
+        },
+        {
+          "path": "server/lib/password.ts",
+          "language": "TypeScript",
+          "sizeLines": 13,
+          "fileCategory": "code"
+        },
+        {
+          "path": "server/lib/phoneHash.ts",
+          "language": "TypeScript",
+          "sizeLines": 36,
+          "fileCategory": "code"
+        },
+        {
+          "path": "server/lib/pollRepository.ts",
+          "language": "TypeScript",
+          "sizeLines": 143,
+          "fileCategory": "code"
+        },
+        {
+          "path": "server/lib/store.ts",
+          "language": "TypeScript",
+          "sizeLines": 230,
+          "fileCategory": "code"
+        },
+        {
+          "path": "server/lib/streakCron.ts",
+          "language": "TypeScript",
+          "sizeLines": 7,
+          "fileCategory": "code"
+        },
+        {
+          "path": "server/lib/supabaseClient.ts",
+          "language": "TypeScript",
+          "sizeLines": 9,
+          "fileCategory": "code"
+        },
+        {
+          "path": "server/lib/userRepository.ts",
+          "language": "TypeScript",
+          "sizeLines": 94,
+          "fileCategory": "code"
+        },
+        {
+          "path": "server/middleware/requireAuth.ts",
+          "language": "TypeScript",
+          "sizeLines": 11,
+          "fileCategory": "code"
+        },
+        {
+          "path": "server/middleware/requireTrustedOrigin.ts",
+          "language": "TypeScript",
+          "sizeLines": 35,
+          "fileCategory": "code"
+        },
+        {
+          "path": "server/routes/assistant.ts",
+          "language": "TypeScript",
+          "sizeLines": 182,
+          "fileCategory": "code"
+        },
+        {
+          "path": "server/routes/auth.ts",
+          "language": "TypeScript",
+          "sizeLines": 347,
+          "fileCategory": "code"
+        },
+        {
+          "path": "server/routes/cron.ts",
+          "language": "TypeScript",
+          "sizeLines": 37,
+          "fileCategory": "code"
+        },
+        {
+          "path": "server/routes/notifications.ts",
+          "language": "TypeScript",
+          "sizeLines": 149,
+          "fileCategory": "code"
+        },
+        {
+          "path": "server/routes/polls.ts",
+          "language": "TypeScript",
+          "sizeLines": 126,
+          "fileCategory": "code"
+        },
+        {
+          "path": "server/routes/users.ts",
+          "language": "TypeScript",
+          "sizeLines": 162,
+          "fileCategory": "code"
+        },
+        {
+          "path": "server/types.ts",
+          "language": "TypeScript",
+          "sizeLines": 54,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/App.css",
+          "language": "CSS",
+          "sizeLines": 42,
+          "fileCategory": "markup"
+        },
+        {
+          "path": "src/App.tsx",
+          "language": "TypeScript",
+          "sizeLines": 67,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        "server/data/assistant-feedback.json": [],
+        "server/index.ts": [
+          "server/config/env",
+          "server/lib/streakCron",
+          "server/middleware/requireTrustedOrigin",
+          "server/routes/assistant",
+          "server/routes/auth",
+          "server/routes/cron",
+          "server/routes/notifications",
+          "server/routes/polls",
+          "server/routes/users"
+        ],
+        "server/lib/admin.ts": [
+          "server/config/env",
+          "server/lib/userRepository"
+        ],
+        "server/lib/assistantStore.ts": [],
+        "server/lib/audit.ts": [
+          "server/lib/supabaseClient"
+        ],
+        "server/lib/email.ts": [
+          "server/config/env"
+        ],
+        "server/lib/otp.ts": [
+          "server/lib/audit"
+        ],
+        "server/lib/password.ts": [
+          "server/config/env"
+        ],
+        "server/lib/phoneHash.ts": [
+          "server/config/env"
+        ],
+        "server/lib/pollRepository.ts": [
+          "server/types"
+        ],
+        "server/lib/store.ts": [
+          "server/types",
+          "src/features/polls/pollQuestions"
+        ],
+        "server/lib/streakCron.ts": [],
+        "server/lib/supabaseClient.ts": [
+          "server/config/env"
+        ],
+        "server/lib/userRepository.ts": [
+          "server/lib/store",
+          "server/types"
+        ],
+        "server/middleware/requireAuth.ts": [
+          "server/types"
+        ],
+        "server/middleware/requireTrustedOrigin.ts": [
+          "server/config/env"
+        ],
+        "server/routes/assistant.ts": [
+          "server/config/env",
+          "server/lib/assistantStore"
+        ],
+        "server/routes/auth.ts": [
+          "server/config/env",
+          "server/lib/audit",
+          "server/lib/email",
+          "server/lib/otp",
+          "server/lib/password",
+          "server/lib/phoneHash",
+          "server/lib/store",
+          "server/lib/userRepository",
+          "server/types"
+        ],
+        "server/routes/cron.ts": [
+          "server/config/env",
+          "server/lib/streakCron"
+        ],
+        "server/routes/notifications.ts": [
+          "server/config/env",
+          "server/lib/admin",
+          "server/lib/email",
+          "server/middleware/requireAuth",
+          "server/types"
+        ],
+        "server/routes/polls.ts": [
+          "server/lib/audit",
+          "server/lib/pollRepository",
+          "server/lib/store",
+          "server/lib/userRepository",
+          "server/types"
+        ],
+        "server/routes/users.ts": [
+          "server/lib/admin",
+          "server/lib/audit",
+          "server/lib/password",
+          "server/lib/userRepository",
+          "server/middleware/requireAuth",
+          "server/types"
+        ],
+        "server/types.ts": [],
+        "src/App.css": [],
+        "src/App.tsx": [
+          "src/components/ErrorBoundary",
+          "src/components/analytics/AnalyticsProvider",
+          "src/components/ui/sonner",
+          "src/components/ui/toaster",
+          "src/components/ui/tooltip",
+          "src/pages/Admin",
+          "src/pages/AskAI",
+          "src/pages/CommunitiesExplained",
+          "src/pages/FAQ",
+          "src/pages/Index",
+          "src/pages/NotFound",
+          "src/pages/PitchSelector",
+          "src/pages/PitchV1",
+          "src/pages/PitchV2",
+          "src/pages/PollsExplained",
+          "src/pages/Privacy",
+          "src/pages/Security",
+          "src/pages/Terms",
+          "src/pages/_TestPollOnboarding",
+          "src/providers/ThemeProvider"
+        ]
+      },
+      "neighborMap": {
+        "src/App.tsx": [
+          {
+            "path": "src/main.tsx",
+            "batchIndex": 21,
+            "symbols": []
+          }
+        ]
+      }
+    },
+    {
+      "batchIndex": 13,
+      "files": [
+        {
+          "path": "src/backend/supabase/client.ts",
+          "language": "TypeScript",
+          "sizeLines": 16,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/backend/supabase/controllers/authController.ts",
+          "language": "TypeScript",
+          "sizeLines": 114,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/backend/supabase/controllers/chatController.ts",
+          "language": "TypeScript",
+          "sizeLines": 42,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/backend/supabase/controllers/communityController.ts",
+          "language": "TypeScript",
+          "sizeLines": 139,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/backend/supabase/controllers/communityPollController.ts",
+          "language": "TypeScript",
+          "sizeLines": 125,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/backend/supabase/controllers/communityRequestController.ts",
+          "language": "TypeScript",
+          "sizeLines": 92,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/backend/supabase/controllers/pollController.ts",
+          "language": "TypeScript",
+          "sizeLines": 63,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/backend/supabase/controllers/userController.ts",
+          "language": "TypeScript",
+          "sizeLines": 39,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/backend/supabase/controllers/waitlistController.ts",
+          "language": "TypeScript",
+          "sizeLines": 45,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/backend/supabase/mappers/communityMessageMapper.ts",
+          "language": "TypeScript",
+          "sizeLines": 35,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/backend/supabase/models/community-poll.ts",
+          "language": "TypeScript",
+          "sizeLines": 53,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/backend/supabase/models/poll.ts",
+          "language": "TypeScript",
+          "sizeLines": 23,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/backend/supabase/models/user.ts",
+          "language": "TypeScript",
+          "sizeLines": 16,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/analytics/AnalyticsProvider.tsx",
+          "language": "TypeScript",
+          "sizeLines": 65,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/dashboard/CommunityBadge.tsx",
+          "language": "TypeScript",
+          "sizeLines": 28,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/dashboard/DashboardChallenges.tsx",
+          "language": "TypeScript",
+          "sizeLines": 345,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/dashboard/DashboardCommunities.tsx",
+          "language": "TypeScript",
+          "sizeLines": 2406,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/dashboard/DashboardDailySpin.tsx",
+          "language": "TypeScript",
+          "sizeLines": 367,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/dashboard/DashboardHome.tsx",
+          "language": "TypeScript",
+          "sizeLines": 383,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/dashboard/DashboardInventory.tsx",
+          "language": "TypeScript",
+          "sizeLines": 419,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/dashboard/DashboardMarketplace.tsx",
+          "language": "TypeScript",
+          "sizeLines": 195,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/dashboard/DashboardNav.tsx",
+          "language": "TypeScript",
+          "sizeLines": 831,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/dashboard/DashboardPolls.tsx",
+          "language": "TypeScript",
+          "sizeLines": 872,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/dashboard/DashboardProfile.tsx",
+          "language": "TypeScript",
+          "sizeLines": 267,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/dashboard/DashboardSectionShell.tsx",
+          "language": "TypeScript",
+          "sizeLines": 16,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        "src/backend/supabase/client.ts": [],
+        "src/backend/supabase/controllers/authController.ts": [
+          "src/backend/supabase/client"
+        ],
+        "src/backend/supabase/controllers/chatController.ts": [
+          "src/backend/supabase/client",
+          "src/backend/supabase/mappers/communityMessageMapper",
+          "src/lib/communityChat.types"
+        ],
+        "src/backend/supabase/controllers/communityController.ts": [
+          "src/backend/supabase/client",
+          "src/backend/supabase/mappers/communityMessageMapper",
+          "src/lib/adminData",
+          "src/lib/communityChat.types",
+          "src/lib/communityChat.utils"
+        ],
+        "src/backend/supabase/controllers/communityPollController.ts": [
+          "src/backend/supabase/client",
+          "src/backend/supabase/models/community-poll"
+        ],
+        "src/backend/supabase/controllers/communityRequestController.ts": [
+          "src/backend/supabase/client",
+          "src/lib/adminData"
+        ],
+        "src/backend/supabase/controllers/pollController.ts": [
+          "src/backend/supabase/client",
+          "src/backend/supabase/models/poll"
+        ],
+        "src/backend/supabase/controllers/userController.ts": [
+          "src/backend/supabase/client",
+          "src/backend/supabase/models/user"
+        ],
+        "src/backend/supabase/controllers/waitlistController.ts": [
+          "src/backend/supabase/client"
+        ],
+        "src/backend/supabase/mappers/communityMessageMapper.ts": [
+          "src/lib/communityChat.types"
+        ],
+        "src/backend/supabase/models/community-poll.ts": [],
+        "src/backend/supabase/models/poll.ts": [],
+        "src/backend/supabase/models/user.ts": [],
+        "src/components/analytics/AnalyticsProvider.tsx": [
+          "src/lib/analytics",
+          "src/lib/analytics/events",
+          "src/lib/analytics/useTrackPageView",
+          "src/store/useRawStore"
+        ],
+        "src/components/dashboard/CommunityBadge.tsx": [],
+        "src/components/dashboard/DashboardChallenges.tsx": [
+          "src/components/dashboard/DashboardDailySpin",
+          "src/components/ui/use-toast",
+          "src/lib/userProgress",
+          "src/store/useRawStore.storage"
+        ],
+        "src/components/dashboard/DashboardCommunities.tsx": [
+          "src/assets/LNT.webp",
+          "src/assets/itisjustme.webp",
+          "src/assets/logospeak.webp",
+          "src/backend/supabase/client",
+          "src/backend/supabase/controllers/chatController",
+          "src/backend/supabase/controllers/communityController",
+          "src/backend/supabase/controllers/communityPollController",
+          "src/backend/supabase/controllers/communityRequestController",
+          "src/backend/supabase/controllers/waitlistController",
+          "src/backend/supabase/mappers/communityMessageMapper",
+          "src/backend/supabase/models/community-poll",
+          "src/components/dashboard/CommunityBadge",
+          "src/components/ui/avatar-figure",
+          "src/components/ui/button",
+          "src/components/ui/dialog",
+          "src/components/ui/dropdown-menu",
+          "src/components/ui/input",
+          "src/components/ui/textarea",
+          "src/components/ui/use-toast",
+          "src/lib/adminData",
+          "src/lib/avatarCatalog",
+          "src/lib/blockedCommunitySenders",
+          "src/lib/communityAccess",
+          "src/lib/communityChat",
+          "src/lib/communityChat.seed",
+          "src/lib/communityChat.types",
+          "src/lib/communityConstants",
+          "src/lib/communityPushNotifications",
+          "src/store/types"
+        ],
+        "src/components/dashboard/DashboardDailySpin.tsx": [
+          "src/components/ui/dialog",
+          "src/components/wheel/WheelOfFortune",
+          "src/lib/dailySpinAvatarPool",
+          "src/providers/useTheme"
+        ],
+        "src/components/dashboard/DashboardHome.tsx": [
+          "src/components/dashboard/DashboardNav",
+          "src/components/dashboard/LevelProgressBanner",
+          "src/components/ui/container-text-flip.lazy",
+          "src/lib/communityChat",
+          "src/lib/communityConstants",
+          "src/providers/useTheme",
+          "src/store/useRawStore",
+          "src/store/useRawStore.storage"
+        ],
+        "src/components/dashboard/DashboardInventory.tsx": [
+          "src/assets/tokens.webp",
+          "src/components/ui/avatar-figure",
+          "src/components/wheel/WheelOfFortune",
+          "src/lib/avatarCatalog",
+          "src/lib/avatarRarity",
+          "src/store/useRawStore",
+          "src/utils/supabasePolls"
+        ],
+        "src/components/dashboard/DashboardMarketplace.tsx": [
+          "src/components/ui/glare-card"
+        ],
+        "src/components/dashboard/DashboardNav.tsx": [
+          "src/components/dashboard/LevelProgressBanner",
+          "src/components/ui/TokenBalanceButton",
+          "src/components/ui/avatar-figure",
+          "src/components/ui/button",
+          "src/components/ui/dialog",
+          "src/components/ui/dropdown-menu",
+          "src/components/ui/input",
+          "src/components/ui/textarea",
+          "src/components/ui/use-toast",
+          "src/lib/adminData",
+          "src/lib/analytics",
+          "src/lib/blockedCommunitySenders",
+          "src/lib/communityChat",
+          "src/lib/communityChat.types",
+          "src/lib/http",
+          "src/lib/userProgress",
+          "src/lib/utils",
+          "src/providers/theme-context",
+          "src/providers/useTheme"
+        ],
+        "src/components/dashboard/DashboardPolls.tsx": [
+          "src/components/polls/PremiumPollCard",
+          "src/components/ui/share-button",
+          "src/lib/pollShare",
+          "src/lib/polls/normalizePollOptionText",
+          "src/providers/useTheme",
+          "src/store/useRawStore",
+          "src/utils/supabasePolls"
+        ],
+        "src/components/dashboard/DashboardProfile.tsx": [
+          "src/backend/supabase/controllers/authController",
+          "src/components/dashboard/LevelProgressBanner",
+          "src/components/ui/avatar-figure",
+          "src/hooks/use-toast",
+          "src/lib/avataridentity"
+        ],
+        "src/components/dashboard/DashboardSectionShell.tsx": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 14,
+      "files": [
+        {
+          "path": "src/components/dashboard/DashboardSidebar.tsx",
+          "language": "TypeScript",
+          "sizeLines": 113,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/dashboard/DashboardWallet.tsx",
+          "language": "TypeScript",
+          "sizeLines": 153,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/dashboard/insights/RawInsightsPanel.tsx",
+          "language": "TypeScript",
+          "sizeLines": 168,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/dashboard/LevelProgressBanner.tsx",
+          "language": "TypeScript",
+          "sizeLines": 78,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/diagnostics/DiagnosticsProbe.tsx",
+          "language": "TypeScript",
+          "sizeLines": 53,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ErrorBoundary.tsx",
+          "language": "TypeScript",
+          "sizeLines": 108,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/landing/AnonQuestionSection.tsx",
+          "language": "TypeScript",
+          "sizeLines": 81,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/landing/AvatarIdentity.tsx",
+          "language": "TypeScript",
+          "sizeLines": 32,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/landing/AvatarProgression.tsx",
+          "language": "TypeScript",
+          "sizeLines": 58,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/landing/AvatarShowcaseSection.tsx",
+          "language": "TypeScript",
+          "sizeLines": 595,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/landing/Communities.tsx",
+          "language": "TypeScript",
+          "sizeLines": 408,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/landing/EarnedWarUpgradesSection.tsx",
+          "language": "TypeScript",
+          "sizeLines": 45,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/landing/EnterRawGate.tsx",
+          "language": "TypeScript",
+          "sizeLines": 71,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/landing/FAQSection.tsx",
+          "language": "TypeScript",
+          "sizeLines": 84,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/landing/FinalCTA.tsx",
+          "language": "TypeScript",
+          "sizeLines": 234,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/landing/FoundingProviders.tsx",
+          "language": "TypeScript",
+          "sizeLines": 33,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/landing/GlobeHero.tsx",
+          "language": "TypeScript",
+          "sizeLines": 179,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/landing/GlobeHeroTypewriterSequence.tsx",
+          "language": "TypeScript",
+          "sizeLines": 65,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/landing/HeroWorldTagline.tsx",
+          "language": "TypeScript",
+          "sizeLines": 27,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/landing/HowItWorks.tsx",
+          "language": "TypeScript",
+          "sizeLines": 73,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/landing/LandingFooter.tsx",
+          "language": "TypeScript",
+          "sizeLines": 97,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/landing/LandingPollsSection.tsx",
+          "language": "TypeScript",
+          "sizeLines": 322,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/landing/LandingSectionShell.tsx",
+          "language": "TypeScript",
+          "sizeLines": 61,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/landing/LandingShell.tsx",
+          "language": "TypeScript",
+          "sizeLines": 98,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/landing/Navbar.tsx",
+          "language": "TypeScript",
+          "sizeLines": 156,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        "src/components/dashboard/DashboardSidebar.tsx": [
+          "src/components/dashboard/DashboardNav",
+          "src/components/ui/floating-dock",
+          "src/lib/communityChat"
+        ],
+        "src/components/dashboard/DashboardWallet.tsx": [
+          "src/assets/tokens.webp",
+          "src/store/useRawStore"
+        ],
+        "src/components/dashboard/insights/RawInsightsPanel.tsx": [
+          "src/features/insights/insights-engine",
+          "src/features/insights/insights.config",
+          "src/features/insights/types",
+          "src/store/useRawStore"
+        ],
+        "src/components/dashboard/LevelProgressBanner.tsx": [
+          "src/assets/lvl-1.webp",
+          "src/assets/lvl-10.webp",
+          "src/assets/lvl-2.webp",
+          "src/assets/lvl-3.webp",
+          "src/assets/lvl-4.webp",
+          "src/assets/lvl-5.webp",
+          "src/assets/lvl-6.webp",
+          "src/assets/lvl-7.webp",
+          "src/assets/lvl-8.webp",
+          "src/assets/lvl-9.webp",
+          "src/lib/userProgress",
+          "src/lib/utils"
+        ],
+        "src/components/diagnostics/DiagnosticsProbe.tsx": [
+          "src/lib/analytics",
+          "src/lib/crashAlerts"
+        ],
+        "src/components/ErrorBoundary.tsx": [
+          "src/lib/analytics",
+          "src/lib/crashAlerts"
+        ],
+        "src/components/landing/AnonQuestionSection.tsx": [
+          "src/lib/analytics",
+          "src/lib/http"
+        ],
+        "src/components/landing/AvatarIdentity.tsx": [
+          "src/components/landing/LandingSectionShell",
+          "src/lib/analytics/useTrackSectionView"
+        ],
+        "src/components/landing/AvatarProgression.tsx": [
+          "src/components/landing/LandingSectionShell",
+          "src/components/ui/avatar-figure",
+          "src/lib/analytics/useTrackSectionView",
+          "src/lib/avatar-theme"
+        ],
+        "src/components/landing/AvatarShowcaseSection.tsx": [
+          "components/raw-reveal-button",
+          "src/components/landing/LandingSectionShell",
+          "src/components/ui/avatar-figure",
+          "src/components/ui/avatar-phone-home-screen",
+          "src/components/ui/phone-mockup",
+          "src/lib/analytics/useTrackSectionView",
+          "src/lib/avatarCatalog",
+          "src/lib/avataridentity",
+          "src/lib/landingNewAvatars",
+          "src/providers/useTheme"
+        ],
+        "src/components/landing/Communities.tsx": [
+          "src/assets/2026-04-18 10_10_00.webm",
+          "src/assets/LB.webp",
+          "src/assets/itisjustme.webm",
+          "src/assets/speakyourheart.webm",
+          "src/lib/analytics/useTrackSectionView",
+          "src/lib/communityMessages"
+        ],
+        "src/components/landing/EarnedWarUpgradesSection.tsx": [
+          "src/assets/war-level-badges.webp"
+        ],
+        "src/components/landing/EnterRawGate.tsx": [
+          "src/components/landing/LandingShell",
+          "src/components/ui/brand-name"
+        ],
+        "src/components/landing/FAQSection.tsx": [],
+        "src/components/landing/FinalCTA.tsx": [
+          "src/components/ui/brand-name",
+          "src/components/ui/container-text-flip.lazy",
+          "src/components/ui/minimal-footer",
+          "src/lib/analytics",
+          "src/lib/analytics/useTrackSectionView",
+          "src/lib/http"
+        ],
+        "src/components/landing/FoundingProviders.tsx": [],
+        "src/components/landing/GlobeHero.tsx": [
+          "src/components/ui/globe-hero",
+          "src/components/ui/typewriter-stack",
+          "src/lib/analytics",
+          "src/providers/useTheme"
+        ],
+        "src/components/landing/GlobeHeroTypewriterSequence.tsx": [
+          "src/components/ui/typewriter-effect"
+        ],
+        "src/components/landing/HeroWorldTagline.tsx": [
+          "src/components/ui/badge",
+          "src/components/ui/card",
+          "src/lib/utils"
+        ],
+        "src/components/landing/HowItWorks.tsx": [
+          "src/components/ui/terminal",
+          "src/lib/analytics/useTrackSectionView"
+        ],
+        "src/components/landing/LandingFooter.tsx": [],
+        "src/components/landing/LandingPollsSection.tsx": [
+          "src/components/landing/LandingSectionShell",
+          "src/components/polls/PremiumPollCard",
+          "src/features/polls/pollQuestions",
+          "src/hooks/useKeyboardOffset",
+          "src/lib/analytics/useTrackSectionView",
+          "src/providers/useTheme",
+          "src/utils/supabasePolls"
+        ],
+        "src/components/landing/LandingSectionShell.tsx": [
+          "src/components/ui/highlightRawWordmark"
+        ],
+        "src/components/landing/LandingShell.tsx": [
+          "src/components/landing/AvatarShowcaseSection",
+          "src/components/landing/Communities",
+          "src/components/landing/EarnedWarUpgradesSection",
+          "src/components/landing/GlobeHero",
+          "src/components/landing/HowItWorks",
+          "src/components/landing/LandingFooter",
+          "src/components/landing/LandingPollsSection",
+          "src/components/landing/Navbar",
+          "src/components/landing/PersonalityInsightsSection",
+          "src/components/landing/PollShowcase",
+          "src/components/landing/ProblemSection",
+          "src/components/landing/SignupModal",
+          "src/components/landing/TestimonialsSection",
+          "src/components/landing/WheelReward",
+          "src/components/landing/WhyAnonymity",
+          "src/components/ui/matrix-background",
+          "src/components/ui/perforated-background",
+          "src/store/types"
+        ],
+        "src/components/landing/Navbar.tsx": [
+          "src/components/theme/ThemeCustomizer",
+          "src/components/theme/ThemeModeSwitcher",
+          "src/lib/analytics",
+          "src/providers/useTheme"
+        ]
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 15,
+      "files": [
+        {
+          "path": "src/components/landing/PersonalityInsightsSection.tsx",
+          "language": "TypeScript",
+          "sizeLines": 283,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/landing/PollBenefitsSection.tsx",
+          "language": "TypeScript",
+          "sizeLines": 71,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/landing/PollSection.tsx",
+          "language": "TypeScript",
+          "sizeLines": 774,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/landing/PollShowcase.tsx",
+          "language": "TypeScript",
+          "sizeLines": 169,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/landing/ProblemSection.tsx",
+          "language": "TypeScript",
+          "sizeLines": 29,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/landing/SignupModal.tsx",
+          "language": "TypeScript",
+          "sizeLines": 368,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/landing/StickyTicker.tsx",
+          "language": "TypeScript",
+          "sizeLines": 65,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/landing/TestimonialsSection.tsx",
+          "language": "TypeScript",
+          "sizeLines": 138,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/landing/WheelReward.tsx",
+          "language": "TypeScript",
+          "sizeLines": 119,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/landing/WhyAnonymity.tsx",
+          "language": "TypeScript",
+          "sizeLines": 52,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/NavLink.tsx",
+          "language": "TypeScript",
+          "sizeLines": 28,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/notifications/NotificationConsentPrompt.tsx",
+          "language": "TypeScript",
+          "sizeLines": 49,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/onboarding/CommentsModal.tsx",
+          "language": "TypeScript",
+          "sizeLines": 64,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/onboarding/EnterRawModal.tsx",
+          "language": "TypeScript",
+          "sizeLines": 90,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/onboarding/OnboardingJourney.tsx",
+          "language": "TypeScript",
+          "sizeLines": 863,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/onboarding/OnboardingPollCard.tsx",
+          "language": "TypeScript",
+          "sizeLines": 373,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/onboarding/PollComments.tsx",
+          "language": "TypeScript",
+          "sizeLines": 264,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/onboarding/SwipeablePollCard.tsx",
+          "language": "TypeScript",
+          "sizeLines": 97,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/PasswordGate.tsx",
+          "language": "TypeScript",
+          "sizeLines": 101,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/polls/HoverGradientVoteButton.tsx",
+          "language": "TypeScript",
+          "sizeLines": 150,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/polls/PremiumPollCard.tsx",
+          "language": "TypeScript",
+          "sizeLines": 222,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/polls/SharedPollPage.tsx",
+          "language": "TypeScript",
+          "sizeLines": 125,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/polls/useAnimatedPercent.ts",
+          "language": "TypeScript",
+          "sizeLines": 47,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/theme/ThemeCustomizer.tsx",
+          "language": "TypeScript",
+          "sizeLines": 104,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/theme/ThemeModeSwitcher.tsx",
+          "language": "TypeScript",
+          "sizeLines": 92,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        "src/components/landing/PersonalityInsightsSection.tsx": [
+          "src/components/ui/glare-card",
+          "src/lib/analytics/useTrackSectionView",
+          "src/providers/useTheme"
+        ],
+        "src/components/landing/PollBenefitsSection.tsx": [],
+        "src/components/landing/PollSection.tsx": [
+          "src/components/landing/LandingSectionShell",
+          "src/lib/analytics",
+          "src/lib/analytics/useTrackSectionView",
+          "src/store/useRawStore"
+        ],
+        "src/components/landing/PollShowcase.tsx": [
+          "src/components/polls/PremiumPollCard",
+          "src/features/polls/pollQuestions"
+        ],
+        "src/components/landing/ProblemSection.tsx": [
+          "src/components/ui/radial-orbital-timeline-demo",
+          "src/lib/analytics/useTrackSectionView"
+        ],
+        "src/components/landing/SignupModal.tsx": [
+          "src/lib/analytics",
+          "src/lib/inputSecurity",
+          "src/store/useRawStore"
+        ],
+        "src/components/landing/StickyTicker.tsx": [],
+        "src/components/landing/TestimonialsSection.tsx": [
+          "src/components/ui/3d-testimonails",
+          "src/components/ui/avatar",
+          "src/components/ui/card"
+        ],
+        "src/components/landing/WheelReward.tsx": [
+          "src/components/landing/LandingSectionShell",
+          "src/components/wheel/WheelOfFortune",
+          "src/lib/analytics",
+          "src/lib/analytics/useTrackSectionView",
+          "src/providers/useTheme"
+        ],
+        "src/components/landing/WhyAnonymity.tsx": [
+          "src/components/ui/glare-card",
+          "src/lib/analytics/useTrackSectionView"
+        ],
+        "src/components/NavLink.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/notifications/NotificationConsentPrompt.tsx": [
+          "src/components/ui/button",
+          "src/components/ui/dialog",
+          "src/hooks/useNotificationConsent"
+        ],
+        "src/components/onboarding/CommentsModal.tsx": [
+          "src/components/onboarding/PollComments"
+        ],
+        "src/components/onboarding/EnterRawModal.tsx": [
+          "src/components/ui/brand-name"
+        ],
+        "src/components/onboarding/OnboardingJourney.tsx": [
+          "src/assets/2026-04-18 10_10_00.webm",
+          "src/assets/itisjustme.webm",
+          "src/assets/speakyourheart.webm",
+          "src/components/onboarding/EnterRawModal",
+          "src/components/onboarding/SwipeablePollCard",
+          "src/components/ui/avatar-figure",
+          "src/components/ui/avatar-phone-home-screen",
+          "src/components/ui/brand-name",
+          "src/components/ui/phone-mockup",
+          "src/lib/analytics",
+          "src/lib/avatarCatalog",
+          "src/lib/avataridentity",
+          "src/store/useRawStore",
+          "src/utils/supabasePolls"
+        ],
+        "src/components/onboarding/OnboardingPollCard.tsx": [
+          "src/components/polls/useAnimatedPercent",
+          "src/providers/useTheme"
+        ],
+        "src/components/onboarding/PollComments.tsx": [],
+        "src/components/onboarding/SwipeablePollCard.tsx": [
+          "src/components/polls/PremiumPollCard",
+          "src/lib/polls/normalizePollOptionText"
+        ],
+        "src/components/PasswordGate.tsx": [],
+        "src/components/polls/HoverGradientVoteButton.tsx": [
+          "src/components/polls/useAnimatedPercent",
+          "src/lib/utils"
+        ],
+        "src/components/polls/PremiumPollCard.tsx": [
+          "src/assets/BRAIN.webp",
+          "src/components/polls/HoverGradientVoteButton",
+          "src/components/ui/share-button",
+          "src/lib/utils",
+          "src/providers/useTheme"
+        ],
+        "src/components/polls/SharedPollPage.tsx": [
+          "src/components/polls/PremiumPollCard",
+          "src/components/ui/button",
+          "src/lib/pollShare",
+          "src/store/types",
+          "src/utils/supabasePolls"
+        ],
+        "src/components/polls/useAnimatedPercent.ts": [],
+        "src/components/theme/ThemeCustomizer.tsx": [
+          "src/components/ui/button",
+          "src/components/ui/popover",
+          "src/lib/utils",
+          "src/providers/useTheme"
+        ],
+        "src/components/theme/ThemeModeSwitcher.tsx": [
+          "src/lib/utils",
+          "src/providers/theme-context",
+          "src/providers/useTheme"
+        ]
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 16,
+      "files": [
+        {
+          "path": "src/components/ui/3d-globe.tsx",
+          "language": "TypeScript",
+          "sizeLines": 488,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/3d-testimonails.tsx",
+          "language": "TypeScript",
+          "sizeLines": 73,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/accordion.tsx",
+          "language": "TypeScript",
+          "sizeLines": 52,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/aceternity-input.tsx",
+          "language": "TypeScript",
+          "sizeLines": 48,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/aceternity-label.tsx",
+          "language": "TypeScript",
+          "sizeLines": 20,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/alert-dialog.tsx",
+          "language": "TypeScript",
+          "sizeLines": 104,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/alert.tsx",
+          "language": "TypeScript",
+          "sizeLines": 43,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/aspect-ratio.tsx",
+          "language": "TypeScript",
+          "sizeLines": 5,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/avatar-figure.tsx",
+          "language": "TypeScript",
+          "sizeLines": 168,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/avatar-phone-home-screen.tsx",
+          "language": "TypeScript",
+          "sizeLines": 321,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/avatar.tsx",
+          "language": "TypeScript",
+          "sizeLines": 38,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/AvatarIdentity.tsx",
+          "language": "TypeScript",
+          "sizeLines": 32,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/background-boxes.tsx",
+          "language": "TypeScript",
+          "sizeLines": 74,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/badge-variants.ts",
+          "language": "TypeScript",
+          "sizeLines": 18,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/badge.tsx",
+          "language": "TypeScript",
+          "sizeLines": 13,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/brand-name.tsx",
+          "language": "TypeScript",
+          "sizeLines": 16,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/breadcrumb.tsx",
+          "language": "TypeScript",
+          "sizeLines": 90,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/button-variants.ts",
+          "language": "TypeScript",
+          "sizeLines": 27,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/button.tsx",
+          "language": "TypeScript",
+          "sizeLines": 22,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/calendar.tsx",
+          "language": "TypeScript",
+          "sizeLines": 54,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/card-stack.tsx",
+          "language": "TypeScript",
+          "sizeLines": 70,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/card.tsx",
+          "language": "TypeScript",
+          "sizeLines": 43,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/carousel.tsx",
+          "language": "TypeScript",
+          "sizeLines": 224,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/checkbox.tsx",
+          "language": "TypeScript",
+          "sizeLines": 26,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/collapsible.tsx",
+          "language": "TypeScript",
+          "sizeLines": 9,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        "src/components/ui/3d-globe.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/3d-testimonails.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/accordion.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/aceternity-input.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/aceternity-label.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/alert-dialog.tsx": [
+          "src/components/ui/button-variants",
+          "src/lib/utils"
+        ],
+        "src/components/ui/alert.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/aspect-ratio.tsx": [],
+        "src/components/ui/avatar-figure.tsx": [
+          "src/lib/avatarRarity",
+          "src/lib/avataridentity"
+        ],
+        "src/components/ui/avatar-phone-home-screen.tsx": [
+          "src/components/ui/avatar-figure",
+          "src/lib/avataridentity"
+        ],
+        "src/components/ui/avatar.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/AvatarIdentity.tsx": [
+          "src/components/landing/LandingSectionShell",
+          "src/components/ui/logo-3d",
+          "src/lib/analytics/useTrackSectionView"
+        ],
+        "src/components/ui/background-boxes.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/badge-variants.ts": [],
+        "src/components/ui/badge.tsx": [
+          "src/components/ui/badge-variants",
+          "src/lib/utils"
+        ],
+        "src/components/ui/brand-name.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/breadcrumb.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/button-variants.ts": [],
+        "src/components/ui/button.tsx": [
+          "src/components/ui/button-variants",
+          "src/lib/utils"
+        ],
+        "src/components/ui/calendar.tsx": [
+          "src/components/ui/button-variants",
+          "src/lib/utils"
+        ],
+        "src/components/ui/card-stack.tsx": [],
+        "src/components/ui/card.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/carousel.tsx": [
+          "src/components/ui/button",
+          "src/lib/utils"
+        ],
+        "src/components/ui/checkbox.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/collapsible.tsx": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 17,
+      "files": [
+        {
+          "path": "src/components/ui/container-text-flip.lazy.tsx",
+          "language": "TypeScript",
+          "sizeLines": 7,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/container-text-flip.tsx",
+          "language": "TypeScript",
+          "sizeLines": 92,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/context-menu.tsx",
+          "language": "TypeScript",
+          "sizeLines": 178,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/demo.tsx",
+          "language": "TypeScript",
+          "sizeLines": 33,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/diagonal-split-progress.tsx",
+          "language": "TypeScript",
+          "sizeLines": 135,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/dialog.tsx",
+          "language": "TypeScript",
+          "sizeLines": 97,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/dotted-surface.tsx",
+          "language": "TypeScript",
+          "sizeLines": 152,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/draggable-card.tsx",
+          "language": "TypeScript",
+          "sizeLines": 173,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/drawer.tsx",
+          "language": "TypeScript",
+          "sizeLines": 87,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/dropdown-menu.tsx",
+          "language": "TypeScript",
+          "sizeLines": 179,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/floating-dock.tsx",
+          "language": "TypeScript",
+          "sizeLines": 234,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/form.tsx",
+          "language": "TypeScript",
+          "sizeLines": 129,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/glare-card.tsx",
+          "language": "TypeScript",
+          "sizeLines": 47,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/globe-hero.tsx",
+          "language": "TypeScript",
+          "sizeLines": 87,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/highlightRawWordmark.tsx",
+          "language": "TypeScript",
+          "sizeLines": 18,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/hover-card.tsx",
+          "language": "TypeScript",
+          "sizeLines": 27,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/infinite-moving-cards.tsx",
+          "language": "TypeScript",
+          "sizeLines": 113,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/input-otp.tsx",
+          "language": "TypeScript",
+          "sizeLines": 61,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/input.tsx",
+          "language": "TypeScript",
+          "sizeLines": 22,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/label.tsx",
+          "language": "TypeScript",
+          "sizeLines": 17,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/LevelUpCelebration.tsx",
+          "language": "TypeScript",
+          "sizeLines": 102,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/logo-3d.tsx",
+          "language": "TypeScript",
+          "sizeLines": 105,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/macbook-scroll.tsx",
+          "language": "TypeScript",
+          "sizeLines": 637,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/matrix-background-intro.tsx",
+          "language": "TypeScript",
+          "sizeLines": 157,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/matrix-background.tsx",
+          "language": "TypeScript",
+          "sizeLines": 162,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        "src/components/ui/container-text-flip.lazy.tsx": [
+          "src/components/ui/container-text-flip"
+        ],
+        "src/components/ui/container-text-flip.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/context-menu.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/demo.tsx": [
+          "src/components/ui/spiral-animation"
+        ],
+        "src/components/ui/diagonal-split-progress.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/dialog.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/dotted-surface.tsx": [
+          "src/lib/utils",
+          "src/providers/useTheme"
+        ],
+        "src/components/ui/draggable-card.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/drawer.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/dropdown-menu.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/floating-dock.tsx": [
+          "src/lib/utils",
+          "src/providers/useTheme"
+        ],
+        "src/components/ui/form.tsx": [
+          "src/components/ui/label",
+          "src/lib/utils"
+        ],
+        "src/components/ui/glare-card.tsx": [],
+        "src/components/ui/globe-hero.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/highlightRawWordmark.tsx": [
+          "src/components/ui/brand-name"
+        ],
+        "src/components/ui/hover-card.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/infinite-moving-cards.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/input-otp.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/input.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/label.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/LevelUpCelebration.tsx": [],
+        "src/components/ui/logo-3d.tsx": [],
+        "src/components/ui/macbook-scroll.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/matrix-background-intro.tsx": [
+          "src/lib/matrixConstants"
+        ],
+        "src/components/ui/matrix-background.tsx": [
+          "src/lib/matrixConstants"
+        ]
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 18,
+      "files": [
+        {
+          "path": "src/components/ui/menubar.tsx",
+          "language": "TypeScript",
+          "sizeLines": 207,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/minimal-footer.tsx",
+          "language": "TypeScript",
+          "sizeLines": 186,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/navigation-menu.tsx",
+          "language": "TypeScript",
+          "sizeLines": 119,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/pagination.tsx",
+          "language": "TypeScript",
+          "sizeLines": 82,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/perforated-background.tsx",
+          "language": "TypeScript",
+          "sizeLines": 91,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/phone-mockup.tsx",
+          "language": "TypeScript",
+          "sizeLines": 56,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/popover.tsx",
+          "language": "TypeScript",
+          "sizeLines": 29,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/progress.tsx",
+          "language": "TypeScript",
+          "sizeLines": 23,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/radial-orbital-timeline-demo.tsx",
+          "language": "TypeScript",
+          "sizeLines": 71,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/radial-orbital-timeline.tsx",
+          "language": "TypeScript",
+          "sizeLines": 394,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/radio-group.tsx",
+          "language": "TypeScript",
+          "sizeLines": 36,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/resizable.tsx",
+          "language": "TypeScript",
+          "sizeLines": 37,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/scroll-area.tsx",
+          "language": "TypeScript",
+          "sizeLines": 38,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/select.tsx",
+          "language": "TypeScript",
+          "sizeLines": 143,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/separator.tsx",
+          "language": "TypeScript",
+          "sizeLines": 20,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/share-button.tsx",
+          "language": "TypeScript",
+          "sizeLines": 108,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/sheet.tsx",
+          "language": "TypeScript",
+          "sizeLines": 107,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/sidebar.tsx",
+          "language": "TypeScript",
+          "sizeLines": 636,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/skeleton.tsx",
+          "language": "TypeScript",
+          "sizeLines": 7,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/slider.tsx",
+          "language": "TypeScript",
+          "sizeLines": 23,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/sonner.tsx",
+          "language": "TypeScript",
+          "sizeLines": 27,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/spiral-animation.tsx",
+          "language": "TypeScript",
+          "sizeLines": 302,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/switch.tsx",
+          "language": "TypeScript",
+          "sizeLines": 27,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/table.tsx",
+          "language": "TypeScript",
+          "sizeLines": 72,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/tabs-aceternity.tsx",
+          "language": "TypeScript",
+          "sizeLines": 116,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        "src/components/ui/menubar.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/minimal-footer.tsx": [],
+        "src/components/ui/navigation-menu.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/pagination.tsx": [
+          "src/components/ui/button",
+          "src/components/ui/button-variants",
+          "src/lib/utils"
+        ],
+        "src/components/ui/perforated-background.tsx": [],
+        "src/components/ui/phone-mockup.tsx": [],
+        "src/components/ui/popover.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/progress.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/radial-orbital-timeline-demo.tsx": [
+          "src/components/ui/radial-orbital-timeline"
+        ],
+        "src/components/ui/radial-orbital-timeline.tsx": [
+          "src/providers/useTheme"
+        ],
+        "src/components/ui/radio-group.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/resizable.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/scroll-area.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/select.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/separator.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/share-button.tsx": [
+          "src/components/ui/button",
+          "src/lib/utils"
+        ],
+        "src/components/ui/sheet.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/sidebar.tsx": [
+          "src/components/ui/button",
+          "src/components/ui/input",
+          "src/components/ui/separator",
+          "src/components/ui/sheet",
+          "src/components/ui/skeleton",
+          "src/components/ui/tooltip",
+          "src/hooks/use-mobile",
+          "src/lib/utils"
+        ],
+        "src/components/ui/skeleton.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/slider.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/sonner.tsx": [],
+        "src/components/ui/spiral-animation.tsx": [],
+        "src/components/ui/switch.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/table.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/tabs-aceternity.tsx": [
+          "src/lib/utils"
+        ]
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 19,
+      "files": [
+        {
+          "path": "src/components/ui/tabs.tsx",
+          "language": "TypeScript",
+          "sizeLines": 53,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/terminal.tsx",
+          "language": "TypeScript",
+          "sizeLines": 447,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/textarea.tsx",
+          "language": "TypeScript",
+          "sizeLines": 21,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/toast.tsx",
+          "language": "TypeScript",
+          "sizeLines": 111,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/toaster.tsx",
+          "language": "TypeScript",
+          "sizeLines": 24,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/toggle-group.tsx",
+          "language": "TypeScript",
+          "sizeLines": 49,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/toggle-variants.ts",
+          "language": "TypeScript",
+          "sizeLines": 22,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/toggle.tsx",
+          "language": "TypeScript",
+          "sizeLines": 17,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/TokenBalanceButton.tsx",
+          "language": "TypeScript",
+          "sizeLines": 84,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/tooltip.tsx",
+          "language": "TypeScript",
+          "sizeLines": 28,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/typewriter-effect.tsx",
+          "language": "TypeScript",
+          "sizeLines": 186,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/typewriter-stack.tsx",
+          "language": "TypeScript",
+          "sizeLines": 181,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/use-toast.ts",
+          "language": "TypeScript",
+          "sizeLines": 3,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/ui/world-map.tsx",
+          "language": "TypeScript",
+          "sizeLines": 157,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/components/wheel/WheelOfFortune.tsx",
+          "language": "TypeScript",
+          "sizeLines": 259,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/features/insights/insights-engine.test.ts",
+          "language": "TypeScript",
+          "sizeLines": 67,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/features/insights/insights-engine.ts",
+          "language": "TypeScript",
+          "sizeLines": 83,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/features/insights/insights.config.ts",
+          "language": "TypeScript",
+          "sizeLines": 115,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/features/insights/types.ts",
+          "language": "TypeScript",
+          "sizeLines": 79,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/features/polls/pollQuestions.ts",
+          "language": "TypeScript",
+          "sizeLines": 29,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/hooks/use-host-mode.ts",
+          "language": "TypeScript",
+          "sizeLines": 24,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/hooks/use-mobile.tsx",
+          "language": "TypeScript",
+          "sizeLines": 19,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/hooks/use-toast.ts",
+          "language": "TypeScript",
+          "sizeLines": 186,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/hooks/useFeatureExperiments.ts",
+          "language": "TypeScript",
+          "sizeLines": 16,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/hooks/useKeyboardOffset.ts",
+          "language": "TypeScript",
+          "sizeLines": 43,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        "src/components/ui/tabs.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/terminal.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/textarea.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/toast.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/toaster.tsx": [
+          "src/components/ui/toast",
+          "src/hooks/use-toast"
+        ],
+        "src/components/ui/toggle-group.tsx": [
+          "src/components/ui/toggle-variants",
+          "src/lib/utils"
+        ],
+        "src/components/ui/toggle-variants.ts": [],
+        "src/components/ui/toggle.tsx": [
+          "src/components/ui/toggle-variants",
+          "src/lib/utils"
+        ],
+        "src/components/ui/TokenBalanceButton.tsx": [
+          "src/assets/tokens.webp",
+          "src/providers/useTheme",
+          "src/store/useRawStore"
+        ],
+        "src/components/ui/tooltip.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/typewriter-effect.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/typewriter-stack.tsx": [
+          "src/lib/utils"
+        ],
+        "src/components/ui/use-toast.ts": [
+          "src/hooks/use-toast"
+        ],
+        "src/components/ui/world-map.tsx": [],
+        "src/components/wheel/WheelOfFortune.tsx": [
+          "src/providers/useTheme"
+        ],
+        "src/features/insights/insights-engine.test.ts": [
+          "src/features/insights/insights-engine",
+          "src/features/insights/types"
+        ],
+        "src/features/insights/insights-engine.ts": [
+          "src/features/insights/insights.config",
+          "src/features/insights/types"
+        ],
+        "src/features/insights/insights.config.ts": [
+          "src/features/insights/types"
+        ],
+        "src/features/insights/types.ts": [
+          "src/store/useRawStore"
+        ],
+        "src/features/polls/pollQuestions.ts": [],
+        "src/hooks/use-host-mode.ts": [],
+        "src/hooks/use-mobile.tsx": [],
+        "src/hooks/use-toast.ts": [
+          "src/components/ui/toast"
+        ],
+        "src/hooks/useFeatureExperiments.ts": [],
+        "src/hooks/useKeyboardOffset.ts": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 20,
+      "files": [
+        {
+          "path": "src/hooks/useNotificationConsent.ts",
+          "language": "TypeScript",
+          "sizeLines": 231,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/hooks/useWebPush.ts",
+          "language": "TypeScript",
+          "sizeLines": 26,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/index.css",
+          "language": "CSS",
+          "sizeLines": 1072,
+          "fileCategory": "markup"
+        },
+        {
+          "path": "src/lib/adminData.ts",
+          "language": "TypeScript",
+          "sizeLines": 314,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/lib/analytics/client.ts",
+          "language": "TypeScript",
+          "sizeLines": 27,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/lib/analytics/events.ts",
+          "language": "TypeScript",
+          "sizeLines": 378,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/lib/analytics/index.ts",
+          "language": "TypeScript",
+          "sizeLines": 121,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/lib/analytics/README.md",
+          "language": "Markdown",
+          "sizeLines": 41,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "src/lib/analytics/useTrackPageView.ts",
+          "language": "TypeScript",
+          "sizeLines": 55,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/lib/analytics/useTrackSectionView.ts",
+          "language": "TypeScript",
+          "sizeLines": 79,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/lib/api/client.ts",
+          "language": "TypeScript",
+          "sizeLines": 183,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/lib/avatar-theme.ts",
+          "language": "TypeScript",
+          "sizeLines": 2,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/lib/avatarCatalog.ts",
+          "language": "TypeScript",
+          "sizeLines": 532,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/lib/avataridentity.ts",
+          "language": "TypeScript",
+          "sizeLines": 53,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/lib/avatarRarity.ts",
+          "language": "TypeScript",
+          "sizeLines": 33,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/lib/blockedCommunitySenders.ts",
+          "language": "TypeScript",
+          "sizeLines": 32,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/lib/communityAccess.ts",
+          "language": "TypeScript",
+          "sizeLines": 62,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/lib/communityChat.seed.ts",
+          "language": "TypeScript",
+          "sizeLines": 110,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/lib/communityChat.storage.ts",
+          "language": "TypeScript",
+          "sizeLines": 109,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/lib/communityChat.ts",
+          "language": "TypeScript",
+          "sizeLines": 366,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/lib/communityChat.types.ts",
+          "language": "TypeScript",
+          "sizeLines": 61,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/lib/communityChat.utils.ts",
+          "language": "TypeScript",
+          "sizeLines": 98,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/lib/communityConstants.ts",
+          "language": "TypeScript",
+          "sizeLines": 22,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/lib/communityMessages.ts",
+          "language": "TypeScript",
+          "sizeLines": 167,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/lib/communityPushNotifications.ts",
+          "language": "TypeScript",
+          "sizeLines": 29,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        "src/hooks/useNotificationConsent.ts": [
+          "src/lib/analytics",
+          "src/lib/supabase"
+        ],
+        "src/hooks/useWebPush.ts": [
+          "src/lib/analytics"
+        ],
+        "src/index.css": [],
+        "src/lib/adminData.ts": [],
+        "src/lib/analytics/client.ts": [],
+        "src/lib/analytics/events.ts": [],
+        "src/lib/analytics/index.ts": [
+          "src/lib/analytics/client",
+          "src/lib/analytics/events"
+        ],
+        "src/lib/analytics/README.md": [],
+        "src/lib/analytics/useTrackPageView.ts": [
+          "src/lib/analytics/index"
+        ],
+        "src/lib/analytics/useTrackSectionView.ts": [
+          "src/lib/analytics/events",
+          "src/lib/analytics/index"
+        ],
+        "src/lib/api/client.ts": [
+          "src/backend/supabase/client",
+          "src/features/polls/pollQuestions"
+        ],
+        "src/lib/avatar-theme.ts": [],
+        "src/lib/avatarCatalog.ts": [
+          "src/lib/avatarRarity",
+          "src/lib/supabase"
+        ],
+        "src/lib/avataridentity.ts": [
+          "src/lib/avatarCatalog"
+        ],
+        "src/lib/avatarRarity.ts": [],
+        "src/lib/blockedCommunitySenders.ts": [],
+        "src/lib/communityAccess.ts": [
+          "src/lib/supabase"
+        ],
+        "src/lib/communityChat.seed.ts": [
+          "src/assets/LNT.webp",
+          "src/assets/logospeak.webp",
+          "src/lib/adminData",
+          "src/lib/communityChat.types"
+        ],
+        "src/lib/communityChat.storage.ts": [
+          "src/lib/adminData",
+          "src/lib/communityChat.types",
+          "src/lib/communityChat.utils"
+        ],
+        "src/lib/communityChat.ts": [
+          "src/assets/LNT.webp",
+          "src/assets/logospeak.webp",
+          "src/lib/adminData",
+          "src/lib/communityChat.seed",
+          "src/lib/communityChat.storage",
+          "src/lib/communityChat.types",
+          "src/lib/communityChat.utils"
+        ],
+        "src/lib/communityChat.types.ts": [],
+        "src/lib/communityChat.utils.ts": [
+          "src/lib/adminData",
+          "src/lib/communityChat.types"
+        ],
+        "src/lib/communityConstants.ts": [
+          "src/assets/2026-04-18 10_10_00.webm",
+          "src/assets/LB.webp",
+          "src/assets/itisjustme.webm",
+          "src/assets/speakyourheart.webm"
+        ],
+        "src/lib/communityMessages.ts": [],
+        "src/lib/communityPushNotifications.ts": [
+          "src/lib/http"
+        ]
+      },
+      "neighborMap": {
+        "src/index.css": [
+          {
+            "path": "src/main.tsx",
+            "batchIndex": 21,
+            "symbols": []
+          }
+        ]
+      }
+    },
+    {
+      "batchIndex": 21,
+      "files": [
+        {
+          "path": "src/lib/crashAlerts.ts",
+          "language": "TypeScript",
+          "sizeLines": 63,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/lib/dailySpinAvatarPool.ts",
+          "language": "TypeScript",
+          "sizeLines": 105,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/lib/http.ts",
+          "language": "TypeScript",
+          "sizeLines": 33,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/lib/inputSecurity.ts",
+          "language": "TypeScript",
+          "sizeLines": 25,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/lib/landingNewAvatars.ts",
+          "language": "TypeScript",
+          "sizeLines": 88,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/lib/matrixConstants.ts",
+          "language": "TypeScript",
+          "sizeLines": 6,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/lib/polls/normalizePollOptionText.ts",
+          "language": "TypeScript",
+          "sizeLines": 11,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/lib/pollShare.ts",
+          "language": "TypeScript",
+          "sizeLines": 22,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/lib/sentry.ts",
+          "language": "TypeScript",
+          "sizeLines": 18,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/lib/supabase.ts",
+          "language": "TypeScript",
+          "sizeLines": 1,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/lib/supabasePolls.ts",
+          "language": "TypeScript",
+          "sizeLines": 2,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/lib/userProgress.ts",
+          "language": "TypeScript",
+          "sizeLines": 247,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/lib/utils.ts",
+          "language": "TypeScript",
+          "sizeLines": 6,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/main.tsx",
+          "language": "TypeScript",
+          "sizeLines": 94,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/pages/_TestPollOnboarding.tsx",
+          "language": "TypeScript",
+          "sizeLines": 96,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/pages/Admin.tsx",
+          "language": "TypeScript",
+          "sizeLines": 3188,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/pages/AskAI.tsx",
+          "language": "TypeScript",
+          "sizeLines": 200,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/pages/CommunitiesExplained.tsx",
+          "language": "TypeScript",
+          "sizeLines": 146,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/pages/Dashboard.tsx",
+          "language": "TypeScript",
+          "sizeLines": 444,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/pages/FAQ.tsx",
+          "language": "TypeScript",
+          "sizeLines": 29,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/pages/Index.tsx",
+          "language": "TypeScript",
+          "sizeLines": 193,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/pages/NotFound.tsx",
+          "language": "TypeScript",
+          "sizeLines": 24,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/pages/PitchSelector.tsx",
+          "language": "TypeScript",
+          "sizeLines": 38,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/pages/PitchV1.tsx",
+          "language": "TypeScript",
+          "sizeLines": 70,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/pages/PitchV2.tsx",
+          "language": "TypeScript",
+          "sizeLines": 125,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        "src/lib/crashAlerts.ts": [
+          "src/lib/http"
+        ],
+        "src/lib/dailySpinAvatarPool.ts": [
+          "src/lib/supabase"
+        ],
+        "src/lib/http.ts": [
+          "src/lib/analytics"
+        ],
+        "src/lib/inputSecurity.ts": [],
+        "src/lib/landingNewAvatars.ts": [
+          "src/lib/supabase"
+        ],
+        "src/lib/matrixConstants.ts": [],
+        "src/lib/polls/normalizePollOptionText.ts": [],
+        "src/lib/pollShare.ts": [
+          "src/store/types"
+        ],
+        "src/lib/sentry.ts": [],
+        "src/lib/supabase.ts": [],
+        "src/lib/supabasePolls.ts": [],
+        "src/lib/userProgress.ts": [
+          "src/lib/supabase"
+        ],
+        "src/lib/utils.ts": [],
+        "src/main.tsx": [
+          "src/App.tsx",
+          "src/components/ErrorBoundary",
+          "src/index.css",
+          "src/lib/analytics",
+          "src/lib/analytics/client",
+          "src/lib/crashAlerts",
+          "src/lib/sentry",
+          "src/styles/raw-reveal-button.css"
+        ],
+        "src/pages/_TestPollOnboarding.tsx": [
+          "src/components/onboarding/OnboardingJourney",
+          "src/store/types"
+        ],
+        "src/pages/Admin.tsx": [
+          "src/backend/supabase/controllers/communityController",
+          "src/backend/supabase/controllers/communityRequestController",
+          "src/components/ui/button",
+          "src/components/ui/use-toast",
+          "src/components/wheel/WheelOfFortune",
+          "src/lib/adminData",
+          "src/lib/analytics",
+          "src/lib/avatarCatalog",
+          "src/lib/avatarRarity",
+          "src/lib/avataridentity",
+          "src/lib/communityChat",
+          "src/lib/communityPushNotifications",
+          "src/lib/dailySpinAvatarPool",
+          "src/lib/http",
+          "src/lib/landingNewAvatars",
+          "src/lib/supabase",
+          "src/lib/supabasePolls",
+          "src/lib/userProgress",
+          "src/store/useRawStore"
+        ],
+        "src/pages/AskAI.tsx": [
+          "src/components/landing/LandingFooter",
+          "src/lib/http"
+        ],
+        "src/pages/CommunitiesExplained.tsx": [
+          "src/components/landing/LandingFooter"
+        ],
+        "src/pages/Dashboard.tsx": [
+          "src/components/dashboard/DashboardChallenges",
+          "src/components/dashboard/DashboardCommunities",
+          "src/components/dashboard/DashboardDailySpin",
+          "src/components/dashboard/DashboardHome",
+          "src/components/dashboard/DashboardInventory",
+          "src/components/dashboard/DashboardNav",
+          "src/components/dashboard/DashboardPolls",
+          "src/components/dashboard/DashboardProfile",
+          "src/components/dashboard/DashboardSectionShell",
+          "src/components/dashboard/DashboardSidebar",
+          "src/components/dashboard/DashboardWallet",
+          "src/components/notifications/NotificationConsentPrompt",
+          "src/components/ui/LevelUpCelebration",
+          "src/components/ui/floating-dock",
+          "src/lib/avatarCatalog",
+          "src/lib/communityChat",
+          "src/lib/communityChat.types",
+          "src/lib/userProgress",
+          "src/providers/theme-context",
+          "src/providers/useTheme",
+          "src/store/useRawStore",
+          "src/store/useRawStore.storage",
+          "src/store/useUserProgress"
+        ],
+        "src/pages/FAQ.tsx": [
+          "src/components/landing/FAQSection",
+          "src/components/landing/LandingFooter"
+        ],
+        "src/pages/Index.tsx": [
+          "src/components/landing/LandingShell",
+          "src/components/landing/SignupModal",
+          "src/components/onboarding/OnboardingJourney",
+          "src/components/polls/SharedPollPage",
+          "src/hooks/use-host-mode",
+          "src/lib/pollShare",
+          "src/lib/userProgress",
+          "src/pages/Dashboard",
+          "src/store/useRawStore"
+        ],
+        "src/pages/NotFound.tsx": [],
+        "src/pages/PitchSelector.tsx": [],
+        "src/pages/PitchV1.tsx": [],
+        "src/pages/PitchV2.tsx": [
+          "src/assets/01_chrome.webp",
+          "src/assets/02_cyborg_purple.webp",
+          "src/assets/03_steampunk.webp",
+          "src/assets/04_solar.webp",
+          "src/assets/Extra avatars they can pick (5).webp",
+          "src/assets/logospeak.webp",
+          "src/assets/tokens.webp",
+          "src/assets/war-level-badges.webp"
+        ]
+      },
+      "neighborMap": {
+        "src/main.tsx": [
+          {
+            "path": "src/App.tsx",
+            "batchIndex": 12,
+            "symbols": []
+          },
+          {
+            "path": "src/index.css",
+            "batchIndex": 20,
+            "symbols": []
+          },
+          {
+            "path": "src/styles/raw-reveal-button.css",
+            "batchIndex": 22,
+            "symbols": []
+          }
+        ]
+      }
+    },
+    {
+      "batchIndex": 22,
+      "files": [
+        {
+          "path": "src/pages/PollsExplained.tsx",
+          "language": "TypeScript",
+          "sizeLines": 129,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/pages/Privacy.tsx",
+          "language": "TypeScript",
+          "sizeLines": 112,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/pages/Security.tsx",
+          "language": "TypeScript",
+          "sizeLines": 75,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/pages/Terms.tsx",
+          "language": "TypeScript",
+          "sizeLines": 100,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/providers/theme-context.ts",
+          "language": "TypeScript",
+          "sizeLines": 58,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/providers/ThemeProvider.tsx",
+          "language": "TypeScript",
+          "sizeLines": 61,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/providers/useTheme.ts",
+          "language": "TypeScript",
+          "sizeLines": 11,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/store/types.ts",
+          "language": "TypeScript",
+          "sizeLines": 27,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/store/useAuth.ts",
+          "language": "TypeScript",
+          "sizeLines": 128,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/store/useCommunities.ts",
+          "language": "TypeScript",
+          "sizeLines": 38,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/store/useOnboarding.ts",
+          "language": "TypeScript",
+          "sizeLines": 89,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/store/usePolls.ts",
+          "language": "TypeScript",
+          "sizeLines": 324,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/store/useRawStore.polling.ts",
+          "language": "TypeScript",
+          "sizeLines": 12,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/store/useRawStore.storage.ts",
+          "language": "TypeScript",
+          "sizeLines": 81,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/store/useRawStore.ts",
+          "language": "TypeScript",
+          "sizeLines": 58,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/store/useRawStore.types.ts",
+          "language": "TypeScript",
+          "sizeLines": 29,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/store/useRewards.ts",
+          "language": "TypeScript",
+          "sizeLines": 161,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/store/useUserProgress.ts",
+          "language": "TypeScript",
+          "sizeLines": 54,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/styles/raw-reveal-button.css",
+          "language": "CSS",
+          "sizeLines": 150,
+          "fileCategory": "markup"
+        },
+        {
+          "path": "src/test/community-chat.test.ts",
+          "language": "TypeScript",
+          "sizeLines": 189,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/test/example.test.ts",
+          "language": "TypeScript",
+          "sizeLines": 7,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/test/onboarding-persistence.test.tsx",
+          "language": "TypeScript",
+          "sizeLines": 40,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/test/onboarding-restore.test.tsx",
+          "language": "TypeScript",
+          "sizeLines": 129,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/test/poll-share.test.ts",
+          "language": "TypeScript",
+          "sizeLines": 35,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/test/setup.ts",
+          "language": "TypeScript",
+          "sizeLines": 15,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        "src/pages/PollsExplained.tsx": [
+          "src/components/landing/LandingFooter"
+        ],
+        "src/pages/Privacy.tsx": [
+          "src/components/landing/LandingFooter"
+        ],
+        "src/pages/Security.tsx": [
+          "src/components/landing/LandingFooter"
+        ],
+        "src/pages/Terms.tsx": [
+          "src/components/landing/LandingFooter"
+        ],
+        "src/providers/theme-context.ts": [],
+        "src/providers/ThemeProvider.tsx": [
+          "src/providers/theme-context"
+        ],
+        "src/providers/useTheme.ts": [
+          "src/providers/theme-context"
+        ],
+        "src/store/types.ts": [],
+        "src/store/useAuth.ts": [
+          "src/backend/supabase/controllers/authController",
+          "src/lib/analytics",
+          "src/lib/userProgress",
+          "src/store/types",
+          "src/store/useRawStore.storage"
+        ],
+        "src/store/useCommunities.ts": [
+          "src/store/useRawStore.storage"
+        ],
+        "src/store/useOnboarding.ts": [
+          "src/store/types",
+          "src/store/useRawStore.storage"
+        ],
+        "src/store/usePolls.ts": [
+          "src/features/polls/pollQuestions",
+          "src/lib/analytics",
+          "src/store/types",
+          "src/store/useRawStore.storage",
+          "src/utils/supabasePolls"
+        ],
+        "src/store/useRawStore.polling.ts": [
+          "src/features/polls/pollQuestions",
+          "src/store/useRawStore.types"
+        ],
+        "src/store/useRawStore.storage.ts": [
+          "src/store/useRawStore.types"
+        ],
+        "src/store/useRawStore.ts": [
+          "src/store/useAuth",
+          "src/store/useCommunities",
+          "src/store/useOnboarding",
+          "src/store/usePolls",
+          "src/store/useRewards"
+        ],
+        "src/store/useRawStore.types.ts": [],
+        "src/store/useRewards.ts": [
+          "src/lib/analytics",
+          "src/lib/avatarCatalog",
+          "src/lib/avataridentity",
+          "src/store/types"
+        ],
+        "src/store/useUserProgress.ts": [
+          "src/lib/userProgress"
+        ],
+        "src/styles/raw-reveal-button.css": [],
+        "src/test/community-chat.test.ts": [
+          "src/lib/communityChat"
+        ],
+        "src/test/example.test.ts": [],
+        "src/test/onboarding-persistence.test.tsx": [
+          "src/store/useCommunities",
+          "src/store/useOnboarding",
+          "src/store/useRawStore.storage"
+        ],
+        "src/test/onboarding-restore.test.tsx": [
+          "src/pages/Index"
+        ],
+        "src/test/poll-share.test.ts": [
+          "src/lib/pollShare",
+          "src/store/types"
+        ],
+        "src/test/setup.ts": []
+      },
+      "neighborMap": {
+        "src/styles/raw-reveal-button.css": [
+          {
+            "path": "src/main.tsx",
+            "batchIndex": 21,
+            "symbols": []
+          }
+        ]
+      }
+    },
+    {
+      "batchIndex": 23,
+      "files": [
+        {
+          "path": "src/utils/supabase.ts",
+          "language": "TypeScript",
+          "sizeLines": 1,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/utils/supabasePolls.ts",
+          "language": "TypeScript",
+          "sizeLines": 185,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/vite-env.d.ts",
+          "language": "TypeScript",
+          "sizeLines": 20,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        "src/utils/supabase.ts": [],
+        "src/utils/supabasePolls.ts": [
+          "src/store/types",
+          "src/utils/supabase"
+        ],
+        "src/vite-env.d.ts": []
+      },
+      "neighborMap": {}
+    }
+  ]
+}
