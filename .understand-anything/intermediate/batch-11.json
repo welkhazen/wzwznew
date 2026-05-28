@@ -1,0 +1,675 @@
+{
+  "batchIndex": 11,
+  "nodes": [
+    {
+      "id": "config:.claude/hooks/check-gstack.sh",
+      "type": "config",
+      "name": "check-gstack.sh (Claude hook)",
+      "filePath": ".claude/hooks/check-gstack.sh",
+      "summary": "Claude Code SessionStart hook that verifies the gstack toolchain is installed before a session begins.",
+      "tags": ["hook", "claude-code", "session-start", "gstack", "shell"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:.codex/environments/environment.toml",
+      "type": "config",
+      "name": "environment.toml",
+      "filePath": ".codex/environments/environment.toml",
+      "summary": "Codex environment definition describing setup steps and actions for the project sandbox.",
+      "tags": ["codex", "environment", "toml", "config"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:.codex/hooks.json",
+      "type": "config",
+      "name": "hooks.json (Codex)",
+      "filePath": ".codex/hooks.json",
+      "summary": "Codex hook registry wiring lifecycle events (e.g. session start) to local shell scripts under .codex/hooks/.",
+      "tags": ["codex", "hooks", "config", "json"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:.codex/hooks/check-gstack.sh",
+      "type": "config",
+      "name": "check-gstack.sh (Codex hook)",
+      "filePath": ".codex/hooks/check-gstack.sh",
+      "summary": "Codex session hook mirroring the Claude check-gstack.sh script to verify the gstack toolchain is available.",
+      "tags": ["hook", "codex", "session-start", "gstack", "shell"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:.github/copilot-instructions.md",
+      "type": "document",
+      "name": "Copilot Instructions",
+      "filePath": ".github/copilot-instructions.md",
+      "summary": "Mirrors CLAUDE.md behavioral guidelines for GitHub Copilot: think-before-coding, simplicity, surgical changes, and goal-driven execution.",
+      "tags": ["copilot", "guidelines", "agents", "process", "docs"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:.github/PULL_REQUEST_TEMPLATE.md",
+      "type": "document",
+      "name": "Pull Request Template",
+      "filePath": ".github/PULL_REQUEST_TEMPLATE.md",
+      "summary": "GitHub PR template prompting authors for summary, assumptions, better-option considered, verification evidence, risks, and next best step.",
+      "tags": ["github", "pr-template", "process", "docs"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:.scratch/_templates/issue.md",
+      "type": "document",
+      "name": "Issue Template",
+      "filePath": ".scratch/_templates/issue.md",
+      "summary": "Markdown template used by the local .scratch/ issue tracker, capturing problem, assumptions, alternatives, acceptance criteria, verification, and risks.",
+      "tags": ["issue-tracker", "scratch", "template", "process", "docs"],
+      "complexity": "simple"
+    },
+    {
+      "id": "service:api/_lib/supabaseServerClient.ts",
+      "type": "service",
+      "name": "supabaseServerClient",
+      "filePath": "api/_lib/supabaseServerClient.ts",
+      "summary": "Shared Supabase JS client for serverless API routes, built from SUPABASE_URL and the publishable or service-role key with persistSession/autoRefreshToken disabled; null when env vars are missing.",
+      "tags": ["supabase", "client", "api", "server", "shared"],
+      "complexity": "simple"
+    },
+    {
+      "id": "endpoint:api/moderation/issue-reports.ts:/api/moderation/issue-reports",
+      "type": "endpoint",
+      "name": "issue-reports handler",
+      "filePath": "api/moderation/issue-reports.ts",
+      "summary": "Serverless API route exposing GET/POST/PATCH on issue_reports for the moderation UI: lists recent reports, creates new ones with sanitized fields and optional screenshot, and updates status to resolved/dismissed.",
+      "tags": ["api", "moderation", "issue-reports", "supabase", "crud"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:api/moderation/issue-reports.ts:handler",
+      "type": "function",
+      "name": "handler",
+      "filePath": "api/moderation/issue-reports.ts",
+      "summary": "Default export request handler dispatching GET/POST/PATCH for moderation issue reports against the supabase issue_reports table.",
+      "tags": ["handler", "request-router", "supabase"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:api/moderation/issue-reports.ts:mapReport",
+      "type": "function",
+      "name": "mapReport",
+      "filePath": "api/moderation/issue-reports.ts",
+      "summary": "Maps a raw issue_reports row to the camelCase IssueReport DTO returned to clients.",
+      "tags": ["mapper", "dto"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:api/moderation/issue-reports.ts:cleanString",
+      "type": "function",
+      "name": "cleanString",
+      "filePath": "api/moderation/issue-reports.ts",
+      "summary": "Trims and length-caps a string input, returning empty string for non-strings; used to sanitize report fields.",
+      "tags": ["util", "sanitize"],
+      "complexity": "simple"
+    },
+    {
+      "id": "endpoint:api/monitoring/crash-alert.ts:/api/monitoring/crash-alert",
+      "type": "endpoint",
+      "name": "crash-alert handler",
+      "filePath": "api/monitoring/crash-alert.ts",
+      "summary": "POST-only serverless route that receives client crash reports, formats a slack-style message, and forwards it to the configured CRASH_ALERT_WEBHOOK URL.",
+      "tags": ["api", "monitoring", "crash", "webhook", "alerting"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:api/monitoring/crash-alert.ts:handler",
+      "type": "function",
+      "name": "handler",
+      "filePath": "api/monitoring/crash-alert.ts",
+      "summary": "Validates crash payloads, sanitizes fields, formats a multi-line alert with stack/component-stack blocks, and POSTs it to the webhook.",
+      "tags": ["handler", "alerting", "webhook"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:api/monitoring/crash-alert.ts:formatBlock",
+      "type": "function",
+      "name": "formatBlock",
+      "filePath": "api/monitoring/crash-alert.ts",
+      "summary": "Renders a labelled fenced text block (omitted when value is empty) for inclusion in the crash alert message.",
+      "tags": ["formatter", "util"],
+      "complexity": "simple"
+    },
+    {
+      "id": "endpoint:api/notifications/send.ts:/api/notifications/send",
+      "type": "endpoint",
+      "name": "notifications send handler",
+      "filePath": "api/notifications/send.ts",
+      "summary": "Admin-only POST route that looks up granted apple-ios notification consents (optionally filtered by userId) and dispatches APNs HTTP/2 pushes signed with an ES256 JWT.",
+      "tags": ["api", "notifications", "apns", "push", "supabase", "admin"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:api/notifications/send.ts:handler",
+      "type": "function",
+      "name": "handler",
+      "filePath": "api/notifications/send.ts",
+      "summary": "Authorizes by admin token, validates payload, queries notification_consents, mints an Apple JWT, and fans out APNs pushes via Promise.all.",
+      "tags": ["handler", "apns", "admin"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:api/notifications/send.ts:createAppleJwt",
+      "type": "function",
+      "name": "createAppleJwt",
+      "filePath": "api/notifications/send.ts",
+      "summary": "Builds an ES256-signed APNs provider JWT using WebCrypto subtle.importKey/sign with the team/key id and PEM private key from env.",
+      "tags": ["apns", "jwt", "es256", "webcrypto"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:api/notifications/send.ts:sendApplePush",
+      "type": "function",
+      "name": "sendApplePush",
+      "filePath": "api/notifications/send.ts",
+      "summary": "POSTs an aps alert payload to api.push.apple.com for a single device token using the provider JWT, returning the APNs response status/body.",
+      "tags": ["apns", "fetch", "push"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:api/notifications/send.ts:pemToArrayBuffer",
+      "type": "function",
+      "name": "pemToArrayBuffer",
+      "filePath": "api/notifications/send.ts",
+      "summary": "Strips PEM headers/whitespace and base64-decodes the APNs key into an ArrayBuffer for crypto.subtle.importKey.",
+      "tags": ["pem", "base64", "util"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:api/notifications/send.ts:base64Url",
+      "type": "function",
+      "name": "base64Url",
+      "filePath": "api/notifications/send.ts",
+      "summary": "Encodes an ArrayBuffer or string into URL-safe base64 (no padding) for JWT header/payload/signature segments.",
+      "tags": ["base64url", "jwt", "util"],
+      "complexity": "simple"
+    },
+    {
+      "id": "endpoint:api/polls/[pollId]/vote.ts:/api/polls/[pollId]/vote",
+      "type": "endpoint",
+      "name": "poll vote handler",
+      "filePath": "api/polls/[pollId]/vote.ts",
+      "summary": "POST-only serverless route that records a vote for a poll option, deriving a per-poll voter key from IP/UA/session via SHA-256, validating the option, and returning updated vote counts.",
+      "tags": ["api", "polls", "voting", "supabase", "rate-limit"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:api/polls/[pollId]/vote.ts:handler",
+      "type": "function",
+      "name": "handler",
+      "filePath": "api/polls/[pollId]/vote.ts",
+      "summary": "Extracts pollId from path, validates option belongs to poll, inserts into poll_votes with a hashed voter key, and returns aggregated counts.",
+      "tags": ["handler", "voting"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:api/polls/[pollId]/vote.ts:getVoterKey",
+      "type": "function",
+      "name": "getVoterKey",
+      "filePath": "api/polls/[pollId]/vote.ts",
+      "summary": "Derives a stable per-poll voter identifier by SHA-256-hashing pollId|ip|userAgent|session-cookie.",
+      "tags": ["hash", "dedupe", "voting"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:api/polls/[pollId]/vote.ts:getPollVoteCounts",
+      "type": "function",
+      "name": "getPollVoteCounts",
+      "filePath": "api/polls/[pollId]/vote.ts",
+      "summary": "Loads all poll_votes rows for a poll and reduces them into a { optionId: count } map.",
+      "tags": ["aggregate", "supabase", "voting"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:api/polls/[pollId]/vote.ts:sha256Base64Url",
+      "type": "function",
+      "name": "sha256Base64Url",
+      "filePath": "api/polls/[pollId]/vote.ts",
+      "summary": "Hashes a string with SHA-256 via WebCrypto and returns URL-safe base64 with padding stripped.",
+      "tags": ["hash", "webcrypto", "util"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:api/polls/[pollId]/vote.ts:getClientIp",
+      "type": "function",
+      "name": "getClientIp",
+      "filePath": "api/polls/[pollId]/vote.ts",
+      "summary": "Resolves the client IP by consulting x-forwarded-for, x-real-ip, and cf-connecting-ip headers in order.",
+      "tags": ["http", "ip", "util"],
+      "complexity": "simple"
+    },
+    {
+      "id": "endpoint:api/polls/random.ts:/api/polls/random",
+      "type": "endpoint",
+      "name": "polls random handler",
+      "filePath": "api/polls/random.ts",
+      "summary": "GET route returning a random sample of unlocked polls (id, question, two options) shuffled in-process from the latest N rows; uses cache-control headers for edge caching.",
+      "tags": ["api", "polls", "random", "supabase", "cache"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:api/polls/random.ts:handler",
+      "type": "function",
+      "name": "handler",
+      "filePath": "api/polls/random.ts",
+      "summary": "Loads up to N non-locked polls with their options, filters to those with a question, randomly samples up to limit, and returns the simplified DTO.",
+      "tags": ["handler", "random-sample"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "endpoint:api/users/[userId]/notification-consent.ts:/api/users/[userId]/notification-consent",
+      "type": "endpoint",
+      "name": "notification-consent handler",
+      "filePath": "api/users/[userId]/notification-consent.ts",
+      "summary": "POST-only route that upserts a notification_consents row for a user/platform/device-token with a granted/denied/blocked status.",
+      "tags": ["api", "notifications", "consent", "supabase", "upsert"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:api/users/[userId]/notification-consent.ts:handler",
+      "type": "function",
+      "name": "handler",
+      "filePath": "api/users/[userId]/notification-consent.ts",
+      "summary": "Parses userId from path, validates provider/platform/status, and upserts the consent row keyed by (user_id, platform, device_token).",
+      "tags": ["handler", "consent"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "endpoint:api/users/[userId]/tokens.ts:/api/users/[userId]/tokens",
+      "type": "endpoint",
+      "name": "user tokens handler",
+      "filePath": "api/users/[userId]/tokens.ts",
+      "summary": "GET/PUT/POST route for a user's token_balance: read current balance, set absolute balance, or call the increment_token_balance RPC for atomic deltas.",
+      "tags": ["api", "users", "tokens", "supabase", "rpc"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:api/users/[userId]/tokens.ts:handler",
+      "type": "function",
+      "name": "handler",
+      "filePath": "api/users/[userId]/tokens.ts",
+      "summary": "Dispatches GET/PUT/POST against the users table for token_balance, using the increment_token_balance Postgres function for POST deltas.",
+      "tags": ["handler", "tokens"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "endpoint:api/waitlist.ts:/api/waitlist",
+      "type": "endpoint",
+      "name": "waitlist handler",
+      "filePath": "api/waitlist.ts",
+      "summary": "Stub POST-only waitlist endpoint that validates email and role and returns success; serves as a placeholder until a real persistence backend is wired up.",
+      "tags": ["api", "waitlist", "stub", "validation"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:api/waitlist.ts:handler",
+      "type": "function",
+      "name": "handler",
+      "filePath": "api/waitlist.ts",
+      "summary": "Validates POST body has a valid email and an allowed role, then returns a stub success response.",
+      "tags": ["handler", "validation"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:components/raw-reveal-button.tsx:RawRevealButton",
+      "type": "function",
+      "name": "RawRevealButton",
+      "filePath": "components/raw-reveal-button.tsx",
+      "summary": "React component rendering the brand 'CLICK TO REVEAL MORE' CTA with size/state variants and optional smooth-scroll to a target element by id.",
+      "tags": ["react", "component", "ui", "cta", "tsx"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:components/raw-reveal-button.tsx:RawRevealButtonShowcase",
+      "type": "function",
+      "name": "RawRevealButtonShowcase",
+      "filePath": "components/raw-reveal-button.tsx",
+      "summary": "Storybook-style showcase rendering RawRevealButton in its idle/hover/loading/disabled states and size variants.",
+      "tags": ["react", "showcase", "ui"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/architecture/deepening-opportunities-2026-05-02.md",
+      "type": "document",
+      "name": "Deepening Opportunities (2026-05-02)",
+      "filePath": "docs/architecture/deepening-opportunities-2026-05-02.md",
+      "summary": "Architecture review proposing three deepening candidates: a Session & Onboarding store module, a Community Chat persistence module, and a server-side Auth flow module, with adoption notes.",
+      "tags": ["architecture", "review", "deepening", "roadmap", "docs"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "resource:public/codebase-callflow.html",
+      "type": "resource",
+      "name": "codebase-callflow.html",
+      "filePath": "public/codebase-callflow.html",
+      "summary": "Static HTML page (served from /public) visualizing the codebase call-flow for documentation/debug purposes.",
+      "tags": ["public", "html", "visualization", "static"],
+      "complexity": "simple"
+    },
+    {
+      "id": "resource:public/push/onesignal/OneSignalSDKUpdaterWorker.js",
+      "type": "resource",
+      "name": "OneSignalSDKUpdaterWorker.js",
+      "filePath": "public/push/onesignal/OneSignalSDKUpdaterWorker.js",
+      "summary": "Vendored OneSignal service-worker updater shim that imports the hosted OneSignal SDK worker.",
+      "tags": ["onesignal", "service-worker", "push", "vendor", "public"],
+      "complexity": "simple"
+    },
+    {
+      "id": "resource:public/push/onesignal/OneSignalSDKWorker.js",
+      "type": "resource",
+      "name": "OneSignalSDKWorker.js",
+      "filePath": "public/push/onesignal/OneSignalSDKWorker.js",
+      "summary": "Vendored OneSignal service-worker shim that imports the hosted OneSignal SDK worker script.",
+      "tags": ["onesignal", "service-worker", "push", "vendor", "public"],
+      "complexity": "simple"
+    },
+    {
+      "id": "service:public/sw.js",
+      "type": "service",
+      "name": "sw.js (PWA service worker)",
+      "filePath": "public/sw.js",
+      "summary": "App service worker that pre-caches the shell on install, drops old caches on activate, and applies cache-first for hashed /assets/, /avatars/, /models/ and network-first elsewhere, with an offline fallback to the cached shell.",
+      "tags": ["service-worker", "pwa", "cache", "offline", "public"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:public/sw.js:fetchAndCache",
+      "type": "function",
+      "name": "fetchAndCache",
+      "filePath": "public/sw.js",
+      "summary": "Fetches a request from the network and stores a clone in the runtime cache when canCache returns true.",
+      "tags": ["service-worker", "cache"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:public/sw.js:offlineResponse",
+      "type": "function",
+      "name": "offlineResponse",
+      "filePath": "public/sw.js",
+      "summary": "Fallback used when network and cache both miss: returns the cached app shell for navigations or a 504 stub otherwise.",
+      "tags": ["service-worker", "offline"],
+      "complexity": "simple"
+    },
+    {
+      "id": "script:scripts/bootstrap-claude.sh",
+      "type": "service",
+      "name": "bootstrap-claude.sh",
+      "filePath": "scripts/bootstrap-claude.sh",
+      "summary": "Provisioning script that installs and configures Claude Code agents and the gstack plugin either system-wide (shared install) or per-user across detected accounts.",
+      "tags": ["bootstrap", "claude-code", "gstack", "provisioning", "shell"],
+      "complexity": "complex"
+    },
+    {
+      "id": "script:scripts/load-test.js",
+      "type": "service",
+      "name": "load-test.js",
+      "filePath": "scripts/load-test.js",
+      "summary": "Defensive local-only load tester that refuses non-localhost targets, fans out concurrent GETs against /api/health, /api/polls/random, and /api/assistant/status, and reports per-endpoint p95/avg latency and error rate.",
+      "tags": ["load-test", "performance", "script", "local-only", "node"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:server/config/env.ts",
+      "type": "config",
+      "name": "env (server config)",
+      "filePath": "server/config/env.ts",
+      "summary": "Loads .env(.local), parses process.env with a Zod schema covering server, auth, email, Twilio, OpenAI, Supabase, and OneSignal settings, fails fast on invalid config, and enforces non-default secrets in production.",
+      "tags": ["config", "env", "zod", "validation", "server", "secrets"],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "from": "endpoint:api/polls/random.ts:/api/polls/random",
+      "to": "service:api/_lib/supabaseServerClient.ts",
+      "type": "imports"
+    },
+    {
+      "from": "endpoint:api/users/[userId]/tokens.ts:/api/users/[userId]/tokens",
+      "to": "service:api/_lib/supabaseServerClient.ts",
+      "type": "imports"
+    },
+    {
+      "from": "endpoint:api/moderation/issue-reports.ts:/api/moderation/issue-reports",
+      "to": "table:api/moderation/issue-reports.ts:issue_reports",
+      "type": "reads_from"
+    },
+    {
+      "from": "endpoint:api/moderation/issue-reports.ts:/api/moderation/issue-reports",
+      "to": "table:api/moderation/issue-reports.ts:issue_reports",
+      "type": "writes_to"
+    },
+    {
+      "from": "endpoint:api/polls/[pollId]/vote.ts:/api/polls/[pollId]/vote",
+      "to": "table:api/polls/[pollId]/vote.ts:poll_votes",
+      "type": "writes_to"
+    },
+    {
+      "from": "endpoint:api/polls/[pollId]/vote.ts:/api/polls/[pollId]/vote",
+      "to": "table:api/polls/[pollId]/vote.ts:poll_options",
+      "type": "reads_from"
+    },
+    {
+      "from": "endpoint:api/polls/random.ts:/api/polls/random",
+      "to": "table:api/polls/random.ts:polls",
+      "type": "reads_from"
+    },
+    {
+      "from": "endpoint:api/polls/random.ts:/api/polls/random",
+      "to": "table:api/polls/random.ts:poll_options",
+      "type": "reads_from"
+    },
+    {
+      "from": "endpoint:api/users/[userId]/notification-consent.ts:/api/users/[userId]/notification-consent",
+      "to": "table:api/users/[userId]/notification-consent.ts:notification_consents",
+      "type": "writes_to"
+    },
+    {
+      "from": "endpoint:api/notifications/send.ts:/api/notifications/send",
+      "to": "table:api/notifications/send.ts:notification_consents",
+      "type": "reads_from"
+    },
+    {
+      "from": "endpoint:api/users/[userId]/tokens.ts:/api/users/[userId]/tokens",
+      "to": "table:api/users/[userId]/tokens.ts:users",
+      "type": "reads_from"
+    },
+    {
+      "from": "endpoint:api/users/[userId]/tokens.ts:/api/users/[userId]/tokens",
+      "to": "table:api/users/[userId]/tokens.ts:users",
+      "type": "writes_to"
+    },
+    {
+      "from": "endpoint:api/moderation/issue-reports.ts:/api/moderation/issue-reports",
+      "to": "function:api/moderation/issue-reports.ts:handler",
+      "type": "contains"
+    },
+    {
+      "from": "endpoint:api/moderation/issue-reports.ts:/api/moderation/issue-reports",
+      "to": "function:api/moderation/issue-reports.ts:mapReport",
+      "type": "contains"
+    },
+    {
+      "from": "endpoint:api/moderation/issue-reports.ts:/api/moderation/issue-reports",
+      "to": "function:api/moderation/issue-reports.ts:cleanString",
+      "type": "contains"
+    },
+    {
+      "from": "endpoint:api/monitoring/crash-alert.ts:/api/monitoring/crash-alert",
+      "to": "function:api/monitoring/crash-alert.ts:handler",
+      "type": "contains"
+    },
+    {
+      "from": "endpoint:api/monitoring/crash-alert.ts:/api/monitoring/crash-alert",
+      "to": "function:api/monitoring/crash-alert.ts:formatBlock",
+      "type": "contains"
+    },
+    {
+      "from": "endpoint:api/notifications/send.ts:/api/notifications/send",
+      "to": "function:api/notifications/send.ts:handler",
+      "type": "contains"
+    },
+    {
+      "from": "endpoint:api/notifications/send.ts:/api/notifications/send",
+      "to": "function:api/notifications/send.ts:createAppleJwt",
+      "type": "contains"
+    },
+    {
+      "from": "endpoint:api/notifications/send.ts:/api/notifications/send",
+      "to": "function:api/notifications/send.ts:sendApplePush",
+      "type": "contains"
+    },
+    {
+      "from": "endpoint:api/notifications/send.ts:/api/notifications/send",
+      "to": "function:api/notifications/send.ts:pemToArrayBuffer",
+      "type": "contains"
+    },
+    {
+      "from": "endpoint:api/notifications/send.ts:/api/notifications/send",
+      "to": "function:api/notifications/send.ts:base64Url",
+      "type": "contains"
+    },
+    {
+      "from": "function:api/notifications/send.ts:handler",
+      "to": "function:api/notifications/send.ts:createAppleJwt",
+      "type": "calls"
+    },
+    {
+      "from": "function:api/notifications/send.ts:handler",
+      "to": "function:api/notifications/send.ts:sendApplePush",
+      "type": "calls"
+    },
+    {
+      "from": "function:api/notifications/send.ts:createAppleJwt",
+      "to": "function:api/notifications/send.ts:pemToArrayBuffer",
+      "type": "calls"
+    },
+    {
+      "from": "function:api/notifications/send.ts:createAppleJwt",
+      "to": "function:api/notifications/send.ts:base64Url",
+      "type": "calls"
+    },
+    {
+      "from": "endpoint:api/polls/[pollId]/vote.ts:/api/polls/[pollId]/vote",
+      "to": "function:api/polls/[pollId]/vote.ts:handler",
+      "type": "contains"
+    },
+    {
+      "from": "endpoint:api/polls/[pollId]/vote.ts:/api/polls/[pollId]/vote",
+      "to": "function:api/polls/[pollId]/vote.ts:getVoterKey",
+      "type": "contains"
+    },
+    {
+      "from": "endpoint:api/polls/[pollId]/vote.ts:/api/polls/[pollId]/vote",
+      "to": "function:api/polls/[pollId]/vote.ts:getPollVoteCounts",
+      "type": "contains"
+    },
+    {
+      "from": "endpoint:api/polls/[pollId]/vote.ts:/api/polls/[pollId]/vote",
+      "to": "function:api/polls/[pollId]/vote.ts:sha256Base64Url",
+      "type": "contains"
+    },
+    {
+      "from": "endpoint:api/polls/[pollId]/vote.ts:/api/polls/[pollId]/vote",
+      "to": "function:api/polls/[pollId]/vote.ts:getClientIp",
+      "type": "contains"
+    },
+    {
+      "from": "function:api/polls/[pollId]/vote.ts:handler",
+      "to": "function:api/polls/[pollId]/vote.ts:getVoterKey",
+      "type": "calls"
+    },
+    {
+      "from": "function:api/polls/[pollId]/vote.ts:handler",
+      "to": "function:api/polls/[pollId]/vote.ts:getPollVoteCounts",
+      "type": "calls"
+    },
+    {
+      "from": "function:api/polls/[pollId]/vote.ts:getVoterKey",
+      "to": "function:api/polls/[pollId]/vote.ts:getClientIp",
+      "type": "calls"
+    },
+    {
+      "from": "function:api/polls/[pollId]/vote.ts:getVoterKey",
+      "to": "function:api/polls/[pollId]/vote.ts:sha256Base64Url",
+      "type": "calls"
+    },
+    {
+      "from": "endpoint:api/polls/random.ts:/api/polls/random",
+      "to": "function:api/polls/random.ts:handler",
+      "type": "contains"
+    },
+    {
+      "from": "endpoint:api/users/[userId]/notification-consent.ts:/api/users/[userId]/notification-consent",
+      "to": "function:api/users/[userId]/notification-consent.ts:handler",
+      "type": "contains"
+    },
+    {
+      "from": "endpoint:api/users/[userId]/tokens.ts:/api/users/[userId]/tokens",
+      "to": "function:api/users/[userId]/tokens.ts:handler",
+      "type": "contains"
+    },
+    {
+      "from": "function:api/users/[userId]/tokens.ts:handler",
+      "to": "function:api/users/[userId]/tokens.ts:handler",
+      "type": "calls"
+    },
+    {
+      "from": "endpoint:api/waitlist.ts:/api/waitlist",
+      "to": "function:api/waitlist.ts:handler",
+      "type": "contains"
+    },
+    {
+      "from": "service:public/sw.js",
+      "to": "function:public/sw.js:fetchAndCache",
+      "type": "contains"
+    },
+    {
+      "from": "service:public/sw.js",
+      "to": "function:public/sw.js:offlineResponse",
+      "type": "contains"
+    },
+    {
+      "from": "config:.codex/hooks.json",
+      "to": "config:.codex/hooks/check-gstack.sh",
+      "type": "configures"
+    },
+    {
+      "from": "config:.codex/hooks/check-gstack.sh",
+      "to": "config:.claude/hooks/check-gstack.sh",
+      "type": "similar_to"
+    },
+    {
+      "from": "document:.github/copilot-instructions.md",
+      "to": "document:CLAUDE.md",
+      "type": "related"
+    },
+    {
+      "from": "document:.scratch/_templates/issue.md",
+      "to": "document:.github/PULL_REQUEST_TEMPLATE.md",
+      "type": "similar_to"
+    },
+    {
+      "from": "script:scripts/load-test.js",
+      "to": "endpoint:api/polls/random.ts:/api/polls/random",
+      "type": "depends_on"
+    },
+    {
+      "from": "script:scripts/bootstrap-claude.sh",
+      "to": "config:.claude/hooks/check-gstack.sh",
+      "type": "configures"
+    },
+    {
+      "from": "config:server/config/env.ts",
+      "to": "service:api/_lib/supabaseServerClient.ts",
+      "type": "related"
+    }
+  ]
+}

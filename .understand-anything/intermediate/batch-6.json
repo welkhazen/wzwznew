@@ -1,0 +1,67 @@
+{
+  "batchIndex": 6,
+  "nodes": [
+    {
+      "id": "document:docs/agents/code-review-and-quality-workflow.md",
+      "type": "document",
+      "name": "Code review and quality workflow",
+      "filePath": "docs/agents/code-review-and-quality-workflow.md",
+      "summary": "Agent workflow doc defining plan/success-criteria, better-option checks, surgical implementation, verification, and large-run optimization guardrails for code review and quality tasks.",
+      "tags": ["agents", "workflow", "code-review", "guardrails", "process"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/agents/domain.md",
+      "type": "document",
+      "name": "Domain Docs",
+      "filePath": "docs/agents/domain.md",
+      "summary": "Declares the repo as single-context and points agents to CONTEXT.md (glossary) and docs/adr/ (decisions), with fallback guidance when those are absent.",
+      "tags": ["agents", "domain", "context", "conventions"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/agents/issue-tracker.md",
+      "type": "document",
+      "name": "Issue Tracker",
+      "filePath": "docs/agents/issue-tracker.md",
+      "summary": "Describes the local markdown-based issue tracker under .scratch/<feature>/ and the steps and template for creating new issues with triage frontmatter.",
+      "tags": ["agents", "issue-tracker", "scratch", "process"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/agents/skill-review-2026-05-20.md",
+      "type": "document",
+      "name": "Skill-focused codebase review (2026-05-20, revised)",
+      "filePath": "docs/agents/skill-review-2026-05-20.md",
+      "summary": "Dated review of repo readiness against Supabase, AI gateway, Cloud SQL health, and Figma Code Connect skills, with confirmed findings, recommended fixes, and an implementation order.",
+      "tags": ["review", "supabase", "ai-gateway", "figma", "roadmap"],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:docs/agents/triage-labels.md",
+      "type": "document",
+      "name": "Triage Labels",
+      "filePath": "docs/agents/triage-labels.md",
+      "summary": "Canonical category (bug, enhancement) and state (needs-triage, needs-info, ready-for-agent, ready-for-human, wontfix) labels used by triage workflows.",
+      "tags": ["agents", "triage", "labels", "conventions"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "from": "document:docs/agents/domain.md",
+      "to": "document:CONTEXT.md",
+      "type": "related"
+    },
+    {
+      "from": "document:docs/agents/issue-tracker.md",
+      "to": "document:docs/agents/triage-labels.md",
+      "type": "related"
+    },
+    {
+      "from": "document:docs/agents/skill-review-2026-05-20.md",
+      "to": "document:docs/agents/code-review-and-quality-workflow.md",
+      "type": "related"
+    }
+  ]
+}

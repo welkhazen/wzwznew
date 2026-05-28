@@ -1,0 +1,78 @@
+{
+  "batchIndex": 5,
+  "nodes": [
+    {
+      "id": "config:tsconfig.node.json",
+      "type": "config",
+      "name": "tsconfig.node.json",
+      "filePath": "tsconfig.node.json",
+      "summary": "TypeScript config scoped to Node-side build tooling (vite.config.ts), using bundler module resolution and ES2022 target with strict mode enabled but unused-locals/params linting disabled.",
+      "tags": ["typescript", "tsconfig", "build-tooling", "vite"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:vercel.json",
+      "type": "config",
+      "name": "vercel.json",
+      "filePath": "vercel.json",
+      "summary": "Vercel deployment config: builds the Vite app via `vite build` to `dist`, deploys to iad1 region, rewrites all non-/api/ paths to /index.html for SPA routing, and sets aggressive Cache-Control headers for assets/avatars/models/images and a short SWR policy for /api/polls.",
+      "tags": ["vercel", "deployment", "spa-rewrites", "cache-headers", "cdn"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:vite.config.ts",
+      "type": "config",
+      "name": "vite.config.ts",
+      "filePath": "vite.config.ts",
+      "summary": "Vite build/dev config: binds dev server to 127.0.0.1:8080 with polling watcher and an /api proxy to localhost:8787, registers the React plugin plus lovable-tagger in development, aliases @ to ./src, injects VITE_APP_VERSION (from env or `git rev-parse --short HEAD`), and defines Rollup manualChunks for three/animations/motion/radix/supabase/sentry/tanstack/icons vendor splitting.",
+      "tags": ["vite", "build-config", "dev-server", "code-splitting", "react", "lovable"],
+      "complexity": "moderate",
+      "languageNotes": "readAppVersion() falls back through env var, git short SHA, then literal 'dev' so builds never fail when git is unavailable."
+    },
+    {
+      "id": "function:vite.config.ts:readAppVersion",
+      "type": "function",
+      "name": "readAppVersion",
+      "filePath": "vite.config.ts",
+      "summary": "Resolves the app version string at build time: returns process.env.VITE_APP_VERSION if set, otherwise the short git HEAD SHA via execSync, otherwise the literal 'dev'.",
+      "tags": ["build-metadata", "versioning", "git"],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:vitest.config.ts",
+      "type": "config",
+      "name": "vitest.config.ts",
+      "filePath": "vitest.config.ts",
+      "summary": "Vitest config: jsdom environment with globals enabled, loads ./src/test/setup.ts, scans src/**/*.{test,spec}.{ts,tsx}, aliases @ to ./src, and uses the React plugin so JSX/TSX tests compile.",
+      "tags": ["vitest", "testing-config", "jsdom", "react"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "config:vite.config.ts",
+      "target": "function:vite.config.ts:readAppVersion",
+      "type": "contains"
+    },
+    {
+      "source": "config:tsconfig.node.json",
+      "target": "config:vite.config.ts",
+      "type": "configures"
+    },
+    {
+      "source": "config:vercel.json",
+      "target": "config:vite.config.ts",
+      "type": "depends_on"
+    },
+    {
+      "source": "config:vercel.json",
+      "target": "config:vite.config.ts",
+      "type": "deploys"
+    },
+    {
+      "source": "config:vitest.config.ts",
+      "target": "config:vite.config.ts",
+      "type": "related"
+    }
+  ]
+}

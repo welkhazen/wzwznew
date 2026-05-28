@@ -1,0 +1,333 @@
+{
+  "nodes": [
+    {
+      "id": "file:supabase/migrations/20240001000000_create_polls.sql",
+      "type": "file",
+      "name": "20240001000000_create_polls.sql",
+      "filePath": "supabase/migrations/20240001000000_create_polls.sql",
+      "summary": "Initial migration creating the public.polls table with question, options jsonb, and lock flag for the global wzwz polling system.",
+      "tags": ["database", "migration", "schema-definition", "polls"],
+      "complexity": "simple"
+    },
+    {
+      "id": "table:supabase/migrations/20240001000000_create_polls.sql:polls",
+      "type": "table",
+      "name": "polls",
+      "summary": "Top-level polls table storing the question text, JSONB option list, and a locked flag for finalized polls.",
+      "tags": ["database", "table", "polls"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:supabase/migrations/20240002000000_unique_username.sql",
+      "type": "file",
+      "name": "20240002000000_unique_username.sql",
+      "filePath": "supabase/migrations/20240002000000_unique_username.sql",
+      "summary": "Adds a unique constraint on users.username to prevent duplicate handles.",
+      "tags": ["database", "migration", "constraint", "users"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:supabase/migrations/20240002100000_create_users_table.sql",
+      "type": "file",
+      "name": "20240002100000_create_users_table.sql",
+      "filePath": "supabase/migrations/20240002100000_create_users_table.sql",
+      "summary": "Backfills public.users (with role/status/avatar_level/token_balance) plus poll_options and poll_votes tables, RLS policies, and basic grants for anon/authenticated roles.",
+      "tags": ["database", "migration", "users", "rls", "polls"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "table:supabase/migrations/20240002100000_create_users_table.sql:users",
+      "type": "table",
+      "name": "users",
+      "summary": "Core user account table holding username, password hash, role, status, warnings, avatar level, token balance, and Stytch linkage.",
+      "tags": ["database", "table", "users", "auth"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "table:supabase/migrations/20240002100000_create_users_table.sql:poll_options",
+      "type": "table",
+      "name": "poll_options",
+      "summary": "Per-poll answer option rows with label and ordering position, FK to polls.id.",
+      "tags": ["database", "table", "polls"],
+      "complexity": "simple"
+    },
+    {
+      "id": "table:supabase/migrations/20240002100000_create_users_table.sql:poll_votes",
+      "type": "table",
+      "name": "poll_votes",
+      "summary": "Records each individual vote on a global poll, referencing poll_id and option_id.",
+      "tags": ["database", "table", "polls", "voting"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:supabase/migrations/20240003000000_auth_setup.sql",
+      "type": "file",
+      "name": "20240003000000_auth_setup.sql",
+      "filePath": "supabase/migrations/20240003000000_auth_setup.sql",
+      "summary": "Bootstraps the custom username/password auth layer: helper functions, grants, and RLS plumbing on the users table.",
+      "tags": ["database", "migration", "auth", "rls"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:supabase/migrations/20240004000000_custom_auth_rpcs.sql",
+      "type": "file",
+      "name": "20240004000000_custom_auth_rpcs.sql",
+      "filePath": "supabase/migrations/20240004000000_custom_auth_rpcs.sql",
+      "summary": "Defines the custom_signup and custom_login PL/pgSQL RPC functions used by the app to register and authenticate users without Supabase Auth.",
+      "tags": ["database", "migration", "rpc", "auth"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:supabase/migrations/20240005000000_fix_auth_rpc_schema.sql",
+      "type": "file",
+      "name": "20240005000000_fix_auth_rpc_schema.sql",
+      "filePath": "supabase/migrations/20240005000000_fix_auth_rpc_schema.sql",
+      "summary": "Reworks the custom_signup/custom_login RPC signatures and search_path so they execute reliably against the public schema.",
+      "tags": ["database", "migration", "rpc", "auth", "bugfix"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:supabase/migrations/20240006000000_communities.sql",
+      "type": "file",
+      "name": "20240006000000_communities.sql",
+      "filePath": "supabase/migrations/20240006000000_communities.sql",
+      "summary": "Creates the communities feature schema: communities, community_members, community_messages, and community_requests tables with RLS policies.",
+      "tags": ["database", "migration", "communities", "schema-definition"],
+      "complexity": "complex"
+    },
+    {
+      "id": "table:supabase/migrations/20240006000000_communities.sql:communities",
+      "type": "table",
+      "name": "communities",
+      "summary": "Communities catalog (abbr, title, description, topic, status, locked, logo) with created_by FK.",
+      "tags": ["database", "table", "communities"],
+      "complexity": "simple"
+    },
+    {
+      "id": "table:supabase/migrations/20240006000000_communities.sql:community_members",
+      "type": "table",
+      "name": "community_members",
+      "summary": "Membership join table pairing community_id and user_id with cached username and read/notification preferences.",
+      "tags": ["database", "table", "communities", "membership"],
+      "complexity": "simple"
+    },
+    {
+      "id": "table:supabase/migrations/20240006000000_communities.sql:community_messages",
+      "type": "table",
+      "name": "community_messages",
+      "summary": "Chat-style messages within a community, supporting replies, pinning, soft-delete and per-user likes.",
+      "tags": ["database", "table", "communities", "chat"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "table:supabase/migrations/20240006000000_communities.sql:community_requests",
+      "type": "table",
+      "name": "community_requests",
+      "summary": "User-submitted requests to create new communities, with reviewer workflow fields (status, reviewed_at, reviewed_by).",
+      "tags": ["database", "table", "communities", "moderation"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:supabase/migrations/20240007000000_poll_options_rls.sql",
+      "type": "file",
+      "name": "20240007000000_poll_options_rls.sql",
+      "filePath": "supabase/migrations/20240007000000_poll_options_rls.sql",
+      "summary": "Adds RLS read/insert policies on public.poll_options for anon and authenticated roles.",
+      "tags": ["database", "migration", "rls", "polls"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:supabase/migrations/20240008000000_community_requests_update_rls.sql",
+      "type": "file",
+      "name": "20240008000000_community_requests_update_rls.sql",
+      "filePath": "supabase/migrations/20240008000000_community_requests_update_rls.sql",
+      "summary": "Adds an UPDATE RLS policy on public.community_requests so admins can mark requests reviewed.",
+      "tags": ["database", "migration", "rls", "communities"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:supabase/migrations/20240009000000_communities_write_access.sql",
+      "type": "file",
+      "name": "20240009000000_communities_write_access.sql",
+      "filePath": "supabase/migrations/20240009000000_communities_write_access.sql",
+      "summary": "Grants anon/authenticated INSERT and UPDATE policies on public.communities to support open community creation.",
+      "tags": ["database", "migration", "rls", "communities"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:supabase/migrations/20240010000000_backfill_approved_communities.sql",
+      "type": "file",
+      "name": "20240010000000_backfill_approved_communities.sql",
+      "filePath": "supabase/migrations/20240010000000_backfill_approved_communities.sql",
+      "summary": "Data migration that inserts the curated set of initial approved communities into public.communities.",
+      "tags": ["database", "migration", "seed-data", "communities"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:supabase/migrations/20240011000000_community_waitlist.sql",
+      "type": "file",
+      "name": "20240011000000_community_waitlist.sql",
+      "filePath": "supabase/migrations/20240011000000_community_waitlist.sql",
+      "summary": "Creates community_waitlist table and supporting index/RLS for users who join queued (non-approved) communities.",
+      "tags": ["database", "migration", "communities", "waitlist"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "table:supabase/migrations/20240011000000_community_waitlist.sql:community_waitlist",
+      "type": "table",
+      "name": "community_waitlist",
+      "summary": "Tracks users waiting to join a non-approved community (community_id, user_id, username, joined_at).",
+      "tags": ["database", "table", "communities", "waitlist"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:supabase/migrations/20240012000000_avatar_catalog_and_inventory.sql",
+      "type": "file",
+      "name": "20240012000000_avatar_catalog_and_inventory.sql",
+      "filePath": "supabase/migrations/20240012000000_avatar_catalog_and_inventory.sql",
+      "summary": "Creates the avatar_catalog, user_avatar_inventory, and user_avatar_selection tables plus RLS policies and an updated_at trigger.",
+      "tags": ["database", "migration", "avatars", "rls"],
+      "complexity": "complex"
+    },
+    {
+      "id": "table:supabase/migrations/20240012000000_avatar_catalog_and_inventory.sql:avatar_catalog",
+      "type": "table",
+      "name": "avatar_catalog",
+      "summary": "Catalog of purchasable avatars with visual style fields (bg/figure/ring/glow), price, level, and is_new flag.",
+      "tags": ["database", "table", "avatars", "catalog"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "table:supabase/migrations/20240012000000_avatar_catalog_and_inventory.sql:user_avatar_inventory",
+      "type": "table",
+      "name": "user_avatar_inventory",
+      "summary": "Per-user owned-avatar join table (user_id, avatar_id, purchased_at).",
+      "tags": ["database", "table", "avatars", "inventory"],
+      "complexity": "simple"
+    },
+    {
+      "id": "table:supabase/migrations/20240012000000_avatar_catalog_and_inventory.sql:user_avatar_selection",
+      "type": "table",
+      "name": "user_avatar_selection",
+      "summary": "Tracks which avatar each user has currently selected (user_id primary key).",
+      "tags": ["database", "table", "avatars", "selection"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:supabase/migrations/20260503000100_avatar_catalog_inventory_selection.sql",
+      "type": "file",
+      "name": "20260503000100_avatar_catalog_inventory_selection.sql",
+      "filePath": "supabase/migrations/20260503000100_avatar_catalog_inventory_selection.sql",
+      "summary": "Redefines the avatar_catalog/inventory/selection tables with admin-only write RLS, owner-only inventory access, and the updated_at trigger.",
+      "tags": ["database", "migration", "avatars", "rls"],
+      "complexity": "complex"
+    },
+    {
+      "id": "table:supabase/migrations/20260503000100_avatar_catalog_inventory_selection.sql:avatar_catalog",
+      "type": "table",
+      "name": "avatar_catalog",
+      "summary": "Re-creates avatar_catalog (without is_new) and tightens write access to admin users only via an RLS subquery on public.users.",
+      "tags": ["database", "table", "avatars", "catalog"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "table:supabase/migrations/20260503000100_avatar_catalog_inventory_selection.sql:user_avatar_inventory",
+      "type": "table",
+      "name": "user_avatar_inventory",
+      "summary": "Re-creates user_avatar_inventory with owner-only read/insert/delete policies tied to auth.uid().",
+      "tags": ["database", "table", "avatars", "inventory"],
+      "complexity": "simple"
+    },
+    {
+      "id": "table:supabase/migrations/20260503000100_avatar_catalog_inventory_selection.sql:user_avatar_selection",
+      "type": "table",
+      "name": "user_avatar_selection",
+      "summary": "Re-creates user_avatar_selection with owner-only upsert policy keyed on auth.uid().",
+      "tags": ["database", "table", "avatars", "selection"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:supabase/migrations/20260504000000_poll_comments.sql",
+      "type": "file",
+      "name": "20260504000000_poll_comments.sql",
+      "filePath": "supabase/migrations/20260504000000_poll_comments.sql",
+      "summary": "Creates poll_comments table with an index on poll_id for fetching comments per poll.",
+      "tags": ["database", "migration", "polls", "comments"],
+      "complexity": "simple"
+    },
+    {
+      "id": "table:supabase/migrations/20260504000000_poll_comments.sql:poll_comments",
+      "type": "table",
+      "name": "poll_comments",
+      "summary": "Stores free-text comments attached to a poll (poll_id FK, text, created_at).",
+      "tags": ["database", "table", "polls", "comments"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:supabase/migrations/20260504000100_avatar_catalog_open_write.sql",
+      "type": "file",
+      "name": "20260504000100_avatar_catalog_open_write.sql",
+      "filePath": "supabase/migrations/20260504000100_avatar_catalog_open_write.sql",
+      "summary": "Replaces the admin-only avatar_catalog write policy with an open anon/authenticated FOR ALL policy for early-stage editing.",
+      "tags": ["database", "migration", "rls", "avatars"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:supabase/migrations/20260504000150_avatar_catalog_fix_anon_write.sql",
+      "type": "file",
+      "name": "20260504000150_avatar_catalog_fix_anon_write.sql",
+      "filePath": "supabase/migrations/20260504000150_avatar_catalog_fix_anon_write.sql",
+      "summary": "Re-grants INSERT/UPDATE/DELETE on avatar_catalog to anon and authenticated after a missing-permission regression.",
+      "tags": ["database", "migration", "grants", "avatars", "bugfix"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:supabase/migrations/20260504000200_daily_spin_pool.sql",
+      "type": "file",
+      "name": "20260504000200_daily_spin_pool.sql",
+      "filePath": "supabase/migrations/20260504000200_daily_spin_pool.sql",
+      "summary": "Creates daily_spin_pool table and open RLS policies for the daily spin/reward wheel feature.",
+      "tags": ["database", "migration", "daily-spin", "rewards"],
+      "complexity": "simple"
+    },
+    {
+      "id": "table:supabase/migrations/20260504000200_daily_spin_pool.sql:daily_spin_pool",
+      "type": "table",
+      "name": "daily_spin_pool",
+      "summary": "Catalog of items available in the daily spin wheel (id, name, image_src, position).",
+      "tags": ["database", "table", "daily-spin", "rewards"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {"source": "file:supabase/migrations/20240001000000_create_polls.sql", "target": "table:supabase/migrations/20240001000000_create_polls.sql:polls", "type": "migrates", "direction": "forward", "weight": 0.7},
+    {"source": "file:supabase/migrations/20240002100000_create_users_table.sql", "target": "table:supabase/migrations/20240002100000_create_users_table.sql:users", "type": "migrates", "direction": "forward", "weight": 0.7},
+    {"source": "file:supabase/migrations/20240002100000_create_users_table.sql", "target": "table:supabase/migrations/20240002100000_create_users_table.sql:poll_options", "type": "migrates", "direction": "forward", "weight": 0.7},
+    {"source": "file:supabase/migrations/20240002100000_create_users_table.sql", "target": "table:supabase/migrations/20240002100000_create_users_table.sql:poll_votes", "type": "migrates", "direction": "forward", "weight": 0.7},
+    {"source": "file:supabase/migrations/20240002000000_unique_username.sql", "target": "table:supabase/migrations/20240002100000_create_users_table.sql:users", "type": "migrates", "direction": "forward", "weight": 0.7},
+    {"source": "file:supabase/migrations/20240003000000_auth_setup.sql", "target": "table:supabase/migrations/20240002100000_create_users_table.sql:users", "type": "migrates", "direction": "forward", "weight": 0.7},
+    {"source": "file:supabase/migrations/20240004000000_custom_auth_rpcs.sql", "target": "table:supabase/migrations/20240002100000_create_users_table.sql:users", "type": "migrates", "direction": "forward", "weight": 0.7},
+    {"source": "file:supabase/migrations/20240005000000_fix_auth_rpc_schema.sql", "target": "table:supabase/migrations/20240002100000_create_users_table.sql:users", "type": "migrates", "direction": "forward", "weight": 0.7},
+    {"source": "file:supabase/migrations/20240006000000_communities.sql", "target": "table:supabase/migrations/20240006000000_communities.sql:communities", "type": "migrates", "direction": "forward", "weight": 0.7},
+    {"source": "file:supabase/migrations/20240006000000_communities.sql", "target": "table:supabase/migrations/20240006000000_communities.sql:community_members", "type": "migrates", "direction": "forward", "weight": 0.7},
+    {"source": "file:supabase/migrations/20240006000000_communities.sql", "target": "table:supabase/migrations/20240006000000_communities.sql:community_messages", "type": "migrates", "direction": "forward", "weight": 0.7},
+    {"source": "file:supabase/migrations/20240006000000_communities.sql", "target": "table:supabase/migrations/20240006000000_communities.sql:community_requests", "type": "migrates", "direction": "forward", "weight": 0.7},
+    {"source": "file:supabase/migrations/20240007000000_poll_options_rls.sql", "target": "table:supabase/migrations/20240002100000_create_users_table.sql:poll_options", "type": "migrates", "direction": "forward", "weight": 0.7},
+    {"source": "file:supabase/migrations/20240008000000_community_requests_update_rls.sql", "target": "table:supabase/migrations/20240006000000_communities.sql:community_requests", "type": "migrates", "direction": "forward", "weight": 0.7},
+    {"source": "file:supabase/migrations/20240009000000_communities_write_access.sql", "target": "table:supabase/migrations/20240006000000_communities.sql:communities", "type": "migrates", "direction": "forward", "weight": 0.7},
+    {"source": "file:supabase/migrations/20240010000000_backfill_approved_communities.sql", "target": "table:supabase/migrations/20240006000000_communities.sql:communities", "type": "migrates", "direction": "forward", "weight": 0.7},
+    {"source": "file:supabase/migrations/20240011000000_community_waitlist.sql", "target": "table:supabase/migrations/20240011000000_community_waitlist.sql:community_waitlist", "type": "migrates", "direction": "forward", "weight": 0.7},
+    {"source": "file:supabase/migrations/20240012000000_avatar_catalog_and_inventory.sql", "target": "table:supabase/migrations/20240012000000_avatar_catalog_and_inventory.sql:avatar_catalog", "type": "migrates", "direction": "forward", "weight": 0.7},
+    {"source": "file:supabase/migrations/20240012000000_avatar_catalog_and_inventory.sql", "target": "table:supabase/migrations/20240012000000_avatar_catalog_and_inventory.sql:user_avatar_inventory", "type": "migrates", "direction": "forward", "weight": 0.7},
+    {"source": "file:supabase/migrations/20240012000000_avatar_catalog_and_inventory.sql", "target": "table:supabase/migrations/20240012000000_avatar_catalog_and_inventory.sql:user_avatar_selection", "type": "migrates", "direction": "forward", "weight": 0.7},
+    {"source": "file:supabase/migrations/20260503000100_avatar_catalog_inventory_selection.sql", "target": "table:supabase/migrations/20260503000100_avatar_catalog_inventory_selection.sql:avatar_catalog", "type": "migrates", "direction": "forward", "weight": 0.7},
+    {"source": "file:supabase/migrations/20260503000100_avatar_catalog_inventory_selection.sql", "target": "table:supabase/migrations/20260503000100_avatar_catalog_inventory_selection.sql:user_avatar_inventory", "type": "migrates", "direction": "forward", "weight": 0.7},
+    {"source": "file:supabase/migrations/20260503000100_avatar_catalog_inventory_selection.sql", "target": "table:supabase/migrations/20260503000100_avatar_catalog_inventory_selection.sql:user_avatar_selection", "type": "migrates", "direction": "forward", "weight": 0.7},
+    {"source": "file:supabase/migrations/20260504000000_poll_comments.sql", "target": "table:supabase/migrations/20260504000000_poll_comments.sql:poll_comments", "type": "migrates", "direction": "forward", "weight": 0.7},
+    {"source": "file:supabase/migrations/20260504000100_avatar_catalog_open_write.sql", "target": "table:supabase/migrations/20240012000000_avatar_catalog_and_inventory.sql:avatar_catalog", "type": "migrates", "direction": "forward", "weight": 0.7},
+    {"source": "file:supabase/migrations/20260504000150_avatar_catalog_fix_anon_write.sql", "target": "table:supabase/migrations/20240012000000_avatar_catalog_and_inventory.sql:avatar_catalog", "type": "migrates", "direction": "forward", "weight": 0.7},
+    {"source": "file:supabase/migrations/20260504000200_daily_spin_pool.sql", "target": "table:supabase/migrations/20260504000200_daily_spin_pool.sql:daily_spin_pool", "type": "migrates", "direction": "forward", "weight": 0.7},
+    {"source": "file:supabase/migrations/20240001000000_create_polls.sql", "target": "file:supabase/migrations/20240002100000_create_users_table.sql", "type": "related", "direction": "forward", "weight": 0.5},
+    {"source": "file:supabase/migrations/20240012000000_avatar_catalog_and_inventory.sql", "target": "file:supabase/migrations/20260503000100_avatar_catalog_inventory_selection.sql", "type": "related", "direction": "forward", "weight": 0.5}
+  ]
+}

@@ -1,0 +1,197 @@
+{
+  "batchIndex": 10,
+  "nodes": [
+    {
+      "id": "schema:supabase/community_access_schema.sql",
+      "type": "schema",
+      "name": "community_access_schema.sql",
+      "filePath": "supabase/community_access_schema.sql",
+      "summary": "Free-tier + token-unlock + subscription gating schema. Defines user_community_unlocks and user_subscriptions tables with RLS, plus RPCs get_community_access, unlock_community (2 free, 10 tokens each), activate_subscription.",
+      "tags": ["sql", "supabase", "rls", "rpc", "communities", "monetization"],
+      "complexity": "medium"
+    },
+    {
+      "id": "table:supabase/community_access_schema.sql:user_community_unlocks",
+      "type": "table",
+      "name": "user_community_unlocks",
+      "filePath": "supabase/community_access_schema.sql",
+      "summary": "Tracks which communities a user has unlocked (free slot or token spend). PK (user_id, community_id).",
+      "tags": ["table", "communities", "tokens"],
+      "complexity": "low"
+    },
+    {
+      "id": "table:supabase/community_access_schema.sql:user_subscriptions",
+      "type": "table",
+      "name": "user_subscriptions",
+      "filePath": "supabase/community_access_schema.sql",
+      "summary": "Per-user subscription status with expiry. PK user_id; status defaults to 'inactive'.",
+      "tags": ["table", "subscription", "monetization"],
+      "complexity": "low"
+    },
+    {
+      "id": "function:supabase/community_access_schema.sql:get_community_access",
+      "type": "function",
+      "name": "get_community_access",
+      "filePath": "supabase/community_access_schema.sql",
+      "summary": "RPC returning {has_subscription, unlocked_community_ids[]} for a user.",
+      "tags": ["rpc", "plpgsql", "security-definer"],
+      "complexity": "low"
+    },
+    {
+      "id": "function:supabase/community_access_schema.sql:unlock_community",
+      "type": "function",
+      "name": "unlock_community",
+      "filePath": "supabase/community_access_schema.sql",
+      "summary": "RPC unlocking a community: free if <2 unlocks or active sub, else debits 10 tokens from users.token_balance. Returns {ok, already, free, balance, error}.",
+      "tags": ["rpc", "plpgsql", "tokens", "transaction"],
+      "complexity": "medium"
+    },
+    {
+      "id": "function:supabase/community_access_schema.sql:activate_subscription",
+      "type": "function",
+      "name": "activate_subscription",
+      "filePath": "supabase/community_access_schema.sql",
+      "summary": "RPC upserting user_subscriptions to 'active' with expiry now()+p_months months.",
+      "tags": ["rpc", "plpgsql", "subscription"],
+      "complexity": "low"
+    },
+    {
+      "id": "config:supabase/config.toml",
+      "type": "config",
+      "name": "config.toml",
+      "filePath": "supabase/config.toml",
+      "summary": "Supabase CLI project configuration: api, db (pooler, migrations, seed), realtime, studio, inbucket, storage (s3, analytics, vector), auth (rate_limit, email, sms, mfa, external providers, third_party, oauth_server), edge_runtime, analytics, experimental.",
+      "tags": ["config", "supabase", "toml", "infra"],
+      "complexity": "high"
+    },
+    {
+      "id": "schema:supabase/full_schema_deploy.sql",
+      "type": "schema",
+      "name": "full_schema_deploy.sql",
+      "filePath": "supabase/full_schema_deploy.sql",
+      "summary": "All-in-one deployment script: full schema (15 public tables: users, polls, poll_options, poll_votes, poll_comments, communities, community_members, community_messages, community_requests, community_waitlist, avatar_catalog, user_avatar_inventory, user_avatar_selection, daily_spin_pool, landing_new_avatars), indexes, RPCs (handle_new_user, signup_user, login_user, toggle_message_like, join_community_waitlist, set_updated_at_avatar_catalog, trim_community_messages), storage bucket setup, plus inline seed inserts.",
+      "tags": ["sql", "supabase", "schema", "deploy", "seed"],
+      "complexity": "high"
+    },
+    {
+      "id": "schema:supabase/schema.sql",
+      "type": "schema",
+      "name": "schema.sql",
+      "filePath": "supabase/schema.sql",
+      "summary": "Canonical schema (no seeds): 15 public tables (users, polls, poll_options, poll_votes, poll_comments, communities, community_members, community_messages, community_requests, community_waitlist, avatar_catalog, user_avatar_inventory, user_avatar_selection, daily_spin_pool, landing_new_avatars), indexes, RLS policies, extensions (pgcrypto, pg_cron), RPCs (handle_new_user trigger, signup_user, login_user, toggle_message_like, join_community_waitlist, set_updated_at_avatar_catalog, trim_community_messages), storage buckets.",
+      "tags": ["sql", "supabase", "schema", "rls", "rpc"],
+      "complexity": "high"
+    },
+    {
+      "id": "schema:supabase/seed.sql",
+      "type": "schema",
+      "name": "seed.sql",
+      "filePath": "supabase/seed.sql",
+      "summary": "Seed data: inserts into communities, polls, and poll_options for initial app content.",
+      "tags": ["sql", "supabase", "seed", "fixtures"],
+      "complexity": "low"
+    },
+    {
+      "id": "schema:supabase/xp_schema.sql",
+      "type": "schema",
+      "name": "xp_schema.sql",
+      "filePath": "supabase/xp_schema.sql",
+      "summary": "XP/leveling schema: user_progress and user_xp_claims tables with RLS, plus RPCs _xp_to_level, get_user_progress, award_xp, award_xp_once (idempotent by claim_key), get_user_xp_claim_keys. Mirrors client LEVEL_THRESHOLDS.",
+      "tags": ["sql", "supabase", "xp", "gamification", "rpc"],
+      "complexity": "medium"
+    },
+    {
+      "id": "table:supabase/xp_schema.sql:user_progress",
+      "type": "table",
+      "name": "user_progress",
+      "filePath": "supabase/xp_schema.sql",
+      "summary": "Per-user XP, level, total_polls_answered, streak_days. PK user_id.",
+      "tags": ["table", "xp", "gamification"],
+      "complexity": "low"
+    },
+    {
+      "id": "table:supabase/xp_schema.sql:user_xp_claims",
+      "type": "table",
+      "name": "user_xp_claims",
+      "filePath": "supabase/xp_schema.sql",
+      "summary": "Idempotency ledger for XP awards. PK (user_id, source, claim_key).",
+      "tags": ["table", "xp", "idempotency"],
+      "complexity": "low"
+    },
+    {
+      "id": "function:supabase/xp_schema.sql:_xp_to_level",
+      "type": "function",
+      "name": "_xp_to_level",
+      "filePath": "supabase/xp_schema.sql",
+      "summary": "Immutable SQL helper mapping XP to level (1-10) using thresholds 500/1500/3500/7000/12000/19000/28000/38000/50000.",
+      "tags": ["function", "sql", "immutable", "xp"],
+      "complexity": "low"
+    },
+    {
+      "id": "function:supabase/xp_schema.sql:get_user_progress",
+      "type": "function",
+      "name": "get_user_progress",
+      "filePath": "supabase/xp_schema.sql",
+      "summary": "RPC returning user_progress row (upserts default if missing).",
+      "tags": ["rpc", "plpgsql", "xp"],
+      "complexity": "low"
+    },
+    {
+      "id": "function:supabase/xp_schema.sql:award_xp",
+      "type": "function",
+      "name": "award_xp",
+      "filePath": "supabase/xp_schema.sql",
+      "summary": "RPC adding XP and recomputing level. Returns {xp, level, leveled_up}.",
+      "tags": ["rpc", "plpgsql", "xp"],
+      "complexity": "low"
+    },
+    {
+      "id": "function:supabase/xp_schema.sql:award_xp_once",
+      "type": "function",
+      "name": "award_xp_once",
+      "filePath": "supabase/xp_schema.sql",
+      "summary": "Idempotent XP award keyed by (user_id, source, claim_key). No-op on duplicate.",
+      "tags": ["rpc", "plpgsql", "xp", "idempotent"],
+      "complexity": "medium"
+    },
+    {
+      "id": "function:supabase/xp_schema.sql:get_user_xp_claim_keys",
+      "type": "function",
+      "name": "get_user_xp_claim_keys",
+      "filePath": "supabase/xp_schema.sql",
+      "summary": "RPC returning TEXT[] of claim_keys for a user and source.",
+      "tags": ["rpc", "plpgsql", "xp"],
+      "complexity": "low"
+    }
+  ],
+  "edges": [
+    {"from": "schema:supabase/community_access_schema.sql", "to": "table:supabase/community_access_schema.sql:user_community_unlocks", "type": "contains"},
+    {"from": "schema:supabase/community_access_schema.sql", "to": "table:supabase/community_access_schema.sql:user_subscriptions", "type": "contains"},
+    {"from": "schema:supabase/community_access_schema.sql", "to": "function:supabase/community_access_schema.sql:get_community_access", "type": "contains"},
+    {"from": "schema:supabase/community_access_schema.sql", "to": "function:supabase/community_access_schema.sql:unlock_community", "type": "contains"},
+    {"from": "schema:supabase/community_access_schema.sql", "to": "function:supabase/community_access_schema.sql:activate_subscription", "type": "contains"},
+    {"from": "function:supabase/community_access_schema.sql:get_community_access", "to": "table:supabase/community_access_schema.sql:user_subscriptions", "type": "reads_from"},
+    {"from": "function:supabase/community_access_schema.sql:get_community_access", "to": "table:supabase/community_access_schema.sql:user_community_unlocks", "type": "reads_from"},
+    {"from": "function:supabase/community_access_schema.sql:unlock_community", "to": "table:supabase/community_access_schema.sql:user_community_unlocks", "type": "writes_to"},
+    {"from": "function:supabase/community_access_schema.sql:unlock_community", "to": "table:supabase/community_access_schema.sql:user_subscriptions", "type": "reads_from"},
+    {"from": "function:supabase/community_access_schema.sql:activate_subscription", "to": "table:supabase/community_access_schema.sql:user_subscriptions", "type": "writes_to"},
+    {"from": "schema:supabase/xp_schema.sql", "to": "table:supabase/xp_schema.sql:user_progress", "type": "contains"},
+    {"from": "schema:supabase/xp_schema.sql", "to": "table:supabase/xp_schema.sql:user_xp_claims", "type": "contains"},
+    {"from": "schema:supabase/xp_schema.sql", "to": "function:supabase/xp_schema.sql:_xp_to_level", "type": "contains"},
+    {"from": "schema:supabase/xp_schema.sql", "to": "function:supabase/xp_schema.sql:get_user_progress", "type": "contains"},
+    {"from": "schema:supabase/xp_schema.sql", "to": "function:supabase/xp_schema.sql:award_xp", "type": "contains"},
+    {"from": "schema:supabase/xp_schema.sql", "to": "function:supabase/xp_schema.sql:award_xp_once", "type": "contains"},
+    {"from": "schema:supabase/xp_schema.sql", "to": "function:supabase/xp_schema.sql:get_user_xp_claim_keys", "type": "contains"},
+    {"from": "function:supabase/xp_schema.sql:get_user_progress", "to": "table:supabase/xp_schema.sql:user_progress", "type": "reads_from"},
+    {"from": "function:supabase/xp_schema.sql:award_xp", "to": "table:supabase/xp_schema.sql:user_progress", "type": "writes_to"},
+    {"from": "function:supabase/xp_schema.sql:award_xp", "to": "function:supabase/xp_schema.sql:_xp_to_level", "type": "calls"},
+    {"from": "function:supabase/xp_schema.sql:award_xp_once", "to": "table:supabase/xp_schema.sql:user_xp_claims", "type": "writes_to"},
+    {"from": "function:supabase/xp_schema.sql:award_xp_once", "to": "function:supabase/xp_schema.sql:award_xp", "type": "calls"},
+    {"from": "function:supabase/xp_schema.sql:get_user_xp_claim_keys", "to": "table:supabase/xp_schema.sql:user_xp_claims", "type": "reads_from"},
+    {"from": "schema:supabase/seed.sql", "to": "schema:supabase/schema.sql", "type": "depends_on"},
+    {"from": "schema:supabase/full_schema_deploy.sql", "to": "schema:supabase/schema.sql", "type": "similar_to"},
+    {"from": "schema:supabase/full_schema_deploy.sql", "to": "schema:supabase/seed.sql", "type": "similar_to"},
+    {"from": "config:supabase/config.toml", "to": "schema:supabase/schema.sql", "type": "configures"},
+    {"from": "config:supabase/config.toml", "to": "schema:supabase/seed.sql", "type": "configures"}
+  ]
+}

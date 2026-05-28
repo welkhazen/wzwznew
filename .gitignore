@@ -27,3 +27,6 @@ dist-ssr
 # Vite local dependency cache
 .vite-local-cache
 .env
+
+# understand-anything pipeline temp files
+.understand-anything/tmp/
