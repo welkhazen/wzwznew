@@ -48,7 +48,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
 import { ChevronDown } from "lucide-react";
-import { spendTokens } from "@/utils/supabasePolls";
+import { spendTokens } from "@/lib/api/tokens";
 import { fetchUserAliases } from "@/backend/supabase/controllers/userAliasController";
 import type { UserAliasRow } from "@/backend/supabase/models/user-alias";
 import { IDENTITY_SELECTION_EVENT, readSelectedIdentityAlias, writeSelectedIdentityAlias } from "@/lib/identitySelection";

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } f
 import { Link, Navigate } from "react-router-dom";
 import { ArrowLeft, Ban, BellRing, CheckCircle2, Copy, Database, Download, Flag, GripVertical, Lock, Plus, Scissors, Shield, Trash2, Upload, Users, XCircle } from "lucide-react";
 import { RARITY_CONFIG, RARITY_ORDER, type AvatarRarity } from "@/lib/avatarRarity";
-import { fetchPollsFromSupabase, insertPollToSupabase, deletePollFromSupabase, testSupabaseConnection } from "@/lib/supabasePolls";
+import { createAdminPoll as createAdminPollInApi, deleteAdminPoll as deleteAdminPollFromApi, fetchAdminPolls, testPollConnection } from "@/lib/api/polls";
 import { fetchCommunityRequests, updateCommunityRequestStatus } from "@/backend/supabase/controllers/communityRequestController";
 import { createCommunityFromRequest } from "@/backend/supabase/controllers/communityController";
 import { Button } from "@/components/ui/button";
@@ -186,12 +186,12 @@ export default function Admin() {
   const loadPolls = useCallback(async () => {
     setIsLoadingPolls(true);
     try {
-      const result = await testSupabaseConnection();
+      const result = await testPollConnection();
       setSupabaseStatus(result.ok ? "ok" : "error");
       setSupabaseMessage(result.message);
       if (result.ok) {
         try {
-          const polls = await fetchPollsFromSupabase();
+          const polls = await fetchAdminPolls();
           setAdminPolls(polls);
         } catch {
           setAdminPolls(readAdminPolls());
@@ -754,8 +754,8 @@ export default function Admin() {
     setPollOptions(["", ""]);
     if (supabaseStatus === "ok") {
       try {
-        await insertPollToSupabase(poll);
-        const polls = await fetchPollsFromSupabase();
+        await createAdminPollInApi(poll);
+        const polls = await fetchAdminPolls();
         setAdminPolls(polls);
         toast({ title: "Poll created", description: "Saved to Supabase." });
       } catch {
@@ -772,8 +772,8 @@ export default function Admin() {
     deleteAdminPoll(pollId);
     if (supabaseStatus === "ok") {
       try {
-        await deletePollFromSupabase(pollId);
-        const polls = await fetchPollsFromSupabase();
+        await deleteAdminPollFromApi(pollId);
+        const polls = await fetchAdminPolls();
         setAdminPolls(polls);
       } catch {
         setAdminPolls(readAdminPolls());

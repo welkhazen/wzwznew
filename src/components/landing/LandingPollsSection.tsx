@@ -5,7 +5,7 @@ import { ChevronLeft, ChevronRight, Send } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { LandingSectionShell } from "@/components/landing/LandingSectionShell";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
-import { fetchSupabasePolls } from "@/utils/supabasePolls";
+import { fetchPolls } from "@/lib/api/polls";
 import { POLL_QUESTION_SEEDS } from "@/features/polls/pollQuestions";
 import { PremiumPollCard } from "@/components/polls/PremiumPollCard";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
@@ -70,7 +70,7 @@ export function LandingPollsSection({ onSignupClick }: LandingPollsSectionProps)
   const { data: fetchedPolls } = useQuery({
     queryKey: ["landing-polls-section"],
     queryFn: async () => {
-      const polls = await fetchSupabasePolls(4);
+      const polls = await fetchPolls(4);
       if (polls.length === 0) return null;
       return polls.slice(0, 4).map((poll) => {
         const yesVotes = poll.options.find((o) => o.text.toLowerCase() === "yes")?.votes ?? 0;

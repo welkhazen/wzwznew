@@ -6,7 +6,7 @@ import { RARITY_CONFIG, RARITY_ORDER } from "@/lib/avatarRarity";
 import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
 import type { Poll } from "@/store/useRawStore";
 import TokenImage from "@/assets/tokens.webp";
-import { spendTokens } from "@/utils/supabasePolls";
+import { spendTokens } from "@/lib/api/tokens";
 
 interface DashboardInventoryProps {
   polls: Poll[];
