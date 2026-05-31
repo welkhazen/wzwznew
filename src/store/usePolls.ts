@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { addTokensToBalance, fetchSupabasePolls, fetchTokenBalance, spendTokens, submitPollVote } from "@/utils/supabasePolls";
+import { fetchPolls, submitPollVote } from "@/lib/api/polls";
+import { addTokensToBalance, fetchTokenBalance, spendTokens } from "@/lib/api/tokens";
 import { track } from "@/lib/analytics";
 import type { Poll } from "@/store/types";
 import { getTodayKey } from "@/store/useRawStore.storage";
@@ -25,7 +26,7 @@ const INITIAL_POLLS: Poll[] = POLL_QUESTION_SEEDS.map((poll, index) => ({
 
 async function fetchPollsWithFallback(): Promise<Poll[]> {
   try {
-    const polls = await fetchSupabasePolls(100);
+    const polls = await fetchPolls(100);
     if (polls.length > 0) {
       return polls;
     }
@@ -161,7 +162,7 @@ export function usePolls(isLoggedIn: boolean, userId?: string) {
   const voteMutation = useMutation({
     mutationFn: async ({ pollId, optionId }: { pollId: string; optionId: string }) => {
       if (!userId) return { pollId, optionId };
-      await submitPollVote(pollId, optionId, userId);
+      await submitPollVote(pollId, optionId);
       return { pollId, optionId };
     },
     onSuccess: ({ pollId, optionId }) => {

@@ -8,7 +8,7 @@ import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { setAvatarThemes } from "@/lib/avataridentity";
 import { AvatarPhoneHomeScreen } from "@/components/ui/avatar-phone-home-screen";
 import { PhoneMockup } from "@/components/ui/phone-mockup";
-import { fetchSupabasePolls } from "@/utils/supabasePolls";
+import { fetchPolls } from "@/lib/api/polls";
 import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
 import { saveUserAliases } from "@/backend/supabase/controllers/userAliasController";
 
@@ -233,7 +233,7 @@ export function OnboardingJourney({
   const { data: supabasePolls } = useQuery({
     queryKey: ["onboarding-landing-polls"],
     queryFn: async () => {
-      const fetched = await fetchSupabasePolls(5);
+      const fetched = await fetchPolls(5);
       if (fetched.length === 0) return null;
       return fetched.map((poll) => ({
         id: poll.id,

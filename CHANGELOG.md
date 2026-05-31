@@ -20,6 +20,8 @@ This project uses a simple release discipline:
 
 ### Changed
 - Route poll vote submissions directly to the canonical Express API via `VITE_API_ORIGIN` when configured.
+- Centralize Supabase browser/server clients and document the direct browser access boundary.
+- Consolidate frontend poll access behind one typed API module and remove the old Supabase poll shims.
 
 ## 0.0.0 - 2026-05-19
 

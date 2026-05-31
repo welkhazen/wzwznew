@@ -1,15 +1,8 @@
-import { createClient } from "@supabase/supabase-js";
+import { supabaseServerClient } from "../_lib/supabaseServerClient";
 
 export const config = { runtime: "edge" };
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL ?? "";
-const supabaseKey = process.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "";
-
-const supabase = supabaseUrl && supabaseKey
-  ? createClient(supabaseUrl, supabaseKey, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    })
-  : null;
+const supabase = supabaseServerClient;
 
 const statuses = new Set(["open", "dismissed", "reviewed"]);
 const MAX_SCREENSHOT_LENGTH = 3_000_000;
