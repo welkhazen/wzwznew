@@ -166,17 +166,26 @@ const insights: InsightPreview[] = [
 ];
 
 
-function LockedPreview({ insight }: { insight: InsightPreview }) {
+function LockedPreview({ insight, isLight }: { insight: InsightPreview; isLight: boolean }) {
   const accent = { color: insight.accentColor };
+  const previewPanelClass = isLight ? "border-slate-300/70 bg-slate-100/80" : "border-white/10 bg-black/30";
+  const mutedTextClass = isLight ? "text-slate-700" : "text-white/80";
+  const secondaryTextClass = isLight ? "text-slate-600" : "text-white/75";
+  const subtleBorderClass = isLight ? "border-slate-300/70 bg-white/45" : "border-white/10 bg-white/5";
+  const trackClass = isLight ? "bg-slate-300/80" : "bg-white/10";
 
   return (
-    <div className="mt-5 rounded-xl border border-white/10 bg-black/30 p-3 blur-[1px]">
+    <div className={`mt-5 rounded-xl border p-3 blur-[1px] ${previewPanelClass}`}>
       {insight.previewVariant === "radar" && (
         <div className="space-y-2">
-          <div className="h-24 rounded-lg border border-white/10 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.1),transparent_70%)]" />
+          <div
+            className={`h-24 rounded-lg border ${
+              isLight ? "border-slate-300/70 bg-[radial-gradient(circle_at_center,rgba(148,163,184,0.22),transparent_70%)]" : "border-white/10 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.1),transparent_70%)]"
+            }`}
+          />
           {insight.traits.slice(0, 3).map((trait) => (
             <div key={trait.label} className="flex items-center justify-between text-[10px]">
-              <span className="text-white/80">{trait.label}</span>
+              <span className={mutedTextClass}>{trait.label}</span>
               <span style={accent}>{trait.value}%</span>
             </div>
           ))}
@@ -185,7 +194,7 @@ function LockedPreview({ insight }: { insight: InsightPreview }) {
 
       {insight.previewVariant === "summary" && (
         <div className="space-y-2 text-[10px]">
-          <p className="rounded border border-white/10 bg-white/5 px-2 py-1 text-white/80">AI Analysis Summary</p>
+          <p className={`rounded border px-2 py-1 ${subtleBorderClass} ${mutedTextClass}`}>AI Analysis Summary</p>
           <p className="rounded border border-emerald-400/30 bg-emerald-500/10 px-2 py-1 text-emerald-200">Top Strengths & Advantages</p>
           <p className="rounded border border-amber-400/30 bg-amber-500/10 px-2 py-1 text-amber-100">Growth Opportunities</p>
         </div>
@@ -193,10 +202,17 @@ function LockedPreview({ insight }: { insight: InsightPreview }) {
 
       {insight.previewVariant === "pie" && (
         <div className="flex items-center gap-3">
-          <div className="h-20 w-20 rounded-full border border-white/20" style={{ background: `conic-gradient(${insight.accentColor} 0 38%, rgba(255,255,255,0.18) 38% 66%, rgba(255,255,255,0.08) 66% 100%)` }} />
+          <div
+            className={`h-20 w-20 rounded-full border ${isLight ? "border-slate-300/80" : "border-white/20"}`}
+            style={{
+              background: isLight
+                ? `conic-gradient(${insight.accentColor} 0 38%, rgba(148,163,184,0.35) 38% 66%, rgba(226,232,240,0.9) 66% 100%)`
+                : `conic-gradient(${insight.accentColor} 0 38%, rgba(255,255,255,0.18) 38% 66%, rgba(255,255,255,0.08) 66% 100%)`,
+            }}
+          />
           <div className="space-y-1 text-[10px]">
             {insight.traits.slice(0, 3).map((trait) => (
-              <p key={trait.label} className="text-white/75">{trait.label}: <span style={accent}>{trait.value}%</span></p>
+              <p key={trait.label} className={secondaryTextClass}>{trait.label}: <span style={accent}>{trait.value}%</span></p>
             ))}
           </div>
         </div>
@@ -206,8 +222,8 @@ function LockedPreview({ insight }: { insight: InsightPreview }) {
         <div className="space-y-2">
           {insight.traits.map((trait) => (
             <div key={trait.label}>
-              <p className="mb-1 text-[10px] text-white/80">{trait.label}</p>
-              <div className="h-1.5 rounded-full bg-white/10">
+              <p className={`mb-1 text-[10px] ${mutedTextClass}`}>{trait.label}</p>
+              <div className={`h-1.5 rounded-full ${trackClass}`}>
                 <div className="h-full rounded-full" style={{ width: `${trait.value}%`, backgroundColor: insight.accentColor }} />
               </div>
             </div>
@@ -218,8 +234,8 @@ function LockedPreview({ insight }: { insight: InsightPreview }) {
       {insight.previewVariant === "quadrants" && (
         <div className="grid grid-cols-2 gap-2 text-[10px]">
           {insight.traits.map((trait) => (
-            <div key={trait.label} className="rounded border border-white/10 bg-white/5 p-2">
-              <p className="text-white/75">{trait.label}</p>
+            <div key={trait.label} className={`rounded border p-2 ${subtleBorderClass}`}>
+              <p className={secondaryTextClass}>{trait.label}</p>
               <p className="mt-1 font-semibold" style={accent}>{trait.value}%</p>
             </div>
           ))}
@@ -231,7 +247,7 @@ function LockedPreview({ insight }: { insight: InsightPreview }) {
           {insight.traits.map((trait) => (
             <div key={trait.label} className="flex items-center gap-2 text-[10px]">
               <div className="h-2 w-2 rounded-full" style={{ backgroundColor: insight.accentColor }} />
-              <span className="text-white/80">{trait.label}</span>
+              <span className={mutedTextClass}>{trait.label}</span>
               <span className="ml-auto" style={accent}>{trait.value}%</span>
             </div>
           ))}
@@ -376,7 +392,7 @@ export function PersonalityInsightsSection() {
                     </div>
                     <h3 className={`font-display text-base tracking-wide ${insight.accentText}`}>{insight.name}</h3>
                     <p className="mt-3 text-xs leading-relaxed text-raw-silver/50">{insight.description}</p>
-                    <LockedPreview insight={insight} />
+                    <LockedPreview insight={insight} isLight={isLight} />
                   </div>
                   <div className="pointer-events-none absolute right-4 top-4 z-20 rounded-full border border-white/20 bg-black/60 px-3 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-white/85 backdrop-blur-sm">Locked · Sample</div>
                 </GlareCard>
