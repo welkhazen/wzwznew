@@ -10,6 +10,8 @@ import { AvatarPhoneHomeScreen } from "@/components/ui/avatar-phone-home-screen"
 import { PhoneMockup } from "@/components/ui/phone-mockup";
 import { fetchPolls } from "@/lib/api/polls";
 import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
+import { LANDING_WHEEL_SPIN_KEY } from "@/lib/avatarCatalog";
+import { WheelOfFortune, type WheelPrize } from "@/components/wheel/WheelOfFortune";
 import { saveUserAliases } from "@/backend/supabase/controllers/userAliasController";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -40,10 +42,36 @@ interface OnboardingJourneyProps {
   onToggleCommunity: (communityId: string) => void;
   onCompleteOnboarding: () => void;
   onLogout: () => void;
+  onClaimLandingWheelAvatar: () => Promise<void>;
 }
 
-const STEP_ORDER: OnboardingStep[] = ["avatar", "identity", "polls", "communities"];
+type WheelPoolEntry = { id: string; avatarId: string; name: string; imageSrc: string };
+
+const SPIN_WHEEL_POOL: readonly WheelPoolEntry[] = [
+  { id: "wheel-avatar-1", avatarId: "silver-void", name: "Silver Void", imageSrc: "/avatars/1.webp" },
+  { id: "wheel-avatar-2", avatarId: "neon-lynx", name: "Neon Lynx", imageSrc: "/avatars/2.webp" },
+  { id: "wheel-avatar-3", avatarId: "blue-signal", name: "Blue Signal", imageSrc: "/avatars/3.webp" },
+  { id: "wheel-avatar-4", avatarId: "violet-mask", name: "Violet Mask", imageSrc: "/avatars/04.webp" },
+  { id: "wheel-avatar-5", avatarId: "horned-iron", name: "Horned Iron", imageSrc: "/avatars/5.webp" },
+  { id: "wheel-avatar-6", avatarId: "crimson-muse", name: "Crimson Muse", imageSrc: "/avatars/6.webp" },
+  { id: "wheel-avatar-7", avatarId: "solar-flame", name: "Solar Flame", imageSrc: "/avatars/07.webp" },
+  { id: "wheel-avatar-8", avatarId: "pink-circuit", name: "Pink Circuit", imageSrc: "/avatars/08.webp" },
+];
+
+function buildSpinPrizes(): WheelPrize[] {
+  return SPIN_WHEEL_POOL.map((entry, i) => ({
+    id: entry.id,
+    label: entry.name,
+    shortLabel: entry.name.split(" ")[0].toUpperCase(),
+    imageSrc: entry.imageSrc,
+    color: i % 2 === 0 ? "#121212" : "#0e0e0e",
+    textColor: "#F1C42D",
+  }));
+}
+
+const STEP_ORDER: OnboardingStep[] = ["spin", "avatar", "identity", "polls", "communities"];
 const STEP_LABELS: Record<OnboardingStep, string> = {
+  spin: "spin",
   avatar: "avatar",
   identity: "names",
   polls: "polls",
@@ -233,6 +261,7 @@ export function OnboardingJourney({
   onToggleCommunity,
   onCompleteOnboarding,
   onLogout,
+  onClaimLandingWheelAvatar,
 }: OnboardingJourneyProps) {
   const { data: supabasePolls } = useQuery({
     queryKey: ["onboarding-landing-polls"],
@@ -263,6 +292,10 @@ export function OnboardingJourney({
   const [publicIdentityIndex, setPublicIdentityIndex] = useState(0);
   const [identitySaveError, setIdentitySaveError] = useState<string | null>(null);
   const [isSavingIdentities, setIsSavingIdentities] = useState(false);
+  const [spinPrizes] = useState<WheelPrize[]>(() => buildSpinPrizes());
+  const [spinResult, setSpinResult] = useState<WheelPoolEntry | null>(null);
+  const [spinClaimError, setSpinClaimError] = useState<string | null>(null);
+  const [isClaimingSpin, setIsClaimingSpin] = useState(false);
   const onboardingAvatars = useMemo(() => (
     avatarCatalog.length > 0 ? avatarCatalog : fallbackAvatarCatalog()
   ), [avatarCatalog]);
@@ -469,6 +502,78 @@ export function OnboardingJourney({
         </div>
 
         <div className="rounded-2xl border border-raw-border/40 bg-gradient-to-b from-raw-surface/40 to-raw-black/90 p-3 sm:rounded-3xl sm:p-6 md:p-8">
+          {onboardingStep === "spin" && (
+            <section>
+              <h2 className="font-display text-lg tracking-wide text-raw-text sm:text-xl">1. Spin for your free avatar</h2>
+              <p className="mt-2 text-xs text-raw-silver/45 sm:text-sm">
+                One spin, one avatar — your early access gift from raW. Land it, claim it, and it joins your inventory.
+              </p>
+
+              <div className="mt-6 flex flex-col items-center gap-5 sm:gap-7">
+                <WheelOfFortune
+                  prizes={spinPrizes}
+                  disabled={!!spinResult || isClaimingSpin}
+                  onSpinEnd={async (prize) => {
+                    const entry = SPIN_WHEEL_POOL.find((p) => p.id === prize.id) ?? SPIN_WHEEL_POOL[0];
+                    setSpinResult(entry);
+                    setSpinClaimError(null);
+                    if (typeof window !== "undefined") {
+                      window.localStorage.setItem(
+                        LANDING_WHEEL_SPIN_KEY,
+                        JSON.stringify({ prizeId: entry.id, avatarId: entry.avatarId, spunAt: Date.now() }),
+                      );
+                    }
+                    setIsClaimingSpin(true);
+                    try {
+                      await onClaimLandingWheelAvatar();
+                    } catch {
+                      setSpinClaimError("Could not save your reward. We'll retry when you continue.");
+                    } finally {
+                      setIsClaimingSpin(false);
+                    }
+                    track("onboarding_step_completed", {
+                      step: "spin" as never,
+                      step_index: STEP_ORDER.indexOf("spin"),
+                      time_in_step: Date.now() - stepStartTimeRef.current,
+                    });
+                  }}
+                />
+
+                {spinResult ? (
+                  <div className="w-full max-w-md rounded-2xl border border-raw-gold/30 bg-gradient-to-b from-raw-gold/[0.08] to-raw-gold/[0.02] p-4 text-center sm:p-5">
+                    <p className="font-display text-sm tracking-wide text-raw-gold">
+                      You won {spinResult.name}
+                    </p>
+                    <p className="mt-2 text-xs leading-relaxed text-raw-text/75">
+                      Added to your inventory. Pick it on the next step.
+                    </p>
+                    {spinClaimError ? (
+                      <p className="mt-2 text-[11px] text-red-300/80">{spinClaimError}</p>
+                    ) : null}
+                  </div>
+                ) : (
+                  <p className="text-center text-[11px] uppercase tracking-[0.2em] text-raw-silver/45">
+                    Tap Spin to claim your free avatar
+                  </p>
+                )}
+
+                <div className="flex w-full max-w-md justify-end">
+                  <button
+                    type="button"
+                    disabled={!spinResult || isClaimingSpin}
+                    onClick={() => onSetOnboardingStep("avatar")}
+                    className={`rounded-full px-6 py-2 font-display text-xs uppercase tracking-[0.2em] transition ${
+                      !spinResult || isClaimingSpin
+                        ? "cursor-not-allowed border border-raw-border/40 bg-raw-surface/40 text-raw-silver/35"
+                        : "border border-raw-gold/50 bg-raw-gold/15 text-raw-gold hover:bg-raw-gold/25"
+                    }`}
+                  >
+                    {isClaimingSpin ? "Saving…" : "Continue"}
+                  </button>
+                </div>
+              </div>
+            </section>
+          )}
           {onboardingStep === "avatar" && (
             <section>
               <h2 className="font-display text-lg tracking-wide text-raw-text sm:text-xl">1. Choose your avatar</h2>

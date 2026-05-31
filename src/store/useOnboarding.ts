@@ -1,11 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { OnboardingStep } from "@/store/types";
 import { readOnboardingMap, writeOnboardingMap } from "@/store/useRawStore.storage";
+import { LANDING_WHEEL_SPIN_KEY } from "@/lib/avatarCatalog";
+
+function defaultInitialStep(): OnboardingStep {
+  if (typeof window === "undefined") return "spin";
+  return window.localStorage.getItem(LANDING_WHEEL_SPIN_KEY) ? "avatar" : "spin";
+}
 
 export function useOnboarding(isLoggedIn: boolean, username?: string) {
   const storageKey = username ? `raw.onboarding.completed.${username}` : null;
 
-  const [onboardingStep, setOnboardingStep] = useState<OnboardingStep>("avatar");
+  const [onboardingStep, setOnboardingStep] = useState<OnboardingStep>(defaultInitialStep);
   const [onboardingAnsweredPollIds, setOnboardingAnsweredPollIds] = useState<Set<string>>(new Set());
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
   const [onboardingLoaded, setOnboardingLoaded] = useState(false);
@@ -49,7 +55,7 @@ export function useOnboarding(isLoggedIn: boolean, username?: string) {
   }, [onboardingAnsweredPollIds, onboardingCompleted, onboardingStep, username]);
 
   const resetOnboardingProgress = useCallback(() => {
-    setOnboardingStep("avatar");
+    setOnboardingStep(defaultInitialStep());
     setOnboardingAnsweredPollIds(new Set());
     setOnboardingCompleted(false);
     if (storageKey) localStorage.removeItem(storageKey);
