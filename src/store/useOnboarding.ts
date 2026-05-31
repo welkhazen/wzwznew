@@ -23,14 +23,19 @@ export function useOnboarding(isLoggedIn: boolean, username?: string) {
     }
 
     const entry = readOnboardingMap()[username];
+    const hasSpun = !!window.localStorage.getItem(LANDING_WHEEL_SPIN_KEY);
     if (entry) {
-      setOnboardingStep(entry.step);
+      const restoredStep: OnboardingStep = !hasSpun && (entry.step === "avatar" || entry.step === "spin")
+        ? "spin"
+        : entry.step;
+      setOnboardingStep(restoredStep);
       setOnboardingAnsweredPollIds(new Set(entry.answeredPollIds));
       setOnboardingCompleted(entry.completed);
       setOnboardingLoaded(true);
       return;
     }
 
+    setOnboardingStep(hasSpun ? "avatar" : "spin");
     setOnboardingCompleted(window.localStorage.getItem(storageKey) === "1");
     setOnboardingLoaded(true);
   }, [storageKey, username]);
