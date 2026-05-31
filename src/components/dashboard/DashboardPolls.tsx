@@ -3,7 +3,7 @@ import type { Poll } from "@/store/useRawStore";
 import { useTheme } from "@/providers/useTheme";
 import { PremiumPollCard } from "@/components/polls/PremiumPollCard";
 import { ShareButton } from "@/components/ui/share-button";
-import { addPollComment, fetchPollComments } from "@/utils/supabasePolls";
+import { addPollComment, fetchPollComments } from "@/lib/api/polls";
 import { isNoPollOption, isYesPollOption } from "@/lib/polls/normalizePollOptionText";
 import {
   getPollShareCode,
