@@ -45,6 +45,12 @@ function writeStoredSpin(entry: PoolEntry): void {
   window.localStorage.setItem(LANDING_WHEEL_SPIN_KEY, JSON.stringify({ prizeId: entry.id, avatarId: entry.avatarId, spunAt: Date.now() }));
 }
 
+function shouldResetStoredSpinForTesting(): boolean {
+  if (!import.meta.env.DEV || typeof window === "undefined") return false;
+  const [navigation] = window.performance.getEntriesByType("navigation") as PerformanceNavigationTiming[];
+  return navigation?.type === "reload";
+}
+
 function buildPrizes(pool: PoolEntry[], isLight: boolean): WheelPrize[] {
   return pool.map((entry, i) => ({
     id: entry.id,
@@ -67,7 +73,13 @@ export function WheelReward({ onSignupClick }: WheelRewardProps) {
   const { mode } = useTheme();
   const isLight = mode === "light";
   const [pool, setPool] = useState<PoolEntry[]>(getPool);
-  const [landedEntry, setLandedEntry] = useState<PoolEntry | null>(() => readStoredSpin(getPool()));
+  const [landedEntry, setLandedEntry] = useState<PoolEntry | null>(() => {
+    if (shouldResetStoredSpinForTesting()) {
+      window.localStorage.removeItem(LANDING_WHEEL_SPIN_KEY);
+      return null;
+    }
+    return readStoredSpin(getPool());
+  });
   const [rewardsImageMissing, setRewardsImageMissing] = useState(false);
   const hasSpun = Boolean(landedEntry);
 
