@@ -23,6 +23,7 @@ interface DashboardChallengesProps {
   onAwardXP?: (amount: number) => Promise<void>;
   onClaimXP?: (source: string, claimKey: string, amount: number) => Promise<boolean>;
   onAwardTokens?: (amount: number) => void;
+  onAvatarWon?: (level: number) => void;
 }
 
 type ChallengeReset = "daily" | "weekly" | "monthly";
@@ -148,6 +149,7 @@ export function DashboardChallenges({
   onAwardXP,
   onClaimXP,
   onAwardTokens,
+  onAvatarWon,
 }: DashboardChallengesProps) {
   const [claimedChallenges, setClaimedChallenges] = useState<Set<string>>(new Set());
   const [dailyLoginClaimKeys, setDailyLoginClaimKeys] = useState<string[]>([]);
@@ -239,7 +241,7 @@ export function DashboardChallenges({
 
   return (
     <div className="space-y-5">
-      <DashboardDailySpin userId={userId} isAdmin={isAdmin} onAwardXP={onAwardXP} />
+      <DashboardDailySpin userId={userId} isAdmin={isAdmin} onAwardXP={onAwardXP} onAvatarWon={onAvatarWon} />
 
       <header className="space-y-2">
         <h1 className="font-display text-xl tracking-wide text-raw-text sm:text-2xl">Challenges</h1>
