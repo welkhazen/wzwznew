@@ -5,21 +5,21 @@ import { WheelOfFortune, type WheelPrize } from "@/components/wheel/WheelOfFortu
 import { useTheme } from "@/providers/useTheme";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 import { track } from "@/lib/analytics";
+import { LANDING_WHEEL_SPIN_KEY } from "@/lib/avatarCatalog";
 
 const TRANSPARENT_REWARDS_IMAGE_SRC = "/images/avatar-rarity-chart.png";
-const LANDING_WHEEL_SPIN_KEY = "raw.landing-wheel.spin.v1";
 
-type PoolEntry = { id: string; name: string; imageSrc: string };
+type PoolEntry = { id: string; avatarId: string; name: string; imageSrc: string };
 
 const WHEEL_REWARD_POOL: readonly PoolEntry[] = [
-  { id: "wheel-avatar-1", name: "Silver Void", imageSrc: "/avatars/1.webp" },
-  { id: "wheel-avatar-2", name: "Neon Lynx", imageSrc: "/avatars/2.webp" },
-  { id: "wheel-avatar-3", name: "Blue Signal", imageSrc: "/avatars/3.webp" },
-  { id: "wheel-avatar-4", name: "Violet Mask", imageSrc: "/avatars/04.webp" },
-  { id: "wheel-avatar-5", name: "Horned Iron", imageSrc: "/avatars/5.webp" },
-  { id: "wheel-avatar-6", name: "Crimson Muse", imageSrc: "/avatars/6.webp" },
-  { id: "wheel-avatar-7", name: "Solar Flame", imageSrc: "/avatars/07.webp" },
-  { id: "wheel-avatar-8", name: "Pink Circuit", imageSrc: "/avatars/08.webp" },
+  { id: "wheel-avatar-1", avatarId: "silver-void", name: "Silver Void", imageSrc: "/avatars/1.webp" },
+  { id: "wheel-avatar-2", avatarId: "neon-lynx", name: "Neon Lynx", imageSrc: "/avatars/2.webp" },
+  { id: "wheel-avatar-3", avatarId: "blue-signal", name: "Blue Signal", imageSrc: "/avatars/3.webp" },
+  { id: "wheel-avatar-4", avatarId: "violet-mask", name: "Violet Mask", imageSrc: "/avatars/04.webp" },
+  { id: "wheel-avatar-5", avatarId: "horned-iron", name: "Horned Iron", imageSrc: "/avatars/5.webp" },
+  { id: "wheel-avatar-6", avatarId: "crimson-muse", name: "Crimson Muse", imageSrc: "/avatars/6.webp" },
+  { id: "wheel-avatar-7", avatarId: "solar-flame", name: "Solar Flame", imageSrc: "/avatars/07.webp" },
+  { id: "wheel-avatar-8", avatarId: "pink-circuit", name: "Pink Circuit", imageSrc: "/avatars/08.webp" },
 ];
 
 function getPool(): PoolEntry[] {
@@ -40,9 +40,9 @@ function readStoredSpin(pool: PoolEntry[]): PoolEntry | null {
   }
 }
 
-function writeStoredSpin(prizeId: string): void {
+function writeStoredSpin(entry: PoolEntry): void {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(LANDING_WHEEL_SPIN_KEY, JSON.stringify({ prizeId, spunAt: Date.now() }));
+  window.localStorage.setItem(LANDING_WHEEL_SPIN_KEY, JSON.stringify({ prizeId: entry.id, avatarId: entry.avatarId, spunAt: Date.now() }));
 }
 
 function buildPrizes(pool: PoolEntry[], isLight: boolean): WheelPrize[] {
@@ -86,7 +86,7 @@ export function WheelReward({ onSignupClick }: WheelRewardProps) {
   function handleSpinEnd(prize: WheelPrize) {
     const entry = pool.find((p) => p.id === prize.id) ?? pool[0];
     setLandedEntry(entry);
-    writeStoredSpin(entry.id);
+    writeStoredSpin(entry);
     track("landing_cta_clicked", { cta_id: "wheel_spin", cta_text: "Spin", source_section: "wheel" });
   }
 

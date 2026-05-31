@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { track } from "@/lib/analytics";
 import {
   type AvatarCatalogItem,
+  claimPendingLandingWheelAvatarForUser,
   equipAvatarForUser,
   getDefaultAvatarCatalog,
   loadAvatarCatalog,
@@ -64,6 +65,16 @@ export function useRewards(user: User | null) {
       const index = avatarCatalog.findIndex((item) => item.id === state.selectedAvatarId);
       setAvatarLevelState(index >= 0 ? index + 1 : 1);
       setInventoryLoaded(true);
+
+      if (user.role !== "admin") {
+        const landingClaim = await claimPendingLandingWheelAvatarForUser(requestUserId);
+        if (cancelled || requestUserId !== activeUserIdRef.current || !landingClaim) return;
+        if (landingClaim.status === "granted") {
+          setOwnedAvatarIds((previous) => (
+            previous.includes(landingClaim.avatarId) ? previous : [...previous, landingClaim.avatarId]
+          ));
+        }
+      }
     })();
 
     return () => {
