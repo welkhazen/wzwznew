@@ -41,7 +41,6 @@ export async function fetchPolls(limit = 10): Promise<Poll[]> {
     .from("poll_options")
     .select("id, poll_id, label, position")
     .in("poll_id", pollIds);
-
   if (optionError) throw optionError;
 
   const normalizedOptionRows = (optionRows ?? []).map((row) => ({
@@ -99,8 +98,7 @@ export async function fetchAdminPolls(): Promise<AdminPoll[]> {
   if (error) throw error;
 
   return (data ?? []).map((row) => {
-    const options = [...((row.poll_options as PollOptionRow[]) ?? [])]
-      .sort((a, b) => a.position - b.position);
+    const options = [...((row.poll_options as PollOptionRow[]) ?? [])].sort((a, b) => a.position - b.position);
     return {
       id: row.id as string,
       question: row.question as string,

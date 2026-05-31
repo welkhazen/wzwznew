@@ -1767,7 +1767,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
 
             {/* Messages */}
             <div ref={messagesContainerRef} className="flex-1 space-y-3 overflow-y-auto p-4">
-              {false && communityPolls.map((poll) => {
+              {communityPolls.map((poll) => {
                 const totalVotes = poll.totalVotes;
                 return (
                   <div

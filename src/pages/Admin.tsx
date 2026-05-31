@@ -547,6 +547,9 @@ export default function Admin() {
       cancelled = true;
       window.clearTimeout(timer);
     };
+  // drawManualCropToCanvas is defined later in this component and only uses stable
+  // state setters plus the provided item/canvas arguments.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentReviewItem, sheetFile, slicedAvatars]);
 
   useEffect(() => {
