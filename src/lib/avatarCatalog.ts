@@ -439,6 +439,11 @@ function readLandingWheelAvatarIdLocal(catalog: AvatarCatalogItem[]): string | n
   }
 }
 
+function clearLandingWheelAvatarLocal(): void {
+  if (!isBrowser()) return;
+  window.localStorage.removeItem(LANDING_WHEEL_SPIN_KEY);
+}
+
 function defaultOwnedIds(catalog: AvatarCatalogItem[]): string[] {
   const freeIds = catalog
     .filter((item) => item.price === "Free" || item.price === "0" || Number(item.price) === 0)
@@ -603,7 +608,9 @@ export async function claimPendingLandingWheelAvatarForUser(userId: string): Pro
   const catalog = readAvatarCatalogLocal();
   const avatarId = readLandingWheelAvatarIdLocal(catalog);
   if (!avatarId) return null;
-  return grantDailySpinAvatarOnceForUser(userId, avatarId);
+  const result = await grantDailySpinAvatarOnceForUser(userId, avatarId);
+  clearLandingWheelAvatarLocal();
+  return result;
 }
 
 export async function equipAvatarForUser(userId: string, avatarId: string): Promise<void> {
