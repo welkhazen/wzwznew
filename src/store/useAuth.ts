@@ -46,12 +46,6 @@ export function useAuth() {
         if (authUser) {
           const u = toUser(authUser);
           setUser(u);
-          if (typeof window !== "undefined") {
-            const key = `raw.onboarding.completed.${u.username}`;
-            if (!localStorage.getItem(key)) {
-              localStorage.setItem(key, "1");
-            }
-          }
           awardDailyLoginXP(u.id);
           identify(u.id, { username: u.username });
         }
@@ -68,9 +62,6 @@ export function useAuth() {
       if (!result.ok || !result.user) return { ok: false, error: result.error };
       const u = toUser(result.user);
       setUser(u);
-      if (typeof window !== "undefined") {
-        localStorage.setItem(`raw.onboarding.completed.${u.username}`, "1");
-      }
       awardDailyLoginXP(u.id);
       identify(u.id, { username: u.username });
       track("login_completed", { method: "username_password" });

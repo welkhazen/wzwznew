@@ -30,6 +30,8 @@ interface OnboardingJourneyProps {
   polls: Poll[];
   avatarIndex: number;
   onAvatarChange: (index: number) => void;
+  ownedAvatarLevels: Set<number>;
+  avatarCatalog: AvatarCatalogItem[];
   onboardingStep: OnboardingStep;
   onboardingAnsweredPollIds: Set<string>;
   onSetOnboardingStep: (step: OnboardingStep) => void;
@@ -221,6 +223,8 @@ export function OnboardingJourney({
   polls,
   avatarIndex,
   onAvatarChange,
+  ownedAvatarLevels,
+  avatarCatalog,
   onboardingStep,
   onboardingAnsweredPollIds,
   onSetOnboardingStep,
@@ -259,7 +263,9 @@ export function OnboardingJourney({
   const [publicIdentityIndex, setPublicIdentityIndex] = useState(0);
   const [identitySaveError, setIdentitySaveError] = useState<string | null>(null);
   const [isSavingIdentities, setIsSavingIdentities] = useState(false);
-  const [onboardingAvatars] = useState<AvatarCatalogItem[]>(() => fallbackAvatarCatalog());
+  const onboardingAvatars = useMemo(() => (
+    avatarCatalog.length > 0 ? avatarCatalog : fallbackAvatarCatalog()
+  ), [avatarCatalog]);
   const [isLoadingPreviewAvatars] = useState(false);
   const [previewAvatarIndex, setPreviewAvatarIndex] = useState(() => Math.min(Math.max(avatarIndex, 1), Math.max(1, onboardingAvatars.length)));
   const [avatarPage, setAvatarPage] = useState(() => Math.floor((Math.min(Math.max(avatarIndex, 1), Math.max(1, onboardingAvatars.length)) - 1) / AVATAR_PAGE_SIZE));
@@ -291,7 +297,7 @@ export function OnboardingJourney({
     stepStartTimeRef.current = Date.now();
   }, [onboardingStep]);
 
-  const canContinueFromAvatar = avatarIndex >= 1 && avatarIndex <= FREE_ONBOARDING_AVATAR_COUNT;
+  const canContinueFromAvatar = avatarIndex >= 1 && (avatarIndex <= FREE_ONBOARDING_AVATAR_COUNT || ownedAvatarLevels.has(avatarIndex));
   const filledIdentityNames = identityNames.slice(1).map((name) => name.trim()).filter(Boolean);
   const identityNamesAreValid = filledIdentityNames.every((name) => name.length >= 3 && name.length <= 32);
   const canContinueFromIdentity = identityNamesAreValid;
@@ -301,6 +307,7 @@ export function OnboardingJourney({
   const canContinueWithPreviewAvatar = canContinueFromAvatar && previewAvatarIndex === avatarIndex;
   const freeAvatarChoices = onboardingAvatars.slice(0, FREE_ONBOARDING_AVATAR_COUNT);
   const previewAvatarChoices = onboardingAvatars.slice(FREE_ONBOARDING_AVATAR_COUNT);
+  const ownedPreviewAvatarChoices = previewAvatarChoices.filter((avatar) => ownedAvatarLevels.has(avatar.level));
   const previewAvatarPageCount = Math.max(1, Math.ceil(previewAvatarChoices.length / AVATAR_PAGE_SIZE));
   const visiblePreviewAvatarChoices = previewAvatarChoices.slice(avatarPage * AVATAR_PAGE_SIZE, (avatarPage + 1) * AVATAR_PAGE_SIZE);
 
@@ -524,6 +531,56 @@ export function OnboardingJourney({
                     </div>
                   </div>
 
+                  {ownedPreviewAvatarChoices.length > 0 ? (
+                    <div className="min-w-0">
+                      <p className="mb-3 text-center font-display text-[9px] uppercase tracking-[0.2em] text-raw-gold/70 md:text-left">
+                        Claimed reward
+                      </p>
+                      <div className="mx-auto grid w-full max-w-[11rem] grid-cols-2 gap-x-1 gap-y-2 min-[390px]:max-w-[12rem] min-[390px]:gap-x-2 sm:max-w-[24rem] sm:grid-cols-4 sm:gap-x-3 sm:gap-y-4 md:mx-0">
+                        {ownedPreviewAvatarChoices.map((avatar) => {
+                          const index = avatar.level;
+                          const isActive = index === avatarIndex;
+                          const isPreviewed = index === previewAvatarIndex;
+                          return (
+                            <button
+                              key={avatar.id}
+                              type="button"
+                              onClick={() => {
+                                setPreviewAvatarIndex(index);
+                                phonePreviewRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+                                track("onboarding_avatar_selected", { avatar_level: index, attempts: 1 });
+                                onAvatarChange(index);
+                              }}
+                              className="group relative flex min-w-0 flex-col items-center gap-0.5 rounded-xl p-1 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/50 sm:gap-1 sm:p-1.5"
+                              aria-label={`Select claimed reward ${avatar.name}`}
+                              aria-pressed={isActive}
+                            >
+                              <div className={`relative rounded-full transition-all duration-300 ${
+                                isActive
+                                  ? "scale-105"
+                                  : isPreviewed
+                                    ? "scale-100 opacity-100"
+                                    : "opacity-80 group-hover:opacity-100 group-hover:scale-105"
+                              }`}>
+                                <AvatarFigure avatarIndex={index} size="sm" selected={isActive || isPreviewed} className="sm:hidden" rarity={avatar.rarity} themeOverride={avatar} />
+                                <AvatarFigure avatarIndex={index} size="md" selected={isActive || isPreviewed} className="hidden sm:block" rarity={avatar.rarity} themeOverride={avatar} />
+                              </div>
+                              <span className={`max-w-full truncate text-center font-display text-[7px] leading-tight tracking-[0.08em] transition-colors sm:text-[8px] ${
+                                isActive
+                                  ? "text-raw-text"
+                                  : isPreviewed
+                                    ? "text-raw-gold/80"
+                                    : "text-raw-silver/45 group-hover:text-raw-silver/80"
+                              }`}>
+                                {avatar.name.split(" ")[0]}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : null}
+
                 </div>
 
                 <div className="flex flex-col items-center justify-start md:justify-center">
@@ -547,7 +604,7 @@ export function OnboardingJourney({
                     </PhoneMockup>
                   </div>
                   <p className="mt-3 text-center text-[10px] uppercase tracking-[0.18em] text-raw-silver/40">
-                    {previewAvatarChoices.length === 0 || previewAvatarIndex <= FREE_ONBOARDING_AVATAR_COUNT ? "Pick this starter" : "Preview only"}
+                    {previewAvatarChoices.length === 0 || previewAvatarIndex <= FREE_ONBOARDING_AVATAR_COUNT || ownedAvatarLevels.has(previewAvatarIndex) ? "Pick this starter" : "Preview only"}
                   </p>
                 </div>
 

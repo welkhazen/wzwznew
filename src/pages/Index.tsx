@@ -118,6 +118,8 @@ const Index = () => {
           polls={polls}
           avatarIndex={avatarLevel}
           onAvatarChange={selectAvatarForOnboarding}
+          ownedAvatarLevels={ownedAvatarLevels}
+          avatarCatalog={avatarCatalog}
           onboardingStep={onboardingStep}
           onboardingAnsweredPollIds={onboardingAnsweredPollIds}
           onSetOnboardingStep={setOnboardingStep}
