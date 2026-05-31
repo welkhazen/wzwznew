@@ -11,28 +11,23 @@ export function useOnboarding(isLoggedIn: boolean, username?: string) {
   const [onboardingLoaded, setOnboardingLoaded] = useState(false);
 
   useEffect(() => {
-    if (!username) {
+    if (!username || !storageKey) {
+      setOnboardingLoaded(true);
       return;
     }
 
     const entry = readOnboardingMap()[username];
-    if (!entry) {
-      return;
-    }
-
-    setOnboardingStep(entry.step);
-    setOnboardingAnsweredPollIds(new Set(entry.answeredPollIds));
-    setOnboardingCompleted(entry.completed);
-  }, [username]);
-
-  useEffect(() => {
-    if (!storageKey) {
+    if (entry) {
+      setOnboardingStep(entry.step);
+      setOnboardingAnsweredPollIds(new Set(entry.answeredPollIds));
+      setOnboardingCompleted(entry.completed);
       setOnboardingLoaded(true);
       return;
     }
-    setOnboardingCompleted(localStorage.getItem(storageKey) === "1");
+
+    setOnboardingCompleted(window.localStorage.getItem(storageKey) === "1");
     setOnboardingLoaded(true);
-  }, [storageKey]);
+  }, [storageKey, username]);
 
   const markOnboardingPollAnswered = useCallback((pollId: string) => {
     setOnboardingAnsweredPollIds((previous) => new Set(previous).add(pollId));
