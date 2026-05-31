@@ -7,6 +7,7 @@ import { SignupModal } from "@/components/landing/SignupModal";
 import { POLL_SHARE_PARAM } from "@/lib/pollShare";
 import { useRawStore } from "@/store/useRawStore";
 import { awardXP, XP_REWARDS } from "@/lib/userProgress";
+import { claimPendingLandingWheelAvatarForUser } from "@/lib/avatarCatalog";
 
 const LandingShellLazy = lazy(() => import("@/components/landing/LandingShell"));
 
@@ -143,6 +144,12 @@ const Index = () => {
             void awardXP(user.id, XP_REWARDS.ONBOARDING_COMPLETE);
           }}
           onLogout={logout}
+          onClaimLandingWheelAvatar={async () => {
+            const result = await claimPendingLandingWheelAvatarForUser(user.id);
+            if (result && (result.status === "granted" || result.status === "already_claimed")) {
+              markAvatarOwned(result.level);
+            }
+          }}
         />
       );
     }
