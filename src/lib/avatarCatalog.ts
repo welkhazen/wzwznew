@@ -23,6 +23,7 @@ const FULL_CATALOG_STORAGE_KEY = "raw.avatar.catalog.full.v2";
 const INVENTORY_STORAGE_PREFIX = "raw.avatar.inventory.v1.";
 const SELECTED_STORAGE_PREFIX = "raw.avatar.selected.v1.";
 const DAILY_SPIN_AVATAR_CLAIM_PREFIX = "raw.daily-spin.avatar-claim.v1.";
+export const LANDING_WHEEL_SPIN_KEY = "raw.landing-wheel.spin.v1";
 let avatarBackendMissingTables = false;
 let avatarCatalogLocalWriteFailed = false;
 
@@ -78,6 +79,17 @@ const WHEEL_AVATAR_IDS = new Set([
   "solar-flame",
   "pink-circuit",
 ]);
+
+const LANDING_WHEEL_PRIZE_TO_AVATAR_ID: Record<string, string> = {
+  "wheel-avatar-1": "silver-void",
+  "wheel-avatar-2": "neon-lynx",
+  "wheel-avatar-3": "blue-signal",
+  "wheel-avatar-4": "violet-mask",
+  "wheel-avatar-5": "horned-iron",
+  "wheel-avatar-6": "crimson-muse",
+  "wheel-avatar-7": "solar-flame",
+  "wheel-avatar-8": "pink-circuit",
+};
 
 export type DailySpinAvatarGrantResult =
   | { status: "granted"; avatarId: string; level: number }
@@ -408,6 +420,25 @@ function writeDailySpinAvatarClaimLocal(userId: string, avatarId: string): void 
   window.localStorage.setItem(dailySpinAvatarClaimKey(userId), avatarId);
 }
 
+function readLandingWheelAvatarIdLocal(catalog: AvatarCatalogItem[]): string | null {
+  if (!isBrowser()) return null;
+
+  try {
+    const raw = window.localStorage.getItem(LANDING_WHEEL_SPIN_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { prizeId?: unknown; avatarId?: unknown };
+    const candidate = typeof parsed.avatarId === "string"
+      ? parsed.avatarId
+      : typeof parsed.prizeId === "string"
+        ? LANDING_WHEEL_PRIZE_TO_AVATAR_ID[parsed.prizeId]
+        : null;
+    if (!candidate) return null;
+    return catalog.some((item) => item.id === candidate) ? candidate : null;
+  } catch {
+    return null;
+  }
+}
+
 function defaultOwnedIds(catalog: AvatarCatalogItem[]): string[] {
   const freeIds = catalog
     .filter((item) => item.price === "Free" || item.price === "0" || Number(item.price) === 0)
@@ -566,6 +597,13 @@ export async function grantDailySpinAvatarOnceForUser(userId: string, avatarId: 
   await purchaseAvatarForUser(userId, avatar.id);
   writeDailySpinAvatarClaimLocal(userId, avatar.id);
   return { status: "granted", avatarId: avatar.id, level: avatar.level };
+}
+
+export async function claimPendingLandingWheelAvatarForUser(userId: string): Promise<DailySpinAvatarGrantResult | null> {
+  const catalog = readAvatarCatalogLocal();
+  const avatarId = readLandingWheelAvatarIdLocal(catalog);
+  if (!avatarId) return null;
+  return grantDailySpinAvatarOnceForUser(userId, avatarId);
 }
 
 export async function equipAvatarForUser(userId: string, avatarId: string): Promise<void> {
