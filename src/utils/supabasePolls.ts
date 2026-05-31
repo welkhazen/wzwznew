@@ -58,6 +58,11 @@ export interface PollVoteResult {
   optionVotes: Record<string, number>;
 }
 
+function apiUrl(path: string): string {
+  const apiOrigin = (import.meta.env.VITE_API_ORIGIN as string | undefined)?.replace(/\/$/, "");
+  return apiOrigin ? `${apiOrigin}${path}` : path;
+}
+
 function parseOptionVotes(value: unknown): Record<string, number> {
   if (!value || typeof value !== "object") return {};
 
@@ -69,8 +74,9 @@ function parseOptionVotes(value: unknown): Record<string, number> {
 }
 
 export async function submitPollVote(pollId: string, optionId: string, _userId: string): Promise<PollVoteResult> {
-  const response = await fetch(`/api/polls/${encodeURIComponent(pollId)}/vote`, {
+  const response = await fetch(apiUrl(`/api/polls/${encodeURIComponent(pollId)}/vote`), {
     method: "POST",
+    credentials: "include",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ optionId }),
   });
