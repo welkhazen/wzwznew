@@ -211,6 +211,7 @@ export default function Dashboard({
               onAwardXP={handleDailySpinAward}
               onClaimXP={(source, claimKey, amount) => awardOnce(source, claimKey, amount)}
               onAwardTokens={(amount) => addTokens(amount)}
+              onAvatarWon={markAvatarOwned}
             />
           </DashboardSectionShell>
         );
@@ -221,6 +222,7 @@ export default function Dashboard({
               userId={user.id}
               isAdmin={user.role === "admin"}
               onAwardXP={handleDailySpinAward}
+              onAvatarWon={markAvatarOwned}
             />
           </DashboardSectionShell>
         );
