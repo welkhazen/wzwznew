@@ -7,6 +7,7 @@ import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 import { track } from "@/lib/analytics";
 
 const TRANSPARENT_REWARDS_IMAGE_SRC = "/images/avatar-rarity-chart.png";
+const LANDING_WHEEL_SPIN_KEY = "raw.landing-wheel.spin.v1";
 
 type PoolEntry = { id: string; name: string; imageSrc: string };
 
@@ -23,6 +24,25 @@ const WHEEL_REWARD_POOL: readonly PoolEntry[] = [
 
 function getPool(): PoolEntry[] {
   return WHEEL_REWARD_POOL.map((entry) => ({ ...entry }));
+}
+
+function readStoredSpin(pool: PoolEntry[]): PoolEntry | null {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const raw = window.localStorage.getItem(LANDING_WHEEL_SPIN_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { prizeId?: unknown };
+    if (typeof parsed.prizeId !== "string") return null;
+    return pool.find((entry) => entry.id === parsed.prizeId) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredSpin(prizeId: string): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(LANDING_WHEEL_SPIN_KEY, JSON.stringify({ prizeId, spunAt: Date.now() }));
 }
 
 function buildPrizes(pool: PoolEntry[], isLight: boolean): WheelPrize[] {
@@ -47,12 +67,16 @@ export function WheelReward({ onSignupClick }: WheelRewardProps) {
   const { mode } = useTheme();
   const isLight = mode === "light";
   const [pool, setPool] = useState<PoolEntry[]>(getPool);
-  const [hasSpun, setHasSpun] = useState(false);
-  const [landedEntry, setLandedEntry] = useState<PoolEntry | null>(null);
+  const [landedEntry, setLandedEntry] = useState<PoolEntry | null>(() => readStoredSpin(getPool()));
   const [rewardsImageMissing, setRewardsImageMissing] = useState(false);
+  const hasSpun = Boolean(landedEntry);
 
   useEffect(() => {
-    function refresh() { setPool(getPool()); }
+    function refresh() {
+      const nextPool = getPool();
+      setPool(nextPool);
+      setLandedEntry((current) => current ?? readStoredSpin(nextPool));
+    }
     window.addEventListener("raw:avatar-catalog-updated", refresh);
     return () => window.removeEventListener("raw:avatar-catalog-updated", refresh);
   }, []);
@@ -62,7 +86,7 @@ export function WheelReward({ onSignupClick }: WheelRewardProps) {
   function handleSpinEnd(prize: WheelPrize) {
     const entry = pool.find((p) => p.id === prize.id) ?? pool[0];
     setLandedEntry(entry);
-    setHasSpun(true);
+    writeStoredSpin(entry.id);
     track("landing_cta_clicked", { cta_id: "wheel_spin", cta_text: "Spin", source_section: "wheel" });
   }
 

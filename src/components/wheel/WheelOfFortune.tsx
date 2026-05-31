@@ -73,6 +73,8 @@ export function WheelOfFortune({ prizes, onSpinEnd, onSpinStart, disabled = fals
   const [rotation, setRotation] = useState(0);
   const [isSpinning, setIsSpinning] = useState(false);
   const currentPrizeRef = useRef<WheelPrize | null>(null);
+  const onSpinEndRef = useRef(onSpinEnd);
+  const onSpinStartRef = useRef(onSpinStart);
 
   const radius = radiusProp;
   const size = radius * 2;
@@ -83,13 +85,21 @@ export function WheelOfFortune({ prizes, onSpinEnd, onSpinStart, disabled = fals
   const pointerGradientId = `pointerGrad-${pointerId}`;
   const pointerShadowId = `pointerShadow-${pointerId}`;
 
+  useEffect(() => {
+    onSpinEndRef.current = onSpinEnd;
+  }, [onSpinEnd]);
+
+  useEffect(() => {
+    onSpinStartRef.current = onSpinStart;
+  }, [onSpinStart]);
+
   const handleSpin = useCallback(() => {
     if (isSpinning || disabled || total === 0) {
       return;
     }
 
     setIsSpinning(true);
-    onSpinStart?.();
+    onSpinStartRef.current?.();
 
     let prizeIndex = Math.floor(Math.random() * total);
 
@@ -132,7 +142,7 @@ export function WheelOfFortune({ prizes, onSpinEnd, onSpinStart, disabled = fals
     const finalRotation = rotation + fullRotations + deltaToTarget;
 
     setRotation(finalRotation);
-  }, [disabled, forcedPrizeId, isSpinning, onSpinStart, prizeWeights, prizes, rotation, total]);
+  }, [disabled, forcedPrizeId, isSpinning, prizeWeights, prizes, rotation, total]);
 
   useEffect(() => {
     if (!isSpinning) {
@@ -142,12 +152,12 @@ export function WheelOfFortune({ prizes, onSpinEnd, onSpinStart, disabled = fals
     const timer = window.setTimeout(() => {
       setIsSpinning(false);
       if (currentPrizeRef.current) {
-        onSpinEnd(currentPrizeRef.current);
+        onSpinEndRef.current(currentPrizeRef.current);
       }
     }, SPIN_DURATION + 180);
 
     return () => window.clearTimeout(timer);
-  }, [isSpinning, onSpinEnd]);
+  }, [isSpinning]);
 
   return (
     <div className="relative flex flex-col items-center">
