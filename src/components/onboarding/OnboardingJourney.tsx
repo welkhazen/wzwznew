@@ -69,6 +69,20 @@ function buildSpinPrizes(): WheelPrize[] {
   }));
 }
 
+function readStoredSpinResult(): WheelPoolEntry | null {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const raw = window.localStorage.getItem(LANDING_WHEEL_SPIN_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { prizeId?: unknown };
+    if (typeof parsed.prizeId !== "string") return null;
+    return SPIN_WHEEL_POOL.find((entry) => entry.id === parsed.prizeId) ?? null;
+  } catch {
+    return null;
+  }
+}
+
 const STEP_ORDER: OnboardingStep[] = ["spin", "avatar", "identity", "polls", "communities"];
 const STEP_LABELS: Record<OnboardingStep, string> = {
   spin: "spin",
@@ -313,7 +327,7 @@ export function OnboardingJourney({
   const [identitySaveError, setIdentitySaveError] = useState<string | null>(null);
   const [isSavingIdentities, setIsSavingIdentities] = useState(false);
   const [spinPrizes] = useState<WheelPrize[]>(() => buildSpinPrizes());
-  const [spinResult, setSpinResult] = useState<WheelPoolEntry | null>(null);
+  const [spinResult, setSpinResult] = useState<WheelPoolEntry | null>(readStoredSpinResult);
   const [spinClaimError, setSpinClaimError] = useState<string | null>(null);
   const [isClaimingSpin, setIsClaimingSpin] = useState(false);
   const onboardingAvatars = useMemo(() => (

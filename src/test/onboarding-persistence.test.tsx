@@ -44,6 +44,21 @@ describe("onboarding persistence", () => {
     expect(result.current.onboardingStep).toBe("avatar");
   });
 
+  it("does not overwrite restored onboarding state with the initial default step", () => {
+    window.localStorage.setItem("raw.onboarding.v1", JSON.stringify({
+      alice: {
+        completed: false,
+        step: "polls",
+        answeredPollIds: ["poll-1"],
+      },
+    }));
+
+    renderHook(() => useOnboarding(true, "alice"));
+
+    expect(readOnboardingMap().alice?.step).toBe("polls");
+    expect(readOnboardingMap().alice?.answeredPollIds).toEqual(["poll-1"]);
+  });
+
   it("persists selected communities for onboarding", () => {
     const { result } = renderHook(() => useCommunities("bob"));
 
