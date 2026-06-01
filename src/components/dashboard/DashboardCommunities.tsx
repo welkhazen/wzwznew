@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import LNTLogo from "@/assets/LNT.webp";
 import SYTLogo from "@/assets/logospeak.webp";
 import IIJMLogo from "@/assets/itisjustme.webp";
-import { AlertTriangle, ArrowLeft, BarChart3, Bell, BellOff, ImagePlus, Lock, Plus, Search, Send, Trash2, UserMinus, Users, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, BarChart3, Bell, BellOff, ImagePlus, Lock, Plus, Search, Trash2, UserMinus, Users, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -81,6 +81,7 @@ import {
 } from "@/lib/blockedCommunitySenders";
 import type { User } from "@/store/types";
 import { CommunityMessageTimeline } from "@/components/dashboard/CommunityMessageTimeline";
+import { CommunityMessageComposer } from "@/components/dashboard/CommunityMessageComposer";
 
 const WAITLIST_UNLOCK_THRESHOLD = 200;
 const TOKEN_BALANCE_STORAGE_PREFIX = "raw.polls.token-balance";
@@ -1775,95 +1776,21 @@ const COMMUNITY_LOGOS: Record<string, string> = {
               onBlockMessageSender={handleBlockMessageSender}
             />
 
-            {/* Input */}
-            <div className="border-t border-raw-border/15 px-3 py-3">
-              {isUserBanned && (
-                <div className="mb-2 rounded-xl border border-red-400/20 bg-red-500/10 px-3 py-2 text-xs text-red-100">
-                  Chat posting is disabled for this account.
-                </div>
-              )}
-              {mentionQuery !== null && (() => {
-                const members = selectedCommunity?.members ?? [];
-                const filtered = members.filter((m) => m.username.toLowerCase().startsWith(mentionQuery.toLowerCase())).slice(0, 6);
-                if (!filtered.length) return null;
-                return (
-                  <div className="mb-2 rounded-xl border border-raw-border/30 bg-raw-black/90 overflow-hidden">
-                    {filtered.map((m, i) => (
-                      <button
-                        key={m.userId}
-                        type="button"
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          const atIdx = messageDraft.lastIndexOf("@");
-                          const newVal = messageDraft.slice(0, atIdx) + `@${m.username} `;
-                          setMessageDraft(newVal);
-                          setMentionQuery(null);
-                          setTimeout(() => messageInputRef.current?.focus(), 0);
-                        }}
-                        className={`w-full px-4 py-2 text-left text-sm text-raw-text hover:bg-raw-surface/40 ${i === mentionIndex ? "bg-raw-surface/30" : ""}`}
-                      >
-                        @{m.username}
-                      </button>
-                    ))}
-                  </div>
-                );
-              })()}
-              <div className="flex gap-2">
-                {canManagePolls && (
-                  <button
-                    onClick={handleOpenPollComposer}
-                    disabled={isUserBanned}
-                    title="Post a poll"
-                    aria-label="Post a poll"
-                    className="flex items-center justify-center rounded-xl border border-raw-border/30 bg-raw-surface/30 px-3 py-2.5 text-raw-silver/70 hover:border-raw-gold/40 hover:text-raw-gold disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    <BarChart3 className="h-4 w-4" />
-                  </button>
-                )}
-                <input
-                  ref={messageInputRef}
-                  value={messageDraft}
-                  maxLength={MAX_COMMUNITY_MESSAGE_LENGTH}
-                  onChange={(event) => {
-                    const val = event.target.value;
-                    setMessageDraft(val);
-                    const atIdx = val.lastIndexOf("@");
-                    if (atIdx !== -1 && (atIdx === 0 || val[atIdx - 1] === " ")) {
-                      setMentionQuery(val.slice(atIdx + 1));
-                      setMentionIndex(0);
-                    } else {
-                      setMentionQuery(null);
-                    }
-                  }}
-                  onKeyDown={(event) => {
-                    if (mentionQuery !== null) {
-                      const members = (selectedCommunity?.members ?? []).filter((m) => m.username.toLowerCase().startsWith(mentionQuery.toLowerCase())).slice(0, 6);
-                      if (event.key === "ArrowDown") { event.preventDefault(); setMentionIndex((i) => Math.min(i + 1, members.length - 1)); return; }
-                      if (event.key === "ArrowUp") { event.preventDefault(); setMentionIndex((i) => Math.max(i - 1, 0)); return; }
-                      if ((event.key === "Enter" || event.key === "Tab") && members[mentionIndex]) {
-                        event.preventDefault();
-                        const atIdx = messageDraft.lastIndexOf("@");
-                        setMessageDraft(messageDraft.slice(0, atIdx) + `@${members[mentionIndex].username} `);
-                        setMentionQuery(null);
-                        return;
-                      }
-                      if (event.key === "Escape") { setMentionQuery(null); return; }
-                    }
-                    if (event.key === "Enter") handleSendMessage();
-                  }}
-                  placeholder="Type a message..."
-                  disabled={isUserBanned}
-                  className="flex-1 rounded-xl border border-raw-border/30 bg-raw-surface/30 px-4 py-2.5 text-sm text-raw-text placeholder:text-raw-silver/25 focus:border-raw-gold/25 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
-                />
-                <button
-                  onClick={handleSendMessage}
-                  disabled={isUserBanned}
-                  className="flex items-center gap-1.5 rounded-xl bg-raw-gold px-4 py-2.5 text-sm font-semibold text-raw-ink disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <Send className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
+            <CommunityMessageComposer
+              inputRef={messageInputRef}
+              draft={messageDraft}
+              maxLength={MAX_COMMUNITY_MESSAGE_LENGTH}
+              members={selectedCommunity?.members ?? []}
+              mentionQuery={mentionQuery}
+              mentionIndex={mentionIndex}
+              canManagePolls={canManagePolls}
+              disabled={isUserBanned}
+              onDraftChange={setMessageDraft}
+              onMentionQueryChange={setMentionQuery}
+              onMentionIndexChange={setMentionIndex}
+              onOpenPollComposer={handleOpenPollComposer}
+              onSendMessage={handleSendMessage}
+            />
           </div>
           )}
         </div>
