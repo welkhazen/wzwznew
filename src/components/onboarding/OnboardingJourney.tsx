@@ -231,13 +231,13 @@ const ONBOARDING_COMMUNITIES = [
 ];
 
 function toOnboardingPolls(polls: Poll[]): OnboardingPoll[] {
-  const core = polls.slice(0, 3).map((poll) => ({
+  const core = polls.slice(0, 4).map((poll) => ({
     id: poll.id,
     question: poll.question,
     options: poll.options.slice(0, 2).map((option) => option.text),
   }));
 
-  const neededFallback = Math.max(0, 3 - core.length);
+  const neededFallback = Math.max(0, 4 - core.length);
   const fallback = FALLBACK_POLLS.slice(0, neededFallback).map((poll) => ({
     ...poll,
     options: poll.options.slice(0, 2),
@@ -311,7 +311,7 @@ export function OnboardingJourney({
   const { data: supabasePolls } = useQuery({
     queryKey: ["onboarding-landing-polls"],
     queryFn: async () => {
-      const fetched = await fetchPolls(5);
+      const fetched = await fetchPolls(4);
       if (fetched.length === 0) return null;
       return fetched.map((poll) => ({
         id: poll.id,
@@ -581,7 +581,7 @@ export function OnboardingJourney({
         <div className="rounded-2xl border border-raw-border/40 bg-gradient-to-b from-raw-surface/40 to-raw-black/90 p-3 sm:rounded-3xl sm:p-6 md:p-8">
           {onboardingStep === "spin" && (
             <section>
-              <h2 className="font-display text-lg tracking-wide text-raw-text sm:text-xl">1. Spin for your free avatar</h2>
+              <h2 className="font-display text-lg tracking-wide text-raw-text sm:text-xl">I. Spin for your free avatar</h2>
               <p className="mt-2 text-xs text-raw-silver/45 sm:text-sm">
                 One spin, one avatar — your early access gift from raW. Land it, claim it, and it joins your inventory.
               </p>
@@ -661,7 +661,7 @@ export function OnboardingJourney({
           )}
           {onboardingStep === "avatar" && (
             <section>
-              <h2 className="font-display text-lg tracking-wide text-raw-text sm:text-xl">1. Choose your avatar</h2>
+              <h2 className="font-display text-lg tracking-wide text-raw-text sm:text-xl">II. Choose your avatar</h2>
               <p className="mt-2 text-xs text-raw-silver/45 sm:text-sm">
                 Your avatar is your public signal. You can evolve it later, but choose your starting form now.
               </p>
@@ -924,7 +924,7 @@ export function OnboardingJourney({
             <section>
               <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                  <h2 className="font-display text-lg tracking-wide text-raw-text sm:text-xl">2. Create your names</h2>
+                  <h2 className="font-display text-lg tracking-wide text-raw-text sm:text-xl">III. Create your names</h2>
                   <p className="mt-2 max-w-2xl text-xs leading-relaxed text-raw-silver/50 sm:text-sm">
                     Your public account name stays fixed. Add private identities connected to the same account, then choose which identity talks in chat.
                   </p>
@@ -1013,7 +1013,7 @@ export function OnboardingJourney({
             <section>
               <div className="flex flex-wrap items-center justify-between gap-2 sm:items-end sm:gap-4">
                 <div className="min-w-0 flex-1">
-                  <h2 className="font-display text-base tracking-wide text-raw-text sm:text-xl">3. Answer 3 launch polls</h2>
+                  <h2 className="font-display text-base tracking-wide text-raw-text sm:text-xl">IV. Answer 4 launch polls</h2>
                 </div>
                 <p className="shrink-0 rounded-full border border-raw-border/40 px-2.5 py-1 text-[10px] text-raw-gold/75 sm:px-3 sm:text-xs">
                   {answeredCount}/{onboardingPolls.length} completed
@@ -1135,7 +1135,7 @@ export function OnboardingJourney({
           {onboardingStep === "communities" && (
             <section>
               <div className="flex items-center justify-between gap-3">
-                <h2 className="font-display text-lg tracking-wide text-raw-text sm:text-xl">4. Pick a community</h2>
+                <h2 className="font-display text-lg tracking-wide text-raw-text sm:text-xl">V. Pick a community</h2>
                 <span className={`shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
                   selectedCommunityIds.length >= 1
                     ? "border-raw-gold/60 bg-raw-gold/10 text-raw-gold"
