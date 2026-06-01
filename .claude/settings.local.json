@@ -33,7 +33,8 @@
       "Bash(gh pr create --repo welkhazen/wzwznew --title 'Move WheelReward under AvatarShowcase' --body 'Place the Spin-the-Wheel section directly after the Avatar Identity section on the landing page. *)",
       "Bash(git checkout *)",
       "Bash(gh pr create --repo welkhazen/wzwznew --title 'Stop SPA-rewriting static asset paths' --body '## Summary *)",
-      "Bash(gh pr create --repo welkhazen/wzwznew --title 'Coming Soon banner under Communities' --body 'Replaces the '\\\\''Where mind meets heart'\\\\'' banner inside the Communities section with a gold Coming Soon notice. This visually marks every landing section that comes after Communities \\(PersonalityInsights, EarnedWarUpgrades, WhyAnonymity, Testimonials\\) as upcoming. *)"
+      "Bash(gh pr create --repo welkhazen/wzwznew --title 'Coming Soon banner under Communities' --body 'Replaces the '\\\\''Where mind meets heart'\\\\'' banner inside the Communities section with a gold Coming Soon notice. This visually marks every landing section that comes after Communities \\(PersonalityInsights, EarnedWarUpgrades, WhyAnonymity, Testimonials\\) as upcoming. *)",
+      "Bash(grep -n \"imageSrc\\\\|imgSrc\\\\|\\\\\\\\.webp\\\\\\\\|\\\\\\\\.png\" src/components/onboarding/OnboardingJourney.tsx)"
     ]
   }
 }
