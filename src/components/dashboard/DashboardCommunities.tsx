@@ -1464,9 +1464,12 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       }
 
       return (
-        <div
+        <motion.div
           className="fixed inset-x-0 top-14 z-30 flex flex-col overflow-hidden sm:static sm:inset-auto sm:z-auto sm:block sm:h-auto sm:overflow-visible sm:space-y-6"
           style={{ bottom: "max(72px, calc(56px + env(safe-area-inset-bottom)))" }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.16, ease: "easeOut" }}
         >
           {/* Desktop: full header card */}
           <div className="hidden sm:flex sm:flex-wrap sm:items-start sm:justify-between sm:gap-4 sm:rounded-3xl sm:border sm:border-raw-border/30 sm:bg-raw-surface/25 sm:p-5">
@@ -1752,15 +1755,21 @@ const COMMUNITY_LOGOS: Record<string, string> = {
             />
           </div>
           )}
-        </div>
+        </motion.div>
       );
     };
 
-    if (activeCommunityId && isInitialCommunitiesLoading) {
+    if (activeCommunityId && isInitialCommunitiesLoading && !selectedCommunity) {
       return (
-        <div className="rounded-3xl border border-raw-border/30 bg-raw-surface/20 p-8 text-center text-raw-silver/50">
-          <p className="font-display text-lg text-raw-text">Loading community…</p>
-        </div>
+        <motion.div
+          className="rounded-3xl border border-raw-border/30 bg-raw-surface/20 p-5"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.16, ease: "easeOut" }}
+        >
+          <div className="h-6 w-40 animate-pulse rounded-full bg-raw-surface/60" />
+          <div className="mt-4 h-56 animate-pulse rounded-2xl bg-raw-black/35" />
+        </motion.div>
       );
     }
 
