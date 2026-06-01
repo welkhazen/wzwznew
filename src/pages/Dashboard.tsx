@@ -21,9 +21,10 @@ import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
 const DashboardPolls = lazy(() =>
   import("@/components/dashboard/DashboardPolls").then((module) => ({ default: module.DashboardPolls }))
 );
-const DashboardCommunities = lazy(() =>
-  import("@/components/dashboard/DashboardCommunities").then((module) => ({ default: module.DashboardCommunities }))
-);
+const loadDashboardCommunities = () =>
+  import("@/components/dashboard/DashboardCommunities").then((module) => ({ default: module.DashboardCommunities }));
+
+const DashboardCommunities = lazy(loadDashboardCommunities);
 const DashboardChallenges = lazy(() =>
   import("@/components/dashboard/DashboardChallenges").then((module) => ({ default: module.DashboardChallenges }))
 );
@@ -118,6 +119,10 @@ export default function Dashboard({
     void awardOnce("daily-login", getTodayKey(), XP_REWARDS.DAILY_LOGIN);
   }, [awardOnce]);
 
+  useEffect(() => {
+    void loadDashboardCommunities();
+  }, []);
+
   const handleTabChange = (tab: DashboardTab) => {
     setActiveTab(tab);
     setIsHome(false);
@@ -129,7 +134,8 @@ export default function Dashboard({
     navigate("/dashboard");
   };
 
-  const handleOpenCommunity = (communityId: string) => {
+  const handleOpenCommunity = async (communityId: string) => {
+    await loadDashboardCommunities();
     setActiveTab("communities");
     setIsHome(false);
     navigate(`/dashboard/communities/${communityId}`);
