@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
+import { useConfirmDialog } from "@/hooks/use-confirm-dialog";
 import { CommunityBadge } from "@/components/dashboard/CommunityBadge";
 import {
   ensureUserRecord,
@@ -366,6 +367,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
   const [waitlistJoiningId, setWaitlistJoiningId] = useState<string | null>(null);
   const [communityAccess, setCommunityAccess] = useState<CommunityAccess>({ hasSubscription: false, unlockedIds: new Set<string>() });
   const [unlockingId, setUnlockingId] = useState<string | null>(null);
+  const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [leavingCommunityId, setLeavingCommunityId] = useState<string | null>(null);
   const [messageDraft, setMessageDraft] = useState("");
   const [chatIdentities, setChatIdentities] = useState<ChatIdentity[]>([
@@ -793,7 +795,12 @@ const COMMUNITY_LOGOS: Record<string, string> = {
 
     const handleKickMember = useCallback(async (memberId: string, memberName: string) => {
       if (!selectedCommunity || !canManagePolls || memberId === user.id) return;
-      const confirmed = window.confirm(`Remove ${memberName} from ${selectedCommunity.title}?`);
+      const confirmed = await confirm({
+        title: `Remove ${memberName}?`,
+        description: `They will lose access to ${selectedCommunity.title}.`,
+        confirmLabel: "Remove",
+        tone: "danger",
+      });
       if (!confirmed) return;
 
       try {
@@ -936,7 +943,11 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       }
 
       if (!canJoinFree) {
-        const confirmed = window.confirm(`Join ${targetCommunity.title} for ${COMMUNITY_UNLOCK_TOKEN_COST} tokens?`);
+        const confirmed = await confirm({
+          title: `Join ${targetCommunity.title}?`,
+          description: `This will use ${COMMUNITY_UNLOCK_TOKEN_COST} tokens from your balance.`,
+          confirmLabel: `Spend ${COMMUNITY_UNLOCK_TOKEN_COST} tokens`,
+        });
         if (!confirmed) {
           return;
         }
@@ -1066,9 +1077,11 @@ const COMMUNITY_LOGOS: Record<string, string> = {
           return;
         }
         if (!canUnlockFree) {
-          const confirmed = window.confirm(
-            `Unlock ${targetCommunity?.title ?? "this group"} for ${COMMUNITY_UNLOCK_TOKEN_COST} tokens?`,
-          );
+          const confirmed = await confirm({
+            title: `Unlock ${targetCommunity?.title ?? "this group"}?`,
+            description: `This will use ${COMMUNITY_UNLOCK_TOKEN_COST} tokens from your balance.`,
+            confirmLabel: `Spend ${COMMUNITY_UNLOCK_TOKEN_COST} tokens`,
+          });
           if (!confirmed) return;
         }
       }
@@ -1788,6 +1801,8 @@ const COMMUNITY_LOGOS: Record<string, string> = {
     }
 
     return (
+      <>
+      {confirmDialog}
       <div className="space-y-8">
         {activeCommunityId ? renderChatPage() : renderDirectoryView()}
 
@@ -2183,5 +2198,6 @@ const COMMUNITY_LOGOS: Record<string, string> = {
           </DialogContent>
         </Dialog>
       </div>
+      </>
     );
   }
