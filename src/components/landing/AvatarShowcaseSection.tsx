@@ -38,6 +38,20 @@ const REVEAL_AVATARS: readonly AvatarCatalogItem[] = [
 ];
 const LANDING_AVATARS: readonly AvatarCatalogItem[] = [...CHOOSER_AVATARS, ...REVEAL_AVATARS];
 
+type RevealAvatarImageFit = { scale: number; objectPosition?: string };
+
+const REVEAL_AVATAR_IMAGE_FIT: Record<string, RevealAvatarImageFit> = {
+  "reveal-1": { scale: 1.18 }, // Silver Void / platinum-style frame
+  "reveal-2": { scale: 1.5 },
+  "reveal-3": { scale: 1.5 },
+  "reveal-4": { scale: 1.62 }, // Violet Mask has the most transparent padding.
+  "reveal-5": { scale: 1.5 },
+  "reveal-6": { scale: 1.12 },
+  "reveal-7": { scale: 1.5 },
+  "reveal-8": { scale: 1.22 },
+  "reveal-9": { scale: 1.42 },
+};
+
 export function AvatarShowcaseSection() {
   const sectionRef = useTrackSectionView("avatar");
   const { mode } = useTheme();
@@ -95,23 +109,16 @@ export function AvatarShowcaseSection() {
     setShowExpandGrid((open) => !open);
   }
 
-  // Per-image scale to normalise inner-circle size — each source PNG has
+  // Per-image scale to normalise inner-circle size — each source image has
   // different transparent padding around the avatar circle.
   function getRevealAvatarImageStyle(avatarId?: string): React.CSSProperties {
-    switch (avatarId) {
-      case "reveal-2": // Neon Lynx
-      case "reveal-3": // Blue Signal
-      case "reveal-4": // Violet Mask
-      case "reveal-5": // Horned Iron
-      case "reveal-7": // Solar Flame
-        return { transform: "scale(1.45)" };
-      case "reveal-9": // Golden Muse
-        return { transform: "scale(1.35)" };
-      case "reveal-8": // Pink Circuit
-        return { transform: "scale(1.05)" };
-      default: // reveal-1 (Silver Void) and reveal-6 (Crimson Muse) already fill
-        return undefined as unknown as React.CSSProperties;
-    }
+    const fit = avatarId ? REVEAL_AVATAR_IMAGE_FIT[avatarId] : undefined;
+
+    return {
+      objectPosition: fit?.objectPosition ?? "center center",
+      transform: `scale(${fit?.scale ?? 1.12})`,
+      transformOrigin: "center center",
+    };
   }
 
   function prev() {
