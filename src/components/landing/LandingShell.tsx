@@ -75,12 +75,35 @@ export default function LandingShell({
             <AvatarShowcaseSection onSignupClick={() => setShowSignup(true)} />
             <LandingPollsSection onSignupClick={() => setShowSignup(true)} />
             <Communities onSignupClick={() => setShowSignup(true)} />
-            <PersonalityInsightsSection />
-            <EarnedWarUpgradesSection />
-            <WhyAnonymity />
-            <Suspense fallback={<div className="h-16" />}>
-              <TestimonialsSection />
-            </Suspense>
+
+            <section className="landing-section px-4 py-8 sm:px-6 sm:py-12">
+              <div
+                className="relative mx-auto w-full max-w-6xl overflow-hidden rounded-3xl border-2 border-raw-gold/35 bg-gradient-to-b from-raw-gold/[0.04] to-transparent px-2 py-6 sm:px-4 sm:py-10"
+                style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 0 60px rgba(241,196,45,0.06)" }}
+              >
+                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/70 to-transparent" />
+                <div className="px-6 pb-2 pt-2 text-center sm:pb-6">
+                  <p className="font-display text-[10px] tracking-[0.3em] uppercase text-raw-gold/70">
+                    On the way
+                  </p>
+                  <h3 className="mt-2 landing-heading text-raw-gold">
+                    Coming soon.
+                  </h3>
+                  <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-raw-silver/55">
+                    Everything in this frame is still being built. Sign up to be first
+                    in line when these features go live.
+                  </p>
+                </div>
+
+                <PersonalityInsightsSection />
+                <EarnedWarUpgradesSection />
+                <WhyAnonymity />
+                <Suspense fallback={<div className="h-16" />}>
+                  <TestimonialsSection />
+                </Suspense>
+              </div>
+            </section>
+
             <LandingFooter />
           </div>
         </motion.div>
