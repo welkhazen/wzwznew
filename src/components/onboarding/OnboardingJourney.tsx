@@ -15,7 +15,6 @@ import { WheelOfFortune, type WheelPrize } from "@/components/wheel/WheelOfFortu
 import { saveUserAliases } from "@/backend/supabase/controllers/userAliasController";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { toast } from "@/components/ui/use-toast";
 import { AnimatePresence, motion } from "framer-motion";
 import { SwipeablePollCard } from "./SwipeablePollCard";
 import { EnterRawModal } from "./EnterRawModal";
@@ -498,11 +497,6 @@ export function OnboardingJourney({
       track("onboarding_avatar_selected", { avatar_level: previewAvatarIndex, attempts: 1 });
       onAvatarChange(previewAvatarIndex);
     }
-    if (onboardingStep === "avatar" && !canSelectPreviewAvatar && previewAvatarIndex !== avatarIndex) {
-      // User had a locked tile previewed — silently revert so the phone mock
-      // matches what they're actually continuing with.
-      setPreviewAvatarIndex(avatarIndex);
-    }
 
     if (onboardingStep === "identity") {
       const saved = await saveIdentityNamesForOnboarding();
@@ -556,7 +550,7 @@ export function OnboardingJourney({
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-raw-black">
-      <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-3 py-4 sm:px-6 sm:py-8 md:py-10">
+      <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-3 py-4 sm:px-6 sm:py-8 md:max-w-none md:px-10 md:py-10 lg:px-16 xl:px-24">
         <div className="mb-5 sm:mb-8">
           <div className="flex items-center justify-between gap-2">
             <p className="font-display text-[10px] uppercase tracking-[0.3em] text-raw-gold/60 sm:text-xs sm:tracking-[0.35em]">Welcome to <BrandName /></p>
@@ -858,11 +852,6 @@ export function OnboardingJourney({
                               track("onboarding_avatar_selected", { avatar_level: index, attempts: 1 });
                               if (isOwned) {
                                 onAvatarChange(index);
-                              } else {
-                                toast({
-                                  title: "Preview only",
-                                  description: "This avatar unlocks via the spin wheel. Pick a Free avatar above to continue.",
-                                });
                               }
                             }}
                             className={`group relative flex min-w-0 flex-col items-center gap-1 rounded-xl p-1.5 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/50 ${
@@ -914,12 +903,19 @@ export function OnboardingJourney({
 
               <div className="mt-6 flex items-center justify-between gap-3 sm:mt-8">
                 <BackButton onClick={goToPreviousStep} />
-                <button
-                  onClick={goToNextStep}
-                  className="rounded-xl bg-raw-gold px-5 py-3 text-sm font-semibold text-raw-ink transition-opacity sm:py-2.5"
-                >
-                  Next: Names
-                </button>
+                {(() => {
+                  const lockedPreview = previewAvatarIndex !== avatarIndex && !canSelectPreviewAvatar;
+                  const blocked = lockedPreview || !canContinueFromAvatar;
+                  return (
+                    <button
+                      onClick={goToNextStep}
+                      disabled={blocked}
+                      className="rounded-xl bg-raw-gold px-5 py-3 text-sm font-semibold text-raw-ink transition-opacity disabled:cursor-not-allowed disabled:bg-raw-border/40 disabled:text-raw-silver/40 sm:py-2.5"
+                    >
+                      Next: Names
+                    </button>
+                  );
+                })()}
               </div>
             </section>
           )}
