@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import {
   Calendar,
+  Eye,
+  EyeOff,
   Flame,
   KeyRound,
   MessageCircle,
@@ -63,6 +65,11 @@ export function DashboardProfile({
   const [delOpen, setDelOpen] = useState(false);
   const [delPw, setDelPw] = useState("");
   const [delLoading, setDelLoading] = useState(false);
+
+  const [showOldPw, setShowOldPw] = useState(false);
+  const [showNewPw, setShowNewPw] = useState(false);
+  const [showConfirmPw, setShowConfirmPw] = useState(false);
+  const [showDelPw, setShowDelPw] = useState(false);
 
   const [identityOpen, setIdentityOpen] = useState(false);
   const [aliasNames, setAliasNames] = useState<string[]>([]);
@@ -460,27 +467,57 @@ export function DashboardProfile({
           </button>
           {pwOpen && (
             <div className="border-t border-raw-border/20 px-4 pb-4 pt-3 space-y-2.5">
-              <input
-                type="password"
-                placeholder="Current password"
-                value={oldPw}
-                onChange={(e) => setOldPw(e.target.value)}
-                className="w-full rounded-xl border border-raw-border/30 bg-raw-black/40 px-3 py-2.5 text-sm text-raw-text placeholder:text-raw-silver/25 focus:border-raw-gold/40 focus:outline-none"
-              />
-              <input
-                type="password"
-                placeholder="New password"
-                value={newPw}
-                onChange={(e) => setNewPw(e.target.value)}
-                className="w-full rounded-xl border border-raw-border/30 bg-raw-black/40 px-3 py-2.5 text-sm text-raw-text placeholder:text-raw-silver/25 focus:border-raw-gold/40 focus:outline-none"
-              />
-              <input
-                type="password"
-                placeholder="Confirm new password"
-                value={confirmPw}
-                onChange={(e) => setConfirmPw(e.target.value)}
-                className="w-full rounded-xl border border-raw-border/30 bg-raw-black/40 px-3 py-2.5 text-sm text-raw-text placeholder:text-raw-silver/25 focus:border-raw-gold/40 focus:outline-none"
-              />
+              <div className="relative">
+                <input
+                  type={showOldPw ? "text" : "password"}
+                  placeholder="Current password"
+                  value={oldPw}
+                  onChange={(e) => setOldPw(e.target.value)}
+                  className="w-full rounded-xl border border-raw-border/30 bg-raw-black/40 px-3 py-2.5 pr-10 text-sm text-raw-text placeholder:text-raw-silver/25 focus:border-raw-gold/40 focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowOldPw((v) => !v)}
+                  aria-label={showOldPw ? "Hide password" : "Show password"}
+                  className="absolute inset-y-0 right-2 flex items-center px-1 text-raw-silver/50 hover:text-raw-gold"
+                >
+                  {showOldPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              <div className="relative">
+                <input
+                  type={showNewPw ? "text" : "password"}
+                  placeholder="New password"
+                  value={newPw}
+                  onChange={(e) => setNewPw(e.target.value)}
+                  className="w-full rounded-xl border border-raw-border/30 bg-raw-black/40 px-3 py-2.5 pr-10 text-sm text-raw-text placeholder:text-raw-silver/25 focus:border-raw-gold/40 focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPw((v) => !v)}
+                  aria-label={showNewPw ? "Hide password" : "Show password"}
+                  className="absolute inset-y-0 right-2 flex items-center px-1 text-raw-silver/50 hover:text-raw-gold"
+                >
+                  {showNewPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              <div className="relative">
+                <input
+                  type={showConfirmPw ? "text" : "password"}
+                  placeholder="Confirm new password"
+                  value={confirmPw}
+                  onChange={(e) => setConfirmPw(e.target.value)}
+                  className="w-full rounded-xl border border-raw-border/30 bg-raw-black/40 px-3 py-2.5 pr-10 text-sm text-raw-text placeholder:text-raw-silver/25 focus:border-raw-gold/40 focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPw((v) => !v)}
+                  aria-label={showConfirmPw ? "Hide password" : "Show password"}
+                  className="absolute inset-y-0 right-2 flex items-center px-1 text-raw-silver/50 hover:text-raw-gold"
+                >
+                  {showConfirmPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
               <button
                 type="button"
                 onClick={handleChangePassword}
@@ -508,13 +545,23 @@ export function DashboardProfile({
           {delOpen && (
             <div className="border-t border-red-500/10 px-4 pb-4 pt-3 space-y-2.5">
               <p className="text-xs text-raw-silver/40">This is permanent. All your data will be deleted and cannot be recovered.</p>
-              <input
-                type="password"
-                placeholder="Enter your password to confirm"
-                value={delPw}
-                onChange={(e) => setDelPw(e.target.value)}
-                className="w-full rounded-xl border border-red-500/20 bg-raw-black/40 px-3 py-2.5 text-sm text-raw-text placeholder:text-raw-silver/25 focus:border-red-400/40 focus:outline-none"
-              />
+              <div className="relative">
+                <input
+                  type={showDelPw ? "text" : "password"}
+                  placeholder="Enter your password to confirm"
+                  value={delPw}
+                  onChange={(e) => setDelPw(e.target.value)}
+                  className="w-full rounded-xl border border-red-500/20 bg-raw-black/40 px-3 py-2.5 pr-10 text-sm text-raw-text placeholder:text-raw-silver/25 focus:border-red-400/40 focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowDelPw((v) => !v)}
+                  aria-label={showDelPw ? "Hide password" : "Show password"}
+                  className="absolute inset-y-0 right-2 flex items-center px-1 text-raw-silver/50 hover:text-red-400"
+                >
+                  {showDelPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
               <button
                 type="button"
                 onClick={handleDeleteAccount}
