@@ -13,7 +13,9 @@ import { PersonalityInsightsSection } from "@/components/landing/PersonalityInsi
 import { AvatarShowcaseSection } from "@/components/landing/AvatarShowcaseSection";
 import { LandingPollsSection } from "@/components/landing/LandingPollsSection";
 import { WhyAnonymity } from "@/components/landing/WhyAnonymity";
-import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
+const TestimonialsSection = lazy(() =>
+  import("@/components/landing/TestimonialsSection").then((m) => ({ default: m.TestimonialsSection }))
+);
 import { EarnedWarUpgradesSection } from "@/components/landing/EarnedWarUpgradesSection";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import PerforatedBackground from "@/components/ui/perforated-background";
@@ -76,7 +78,9 @@ export default function LandingShell({
             <PersonalityInsightsSection />
             <EarnedWarUpgradesSection />
             <WhyAnonymity />
-            <TestimonialsSection />
+            <Suspense fallback={<div className="h-16" />}>
+              <TestimonialsSection />
+            </Suspense>
             <LandingFooter />
           </div>
         </motion.div>
