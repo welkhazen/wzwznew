@@ -1,5 +1,5 @@
 import { FloatingDock } from "@/components/ui/floating-dock";
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { readCommunityChats } from "@/lib/communityChat";
 import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
 import { Archive, Home as HomeIcon, MessageCircle, Target, User as UserIcon, LogOut, Shield, Trophy, Sparkles, Moon, CloudMoon, Sun } from "lucide-react";
@@ -9,13 +9,6 @@ import { matchPath, useLocation, useNavigate } from "react-router-dom";
 import { DashboardNav, type DashboardTab } from "@/components/dashboard/DashboardNav";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { DashboardHome } from "@/components/dashboard/DashboardHome";
-import { DashboardPolls } from "@/components/dashboard/DashboardPolls";
-import { DashboardCommunities } from "@/components/dashboard/DashboardCommunities";
-import { DashboardChallenges } from "@/components/dashboard/DashboardChallenges";
-import { DashboardDailySpin } from "@/components/dashboard/DashboardDailySpin";
-import { DashboardProfile } from "@/components/dashboard/DashboardProfile";
-import { DashboardWallet } from "@/components/dashboard/DashboardWallet";
-import { DashboardInventory } from "@/components/dashboard/DashboardInventory";
 import { DashboardSectionShell } from "@/components/dashboard/DashboardSectionShell";
 import { NotificationConsentPrompt } from "@/components/notifications/NotificationConsentPrompt";
 import { LevelUpCelebration } from "@/components/ui/LevelUpCelebration";
@@ -24,6 +17,36 @@ import { XP_REWARDS } from "@/lib/userProgress";
 import { getTodayKey } from "@/store/useRawStore.storage";
 import type { User, Poll } from "@/store/useRawStore";
 import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
+
+const DashboardPolls = lazy(() =>
+  import("@/components/dashboard/DashboardPolls").then((module) => ({ default: module.DashboardPolls }))
+);
+const DashboardCommunities = lazy(() =>
+  import("@/components/dashboard/DashboardCommunities").then((module) => ({ default: module.DashboardCommunities }))
+);
+const DashboardChallenges = lazy(() =>
+  import("@/components/dashboard/DashboardChallenges").then((module) => ({ default: module.DashboardChallenges }))
+);
+const DashboardDailySpin = lazy(() =>
+  import("@/components/dashboard/DashboardDailySpin").then((module) => ({ default: module.DashboardDailySpin }))
+);
+const DashboardProfile = lazy(() =>
+  import("@/components/dashboard/DashboardProfile").then((module) => ({ default: module.DashboardProfile }))
+);
+const DashboardWallet = lazy(() =>
+  import("@/components/dashboard/DashboardWallet").then((module) => ({ default: module.DashboardWallet }))
+);
+const DashboardInventory = lazy(() =>
+  import("@/components/dashboard/DashboardInventory").then((module) => ({ default: module.DashboardInventory }))
+);
+
+const dashboardSectionFallback = (
+  <DashboardSectionShell>
+    <div className="flex min-h-[240px] items-center justify-center text-sm text-raw-silver/60">
+      Loading dashboard section…
+    </div>
+  </DashboardSectionShell>
+);
 
 interface DashboardProps {
   user: User;
@@ -168,104 +191,118 @@ export default function Dashboard({
     switch (activeTab) {
       case "polls":
         return (
-          <DashboardPolls
-            polls={polls}
-            votedPolls={votedPolls}
-            userId={user.id}
-            username={user.username}
-            dailyAnsweredCount={dailyAnsweredCount}
-            dailyPollLimit={dailyPollLimit}
-            isDailyPollLimitReached={isDailyPollLimitReached}
-            tokenBalance={tokenBalance}
-            onUnlockExtra={unlockExtraPolls}
-            onVote={(pollId, optionId) => {
-              vote(pollId, optionId);
-              void award(XP_REWARDS.POLL_VOTE);
-            }}
-          />
+          <Suspense fallback={dashboardSectionFallback}>
+            <DashboardPolls
+              polls={polls}
+              votedPolls={votedPolls}
+              userId={user.id}
+              username={user.username}
+              dailyAnsweredCount={dailyAnsweredCount}
+              dailyPollLimit={dailyPollLimit}
+              isDailyPollLimitReached={isDailyPollLimitReached}
+              tokenBalance={tokenBalance}
+              onUnlockExtra={unlockExtraPolls}
+              onVote={(pollId, optionId) => {
+                vote(pollId, optionId);
+                void award(XP_REWARDS.POLL_VOTE);
+              }}
+            />
+          </Suspense>
         );
       case "communities":
         return (
-          <DashboardSectionShell className="p-2 sm:p-3">
-            <DashboardCommunities
-              user={user}
-              avatarLevel={avatarLevel}
-              tokenBalance={tokenBalance}
-              activeCommunityId={activeCommunityId}
-              onOpenCommunity={handleOpenCommunity}
-              onBackToCommunities={handleBackToCommunities}
-              onCommunitiesChange={setDashboardCommunities}
-            />
-          </DashboardSectionShell>
+          <Suspense fallback={dashboardSectionFallback}>
+            <DashboardSectionShell className="p-2 sm:p-3">
+              <DashboardCommunities
+                user={user}
+                avatarLevel={avatarLevel}
+                tokenBalance={tokenBalance}
+                activeCommunityId={activeCommunityId}
+                onOpenCommunity={handleOpenCommunity}
+                onBackToCommunities={handleBackToCommunities}
+                onCommunitiesChange={setDashboardCommunities}
+              />
+            </DashboardSectionShell>
+          </Suspense>
         );
       case "challenges":
         return (
-          <DashboardSectionShell>
-            <DashboardChallenges
-              userId={user.id}
-              isAdmin={user.role === "admin"}
-              avatarLevel={avatarLevel}
-              pollsAnswered={votedPolls.size}
-              dailyAnsweredCount={dailyAnsweredCount}
-              dailyPollLimit={dailyPollLimit}
-              onAwardXP={handleDailySpinAward}
-              onClaimXP={(source, claimKey, amount) => awardOnce(source, claimKey, amount)}
-              onAwardTokens={(amount) => addTokens(amount)}
-              onAvatarWon={markAvatarOwned}
-            />
-          </DashboardSectionShell>
+          <Suspense fallback={dashboardSectionFallback}>
+            <DashboardSectionShell>
+              <DashboardChallenges
+                userId={user.id}
+                isAdmin={user.role === "admin"}
+                avatarLevel={avatarLevel}
+                pollsAnswered={votedPolls.size}
+                dailyAnsweredCount={dailyAnsweredCount}
+                dailyPollLimit={dailyPollLimit}
+                onAwardXP={handleDailySpinAward}
+                onClaimXP={(source, claimKey, amount) => awardOnce(source, claimKey, amount)}
+                onAwardTokens={(amount) => addTokens(amount)}
+                onAvatarWon={markAvatarOwned}
+              />
+            </DashboardSectionShell>
+          </Suspense>
         );
       case "daily-spin":
         return (
-          <DashboardSectionShell>
-            <DashboardDailySpin
-              userId={user.id}
-              isAdmin={user.role === "admin"}
-              onAwardXP={handleDailySpinAward}
-              onAvatarWon={markAvatarOwned}
-            />
-          </DashboardSectionShell>
+          <Suspense fallback={dashboardSectionFallback}>
+            <DashboardSectionShell>
+              <DashboardDailySpin
+                userId={user.id}
+                isAdmin={user.role === "admin"}
+                onAwardXP={handleDailySpinAward}
+                onAvatarWon={markAvatarOwned}
+              />
+            </DashboardSectionShell>
+          </Suspense>
         );
       case "inventory":
         return (
-          <DashboardSectionShell>
-            <DashboardInventory
-              polls={polls}
-              votedPolls={votedPolls}
-              avatarLevel={avatarLevel}
-              ownedAvatarLevels={ownedAvatarLevels}
-              onUnlockAvatar={unlockAvatarLevel}
-              onAvatarPurchased={markAvatarOwned}
-              avatarPricesByLevel={avatarPricesByLevel}
-              avatarCatalog={avatarCatalog}
-              tokenBalance={tokenBalance}
-              userId={user.id}
-            />
-          </DashboardSectionShell>
+          <Suspense fallback={dashboardSectionFallback}>
+            <DashboardSectionShell>
+              <DashboardInventory
+                polls={polls}
+                votedPolls={votedPolls}
+                avatarLevel={avatarLevel}
+                ownedAvatarLevels={ownedAvatarLevels}
+                onUnlockAvatar={unlockAvatarLevel}
+                onAvatarPurchased={markAvatarOwned}
+                avatarPricesByLevel={avatarPricesByLevel}
+                avatarCatalog={avatarCatalog}
+                tokenBalance={tokenBalance}
+                userId={user.id}
+              />
+            </DashboardSectionShell>
+          </Suspense>
         );
       case "wallet":
         return (
-          <DashboardSectionShell>
-            <DashboardWallet />
-          </DashboardSectionShell>
+          <Suspense fallback={dashboardSectionFallback}>
+            <DashboardSectionShell>
+              <DashboardWallet />
+            </DashboardSectionShell>
+          </Suspense>
         );
       case "profile":
         return (
-          <DashboardSectionShell>
-            <DashboardProfile
-              userId={user.id}
-              username={user.username}
-              avatarLevel={avatarLevel}
-              onAvatarChange={setAvatarLevel}
-              ownedAvatarLevels={ownedAvatarLevels}
-              onUnlockAvatar={unlockAvatarLevel}
-              avatarPricesByLevel={avatarPricesByLevel}
-              pollsAnswered={votedPolls.size}
-              xp={progress?.xp ?? 0}
-              xpLevel={progress?.level ?? 1}
-              onLogout={onLogout}
-            />
-          </DashboardSectionShell>
+          <Suspense fallback={dashboardSectionFallback}>
+            <DashboardSectionShell>
+              <DashboardProfile
+                userId={user.id}
+                username={user.username}
+                avatarLevel={avatarLevel}
+                onAvatarChange={setAvatarLevel}
+                ownedAvatarLevels={ownedAvatarLevels}
+                onUnlockAvatar={unlockAvatarLevel}
+                avatarPricesByLevel={avatarPricesByLevel}
+                pollsAnswered={votedPolls.size}
+                xp={progress?.xp ?? 0}
+                xpLevel={progress?.level ?? 1}
+                onLogout={onLogout}
+              />
+            </DashboardSectionShell>
+          </Suspense>
         );
       default:
         return (
