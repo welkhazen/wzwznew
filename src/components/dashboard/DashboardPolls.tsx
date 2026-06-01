@@ -411,7 +411,7 @@ export function DashboardPolls({
           ...previous,
           [currentPoll.id]: comments.map((comment) => ({
             id: comment.id,
-            author: "Anonymous",
+            author: comment.author_name?.trim() || "Anonymous",
             content: comment.text,
             createdAt: new Date(comment.created_at).toLocaleTimeString([], {
               hour: "2-digit",
@@ -477,7 +477,7 @@ export function DashboardPolls({
     setTimeout(() => commentsEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
 
     try {
-      await addPollComment(currentPoll.id, content);
+      await addPollComment(currentPoll.id, content, { id: userId, name: username });
     } catch (error) {
       console.error("Failed to save dashboard comment to Supabase", error);
     }
