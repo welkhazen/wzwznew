@@ -83,6 +83,17 @@ function readStoredSpinResult(): WheelPoolEntry | null {
   }
 }
 
+function findOwnedSpinResult(ownedAvatarLevels: Set<number>, avatarCatalog: AvatarCatalogItem[]): WheelPoolEntry | null {
+  for (const entry of SPIN_WHEEL_POOL) {
+    const level = avatarCatalog.findIndex((avatar) => avatar.id === entry.avatarId) + 1;
+    if (level > 0 && ownedAvatarLevels.has(level)) {
+      return entry;
+    }
+  }
+
+  return null;
+}
+
 const STEP_ORDER: OnboardingStep[] = ["spin", "avatar", "identity", "polls", "communities"];
 const STEP_LABELS: Record<OnboardingStep, string> = {
   spin: "spin",
@@ -376,6 +387,7 @@ export function OnboardingJourney({
   const freeAvatarChoices = onboardingAvatars.slice(0, FREE_ONBOARDING_AVATAR_COUNT);
   const previewAvatarChoices = onboardingAvatars.slice(FREE_ONBOARDING_AVATAR_COUNT);
   const ownedPreviewAvatarChoices = previewAvatarChoices.filter((avatar) => ownedAvatarLevels.has(avatar.level));
+  const claimedSpinResult = spinResult ?? findOwnedSpinResult(ownedAvatarLevels, onboardingAvatars);
   const previewAvatarPageCount = Math.max(1, Math.ceil(previewAvatarChoices.length / AVATAR_PAGE_SIZE));
   const visiblePreviewAvatarChoices = previewAvatarChoices.slice(avatarPage * AVATAR_PAGE_SIZE, (avatarPage + 1) * AVATAR_PAGE_SIZE);
 
@@ -553,8 +565,9 @@ export function OnboardingJourney({
               <div className="mt-6 flex flex-col items-center gap-5 sm:gap-7">
                 <WheelOfFortune
                   prizes={spinPrizes}
-                  disabled={!!spinResult || isClaimingSpin}
+                  disabled={!!claimedSpinResult || isClaimingSpin}
                   onSpinEnd={async (prize) => {
+                    if (claimedSpinResult) return;
                     const entry = SPIN_WHEEL_POOL.find((p) => p.id === prize.id) ?? SPIN_WHEEL_POOL[0];
                     setSpinResult(entry);
                     setSpinClaimError(null);
@@ -580,10 +593,10 @@ export function OnboardingJourney({
                   }}
                 />
 
-                {spinResult ? (
+                {claimedSpinResult ? (
                   <div className="w-full max-w-md rounded-2xl border border-raw-gold/30 bg-gradient-to-b from-raw-gold/[0.08] to-raw-gold/[0.02] p-4 text-center sm:p-5">
                     <p className="font-display text-sm tracking-wide text-raw-gold">
-                      You won {spinResult.name}
+                      You won {claimedSpinResult.name}
                     </p>
                     <p className="mt-2 text-xs leading-relaxed text-raw-text/75">
                       Added to your inventory. Pick it on the next step.
@@ -616,7 +629,7 @@ export function OnboardingJourney({
                         : "border border-raw-gold/50 bg-raw-gold/15 text-raw-gold hover:bg-raw-gold/25"
                     }`}
                   >
-                    {isClaimingSpin ? "Saving…" : spinResult ? "Continue" : "Next: Avatar"}
+                    {isClaimingSpin ? "Saving…" : claimedSpinResult ? "Continue" : "Next: Avatar"}
                   </button>
                 </div>
               </div>
