@@ -20,6 +20,8 @@ const WHEEL_REWARD_POOL: readonly PoolEntry[] = [
   { id: "wheel-avatar-6", avatarId: "crimson-muse", name: "Crimson Muse", imageSrc: "/avatars/6.webp" },
   { id: "wheel-avatar-7", avatarId: "solar-flame", name: "Solar Flame", imageSrc: "/avatars/07.webp" },
   { id: "wheel-avatar-8", avatarId: "pink-circuit", name: "Pink Circuit", imageSrc: "/avatars/08.webp" },
+  { id: "wheel-avatar-9", avatarId: "golden-muse", name: "Golden Muse", imageSrc: "/avatars/9.png" },
+  { id: "wheel-avatar-10", avatarId: "blu-fifer", name: "Blu Fifer", imageSrc: "/avatars/11.png" },
 ];
 
 function getPool(): PoolEntry[] {
