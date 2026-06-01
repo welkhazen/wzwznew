@@ -40,8 +40,12 @@ export function useConfirmDialog() {
   };
 
   const dialog = (
-    <AlertDialog open={pending !== null} onOpenChange={(open) => { if (!open) close(false); }}>
-      <AlertDialogContent className="border-raw-border/40 bg-raw-surface/95 backdrop-blur">
+    <AlertDialog open={pending !== null}>
+      <AlertDialogContent
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+        className="!bg-raw-surface/95 border-raw-border/40 backdrop-blur"
+      >
         <AlertDialogHeader>
           <AlertDialogTitle className="text-raw-text">{pending?.title}</AlertDialogTitle>
           {pending?.description && (
