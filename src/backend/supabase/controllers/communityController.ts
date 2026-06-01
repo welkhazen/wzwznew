@@ -28,7 +28,7 @@ type DbCommunity = {
   created_at: string;
   created_by: string | null;
   community_members: DbMember[];
-  community_messages: DbMessage[];
+  community_messages?: DbMessage[];
 };
 
 function mapMember(m: DbMember): CommunityChatMemberRecord {
@@ -64,12 +64,34 @@ function mapCommunity(c: DbCommunity): PersistedCommunityRecord {
 export async function fetchCommunities(): Promise<PersistedCommunityRecord[]> {
   const { data, error } = await supabase
     .from('communities')
-    .select('*, community_members(*), community_messages(*)')
-    .order('created_at', { ascending: true })
-    .order('created_at', { referencedTable: 'community_messages', ascending: true });
+    .select('*, community_members(*)')
+    .order('created_at', { ascending: true });
 
   if (error) throw error;
   return (data as DbCommunity[]).map(mapCommunity);
+}
+
+export async function fetchCommunityMessages(
+  communityId: string,
+  options: { before?: string; limit?: number } = {},
+): Promise<CommunityChatMessageRecord[]> {
+  const limit = options.limit ?? 10;
+  let query = supabase
+    .from('community_messages')
+    .select('*')
+    .eq('community_id', communityId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (options.before) {
+    query = query.lt('created_at', options.before);
+  }
+
+  const { data, error } = await query;
+  if (error) throw error;
+  return ((data ?? []) as DbMessage[])
+    .map(mapCommunityMessage)
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 }
 
 export async function joinCommunity(communityId: string, userId: string, username: string): Promise<void> {

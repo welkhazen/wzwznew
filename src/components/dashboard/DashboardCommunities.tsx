@@ -32,6 +32,7 @@ import {
 } from "@/lib/communityChat";
 import {
   fetchCommunities,
+  fetchCommunityMessages,
   joinCommunity as joinCommunitySupabase,
   leaveCommunity as leaveCommunitySupabase,
   touchMemberActivity,
@@ -85,6 +86,7 @@ import { CommunityMessageComposer } from "@/components/dashboard/CommunityMessag
 import { CommunityRoomList } from "@/components/dashboard/CommunityRoomList";
 
 const WAITLIST_UNLOCK_THRESHOLD = 200;
+const MESSAGE_PAGE_SIZE = 10;
 const TOKEN_BALANCE_STORAGE_PREFIX = "raw.polls.token-balance";
 const TOKEN_BALANCE_UPDATED_EVENT = "raw:token-balance-updated";
 
@@ -101,13 +103,20 @@ function getMessageSenderBlockKey(message: Pick<CommunityChatMessageRecord, "sen
   return getCommunitySenderBlockKey(message.senderId, message.senderName);
 }
 
+function limitCachedCommunityMessages(communities: PersistedCommunityRecord[]): PersistedCommunityRecord[] {
+  return communities.map((community) => ({
+    ...community,
+    messages: community.messages.slice(-MESSAGE_PAGE_SIZE),
+  }));
+}
+
 function readCachedCommunities(): PersistedCommunityRecord[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = window.sessionStorage.getItem(COMMUNITIES_CACHE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    return Array.isArray(parsed) ? limitCachedCommunityMessages(parsed) : [];
   } catch {
     return [];
   }
@@ -116,7 +125,7 @@ function readCachedCommunities(): PersistedCommunityRecord[] {
 function writeCachedCommunities(communities: PersistedCommunityRecord[]): void {
   if (typeof window === "undefined") return;
   try {
-    window.sessionStorage.setItem(COMMUNITIES_CACHE_KEY, JSON.stringify(communities));
+    window.sessionStorage.setItem(COMMUNITIES_CACHE_KEY, JSON.stringify(limitCachedCommunityMessages(communities)));
   } catch {
     // ignore storage write errors
   }
@@ -153,6 +162,27 @@ function upsertCommunityMessage(
       ? { ...community, messages: mergeCommunityMessages(community.messages, message) }
       : community
   );
+}
+
+function setCommunityMessages(
+  communities: PersistedCommunityRecord[],
+  communityId: string,
+  messages: CommunityChatMessageRecord[],
+): PersistedCommunityRecord[] {
+  return communities.map((community) =>
+    community.id === communityId ? { ...community, messages } : community
+  );
+}
+
+function mergeCommunityMessageList(
+  messages: CommunityChatMessageRecord[],
+  incoming: CommunityChatMessageRecord[],
+): CommunityChatMessageRecord[] {
+  const byId = new Map<string, CommunityChatMessageRecord>();
+  [...messages, ...incoming].forEach((message) => {
+    byId.set(message.id, message);
+  });
+  return Array.from(byId.values()).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 }
 
 function replaceCommunityMessage(
@@ -356,9 +386,12 @@ const COMMUNITY_LOGOS: Record<string, string> = {
   const [pollSubmitting, setPollSubmitting] = useState(false);
   const [blockedSenderKeys, setBlockedSenderKeys] = useState<string[]>(() => readBlockedCommunitySenders(user.id));
   const [senderAvatarLevels, setSenderAvatarLevels] = useState<Record<string, number>>({});
+  const [hasOlderMessages, setHasOlderMessages] = useState(false);
+  const [isLoadingOlderMessages, setIsLoadingOlderMessages] = useState(false);
   const lastTouchedCommunityRef = useRef<string>("");
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const messageInputRef = useRef<HTMLInputElement | null>(null);
+  const preserveScrollAfterOlderLoadRef = useRef<{ previousHeight: number } | null>(null);
 
     const updateCommunities = useCallback((updater: (communities: PersistedCommunityRecord[]) => PersistedCommunityRecord[]) => {
       setCommunities((previous) => {
@@ -377,9 +410,15 @@ const COMMUNITY_LOGOS: Record<string, string> = {
           fetchWaitlistSummary(user.id).catch(() => createEmptyWaitlistSummary()),
           loadCommunityAccess(user.id).catch(() => ({ hasSubscription: false, unlockedIds: new Set<string>() })),
         ]);
-        setCommunities(communitiesData);
-        writeCachedCommunities(communitiesData);
-        onCommunitiesChange?.(communitiesData);
+        setCommunities((previous) => {
+          const next = communitiesData.map((community) => ({
+            ...community,
+            messages: previous.find((item) => item.id === community.id)?.messages ?? community.messages,
+          }));
+          writeCachedCommunities(next);
+          onCommunitiesChange?.(next);
+          return next;
+        });
         setCommunityRequests(requestsData);
         setChatReports(readChatReports());
         setCommunityJoinRequests(readCommunityJoinRequests());
@@ -426,6 +465,46 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       () => (selectedCommunity?.messages ?? []).filter((message) => !blockedSenderKeySet.has(getMessageSenderBlockKey(message))),
       [blockedSenderKeySet, selectedCommunity]
     );
+
+    const loadLatestMessages = useCallback(async () => {
+      if (!activeCommunityId) {
+        setHasOlderMessages(false);
+        return;
+      }
+
+      const messages = await fetchCommunityMessages(activeCommunityId, { limit: MESSAGE_PAGE_SIZE });
+      setHasOlderMessages(messages.length === MESSAGE_PAGE_SIZE);
+      updateCommunities((current) => setCommunityMessages(current, activeCommunityId, messages));
+    }, [activeCommunityId, updateCommunities]);
+
+    const loadOlderMessages = useCallback(async () => {
+      if (!activeCommunityId || isLoadingOlderMessages || activeMessages.length === 0 || !hasOlderMessages) {
+        return;
+      }
+
+      setIsLoadingOlderMessages(true);
+      preserveScrollAfterOlderLoadRef.current = {
+        previousHeight: messagesContainerRef.current?.scrollHeight ?? 0,
+      };
+      try {
+        const olderMessages = await fetchCommunityMessages(activeCommunityId, {
+          before: activeMessages[0].createdAt,
+          limit: MESSAGE_PAGE_SIZE,
+        });
+        setHasOlderMessages(olderMessages.length === MESSAGE_PAGE_SIZE);
+        updateCommunities((current) => {
+          const existing = current.find((community) => community.id === activeCommunityId)?.messages ?? [];
+          return setCommunityMessages(current, activeCommunityId, mergeCommunityMessageList(existing, olderMessages));
+        });
+      } finally {
+        setIsLoadingOlderMessages(false);
+      }
+    }, [activeCommunityId, activeMessages, hasOlderMessages, isLoadingOlderMessages, updateCommunities]);
+
+    useEffect(() => {
+      void loadLatestMessages();
+    }, [loadLatestMessages, selectedCommunity?.id]);
+
     const messageSenderIds = useMemo(() => {
       const ids = new Set<string>();
       activeMessages.forEach((message) => {
@@ -805,6 +884,13 @@ const COMMUNITY_LOGOS: Record<string, string> = {
 
     useLayoutEffect(() => {
       if (!messagesContainerRef.current || searchQuery.trim()) {
+        return;
+      }
+
+      if (preserveScrollAfterOlderLoadRef.current) {
+        const { previousHeight } = preserveScrollAfterOlderLoadRef.current;
+        preserveScrollAfterOlderLoadRef.current = null;
+        messagesContainerRef.current.scrollTop += messagesContainerRef.current.scrollHeight - previousHeight;
         return;
       }
 
@@ -1644,6 +1730,9 @@ const COMMUNITY_LOGOS: Record<string, string> = {
               onLikeMessage={(message) => { void handleLikeMessage(message); }}
               onOpenMessageReport={handleOpenMessageReport}
               onBlockMessageSender={handleBlockMessageSender}
+              hasOlderMessages={hasOlderMessages}
+              isLoadingOlderMessages={isLoadingOlderMessages}
+              onLoadOlderMessages={loadOlderMessages}
             />
 
             <CommunityMessageComposer
