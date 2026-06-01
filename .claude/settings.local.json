@@ -31,7 +31,8 @@
       "Bash(gh api *)",
       "Bash(git branch *)",
       "Bash(gh pr create --repo welkhazen/wzwznew --title 'Move WheelReward under AvatarShowcase' --body 'Place the Spin-the-Wheel section directly after the Avatar Identity section on the landing page. *)",
-      "Bash(git checkout *)"
+      "Bash(git checkout *)",
+      "Bash(gh pr create --repo welkhazen/wzwznew --title 'Stop SPA-rewriting static asset paths' --body '## Summary *)"
     ]
   }
 }
