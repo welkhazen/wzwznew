@@ -439,6 +439,21 @@ export function OnboardingJourney({
 
     try {
       const uniqueNames = new Set<string>();
+      const duplicateName = identityNames
+        .map((name) => name.trim())
+        .filter(Boolean)
+        .find((name) => {
+          const key = name.toLowerCase();
+          if (uniqueNames.has(key)) return true;
+          uniqueNames.add(key);
+          return false;
+        });
+
+      if (duplicateName) {
+        throw new Error(`Name "${duplicateName}" is already used in this identity set.`);
+      }
+
+      uniqueNames.clear();
       const usedAvatarLevels = new Set<number>();
       const aliases = identityNames
         .map((name, index) => {
