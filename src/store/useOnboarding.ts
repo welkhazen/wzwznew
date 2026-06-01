@@ -24,7 +24,10 @@ export function useOnboarding(isLoggedIn: boolean, username?: string) {
 
     const entry = readOnboardingMap()[username];
     if (entry) {
-      setOnboardingStep(entry.step);
+      const restoredStep = entry.step === "spin" && window.localStorage.getItem(LANDING_WHEEL_SPIN_KEY)
+        ? "avatar"
+        : entry.step;
+      setOnboardingStep(restoredStep);
       setOnboardingAnsweredPollIds(new Set(entry.answeredPollIds));
       setOnboardingCompleted(entry.completed);
       setOnboardingLoaded(true);

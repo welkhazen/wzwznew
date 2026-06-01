@@ -230,10 +230,30 @@ function getNextStep(step: OnboardingStep): OnboardingStep {
   return STEP_ORDER[currentIndex + 1];
 }
 
-function StepPill({ label, active, complete }: { label: string; active: boolean; complete: boolean }) {
+function getPreviousStep(step: OnboardingStep): OnboardingStep | null {
+  const currentIndex = STEP_ORDER.indexOf(step);
+  if (currentIndex <= 0) return null;
+  return STEP_ORDER[currentIndex - 1];
+}
+
+function BackButton({ onClick }: { onClick: () => void }) {
   return (
-    <div
-      className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.18em] transition-all ${
+    <button
+      type="button"
+      onClick={onClick}
+      className="rounded-xl border border-raw-border/50 px-5 py-3 text-sm font-semibold text-raw-silver/75 transition hover:border-raw-gold/40 hover:text-raw-gold sm:py-2.5"
+    >
+      ← Back
+    </button>
+  );
+}
+
+function StepPill({ label, active, complete, onClick }: { label: string; active: boolean; complete: boolean; onClick?: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.18em] transition-all hover:border-raw-gold/60 hover:text-raw-gold ${
         active
           ? "border-raw-gold/60 bg-raw-gold/15 text-raw-gold"
           : complete
@@ -242,7 +262,7 @@ function StepPill({ label, active, complete }: { label: string; active: boolean;
       }`}
     >
       {label}
-    </div>
+    </button>
   );
 }
 
@@ -336,6 +356,7 @@ export function OnboardingJourney({
   const canContinueFromIdentity = identityNamesAreValid;
   const canContinueFromPolls = answeredCount >= onboardingPolls.length;
   const canContinueFromCommunities = selectedCommunityIds.length >= 1;
+  const canCompleteOnboarding = canContinueFromAvatar && canContinueFromIdentity && canContinueFromPolls && canContinueFromCommunities;
   const previewAvatar = onboardingAvatars[previewAvatarIndex - 1] ?? onboardingAvatars[0];
   const canContinueWithPreviewAvatar = canContinueFromAvatar && previewAvatarIndex === avatarIndex;
   const freeAvatarChoices = onboardingAvatars.slice(0, FREE_ONBOARDING_AVATAR_COUNT);
@@ -439,6 +460,11 @@ export function OnboardingJourney({
     onSetOnboardingStep(getNextStep(onboardingStep));
   };
 
+  const goToPreviousStep = () => {
+    const previous = getPreviousStep(onboardingStep);
+    if (previous) onSetOnboardingStep(previous);
+  };
+
   const currentStepIndex = STEP_ORDER.indexOf(onboardingStep);
 
   if (isAgeVerifiedLoaded && !isAgeVerified) {
@@ -497,6 +523,7 @@ export function OnboardingJourney({
               label={STEP_LABELS[step]}
               active={step === onboardingStep}
               complete={index < currentStepIndex}
+              onClick={() => onSetOnboardingStep(step)}
             />
           ))}
         </div>
@@ -557,18 +584,25 @@ export function OnboardingJourney({
                   </p>
                 )}
 
-                <div className="flex w-full max-w-md justify-end">
+                <div className="flex w-full max-w-md items-center justify-between gap-3">
                   <button
                     type="button"
-                    disabled={!spinResult || isClaimingSpin}
+                    onClick={() => onSetOnboardingStep("avatar")}
+                    className="rounded-full border border-raw-border/50 px-5 py-2 font-display text-[10px] uppercase tracking-[0.2em] text-raw-silver/70 transition hover:border-raw-gold/40 hover:text-raw-gold"
+                  >
+                    Skip
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isClaimingSpin}
                     onClick={() => onSetOnboardingStep("avatar")}
                     className={`rounded-full px-6 py-2 font-display text-xs uppercase tracking-[0.2em] transition ${
-                      !spinResult || isClaimingSpin
+                      isClaimingSpin
                         ? "cursor-not-allowed border border-raw-border/40 bg-raw-surface/40 text-raw-silver/35"
                         : "border border-raw-gold/50 bg-raw-gold/15 text-raw-gold hover:bg-raw-gold/25"
                     }`}
                   >
-                    {isClaimingSpin ? "Saving…" : "Continue"}
+                    {isClaimingSpin ? "Saving…" : spinResult ? "Continue" : "Next: Avatar"}
                   </button>
                 </div>
               </div>
@@ -806,11 +840,11 @@ export function OnboardingJourney({
                   ) : null}
               </div>
 
-              <div className="mt-6 flex justify-end sm:mt-8">
+              <div className="mt-6 flex items-center justify-between gap-3 sm:mt-8">
+                <BackButton onClick={goToPreviousStep} />
                 <button
                   onClick={goToNextStep}
-                  disabled={!canContinueWithPreviewAvatar}
-                  className="w-full rounded-xl bg-raw-gold px-5 py-3 text-sm font-semibold text-raw-ink transition-opacity disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:py-2.5"
+                  className="rounded-xl bg-raw-gold px-5 py-3 text-sm font-semibold text-raw-ink transition-opacity sm:py-2.5"
                 >
                   Next: Names
                 </button>
@@ -893,12 +927,13 @@ export function OnboardingJourney({
                 </p>
               ) : null}
 
-              <div className="mt-6 flex justify-end sm:mt-8">
+              <div className="mt-6 flex items-center justify-between gap-3 sm:mt-8">
+                <BackButton onClick={goToPreviousStep} />
                 <button
                   type="button"
                   onClick={goToNextStep}
                   disabled={!canContinueFromIdentity || isSavingIdentities}
-                  className="w-full rounded-xl bg-raw-gold px-5 py-3 text-sm font-semibold text-raw-ink transition-opacity disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:py-2.5"
+                  className="rounded-xl bg-raw-gold px-5 py-3 text-sm font-semibold text-raw-ink transition-opacity disabled:cursor-not-allowed disabled:opacity-40 sm:py-2.5"
                 >
                   {isSavingIdentities ? "Saving..." : "Save names"}
                 </button>
@@ -1016,11 +1051,12 @@ export function OnboardingJourney({
                 )}
               </div>
 
-              <div className="mt-5 flex justify-end sm:mt-6">
+              <div className="mt-5 flex items-center justify-between gap-3 sm:mt-6">
+                <BackButton onClick={goToPreviousStep} />
                 <button
                   onClick={goToNextStep}
                   disabled={!canContinueFromPolls}
-                  className="w-full rounded-xl border border-raw-gold/40 bg-raw-gold/15 px-5 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-raw-gold transition-all hover:bg-raw-gold/25 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:py-2.5"
+                  className="rounded-xl border border-raw-gold/40 bg-raw-gold/15 px-5 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-raw-gold transition-all hover:bg-raw-gold/25 disabled:cursor-not-allowed disabled:opacity-40 sm:py-2.5"
                 >
                   Continue to communities →
                 </button>
@@ -1135,7 +1171,13 @@ export function OnboardingJourney({
                 })}
               </div>
 
-              <div className="mt-6 flex justify-end sm:mt-8">
+              {!canCompleteOnboarding ? (
+                <p className="mt-4 text-center text-[11px] uppercase tracking-[0.18em] text-raw-silver/50 sm:text-right">
+                  Finish every step to enter raW
+                </p>
+              ) : null}
+              <div className="mt-6 flex items-center justify-between gap-3 sm:mt-8">
+                <BackButton onClick={goToPreviousStep} />
                 <button
                   onClick={() => {
                     track("onboarding_completed", {
@@ -1146,8 +1188,8 @@ export function OnboardingJourney({
                     });
                     setEnterRawOpen(true);
                   }}
-                  disabled={!canContinueFromCommunities}
-                  className="w-full rounded-xl bg-raw-gold px-5 py-3 text-sm font-semibold text-raw-ink transition-opacity disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:py-2.5"
+                  disabled={!canCompleteOnboarding}
+                  className="rounded-xl bg-raw-gold px-5 py-3 text-sm font-semibold text-raw-ink transition-opacity disabled:cursor-not-allowed disabled:opacity-40 sm:py-2.5"
                 >
                   Complete onboarding
                 </button>
