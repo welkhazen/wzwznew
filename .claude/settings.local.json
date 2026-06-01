@@ -36,7 +36,8 @@
       "Bash(gh pr create --repo welkhazen/wzwznew --title 'Coming Soon banner under Communities' --body 'Replaces the '\\\\''Where mind meets heart'\\\\'' banner inside the Communities section with a gold Coming Soon notice. This visually marks every landing section that comes after Communities \\(PersonalityInsights, EarnedWarUpgrades, WhyAnonymity, Testimonials\\) as upcoming. *)",
       "Bash(grep -n \"imageSrc\\\\|imgSrc\\\\|\\\\\\\\.webp\\\\\\\\|\\\\\\\\.png\" src/components/onboarding/OnboardingJourney.tsx)",
       "Bash(gh pr create --repo welkhazen/wzwznew --title 'Clarify locked-avatar UX in onboarding' --body 'Users tapping a '\\\\''Preview only'\\\\'' avatar in onboarding thought they couldn'\\\\''t continue. Now: *)",
-      "Bash(gh pr create --repo welkhazen/wzwznew --title 'Make Preview-only grid full-width on desktop' --body 'Reverts the onboarding container width change. Only the '\\\\''Preview only'\\\\'' avatar grid now spans the full width on desktop \\(8 tiles in one row\\); the rest of the onboarding layout returns to the original max-w-5xl. Mobile unchanged. *)"
+      "Bash(gh pr create --repo welkhazen/wzwznew --title 'Make Preview-only grid full-width on desktop' --body 'Reverts the onboarding container width change. Only the '\\\\''Preview only'\\\\'' avatar grid now spans the full width on desktop \\(8 tiles in one row\\); the rest of the onboarding layout returns to the original max-w-5xl. Mobile unchanged. *)",
+      "Bash(gh pr create --repo welkhazen/wzwznew --title 'Sync avatar_catalog with renames + new avatars' --body 'Migration updates the Supabase avatar_catalog table to match the TS catalog: renames Horned Iron -> Viozen with /avatars/5.png, upserts Blu Fifer and Golden Muse. Idempotent. *)"
     ]
   }
 }
