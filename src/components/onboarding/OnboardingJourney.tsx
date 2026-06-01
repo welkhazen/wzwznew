@@ -40,7 +40,7 @@ interface OnboardingJourneyProps {
   onMarkPollAnswered: (pollId: string) => void;
   selectedCommunityIds: string[];
   onToggleCommunity: (communityId: string) => void;
-  onCompleteOnboarding: () => void;
+  onCompleteOnboarding: () => void | Promise<void>;
   onLogout: () => void;
   onClaimLandingWheelAvatar: () => Promise<void>;
 }
@@ -336,7 +336,9 @@ export function OnboardingJourney({
   const [identityNames, setIdentityNames] = useState<string[]>(() => [user.username, "", ""]);
   const [publicIdentityIndex, setPublicIdentityIndex] = useState(0);
   const [identitySaveError, setIdentitySaveError] = useState<string | null>(null);
+  const [communitySaveError, setCommunitySaveError] = useState<string | null>(null);
   const [isSavingIdentities, setIsSavingIdentities] = useState(false);
+  const [isCompletingOnboarding, setIsCompletingOnboarding] = useState(false);
   const [spinPrizes] = useState<WheelPrize[]>(() => buildSpinPrizes());
   const [spinResult, setSpinResult] = useState<WheelPoolEntry | null>(readStoredSpinResult);
   const [spinClaimError, setSpinClaimError] = useState<string | null>(null);
@@ -367,6 +369,7 @@ export function OnboardingJourney({
     setIdentityNames([user.username, "", ""]);
     setPublicIdentityIndex(0);
     setIdentitySaveError(null);
+    setCommunitySaveError(null);
   }, [user.id, user.username]);
 
   useEffect(() => {
@@ -1218,10 +1221,16 @@ export function OnboardingJourney({
                   Finish every step to enter raW
                 </p>
               ) : null}
+              {communitySaveError ? (
+                <p className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-200">
+                  {communitySaveError}
+                </p>
+              ) : null}
               <div className="mt-6 flex items-center justify-between gap-3 sm:mt-8">
                 <BackButton onClick={goToPreviousStep} />
                 <button
                   onClick={() => {
+                    setCommunitySaveError(null);
                     track("onboarding_completed", {
                       total_duration_ms: Date.now() - stepStartTimeRef.current,
                       polls_answered: answeredCount,
@@ -1243,15 +1252,25 @@ export function OnboardingJourney({
 
       <EnterRawModal
         open={enterRawOpen}
-        onEnter={() => {
+        onEnter={async () => {
+          if (isCompletingOnboarding) return;
           track("onboarding_completed", {
             total_duration_ms: Date.now() - stepStartTimeRef.current,
             polls_answered: answeredCount,
             communities_selected: selectedCommunityIds.length,
             source: "enter_raw_modal",
           });
-          setEnterRawOpen(false);
-          onCompleteOnboarding();
+          setIsCompletingOnboarding(true);
+          setCommunitySaveError(null);
+          try {
+            await onCompleteOnboarding();
+            setEnterRawOpen(false);
+          } catch (error) {
+            setEnterRawOpen(false);
+            setCommunitySaveError(error instanceof Error ? error.message : "Could not save your community. Please try again.");
+          } finally {
+            setIsCompletingOnboarding(false);
+          }
         }}
         onDismiss={() => {
           setEnterRawOpen(false);
