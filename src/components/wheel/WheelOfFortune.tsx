@@ -6,7 +6,7 @@ const IMAGE_SCALE_BY_SRC: Record<string, number> = {
   "/avatars/2.webp": 1.45,
   "/avatars/3.webp": 1.45,
   "/avatars/04.webp": 1.45,
-  "/avatars/5.webp": 1.45,
+  "/avatars/5.png": 1.45,
   "/avatars/6.webp": 1.0,
   "/avatars/07.webp": 1.45,
   "/avatars/08.webp": 1.08,
