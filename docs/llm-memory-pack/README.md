@@ -10,15 +10,16 @@ Use this folder to export the highest-signal project memory from Codex/ChatGPT a
 - `03_open_loops.md`: Unfinished items and blockers.
 - `04_timeline.md`: Date-based milestones.
 - `05_glossary.md`: Terms and abbreviations.
-- `BOOTSTRAP_PROMPT.md`: Copy/paste prompt for the destination LLM.
+- `BOOTSTRAP_PROMPT.md`: Source prompt for the destination LLM.
 - `CLAUDE_EXPORT_PREVIEW.md`: Ready-to-paste filled example for Claude Code intake.
 
 ## Suggested flow (better than raw transcript dump)
 
 1. Export source data from your current tool.
 2. Summarize into these files (high signal, low noise).
-3. Paste `BOOTSTRAP_PROMPT.md` into the destination LLM plus the six files.
-4. Keep these files updated after each major session.
+3. For same-repo handoff, paste `BOOTSTRAP_PROMPT.md` into the destination LLM plus the six files.
+4. For outside-repo handoff, run `npm run --silent memory-pack:export-bootstrap` and paste its output so selected `AGENTS.md` guidance is inlined at export time.
+5. Keep these files updated after each major session.
 
 ## Why this is better
 
