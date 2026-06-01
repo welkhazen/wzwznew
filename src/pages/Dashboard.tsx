@@ -9,7 +9,6 @@ import { matchPath, useLocation, useNavigate } from "react-router-dom";
 import { DashboardNav, type DashboardTab } from "@/components/dashboard/DashboardNav";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { DashboardHome } from "@/components/dashboard/DashboardHome";
-import { DashboardCommunities } from "@/components/dashboard/DashboardCommunities";
 import { DashboardSectionShell } from "@/components/dashboard/DashboardSectionShell";
 import { NotificationConsentPrompt } from "@/components/notifications/NotificationConsentPrompt";
 import { LevelUpCelebration } from "@/components/ui/LevelUpCelebration";
@@ -21,6 +20,9 @@ import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
 
 const DashboardPolls = lazy(() =>
   import("@/components/dashboard/DashboardPolls").then((module) => ({ default: module.DashboardPolls }))
+);
+const DashboardCommunities = lazy(() =>
+  import("@/components/dashboard/DashboardCommunities").then((module) => ({ default: module.DashboardCommunities }))
 );
 const DashboardChallenges = lazy(() =>
   import("@/components/dashboard/DashboardChallenges").then((module) => ({ default: module.DashboardChallenges }))
@@ -209,17 +211,19 @@ export default function Dashboard({
         );
       case "communities":
         return (
-          <DashboardSectionShell className="p-2 sm:p-3">
-            <DashboardCommunities
-              user={user}
-              avatarLevel={avatarLevel}
-              tokenBalance={tokenBalance}
-              activeCommunityId={activeCommunityId}
-              onOpenCommunity={handleOpenCommunity}
-              onBackToCommunities={handleBackToCommunities}
-              onCommunitiesChange={setDashboardCommunities}
-            />
-          </DashboardSectionShell>
+          <Suspense fallback={dashboardSectionFallback}>
+            <DashboardSectionShell className="p-2 sm:p-3">
+              <DashboardCommunities
+                user={user}
+                avatarLevel={avatarLevel}
+                tokenBalance={tokenBalance}
+                activeCommunityId={activeCommunityId}
+                onOpenCommunity={handleOpenCommunity}
+                onBackToCommunities={handleBackToCommunities}
+                onCommunitiesChange={setDashboardCommunities}
+              />
+            </DashboardSectionShell>
+          </Suspense>
         );
       case "challenges":
         return (

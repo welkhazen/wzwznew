@@ -1746,9 +1746,6 @@ const COMMUNITY_LOGOS: Record<string, string> = {
               onLikeMessage={(message) => { void handleLikeMessage(message); }}
               onOpenMessageReport={handleOpenMessageReport}
               onBlockMessageSender={handleBlockMessageSender}
-              hasOlderMessages={hasOlderMessages}
-              isLoadingOlderMessages={isLoadingOlderMessages}
-              onLoadOlderMessages={loadOlderMessages}
             />
 
             <CommunityMessageComposer

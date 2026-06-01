@@ -31,9 +31,6 @@ interface CommunityMessageTimelineProps {
   onLikeMessage: (message: CommunityChatMessageRecord) => void;
   onOpenMessageReport: (message: CommunityChatMessageRecord) => void;
   onBlockMessageSender: (message: CommunityChatMessageRecord) => void;
-  hasOlderMessages: boolean;
-  isLoadingOlderMessages: boolean;
-  onLoadOlderMessages: () => void;
 }
 
 export function CommunityMessageTimeline({
@@ -51,32 +48,9 @@ export function CommunityMessageTimeline({
   onLikeMessage,
   onOpenMessageReport,
   onBlockMessageSender,
-  hasOlderMessages,
-  isLoadingOlderMessages,
-  onLoadOlderMessages,
 }: CommunityMessageTimelineProps) {
   return (
-    <div
-      ref={containerRef}
-      className="flex-1 space-y-3 overflow-y-auto p-4"
-      onScroll={(event) => {
-        if (event.currentTarget.scrollTop <= 24 && hasOlderMessages && !isLoadingOlderMessages) {
-          onLoadOlderMessages();
-        }
-      }}
-    >
-      {hasOlderMessages || isLoadingOlderMessages ? (
-        <div className="flex justify-center">
-          <button
-            type="button"
-            onClick={onLoadOlderMessages}
-            disabled={isLoadingOlderMessages}
-            className="rounded-full border border-raw-border/35 px-3 py-1 text-[10px] uppercase tracking-[0.14em] text-raw-silver/55 transition hover:border-raw-gold/40 hover:text-raw-gold disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            {isLoadingOlderMessages ? "Loading..." : "Load earlier"}
-          </button>
-        </div>
-      ) : null}
+    <div ref={containerRef} className="flex-1 space-y-3 overflow-y-auto p-4">
       {polls.map((poll) => {
         const totalVotes = poll.totalVotes;
         return (
