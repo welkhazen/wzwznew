@@ -25,6 +25,25 @@ describe("onboarding persistence", () => {
     expect(result.current.onboardingAnsweredPollIds.has("poll-2")).toBe(true);
   });
 
+  it("does not restore spin step after the wheel has already been claimed", () => {
+    window.localStorage.setItem("raw.landing-wheel.spin.v1", JSON.stringify({
+      prizeId: "wheel-avatar-1",
+      avatarId: "silver-void",
+      spunAt: Date.now(),
+    }));
+    window.localStorage.setItem("raw.onboarding.v1", JSON.stringify({
+      alice: {
+        completed: false,
+        step: "spin",
+        answeredPollIds: [],
+      },
+    }));
+
+    const { result } = renderHook(() => useOnboarding(true, "alice"));
+
+    expect(result.current.onboardingStep).toBe("avatar");
+  });
+
   it("persists selected communities for onboarding", () => {
     const { result } = renderHook(() => useCommunities("bob"));
 
