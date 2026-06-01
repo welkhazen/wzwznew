@@ -386,6 +386,7 @@ export function OnboardingJourney({
   const canContinueFromCommunities = selectedCommunityIds.length >= 1;
   const canCompleteOnboarding = canContinueFromAvatar && canContinueFromIdentity && canContinueFromPolls && canContinueFromCommunities;
   const previewAvatar = onboardingAvatars[previewAvatarIndex - 1] ?? onboardingAvatars[0];
+  const canSelectPreviewAvatar = previewAvatarIndex <= FREE_ONBOARDING_AVATAR_COUNT || ownedAvatarLevels.has(previewAvatarIndex);
   const canContinueWithPreviewAvatar = canContinueFromAvatar && previewAvatarIndex === avatarIndex;
   const freeAvatarChoices = onboardingAvatars.slice(0, FREE_ONBOARDING_AVATAR_COUNT);
   const previewAvatarChoices = onboardingAvatars.slice(FREE_ONBOARDING_AVATAR_COUNT);
@@ -492,6 +493,11 @@ export function OnboardingJourney({
   };
 
   const goToNextStep = async () => {
+    if (onboardingStep === "avatar" && canSelectPreviewAvatar && previewAvatarIndex !== avatarIndex) {
+      track("onboarding_avatar_selected", { avatar_level: previewAvatarIndex, attempts: 1 });
+      onAvatarChange(previewAvatarIndex);
+    }
+
     if (onboardingStep === "identity") {
       const saved = await saveIdentityNamesForOnboarding();
       if (!saved) return;
@@ -835,6 +841,7 @@ export function OnboardingJourney({
                       {visiblePreviewAvatarChoices.map((avatar, i) => {
                         const index = FREE_ONBOARDING_AVATAR_COUNT + avatarPage * AVATAR_PAGE_SIZE + i + 1;
                         const isPreviewed = index === previewAvatarIndex;
+                        const isOwned = ownedAvatarLevels.has(index);
                         return (
                           <button
                             key={index}
@@ -843,9 +850,12 @@ export function OnboardingJourney({
                               setPreviewAvatarIndex(index);
                               phonePreviewRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
                               track("onboarding_avatar_selected", { avatar_level: index, attempts: 1 });
+                              if (isOwned) {
+                                onAvatarChange(index);
+                              }
                             }}
                             className="group relative flex min-w-0 flex-col items-center gap-1 rounded-xl p-1.5 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/50"
-                            aria-label={`Preview ${avatar.name}, locked until later`}
+                            aria-label={isOwned ? `Select claimed reward ${avatar.name}` : `Preview ${avatar.name}, locked until later`}
                           >
                             <div className={`relative rounded-full transition-all duration-300 ${
                               isPreviewed ? "scale-100 opacity-100" : "opacity-80 group-hover:opacity-100 group-hover:scale-105"
@@ -874,8 +884,12 @@ export function OnboardingJourney({
                             }`}>
                               {avatar.name.split(" ")[0]}
                             </span>
-                            <span className="rounded-full border border-raw-border/35 px-1.5 py-0.5 text-[7px] uppercase tracking-[0.08em] text-raw-silver/35">
-                              locked
+                            <span className={`rounded-full border px-1.5 py-0.5 text-[7px] uppercase tracking-[0.08em] ${
+                              isOwned
+                                ? "border-raw-gold/45 text-raw-gold/70"
+                                : "border-raw-border/35 text-raw-silver/35"
+                            }`}>
+                              {isOwned ? "owned" : "locked"}
                             </span>
                           </button>
                         );
