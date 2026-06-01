@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import LNTLogo from "@/assets/LNT.webp";
 import SYTLogo from "@/assets/logospeak.webp";
 import IIJMLogo from "@/assets/itisjustme.webp";
-import { AlertTriangle, ArrowLeft, BarChart3, Bell, BellOff, ImagePlus, Lock, Plus, Search, Trash2, UserMinus, Users, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, BarChart3, Bell, BellOff, ImagePlus, Lock, Plus, Search, Trash2, UserMinus, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -82,6 +82,7 @@ import {
 import type { User } from "@/store/types";
 import { CommunityMessageTimeline } from "@/components/dashboard/CommunityMessageTimeline";
 import { CommunityMessageComposer } from "@/components/dashboard/CommunityMessageComposer";
+import { CommunityRoomList } from "@/components/dashboard/CommunityRoomList";
 
 const WAITLIST_UNLOCK_THRESHOLD = 200;
 const TOKEN_BALANCE_STORAGE_PREFIX = "raw.polls.token-balance";
@@ -1340,165 +1341,34 @@ const COMMUNITY_LOGOS: Record<string, string> = {
           </div>
         )}
 
-        <div className="grid grid-cols-2 items-stretch gap-4 sm:gap-5 lg:grid-cols-2 xl:grid-cols-3">
-          {directoryCommunities.map((community) => {
-            const joined = community.members.some((member) => member.userId === user.id);
-            const communityUnreadCount = joined ? countUnreadMessages(community, user.id) : 0;
-            const coverImage = COMMUNITY_COVER_IMAGES[community.id] ?? community.logoUrl;
-            const coverVideo = COMMUNITY_COVER_VIDEOS[community.id];
-            const isExpanded = expandedDescs.has(community.id);
-            const descLong = community.description.length > 120;
-
-            return (
-              <div key={community.id} className="flex flex-col overflow-hidden rounded-2xl border border-raw-border/30 bg-raw-surface/35 shadow-[0_8px_24px_rgba(0,0,0,0.22)]">
-                {/* Cover image */}
-                <div className="relative h-28 sm:h-44 shrink-0 overflow-hidden border-b border-raw-border/25">
-                  {coverVideo ? (
-                    <video src={coverVideo} className="h-full w-full object-cover" autoPlay loop muted playsInline preload="auto" />
-                  ) : coverImage ? (
-                    <img src={coverImage} alt={`${community.title} cover`} className="h-full w-full object-cover" loading="lazy" />
-                  ) : (
-                    <div className="h-full w-full bg-gradient-to-br from-raw-gold/12 via-raw-surface/30 to-raw-black/70" />
-                  )}
-                  {!coverVideo && <div className="absolute inset-0 bg-gradient-to-t from-raw-black/85 via-raw-black/30 to-transparent" />}
-                  <div className="absolute bottom-2 right-2 rounded-full border border-raw-border/40 bg-raw-black/60 px-2 py-0.5 text-[9px] text-raw-silver/70 backdrop-blur-sm">
-                    {joined ? "Joined" : community.locked ? "Locked" : "Not joined"}
-                  </div>
-                </div>
-
-                <div className="flex flex-1 flex-col p-3 sm:p-5">
-                  {/* Title row */}
-                  <div className="flex items-center gap-2">
-                    <CommunityBadge abbr={community.abbr} title={community.title} logoUrl={COMMUNITY_LOGOS[community.id] ?? community.logoUrl} />
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <p className="font-display text-xs sm:text-base tracking-wide text-raw-text leading-tight">{community.title}</p>
-                        {communityUnreadCount > 0 && (
-                          <span className="rounded-full bg-raw-gold px-1.5 py-0.5 text-[9px] font-semibold text-raw-ink">
-                            {communityUnreadCount}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-[9px] uppercase tracking-[0.14em] text-raw-gold/65">{community.status}</p>
-                    </div>
-                  </div>
-
-                  {/* Description */}
-                  <div className="mt-2">
-                    <p className={`text-[11px] sm:text-sm leading-relaxed text-raw-silver/50 line-clamp-2 sm:${!isExpanded && descLong ? "line-clamp-3" : ""}`}>
-                      {community.description}
-                    </p>
-                    {descLong && (
-                      <button
-                        onClick={() => setExpandedDescs((prev) => {
-                          const next = new Set(prev);
-                          if (isExpanded) next.delete(community.id);
-                          else next.add(community.id);
-                          return next;
-                        })}
-                        className="mt-0.5 hidden sm:block text-xs text-raw-gold/60 hover:text-raw-gold"
-                      >
-                        {isExpanded ? "Show less" : "Show more"}
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Members row */}
-                  <div className="mt-2 sm:mt-4 flex items-center gap-2 text-[10px] text-raw-silver/35">
-                    <span className="flex items-center gap-1">
-                      <Users className="h-3 w-3" /> {community.members.length}
-                    </span>
-                    {!community.locked && (
-                      <span className="flex items-center gap-1">
-                        <div className="h-1.5 w-1.5 rounded-full bg-emerald-400/70" /> {countOnlineMembers(community)}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Action button */}
-                  <div className="mt-auto pt-3">
-                    {community.locked && !joined ? (() => {
-                      const joinReq = communityJoinRequests.find(
-                        (r) => r.communityId === community.id && r.requesterId === user.id,
-                      );
-                      if (joinReq?.status === "approved") {
-                        return (
-                          <Button
-                            onClick={() => handlePaidJoinCommunity(community.id, true)}
-                            className="w-full rounded-xl bg-raw-gold px-2 py-2 text-xs text-raw-ink hover:bg-raw-gold/90"
-                          >
-                            Join Group - {COMMUNITY_UNLOCK_TOKEN_COST} tokens
-                          </Button>
-                        );
-                      }
-                      const onWaitlist = waitlistJoinedIds.has(community.id);
-                      const waitlistCount = waitlistCounts[community.id] ?? 0;
-                      const isJoining = waitlistJoiningId === community.id;
-                      return (
-                        <div className="space-y-1.5">
-                          <Button
-                            onClick={() => handleJoinWaitlist(community)}
-                            disabled={onWaitlist || isJoining}
-                            className="w-full rounded-xl border border-raw-gold/30 bg-transparent px-2 py-2 text-xs text-raw-gold hover:bg-raw-gold/10 disabled:opacity-70"
-                          >
-                            <Lock className="h-3 w-3" /> {onWaitlist ? "On Waitlist" : "Join Waitlist"}
-                          </Button>
-                          <p className="text-center text-[10px] text-raw-silver/45">
-                            <span className="text-raw-gold/80">{waitlistCount}</span>
-                            <span className="text-raw-silver/35">/{WAITLIST_UNLOCK_THRESHOLD}</span>
-                            <span className="ml-1">to unlock</span>
-                          </p>
-                        </div>
-                      );
-                    })() : (() => {
-                      const isUnlocked = joined || communityAccess.hasSubscription || communityAccess.unlockedIds.has(community.id);
-                      const canGetFree = freeCommunitySlotsRemaining > 0;
-                      const isUnlocking = unlockingId === community.id;
-                      if (isUnlocked) {
-                        return (
-                          <Button
-                            onClick={() => onOpenCommunity(community.id)}
-                            className="w-full rounded-xl bg-raw-gold px-2 py-2 text-xs text-raw-ink hover:bg-raw-gold/90"
-                          >
-                            Open Chat
-                          </Button>
-                        );
-                      }
-                      if (canGetFree) {
-                        return (
-                          <div className="space-y-1.5">
-                            <Button
-                              onClick={() => handleUnlockCommunity(community.id)}
-                              disabled={isUnlocking}
-                              className="w-full rounded-xl bg-raw-gold px-2 py-2 text-xs text-raw-ink hover:bg-raw-gold/90 disabled:opacity-70"
-                            >
-                              {isUnlocking ? "Opening…" : "Open Chat — Free"}
-                            </Button>
-                            <p className="text-center text-[10px] text-raw-silver/40">
-                              {freeCommunitySlotsRemaining} free slot{freeCommunitySlotsRemaining === 1 ? "" : "s"} remaining
-                            </p>
-                          </div>
-                        );
-                      }
-                      return (
-                        <div className="space-y-1.5">
-                          <Button
-                            onClick={() => handleUnlockCommunity(community.id)}
-                            disabled={isUnlocking}
-                            className="w-full rounded-xl border border-raw-gold/40 bg-transparent px-2 py-2 text-xs text-raw-gold hover:bg-raw-gold/10 disabled:opacity-70"
-                          >
-                            <Lock className="h-3 w-3" /> {isUnlocking ? "Unlocking…" : `Unlock — ${COMMUNITY_UNLOCK_TOKEN_COST} tokens`}
-                          </Button>
-                          <p className="text-center text-[10px] text-raw-silver/40">or subscribe for all access</p>
-                        </div>
-                      );
-                    })()}
-                  </div>
-                </div>
-              </div>
-            );
+        <CommunityRoomList
+          communities={directoryCommunities}
+          userId={user.id}
+          logoUrlsByCommunityId={COMMUNITY_LOGOS}
+          coverImagesByCommunityId={COMMUNITY_COVER_IMAGES}
+          coverVideosByCommunityId={COMMUNITY_COVER_VIDEOS}
+          expandedDescriptionIds={expandedDescs}
+          joinRequests={communityJoinRequests}
+          waitlistJoinedIds={waitlistJoinedIds}
+          waitlistCounts={waitlistCounts}
+          waitlistJoiningId={waitlistJoiningId}
+          waitlistUnlockThreshold={WAITLIST_UNLOCK_THRESHOLD}
+          hasSubscriptionAccess={communityAccess.hasSubscription}
+          unlockedCommunityIds={communityAccess.unlockedIds}
+          freeCommunitySlotsRemaining={freeCommunitySlotsRemaining}
+          unlockingId={unlockingId}
+          unlockTokenCost={COMMUNITY_UNLOCK_TOKEN_COST}
+          onToggleDescription={(communityId) => setExpandedDescs((previous) => {
+            const next = new Set(previous);
+            if (next.has(communityId)) next.delete(communityId);
+            else next.add(communityId);
+            return next;
           })}
-        </div>
+          onPaidJoinCommunity={(communityId, shouldOpenPage) => { void handlePaidJoinCommunity(communityId, shouldOpenPage); }}
+          onJoinWaitlist={(community) => { void handleJoinWaitlist(community); }}
+          onOpenCommunity={onOpenCommunity}
+          onUnlockCommunity={(communityId) => { void handleUnlockCommunity(communityId); }}
+        />
       </div>
     );
 
