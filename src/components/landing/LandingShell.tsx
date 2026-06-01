@@ -98,11 +98,12 @@ export default function LandingShell({
                 <PersonalityInsightsSection />
                 <EarnedWarUpgradesSection />
                 <WhyAnonymity />
-                <Suspense fallback={<div className="h-16" />}>
-                  <TestimonialsSection />
-                </Suspense>
               </div>
             </section>
+
+            <Suspense fallback={<div className="h-16" />}>
+              <TestimonialsSection />
+            </Suspense>
 
             <LandingFooter />
           </div>
