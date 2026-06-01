@@ -43,7 +43,7 @@ export function useOnboarding(isLoggedIn: boolean, username?: string) {
   }, []);
 
   useEffect(() => {
-    if (!username) {
+    if (!username || !onboardingLoaded) {
       return;
     }
 
@@ -55,7 +55,7 @@ export function useOnboarding(isLoggedIn: boolean, username?: string) {
       answeredPollIds: Array.from(onboardingAnsweredPollIds),
     };
     writeOnboardingMap(map);
-  }, [onboardingAnsweredPollIds, onboardingCompleted, onboardingStep, username]);
+  }, [onboardingAnsweredPollIds, onboardingCompleted, onboardingLoaded, onboardingStep, username]);
 
   const resetOnboardingProgress = useCallback(() => {
     setOnboardingStep(defaultInitialStep());
