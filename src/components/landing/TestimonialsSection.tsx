@@ -12,16 +12,18 @@ type Testimonial = {
   country: string;
 };
 
+// Tiny thumb params — Unsplash without params returns multi-MB hero images.
+const THUMB = "?w=88&h=88&fit=crop&crop=faces&q=70&auto=format";
 const testimonials: Testimonial[] = [
-  { name: "Ava Green", username: "@ava", body: "Cascade AI made my workflow 10x faster!", img: "https://images.unsplash.com/photo-1494790108377-be9c29b29330", country: "🇦🇺 Australia" },
-  { name: "Ana Miller", username: "@ana", body: "Vertical marquee is a game changer!", img: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80", country: "🇩🇪 Germany" },
-  { name: "Mateo Rossi", username: "@mat", body: "Animations are buttery smooth!", img: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e", country: "🇮🇹 Italy" },
-  { name: "Maya Patel", username: "@maya", body: "Setup was a breeze!", img: "https://images.unsplash.com/photo-1544005313-94ddf0286df2", country: "🇮🇳 India" },
-  { name: "Noah Smith", username: "@noah", body: "Best marquee component!", img: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d", country: "🇺🇸 USA" },
-  { name: "Lucas Stone", username: "@luc", body: "Very customizable and smooth.", img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d", country: "🇫🇷 France" },
-  { name: "Haruto Sato", username: "@haru", body: "Impressive performance on mobile!", img: "https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f", country: "🇯🇵 Japan" },
-  { name: "Emma Lee", username: "@emma", body: "Love the pause on hover feature!", img: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f", country: "🇨🇦 Canada" },
-  { name: "Carlos Ray", username: "@carl", body: "Great for testimonials and logos.", img: "https://images.unsplash.com/photo-1504257432389-52343af06ae3", country: "🇪🇸 Spain" },
+  { name: "Ava Green", username: "@ava", body: "Cascade AI made my workflow 10x faster!", img: `https://images.unsplash.com/photo-1494790108377-be9c29b29330${THUMB}`, country: "🇦🇺 Australia" },
+  { name: "Ana Miller", username: "@ana", body: "Vertical marquee is a game changer!", img: `https://images.unsplash.com/photo-1438761681033-6461ffad8d80${THUMB}`, country: "🇩🇪 Germany" },
+  { name: "Mateo Rossi", username: "@mat", body: "Animations are buttery smooth!", img: `https://images.unsplash.com/photo-1500648767791-00dcc994a43e${THUMB}`, country: "🇮🇹 Italy" },
+  { name: "Maya Patel", username: "@maya", body: "Setup was a breeze!", img: `https://images.unsplash.com/photo-1544005313-94ddf0286df2${THUMB}`, country: "🇮🇳 India" },
+  { name: "Noah Smith", username: "@noah", body: "Best marquee component!", img: `https://images.unsplash.com/photo-1506794778202-cad84cf45f1d${THUMB}`, country: "🇺🇸 USA" },
+  { name: "Lucas Stone", username: "@luc", body: "Very customizable and smooth.", img: `https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d${THUMB}`, country: "🇫🇷 France" },
+  { name: "Haruto Sato", username: "@haru", body: "Impressive performance on mobile!", img: `https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f${THUMB}`, country: "🇯🇵 Japan" },
+  { name: "Emma Lee", username: "@emma", body: "Love the pause on hover feature!", img: `https://images.unsplash.com/photo-1487412720507-e7ab37603c6f${THUMB}`, country: "🇨🇦 Canada" },
+  { name: "Carlos Ray", username: "@carl", body: "Great for testimonials and logos.", img: `https://images.unsplash.com/photo-1504257432389-52343af06ae3${THUMB}`, country: "🇪🇸 Spain" },
 ];
 
 function TestimonialCard({ img, name, username, body, country }: Testimonial) {
