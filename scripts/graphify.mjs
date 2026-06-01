@@ -20,10 +20,6 @@ const root = path.resolve(process.cwd(), rootArg);
 const srcRoot = path.join(root, 'src');
 const graphMdFile = path.join(root, 'docs', 'codebase-graph.md');
 const callflowHtmlFile = path.join(root, 'docs', 'callflow.html');
-const graphOutDir = path.join(root, 'graphify-out');
-const graphOutHtmlFile = path.join(graphOutDir, 'graph.html');
-const graphOutJsonFile = path.join(graphOutDir, 'graph.json');
-const graphOutReportFile = path.join(graphOutDir, 'GRAPH_REPORT.md');
 
 const files = [];
 
@@ -45,17 +41,9 @@ function normalize(p) {
 }
 
 function resolveImport(fromFile, spec) {
-  let base = null;
-  if (spec.startsWith('.')) {
-    base = path.resolve(path.dirname(fromFile), spec);
-  } else if (spec.startsWith('@/')) {
-    base = path.join(srcRoot, spec.slice(2));
-  }
-
-  if (!base) return null;
-
+  if (!spec.startsWith('.')) return null;
+  const base = path.resolve(path.dirname(fromFile), spec);
   const candidates = [
-    base,
     `${base}.ts`,
     `${base}.tsx`,
     path.join(base, 'index.ts'),
@@ -64,28 +52,8 @@ function resolveImport(fromFile, spec) {
   return candidates.find((c) => files.includes(c)) ?? null;
 }
 
-function escapeMermaidLabel(value) {
-  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-}
-
 function buildMermaid(edges) {
-  const nodeIds = new Map();
-
-  function getNodeId(node) {
-    if (!nodeIds.has(node)) {
-      nodeIds.set(node, `n${nodeIds.size}`);
-    }
-    return nodeIds.get(node);
-  }
-
-  const graphEdges = edges.map((edge) => {
-    const [from, to] = edge.split('-->');
-    return `  ${getNodeId(from)}-->${getNodeId(to)}`;
-  });
-
-  const graphNodes = [...nodeIds.entries()].map(([node, id]) => `  ${id}["${escapeMermaidLabel(node)}"]`);
-
-  return ['graph LR', ...graphNodes, ...graphEdges].join('\n');
+  return ['graph LR', ...edges.map((edge) => `  ${edge}`)].join('\n');
 }
 
 function buildMarkdown(mermaid) {
@@ -130,66 +98,6 @@ function buildCallflowHtml(mermaid) {
 `;
 }
 
-function classifyNode(name) {
-  if (name === 'cn') return 'core-utility';
-  if (name === 'track' || name === 'useTrackSectionView') return 'analytics-core';
-  if (name === 'useTheme') return 'theme-core';
-  if (name.startsWith('src/')) return 'source';
-  return 'other';
-}
-
-function buildGraphJson(edges) {
-  const degree = new Map();
-  const nodes = new Set();
-  for (const edge of edges) {
-    const [from, to] = edge.split('-->');
-    nodes.add(from);
-    nodes.add(to);
-    degree.set(from, (degree.get(from) ?? 0) + 1);
-    degree.set(to, (degree.get(to) ?? 0) + 1);
-  }
-
-  const nodeList = [...nodes].map((id) => ({
-    id,
-    degree: degree.get(id) ?? 0,
-    class: classifyNode(id),
-  }));
-
-  return {
-    generatedAt: new Date().toISOString(),
-    root: path.relative(root, srcRoot),
-    summary: {
-      nodeCount: nodeList.length,
-      edgeCount: edges.length,
-    },
-    nodes: nodeList,
-    edges: edges.map((edge) => {
-      const [from, to] = edge.split('-->');
-      return { from, to };
-    }),
-  };
-}
-
-function buildReport(graph) {
-  const top = [...graph.nodes].sort((a, b) => b.degree - a.degree).slice(0, 10);
-  return [
-    '# Graph Report',
-    '',
-    `Generated: ${graph.generatedAt}`,
-    `Nodes: ${graph.summary.nodeCount}`,
-    `Edges: ${graph.summary.edgeCount}`,
-    '',
-    '## Top connected nodes',
-    '',
-    ...top.map((n) => `- ${n.id} — degree ${n.degree} (${n.class})`),
-    '',
-    '## Scoring notes',
-    '',
-    '- `core-utility`, `analytics-core`, and `theme-core` are intentional primitives and should be deprioritized in risk triage.',
-    '- Focus architecture follow-up on high-degree `source` nodes with unexpected cross-feature imports.',
-  ].join('\n');
-}
-
 if (command !== 'generate' && command !== 'export') {
   throw new Error(`Unsupported command: ${command}`);
 }
@@ -199,9 +107,8 @@ await walk(srcRoot);
 const edges = new Set();
 for (const file of files) {
   const text = await fs.readFile(file, 'utf8');
-  const staticImports = text.matchAll(/from\s+['\"]([^'\"]+)['\"]/g);
-  const dynamicImports = text.matchAll(/import\(\s*['\"]([^'\"]+)['\"]\s*\)/g);
-  for (const m of [...staticImports, ...dynamicImports]) {
+  const matches = text.matchAll(/from\s+['\"]([^'\"]+)['\"]/g);
+  for (const m of matches) {
     const target = resolveImport(file, m[1]);
     if (!target) continue;
     edges.add(`${normalize(file)}-->${normalize(target)}`);
@@ -217,17 +124,9 @@ if (command === 'generate') {
 }
 
 if (command === 'export') {
-  if (format === 'callflow-html') {
-    await fs.writeFile(callflowHtmlFile, buildCallflowHtml(mermaid));
-    console.log(`Wrote ${path.relative(root, callflowHtmlFile)} with ${sortedEdges.length} edges.`);
-  } else if (format === 'preview-bundle') {
-    await fs.mkdir(graphOutDir, { recursive: true });
-    await fs.writeFile(graphOutHtmlFile, buildCallflowHtml(mermaid));
-    const graph = buildGraphJson(sortedEdges);
-    await fs.writeFile(graphOutJsonFile, JSON.stringify(graph, null, 2));
-    await fs.writeFile(graphOutReportFile, buildReport(graph));
-    console.log(`Wrote ${path.relative(root, graphOutHtmlFile)}, ${path.relative(root, graphOutReportFile)}, ${path.relative(root, graphOutJsonFile)}.`);
-  } else {
+  if (format !== 'callflow-html') {
     throw new Error(`Unsupported export format: ${format}`);
   }
+  await fs.writeFile(callflowHtmlFile, buildCallflowHtml(mermaid));
+  console.log(`Wrote ${path.relative(root, callflowHtmlFile)} with ${sortedEdges.length} edges.`);
 }

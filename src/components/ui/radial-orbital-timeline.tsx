@@ -197,7 +197,7 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
           <div className={`absolute z-10 flex items-center justify-center ${isCompact ? "h-[72px] w-[72px]" : "h-[106px] w-[106px]"}`}>
             <div className="absolute animate-ping rounded-full" style={{ width: isCompact ? 96 : 136, height: isCompact ? 96 : 136, border: "1px solid hsl(var(--primary) / 0.16)", animationDuration: "3s" }} />
             <img
-              src="/android-chrome-192x192.png"
+              src="/raw-logo-96.png"
               alt="raW"
               className={`object-contain ${isCompact ? "h-[72px] w-[72px]" : "h-[106px] w-[106px]"}`}
               style={{ animation: "logoFlip 3s ease-in-out infinite", filter: "drop-shadow(0 0 16px hsl(var(--primary) / 0.35))" }}

@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import type { LucideIcon } from "lucide-react";
 import { X } from "lucide-react";
 
@@ -19,31 +18,7 @@ interface ShareButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement>
 
 export function ShareButton({ className, links, children, ...props }: ShareButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [panelPosition, setPanelPosition] = useState<{ left: number; top: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const updatePosition = () => {
-      const trigger = triggerRef.current;
-      if (!trigger) return;
-      const rect = trigger.getBoundingClientRect();
-      setPanelPosition({
-        left: rect.left + rect.width / 2,
-        top: rect.top - 12,
-      });
-    };
-
-    updatePosition();
-    window.addEventListener("resize", updatePosition);
-    window.addEventListener("scroll", updatePosition, true);
-    return () => {
-      window.removeEventListener("resize", updatePosition);
-      window.removeEventListener("scroll", updatePosition, true);
-    };
-  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -62,17 +37,15 @@ export function ShareButton({ className, links, children, ...props }: ShareButto
 
   return (
     <div ref={containerRef} className="relative inline-flex h-10">
-      {createPortal(
-        <div
-          className={cn(
-            "pointer-events-none fixed z-[120] flex w-[min(96vw,640px)] -translate-x-1/2 -translate-y-full flex-wrap items-end justify-center gap-1.5 rounded-2xl border border-raw-gold/25 bg-raw-black/90 px-2.5 py-2 shadow-[0_0_28px_rgba(234,179,8,0.18)] backdrop-blur-md transition-all duration-200",
-            "before:absolute before:-bottom-1.5 before:left-1/2 before:h-3 before:w-3 before:-translate-x-1/2 before:rotate-45 before:border-b before:border-r before:border-raw-gold/25 before:bg-raw-black/90",
-            isOpen ? "translate-y-0 scale-100 opacity-100" : "translate-y-2 scale-95 opacity-0",
-          )}
-          style={{ left: panelPosition?.left ?? -9999, top: panelPosition?.top ?? -9999 }}
-          aria-hidden={!isOpen}
-        >
-          {links.map((link, index) => {
+      <div
+        className={cn(
+          "pointer-events-none absolute bottom-[calc(100%+0.7rem)] left-1/2 z-30 flex -translate-x-1/2 items-end justify-center gap-1.5 rounded-2xl border border-raw-gold/25 bg-raw-black/90 px-2.5 py-2 shadow-[0_0_28px_rgba(234,179,8,0.18)] backdrop-blur-md transition-all duration-200",
+          "before:absolute before:-bottom-1.5 before:left-1/2 before:h-3 before:w-3 before:-translate-x-1/2 before:rotate-45 before:border-b before:border-r before:border-raw-gold/25 before:bg-raw-black/90",
+          isOpen ? "translate-y-0 scale-100 opacity-100" : "translate-y-2 scale-95 opacity-0",
+        )}
+        aria-hidden={!isOpen}
+      >
+        {links.map((link, index) => {
           const Icon = link.icon;
           const shortLabel = link.label
             .replace(/^Share on /, "")
@@ -102,22 +75,20 @@ export function ShareButton({ className, links, children, ...props }: ShareButto
               </span>
             </button>
           );
-          })}
-          <button
-            type="button"
-            onClick={() => setIsOpen(false)}
-            aria-label="Close share options"
-            tabIndex={isOpen ? 0 : -1}
-            className={cn(
-              "pointer-events-auto flex h-8 w-8 items-center justify-center rounded-full border border-raw-border/30 bg-raw-black/80 text-raw-silver/55 transition hover:border-raw-gold/45 hover:text-raw-gold focus:outline-none focus:ring-2 focus:ring-raw-gold/45",
-              !isOpen && "pointer-events-none",
-            )}
-          >
-            <X className="size-3.5" />
-          </button>
-        </div>,
-        document.body,
-      )}
+        })}
+        <button
+          type="button"
+          onClick={() => setIsOpen(false)}
+          aria-label="Close share options"
+          tabIndex={isOpen ? 0 : -1}
+          className={cn(
+            "pointer-events-auto flex h-8 w-8 items-center justify-center rounded-full border border-raw-border/30 bg-raw-black/80 text-raw-silver/55 transition hover:border-raw-gold/45 hover:text-raw-gold focus:outline-none focus:ring-2 focus:ring-raw-gold/45",
+            !isOpen && "pointer-events-none",
+          )}
+        >
+          <X className="size-3.5" />
+        </button>
+      </div>
 
       <Button
         type="button"
@@ -128,7 +99,6 @@ export function ShareButton({ className, links, children, ...props }: ShareButto
         )}
         aria-expanded={isOpen}
         onClick={() => setIsOpen((current) => !current)}
-        ref={triggerRef}
         {...props}
       >
         <span className="flex items-center gap-2">{children}</span>

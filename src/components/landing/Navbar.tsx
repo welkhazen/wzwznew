@@ -6,7 +6,7 @@ import { ThemeModeSwitcher } from "@/components/theme/ThemeModeSwitcher";
 import { track } from "@/lib/analytics";
 import { useTheme } from "@/providers/useTheme";
 
-const RAW_LOGO_SRC = "/android-chrome-192x192.png";
+const RAW_LOGO_SRC = "/raw-logo-96.png";
 
 interface NavbarProps {
   isLoggedIn: boolean;
