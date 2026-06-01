@@ -15,13 +15,12 @@ import {
   ensureUserRecord,
   formatAdminTimestamp,
   getPersistedUserById,
-  readChatReports,
   readCommunityJoinRequests,
   type ChatReportRecord,
   type CommunityJoinRequestRecord,
-  writeChatReports,
   writeCommunityJoinRequests,
 } from "@/lib/adminData";
+import { submitChatReport } from "@/backend/supabase/controllers/chatReportsController";
 import {
   canManageCommunity,
   countUnreadMessages,
@@ -422,7 +421,6 @@ const COMMUNITY_LOGOS: Record<string, string> = {
           return next;
         });
         setCommunityRequests(requestsData);
-        setChatReports(readChatReports());
         setCommunityJoinRequests(readCommunityJoinRequests());
         setWaitlistCounts(waitlistData.counts);
         setWaitlistJoinedIds(waitlistData.joinedCommunityIds);
@@ -1258,7 +1256,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       });
     };
 
-    const handleSubmitReport = () => {
+    const handleSubmitReport = async () => {
       if (!reportTarget) {
         return;
       }
@@ -1274,34 +1272,34 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       }
 
       const reportedUser = ensureUserRecord(reportTarget.message.senderName);
-      const nextReport: ChatReportRecord = {
-        id: `chat-report-${Date.now()}`,
-        communityId: reportTarget.communityId,
-        communityTitle: reportTarget.communityTitle,
-        messageId: reportTarget.message.id,
-        messageText: reportTarget.message.text,
-        reportedUserId: reportTarget.message.senderId || reportedUser.id,
-        reportedUsername: reportTarget.message.senderName,
-        reporterId: user.id,
-        reporterName: user.username,
-        reason,
-        details,
-        createdAt: new Date().toISOString(),
-        status: "open",
-      };
-
-      setChatReports((previous) => {
-        const nextReports = [nextReport, ...previous];
-        writeChatReports(nextReports);
-        return nextReports;
-      });
-      setReportDialogOpen(false);
-      setReportTarget(null);
-      setReportDraft(INITIAL_REPORT_DRAFT);
-      toast({
-        title: "Report sent for review",
-        description: `The message from ${nextReport.reportedUsername} is now in the admin review queue.`,
-      });
+      const reportedUsername = reportTarget.message.senderName;
+      try {
+        const saved = await submitChatReport({
+          communityId: reportTarget.communityId,
+          communityTitle: reportTarget.communityTitle,
+          messageId: reportTarget.message.id,
+          messageText: reportTarget.message.text,
+          reportedUserId: reportTarget.message.senderId || reportedUser.id,
+          reportedUsername,
+          reporterId: user.id,
+          reporterName: user.username,
+          reason,
+          details,
+        });
+        setChatReports((previous) => [saved, ...previous]);
+        setReportDialogOpen(false);
+        setReportTarget(null);
+        setReportDraft(INITIAL_REPORT_DRAFT);
+        toast({
+          title: "Report sent for review",
+          description: `The message from ${reportedUsername} is now in the admin review queue.`,
+        });
+      } catch (error) {
+        toast({
+          title: "Could not send report",
+          description: error instanceof Error ? error.message : "Please try again.",
+        });
+      }
     };
 
     const handleOpenMessageReport = (message: CommunityChatMessageRecord) => {
