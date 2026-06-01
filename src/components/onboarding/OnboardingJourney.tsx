@@ -550,7 +550,7 @@ export function OnboardingJourney({
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-raw-black">
-      <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-3 py-4 sm:px-6 sm:py-8 md:max-w-none md:px-10 md:py-10 lg:px-16 xl:px-24">
+      <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-3 py-4 sm:px-6 sm:py-8 md:py-10">
         <div className="mb-5 sm:mb-8">
           <div className="flex items-center justify-between gap-2">
             <p className="font-display text-[10px] uppercase tracking-[0.3em] text-raw-gold/60 sm:text-xs sm:tracking-[0.35em]">Welcome to <BrandName /></p>
@@ -799,8 +799,8 @@ export function OnboardingJourney({
                 </div>
 
                 {previewAvatarChoices.length > 0 ? (
-                    <div className="col-span-2 md:col-span-1">
-                      <div className="mx-auto mb-3 flex w-full max-w-[15rem] items-center justify-between gap-3 min-[420px]:max-w-[22rem] sm:max-w-[30rem] md:mx-0">
+                    <div className="col-span-2">
+                      <div className="mx-auto mb-3 flex w-full max-w-[15rem] items-center justify-between gap-3 min-[420px]:max-w-[22rem] sm:max-w-[30rem] md:max-w-none">
                         <button
                           type="button"
                           onClick={() => setAvatarPage((page) => Math.max(0, page - 1))}
@@ -829,7 +829,7 @@ export function OnboardingJourney({
                         </button>
                       </div>
 
-                      <div className="mx-auto grid w-full max-w-[24rem] grid-cols-4 gap-x-3 gap-y-3 sm:gap-x-3 sm:gap-y-4 md:mx-0">
+                      <div className="mx-auto grid w-full max-w-[24rem] grid-cols-4 gap-x-3 gap-y-3 sm:gap-x-3 sm:gap-y-4 md:max-w-none md:grid-cols-8">
                       {isLoadingPreviewAvatars && visiblePreviewAvatarChoices.length === 0
                         ? Array.from({ length: AVATAR_PAGE_SIZE }).map((_, i) => (
                             <div key={i} className="flex flex-col items-center gap-1 p-1.5">
