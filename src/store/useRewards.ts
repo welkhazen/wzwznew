@@ -154,9 +154,14 @@ export function useRewards(user: User | null) {
   const selectAvatarForOnboarding = useCallback((toLevel: number) => {
     const maxLevel = avatarCatalog.length;
     const clamped = Math.min(Math.max(1, toLevel), Math.max(1, maxLevel));
-    if (!avatarCatalog[clamped - 1]) return;
+    const candidate = avatarCatalog[clamped - 1];
+    if (!candidate) return;
+    if (user && inventoryLoaded && !ownedAvatarIds.includes(candidate.id)) return;
     setAvatarLevelState(clamped);
-  }, [avatarCatalog]);
+    if (user && inventoryLoaded) {
+      void equipAvatarForUser(user.id, candidate.id);
+    }
+  }, [avatarCatalog, inventoryLoaded, ownedAvatarIds, user]);
 
   return useMemo(() => ({
     avatarLevel,

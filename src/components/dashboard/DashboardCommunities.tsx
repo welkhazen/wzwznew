@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
+import { useConfirmDialog } from "@/hooks/use-confirm-dialog";
 import { CommunityBadge } from "@/components/dashboard/CommunityBadge";
 import {
   ensureUserRecord,
@@ -32,6 +33,7 @@ import {
 } from "@/lib/communityChat";
 import {
   fetchCommunities,
+  fetchCommunityMessages,
   joinCommunity as joinCommunitySupabase,
   leaveCommunity as leaveCommunitySupabase,
   touchMemberActivity,
@@ -85,6 +87,7 @@ import { CommunityMessageComposer } from "@/components/dashboard/CommunityMessag
 import { CommunityRoomList } from "@/components/dashboard/CommunityRoomList";
 
 const WAITLIST_UNLOCK_THRESHOLD = 200;
+const MESSAGE_PAGE_SIZE = 10;
 const TOKEN_BALANCE_STORAGE_PREFIX = "raw.polls.token-balance";
 const TOKEN_BALANCE_UPDATED_EVENT = "raw:token-balance-updated";
 
@@ -101,13 +104,20 @@ function getMessageSenderBlockKey(message: Pick<CommunityChatMessageRecord, "sen
   return getCommunitySenderBlockKey(message.senderId, message.senderName);
 }
 
+function limitCachedCommunityMessages(communities: PersistedCommunityRecord[]): PersistedCommunityRecord[] {
+  return communities.map((community) => ({
+    ...community,
+    messages: community.messages.slice(-MESSAGE_PAGE_SIZE),
+  }));
+}
+
 function readCachedCommunities(): PersistedCommunityRecord[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = window.sessionStorage.getItem(COMMUNITIES_CACHE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    return Array.isArray(parsed) ? limitCachedCommunityMessages(parsed) : [];
   } catch {
     return [];
   }
@@ -116,7 +126,7 @@ function readCachedCommunities(): PersistedCommunityRecord[] {
 function writeCachedCommunities(communities: PersistedCommunityRecord[]): void {
   if (typeof window === "undefined") return;
   try {
-    window.sessionStorage.setItem(COMMUNITIES_CACHE_KEY, JSON.stringify(communities));
+    window.sessionStorage.setItem(COMMUNITIES_CACHE_KEY, JSON.stringify(limitCachedCommunityMessages(communities)));
   } catch {
     // ignore storage write errors
   }
@@ -153,6 +163,27 @@ function upsertCommunityMessage(
       ? { ...community, messages: mergeCommunityMessages(community.messages, message) }
       : community
   );
+}
+
+function setCommunityMessages(
+  communities: PersistedCommunityRecord[],
+  communityId: string,
+  messages: CommunityChatMessageRecord[],
+): PersistedCommunityRecord[] {
+  return communities.map((community) =>
+    community.id === communityId ? { ...community, messages } : community
+  );
+}
+
+function mergeCommunityMessageList(
+  messages: CommunityChatMessageRecord[],
+  incoming: CommunityChatMessageRecord[],
+): CommunityChatMessageRecord[] {
+  const byId = new Map<string, CommunityChatMessageRecord>();
+  [...messages, ...incoming].forEach((message) => {
+    byId.set(message.id, message);
+  });
+  return Array.from(byId.values()).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 }
 
 function replaceCommunityMessage(
@@ -336,6 +367,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
   const [waitlistJoiningId, setWaitlistJoiningId] = useState<string | null>(null);
   const [communityAccess, setCommunityAccess] = useState<CommunityAccess>({ hasSubscription: false, unlockedIds: new Set<string>() });
   const [unlockingId, setUnlockingId] = useState<string | null>(null);
+  const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [leavingCommunityId, setLeavingCommunityId] = useState<string | null>(null);
   const [messageDraft, setMessageDraft] = useState("");
   const [chatIdentities, setChatIdentities] = useState<ChatIdentity[]>([
@@ -356,9 +388,12 @@ const COMMUNITY_LOGOS: Record<string, string> = {
   const [pollSubmitting, setPollSubmitting] = useState(false);
   const [blockedSenderKeys, setBlockedSenderKeys] = useState<string[]>(() => readBlockedCommunitySenders(user.id));
   const [senderAvatarLevels, setSenderAvatarLevels] = useState<Record<string, number>>({});
+  const [hasOlderMessages, setHasOlderMessages] = useState(false);
+  const [isLoadingOlderMessages, setIsLoadingOlderMessages] = useState(false);
   const lastTouchedCommunityRef = useRef<string>("");
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const messageInputRef = useRef<HTMLInputElement | null>(null);
+  const preserveScrollAfterOlderLoadRef = useRef<{ previousHeight: number } | null>(null);
 
     const updateCommunities = useCallback((updater: (communities: PersistedCommunityRecord[]) => PersistedCommunityRecord[]) => {
       setCommunities((previous) => {
@@ -377,9 +412,15 @@ const COMMUNITY_LOGOS: Record<string, string> = {
           fetchWaitlistSummary(user.id).catch(() => createEmptyWaitlistSummary()),
           loadCommunityAccess(user.id).catch(() => ({ hasSubscription: false, unlockedIds: new Set<string>() })),
         ]);
-        setCommunities(communitiesData);
-        writeCachedCommunities(communitiesData);
-        onCommunitiesChange?.(communitiesData);
+        setCommunities((previous) => {
+          const next = communitiesData.map((community) => ({
+            ...community,
+            messages: previous.find((item) => item.id === community.id)?.messages ?? community.messages,
+          }));
+          writeCachedCommunities(next);
+          onCommunitiesChange?.(next);
+          return next;
+        });
         setCommunityRequests(requestsData);
         setChatReports(readChatReports());
         setCommunityJoinRequests(readCommunityJoinRequests());
@@ -426,6 +467,46 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       () => (selectedCommunity?.messages ?? []).filter((message) => !blockedSenderKeySet.has(getMessageSenderBlockKey(message))),
       [blockedSenderKeySet, selectedCommunity]
     );
+
+    const loadLatestMessages = useCallback(async () => {
+      if (!activeCommunityId) {
+        setHasOlderMessages(false);
+        return;
+      }
+
+      const messages = await fetchCommunityMessages(activeCommunityId, { limit: MESSAGE_PAGE_SIZE });
+      setHasOlderMessages(messages.length === MESSAGE_PAGE_SIZE);
+      updateCommunities((current) => setCommunityMessages(current, activeCommunityId, messages));
+    }, [activeCommunityId, updateCommunities]);
+
+    const loadOlderMessages = useCallback(async () => {
+      if (!activeCommunityId || isLoadingOlderMessages || activeMessages.length === 0 || !hasOlderMessages) {
+        return;
+      }
+
+      setIsLoadingOlderMessages(true);
+      preserveScrollAfterOlderLoadRef.current = {
+        previousHeight: messagesContainerRef.current?.scrollHeight ?? 0,
+      };
+      try {
+        const olderMessages = await fetchCommunityMessages(activeCommunityId, {
+          before: activeMessages[0].createdAt,
+          limit: MESSAGE_PAGE_SIZE,
+        });
+        setHasOlderMessages(olderMessages.length === MESSAGE_PAGE_SIZE);
+        updateCommunities((current) => {
+          const existing = current.find((community) => community.id === activeCommunityId)?.messages ?? [];
+          return setCommunityMessages(current, activeCommunityId, mergeCommunityMessageList(existing, olderMessages));
+        });
+      } finally {
+        setIsLoadingOlderMessages(false);
+      }
+    }, [activeCommunityId, activeMessages, hasOlderMessages, isLoadingOlderMessages, updateCommunities]);
+
+    useEffect(() => {
+      void loadLatestMessages();
+    }, [loadLatestMessages, selectedCommunity?.id]);
+
     const messageSenderIds = useMemo(() => {
       const ids = new Set<string>();
       activeMessages.forEach((message) => {
@@ -714,7 +795,12 @@ const COMMUNITY_LOGOS: Record<string, string> = {
 
     const handleKickMember = useCallback(async (memberId: string, memberName: string) => {
       if (!selectedCommunity || !canManagePolls || memberId === user.id) return;
-      const confirmed = window.confirm(`Remove ${memberName} from ${selectedCommunity.title}?`);
+      const confirmed = await confirm({
+        title: `Remove ${memberName}?`,
+        description: `They will lose access to ${selectedCommunity.title}.`,
+        confirmLabel: "Remove",
+        tone: "danger",
+      });
       if (!confirmed) return;
 
       try {
@@ -808,6 +894,13 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         return;
       }
 
+      if (preserveScrollAfterOlderLoadRef.current) {
+        const { previousHeight } = preserveScrollAfterOlderLoadRef.current;
+        preserveScrollAfterOlderLoadRef.current = null;
+        messagesContainerRef.current.scrollTop += messagesContainerRef.current.scrollHeight - previousHeight;
+        return;
+      }
+
       messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
     }, [activeMessages, activeCommunityId, searchQuery]);
 
@@ -850,7 +943,11 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       }
 
       if (!canJoinFree) {
-        const confirmed = window.confirm(`Join ${targetCommunity.title} for ${COMMUNITY_UNLOCK_TOKEN_COST} tokens?`);
+        const confirmed = await confirm({
+          title: `Join ${targetCommunity.title}?`,
+          description: `This will use ${COMMUNITY_UNLOCK_TOKEN_COST} tokens from your balance.`,
+          confirmLabel: `Spend ${COMMUNITY_UNLOCK_TOKEN_COST} tokens`,
+        });
         if (!confirmed) {
           return;
         }
@@ -980,9 +1077,11 @@ const COMMUNITY_LOGOS: Record<string, string> = {
           return;
         }
         if (!canUnlockFree) {
-          const confirmed = window.confirm(
-            `Unlock ${targetCommunity?.title ?? "this group"} for ${COMMUNITY_UNLOCK_TOKEN_COST} tokens?`,
-          );
+          const confirmed = await confirm({
+            title: `Unlock ${targetCommunity?.title ?? "this group"}?`,
+            description: `This will use ${COMMUNITY_UNLOCK_TOKEN_COST} tokens from your balance.`,
+            confirmLabel: `Spend ${COMMUNITY_UNLOCK_TOKEN_COST} tokens`,
+          });
           if (!confirmed) return;
         }
       }
@@ -1378,9 +1477,12 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       }
 
       return (
-        <div
+        <motion.div
           className="fixed inset-x-0 top-14 z-30 flex flex-col overflow-hidden sm:static sm:inset-auto sm:z-auto sm:block sm:h-auto sm:overflow-visible sm:space-y-6"
           style={{ bottom: "max(72px, calc(56px + env(safe-area-inset-bottom)))" }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.16, ease: "easeOut" }}
         >
           {/* Desktop: full header card */}
           <div className="hidden sm:flex sm:flex-wrap sm:items-start sm:justify-between sm:gap-4 sm:rounded-3xl sm:border sm:border-raw-border/30 sm:bg-raw-surface/25 sm:p-5">
@@ -1663,15 +1765,21 @@ const COMMUNITY_LOGOS: Record<string, string> = {
             />
           </div>
           )}
-        </div>
+        </motion.div>
       );
     };
 
-    if (activeCommunityId && isInitialCommunitiesLoading) {
+    if (activeCommunityId && isInitialCommunitiesLoading && !selectedCommunity) {
       return (
-        <div className="rounded-3xl border border-raw-border/30 bg-raw-surface/20 p-8 text-center text-raw-silver/50">
-          <p className="font-display text-lg text-raw-text">Loading community…</p>
-        </div>
+        <motion.div
+          className="rounded-3xl border border-raw-border/30 bg-raw-surface/20 p-5"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.16, ease: "easeOut" }}
+        >
+          <div className="h-6 w-40 animate-pulse rounded-full bg-raw-surface/60" />
+          <div className="mt-4 h-56 animate-pulse rounded-2xl bg-raw-black/35" />
+        </motion.div>
       );
     }
 
@@ -1690,6 +1798,8 @@ const COMMUNITY_LOGOS: Record<string, string> = {
     }
 
     return (
+      <>
+      {confirmDialog}
       <div className="space-y-8">
         {activeCommunityId ? renderChatPage() : renderDirectoryView()}
 
@@ -2085,5 +2195,6 @@ const COMMUNITY_LOGOS: Record<string, string> = {
           </DialogContent>
         </Dialog>
       </div>
+      </>
     );
   }

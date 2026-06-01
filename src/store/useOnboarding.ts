@@ -24,7 +24,10 @@ export function useOnboarding(isLoggedIn: boolean, username?: string) {
 
     const entry = readOnboardingMap()[username];
     if (entry) {
-      setOnboardingStep(entry.step);
+      const restoredStep = entry.step === "spin" && window.localStorage.getItem(LANDING_WHEEL_SPIN_KEY)
+        ? "avatar"
+        : entry.step;
+      setOnboardingStep(restoredStep);
       setOnboardingAnsweredPollIds(new Set(entry.answeredPollIds));
       setOnboardingCompleted(entry.completed);
       setOnboardingLoaded(true);
@@ -40,7 +43,7 @@ export function useOnboarding(isLoggedIn: boolean, username?: string) {
   }, []);
 
   useEffect(() => {
-    if (!username) {
+    if (!username || !onboardingLoaded) {
       return;
     }
 
@@ -52,7 +55,7 @@ export function useOnboarding(isLoggedIn: boolean, username?: string) {
       answeredPollIds: Array.from(onboardingAnsweredPollIds),
     };
     writeOnboardingMap(map);
-  }, [onboardingAnsweredPollIds, onboardingCompleted, onboardingStep, username]);
+  }, [onboardingAnsweredPollIds, onboardingCompleted, onboardingLoaded, onboardingStep, username]);
 
   const resetOnboardingProgress = useCallback(() => {
     setOnboardingStep(defaultInitialStep());

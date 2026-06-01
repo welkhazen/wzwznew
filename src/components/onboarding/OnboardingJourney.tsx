@@ -40,7 +40,7 @@ interface OnboardingJourneyProps {
   onMarkPollAnswered: (pollId: string) => void;
   selectedCommunityIds: string[];
   onToggleCommunity: (communityId: string) => void;
-  onCompleteOnboarding: () => void;
+  onCompleteOnboarding: () => void | Promise<void>;
   onLogout: () => void;
   onClaimLandingWheelAvatar: () => Promise<void>;
 }
@@ -67,6 +67,31 @@ function buildSpinPrizes(): WheelPrize[] {
     color: i % 2 === 0 ? "#121212" : "#0e0e0e",
     textColor: "#F1C42D",
   }));
+}
+
+function readStoredSpinResult(): WheelPoolEntry | null {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const raw = window.localStorage.getItem(LANDING_WHEEL_SPIN_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { prizeId?: unknown };
+    if (typeof parsed.prizeId !== "string") return null;
+    return SPIN_WHEEL_POOL.find((entry) => entry.id === parsed.prizeId) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function findOwnedSpinResult(ownedAvatarLevels: Set<number>, avatarCatalog: AvatarCatalogItem[]): WheelPoolEntry | null {
+  for (const entry of SPIN_WHEEL_POOL) {
+    const level = avatarCatalog.findIndex((avatar) => avatar.id === entry.avatarId) + 1;
+    if (level > 0 && ownedAvatarLevels.has(level)) {
+      return entry;
+    }
+  }
+
+  return null;
 }
 
 const STEP_ORDER: OnboardingStep[] = ["spin", "avatar", "identity", "polls", "communities"];
@@ -230,10 +255,30 @@ function getNextStep(step: OnboardingStep): OnboardingStep {
   return STEP_ORDER[currentIndex + 1];
 }
 
-function StepPill({ label, active, complete }: { label: string; active: boolean; complete: boolean }) {
+function getPreviousStep(step: OnboardingStep): OnboardingStep | null {
+  const currentIndex = STEP_ORDER.indexOf(step);
+  if (currentIndex <= 0) return null;
+  return STEP_ORDER[currentIndex - 1];
+}
+
+function BackButton({ onClick }: { onClick: () => void }) {
   return (
-    <div
-      className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.18em] transition-all ${
+    <button
+      type="button"
+      onClick={onClick}
+      className="rounded-xl border border-raw-border/50 px-5 py-3 text-sm font-semibold text-raw-silver/75 transition hover:border-raw-gold/40 hover:text-raw-gold sm:py-2.5"
+    >
+      ← Back
+    </button>
+  );
+}
+
+function StepPill({ label, active, complete, onClick }: { label: string; active: boolean; complete: boolean; onClick?: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.18em] transition-all hover:border-raw-gold/60 hover:text-raw-gold ${
         active
           ? "border-raw-gold/60 bg-raw-gold/15 text-raw-gold"
           : complete
@@ -242,7 +287,7 @@ function StepPill({ label, active, complete }: { label: string; active: boolean;
       }`}
     >
       {label}
-    </div>
+    </button>
   );
 }
 
@@ -291,9 +336,11 @@ export function OnboardingJourney({
   const [identityNames, setIdentityNames] = useState<string[]>(() => [user.username, "", ""]);
   const [publicIdentityIndex, setPublicIdentityIndex] = useState(0);
   const [identitySaveError, setIdentitySaveError] = useState<string | null>(null);
+  const [communitySaveError, setCommunitySaveError] = useState<string | null>(null);
   const [isSavingIdentities, setIsSavingIdentities] = useState(false);
+  const [isCompletingOnboarding, setIsCompletingOnboarding] = useState(false);
   const [spinPrizes] = useState<WheelPrize[]>(() => buildSpinPrizes());
-  const [spinResult, setSpinResult] = useState<WheelPoolEntry | null>(null);
+  const [spinResult, setSpinResult] = useState<WheelPoolEntry | null>(readStoredSpinResult);
   const [spinClaimError, setSpinClaimError] = useState<string | null>(null);
   const [isClaimingSpin, setIsClaimingSpin] = useState(false);
   const onboardingAvatars = useMemo(() => (
@@ -322,6 +369,7 @@ export function OnboardingJourney({
     setIdentityNames([user.username, "", ""]);
     setPublicIdentityIndex(0);
     setIdentitySaveError(null);
+    setCommunitySaveError(null);
   }, [user.id, user.username]);
 
   useEffect(() => {
@@ -336,11 +384,14 @@ export function OnboardingJourney({
   const canContinueFromIdentity = identityNamesAreValid;
   const canContinueFromPolls = answeredCount >= onboardingPolls.length;
   const canContinueFromCommunities = selectedCommunityIds.length >= 1;
+  const canCompleteOnboarding = canContinueFromAvatar && canContinueFromIdentity && canContinueFromPolls && canContinueFromCommunities;
   const previewAvatar = onboardingAvatars[previewAvatarIndex - 1] ?? onboardingAvatars[0];
+  const canSelectPreviewAvatar = previewAvatarIndex <= FREE_ONBOARDING_AVATAR_COUNT || ownedAvatarLevels.has(previewAvatarIndex);
   const canContinueWithPreviewAvatar = canContinueFromAvatar && previewAvatarIndex === avatarIndex;
   const freeAvatarChoices = onboardingAvatars.slice(0, FREE_ONBOARDING_AVATAR_COUNT);
   const previewAvatarChoices = onboardingAvatars.slice(FREE_ONBOARDING_AVATAR_COUNT);
   const ownedPreviewAvatarChoices = previewAvatarChoices.filter((avatar) => ownedAvatarLevels.has(avatar.level));
+  const claimedSpinResult = spinResult ?? findOwnedSpinResult(ownedAvatarLevels, onboardingAvatars);
   const previewAvatarPageCount = Math.max(1, Math.ceil(previewAvatarChoices.length / AVATAR_PAGE_SIZE));
   const visiblePreviewAvatarChoices = previewAvatarChoices.slice(avatarPage * AVATAR_PAGE_SIZE, (avatarPage + 1) * AVATAR_PAGE_SIZE);
 
@@ -392,6 +443,21 @@ export function OnboardingJourney({
 
     try {
       const uniqueNames = new Set<string>();
+      const duplicateName = identityNames
+        .map((name) => name.trim())
+        .filter(Boolean)
+        .find((name) => {
+          const key = name.toLowerCase();
+          if (uniqueNames.has(key)) return true;
+          uniqueNames.add(key);
+          return false;
+        });
+
+      if (duplicateName) {
+        throw new Error(`Name "${duplicateName}" is already used in this identity set.`);
+      }
+
+      uniqueNames.clear();
       const usedAvatarLevels = new Set<number>();
       const aliases = identityNames
         .map((name, index) => {
@@ -427,6 +493,11 @@ export function OnboardingJourney({
   };
 
   const goToNextStep = async () => {
+    if (onboardingStep === "avatar" && canSelectPreviewAvatar && previewAvatarIndex !== avatarIndex) {
+      track("onboarding_avatar_selected", { avatar_level: previewAvatarIndex, attempts: 1 });
+      onAvatarChange(previewAvatarIndex);
+    }
+
     if (onboardingStep === "identity") {
       const saved = await saveIdentityNamesForOnboarding();
       if (!saved) return;
@@ -437,6 +508,11 @@ export function OnboardingJourney({
       duration_ms: Date.now() - stepStartTimeRef.current,
     });
     onSetOnboardingStep(getNextStep(onboardingStep));
+  };
+
+  const goToPreviousStep = () => {
+    const previous = getPreviousStep(onboardingStep);
+    if (previous) onSetOnboardingStep(previous);
   };
 
   const currentStepIndex = STEP_ORDER.indexOf(onboardingStep);
@@ -497,6 +573,7 @@ export function OnboardingJourney({
               label={STEP_LABELS[step]}
               active={step === onboardingStep}
               complete={index < currentStepIndex}
+              onClick={() => onSetOnboardingStep(step)}
             />
           ))}
         </div>
@@ -512,8 +589,9 @@ export function OnboardingJourney({
               <div className="mt-6 flex flex-col items-center gap-5 sm:gap-7">
                 <WheelOfFortune
                   prizes={spinPrizes}
-                  disabled={!!spinResult || isClaimingSpin}
+                  disabled={!!claimedSpinResult || isClaimingSpin}
                   onSpinEnd={async (prize) => {
+                    if (claimedSpinResult) return;
                     const entry = SPIN_WHEEL_POOL.find((p) => p.id === prize.id) ?? SPIN_WHEEL_POOL[0];
                     setSpinResult(entry);
                     setSpinClaimError(null);
@@ -539,10 +617,10 @@ export function OnboardingJourney({
                   }}
                 />
 
-                {spinResult ? (
+                {claimedSpinResult ? (
                   <div className="w-full max-w-md rounded-2xl border border-raw-gold/30 bg-gradient-to-b from-raw-gold/[0.08] to-raw-gold/[0.02] p-4 text-center sm:p-5">
                     <p className="font-display text-sm tracking-wide text-raw-gold">
-                      You won {spinResult.name}
+                      You won {claimedSpinResult.name}
                     </p>
                     <p className="mt-2 text-xs leading-relaxed text-raw-text/75">
                       Added to your inventory. Pick it on the next step.
@@ -557,18 +635,25 @@ export function OnboardingJourney({
                   </p>
                 )}
 
-                <div className="flex w-full max-w-md justify-end">
+                <div className="flex w-full max-w-md items-center justify-between gap-3">
                   <button
                     type="button"
-                    disabled={!spinResult || isClaimingSpin}
+                    onClick={() => onSetOnboardingStep("avatar")}
+                    className="rounded-full border border-raw-border/50 px-5 py-2 font-display text-[10px] uppercase tracking-[0.2em] text-raw-silver/70 transition hover:border-raw-gold/40 hover:text-raw-gold"
+                  >
+                    Skip
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isClaimingSpin}
                     onClick={() => onSetOnboardingStep("avatar")}
                     className={`rounded-full px-6 py-2 font-display text-xs uppercase tracking-[0.2em] transition ${
-                      !spinResult || isClaimingSpin
+                      isClaimingSpin
                         ? "cursor-not-allowed border border-raw-border/40 bg-raw-surface/40 text-raw-silver/35"
                         : "border border-raw-gold/50 bg-raw-gold/15 text-raw-gold hover:bg-raw-gold/25"
                     }`}
                   >
-                    {isClaimingSpin ? "Saving…" : "Continue"}
+                    {isClaimingSpin ? "Saving…" : claimedSpinResult ? "Continue" : "Next: Avatar"}
                   </button>
                 </div>
               </div>
@@ -756,6 +841,7 @@ export function OnboardingJourney({
                       {visiblePreviewAvatarChoices.map((avatar, i) => {
                         const index = FREE_ONBOARDING_AVATAR_COUNT + avatarPage * AVATAR_PAGE_SIZE + i + 1;
                         const isPreviewed = index === previewAvatarIndex;
+                        const isOwned = ownedAvatarLevels.has(index);
                         return (
                           <button
                             key={index}
@@ -764,9 +850,12 @@ export function OnboardingJourney({
                               setPreviewAvatarIndex(index);
                               phonePreviewRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
                               track("onboarding_avatar_selected", { avatar_level: index, attempts: 1 });
+                              if (isOwned) {
+                                onAvatarChange(index);
+                              }
                             }}
                             className="group relative flex min-w-0 flex-col items-center gap-1 rounded-xl p-1.5 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/50"
-                            aria-label={`Preview ${avatar.name}, locked until later`}
+                            aria-label={isOwned ? `Select claimed reward ${avatar.name}` : `Preview ${avatar.name}, locked until later`}
                           >
                             <div className={`relative rounded-full transition-all duration-300 ${
                               isPreviewed ? "scale-100 opacity-100" : "opacity-80 group-hover:opacity-100 group-hover:scale-105"
@@ -795,8 +884,12 @@ export function OnboardingJourney({
                             }`}>
                               {avatar.name.split(" ")[0]}
                             </span>
-                            <span className="rounded-full border border-raw-border/35 px-1.5 py-0.5 text-[7px] uppercase tracking-[0.08em] text-raw-silver/35">
-                              locked
+                            <span className={`rounded-full border px-1.5 py-0.5 text-[7px] uppercase tracking-[0.08em] ${
+                              isOwned
+                                ? "border-raw-gold/45 text-raw-gold/70"
+                                : "border-raw-border/35 text-raw-silver/35"
+                            }`}>
+                              {isOwned ? "owned" : "locked"}
                             </span>
                           </button>
                         );
@@ -806,11 +899,11 @@ export function OnboardingJourney({
                   ) : null}
               </div>
 
-              <div className="mt-6 flex justify-end sm:mt-8">
+              <div className="mt-6 flex items-center justify-between gap-3 sm:mt-8">
+                <BackButton onClick={goToPreviousStep} />
                 <button
                   onClick={goToNextStep}
-                  disabled={!canContinueWithPreviewAvatar}
-                  className="w-full rounded-xl bg-raw-gold px-5 py-3 text-sm font-semibold text-raw-ink transition-opacity disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:py-2.5"
+                  className="rounded-xl bg-raw-gold px-5 py-3 text-sm font-semibold text-raw-ink transition-opacity sm:py-2.5"
                 >
                   Next: Names
                 </button>
@@ -893,12 +986,13 @@ export function OnboardingJourney({
                 </p>
               ) : null}
 
-              <div className="mt-6 flex justify-end sm:mt-8">
+              <div className="mt-6 flex items-center justify-between gap-3 sm:mt-8">
+                <BackButton onClick={goToPreviousStep} />
                 <button
                   type="button"
                   onClick={goToNextStep}
                   disabled={!canContinueFromIdentity || isSavingIdentities}
-                  className="w-full rounded-xl bg-raw-gold px-5 py-3 text-sm font-semibold text-raw-ink transition-opacity disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:py-2.5"
+                  className="rounded-xl bg-raw-gold px-5 py-3 text-sm font-semibold text-raw-ink transition-opacity disabled:cursor-not-allowed disabled:opacity-40 sm:py-2.5"
                 >
                   {isSavingIdentities ? "Saving..." : "Save names"}
                 </button>
@@ -1016,11 +1110,12 @@ export function OnboardingJourney({
                 )}
               </div>
 
-              <div className="mt-5 flex justify-end sm:mt-6">
+              <div className="mt-5 flex items-center justify-between gap-3 sm:mt-6">
+                <BackButton onClick={goToPreviousStep} />
                 <button
                   onClick={goToNextStep}
                   disabled={!canContinueFromPolls}
-                  className="w-full rounded-xl border border-raw-gold/40 bg-raw-gold/15 px-5 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-raw-gold transition-all hover:bg-raw-gold/25 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:py-2.5"
+                  className="rounded-xl border border-raw-gold/40 bg-raw-gold/15 px-5 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-raw-gold transition-all hover:bg-raw-gold/25 disabled:cursor-not-allowed disabled:opacity-40 sm:py-2.5"
                 >
                   Continue to communities →
                 </button>
@@ -1135,9 +1230,21 @@ export function OnboardingJourney({
                 })}
               </div>
 
-              <div className="mt-6 flex justify-end sm:mt-8">
+              {!canCompleteOnboarding ? (
+                <p className="mt-4 text-center text-[11px] uppercase tracking-[0.18em] text-raw-silver/50 sm:text-right">
+                  Finish every step to enter raW
+                </p>
+              ) : null}
+              {communitySaveError ? (
+                <p className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-200">
+                  {communitySaveError}
+                </p>
+              ) : null}
+              <div className="mt-6 flex items-center justify-between gap-3 sm:mt-8">
+                <BackButton onClick={goToPreviousStep} />
                 <button
                   onClick={() => {
+                    setCommunitySaveError(null);
                     track("onboarding_completed", {
                       total_duration_ms: Date.now() - stepStartTimeRef.current,
                       polls_answered: answeredCount,
@@ -1146,8 +1253,8 @@ export function OnboardingJourney({
                     });
                     setEnterRawOpen(true);
                   }}
-                  disabled={!canContinueFromCommunities}
-                  className="w-full rounded-xl bg-raw-gold px-5 py-3 text-sm font-semibold text-raw-ink transition-opacity disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:py-2.5"
+                  disabled={!canCompleteOnboarding}
+                  className="rounded-xl bg-raw-gold px-5 py-3 text-sm font-semibold text-raw-ink transition-opacity disabled:cursor-not-allowed disabled:opacity-40 sm:py-2.5"
                 >
                   Complete onboarding
                 </button>
@@ -1159,15 +1266,25 @@ export function OnboardingJourney({
 
       <EnterRawModal
         open={enterRawOpen}
-        onEnter={() => {
+        onEnter={async () => {
+          if (isCompletingOnboarding) return;
           track("onboarding_completed", {
             total_duration_ms: Date.now() - stepStartTimeRef.current,
             polls_answered: answeredCount,
             communities_selected: selectedCommunityIds.length,
             source: "enter_raw_modal",
           });
-          setEnterRawOpen(false);
-          onCompleteOnboarding();
+          setIsCompletingOnboarding(true);
+          setCommunitySaveError(null);
+          try {
+            await onCompleteOnboarding();
+            setEnterRawOpen(false);
+          } catch (error) {
+            setEnterRawOpen(false);
+            setCommunitySaveError(error instanceof Error ? error.message : "Could not save your community. Please try again.");
+          } finally {
+            setIsCompletingOnboarding(false);
+          }
         }}
         onDismiss={() => {
           setEnterRawOpen(false);
