@@ -68,6 +68,87 @@ interface WheelRewardProps {
   onSignupClick: () => void;
 }
 
+/**
+ * Inline variant: renders the wheel + result banner with NO section header
+ * or outer LandingSectionShell, so callers can embed it inside another section.
+ */
+export function WheelRewardInline({ onSignupClick }: WheelRewardProps) {
+  const { mode } = useTheme();
+  const isLight = mode === "light";
+  const [pool, setPool] = useState<PoolEntry[]>(getPool);
+  const [landedEntry, setLandedEntry] = useState<PoolEntry | null>(() => {
+    if (shouldResetStoredSpinForTesting()) {
+      window.localStorage.removeItem(LANDING_WHEEL_SPIN_KEY);
+      return null;
+    }
+    return readStoredSpin(getPool());
+  });
+  const [rewardsImageMissing, setRewardsImageMissing] = useState(false);
+  const hasSpun = Boolean(landedEntry);
+
+  useEffect(() => {
+    function refresh() {
+      const nextPool = getPool();
+      setPool(nextPool);
+      setLandedEntry((current) => current ?? readStoredSpin(nextPool));
+    }
+    window.addEventListener("raw:avatar-catalog-updated", refresh);
+    return () => window.removeEventListener("raw:avatar-catalog-updated", refresh);
+  }, []);
+
+  const prizes = buildPrizes(pool, isLight);
+
+  function handleSpinEnd(prize: WheelPrize) {
+    const entry = pool.find((p) => p.id === prize.id) ?? pool[0];
+    setLandedEntry(entry);
+    writeStoredSpin(entry);
+    track("landing_cta_clicked", { cta_id: "wheel_spin", cta_text: "Spin", source_section: "wheel" });
+  }
+
+  return (
+    <div className="flex flex-col items-center gap-6 sm:gap-10">
+      <WheelOfFortune prizes={prizes} onSpinEnd={handleSpinEnd} disabled={hasSpun} />
+
+      {!rewardsImageMissing ? (
+        <img
+          src={TRANSPARENT_REWARDS_IMAGE_SRC}
+          alt="Avatar rarity chart"
+          className={`w-full max-w-5xl object-contain ${isLight ? "opacity-80" : "mix-blend-screen"}`}
+          onError={() => setRewardsImageMissing(true)}
+        />
+      ) : null}
+
+      {landedEntry && (
+        <div className={`w-full max-w-md rounded-2xl border p-4 text-center transition-all duration-500 sm:p-5 ${
+          isLight
+            ? "border-raw-gold/40 bg-gradient-to-b from-raw-gold/[0.12] to-raw-gold/[0.04]"
+            : "border-raw-gold/30 bg-gradient-to-b from-raw-gold/[0.08] to-raw-gold/[0.02]"
+        }`}>
+          <div className="mb-2 flex items-center justify-center gap-2">
+            {landedEntry.imageSrc ? (
+              <img src={landedEntry.imageSrc} alt={landedEntry.name} className="h-8 w-8 rounded-full object-cover" />
+            ) : null}
+            <Sparkles className="h-4 w-4 text-raw-gold" />
+            <span className="font-display text-sm tracking-wide text-raw-gold">
+              You won {landedEntry.name}
+            </span>
+          </div>
+          <p className="mt-2 text-xs leading-relaxed text-raw-text/75">
+            You won this cool avatar from raW's early access wheel.
+          </p>
+          <button
+            type="button"
+            onClick={onSignupClick}
+            className="mt-4 rounded-full border border-raw-gold/35 bg-raw-gold/10 px-5 py-2 font-display text-[10px] uppercase tracking-[0.2em] text-raw-gold/85 transition hover:bg-raw-gold/15"
+          >
+            Sign up to claim it
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function WheelReward({ onSignupClick }: WheelRewardProps) {
   const sectionRef = useTrackSectionView("final_cta");
   const { mode } = useTheme();

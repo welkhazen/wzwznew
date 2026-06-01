@@ -12,7 +12,6 @@ import { Communities } from "@/components/landing/Communities";
 import { PersonalityInsightsSection } from "@/components/landing/PersonalityInsightsSection";
 import { AvatarShowcaseSection } from "@/components/landing/AvatarShowcaseSection";
 import { LandingPollsSection } from "@/components/landing/LandingPollsSection";
-import { WheelReward } from "@/components/landing/WheelReward";
 import { WhyAnonymity } from "@/components/landing/WhyAnonymity";
 import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
 import { EarnedWarUpgradesSection } from "@/components/landing/EarnedWarUpgradesSection";
@@ -71,8 +70,7 @@ export default function LandingShell({
             </Suspense>
             <ProblemSection />
             <HowItWorks />
-            <AvatarShowcaseSection />
-            <WheelReward onSignupClick={() => setShowSignup(true)} />
+            <AvatarShowcaseSection onSignupClick={() => setShowSignup(true)} />
             <LandingPollsSection onSignupClick={() => setShowSignup(true)} />
             <Communities onSignupClick={() => setShowSignup(true)} />
             <PersonalityInsightsSection />
