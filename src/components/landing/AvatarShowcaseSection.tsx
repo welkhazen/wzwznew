@@ -30,7 +30,7 @@ const REVEAL_AVATARS: readonly AvatarCatalogItem[] = [
   { id: "reveal-2", level: 12, name: "Neon Lynx", price: "0", imageSrc: "/avatars/2.webp", bg: "#170f2e", figure: "#a855f7", ring: "#c084fc", glow: "#a855f780", isActive: true, rarity: "common" },
   { id: "reveal-3", level: 13, name: "Blue Signal", price: "0", imageSrc: "/avatars/3.webp", bg: "#06131f", figure: "#22d3ee", ring: "#22d3ee", glow: "#22d3ee80", isActive: true, rarity: "common" },
   { id: "reveal-4", level: 14, name: "Violet Mask", price: "0", imageSrc: "/avatars/4.webp", bg: "#1a1028", figure: "#d946ef", ring: "#d946ef", glow: "#d946ef80", isActive: true, rarity: "common" },
-  { id: "reveal-5", level: 15, name: "Horned Iron", price: "0", imageSrc: "/avatars/5.webp", bg: "#1f0a05", figure: "#fb923c", ring: "#fb923c", glow: "#fb923c80", isActive: true, rarity: "common" },
+  { id: "reveal-5", level: 15, name: "Viozen", price: "0", imageSrc: "/avatars/5.webp", bg: "#1f0a05", figure: "#fb923c", ring: "#fb923c", glow: "#fb923c80", isActive: true, rarity: "common" },
   { id: "reveal-6", level: 16, name: "Crimson Muse", price: "0", imageSrc: "/avatars/6.webp", bg: "#2a0b0b", figure: "#f97316", ring: "#f97316", glow: "#f9731680", isActive: true, rarity: "common" },
   { id: "reveal-7", level: 17, name: "Solar Flame", price: "0", imageSrc: "/avatars/7.webp", bg: "#241005", figure: "#facc15", ring: "#facc15", glow: "#facc1590", isActive: true, rarity: "common" },
   { id: "reveal-8", level: 18, name: "Pink Circuit", price: "0", imageSrc: "/avatars/8.webp", bg: "#2a0b1c", figure: "#fb7185", ring: "#fb7185", glow: "#fb718580", isActive: true, rarity: "common" },
