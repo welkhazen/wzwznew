@@ -5,7 +5,7 @@ import type { Poll } from "@/store/types";
 export interface PollCommentRow {
   id: string;
   poll_id: string;
-  body: string;
+  text: string;
   created_at: string;
 }
 
@@ -69,7 +69,7 @@ export async function fetchPolls(limit = 10): Promise<Poll[]> {
   );
   const voteCounts = new Map<string, number>(voteCountEntries);
 
-  return (pollRows ?? [])
+  const built = (pollRows ?? [])
     .map((row) => {
       const options = [...(optionsByPoll.get(row.id) ?? [])]
         .sort((a, b) => a.position - b.position)
@@ -77,6 +77,13 @@ export async function fetchPolls(limit = 10): Promise<Poll[]> {
       return { id: row.id as string, question: row.question as string, options, locked: false };
     })
     .filter((poll) => poll.question?.trim().length > 5 && poll.options.length >= 2);
+
+  // Shuffle so users see a random order each load instead of newest-first.
+  for (let i = built.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [built[i], built[j]] = [built[j], built[i]];
+  }
+  return built;
 }
 
 export async function fetchAdminPolls(): Promise<AdminPoll[]> {
@@ -180,19 +187,19 @@ export async function submitPollVote(pollId: string, optionId: string): Promise<
 export async function fetchPollComments(pollId: string): Promise<PollCommentRow[]> {
   const { data, error } = await supabase
     .from("poll_comments")
-    .select("id, body, created_at")
+    .select("id, poll_id, text, created_at")
     .eq("poll_id", pollId)
     .order("created_at", { ascending: false })
     .limit(50);
   if (error) throw error;
-  return data ?? [];
+  return (data ?? []) as PollCommentRow[];
 }
 
 export async function addPollComment(pollId: string, text: string): Promise<PollCommentRow> {
   const { data, error } = await supabase
     .from("poll_comments")
-    .insert({ poll_id: pollId, body: text })
-    .select("id, body, created_at")
+    .insert({ poll_id: pollId, text })
+    .select("id, poll_id, text, created_at")
     .single();
   if (error || !data) throw error ?? new Error("Failed to create comment");
   return data as PollCommentRow;

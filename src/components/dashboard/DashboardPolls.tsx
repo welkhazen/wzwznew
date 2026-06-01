@@ -412,7 +412,7 @@ export function DashboardPolls({
           [currentPoll.id]: comments.map((comment) => ({
             id: comment.id,
             author: "Anonymous",
-            content: comment.body,
+            content: comment.text,
             createdAt: new Date(comment.created_at).toLocaleTimeString([], {
               hour: "2-digit",
               minute: "2-digit",
