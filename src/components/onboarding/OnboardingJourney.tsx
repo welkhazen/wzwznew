@@ -15,6 +15,7 @@ import { WheelOfFortune, type WheelPrize } from "@/components/wheel/WheelOfFortu
 import { saveUserAliases } from "@/backend/supabase/controllers/userAliasController";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
 import { AnimatePresence, motion } from "framer-motion";
 import { SwipeablePollCard } from "./SwipeablePollCard";
 import { EnterRawModal } from "./EnterRawModal";
@@ -497,6 +498,11 @@ export function OnboardingJourney({
       track("onboarding_avatar_selected", { avatar_level: previewAvatarIndex, attempts: 1 });
       onAvatarChange(previewAvatarIndex);
     }
+    if (onboardingStep === "avatar" && !canSelectPreviewAvatar && previewAvatarIndex !== avatarIndex) {
+      // User had a locked tile previewed — silently revert so the phone mock
+      // matches what they're actually continuing with.
+      setPreviewAvatarIndex(avatarIndex);
+    }
 
     if (onboardingStep === "identity") {
       const saved = await saveIdentityNamesForOnboarding();
@@ -852,9 +858,16 @@ export function OnboardingJourney({
                               track("onboarding_avatar_selected", { avatar_level: index, attempts: 1 });
                               if (isOwned) {
                                 onAvatarChange(index);
+                              } else {
+                                toast({
+                                  title: "Preview only",
+                                  description: "This avatar unlocks via the spin wheel. Pick a Free avatar above to continue.",
+                                });
                               }
                             }}
-                            className="group relative flex min-w-0 flex-col items-center gap-1 rounded-xl p-1.5 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/50"
+                            className={`group relative flex min-w-0 flex-col items-center gap-1 rounded-xl p-1.5 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/50 ${
+                              isOwned ? "" : "cursor-help"
+                            }`}
                             aria-label={isOwned ? `Select claimed reward ${avatar.name}` : `Preview ${avatar.name}, locked until later`}
                           >
                             <div className={`relative rounded-full transition-all duration-300 ${
