@@ -11,6 +11,7 @@ import type { LandingNewAvatar } from "@/lib/landingNewAvatars";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 import { useTheme } from "@/providers/useTheme";
 import { RawRevealButton } from "../../../components/raw-reveal-button";
+import { WheelRewardInline } from "@/components/landing/WheelReward";
 
 const VISIBLE_COUNT = 4;
 const DESKTOP_COUNT = 8;
@@ -54,7 +55,11 @@ const REVEAL_AVATAR_IMAGE_FIT: Record<string, RevealAvatarImageFit> = {
   "reveal-10": { scale: 1.42 },
 };
 
-export function AvatarShowcaseSection() {
+interface AvatarShowcaseSectionProps {
+  onSignupClick?: () => void;
+}
+
+export function AvatarShowcaseSection({ onSignupClick }: AvatarShowcaseSectionProps = {}) {
   const sectionRef = useTrackSectionView("avatar");
   const { mode } = useTheme();
   const isLight = mode === "light";
@@ -601,6 +606,10 @@ Just like in real life, every person is born with a name, an appearance, and an 
             </motion.div>
           )}
         </AnimatePresence>
+
+        <div className="mt-10 border-t border-raw-border/20 pt-10 sm:mt-14 sm:pt-14">
+          <WheelRewardInline onSignupClick={onSignupClick ?? (() => undefined)} />
+        </div>
       </div>
     </LandingSectionShell>
   );
