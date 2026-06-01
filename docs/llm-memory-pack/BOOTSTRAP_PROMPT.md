@@ -16,6 +16,7 @@ Operating instructions:
 - Preserve existing terminology and decisions unless asked to revisit.
 - Prefer surgical changes and explicit verification steps.
 - Maintain an "Open Loops" list and update it as work progresses.
+- Follow repo-level assistant interaction preferences in `../../AGENTS.md` instead of duplicating them here.
 
 Now produce:
 1. A concise understanding summary.
