@@ -76,6 +76,7 @@ const TOKEN_BALANCE_UPDATED_EVENT = "raw:token-balance-updated";
 const TOKEN_BALANCE_STORAGE_KEY = "raw.polls.token-balance";
 const ACCENT_UNLOCK_COST = 10;
 const ACCENT_FREE_ID: AccentPresetId = "gold";
+const FREE_ACCENT_IDS: AccentPresetId[] = ["gold", "indigo"];
 const OWNED_ACCENTS_CACHE_PREFIX = "raw.theme.accent.owned.v2.";
 
 function readOwnedAccentsCache(userId: string): AccentPresetId[] {
@@ -360,7 +361,7 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
   }, [userId]);
 
   const isAccentOwned = (presetId: AccentPresetId): boolean =>
-    presetId === ACCENT_FREE_ID || presetId === effectiveAccent || ownedAccentIds.includes(presetId);
+    FREE_ACCENT_IDS.includes(presetId) || presetId === effectiveAccent || ownedAccentIds.includes(presetId);
 
   const handleAccentClick = async (presetId: AccentPresetId) => {
     if (isAccentOwned(presetId)) {
