@@ -1,5 +1,5 @@
-import { useState, type CSSProperties } from "react";
-import { LEVEL_THEMES } from "@/lib/avataridentity";
+import { useEffect, useState, type CSSProperties } from "react";
+import { LEVEL_THEMES, type AvatarTheme } from "@/lib/avataridentity";
 import { RARITY_CONFIG, type AvatarRarity } from "@/lib/avatarRarity";
 
 interface AvatarFigureProps {
@@ -10,6 +10,7 @@ interface AvatarFigureProps {
   rarity?: AvatarRarity;
   disableRarityGlow?: boolean;
   style?: CSSProperties;
+  themeOverride?: AvatarTheme;
 }
 
 const sizes = {
@@ -19,9 +20,12 @@ const sizes = {
   xl: { outer: 180, inner: 148, face: 0.65 },
 };
 
-export function AvatarFigure({ avatarIndex, size = "md", selected = false, className = "", rarity, disableRarityGlow = false, style }: AvatarFigureProps) {
-  const theme = LEVEL_THEMES[avatarIndex - 1] || LEVEL_THEMES[0];
+export function AvatarFigure({ avatarIndex, size = "md", selected = false, className = "", rarity, disableRarityGlow = false, style, themeOverride }: AvatarFigureProps) {
+  const theme = themeOverride || LEVEL_THEMES[avatarIndex - 1] || LEVEL_THEMES[0];
   const [imageFailed, setImageFailed] = useState(false);
+  useEffect(() => {
+    setImageFailed(false);
+  }, [theme.imageSrc]);
   const useImage = !!theme.imageSrc && !imageFailed;
   const s = sizes[size];
 
@@ -50,7 +54,7 @@ export function AvatarFigure({ avatarIndex, size = "md", selected = false, class
           <img
             src={theme.imageSrc}
             alt={theme.name}
-            loading="lazy"
+            loading="eager"
             decoding="async"
             onError={() => setImageFailed(true)}
             draggable={false}

@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { PremiumPollCard } from "@/components/polls/PremiumPollCard";
 import { Button } from "@/components/ui/button";
 import { resolvePollShareCode } from "@/lib/pollShare";
-import { submitPollVote } from "@/utils/supabasePolls";
+import { submitPollVote } from "@/lib/api/polls";
 import type { Poll } from "@/store/types";
 
 interface SharedPollPageProps {
@@ -80,7 +80,7 @@ export function SharedPollPage({
             onVote={async (optionId) => {
               setVoteStatus("saving");
               try {
-                const result = await submitPollVote(poll.id, optionId, "guest");
+                const result = await submitPollVote(poll.id, optionId);
                 setOptionVotes((previous) => ({ ...previous, ...result.optionVotes }));
                 setSelectedOptionId(optionId);
                 onVote(poll.id, optionId);

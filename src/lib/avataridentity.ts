@@ -14,10 +14,11 @@ const DEFAULT_LEVEL_THEMES: AvatarTheme[] = [
   { bg: "#170f2e", figure: "#a855f7", ring: "#c084fc", glow: "#a855f780", name: "Neon Lynx", imageSrc: "/avatars/2.webp" },
   { bg: "#06131f", figure: "#22d3ee", ring: "#22d3ee", glow: "#22d3ee80", name: "Blue Signal", imageSrc: "/avatars/3.webp" },
   { bg: "#1a1028", figure: "#d946ef", ring: "#d946ef", glow: "#d946ef80", name: "Violet Mask", imageSrc: "/avatars/4.webp" },
-  { bg: "#1f0a05", figure: "#fb923c", ring: "#fb923c", glow: "#fb923c80", name: "Horned Iron", imageSrc: "/avatars/5.webp" },
+  { bg: "#1f0a05", figure: "#fb923c", ring: "#fb923c", glow: "#fb923c80", name: "Viozen", imageSrc: "/avatars/5.png" },
   { bg: "#2a0b0b", figure: "#f97316", ring: "#f97316", glow: "#f9731680", name: "Crimson Muse", imageSrc: "/avatars/6.webp" },
   { bg: "#241005", figure: "#facc15", ring: "#facc15", glow: "#facc1590", name: "Solar Flame", imageSrc: "/avatars/7.webp" },
   { bg: "#2a0b1c", figure: "#fb7185", ring: "#fb7185", glow: "#fb718580", name: "Pink Circuit", imageSrc: "/avatars/8.webp" },
+  { bg: "#0a1a2e", figure: "#3b82f6", ring: "#60a5fa", glow: "#3b82f680", name: "Blu Fifer", imageSrc: "/avatars/11.png" },
 ];
 
 function loadInitialThemes(): AvatarTheme[] {

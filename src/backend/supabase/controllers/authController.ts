@@ -109,6 +109,7 @@ export async function deleteAccount(
     p_password: password,
   });
   if (error) return { ok: false, error: error.message };
-  clearSession();
-  return (data as { ok: boolean; error?: string }) ?? { ok: true };
+  const result = (data as { ok: boolean; error?: string }) ?? { ok: true };
+  if (result.ok) clearSession();
+  return result;
 }

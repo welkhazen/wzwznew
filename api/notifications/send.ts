@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { supabaseServerClient } from "../_lib/supabaseServerClient";
 
 export const config = { runtime: "edge" };
 
@@ -14,8 +14,6 @@ type NotificationConsentRow = {
   device_token: string | null;
 };
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL ?? "";
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "";
 const pushSendSecret = process.env.PUSH_SEND_SECRET ?? "";
 const appleTeamId = process.env.APPLE_TEAM_ID ?? "";
 const appleKeyId = process.env.APPLE_KEY_ID ?? "";
@@ -23,11 +21,7 @@ const appleBundleId = process.env.APPLE_BUNDLE_ID ?? "";
 const appleApnsPrivateKey = process.env.APPLE_APNS_PRIVATE_KEY ?? "";
 const appleApnsEnv = process.env.APPLE_APNS_ENV ?? "sandbox";
 
-const supabase = supabaseUrl && supabaseKey
-  ? createClient(supabaseUrl, supabaseKey, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    })
-  : null;
+const supabase = supabaseServerClient;
 
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {

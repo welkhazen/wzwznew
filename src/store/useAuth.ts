@@ -11,6 +11,7 @@ import {
   getSession,
   type AuthUser,
 } from "@/backend/supabase/controllers/authController";
+import { readOnboardingMap, writeOnboardingMap } from "@/store/useRawStore.storage";
 
 function toUser(a: AuthUser): User {
   return {
@@ -46,12 +47,6 @@ export function useAuth() {
         if (authUser) {
           const u = toUser(authUser);
           setUser(u);
-          if (typeof window !== "undefined") {
-            const key = `raw.onboarding.completed.${u.username}`;
-            if (!localStorage.getItem(key)) {
-              localStorage.setItem(key, "1");
-            }
-          }
           awardDailyLoginXP(u.id);
           identify(u.id, { username: u.username });
         }
@@ -68,9 +63,6 @@ export function useAuth() {
       if (!result.ok || !result.user) return { ok: false, error: result.error };
       const u = toUser(result.user);
       setUser(u);
-      if (typeof window !== "undefined") {
-        localStorage.setItem(`raw.onboarding.completed.${u.username}`, "1");
-      }
       awardDailyLoginXP(u.id);
       identify(u.id, { username: u.username });
       track("login_completed", { method: "username_password" });
@@ -87,7 +79,15 @@ export function useAuth() {
       const u = toUser(result.user);
       setUser(u);
       if (typeof window !== "undefined") {
+        // New signup: wipe any prior onboarding state for this username so
+        // a recreated account walks through onboarding again, not skip
+        // straight to the dashboard.
         localStorage.removeItem(`raw.onboarding.completed.${username}`);
+        const map = readOnboardingMap();
+        if (map[username]) {
+          delete map[username];
+          writeOnboardingMap(map);
+        }
       }
       awardDailyLoginXP(u.id);
       identify(u.id, { username: u.username });
