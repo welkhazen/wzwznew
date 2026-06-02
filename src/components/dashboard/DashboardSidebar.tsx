@@ -4,6 +4,9 @@ import { Link } from "react-router-dom";
 import { FloatingDock } from "@/components/ui/floating-dock";
 import { countUnreadMessages, type PersistedCommunityRecord } from "@/lib/communityChat";
 import { COMMUNITY_COVER_IMAGES } from "@/lib/communityConstants";
+import LNTLogo from "@/assets/LNT.webp";
+import SYTLogo from "@/assets/logospeak.webp";
+import IIJMLogo from "@/assets/itisjustme.webp";
 import type { DashboardTab } from "./DashboardNav";
 
 interface DashboardSidebarProps {
@@ -28,6 +31,12 @@ const NAV: { icon: typeof Home; label: string; tab: DashboardTab | "home" }[] = 
   { icon: Store,         label: "Store",       tab: "store"       },
   { icon: Archive,       label: "Inventory",   tab: "inventory"   },
 ];
+
+const COMMUNITY_LOGOS: Record<string, string> = {
+  lnt: LNTLogo,
+  syt: SYTLogo,
+  iijm: IIJMLogo,
+};
 
 export function DashboardSidebar({
   activeTab,
@@ -91,7 +100,7 @@ export function DashboardSidebar({
       {joinedCommunities.length > 0 && (
         <div className="mt-5 flex w-full flex-col items-center gap-3 px-3">
           {joinedCommunities.map((community) => {
-            const imageUrl = community.logoUrl ?? COMMUNITY_COVER_IMAGES[community.id];
+            const imageUrl = COMMUNITY_LOGOS[community.id] ?? community.logoUrl ?? COMMUNITY_COVER_IMAGES[community.id];
             const unread = countUnreadMessages(community, userId);
 
             return (
