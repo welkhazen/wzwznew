@@ -1,5 +1,7 @@
 import { FloatingDock } from "@/components/ui/floating-dock";
+import { AnimatePresence, motion } from "framer-motion";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import type React from "react";
 import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
 import { fetchCommunities } from "@/backend/supabase/controllers/communityController";
 import { Archive, Home as HomeIcon, MessageCircle, Target, User as UserIcon, LogOut, Shield, Trophy, Sparkles, Moon, CloudMoon, Sun } from "lucide-react";
@@ -113,6 +115,7 @@ export default function Dashboard({
   const [dashboardCommunities, setDashboardCommunities] = useState<PersistedCommunityRecord[]>([]);
   const [isHome, setIsHome] = useState(true);
   const [mobileCommunityPickerOpen, setMobileCommunityPickerOpen] = useState(false);
+  const [mobileCommunityAnchorRect, setMobileCommunityAnchorRect] = useState<DOMRect | null>(null);
   const mobileCommunityPressTimerRef = useRef<number | null>(null);
   const mobileCommunityLongPressRef = useRef(false);
   const communityRouteMatch = matchPath("/dashboard/communities/:communityId", location.pathname);
@@ -193,7 +196,9 @@ export default function Dashboard({
     }
   };
 
-  const handleMobileCommunityPressStart = () => {
+  const handleMobileCommunityPressStart = (event: React.TouchEvent<HTMLElement> | React.PointerEvent<HTMLElement>) => {
+    if ("pointerType" in event && event.pointerType === "mouse") return;
+    setMobileCommunityAnchorRect(event.currentTarget.getBoundingClientRect());
     clearMobileCommunityPressTimer();
     mobileCommunityLongPressRef.current = false;
     mobileCommunityPressTimerRef.current = window.setTimeout(() => {
@@ -207,6 +212,19 @@ export default function Dashboard({
   const handleMobileCommunityPressEnd = () => {
     clearMobileCommunityPressTimer();
   };
+
+  useEffect(() => {
+    if (!mobileCommunityPickerOpen) return;
+    const closePicker = () => setMobileCommunityPickerOpen(false);
+    window.addEventListener("pointerdown", closePicker);
+    window.addEventListener("resize", closePicker);
+    window.addEventListener("scroll", closePicker, true);
+    return () => {
+      window.removeEventListener("pointerdown", closePicker);
+      window.removeEventListener("resize", closePicker);
+      window.removeEventListener("scroll", closePicker, true);
+    };
+  }, [mobileCommunityPickerOpen]);
 
   const handleProfileClick = () => {
     setActiveTab("profile");
@@ -488,6 +506,11 @@ export default function Dashboard({
             onPointerDown: handleMobileCommunityPressStart,
             onPointerUp: handleMobileCommunityPressEnd,
             onPointerLeave: handleMobileCommunityPressEnd,
+            onTouchStart: handleMobileCommunityPressStart,
+            onTouchEnd: handleMobileCommunityPressEnd,
+            onTouchCancel: handleMobileCommunityPressEnd,
+            onTouchMove: handleMobileCommunityPressEnd,
+            onContextMenu: (event) => event.preventDefault(),
             active: !isHome && activeTab === "communities",
           },
           {
@@ -521,40 +544,74 @@ export default function Dashboard({
         ]}
       />
 
-      {mobileCommunityPickerOpen && joinedMobileCommunities.length > 0 && (
-        <div className="fixed bottom-[4.7rem] left-[30%] z-[60] h-24 w-28 -translate-x-1/2 lg:hidden">
-          {joinedMobileCommunities.slice(0, 3).map((community, index, visibleCommunities) => {
-            const imageUrl = COMMUNITY_LOGOS[community.id] ?? community.logoUrl ?? COMMUNITY_COVER_IMAGES[community.id];
-            const count = visibleCommunities.length;
-            const startAngle = count === 1 ? -90 : -150;
-            const endAngle = count === 1 ? -90 : -30;
-            const angle = startAngle + ((endAngle - startAngle) * index) / Math.max(1, count - 1);
-            const radius = 46;
-            const x = Math.cos((angle * Math.PI) / 180) * radius;
-            const y = Math.sin((angle * Math.PI) / 180) * radius;
-            return (
-              <button
-                key={community.id}
-                type="button"
-                onClick={() => {
-                  setMobileCommunityPickerOpen(false);
-                  handleOpenCommunity(community.id);
-                }}
-                title={community.title}
-                aria-label={`Open ${community.title}`}
-                className="absolute left-1/2 top-1/2 flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-raw-border/35 bg-raw-surface text-[10px] font-semibold text-raw-text shadow-xl shadow-black/25 transition hover:border-raw-gold/55 focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/50"
-                style={{ transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))` }}
-              >
-                {imageUrl ? (
-                  <img src={imageUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
-                ) : (
-                  <span>{community.abbr}</span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      )}
+      <AnimatePresence>
+        {mobileCommunityPickerOpen && joinedMobileCommunities.length > 0 && mobileCommunityAnchorRect && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.86, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.88, y: 6 }}
+            transition={{ duration: 0.16, ease: "easeOut" }}
+            className="fixed z-[60] h-24 w-36 -translate-x-1/2 lg:hidden"
+            style={{
+              left: mobileCommunityAnchorRect.left + mobileCommunityAnchorRect.width / 2,
+              bottom: window.innerHeight - mobileCommunityAnchorRect.top + 10,
+              WebkitTouchCallout: "none",
+              WebkitUserSelect: "none",
+              userSelect: "none",
+            }}
+            onPointerDown={(event) => event.stopPropagation()}
+            onContextMenu={(event) => event.preventDefault()}
+          >
+            <div className="absolute bottom-0 left-1/2 h-3 w-px -translate-x-1/2 bg-gradient-to-t from-raw-gold/55 to-transparent" />
+            {joinedMobileCommunities.slice(0, 3).map((community, index, visibleCommunities) => {
+              const imageUrl = COMMUNITY_LOGOS[community.id] ?? community.logoUrl ?? COMMUNITY_COVER_IMAGES[community.id];
+              const positions =
+                visibleCommunities.length === 1
+                  ? [{ x: 0, y: -10 }]
+                  : visibleCommunities.length === 2
+                    ? [{ x: -30, y: -22 }, { x: 30, y: -22 }]
+                    : [{ x: -54, y: -14 }, { x: 0, y: -50 }, { x: 54, y: -14 }];
+              const { x, y } = positions[index];
+              return (
+                <motion.button
+                  key={community.id}
+                  type="button"
+                  initial={{ opacity: 0, scale: 0.7 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.75 }}
+                  transition={{ duration: 0.16, delay: index * 0.025 }}
+                  onClick={() => {
+                    setMobileCommunityPickerOpen(false);
+                    handleOpenCommunity(community.id);
+                  }}
+                  onContextMenu={(event) => event.preventDefault()}
+                  title={community.title}
+                  aria-label={`Open ${community.title}`}
+                  className="absolute bottom-0 left-1/2 flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-raw-border/35 bg-raw-surface text-[10px] font-semibold text-raw-text shadow-xl shadow-black/30 ring-1 ring-raw-gold/10 transition hover:border-raw-gold/55 focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/50"
+                  style={{
+                    transform: `translate(calc(-50% + ${x}px), ${y}px)`,
+                    WebkitTouchCallout: "none",
+                    WebkitUserSelect: "none",
+                    userSelect: "none",
+                  }}
+                >
+                  {imageUrl ? (
+                    <img
+                      src={imageUrl}
+                      alt=""
+                      className="h-full w-full object-cover"
+                      loading="lazy"
+                      draggable={false}
+                    />
+                  ) : (
+                    <span>{community.abbr}</span>
+                  )}
+                </motion.button>
+              );
+            })}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Main content */}
       <main className="relative z-10 pt-14 pb-28 lg:pl-[80px] lg:pb-8">

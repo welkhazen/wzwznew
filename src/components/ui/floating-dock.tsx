@@ -2,6 +2,7 @@
 import { cn } from "@/lib/utils";
 import { IconLayoutNavbarCollapse } from "@tabler/icons-react";
 import { useTheme } from "@/providers/useTheme";
+import type React from "react";
 import {
   AnimatePresence,
   MotionValue,
@@ -22,9 +23,14 @@ export const FloatingDock = ({
     icon: React.ReactNode;
     href: string;
     onClick?: () => void;
-    onPointerDown?: () => void;
-    onPointerUp?: () => void;
-    onPointerLeave?: () => void;
+    onPointerDown?: (event: React.PointerEvent<HTMLAnchorElement>) => void;
+    onPointerUp?: (event: React.PointerEvent<HTMLAnchorElement>) => void;
+    onPointerLeave?: (event: React.PointerEvent<HTMLAnchorElement>) => void;
+    onTouchStart?: (event: React.TouchEvent<HTMLAnchorElement>) => void;
+    onTouchEnd?: (event: React.TouchEvent<HTMLAnchorElement>) => void;
+    onTouchCancel?: (event: React.TouchEvent<HTMLAnchorElement>) => void;
+    onTouchMove?: (event: React.TouchEvent<HTMLAnchorElement>) => void;
+    onContextMenu?: (event: React.MouseEvent<HTMLAnchorElement>) => void;
     active?: boolean;
   }[];
   desktopClassName?: string;
@@ -47,9 +53,14 @@ const FloatingDockMobile = ({
     icon: React.ReactNode;
     href: string;
     onClick?: () => void;
-    onPointerDown?: () => void;
-    onPointerUp?: () => void;
-    onPointerLeave?: () => void;
+    onPointerDown?: (event: React.PointerEvent<HTMLAnchorElement>) => void;
+    onPointerUp?: (event: React.PointerEvent<HTMLAnchorElement>) => void;
+    onPointerLeave?: (event: React.PointerEvent<HTMLAnchorElement>) => void;
+    onTouchStart?: (event: React.TouchEvent<HTMLAnchorElement>) => void;
+    onTouchEnd?: (event: React.TouchEvent<HTMLAnchorElement>) => void;
+    onTouchCancel?: (event: React.TouchEvent<HTMLAnchorElement>) => void;
+    onTouchMove?: (event: React.TouchEvent<HTMLAnchorElement>) => void;
+    onContextMenu?: (event: React.MouseEvent<HTMLAnchorElement>) => void;
     active?: boolean;
   }[];
   className?: string;
@@ -84,6 +95,16 @@ const FloatingDockMobile = ({
           onPointerUp={item.onPointerUp}
           onPointerCancel={item.onPointerUp}
           onPointerLeave={item.onPointerLeave}
+          onTouchStart={item.onTouchStart}
+          onTouchEnd={item.onTouchEnd}
+          onTouchCancel={item.onTouchCancel}
+          onTouchMove={item.onTouchMove}
+          onContextMenu={item.onContextMenu}
+          style={{
+            WebkitTouchCallout: "none",
+            WebkitUserSelect: "none",
+            userSelect: "none",
+          }}
           className={cn(
             "flex flex-col items-center gap-1 px-3 transition-colors",
             item.active
