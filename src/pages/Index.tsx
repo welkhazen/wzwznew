@@ -18,6 +18,7 @@ const Index = () => {
   const {
     user,
     isLoggedIn,
+    sessionLoaded,
     polls,
     votedPolls,
     freeVotesUsed,
@@ -79,6 +80,16 @@ const Index = () => {
       window.location.replace(targetUrl);
     }
   }, [hostname, isLoggedIn, isTheRawMe, user]);
+
+  // Don't flash the landing page (and its poll popup) while auth is still
+  // resolving on refresh. Wait for the session to load first.
+  if (!sessionLoaded && !sharedPollRef) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-raw-black">
+        <div className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-raw-border border-t-raw-gold" />
+      </div>
+    );
+  }
 
   if (isLoggedIn && user && isTheRawMe) {
     return (
