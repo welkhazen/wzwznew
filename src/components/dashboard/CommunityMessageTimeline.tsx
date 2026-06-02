@@ -21,6 +21,8 @@ interface CommunityMessageTimelineProps {
   polls: CommunityPollRecord[];
   groupedMessages: MessageGroup[];
   activeMessageCount: number;
+  messagesLoading: boolean;
+  messagesError: boolean;
   canManagePolls: boolean;
   userId: string;
   username: string;
@@ -39,6 +41,8 @@ export function CommunityMessageTimeline({
   polls,
   groupedMessages,
   activeMessageCount,
+  messagesLoading,
+  messagesError,
   canManagePolls,
   userId,
   username,
@@ -239,12 +243,22 @@ export function CommunityMessageTimeline({
         </div>
       ))}
 
-      {!groupedMessages.length && activeMessageCount === 0 && (
+      {!groupedMessages.length && messagesLoading && (
+        <div className="flex h-full items-center justify-center text-sm text-raw-silver/35">
+          Loading messages...
+        </div>
+      )}
+      {!groupedMessages.length && !messagesLoading && messagesError && (
+        <div className="flex h-full items-center justify-center text-sm text-red-300/70">
+          Could not load messages. Pull to refresh or reopen the room.
+        </div>
+      )}
+      {!groupedMessages.length && !messagesLoading && !messagesError && activeMessageCount === 0 && (
         <div className="flex h-full items-center justify-center text-sm text-raw-silver/35">
           This group is quiet right now. Join and start the first real conversation.
         </div>
       )}
-      {!groupedMessages.length && activeMessageCount > 0 && (
+      {!groupedMessages.length && !messagesLoading && !messagesError && activeMessageCount > 0 && (
         <div className="flex h-full items-center justify-center text-sm text-raw-silver/35">
           No messages match your search.
         </div>

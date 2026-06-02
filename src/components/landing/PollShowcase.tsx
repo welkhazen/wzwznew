@@ -23,7 +23,7 @@ const FALLBACK_POLLS: PollData[] = POLL_QUESTION_SEEDS.map((s) => ({
   noPercent: Math.round((s.noVotes / (s.yesVotes + s.noVotes)) * 100),
 }));
 
-export function PollShowcase({ initialOpen = true, onResolved }: PollShowcaseProps) {
+export function PollShowcase({ initialOpen = false, onResolved }: PollShowcaseProps) {
   const [index, setIndex] = useState(0);
   const [open, setOpen] = useState(initialOpen);
   const [mounted, setMounted] = useState(false);
