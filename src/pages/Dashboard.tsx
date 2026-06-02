@@ -206,8 +206,6 @@ export default function Dashboard({
       ?? joinedMobileCommunities.find((community) => community.id === activeCommunityId)
       ?? joinedMobileCommunities[0];
   }, [activeCommunityId, joinedMobileCommunities, mobileCommunityCenterId]);
-  const currentCommunityIconUrl = mobileWheelCenterCommunity ? COMMUNITY_LOGOS[mobileWheelCenterCommunity.id] ?? mobileWheelCenterCommunity.logoUrl : undefined;
-
   const clearMobileCommunityPressTimer = () => {
     if (mobileCommunityPressTimerRef.current !== null) {
       window.clearTimeout(mobileCommunityPressTimerRef.current);
@@ -565,16 +563,7 @@ export default function Dashboard({
           },
           {
             title: "Communities",
-            icon: currentCommunityIconUrl ? (
-              <img
-                src={currentCommunityIconUrl}
-                alt=""
-                className="h-7 w-7 rounded-full border border-raw-gold/45 object-cover shadow-[0_0_14px_rgba(255,207,92,0.18)]"
-                draggable={false}
-              />
-            ) : (
-              <MessageCircle className="h-5 w-5" />
-            ),
+            icon: <MessageCircle className="h-5 w-5" />,
             href: "#",
             onClick: () => {
               if (mobileCommunitySuppressClickRef.current) {
