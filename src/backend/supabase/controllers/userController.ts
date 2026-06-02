@@ -1,5 +1,10 @@
 import { supabase } from '../client';
 import type { UserRow, UserRole } from '../models/user';
+import {
+  getUserFavoriteCommunities,
+  getUserPinnedMessage,
+  type PinnedMessageRecord,
+} from './userExtrasController';
 
 export async function isUsernameTaken(username: string): Promise<boolean> {
   const { data, error } = await supabase
@@ -45,6 +50,8 @@ export interface PublicUserProfile {
   role: UserRole | null;
   createdAt: string | null;
   profilePublic: boolean;
+  favoriteCommunityIds: string[];
+  pinnedMessage: PinnedMessageRecord | null;
 }
 
 export async function getPublicUserProfile(userId: string): Promise<PublicUserProfile | null> {
@@ -58,6 +65,20 @@ export async function getPublicUserProfile(userId: string): Promise<PublicUserPr
 
   const row = data as UserRow;
   const isPublic = row.profile_public === true;
+
+  let favoriteCommunityIds: string[] = [];
+  let pinnedMessage: PinnedMessageRecord | null = null;
+  if (isPublic) {
+    try {
+      [favoriteCommunityIds, pinnedMessage] = await Promise.all([
+        getUserFavoriteCommunities(userId),
+        getUserPinnedMessage(userId),
+      ]);
+    } catch {
+      // Profile extras are best-effort; fall back to empty/null on error.
+    }
+  }
+
   return {
     id: row.id,
     username: isPublic ? row.username : null,
@@ -65,6 +86,8 @@ export async function getPublicUserProfile(userId: string): Promise<PublicUserPr
     role: isPublic ? row.role : null,
     createdAt: isPublic ? row.created_at ?? null : null,
     profilePublic: isPublic,
+    favoriteCommunityIds,
+    pinnedMessage,
   };
 }
 

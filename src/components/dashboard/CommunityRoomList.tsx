@@ -1,4 +1,4 @@
-import { Lock, Users } from "lucide-react";
+import { Lock, Star, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CommunityBadge } from "@/components/dashboard/CommunityBadge";
 import { countOnlineMembers, countUnreadMessages } from "@/lib/communityChat";
@@ -25,6 +25,9 @@ interface CommunityRoomListProps {
   onJoinWaitlist: (community: PersistedCommunityRecord) => void;
   onOpenCommunity: (communityId: string) => void;
   onUnlockCommunity: (communityId: string) => void;
+  favoriteCommunityIds: string[];
+  onToggleFavorite: (communityId: string) => void;
+  favoriteLimitReached: boolean;
 }
 
 export function CommunityRoomList({
@@ -47,6 +50,9 @@ export function CommunityRoomList({
   onJoinWaitlist,
   onOpenCommunity,
   onUnlockCommunity,
+  favoriteCommunityIds,
+  onToggleFavorite,
+  favoriteLimitReached,
 }: CommunityRoomListProps) {
   return (
     <div className="grid grid-cols-2 items-stretch gap-4 sm:gap-5 lg:grid-cols-2 xl:grid-cols-3">
@@ -72,6 +78,39 @@ export function CommunityRoomList({
               <div className="absolute bottom-2 right-2 rounded-full border border-raw-border/40 bg-raw-black/60 px-2 py-0.5 text-[9px] text-raw-silver/70 backdrop-blur-sm">
                 {joined ? "Joined" : community.locked ? "Locked" : "Not joined"}
               </div>
+              {joined && (() => {
+                const isFavorite = favoriteCommunityIds.includes(community.id);
+                const disabled = !isFavorite && favoriteLimitReached;
+                return (
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      if (disabled) return;
+                      onToggleFavorite(community.id);
+                    }}
+                    disabled={disabled}
+                    aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+                    aria-pressed={isFavorite}
+                    title={
+                      isFavorite
+                        ? "Unfavorite"
+                        : disabled
+                          ? "Favorites limit reached (3)"
+                          : "Favorite (shows on your profile)"
+                    }
+                    className={`absolute left-2 top-2 flex h-7 w-7 items-center justify-center rounded-full border backdrop-blur-sm transition-colors ${
+                      isFavorite
+                        ? "border-raw-gold/60 bg-raw-gold/20 text-raw-gold"
+                        : disabled
+                          ? "border-raw-border/30 bg-raw-black/50 text-raw-silver/30"
+                          : "border-raw-border/40 bg-raw-black/55 text-raw-silver/70 hover:border-raw-gold/55 hover:text-raw-gold"
+                    }`}
+                  >
+                    <Star className={`h-3.5 w-3.5 ${isFavorite ? "fill-current" : ""}`} />
+                  </button>
+                );
+              })()}
             </div>
 
             <div className="flex flex-1 flex-col p-3 sm:p-5">

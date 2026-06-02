@@ -1,5 +1,5 @@
 import type { RefObject } from "react";
-import { AlertTriangle, Ban, BarChart3, Heart, MoreHorizontal, Trash2 } from "lucide-react";
+import { AlertTriangle, Ban, BarChart3, Heart, MoreHorizontal, Pin, PinOff, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,6 +34,9 @@ interface CommunityMessageTimelineProps {
   onOpenSenderProfile: (message: CommunityChatMessageRecord) => void;
   onOpenMessageReport: (message: CommunityChatMessageRecord) => void;
   onBlockMessageSender: (message: CommunityChatMessageRecord) => void;
+  pinnedMessageId: string | null;
+  onPinMessageToProfile: (message: CommunityChatMessageRecord) => void;
+  onUnpinMessageFromProfile: () => void;
 }
 
 export function CommunityMessageTimeline({
@@ -54,6 +57,9 @@ export function CommunityMessageTimeline({
   onOpenSenderProfile,
   onOpenMessageReport,
   onBlockMessageSender,
+  pinnedMessageId,
+  onPinMessageToProfile,
+  onUnpinMessageFromProfile,
 }: CommunityMessageTimelineProps) {
   return (
     <div ref={containerRef} className="flex-1 space-y-3 overflow-y-auto p-4">
@@ -207,34 +213,58 @@ export function CommunityMessageTimeline({
                       <Heart className={`h-2.5 w-2.5 ${alreadyLiked ? "fill-current" : ""}`} />
                       {likeCount > 0 && <span>{likeCount}</span>}
                     </button>
-                    {!isOwnMessage && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button
-                            className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-raw-border/20 text-raw-silver/45 opacity-0 transition-all hover:border-raw-gold/35 hover:bg-raw-gold/10 hover:text-raw-gold group-hover/msg:opacity-100 data-[state=open]:opacity-100"
-                            aria-label="Message actions"
-                          >
-                            <MoreHorizontal className="h-3.5 w-3.5" />
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="min-w-32 border-raw-border/30 bg-raw-black/95 text-raw-silver shadow-xl shadow-black/40">
-                          <DropdownMenuItem
-                            className="cursor-pointer gap-2 text-xs focus:bg-raw-surface/80 focus:text-raw-text"
-                            onClick={() => onOpenMessageReport(message)}
-                          >
-                            <AlertTriangle className="h-3.5 w-3.5 text-raw-gold/80" />
-                            Report
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="cursor-pointer gap-2 text-xs text-red-200/90 focus:bg-red-500/10 focus:text-red-100"
-                            onClick={() => onBlockMessageSender(message)}
-                          >
-                            <Ban className="h-3.5 w-3.5" />
-                            Block
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
+                    {(() => {
+                      const isPinned = pinnedMessageId === message.id;
+                      return (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button
+                              className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-raw-border/20 text-raw-silver/45 opacity-0 transition-all hover:border-raw-gold/35 hover:bg-raw-gold/10 hover:text-raw-gold group-hover/msg:opacity-100 data-[state=open]:opacity-100"
+                              aria-label="Message actions"
+                            >
+                              <MoreHorizontal className="h-3.5 w-3.5" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="min-w-40 border-raw-border/30 bg-raw-black/95 text-raw-silver shadow-xl shadow-black/40">
+                            {isPinned ? (
+                              <DropdownMenuItem
+                                className="cursor-pointer gap-2 text-xs focus:bg-raw-surface/80 focus:text-raw-text"
+                                onClick={() => onUnpinMessageFromProfile()}
+                              >
+                                <PinOff className="h-3.5 w-3.5 text-raw-gold/80" />
+                                Unpin from profile
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem
+                                className="cursor-pointer gap-2 text-xs focus:bg-raw-surface/80 focus:text-raw-text"
+                                onClick={() => onPinMessageToProfile(message)}
+                              >
+                                <Pin className="h-3.5 w-3.5 text-raw-gold/80" />
+                                Pin to my profile
+                              </DropdownMenuItem>
+                            )}
+                            {!isOwnMessage && (
+                              <>
+                                <DropdownMenuItem
+                                  className="cursor-pointer gap-2 text-xs focus:bg-raw-surface/80 focus:text-raw-text"
+                                  onClick={() => onOpenMessageReport(message)}
+                                >
+                                  <AlertTriangle className="h-3.5 w-3.5 text-raw-gold/80" />
+                                  Report
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  className="cursor-pointer gap-2 text-xs text-red-200/90 focus:bg-red-500/10 focus:text-red-100"
+                                  onClick={() => onBlockMessageSender(message)}
+                                >
+                                  <Ban className="h-3.5 w-3.5" />
+                                  Block
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      );
+                    })()}
                   </div>
                 )}
               </div>
