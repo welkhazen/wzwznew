@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Archive, Home, MessageCircle, Target, Trophy, Shield, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
 import { FloatingDock } from "@/components/ui/floating-dock";
-import { countUnreadMessages, readCommunityChats, type PersistedCommunityRecord } from "@/lib/communityChat";
+import { countUnreadMessages, type PersistedCommunityRecord } from "@/lib/communityChat";
 import type { DashboardTab } from "./DashboardNav";
 
 interface DashboardSidebarProps {
@@ -15,6 +15,7 @@ interface DashboardSidebarProps {
   onHomeClick: () => void;
   isHome: boolean;
   onLogout: () => void;
+  communities: PersistedCommunityRecord[];
 }
 
 const NAV: { icon: typeof Home; label: string; tab: DashboardTab | "home" }[] = [
@@ -33,19 +34,8 @@ export function DashboardSidebar({
   onHomeClick,
   isHome,
   onLogout,
+  communities,
 }: DashboardSidebarProps) {
-  const [communities, setCommunities] = useState<PersistedCommunityRecord[]>(() => readCommunityChats());
-
-  useEffect(() => {
-    const reload = () => setCommunities(readCommunityChats());
-    const onStorage = (e: StorageEvent) => { if (!e.key || e.key.startsWith("raw.community")) reload(); };
-    reload();
-    window.addEventListener("focus", reload);
-    window.addEventListener("storage", onStorage);
-    const id = window.setInterval(reload, 3000);
-    return () => { window.removeEventListener("focus", reload); window.removeEventListener("storage", onStorage); window.clearInterval(id); };
-  }, []);
-
   const totalUnread = useMemo(() =>
     communities.reduce((sum, c) => {
       if (!c.members.some((m) => m.userId === userId)) return sum;

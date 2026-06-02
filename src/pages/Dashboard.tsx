@@ -1,6 +1,5 @@
 import { FloatingDock } from "@/components/ui/floating-dock";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
-import { readCommunityChats } from "@/lib/communityChat";
 import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
 import { Archive, Home as HomeIcon, MessageCircle, Target, User as UserIcon, LogOut, Shield, Trophy, Sparkles, Moon, CloudMoon, Sun } from "lucide-react";
 import { useTheme } from "@/providers/useTheme";
@@ -143,8 +142,7 @@ export default function Dashboard({
 
   const activeCommunityTitle = useMemo(() => {
     if (!activeCommunityId) return undefined;
-    return (dashboardCommunities.length > 0 ? dashboardCommunities : readCommunityChats())
-      .find((c) => c.id === activeCommunityId)?.title;
+    return dashboardCommunities.find((c) => c.id === activeCommunityId)?.title;
   }, [activeCommunityId, dashboardCommunities]);
 
   const handleProfileClick = () => {
@@ -183,6 +181,7 @@ export default function Dashboard({
             xpLevel={progress?.level ?? 1}
             onNavigate={handleTabChange}
             onOpenCommunity={handleOpenCommunity}
+            communities={dashboardCommunities}
           />
         </DashboardSectionShell>
       );
@@ -299,6 +298,7 @@ export default function Dashboard({
                 pollsAnswered={votedPolls.size}
                 xp={progress?.xp ?? 0}
                 xpLevel={progress?.level ?? 1}
+                profilePublic={user.profilePublic}
                 onLogout={onLogout}
               />
             </DashboardSectionShell>
@@ -319,6 +319,7 @@ export default function Dashboard({
               xpLevel={progress?.level ?? 1}
               onNavigate={handleTabChange}
               onOpenCommunity={handleOpenCommunity}
+              communities={dashboardCommunities}
             />
           </DashboardSectionShell>
         );
@@ -344,7 +345,7 @@ export default function Dashboard({
         onLogout={onLogout}
         communityTitle={activeCommunityTitle}
         onBack={handleBackToCommunities}
-        communities={dashboardCommunities.length > 0 ? dashboardCommunities : undefined}
+        communities={dashboardCommunities}
         xp={progress?.xp ?? 0}
         level={progress?.level ?? 1}
       />
@@ -359,6 +360,7 @@ export default function Dashboard({
         onHomeClick={handleHomeClick}
         isHome={isHome}
         onLogout={onLogout}
+        communities={dashboardCommunities}
       />
 
       {/* Mobile bottom nav replaced with FloatingDock */}

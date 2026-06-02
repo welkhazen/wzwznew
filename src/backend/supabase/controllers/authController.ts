@@ -6,6 +6,8 @@ export interface AuthUser {
   role: string;
   status: string;
   avatar_level: number;
+  onboarding_completed?: boolean;
+  profile_public?: boolean;
 }
 
 const SESSION_KEY = 'raw.auth.session.v2';
@@ -22,6 +24,25 @@ type RpcResult = { ok: boolean; user?: AuthUser; error?: string };
 
 function normalizeAuthUser(user: AuthUser): AuthUser {
   return user;
+}
+
+async function refreshAuthUser(user: AuthUser): Promise<AuthUser> {
+  const { data, error } = await supabase
+    .from('users')
+    .select('id, username, role, status, avatar_level, onboarding_completed, profile_public')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (error || !data) return user;
+  return normalizeAuthUser(data as AuthUser);
+}
+
+export async function completeUserOnboarding(userId: string): Promise<{ ok: boolean; error?: string }> {
+  const { data, error } = await supabase.rpc('complete_user_onboarding', {
+    p_user_id: userId,
+  });
+  if (error) return { ok: false, error: error.message };
+  return (data as { ok: boolean; error?: string }) ?? { ok: true };
 }
 
 export async function signUp(username: string, password: string): Promise<RpcResult> {
@@ -78,7 +99,7 @@ export async function getSession(): Promise<AuthUser | null> {
   try {
     const raw = localStorage.getItem(SESSION_KEY);
     if (!raw) return null;
-    const user = normalizeAuthUser(JSON.parse(raw) as AuthUser);
+    const user = await refreshAuthUser(normalizeAuthUser(JSON.parse(raw) as AuthUser));
     saveSession(user);
     return user;
   } catch {

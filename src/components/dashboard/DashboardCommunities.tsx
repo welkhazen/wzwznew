@@ -27,8 +27,6 @@ import {
   countOnlineMembers,
   formatChatDayLabel,
   formatChatTimestamp,
-  leaveCommunityChat,
-  updateCommunityPresentation,
 } from "@/lib/communityChat";
 import {
   fetchCommunities,
@@ -38,6 +36,7 @@ import {
   touchMemberActivity,
   markCommunityRead as markCommunityReadSupabase,
   setCommunityNotifications as setCommunityNotificationsSupabase,
+  updateCommunityPresentation,
 } from "@/backend/supabase/controllers/communityController";
 import {
   sendMessage as sendMessageSupabase,
@@ -73,6 +72,7 @@ import {
   type CommunityAccess,
 } from "@/lib/communityAccess";
 import { readAvatarCatalogLocal } from "@/lib/avatarCatalog";
+import { getPublicUserProfile, type PublicUserProfile } from "@/backend/supabase/controllers/userController";
 import {
   getCommunitySenderBlockKey,
   readBlockedCommunitySenders,
@@ -82,6 +82,7 @@ import type { User } from "@/store/types";
 import { CommunityMessageTimeline } from "@/components/dashboard/CommunityMessageTimeline";
 import { CommunityMessageComposer } from "@/components/dashboard/CommunityMessageComposer";
 import { CommunityRoomList } from "@/components/dashboard/CommunityRoomList";
+import { AvatarFigure } from "@/components/ui/avatar-figure";
 
 const WAITLIST_UNLOCK_THRESHOLD = 200;
 const MESSAGE_PAGE_SIZE = 10;
@@ -94,39 +95,10 @@ function updateTokenBalanceCache(userId: string, balance: number): void {
   window.localStorage.setItem(key, String(balance));
   window.dispatchEvent(new CustomEvent(TOKEN_BALANCE_UPDATED_EVENT, { detail: { storageKey: key, balance } }));
 }
-const COMMUNITIES_CACHE_KEY = "raw.dashboard.communities.v1";
 const MAX_COMMUNITY_MESSAGE_LENGTH = 150;
 
 function getMessageSenderBlockKey(message: Pick<CommunityChatMessageRecord, "senderId" | "senderName">): string {
   return getCommunitySenderBlockKey(message.senderId, message.senderName);
-}
-
-function limitCachedCommunityMessages(communities: PersistedCommunityRecord[]): PersistedCommunityRecord[] {
-  return communities.map((community) => ({
-    ...community,
-    messages: community.messages.slice(-MESSAGE_PAGE_SIZE),
-  }));
-}
-
-function readCachedCommunities(): PersistedCommunityRecord[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.sessionStorage.getItem(COMMUNITIES_CACHE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? limitCachedCommunityMessages(parsed) : [];
-  } catch {
-    return [];
-  }
-}
-
-function writeCachedCommunities(communities: PersistedCommunityRecord[]): void {
-  if (typeof window === "undefined") return;
-  try {
-    window.sessionStorage.setItem(COMMUNITIES_CACHE_KEY, JSON.stringify(limitCachedCommunityMessages(communities)));
-  } catch {
-    // ignore storage write errors
-  }
 }
 
 function mergeCommunityMessages(
@@ -158,6 +130,18 @@ function upsertCommunityMessage(
   return communities.map((community) =>
     community.id === communityId
       ? { ...community, messages: mergeCommunityMessages(community.messages, message) }
+      : community
+  );
+}
+
+function removeCommunityMessage(
+  communities: PersistedCommunityRecord[],
+  communityId: string,
+  messageId: string,
+): PersistedCommunityRecord[] {
+  return communities.map((community) =>
+    community.id === communityId
+      ? { ...community, messages: community.messages.filter((message) => message.id !== messageId) }
       : community
   );
 }
@@ -233,7 +217,7 @@ export function DashboardCommunities(props) {
       // Main search query state (fix ReferenceError)
       const [searchQuery, setSearchQuery] = useState("");
     // Main community state (fix ReferenceError)
-    const [communities, setCommunities] = useState<PersistedCommunityRecord[]>(() => readCachedCommunities());
+    const [communities, setCommunities] = useState<PersistedCommunityRecord[]>([]);
   // Destructure props for clarity and to avoid ReferenceError
   const {
     user,
@@ -248,7 +232,7 @@ export function DashboardCommunities(props) {
   const [showRequestButton, setShowRequestButton] = useState(false);
   const [requestBtnText, setRequestBtnText] = useState("Didn't find your community?");
   const [mobileRequestExpanded, setMobileRequestExpanded] = useState(false);
-  const [isInitialCommunitiesLoading, setIsInitialCommunitiesLoading] = useState(() => readCachedCommunities().length === 0);
+  const [isInitialCommunitiesLoading, setIsInitialCommunitiesLoading] = useState(true);
 
   // Show button after scrolling 400px
   useEffect(() => {
@@ -354,6 +338,12 @@ const COMMUNITY_LOGOS: Record<string, string> = {
   const [requestDraft, setRequestDraft] = useState<CommunityRequestDraft>(INITIAL_REQUEST_DRAFT);
   const [reportDraft, setReportDraft] = useState<ReportDraft>(INITIAL_REPORT_DRAFT);
   const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+  const [profileTarget, setProfileTarget] = useState<{
+    message: CommunityChatMessageRecord;
+    profile: PublicUserProfile | null;
+    loading: boolean;
+  } | null>(null);
   const [communityRequests, setCommunityRequests] = useState<CommunityRequestRecord[]>([]);
   const [chatReports, setChatReports] = useState<ChatReportRecord[]>([]);
   const [communityJoinRequests, setCommunityJoinRequests] = useState<CommunityJoinRequestRecord[]>([]);
@@ -389,7 +379,6 @@ const COMMUNITY_LOGOS: Record<string, string> = {
     const updateCommunities = useCallback((updater: (communities: PersistedCommunityRecord[]) => PersistedCommunityRecord[]) => {
       setCommunities((previous) => {
         const next = updater(previous);
-        writeCachedCommunities(next);
         onCommunitiesChange?.(next);
         return next;
       });
@@ -408,7 +397,6 @@ const COMMUNITY_LOGOS: Record<string, string> = {
             ...community,
             messages: previous.find((item) => item.id === community.id)?.messages ?? community.messages,
           }));
-          writeCachedCommunities(next);
           onCommunitiesChange?.(next);
           return next;
         });
@@ -782,6 +770,10 @@ const COMMUNITY_LOGOS: Record<string, string> = {
           },
           (payload) => {
             if (payload.eventType === "DELETE") {
+              const deletedId = (payload.old as { id?: string } | null)?.id;
+              if (deletedId) {
+                updateCommunities((current) => removeCommunityMessage(current, activeCommunityId, deletedId));
+              }
               return;
             }
             const nextMessage = mapCommunityMessage(payload.new as DbCommunityMessage);
@@ -797,6 +789,22 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         void supabase.removeChannel(channel);
       };
     }, [activeCommunityId, updateCommunities]);
+
+    const handleOpenSenderProfile = useCallback((message: CommunityChatMessageRecord) => {
+      setProfileDialogOpen(true);
+      setProfileTarget({ message, profile: null, loading: true });
+      getPublicUserProfile(message.senderId)
+        .then((profile) => {
+          setProfileTarget((current) => (
+            current?.message.id === message.id ? { message, profile, loading: false } : current
+          ));
+        })
+        .catch(() => {
+          setProfileTarget((current) => (
+            current?.message.id === message.id ? { message, profile: null, loading: false } : current
+          ));
+        });
+    }, []);
 
     useEffect(() => {
       if (!selectedCommunity || !isJoined) {
@@ -923,7 +931,6 @@ const COMMUNITY_LOGOS: Record<string, string> = {
 
       try {
         await leaveCommunitySupabase(communityId, user.id);
-        leaveCommunityChat(communityId, user.id);
         lastTouchedCommunityRef.current = "";
         await reloadChatData();
         onBackToCommunities?.();
@@ -1152,7 +1159,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       }
     };
 
-    const handleCommunitySettingsSave = () => {
+    const handleCommunitySettingsSave = async () => {
       if (!selectedCommunity || !canEditSelectedCommunity) {
         toast({
           title: "Creator access required",
@@ -1170,14 +1177,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         return;
       }
 
-      const updatedCommunity = updateCommunityPresentation(selectedCommunity.id, {
-        actorUserId: user.id,
-        actorUsername: user.username,
-        title: trimmedTitle,
-        logoUrl: communitySettingsDraft.logoUrl,
-      });
-
-      if (!updatedCommunity) {
+      if (!canManageCommunity(selectedCommunity, user.id, user.username)) {
         toast({
           title: "Creator access required",
           description: "Only the community creator can change the group name or logo.",
@@ -1185,12 +1185,20 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         return;
       }
 
-      reloadChatData();
-      setLogoDialogOpen(false);
-      toast({
-        title: "Community updated",
-        description: `${updatedCommunity.title} now shows the latest name and logo across the app.`,
-      });
+      try {
+        await updateCommunityPresentation(selectedCommunity.id, {
+          title: trimmedTitle,
+          logoUrl: communitySettingsDraft.logoUrl,
+        });
+        await reloadChatData();
+        setLogoDialogOpen(false);
+        toast({
+          title: "Community updated",
+          description: `${trimmedTitle} now shows the latest name and logo across the app.`,
+        });
+      } catch {
+        toast({ title: "Update failed", description: "Please try again." });
+      }
     };
 
     const handleSubmitReport = async () => {
@@ -1679,6 +1687,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
               onVotePoll={(pollId, optionId) => { void handleVoteOnPoll(pollId, optionId); }}
               onRetryMessage={(message) => { void handleRetryMessage(message); }}
               onLikeMessage={(message) => { void handleLikeMessage(message); }}
+              onOpenSenderProfile={handleOpenSenderProfile}
               onOpenMessageReport={handleOpenMessageReport}
               onBlockMessageSender={handleBlockMessageSender}
             />
@@ -1882,6 +1891,57 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                   )}
                 </div>
               ))}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={profileDialogOpen} onOpenChange={setProfileDialogOpen}>
+          <DialogContent className="border border-raw-border/40 bg-raw-black p-0 text-raw-text sm:max-w-sm sm:rounded-3xl">
+            <div className="border-b border-raw-border/20 bg-gradient-to-br from-raw-gold/[0.08] via-raw-black to-raw-black px-6 py-6">
+              <DialogHeader className="space-y-2 text-left">
+                <DialogTitle className="font-display text-xl tracking-wide text-raw-text">Chat profile</DialogTitle>
+                <DialogDescription className="text-sm leading-relaxed text-raw-silver/45">
+                  People choose how much of their profile appears in community chat.
+                </DialogDescription>
+              </DialogHeader>
+            </div>
+            <div className="px-6 py-6">
+              {profileTarget?.loading ? (
+                <p className="text-sm text-raw-silver/50">Loading profile...</p>
+              ) : profileTarget?.profile?.profilePublic ? (
+                <div className="flex items-center gap-4">
+                  <AvatarFigure avatarIndex={profileTarget.profile.avatarLevel} size="lg" selected />
+                  <div className="min-w-0">
+                    <p className="truncate font-display text-lg tracking-wide text-raw-text">
+                      @{profileTarget.profile.username ?? profileTarget.message.senderName}
+                    </p>
+                    <p className="mt-1 text-xs uppercase tracking-[0.16em] text-raw-silver/40">
+                      {profileTarget.profile.role ?? "member"}
+                    </p>
+                    {profileTarget.profile.createdAt && (
+                      <p className="mt-2 text-xs text-raw-silver/45">
+                        Joined {formatChatTimestamp(profileTarget.profile.createdAt)}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-4">
+                  <AvatarFigure
+                    avatarIndex={
+                      profileTarget?.message.senderAvatarLevel
+                      ?? (profileTarget ? senderAvatarLevels[profileTarget.message.senderId] : undefined)
+                      ?? 1
+                    }
+                    size="lg"
+                    selected
+                  />
+                  <div className="min-w-0">
+                    <p className="font-display text-lg tracking-wide text-raw-text">Private user</p>
+                    <p className="mt-1 text-sm text-raw-silver/45">This user keeps their profile private.</p>
+                  </div>
+                </div>
+              )}
             </div>
           </DialogContent>
         </Dialog>

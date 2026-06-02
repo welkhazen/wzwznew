@@ -3,7 +3,7 @@ import { ContainerTextFlipLazy } from "@/components/ui/container-text-flip.lazy"
 import { ChevronRight, Dices, Zap, Flame, Users, BarChart3 } from "lucide-react";
 import type { Poll } from "@/store/useRawStore";
 import type { DashboardTab } from "./DashboardNav";
-import { readCommunityChats } from "@/lib/communityChat";
+import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
 import { COMMUNITY_COVER_IMAGES, COMMUNITY_COVER_VIDEOS } from "@/lib/communityConstants";
 import { getTodayKey } from "@/store/useRawStore.storage";
 import { useTheme } from "@/providers/useTheme";
@@ -19,6 +19,7 @@ interface DashboardHomeProps {
   dailyPollLimit: number;
   xp: number;
   xpLevel: number;
+  communities: PersistedCommunityRecord[];
   onNavigate: (tab: DashboardTab) => void;
   onOpenCommunity: (communityId: string) => void;
 }
@@ -29,7 +30,7 @@ function CommunityCard({
   isLight,
   onOpenCommunity,
 }: {
-  community: ReturnType<typeof readCommunityChats>[number];
+  community: PersistedCommunityRecord;
   rank?: number;
   isLight: boolean;
   onOpenCommunity: (id: string) => void;
@@ -175,13 +176,14 @@ export function DashboardHome({
   dailyPollLimit,
   xp,
   xpLevel,
+  communities,
   onNavigate,
   onOpenCommunity,
 }: DashboardHomeProps) {
   const { mode } = useTheme();
   const isLight = mode === "light";
   const dailyItemsLeft = Math.max(0, dailyPollLimit - dailyAnsweredCount);
-  const allCommunities = useMemo(() => readCommunityChats(), []);
+  const allCommunities = communities;
 
   const spinStorageKey = userId ? `raw.daily-spin.${userId}` : null;
   const hasSpunToday = useMemo(() => {

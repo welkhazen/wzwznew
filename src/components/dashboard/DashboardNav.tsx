@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { track } from "@/lib/analytics";
-import { readCommunityChats } from "@/lib/communityChat";
 import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
 import {
   ArrowLeft,
@@ -63,7 +62,7 @@ interface DashboardNavProps {
   onLogout: () => void;
   communityTitle?: string;
   onBack?: () => void;
-  communities?: PersistedCommunityRecord[];
+  communities: PersistedCommunityRecord[];
   xp?: number;
   level?: number;
 }
@@ -127,7 +126,7 @@ function readStoredTokenBalance(userId: string): number {
   }
 }
 
-export function DashboardNav({ userId, username, avatarLevel, showAdminLink = false, onAddTestXP, onProfileClick, onBillingClick, onLogout, communityTitle, onBack, communities: propCommunities, xp = 0, level = 1 }: DashboardNavProps) {
+export function DashboardNav({ userId, username, avatarLevel, showAdminLink = false, onAddTestXP, onProfileClick, onBillingClick, onLogout, communityTitle, onBack, communities, xp = 0, level = 1 }: DashboardNavProps) {
   const { mode, accent, accentPresets, setMode, setAccent } = useTheme();
   const [hoveredMode, setHoveredMode] = useState<ThemeMode | null>(null);
   const [hoveredAccent, setHoveredAccent] = useState<AccentPresetId | null>(null);
@@ -163,7 +162,6 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
   }, [userId]);
 
   const notifications = useMemo<DashboardNotification[]>(() => {
-    const communities = propCommunities ?? readCommunityChats();
     const tag = `@${username}`.toLowerCase();
     const results: DashboardNotification[] = [];
     for (const community of communities) {
@@ -206,7 +204,7 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
       }
     }
     return results.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  }, [userId, username, propCommunities]);
+  }, [userId, username, communities]);
   const unseenNotificationCount = useMemo(() => {
     const seen = new Set(seenNotificationIds);
     return notifications.filter((notification) => !seen.has(notification.id)).length;
@@ -218,7 +216,6 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
   }, [userId]);
 
   const blockedSenderLabels = useMemo(() => {
-    const communities = propCommunities ?? readCommunityChats();
     const labels = new Map<string, string>();
     for (const community of communities) {
       for (const message of community.messages) {
@@ -231,7 +228,7 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
       }
     }
     return blockedSenderKeys.map((key) => ({ key, label: labels.get(key) ?? key }));
-  }, [blockedSenderKeys, propCommunities]);
+  }, [blockedSenderKeys, communities]);
 
   const handleUnblockSender = (senderKey: string) => {
     const next = blockedSenderKeys.filter((key) => key !== senderKey);

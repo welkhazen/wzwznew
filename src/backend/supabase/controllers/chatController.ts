@@ -15,6 +15,7 @@ export type DbCommunityMessage = {
   deleted_at: string | null;
   deleted_by_user_id: string | null;
   liked_by: string[] | null;
+  sender_avatar_level?: number | null;
 };
 
 export function mapCommunityMessage(row: DbCommunityMessage): CommunityChatMessageRecord {
@@ -32,12 +33,13 @@ export function mapCommunityMessage(row: DbCommunityMessage): CommunityChatMessa
     deletedAt: row.deleted_at ?? undefined,
     deletedByUserId: row.deleted_by_user_id ?? undefined,
     likedBy: row.liked_by ?? [],
+    senderAvatarLevel: row.sender_avatar_level ?? undefined,
   };
 }
 
 export async function sendMessage(
   communityId: string,
-  { senderId, senderName, text, replyToMessage }: SendCommunityMessageInput
+  { senderId, senderName, senderAvatarLevel, text, replyToMessage }: SendCommunityMessageInput
 ): Promise<CommunityChatMessageRecord> {
   const { data, error } = await supabase
     .from('community_messages')
@@ -45,6 +47,7 @@ export async function sendMessage(
       community_id: communityId,
       sender_id: senderId,
       sender_name: senderName,
+      sender_avatar_level: senderAvatarLevel ?? null,
       text,
       reply_to_message_id: replyToMessage?.id ?? null,
       reply_to_sender_name: replyToMessage?.senderName ?? null,
