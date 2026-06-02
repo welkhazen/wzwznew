@@ -37,3 +37,7 @@ graphify-out/manifest.json
 graphify-out/cost.json
 graphify-out/cache/
 graphify-out/.graphify_*
+graphify-deploy/
+
+# Claude Flow / ruflo runtime files
+.claude-flow/
