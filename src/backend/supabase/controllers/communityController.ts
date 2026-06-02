@@ -140,6 +140,19 @@ export async function setCommunityNotifications(communityId: string, userId: str
   if (error) throw error;
 }
 
+export async function updateCommunityPresentation(
+  communityId: string,
+  input: { title: string; logoUrl?: string },
+): Promise<void> {
+  const title = input.title.trim();
+  const logoUrl = input.logoUrl?.trim() || null;
+  const { error } = await supabase
+    .from('communities')
+    .update({ title, abbr: buildCommunityAbbr(title), logo_url: logoUrl })
+    .eq('id', communityId);
+  if (error) throw error;
+}
+
 export async function createCommunityFromRequest(request: CommunityRequestRecord): Promise<void> {
   const id = `request-${request.id}`;
   const abbr = buildCommunityAbbr(request.communityName);

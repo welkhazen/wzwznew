@@ -4,7 +4,7 @@ import { ArrowLeft, Ban, BellRing, CheckCircle2, Copy, Database, Download, Flag,
 import { RARITY_CONFIG, RARITY_ORDER, type AvatarRarity } from "@/lib/avatarRarity";
 import { createAdminPoll as createAdminPollInApi, deleteAdminPoll as deleteAdminPollFromApi, fetchAdminPolls, testPollConnection } from "@/lib/api/polls";
 import { fetchCommunityRequests, updateCommunityRequestStatus } from "@/backend/supabase/controllers/communityRequestController";
-import { createCommunityFromRequest } from "@/backend/supabase/controllers/communityController";
+import { createCommunityFromRequest, joinCommunity } from "@/backend/supabase/controllers/communityController";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import { useRawStore } from "@/store/useRawStore";
@@ -55,7 +55,6 @@ import {
   type IssueReportRecord,
   type PersistedUserRecord,
 } from "@/lib/adminData";
-import { approveCommunityJoinRequest, createCommunityFromApprovedRequest } from "@/lib/communityChat";
 import { getAvatar } from "@/lib/avataridentity";
 
 import {
@@ -657,7 +656,7 @@ export default function Admin() {
     }
   };
 
-  const handleJoinRequestStatus = (requestId: string, status: "approved" | "rejected") => {
+  const handleJoinRequestStatus = async (requestId: string, status: "approved" | "rejected") => {
     const target = communityJoinRequests.find((r) => r.id === requestId);
     if (!target) return;
 
@@ -669,19 +668,23 @@ export default function Admin() {
     setCommunityJoinRequests(nextRequests);
     writeCommunityJoinRequests(nextRequests);
 
-    if (status === "approved") {
-      approveCommunityJoinRequest(target.communityId, target.requesterId, target.requesterName);
-      track("admin_action_performed", { action: "approve_join_request", resource_id: requestId });
-    } else {
-      track("admin_action_performed", { action: "reject_join_request", resource_id: requestId });
-    }
+    try {
+      if (status === "approved") {
+        await joinCommunity(target.communityId, target.requesterId, target.requesterName);
+        track("admin_action_performed", { action: "approve_join_request", resource_id: requestId });
+      } else {
+        track("admin_action_performed", { action: "reject_join_request", resource_id: requestId });
+      }
 
-    toast({
-      title: status === "approved" ? "Access granted" : "Request rejected",
-      description: status === "approved"
-        ? `@${target.requesterName} has been added to ${target.communityTitle}.`
-        : `@${target.requesterName}'s request to join ${target.communityTitle} was rejected.`,
-    });
+      toast({
+        title: status === "approved" ? "Access granted" : "Request rejected",
+        description: status === "approved"
+          ? `@${target.requesterName} has been added to ${target.communityTitle}.`
+          : `@${target.requesterName}'s request to join ${target.communityTitle} was rejected.`,
+      });
+    } catch {
+      toast({ title: "Action failed", description: "Please try again." });
+    }
   };
 
   const handleModeration = async (reportId: string, action: "dismissed" | "warned" | "banned") => {
