@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { useTheme } from "@/providers/useTheme";
 import { useRawStore } from "@/store/useRawStore";
 import { spendTokens } from "@/lib/api/tokens";
+import { supabase } from "@/lib/supabase";
 import type { AccentPresetId } from "@/providers/theme-context";
 
 interface ThemeCustomizerProps {
@@ -16,27 +17,34 @@ interface ThemeCustomizerProps {
 
 const ACCENT_UNLOCK_PRICE = 10;
 const ACCENT_FREE_ID: AccentPresetId = "gold";
-const OWNED_ACCENTS_STORAGE_KEY = "raw.theme.accent.owned.v1";
+const OWNED_ACCENTS_CACHE_PREFIX = "raw.theme.accent.owned.v2.";
 
-function readOwnedAccentsLocal(): AccentPresetId[] {
-  if (typeof window === "undefined") return [ACCENT_FREE_ID];
+function cacheKey(userId: string): string {
+  return `${OWNED_ACCENTS_CACHE_PREFIX}${userId}`;
+}
+
+function readOwnedAccentsCache(userId: string | undefined): AccentPresetId[] {
+  if (!userId || typeof window === "undefined") return [ACCENT_FREE_ID];
   try {
-    const raw = window.localStorage.getItem(OWNED_ACCENTS_STORAGE_KEY);
+    const raw = window.localStorage.getItem(cacheKey(userId));
     if (!raw) return [ACCENT_FREE_ID];
     const parsed = JSON.parse(raw) as unknown;
     if (!Array.isArray(parsed)) return [ACCENT_FREE_ID];
-    return [ACCENT_FREE_ID, ...parsed.filter((id): id is AccentPresetId => typeof id === "string" && id !== ACCENT_FREE_ID)];
+    return Array.from(new Set([
+      ACCENT_FREE_ID,
+      ...parsed.filter((id): id is AccentPresetId => typeof id === "string"),
+    ]));
   } catch {
     return [ACCENT_FREE_ID];
   }
 }
 
-function writeOwnedAccentsLocal(ids: AccentPresetId[]): void {
-  if (typeof window === "undefined") return;
+function writeOwnedAccentsCache(userId: string | undefined, ids: AccentPresetId[]): void {
+  if (!userId || typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(OWNED_ACCENTS_STORAGE_KEY, JSON.stringify(Array.from(new Set(ids))));
+    window.localStorage.setItem(cacheKey(userId), JSON.stringify(Array.from(new Set(ids))));
   } catch {
-    // localStorage may be unavailable; runtime state still holds.
+    // localStorage may be unavailable; server remains the source of truth.
   }
 }
 
@@ -46,23 +54,40 @@ export function ThemeCustomizer({ placement = "floating", triggerStyle = "icon",
   const isFloating = placement === "floating";
   const selectedAccent = accentPresets.find((preset) => preset.id === accent);
 
-  const [ownedAccents, setOwnedAccents] = useState<AccentPresetId[]>(() => {
-    const initial = readOwnedAccentsLocal();
-    // Always include current accent so a previously chosen color stays unlocked.
-    return Array.from(new Set([...initial, accent]));
-  });
+  const [ownedAccents, setOwnedAccents] = useState<AccentPresetId[]>(() =>
+    readOwnedAccentsCache(user?.id),
+  );
   const [unlocking, setUnlocking] = useState<AccentPresetId | null>(null);
   const [errorId, setErrorId] = useState<AccentPresetId | null>(null);
 
+  // Hydrate from Supabase whenever the signed-in user changes so unlocks
+  // follow the account across devices and survive logout/login.
   useEffect(() => {
-    if (!ownedAccents.includes(accent)) {
-      setOwnedAccents((prev) => Array.from(new Set([...prev, accent])));
+    if (!user?.id) {
+      setOwnedAccents([ACCENT_FREE_ID]);
+      return;
     }
-  }, [accent, ownedAccents]);
+    let cancelled = false;
+    setOwnedAccents(readOwnedAccentsCache(user.id));
+    void (async () => {
+      const { data, error } = await supabase
+        .from("user_accent_unlocks")
+        .select("accent_id")
+        .eq("user_id", user.id);
+      if (cancelled || error || !data) return;
+      const serverIds = data.map((row) => row.accent_id as AccentPresetId);
+      const merged = Array.from(new Set([ACCENT_FREE_ID, ...serverIds]));
+      setOwnedAccents(merged);
+      writeOwnedAccentsCache(user.id, merged);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
 
   useEffect(() => {
-    writeOwnedAccentsLocal(ownedAccents);
-  }, [ownedAccents]);
+    writeOwnedAccentsCache(user?.id, ownedAccents);
+  }, [ownedAccents, user?.id]);
 
   const ownedSet = useMemo(() => new Set(ownedAccents), [ownedAccents]);
 
@@ -85,6 +110,16 @@ export function ThemeCustomizer({ placement = "floating", triggerStyle = "icon",
       try {
         await spendTokens(user.id, ACCENT_UNLOCK_PRICE);
         addTokens(-ACCENT_UNLOCK_PRICE);
+        const { error: insertError } = await supabase
+          .from("user_accent_unlocks")
+          .upsert({ user_id: user.id, accent_id: id }, { onConflict: "user_id,accent_id" });
+        if (insertError) {
+          // Server persist failed — refund the locally tracked tokens so the user
+          // can retry without being silently overcharged.
+          addTokens(ACCENT_UNLOCK_PRICE);
+          setErrorId(id);
+          return;
+        }
         setOwnedAccents((prev) => Array.from(new Set([...prev, id])));
         setAccent(id);
       } catch {
