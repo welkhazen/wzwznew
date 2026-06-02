@@ -1,6 +1,7 @@
 import { FloatingDock } from "@/components/ui/floating-dock";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
+import { fetchCommunities } from "@/backend/supabase/controllers/communityController";
 import { Archive, Home as HomeIcon, MessageCircle, Target, User as UserIcon, LogOut, Shield, Trophy, Sparkles, Moon, CloudMoon, Sun } from "lucide-react";
 import { useTheme } from "@/providers/useTheme";
 import type { ThemeMode } from "@/providers/theme-context";
@@ -112,6 +113,26 @@ export default function Dashboard({
       return;
     }
   }, [activeCommunityId, location.pathname]);
+
+  // Preload communities at the Dashboard level so the home "Trending"
+  // section renders without waiting for the user to visit the Communities tab.
+  useEffect(() => {
+    if (dashboardCommunities.length > 0) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const list = await fetchCommunities();
+        if (!cancelled) setDashboardCommunities(list);
+      } catch {
+        // Tab-level fetch will retry; leave list empty.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // Run once on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     void awardOnce("daily-login", getTodayKey(), XP_REWARDS.DAILY_LOGIN);
