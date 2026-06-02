@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Archive, Home, MessageCircle, Target, Trophy, Shield, LogOut } from "lucide-react";
+import { Archive, Home, MessageCircle, Store, Target, Trophy, Shield, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
 import { FloatingDock } from "@/components/ui/floating-dock";
 import { countUnreadMessages, type PersistedCommunityRecord } from "@/lib/communityChat";
@@ -23,6 +23,7 @@ const NAV: { icon: typeof Home; label: string; tab: DashboardTab | "home" }[] = 
   { icon: MessageCircle, label: "Communities", tab: "communities" },
   { icon: Target,        label: "Polls",       tab: "polls"       },
   { icon: Trophy,        label: "Challenges",  tab: "challenges"  },
+  { icon: Store,         label: "Store",       tab: "store"       },
   { icon: Archive,       label: "Inventory",   tab: "inventory"   },
 ];
 
@@ -70,14 +71,16 @@ export function DashboardSidebar({
 
   return (
     <aside className="fixed left-0 top-14 bottom-0 z-40 hidden w-[80px] flex-col items-center border-r border-raw-border/20 bg-raw-black lg:flex">
-      {/* Floating dock nav */}
-      <div className="flex flex-1 items-center justify-center">
+      {/* Floating dock nav — anchored directly under the navbar */}
+      <div className="mt-4 flex w-full justify-center">
         <FloatingDock
           orientation="vertical"
           desktopClassName="border-raw-border/25 bg-raw-surface/30 w-14 gap-3 py-4 px-2"
           items={dockItems}
         />
       </div>
+
+      <div className="flex-1" />
 
       {/* Bottom actions */}
       <div className="flex flex-col items-center gap-2 pb-5">
