@@ -24,6 +24,7 @@ export const FloatingDock = ({
     href: string;
     onClick?: () => void;
     onPointerDown?: (event: React.PointerEvent<HTMLButtonElement>) => void;
+    onPointerMove?: (event: React.PointerEvent<HTMLButtonElement>) => void;
     onPointerUp?: (event: React.PointerEvent<HTMLButtonElement>) => void;
     onPointerLeave?: (event: React.PointerEvent<HTMLButtonElement>) => void;
     onTouchStart?: (event: React.TouchEvent<HTMLButtonElement>) => void;
@@ -54,6 +55,7 @@ const FloatingDockMobile = ({
     href: string;
     onClick?: () => void;
     onPointerDown?: (event: React.PointerEvent<HTMLButtonElement>) => void;
+    onPointerMove?: (event: React.PointerEvent<HTMLButtonElement>) => void;
     onPointerUp?: (event: React.PointerEvent<HTMLButtonElement>) => void;
     onPointerLeave?: (event: React.PointerEvent<HTMLButtonElement>) => void;
     onTouchStart?: (event: React.TouchEvent<HTMLButtonElement>) => void;
@@ -87,6 +89,7 @@ const FloatingDockMobile = ({
           key={item.title}
           onClick={() => item.onClick?.()}
           onPointerDown={item.onPointerDown}
+          onPointerMove={item.onPointerMove}
           onPointerUp={item.onPointerUp}
           onPointerCancel={item.onPointerUp}
           onPointerLeave={item.onPointerLeave}

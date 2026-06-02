@@ -1,11 +1,9 @@
 import { FloatingDock } from "@/components/ui/floating-dock";
-import { AnimatePresence, motion } from "framer-motion";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import type React from "react";
 import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
 import { fetchCommunities } from "@/backend/supabase/controllers/communityController";
 import { Archive, Home as HomeIcon, MessageCircle, Target, User as UserIcon, LogOut, Shield, Trophy, Sparkles, Moon, CloudMoon, Sun } from "lucide-react";
-import { COMMUNITY_COVER_IMAGES } from "@/lib/communityConstants";
 import LNTLogo from "@/assets/LNT.webp";
 import SYTLogo from "@/assets/logospeak.webp";
 import IIJMLogo from "@/assets/itisjustme.webp";
@@ -16,6 +14,7 @@ import { DashboardNav, type DashboardTab } from "@/components/dashboard/Dashboar
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { DashboardHome } from "@/components/dashboard/DashboardHome";
 import { DashboardSectionShell } from "@/components/dashboard/DashboardSectionShell";
+import { CommunityQuickSwitchWheel } from "@/components/dashboard/CommunityQuickSwitchWheel";
 import { NotificationConsentPrompt } from "@/components/notifications/NotificationConsentPrompt";
 import { LevelUpCelebration } from "@/components/ui/LevelUpCelebration";
 import { useUserProgress } from "@/store/useUserProgress";
@@ -118,6 +117,7 @@ export default function Dashboard({
   const [mobileCommunityAnchorRect, setMobileCommunityAnchorRect] = useState<DOMRect | null>(null);
   const [mobileCommunityCenterId, setMobileCommunityCenterId] = useState<string | null>(null);
   const mobileCommunityPressTimerRef = useRef<number | null>(null);
+  const mobileCommunityPressStartRef = useRef<{ x: number; y: number } | null>(null);
   const mobileCommunityLongPressRef = useRef(false);
   const communityRouteMatch = matchPath("/dashboard/communities/:communityId", location.pathname);
   const activeCommunityId = communityRouteMatch?.params.communityId ?? null;
@@ -185,22 +185,23 @@ export default function Dashboard({
     if (!activeCommunityId) return undefined;
     return dashboardCommunities.find((c) => c.id === activeCommunityId)?.title;
   }, [activeCommunityId, dashboardCommunities]);
-  const joinedMobileCommunities = useMemo(
-    () => dashboardCommunities.filter((community) => community.members.some((member) => member.userId === user.id)),
-    [dashboardCommunities, user.id],
-  );
+  const joinedMobileCommunities = useMemo(() => {
+    return dashboardCommunities
+      .filter((community) => community.members.some((member) => member.userId === user.id))
+      .sort((a, b) => {
+        const aMember = a.members.find((member) => member.userId === user.id);
+        const bMember = b.members.find((member) => member.userId === user.id);
+        return (Date.parse(bMember?.lastSeenAt ?? bMember?.joinedAt ?? "") || 0)
+          - (Date.parse(aMember?.lastSeenAt ?? aMember?.joinedAt ?? "") || 0);
+      });
+  }, [dashboardCommunities, user.id]);
   const mobileWheelCenterCommunity = useMemo(() => {
     if (joinedMobileCommunities.length === 0) return null;
     return joinedMobileCommunities.find((community) => community.id === mobileCommunityCenterId)
       ?? joinedMobileCommunities.find((community) => community.id === activeCommunityId)
       ?? joinedMobileCommunities[0];
   }, [activeCommunityId, joinedMobileCommunities, mobileCommunityCenterId]);
-  const mobileWheelOuterCommunities = useMemo(() => {
-    if (!mobileWheelCenterCommunity) return [];
-    return joinedMobileCommunities
-      .filter((community) => community.id !== mobileWheelCenterCommunity.id)
-      .slice(0, 3);
-  }, [joinedMobileCommunities, mobileWheelCenterCommunity]);
+  const currentCommunityIconUrl = mobileWheelCenterCommunity ? COMMUNITY_LOGOS[mobileWheelCenterCommunity.id] ?? mobileWheelCenterCommunity.logoUrl : undefined;
 
   const clearMobileCommunityPressTimer = () => {
     if (mobileCommunityPressTimerRef.current !== null) {
@@ -209,8 +210,20 @@ export default function Dashboard({
     }
   };
 
+  const getMobileCommunityPressPoint = (event: React.TouchEvent<HTMLElement> | React.PointerEvent<HTMLElement>) => {
+    if ("touches" in event) {
+      const touch = event.touches[0] ?? event.changedTouches[0];
+      return touch ? { x: touch.clientX, y: touch.clientY } : null;
+    }
+    return { x: event.clientX, y: event.clientY };
+  };
+
   const handleMobileCommunityPressStart = (event: React.TouchEvent<HTMLElement> | React.PointerEvent<HTMLElement>) => {
     if ("pointerType" in event && event.pointerType === "mouse") return;
+    if (mobileCommunityPressTimerRef.current !== null || mobileCommunityPickerOpen) return;
+    const point = getMobileCommunityPressPoint(event);
+    if (!point) return;
+    mobileCommunityPressStartRef.current = point;
     setMobileCommunityAnchorRect(event.currentTarget.getBoundingClientRect());
     clearMobileCommunityPressTimer();
     mobileCommunityLongPressRef.current = false;
@@ -226,6 +239,19 @@ export default function Dashboard({
 
   const handleMobileCommunityPressEnd = () => {
     clearMobileCommunityPressTimer();
+    mobileCommunityPressStartRef.current = null;
+    if (mobileCommunityLongPressRef.current) {
+      setMobileCommunityPickerOpen(false);
+    }
+  };
+
+  const handleMobileCommunityPressMove = (event: React.TouchEvent<HTMLElement> | React.PointerEvent<HTMLElement>) => {
+    const start = mobileCommunityPressStartRef.current;
+    const point = getMobileCommunityPressPoint(event);
+    if (!start || !point) return;
+    if (Math.hypot(point.x - start.x, point.y - start.y) > 10) {
+      handleMobileCommunityPressEnd();
+    }
   };
 
   useEffect(() => {
@@ -508,7 +534,16 @@ export default function Dashboard({
           },
           {
             title: "Communities",
-            icon: <MessageCircle className="h-5 w-5" />,
+            icon: currentCommunityIconUrl ? (
+              <img
+                src={currentCommunityIconUrl}
+                alt=""
+                className="h-7 w-7 rounded-full border border-raw-gold/45 object-cover shadow-[0_0_14px_rgba(255,207,92,0.18)]"
+                draggable={false}
+              />
+            ) : (
+              <MessageCircle className="h-5 w-5" />
+            ),
             href: "#",
             onClick: () => {
               if (mobileCommunityLongPressRef.current) {
@@ -519,12 +554,13 @@ export default function Dashboard({
               handleTabChange("communities");
             },
             onPointerDown: handleMobileCommunityPressStart,
+            onPointerMove: handleMobileCommunityPressMove,
             onPointerUp: handleMobileCommunityPressEnd,
             onPointerLeave: handleMobileCommunityPressEnd,
             onTouchStart: handleMobileCommunityPressStart,
             onTouchEnd: handleMobileCommunityPressEnd,
             onTouchCancel: handleMobileCommunityPressEnd,
-            onTouchMove: handleMobileCommunityPressEnd,
+            onTouchMove: handleMobileCommunityPressMove,
             onContextMenu: (event) => event.preventDefault(),
             active: !isHome && activeTab === "communities",
           },
@@ -559,110 +595,17 @@ export default function Dashboard({
         ]}
       />
 
-      <AnimatePresence>
-        {mobileCommunityPickerOpen && mobileWheelCenterCommunity && mobileCommunityAnchorRect && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.86, y: 8 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.88, y: 6 }}
-            transition={{ duration: 0.16, ease: "easeOut" }}
-            className="fixed z-[60] h-36 w-36 -translate-x-1/2 lg:hidden"
-            style={{
-              left: mobileCommunityAnchorRect.left + mobileCommunityAnchorRect.width / 2,
-              bottom: window.innerHeight - mobileCommunityAnchorRect.top + 8,
-              WebkitTouchCallout: "none",
-              WebkitUserSelect: "none",
-              userSelect: "none",
-            }}
-            onPointerDown={(event) => event.stopPropagation()}
-            onContextMenu={(event) => event.preventDefault()}
-          >
-            <div className="absolute bottom-0 left-1/2 h-3 w-px -translate-x-1/2 bg-gradient-to-t from-raw-gold/65 to-transparent" />
-            <div
-              className="absolute inset-x-1 bottom-3 aspect-square overflow-hidden rounded-full border border-raw-border/40 bg-raw-black/80 shadow-[0_18px_42px_rgba(0,0,0,0.45),0_0_28px_rgba(255,207,92,0.12)] backdrop-blur-xl"
-              style={{
-                background:
-                  "radial-gradient(circle at 50% 50%, rgba(255,207,92,0.15) 0 18%, rgba(12,12,14,0.92) 19% 48%, rgba(0,0,0,0.88) 49% 100%), conic-gradient(from 210deg, rgba(255,207,92,0.24) 0deg 118deg, rgba(255,255,255,0.07) 118deg 122deg, rgba(255,255,255,0.045) 122deg 238deg, rgba(255,255,255,0.07) 238deg 242deg, rgba(255,255,255,0.045) 242deg 360deg)",
-              }}
-            >
-              <div className="absolute inset-[18px] rounded-full border border-raw-border/25" />
-              <div className="absolute left-1/2 top-1/2 h-px w-full -translate-x-1/2 -translate-y-1/2 rotate-[30deg] bg-gradient-to-r from-transparent via-raw-silver/25 to-transparent" />
-              <div className="absolute left-1/2 top-1/2 h-px w-full -translate-x-1/2 -translate-y-1/2 rotate-[150deg] bg-gradient-to-r from-transparent via-raw-silver/25 to-transparent" />
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                setMobileCommunityPickerOpen(false);
-                handleOpenCommunity(mobileWheelCenterCommunity.id);
-              }}
-              onContextMenu={(event) => event.preventDefault()}
-              title={mobileWheelCenterCommunity.title}
-              aria-label={`Current community ${mobileWheelCenterCommunity.title}`}
-              className="absolute bottom-3 left-1/2 flex h-14 w-14 -translate-x-1/2 -translate-y-[33px] items-center justify-center overflow-hidden rounded-full border border-raw-gold/70 bg-raw-black text-[10px] font-semibold text-raw-text shadow-[0_0_22px_rgba(255,207,92,0.22)] ring-2 ring-raw-gold/30"
-              style={{
-                WebkitTouchCallout: "none",
-                WebkitUserSelect: "none",
-                userSelect: "none",
-              }}
-            >
-              {(() => {
-                const imageUrl = COMMUNITY_LOGOS[mobileWheelCenterCommunity.id] ?? mobileWheelCenterCommunity.logoUrl ?? COMMUNITY_COVER_IMAGES[mobileWheelCenterCommunity.id];
-                return imageUrl ? (
-                  <img src={imageUrl} alt="" className="h-full w-full object-cover" loading="lazy" draggable={false} />
-                ) : (
-                  <span>{mobileWheelCenterCommunity.abbr}</span>
-                );
-              })()}
-            </button>
-            {mobileWheelOuterCommunities.map((community, index, visibleCommunities) => {
-              const imageUrl = COMMUNITY_LOGOS[community.id] ?? community.logoUrl ?? COMMUNITY_COVER_IMAGES[community.id];
-              const positions =
-                visibleCommunities.length === 1
-                  ? [{ x: 0, y: -68 }]
-                  : visibleCommunities.length === 2
-                    ? [{ x: -36, y: -48 }, { x: 36, y: -48 }]
-                    : [{ x: -43, y: -39 }, { x: 0, y: -70 }, { x: 43, y: -39 }];
-              const { x, y } = positions[index];
-              return (
-                <motion.button
-                  key={community.id}
-                  type="button"
-                  initial={{ opacity: 0, scale: 0.7 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.75 }}
-                  transition={{ duration: 0.16, delay: index * 0.025 }}
-                  onClick={() => {
-                    setMobileCommunityPickerOpen(false);
-                    handleOpenCommunity(community.id);
-                  }}
-                  onContextMenu={(event) => event.preventDefault()}
-                  title={community.title}
-                  aria-label={`Open ${community.title}`}
-                  className="absolute bottom-0 left-1/2 flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-raw-border/35 bg-raw-surface text-[10px] font-semibold text-raw-text shadow-xl shadow-black/30 ring-1 ring-raw-gold/10 transition hover:border-raw-gold/55 focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/50"
-                  style={{
-                    transform: `translate(calc(-50% + ${x}px), ${y}px)`,
-                    WebkitTouchCallout: "none",
-                    WebkitUserSelect: "none",
-                    userSelect: "none",
-                  }}
-                >
-                  {imageUrl ? (
-                    <img
-                      src={imageUrl}
-                      alt=""
-                      className="h-full w-full object-cover"
-                      loading="lazy"
-                      draggable={false}
-                    />
-                  ) : (
-                    <span>{community.abbr}</span>
-                  )}
-                </motion.button>
-              );
-            })}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <CommunityQuickSwitchWheel
+        open={mobileCommunityPickerOpen}
+        anchorRect={mobileCommunityAnchorRect}
+        currentCommunity={mobileWheelCenterCommunity}
+        joinedCommunities={joinedMobileCommunities}
+        logoUrlsByCommunityId={COMMUNITY_LOGOS}
+        onSelectCommunity={(communityId) => {
+          setMobileCommunityPickerOpen(false);
+          handleOpenCommunity(communityId);
+        }}
+      />
 
       {/* Main content */}
       <main className="relative z-10 pt-14 pb-28 lg:pl-[80px] lg:pb-8">
