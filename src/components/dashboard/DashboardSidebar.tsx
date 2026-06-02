@@ -20,6 +20,7 @@ interface DashboardSidebarProps {
   isHome: boolean;
   onLogout: () => void;
   communities: PersistedCommunityRecord[];
+  favoriteCommunityIds: string[];
   onOpenCommunity: (communityId: string) => void;
 }
 
@@ -47,12 +48,22 @@ export function DashboardSidebar({
   isHome,
   onLogout,
   communities,
+  favoriteCommunityIds,
   onOpenCommunity,
 }: DashboardSidebarProps) {
   const joinedCommunities = useMemo(
     () => communities.filter((community) => community.members.some((member) => member.userId === userId)),
     [communities, userId],
   );
+
+  const displayedCommunities = useMemo(() => {
+    if (favoriteCommunityIds.length === 0) return joinedCommunities.slice(0, 3);
+    const byId = new Map(joinedCommunities.map((c) => [c.id, c] as const));
+    const picked = favoriteCommunityIds
+      .map((id) => byId.get(id))
+      .filter((c): c is PersistedCommunityRecord => Boolean(c));
+    return picked.slice(0, 3);
+  }, [favoriteCommunityIds, joinedCommunities]);
 
   const totalUnread = useMemo(() =>
     communities.reduce((sum, c) => {
@@ -97,9 +108,9 @@ export function DashboardSidebar({
         />
       </div>
 
-      {joinedCommunities.length > 0 && (
+      {displayedCommunities.length > 0 && (
         <div className="mt-5 flex w-full flex-col items-center gap-3 px-3">
-          {joinedCommunities.map((community) => {
+          {displayedCommunities.map((community) => {
             const imageUrl = COMMUNITY_LOGOS[community.id] ?? community.logoUrl ?? COMMUNITY_COVER_IMAGES[community.id];
             const unread = countUnreadMessages(community, userId);
 

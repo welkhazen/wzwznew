@@ -48,7 +48,9 @@
       "Bash(git commit -m 'Preload communities at dashboard mount so home Trending populates *)",
       "Bash(git commit -m 'Gate landing render on sessionLoaded to stop poll popup flash on dashboard refresh *)",
       "Bash(git fetch *)",
-      "Bash(git commit -m 'Add Store tab, lift sidebar icons under navbar, scope Inventory to owned items *)"
+      "Bash(git commit -m 'Add Store tab, lift sidebar icons under navbar, scope Inventory to owned items *)",
+      "Bash(git commit -m 'Hide '\\\\''Didn'\\\\''t find your community?'\\\\'' CTA on mobile *)",
+      "Bash(git commit -m 'Add favorite communities \\(max 3\\) and pinned chat message *)"
     ]
   }
 }

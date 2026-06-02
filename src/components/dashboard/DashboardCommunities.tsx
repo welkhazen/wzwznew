@@ -71,6 +71,14 @@ import {
 import { readAvatarCatalogLocal } from "@/lib/avatarCatalog";
 import { getPublicUserProfile, type PublicUserProfile } from "@/backend/supabase/controllers/userController";
 import {
+  MAX_FAVORITE_COMMUNITIES,
+  getUserFavoriteCommunities,
+  setUserFavoriteCommunities,
+  setUserPinnedMessage,
+  clearUserPinnedMessage,
+  type PinnedMessageRecord,
+} from "@/backend/supabase/controllers/userExtrasController";
+import {
   getCommunitySenderBlockKey,
   readBlockedCommunitySenders,
   writeBlockedCommunitySenders,
@@ -338,6 +346,8 @@ const COMMUNITY_LOGOS: Record<string, string> = {
   const [waitlistJoiningId, setWaitlistJoiningId] = useState<string | null>(null);
   const [communityAccess, setCommunityAccess] = useState<CommunityAccess>({ hasSubscription: false, unlockedIds: new Set<string>() });
   const [unlockingId, setUnlockingId] = useState<string | null>(null);
+  const [favoriteCommunityIds, setFavoriteCommunityIds] = useState<string[]>([]);
+  const [ownPinnedMessage, setOwnPinnedMessage] = useState<PinnedMessageRecord | null>(null);
   const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [leavingCommunityId, setLeavingCommunityId] = useState<string | null>(null);
   const [messageDraft, setMessageDraft] = useState("");
@@ -812,6 +822,79 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         void supabase.removeChannel(channel);
       };
     }, [activeCommunityId, updateCommunities]);
+
+    useEffect(() => {
+      let cancelled = false;
+      void (async () => {
+        try {
+          const ids = await getUserFavoriteCommunities(user.id);
+          if (!cancelled) setFavoriteCommunityIds(ids);
+        } catch {
+          // Best-effort.
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }, [user.id]);
+
+    const broadcastFavoritesUpdated = useCallback((ids: string[]) => {
+      window.dispatchEvent(new CustomEvent("raw:favorite-communities-updated", {
+        detail: { userId: user.id, ids },
+      }));
+    }, [user.id]);
+
+    const handleToggleFavorite = useCallback(async (communityId: string) => {
+      const isFavorite = favoriteCommunityIds.includes(communityId);
+      let next: string[];
+      if (isFavorite) {
+        next = favoriteCommunityIds.filter((id) => id !== communityId);
+      } else {
+        if (favoriteCommunityIds.length >= MAX_FAVORITE_COMMUNITIES) {
+          toast({ title: "Favorites full", description: `You can pick up to ${MAX_FAVORITE_COMMUNITIES} favorite communities.` });
+          return;
+        }
+        next = [...favoriteCommunityIds, communityId];
+      }
+      const previous = favoriteCommunityIds;
+      setFavoriteCommunityIds(next);
+      broadcastFavoritesUpdated(next);
+      try {
+        await setUserFavoriteCommunities(user.id, next);
+      } catch {
+        setFavoriteCommunityIds(previous);
+        broadcastFavoritesUpdated(previous);
+        toast({ title: "Could not update favorites", description: "Please try again." });
+      }
+    }, [broadcastFavoritesUpdated, favoriteCommunityIds, user.id]);
+
+    const handlePinMessageToProfile = useCallback(async (message: CommunityChatMessageRecord, community: PersistedCommunityRecord) => {
+      try {
+        const payload = {
+          messageId: message.id,
+          communityId: community.id,
+          communityTitle: community.title,
+          senderName: message.senderName,
+          messageText: message.text,
+          messageCreatedAt: message.createdAt,
+        };
+        await setUserPinnedMessage(user.id, payload);
+        setOwnPinnedMessage({ ...payload, pinnedAt: new Date().toISOString() });
+        toast({ title: "Pinned to your profile", description: "Others will see this message on your chat profile." });
+      } catch {
+        toast({ title: "Could not pin message", description: "Please try again." });
+      }
+    }, [user.id]);
+
+    const handleClearPinnedMessage = useCallback(async () => {
+      try {
+        await clearUserPinnedMessage(user.id);
+        setOwnPinnedMessage(null);
+        toast({ title: "Pinned message removed" });
+      } catch {
+        toast({ title: "Could not remove pinned message", description: "Please try again." });
+      }
+    }, [user.id]);
 
     const handleOpenSenderProfile = useCallback((message: CommunityChatMessageRecord) => {
       setProfileDialogOpen(true);
@@ -1364,6 +1447,9 @@ const COMMUNITY_LOGOS: Record<string, string> = {
           onJoinWaitlist={(community) => { void handleJoinWaitlist(community); }}
           onOpenCommunity={onOpenCommunity}
           onUnlockCommunity={(communityId) => { void handleUnlockCommunity(communityId); }}
+          favoriteCommunityIds={favoriteCommunityIds}
+          favoriteLimitReached={favoriteCommunityIds.length >= MAX_FAVORITE_COMMUNITIES}
+          onToggleFavorite={(communityId) => { void handleToggleFavorite(communityId); }}
         />
       </div>
     );
@@ -1646,6 +1732,12 @@ const COMMUNITY_LOGOS: Record<string, string> = {
               onOpenSenderProfile={handleOpenSenderProfile}
               onOpenMessageReport={handleOpenMessageReport}
               onBlockMessageSender={handleBlockMessageSender}
+              pinnedMessageId={ownPinnedMessage?.messageId ?? null}
+              onPinMessageToProfile={(message) => {
+                if (!selectedCommunity) return;
+                void handlePinMessageToProfile(message, selectedCommunity);
+              }}
+              onUnpinMessageFromProfile={() => { void handleClearPinnedMessage(); }}
             />
 
             <CommunityMessageComposer
@@ -1865,21 +1957,68 @@ const COMMUNITY_LOGOS: Record<string, string> = {
               {profileTarget?.loading ? (
                 <p className="text-sm text-raw-silver/50">Loading profile...</p>
               ) : profileTarget?.profile?.profilePublic ? (
-                <div className="flex items-center gap-4">
-                  <AvatarFigure avatarIndex={profileTarget.profile.avatarLevel} size="lg" selected />
-                  <div className="min-w-0">
-                    <p className="truncate font-display text-lg tracking-wide text-raw-text">
-                      @{profileTarget.profile.username ?? profileTarget.message.senderName}
-                    </p>
-                    <p className="mt-1 text-xs uppercase tracking-[0.16em] text-raw-silver/40">
-                      {profileTarget.profile.role ?? "member"}
-                    </p>
-                    {profileTarget.profile.createdAt && (
-                      <p className="mt-2 text-xs text-raw-silver/45">
-                        Joined {formatChatTimestamp(profileTarget.profile.createdAt)}
+                <div className="space-y-5">
+                  <div className="flex items-center gap-4">
+                    <AvatarFigure avatarIndex={profileTarget.profile.avatarLevel} size="lg" selected />
+                    <div className="min-w-0">
+                      <p className="truncate font-display text-lg tracking-wide text-raw-text">
+                        @{profileTarget.profile.username ?? profileTarget.message.senderName}
                       </p>
-                    )}
+                      <p className="mt-1 text-xs uppercase tracking-[0.16em] text-raw-silver/40">
+                        {profileTarget.profile.role ?? "member"}
+                      </p>
+                      {profileTarget.profile.createdAt && (
+                        <p className="mt-2 text-xs text-raw-silver/45">
+                          Joined {formatChatTimestamp(profileTarget.profile.createdAt)}
+                        </p>
+                      )}
+                    </div>
                   </div>
+
+                  {profileTarget.profile.pinnedMessage && (
+                    <div className="rounded-2xl border border-raw-gold/25 bg-raw-gold/[0.06] p-3">
+                      <p className="text-[10px] uppercase tracking-[0.16em] text-raw-gold/70">Pinned message</p>
+                      <p className="mt-1.5 text-sm leading-relaxed text-raw-text/85">
+                        {profileTarget.profile.pinnedMessage.messageText}
+                      </p>
+                      <p className="mt-2 text-[10px] text-raw-silver/45">
+                        {profileTarget.profile.pinnedMessage.communityTitle ?? "Community"}
+                        {profileTarget.profile.pinnedMessage.messageCreatedAt
+                          ? ` · ${formatChatTimestamp(profileTarget.profile.pinnedMessage.messageCreatedAt)}`
+                          : ""}
+                      </p>
+                    </div>
+                  )}
+
+                  {profileTarget.profile.favoriteCommunityIds.length > 0 && (
+                    <div>
+                      <p className="text-[10px] uppercase tracking-[0.16em] text-raw-silver/45">Favorite communities</p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {profileTarget.profile.favoriteCommunityIds.map((id) => {
+                          const community = communities.find((c) => c.id === id);
+                          const logo = COMMUNITY_LOGOS[id] ?? community?.logoUrl ?? COMMUNITY_COVER_IMAGES[id];
+                          return (
+                            <button
+                              key={id}
+                              type="button"
+                              onClick={() => {
+                                setProfileDialogOpen(false);
+                                onOpenCommunity(id);
+                              }}
+                              title={community?.title ?? id}
+                              className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-raw-border/35 bg-raw-surface/40 text-[10px] font-semibold text-raw-text transition hover:border-raw-gold/55"
+                            >
+                              {logo ? (
+                                <img src={logo} alt="" className="h-full w-full object-cover" loading="lazy" />
+                              ) : (
+                                <span>{community?.abbr ?? id.slice(0, 2).toUpperCase()}</span>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="flex items-center gap-4">

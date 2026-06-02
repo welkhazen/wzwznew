@@ -3,6 +3,7 @@ import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import type React from "react";
 import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
 import { fetchCommunities } from "@/backend/supabase/controllers/communityController";
+import { getUserFavoriteCommunities } from "@/backend/supabase/controllers/userExtrasController";
 import { Archive, Home as HomeIcon, MessageCircle, Target, User as UserIcon, LogOut, Shield, Trophy, Sparkles, Moon, CloudMoon, Sun } from "lucide-react";
 import LNTLogo from "@/assets/LNT.webp";
 import SYTLogo from "@/assets/logospeak.webp";
@@ -114,6 +115,7 @@ export default function Dashboard({
   const { progress, leveledUpTo, clearLevelUp, award, awardOnce } = useUserProgress(user.id);
   const [activeTab, setActiveTab] = useState<DashboardTab>("home");
   const [dashboardCommunities, setDashboardCommunities] = useState<PersistedCommunityRecord[]>([]);
+  const [favoriteCommunityIds, setFavoriteCommunityIds] = useState<string[]>([]);
   const [isHome, setIsHome] = useState(true);
   const [mobileCommunityPickerOpen, setMobileCommunityPickerOpen] = useState(false);
   const [mobileCommunityAnchorRect, setMobileCommunityAnchorRect] = useState<DOMRect | null>(null);
@@ -163,6 +165,28 @@ export default function Dashboard({
     void awardOnce("daily-login", getTodayKey(), XP_REWARDS.DAILY_LOGIN);
   }, [awardOnce]);
 
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const ids = await getUserFavoriteCommunities(user.id);
+        if (!cancelled) setFavoriteCommunityIds(ids);
+      } catch {
+        // Favorites are best-effort; sidebar/radial fall back to recent joined.
+      }
+    })();
+    const onChange = (event: Event) => {
+      const detail = (event as CustomEvent<{ userId?: string; ids?: string[] }>).detail;
+      if (!detail || detail.userId !== user.id || !Array.isArray(detail.ids)) return;
+      setFavoriteCommunityIds(detail.ids);
+    };
+    window.addEventListener("raw:favorite-communities-updated", onChange);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("raw:favorite-communities-updated", onChange);
+    };
+  }, [user.id]);
+
   const handleTabChange = (tab: DashboardTab) => {
     setActiveTab(tab);
     setIsHome(false);
@@ -191,7 +215,7 @@ export default function Dashboard({
     return dashboardCommunities.find((c) => c.id === activeCommunityId)?.title;
   }, [activeCommunityId, dashboardCommunities]);
   const joinedMobileCommunities = useMemo(() => {
-    return dashboardCommunities
+    const joined = dashboardCommunities
       .filter((community) => community.members.some((member) => member.userId === user.id))
       .sort((a, b) => {
         const aMember = a.members.find((member) => member.userId === user.id);
@@ -199,7 +223,13 @@ export default function Dashboard({
         return (Date.parse(bMember?.lastSeenAt ?? bMember?.joinedAt ?? "") || 0)
           - (Date.parse(aMember?.lastSeenAt ?? aMember?.joinedAt ?? "") || 0);
       });
-  }, [dashboardCommunities, user.id]);
+    if (favoriteCommunityIds.length === 0) return joined.slice(0, 3);
+    const byId = new Map(joined.map((c) => [c.id, c] as const));
+    return favoriteCommunityIds
+      .map((id) => byId.get(id))
+      .filter((c): c is PersistedCommunityRecord => Boolean(c))
+      .slice(0, 3);
+  }, [dashboardCommunities, favoriteCommunityIds, user.id]);
   const mobileWheelCenterCommunity = useMemo(() => {
     if (joinedMobileCommunities.length === 0) return null;
     return joinedMobileCommunities.find((community) => community.id === mobileCommunityCenterId)
@@ -514,6 +544,7 @@ export default function Dashboard({
         isHome={isHome}
         onLogout={onLogout}
         communities={dashboardCommunities}
+        favoriteCommunityIds={favoriteCommunityIds}
         onOpenCommunity={handleOpenCommunity}
       />
 
