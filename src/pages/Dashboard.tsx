@@ -288,6 +288,7 @@ export default function Dashboard({
                 polls={polls}
                 votedPolls={votedPolls}
                 avatarLevel={avatarLevel}
+                onAvatarChange={setAvatarLevel}
                 ownedAvatarLevels={ownedAvatarLevels}
                 onUnlockAvatar={unlockAvatarLevel}
                 onAvatarPurchased={markAvatarOwned}
