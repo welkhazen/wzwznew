@@ -27,8 +27,6 @@ import {
   countOnlineMembers,
   formatChatDayLabel,
   formatChatTimestamp,
-  leaveCommunityChat,
-  updateCommunityPresentation,
 } from "@/lib/communityChat";
 import {
   fetchCommunities,
@@ -38,6 +36,7 @@ import {
   touchMemberActivity,
   markCommunityRead as markCommunityReadSupabase,
   setCommunityNotifications as setCommunityNotificationsSupabase,
+  updateCommunityPresentation,
 } from "@/backend/supabase/controllers/communityController";
 import {
   sendMessage as sendMessageSupabase,
@@ -96,39 +95,10 @@ function updateTokenBalanceCache(userId: string, balance: number): void {
   window.localStorage.setItem(key, String(balance));
   window.dispatchEvent(new CustomEvent(TOKEN_BALANCE_UPDATED_EVENT, { detail: { storageKey: key, balance } }));
 }
-const COMMUNITIES_CACHE_KEY = "raw.dashboard.communities.v1";
 const MAX_COMMUNITY_MESSAGE_LENGTH = 150;
 
 function getMessageSenderBlockKey(message: Pick<CommunityChatMessageRecord, "senderId" | "senderName">): string {
   return getCommunitySenderBlockKey(message.senderId, message.senderName);
-}
-
-function limitCachedCommunityMessages(communities: PersistedCommunityRecord[]): PersistedCommunityRecord[] {
-  return communities.map((community) => ({
-    ...community,
-    messages: community.messages.slice(-MESSAGE_PAGE_SIZE),
-  }));
-}
-
-function readCachedCommunities(): PersistedCommunityRecord[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.sessionStorage.getItem(COMMUNITIES_CACHE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? limitCachedCommunityMessages(parsed) : [];
-  } catch {
-    return [];
-  }
-}
-
-function writeCachedCommunities(communities: PersistedCommunityRecord[]): void {
-  if (typeof window === "undefined") return;
-  try {
-    window.sessionStorage.setItem(COMMUNITIES_CACHE_KEY, JSON.stringify(limitCachedCommunityMessages(communities)));
-  } catch {
-    // ignore storage write errors
-  }
 }
 
 function mergeCommunityMessages(
@@ -247,7 +217,7 @@ export function DashboardCommunities(props) {
       // Main search query state (fix ReferenceError)
       const [searchQuery, setSearchQuery] = useState("");
     // Main community state (fix ReferenceError)
-    const [communities, setCommunities] = useState<PersistedCommunityRecord[]>(() => readCachedCommunities());
+    const [communities, setCommunities] = useState<PersistedCommunityRecord[]>([]);
   // Destructure props for clarity and to avoid ReferenceError
   const {
     user,
@@ -262,7 +232,7 @@ export function DashboardCommunities(props) {
   const [showRequestButton, setShowRequestButton] = useState(false);
   const [requestBtnText, setRequestBtnText] = useState("Didn't find your community?");
   const [mobileRequestExpanded, setMobileRequestExpanded] = useState(false);
-  const [isInitialCommunitiesLoading, setIsInitialCommunitiesLoading] = useState(() => readCachedCommunities().length === 0);
+  const [isInitialCommunitiesLoading, setIsInitialCommunitiesLoading] = useState(true);
 
   // Show button after scrolling 400px
   useEffect(() => {
@@ -409,7 +379,6 @@ const COMMUNITY_LOGOS: Record<string, string> = {
     const updateCommunities = useCallback((updater: (communities: PersistedCommunityRecord[]) => PersistedCommunityRecord[]) => {
       setCommunities((previous) => {
         const next = updater(previous);
-        writeCachedCommunities(next);
         onCommunitiesChange?.(next);
         return next;
       });
@@ -428,7 +397,6 @@ const COMMUNITY_LOGOS: Record<string, string> = {
             ...community,
             messages: previous.find((item) => item.id === community.id)?.messages ?? community.messages,
           }));
-          writeCachedCommunities(next);
           onCommunitiesChange?.(next);
           return next;
         });
@@ -963,7 +931,6 @@ const COMMUNITY_LOGOS: Record<string, string> = {
 
       try {
         await leaveCommunitySupabase(communityId, user.id);
-        leaveCommunityChat(communityId, user.id);
         lastTouchedCommunityRef.current = "";
         await reloadChatData();
         onBackToCommunities?.();
@@ -1192,7 +1159,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       }
     };
 
-    const handleCommunitySettingsSave = () => {
+    const handleCommunitySettingsSave = async () => {
       if (!selectedCommunity || !canEditSelectedCommunity) {
         toast({
           title: "Creator access required",
@@ -1210,14 +1177,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         return;
       }
 
-      const updatedCommunity = updateCommunityPresentation(selectedCommunity.id, {
-        actorUserId: user.id,
-        actorUsername: user.username,
-        title: trimmedTitle,
-        logoUrl: communitySettingsDraft.logoUrl,
-      });
-
-      if (!updatedCommunity) {
+      if (!canManageCommunity(selectedCommunity, user.id, user.username)) {
         toast({
           title: "Creator access required",
           description: "Only the community creator can change the group name or logo.",
@@ -1225,12 +1185,20 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         return;
       }
 
-      reloadChatData();
-      setLogoDialogOpen(false);
-      toast({
-        title: "Community updated",
-        description: `${updatedCommunity.title} now shows the latest name and logo across the app.`,
-      });
+      try {
+        await updateCommunityPresentation(selectedCommunity.id, {
+          title: trimmedTitle,
+          logoUrl: communitySettingsDraft.logoUrl,
+        });
+        await reloadChatData();
+        setLogoDialogOpen(false);
+        toast({
+          title: "Community updated",
+          description: `${trimmedTitle} now shows the latest name and logo across the app.`,
+        });
+      } catch {
+        toast({ title: "Update failed", description: "Please try again." });
+      }
     };
 
     const handleSubmitReport = async () => {

@@ -1,189 +1,169 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { sendMessage, deleteMessage, likeMessage } from "@/backend/supabase/controllers/chatController";
 import {
-  canManageCommunity,
-  countUnreadMessages,
-  createCommunityFromApprovedRequest,
-  deleteCommunityMessage,
-  joinCommunityChat,
-  leaveCommunityChat,
+  joinCommunity,
+  leaveCommunity,
   markCommunityRead,
-  readCommunityChats,
-  sendCommunityMessage,
+  setCommunityNotifications,
   updateCommunityPresentation,
-} from "@/lib/communityChat";
+} from "@/backend/supabase/controllers/communityController";
+import { canManageCommunity, countUnreadMessages } from "@/lib/communityChat";
+import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
 
-describe("community chat storage", () => {
+const { fromMock, rpcMock } = vi.hoisted(() => ({
+  fromMock: vi.fn(),
+  rpcMock: vi.fn(),
+}));
+
+vi.mock("@/backend/supabase/client", () => ({
+  supabase: {
+    from: fromMock,
+    rpc: rpcMock,
+  },
+}));
+
+function successfulSingle(data: unknown) {
+  return {
+    insert: vi.fn(() => ({
+      select: vi.fn(() => ({
+        single: vi.fn(async () => ({ data, error: null })),
+      })),
+    })),
+  };
+}
+
+function successfulMutation() {
+  const query = {
+    upsert: vi.fn(async () => ({ error: null })),
+    insert: vi.fn(async () => ({ error: null })),
+    update: vi.fn(() => query),
+    delete: vi.fn(() => query),
+    eq: vi.fn(() => query),
+    then: vi.fn((resolve: (value: { error: null }) => unknown) => resolve({ error: null })),
+  };
+  return query;
+}
+
+describe("community chat Supabase persistence", () => {
   beforeEach(() => {
-    window.localStorage.clear();
+    vi.clearAllMocks();
   });
 
-  it("joins a community and persists sent messages", () => {
-    const community = readCommunityChats()[0];
+  it("sends community messages through Supabase only", async () => {
+    const setItemSpy = vi.spyOn(window.localStorage.__proto__, "setItem");
+    fromMock.mockReturnValueOnce(successfulSingle({
+      id: "message-1",
+      community_id: "community-1",
+      sender_id: "user-alice",
+      sender_name: "alice",
+      text: "hello everyone",
+      created_at: "2026-06-02T09:00:00.000Z",
+      pinned: false,
+      reply_to_message_id: null,
+      reply_to_sender_name: null,
+      reply_to_text: null,
+      deleted_at: null,
+      deleted_by_user_id: null,
+      liked_by: null,
+      sender_avatar_level: 3,
+    }));
 
-    joinCommunityChat(community.id, { userId: "user-alice", username: "alice" });
-    sendCommunityMessage(community.id, {
+    const message = await sendMessage("community-1", {
       senderId: "user-alice",
       senderName: "alice",
+      senderAvatarLevel: 3,
       text: "hello everyone",
     });
 
-    const updatedCommunity = readCommunityChats().find((entry) => entry.id === community.id);
-
-    expect(updatedCommunity?.members.some((member) => member.userId === "user-alice")).toBe(true);
-    expect(updatedCommunity?.messages.at(-1)?.text).toBe("hello everyone");
+    expect(fromMock).toHaveBeenCalledWith("community_messages");
+    expect(message.text).toBe("hello everyone");
+    expect(message.senderAvatarLevel).toBe(3);
+    expect(setItemSpy).not.toHaveBeenCalled();
   });
 
-  it("leaves a community and persists membership removal", () => {
-    const community = readCommunityChats()[0];
+  it("updates message deletes and likes through Supabase only", async () => {
+    const deleteQuery = successfulMutation();
+    fromMock.mockReturnValueOnce(deleteQuery);
+    await deleteMessage("message-1", "user-alice");
+    expect(fromMock).toHaveBeenCalledWith("community_messages");
+    expect(deleteQuery.update).toHaveBeenCalledWith(expect.objectContaining({ deleted_by_user_id: "user-alice" }));
 
-    joinCommunityChat(community.id, { userId: "user-alice", username: "alice" });
-    leaveCommunityChat(community.id, "user-alice");
-
-    const updatedCommunity = readCommunityChats().find((entry) => entry.id === community.id);
-
-    expect(updatedCommunity?.members.some((member) => member.userId === "user-alice")).toBe(false);
+    rpcMock.mockResolvedValueOnce({ error: null });
+    await likeMessage("message-1", "user-bob");
+    expect(rpcMock).toHaveBeenCalledWith("toggle_message_like", {
+      p_message_id: "message-1",
+      p_user_id: "user-bob",
+    });
   });
 
-  it("stores reply metadata and supports deleting own messages", () => {
-    const community = readCommunityChats()[0];
+  it("stores community membership state in Supabase only", async () => {
+    fromMock
+      .mockReturnValueOnce(successfulMutation())
+      .mockReturnValueOnce(successfulMutation())
+      .mockReturnValueOnce(successfulMutation())
+      .mockReturnValueOnce(successfulMutation());
 
-    joinCommunityChat(community.id, { userId: "user-alice", username: "alice" });
-    sendCommunityMessage(community.id, {
-      senderId: "user-alice",
-      senderName: "alice",
-      text: "first message",
-    });
+    await joinCommunity("community-1", "user-alice", "alice");
+    await leaveCommunity("community-1", "user-alice");
+    await markCommunityRead("community-1", "user-alice");
+    await setCommunityNotifications("community-1", "user-alice", false);
 
-    const originalMessage = readCommunityChats().find((entry) => entry.id === community.id)?.messages.at(-1);
-    expect(originalMessage).toBeDefined();
-
-    sendCommunityMessage(community.id, {
-      senderId: "user-alice",
-      senderName: "alice",
-      text: "reply message",
-      replyToMessage: originalMessage ?? null,
-    });
-
-    const repliedMessage = readCommunityChats().find((entry) => entry.id === community.id)?.messages.at(-1);
-    expect(repliedMessage?.replyToMessageId).toBe(originalMessage?.id);
-    expect(repliedMessage?.replyToText).toBe("first message");
-
-    deleteCommunityMessage(community.id, originalMessage!.id, "user-alice");
-    const deletedMessage = readCommunityChats().find((entry) => entry.id === community.id)?.messages.find((message) => message.id === originalMessage?.id);
-    expect(deletedMessage?.deletedAt).toBeTruthy();
-    expect(deletedMessage?.text).toBe("This message was deleted.");
+    expect(fromMock).toHaveBeenCalledTimes(4);
+    expect(fromMock).toHaveBeenNthCalledWith(1, "community_members");
+    expect(fromMock).toHaveBeenNthCalledWith(2, "community_members");
+    expect(fromMock).toHaveBeenNthCalledWith(3, "community_members");
+    expect(fromMock).toHaveBeenNthCalledWith(4, "community_members");
   });
 
-  it("tracks unread counts and clears them when the community is read", () => {
-    const community = readCommunityChats()[0];
+  it("updates community presentation in Supabase only", async () => {
+    const query = successfulMutation();
+    fromMock.mockReturnValueOnce(query);
 
-    joinCommunityChat(community.id, { userId: "user-alice", username: "alice" });
-    joinCommunityChat(community.id, { userId: "user-bob", username: "bob" });
-    markCommunityRead(community.id, "user-alice");
-
-    sendCommunityMessage(community.id, {
-      senderId: "user-bob",
-      senderName: "bob",
-      text: "new unread message",
-    });
-
-    const withUnread = readCommunityChats().find((entry) => entry.id === community.id)!;
-    expect(countUnreadMessages(withUnread, "user-alice")).toBe(1);
-
-    markCommunityRead(community.id, "user-alice");
-    const afterRead = readCommunityChats().find((entry) => entry.id === community.id)!;
-    expect(countUnreadMessages(afterRead, "user-alice")).toBe(0);
-  });
-
-  it("creates a live room from an approved community request", () => {
-    createCommunityFromApprovedRequest({
-      id: "community-request-123",
-      requesterId: "user-jules",
-      requesterName: "jules",
-      communityName: "Writers Room",
-      focusArea: "writing and editing",
-      audience: "people building drafts in public",
-      whyNow: "A place for writers to workshop ideas live.",
-      samplePrompt: "What are you struggling to write this week?",
-      submittedAt: "2026-04-14T12:00:00.000Z",
-      status: "approved",
-      reviewedAt: "2026-04-14T12:30:00.000Z",
-      reviewedBy: "admin",
-    });
-
-    const createdCommunity = readCommunityChats().find((entry) => entry.id === "request-community-request-123");
-
-    expect(createdCommunity?.title).toBe("Writers Room");
-    expect(createdCommunity?.messages[0]?.text).toBe("What are you struggling to write this week?");
-  });
-
-  it("lets only the creator update the community name and logo", () => {
-    createCommunityFromApprovedRequest({
-      id: "community-request-456",
-      requesterId: "user-maya",
-      requesterName: "maya",
-      communityName: "Founders Circle",
-      focusArea: "operators and builders",
-      audience: "people launching early-stage products",
-      whyNow: "A place to compare notes while building in public.",
-      samplePrompt: "What is the hardest thing about your current launch?",
-      submittedAt: "2026-04-14T12:00:00.000Z",
-      status: "approved",
-      reviewedAt: "2026-04-14T12:30:00.000Z",
-      reviewedBy: "admin",
-    });
-
-    const community = readCommunityChats().find((entry) => entry.id === "request-community-request-456")!;
-
-    expect(canManageCommunity(community, "user-maya", "maya")).toBe(true);
-    expect(canManageCommunity(community, "user-else", "someone-else")).toBe(false);
-
-    const rejectedUpdate = updateCommunityPresentation(community.id, {
-      actorUserId: "user-else",
-      actorUsername: "someone-else",
-      title: "Hijacked Name",
-      logoUrl: "https://example.com/hijacked.png",
-    });
-    expect(rejectedUpdate).toBeNull();
-
-    const creatorUpdate = updateCommunityPresentation(community.id, {
-      actorUserId: "user-maya",
-      actorUsername: "maya",
+    await updateCommunityPresentation("community-1", {
       title: "Builder Signal",
       logoUrl: "https://example.com/logo.png",
     });
 
-    expect(creatorUpdate?.title).toBe("Builder Signal");
-    expect(creatorUpdate?.logoUrl).toBe("https://example.com/logo.png");
-    expect(creatorUpdate?.abbr).toBe("BS");
-
-    const persistedCommunity = readCommunityChats().find((entry) => entry.id === community.id);
-    expect(persistedCommunity?.title).toBe("Builder Signal");
-    expect(persistedCommunity?.logoUrl).toBe("https://example.com/logo.png");
+    expect(fromMock).toHaveBeenCalledWith("communities");
+    expect(query.update).toHaveBeenCalledWith({
+      title: "Builder Signal",
+      abbr: "BS",
+      logo_url: "https://example.com/logo.png",
+    });
   });
 
-  it("normalizes malformed stored communities instead of crashing", () => {
-    window.localStorage.setItem(
-      "raw.community-chats.v1",
-      JSON.stringify([
+  it("keeps unread counting as React-memory-only derived state", () => {
+    const community: PersistedCommunityRecord = {
+      id: "community-1",
+      abbr: "C1",
+      title: "Community",
+      description: "Test",
+      topic: "Test",
+      status: "Active",
+      createdAt: "2026-06-02T08:00:00.000Z",
+      members: [
         {
-          id: "broken-room",
-          title: "Broken Room",
-          members: null,
-          messages: [
-            {
-              id: "bad-message",
-              text: "hello",
-            },
-          ],
+          userId: "user-alice",
+          username: "alice",
+          joinedAt: "2026-06-02T08:00:00.000Z",
+          lastSeenAt: "2026-06-02T08:00:00.000Z",
+          lastReadAt: "2026-06-02T08:30:00.000Z",
+          notificationsEnabled: true,
         },
-      ])
-    );
+      ],
+      messages: [
+        {
+          id: "message-1",
+          communityId: "community-1",
+          senderId: "user-bob",
+          senderName: "bob",
+          text: "new unread message",
+          createdAt: "2026-06-02T09:00:00.000Z",
+        },
+      ],
+    };
 
-    const communities = readCommunityChats();
-    const brokenRoom = communities.find((entry) => entry.id === "broken-room");
-
-    expect(brokenRoom?.members).toEqual([]);
-    expect(brokenRoom?.messages[0]?.senderName).toBe("unknown");
+    expect(countUnreadMessages(community, "user-alice")).toBe(1);
+    expect(canManageCommunity({ ...community, createdBy: "user-alice" }, "user-alice", "alice")).toBe(true);
   });
 });
