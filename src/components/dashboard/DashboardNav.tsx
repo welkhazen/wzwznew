@@ -50,7 +50,7 @@ import { toast } from "@/components/ui/use-toast";
 import { spendTokens } from "@/lib/api/tokens";
 import { supabase } from "@/lib/supabase";
 
-export type DashboardTab = "home" | "polls" | "challenges" | "daily-spin" | "communities" | "profile" | "wallet" | "inventory";
+export type DashboardTab = "home" | "polls" | "challenges" | "daily-spin" | "communities" | "profile" | "wallet" | "inventory" | "store";
 
 interface DashboardNavProps {
   userId: string;

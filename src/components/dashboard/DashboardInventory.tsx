@@ -200,7 +200,7 @@ function PersonalityInsightsInventory({
 
 // ─── Avatar Shop ────────────────────────────────────────────────────────────
 
-function AvatarShop({
+export function AvatarShop({
   avatarCatalog,
   ownedAvatarLevels,
   onUnlockAvatar,
@@ -365,14 +365,12 @@ export function DashboardInventory({
   polls,
   votedPolls,
   ownedAvatarLevels,
-  onUnlockAvatar,
-  onAvatarPurchased,
-  avatarPricesByLevel,
   avatarCatalog,
   tokenBalance,
-  userId,
 }: DashboardInventoryProps) {
   const pollsAnswered = votedPolls.size;
+
+  const ownedAvatars = avatarCatalog.filter((avatar) => ownedAvatarLevels.has(avatar.level));
 
   return (
     <div className="space-y-8">
@@ -382,22 +380,41 @@ export function DashboardInventory({
           Inventory
         </h1>
         <p className="mt-1 text-xs text-raw-silver/40">
-          Your insights, collectible avatars, and loot rolls.
+          Everything you've collected — avatars, insights, and rewards.
         </p>
       </header>
 
-      {/* Avatar Shop */}
+      {/* Owned Avatars */}
       <section>
-        <h2 className="mb-3 font-display text-sm tracking-wide text-raw-text">Avatar Shop</h2>
-        <AvatarShop
-          avatarCatalog={avatarCatalog}
-          ownedAvatarLevels={ownedAvatarLevels}
-          onUnlockAvatar={onUnlockAvatar}
-          onAvatarPurchased={onAvatarPurchased}
-          avatarPricesByLevel={avatarPricesByLevel}
-          tokenBalance={tokenBalance}
-          userId={userId}
-        />
+        <h2 className="mb-3 font-display text-sm tracking-wide text-raw-text">Your Avatars</h2>
+        {ownedAvatars.length === 0 ? (
+          <div className="rounded-2xl border border-raw-border/30 bg-raw-surface/20 p-6 text-center text-xs text-raw-silver/40">
+            You don't own any avatars yet. Visit the Store to unlock some.
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            {ownedAvatars.map((avatar) => {
+              const rarity = avatar.rarity ?? "common";
+              const rarityConfig = RARITY_CONFIG[rarity];
+              return (
+                <div
+                  key={avatar.id}
+                  className="relative flex flex-col items-center gap-2 overflow-hidden rounded-2xl border bg-raw-black/45 p-3"
+                  style={{ borderColor: `${rarityConfig.color}40` }}
+                >
+                  <div className="pointer-events-none absolute inset-0 opacity-30 [background-image:radial-gradient(rgba(255,255,255,0.12)_0.6px,transparent_0.6px)] [background-size:8px_8px]" />
+                  <AvatarFigure avatarIndex={avatar.level} size="md" selected rarity={rarity} />
+                  <div className="relative text-center">
+                    <p className="text-xs font-medium text-raw-text line-clamp-1">{avatar.name}</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: rarityConfig.color }}>
+                      {rarityConfig.label}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       {/* Loot Spin */}

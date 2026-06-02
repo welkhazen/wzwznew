@@ -39,6 +39,9 @@ const DashboardWallet = lazy(() =>
 const DashboardInventory = lazy(() =>
   import("@/components/dashboard/DashboardInventory").then((module) => ({ default: module.DashboardInventory }))
 );
+const DashboardStore = lazy(() =>
+  import("@/components/dashboard/DashboardStore").then((module) => ({ default: module.DashboardStore }))
+);
 
 const dashboardSectionFallback = (
   <DashboardSectionShell>
@@ -290,6 +293,22 @@ export default function Dashboard({
                 onAvatarPurchased={markAvatarOwned}
                 avatarPricesByLevel={avatarPricesByLevel}
                 avatarCatalog={avatarCatalog}
+                tokenBalance={tokenBalance}
+                userId={user.id}
+              />
+            </DashboardSectionShell>
+          </Suspense>
+        );
+      case "store":
+        return (
+          <Suspense fallback={dashboardSectionFallback}>
+            <DashboardSectionShell>
+              <DashboardStore
+                avatarCatalog={avatarCatalog}
+                ownedAvatarLevels={ownedAvatarLevels}
+                onUnlockAvatar={unlockAvatarLevel}
+                onAvatarPurchased={markAvatarOwned}
+                avatarPricesByLevel={avatarPricesByLevel}
                 tokenBalance={tokenBalance}
                 userId={user.id}
               />
