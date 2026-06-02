@@ -12,6 +12,7 @@ import { fetchPolls } from "@/lib/api/polls";
 import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
 import { LANDING_WHEEL_SPIN_KEY } from "@/lib/avatarCatalog";
 import { WheelOfFortune, type WheelPrize } from "@/components/wheel/WheelOfFortune";
+import { SpinWheelClaimBanner } from "@/components/wheel/SpinWheelClaimBanner";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";

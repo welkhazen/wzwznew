@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { LandingSectionShell } from "@/components/landing/LandingSectionShell";
 import { WheelOfFortune, type WheelPrize } from "@/components/wheel/WheelOfFortune";
+import { SpinWheelClaimBanner } from "@/components/wheel/SpinWheelClaimBanner";
 import { useTheme } from "@/providers/useTheme";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 import { track } from "@/lib/analytics";
@@ -108,6 +109,7 @@ export function WheelRewardInline({ onSignupClick }: WheelRewardProps) {
 
   return (
     <div className="flex flex-col items-center gap-6 sm:gap-10">
+      <SpinWheelClaimBanner />
       <WheelOfFortune prizes={prizes} onSpinEnd={handleSpinEnd} disabled={hasSpun} />
 
       {!rewardsImageMissing ? (
@@ -193,6 +195,7 @@ export function WheelReward({ onSignupClick }: WheelRewardProps) {
       description="One spin, one avatar — yours as an early access gift from raW."
     >
       <div className="flex flex-col items-center gap-6 sm:gap-10">
+        <SpinWheelClaimBanner />
         <WheelOfFortune prizes={prizes} onSpinEnd={handleSpinEnd} disabled={hasSpun} />
 
         {!rewardsImageMissing ? (
