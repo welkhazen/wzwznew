@@ -3,6 +3,15 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { useOnboarding } from "@/store/useOnboarding";
 import { useCommunities } from "@/store/useCommunities";
 import { readOnboardingMap } from "@/store/useRawStore.storage";
+import type { User } from "@/store/types";
+
+const alice: User = {
+  id: "user-alice",
+  username: "alice",
+  role: "member",
+  moderationStatus: "active",
+  warnings: 0,
+};
 
 describe("onboarding persistence", () => {
   beforeEach(() => {
@@ -18,7 +27,7 @@ describe("onboarding persistence", () => {
       },
     }));
 
-    const { result } = renderHook(() => useOnboarding(true, "alice"));
+    const { result } = renderHook(() => useOnboarding(true, alice));
 
     expect(result.current.onboardingStep).toBe("polls");
     expect(result.current.onboardingAnsweredPollIds.has("poll-1")).toBe(true);
@@ -39,7 +48,7 @@ describe("onboarding persistence", () => {
       },
     }));
 
-    const { result } = renderHook(() => useOnboarding(true, "alice"));
+    const { result } = renderHook(() => useOnboarding(true, alice));
 
     expect(result.current.onboardingStep).toBe("avatar");
   });
@@ -53,10 +62,24 @@ describe("onboarding persistence", () => {
       },
     }));
 
-    renderHook(() => useOnboarding(true, "alice"));
+    renderHook(() => useOnboarding(true, alice));
 
     expect(readOnboardingMap().alice?.step).toBe("polls");
     expect(readOnboardingMap().alice?.answeredPollIds).toEqual(["poll-1"]);
+  });
+
+  it("uses server onboarding completion over stale local onboarding state", () => {
+    window.localStorage.setItem("raw.onboarding.v1", JSON.stringify({
+      alice: {
+        completed: false,
+        step: "spin",
+        answeredPollIds: [],
+      },
+    }));
+
+    const { result } = renderHook(() => useOnboarding(true, { ...alice, onboardingCompleted: true }));
+
+    expect(result.current.onboardingCompleted).toBe(true);
   });
 
   it("persists selected communities for onboarding", () => {

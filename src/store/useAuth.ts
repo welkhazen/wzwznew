@@ -23,8 +23,9 @@ function toUser(a: AuthUser): User {
         ? "banned"
         : a.status === "warned"
           ? "warned"
-          : "active",
+        : "active",
     warnings: 0,
+    onboardingCompleted: a.onboarding_completed,
   };
 }
 
