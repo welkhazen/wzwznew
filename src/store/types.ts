@@ -4,6 +4,7 @@ export interface User {
   role: "member" | "admin";
   moderationStatus: "active" | "warned" | "banned";
   warnings: number;
+  onboardingCompleted?: boolean;
 }
 
 export interface AuthResult {
