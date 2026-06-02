@@ -44,7 +44,7 @@ export default function LandingShell({
   verifySignupOtp,
   login,
 }: LandingShellProps) {
-  const [siteReady, setSiteReady] = useState(false);
+  const [siteReady, setSiteReady] = useState(true);
 
   return (
     <div className="landing-page-shell min-h-screen overflow-x-hidden bg-raw-black">

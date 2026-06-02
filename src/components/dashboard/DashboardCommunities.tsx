@@ -370,8 +370,11 @@ const COMMUNITY_LOGOS: Record<string, string> = {
   const [blockedSenderKeys, setBlockedSenderKeys] = useState<string[]>(() => readBlockedCommunitySenders(user.id));
   const [senderAvatarLevels, setSenderAvatarLevels] = useState<Record<string, number>>({});
   const [hasOlderMessages, setHasOlderMessages] = useState(false);
+  const [messagesLoading, setMessagesLoading] = useState(false);
+  const [messagesError, setMessagesError] = useState(false);
   const [isLoadingOlderMessages, setIsLoadingOlderMessages] = useState(false);
   const lastTouchedCommunityRef = useRef<string>("");
+  const latestMessagesRequestRef = useRef(0);
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const messageInputRef = useRef<HTMLInputElement | null>(null);
   const preserveScrollAfterOlderLoadRef = useRef<{ previousHeight: number } | null>(null);
@@ -449,12 +452,30 @@ const COMMUNITY_LOGOS: Record<string, string> = {
     const loadLatestMessages = useCallback(async () => {
       if (!activeCommunityId) {
         setHasOlderMessages(false);
+        setMessagesLoading(false);
+        setMessagesError(false);
         return;
       }
 
-      const messages = await fetchCommunityMessages(activeCommunityId, { limit: MESSAGE_PAGE_SIZE });
-      setHasOlderMessages(messages.length === MESSAGE_PAGE_SIZE);
-      updateCommunities((current) => setCommunityMessages(current, activeCommunityId, messages));
+      const requestId = latestMessagesRequestRef.current + 1;
+      latestMessagesRequestRef.current = requestId;
+      setMessagesLoading(true);
+      setMessagesError(false);
+      try {
+        const communityId = activeCommunityId;
+        const messages = await fetchCommunityMessages(communityId, { limit: MESSAGE_PAGE_SIZE });
+        if (latestMessagesRequestRef.current !== requestId) return;
+        setHasOlderMessages(messages.length === MESSAGE_PAGE_SIZE);
+        updateCommunities((current) => setCommunityMessages(current, communityId, messages));
+      } catch {
+        if (latestMessagesRequestRef.current === requestId) {
+          setMessagesError(true);
+        }
+      } finally {
+        if (latestMessagesRequestRef.current === requestId) {
+          setMessagesLoading(false);
+        }
+      }
     }, [activeCommunityId, updateCommunities]);
 
     const loadOlderMessages = useCallback(async () => {
@@ -1679,6 +1700,8 @@ const COMMUNITY_LOGOS: Record<string, string> = {
               polls={communityPolls}
               groupedMessages={groupedMessages}
               activeMessageCount={activeMessages.length}
+              messagesLoading={messagesLoading}
+              messagesError={messagesError}
               canManagePolls={canManagePolls}
               userId={user.id}
               username={user.username}
