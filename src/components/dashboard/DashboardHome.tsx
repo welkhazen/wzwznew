@@ -8,6 +8,8 @@ import { COMMUNITY_COVER_IMAGES, COMMUNITY_COVER_VIDEOS } from "@/lib/communityC
 import { getTodayKey } from "@/store/useRawStore.storage";
 import { useTheme } from "@/providers/useTheme";
 import { LevelProgressBanner } from "@/components/dashboard/LevelProgressBanner";
+import { WheelOfFortune } from "@/components/wheel/WheelOfFortune";
+import { buildSpinPrizes } from "@/components/dashboard/DashboardDailySpin";
 
 interface DashboardHomeProps {
   username: string;
@@ -180,7 +182,15 @@ export function DashboardHome({
   onNavigate,
   onOpenCommunity,
 }: DashboardHomeProps) {
-  const { mode } = useTheme();
+  const { mode, accent, accentPresets } = useTheme();
+  const accentRgb = useMemo(
+    () => accentPresets.find((preset) => preset.id === accent)?.rgb ?? "241 196 45",
+    [accent, accentPresets],
+  );
+  const spinPrizes = useMemo(
+    () => buildSpinPrizes(mode === "light" ? "light" : "dark", accentRgb),
+    [mode, accentRgb],
+  );
   const isLight = mode === "light";
   const dailyItemsLeft = Math.max(0, dailyPollLimit - dailyAnsweredCount);
   const allCommunities = communities;
@@ -342,7 +352,17 @@ export function DashboardHome({
                 <Dices className="size-5 text-raw-gold" />
               </div>
             </div>
-            <p className={`text-sm leading-relaxed ${isLight ? "text-slate-600" : "text-white/50"}`}>Spin the wheel once a day for a chance to earn XP, badges, and avatar themes.</p>
+            <div className="flex justify-center -mb-1">
+              <div className="w-[160px] sm:w-[180px] pointer-events-none">
+                <WheelOfFortune
+                  prizes={spinPrizes}
+                  onSpinEnd={() => undefined}
+                  disabled
+                  previewOnly
+                  radius={80}
+                />
+              </div>
+            </div>
             {hasSpunToday && spinCountdown ? (
               <div className={`rounded-xl border p-4 text-center ${isLight ? "border-slate-200 bg-slate-50" : "border-white/5 bg-white/[0.03]"}`}>
                 <p className={`text-[10px] uppercase tracking-[0.16em] ${isLight ? "text-slate-500" : "text-white/30"}`}>Next spin in</p>
