@@ -1,53 +1,71 @@
 -- User favorite communities (max 3) and user pinned chat message (1).
--- Both tables are publicly readable so other users see them on the
--- Chat profile dialog; only the owner can edit their own rows.
+-- Follows the same access pattern as user_accent_unlocks: permissive RLS,
+-- auth enforced at the application layer, text user_id.
+-- Drop any pre-existing versions of these tables so we land on the right
+-- column types (text, not uuid) without leaving stale FK constraints behind.
 
-CREATE TABLE IF NOT EXISTS public.user_favorite_communities (
-  user_id uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-  community_id text NOT NULL,
-  position smallint NOT NULL CHECK (position BETWEEN 1 AND 3),
-  created_at timestamptz NOT NULL DEFAULT now(),
-  PRIMARY KEY (user_id, community_id),
-  UNIQUE (user_id, position)
+drop table if exists public.user_favorite_communities cascade;
+drop table if exists public.user_pinned_message cascade;
+
+create table if not exists public.user_favorite_communities (
+  user_id text not null,
+  community_id text not null,
+  position smallint not null check (position between 1 and 3),
+  created_at timestamptz not null default now(),
+  primary key (user_id, community_id),
+  unique (user_id, position)
 );
 
-ALTER TABLE public.user_favorite_communities ENABLE ROW LEVEL SECURITY;
+alter table public.user_favorite_communities enable row level security;
 
-DROP POLICY IF EXISTS "favorites readable by everyone" ON public.user_favorite_communities;
-CREATE POLICY "favorites readable by everyone"
-  ON public.user_favorite_communities
-  FOR SELECT
-  USING (true);
+grant usage on schema public to anon, authenticated;
+grant all on table public.user_favorite_communities to anon, authenticated;
 
-DROP POLICY IF EXISTS "favorites editable by owner" ON public.user_favorite_communities;
-CREATE POLICY "favorites editable by owner"
-  ON public.user_favorite_communities
-  FOR ALL
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
+drop policy if exists "user_favorite_communities_select_all" on public.user_favorite_communities;
+create policy "user_favorite_communities_select_all" on public.user_favorite_communities
+  for select using (true);
 
-CREATE TABLE IF NOT EXISTS public.user_pinned_message (
-  user_id uuid PRIMARY KEY REFERENCES public.users(id) ON DELETE CASCADE,
-  message_id text NOT NULL,
-  community_id text NOT NULL,
+drop policy if exists "user_favorite_communities_insert" on public.user_favorite_communities;
+create policy "user_favorite_communities_insert" on public.user_favorite_communities
+  for insert with check (true);
+
+drop policy if exists "user_favorite_communities_update" on public.user_favorite_communities;
+create policy "user_favorite_communities_update" on public.user_favorite_communities
+  for update using (true) with check (true);
+
+drop policy if exists "user_favorite_communities_delete" on public.user_favorite_communities;
+create policy "user_favorite_communities_delete" on public.user_favorite_communities
+  for delete using (true);
+
+create table if not exists public.user_pinned_message (
+  user_id text primary key,
+  message_id text not null,
+  community_id text not null,
   community_title text,
   sender_name text,
-  message_text text NOT NULL,
+  message_text text not null,
   message_created_at timestamptz,
-  pinned_at timestamptz NOT NULL DEFAULT now()
+  pinned_at timestamptz not null default now()
 );
 
-ALTER TABLE public.user_pinned_message ENABLE ROW LEVEL SECURITY;
+alter table public.user_pinned_message enable row level security;
 
-DROP POLICY IF EXISTS "pinned messages readable by everyone" ON public.user_pinned_message;
-CREATE POLICY "pinned messages readable by everyone"
-  ON public.user_pinned_message
-  FOR SELECT
-  USING (true);
+grant all on table public.user_pinned_message to anon, authenticated;
 
-DROP POLICY IF EXISTS "pinned messages editable by owner" ON public.user_pinned_message;
-CREATE POLICY "pinned messages editable by owner"
-  ON public.user_pinned_message
-  FOR ALL
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
+drop policy if exists "user_pinned_message_select_all" on public.user_pinned_message;
+create policy "user_pinned_message_select_all" on public.user_pinned_message
+  for select using (true);
+
+drop policy if exists "user_pinned_message_insert" on public.user_pinned_message;
+create policy "user_pinned_message_insert" on public.user_pinned_message
+  for insert with check (true);
+
+drop policy if exists "user_pinned_message_update" on public.user_pinned_message;
+create policy "user_pinned_message_update" on public.user_pinned_message
+  for update using (true) with check (true);
+
+drop policy if exists "user_pinned_message_delete" on public.user_pinned_message;
+create policy "user_pinned_message_delete" on public.user_pinned_message
+  for delete using (true);
+
+notify pgrst, 'reload schema';
