@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Archive, BookOpen, Brain, CircleGauge, Fingerprint, Lock, Map, Sparkles, WandSparkles } from "lucide-react";
+import { readOwnedInsightIds } from "@/lib/insightsOwnership";
 import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { WheelOfFortune, type WheelPrize } from "@/components/wheel/WheelOfFortune";
 import { RARITY_CONFIG, RARITY_ORDER } from "@/lib/avatarRarity";
@@ -101,14 +102,20 @@ const PERSONALITY_INSIGHTS = [
   },
 ];
 
-function PersonalityInsightsInventory({
+export const PERSONALITY_INSIGHTS_CATALOG = PERSONALITY_INSIGHTS;
+
+export function PersonalityInsightsInventory({
   pollsAnswered,
   totalPolls,
   tokenBalance,
+  ownedIds = new Set<string>(),
+  onPurchase,
 }: {
   pollsAnswered: number;
   totalPolls: number;
   tokenBalance: number;
+  ownedIds?: Set<string>;
+  onPurchase?: (insightId: string, tokenPrice: number) => Promise<void> | void;
 }) {
   const readyCount = PERSONALITY_INSIGHTS.filter(
     (insight) => pollsAnswered >= insight.requiredPolls && tokenBalance >= insight.tokenPrice
@@ -138,7 +145,7 @@ function PersonalityInsightsInventory({
       </div>
 
       <div className="grid gap-3 p-3 sm:grid-cols-2 sm:p-4">
-        {PERSONALITY_INSIGHTS.map((insight) => {
+        {PERSONALITY_INSIGHTS.filter((i) => !ownedIds.has(i.id)).map((insight) => {
           const Icon = insight.icon;
           const hasPolls = pollsAnswered >= insight.requiredPolls;
           const hasTokens = tokenBalance >= insight.tokenPrice;
@@ -184,6 +191,20 @@ function PersonalityInsightsInventory({
                       {insight.tokenPrice} tokens
                     </span>
                   </div>
+                  {onPurchase && (
+                    <button
+                      type="button"
+                      disabled={!ready}
+                      onClick={() => void onPurchase(insight.id, insight.tokenPrice)}
+                      className={`mt-3 w-full rounded-full border px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] transition ${
+                        ready
+                          ? "border-raw-gold/55 bg-raw-gold/15 text-raw-gold hover:bg-raw-gold/25"
+                          : "border-raw-border/30 bg-raw-surface/20 text-raw-silver/40"
+                      }`}
+                    >
+                      {ready ? `Unlock · ${insight.tokenPrice} tokens` : "Locked"}
+                    </button>
+                  )}
                 </div>
               </div>
             </article>
@@ -300,7 +321,7 @@ const SPIN_PRIZES = RARITY_ORDER.map((r) => ({
   weight: RARITY_CONFIG[r].defaultWeight,
 }));
 
-function LootSpin({ tokenBalance }: { tokenBalance: number }) {
+export function LootSpin({ tokenBalance }: { tokenBalance: number }) {
   const [result, setResult] = useState<(typeof SPIN_PRIZES)[number] | null>(null);
 
   const canSpin = tokenBalance >= SPIN_COST;
@@ -367,10 +388,22 @@ export function DashboardInventory({
   ownedAvatarLevels,
   avatarCatalog,
   tokenBalance,
+  userId,
 }: DashboardInventoryProps) {
   const pollsAnswered = votedPolls.size;
 
   const ownedAvatars = avatarCatalog.filter((avatar) => ownedAvatarLevels.has(avatar.level));
+  const [ownedInsightIds, setOwnedInsightIds] = useState<Set<string>>(() => readOwnedInsightIds(userId));
+  useEffect(() => {
+    const refresh = () => setOwnedInsightIds(readOwnedInsightIds(userId));
+    window.addEventListener("storage", refresh);
+    window.addEventListener("raw:insights-updated", refresh);
+    return () => {
+      window.removeEventListener("storage", refresh);
+      window.removeEventListener("raw:insights-updated", refresh);
+    };
+  }, [userId]);
+  const ownedInsights = PERSONALITY_INSIGHTS_CATALOG.filter((i) => ownedInsightIds.has(i.id));
 
   return (
     <div className="space-y-8">
@@ -417,20 +450,45 @@ export function DashboardInventory({
         )}
       </section>
 
-      {/* Loot Spin */}
+      {/* Owned Identity Reports */}
       <section>
-        <h2 className="mb-3 font-display text-sm tracking-wide text-raw-text">Loot Spin</h2>
-        <LootSpin tokenBalance={tokenBalance} />
+        <h2 className="mb-3 font-display text-sm tracking-wide text-raw-text">Identity Reports</h2>
+        {ownedInsights.length === 0 ? (
+          <div className="rounded-2xl border border-raw-border/30 bg-raw-surface/20 p-6 text-center text-xs text-raw-silver/40">
+            You haven't unlocked any identity reports yet. Visit the Store to buy one.
+          </div>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2">
+            {ownedInsights.map((insight) => {
+              const Icon = insight.icon;
+              return (
+                <article
+                  key={insight.id}
+                  className={`relative overflow-hidden rounded-2xl border ${insight.border} bg-gradient-to-br ${insight.accent} p-4`}
+                >
+                  <div className="pointer-events-none absolute inset-0 bg-raw-black/20" />
+                  <div className="relative flex items-start gap-3">
+                    <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-white/10 ${insight.iconColor}`}>
+                      <Icon className="h-5 w-5" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="font-display text-base leading-tight text-raw-text">{insight.name}</h3>
+                        <span className="shrink-0 rounded-full border border-emerald-300/45 bg-emerald-400/15 px-2.5 py-1 text-[10px] text-emerald-200">
+                          Owned
+                        </span>
+                      </div>
+                      <p className="mt-2 text-xs leading-relaxed text-raw-silver/65">{insight.description}</p>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
       </section>
-
-      {/* Personality Insights */}
-      <section>
-        <PersonalityInsightsInventory
-          pollsAnswered={pollsAnswered}
-          totalPolls={polls.length}
-          tokenBalance={tokenBalance}
-        />
-      </section>
+      {/* Placeholder for unused props to avoid TS warnings without dropping the interface */}
+      <span className="hidden" data-polls={polls.length} data-polls-answered={pollsAnswered} data-balance={tokenBalance} />
     </div>
   );
 }

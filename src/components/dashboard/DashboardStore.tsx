@@ -1,8 +1,19 @@
+import { useEffect, useState } from "react";
 import { Store } from "lucide-react";
-import { AvatarShop } from "@/components/dashboard/DashboardInventory";
+import {
+  AvatarShop,
+  LootSpin,
+  PersonalityInsightsInventory,
+} from "@/components/dashboard/DashboardInventory";
 import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
+import type { Poll } from "@/store/useRawStore";
+import { addOwnedInsightId, readOwnedInsightIds } from "@/lib/insightsOwnership";
+import { spendTokens } from "@/lib/api/tokens";
+import { toast } from "@/components/ui/use-toast";
 
 interface DashboardStoreProps {
+  polls: Poll[];
+  votedPolls: Set<string>;
   avatarCatalog: AvatarCatalogItem[];
   ownedAvatarLevels: Set<number>;
   onUnlockAvatar: (level: number) => Promise<boolean>;
@@ -12,7 +23,19 @@ interface DashboardStoreProps {
   userId: string;
 }
 
+const TOKEN_BALANCE_STORAGE_PREFIX = "raw.polls.token-balance";
+const TOKEN_BALANCE_UPDATED_EVENT = "raw:token-balance-updated";
+
+function pushTokenBalance(userId: string, balance: number): void {
+  if (typeof window === "undefined") return;
+  const key = `${TOKEN_BALANCE_STORAGE_PREFIX}.${userId}`;
+  window.localStorage.setItem(key, String(balance));
+  window.dispatchEvent(new CustomEvent(TOKEN_BALANCE_UPDATED_EVENT, { detail: { storageKey: key, balance } }));
+}
+
 export function DashboardStore({
+  polls,
+  votedPolls,
   avatarCatalog,
   ownedAvatarLevels,
   onUnlockAvatar,
@@ -21,6 +44,29 @@ export function DashboardStore({
   tokenBalance,
   userId,
 }: DashboardStoreProps) {
+  const [ownedInsightIds, setOwnedInsightIds] = useState<Set<string>>(() => readOwnedInsightIds(userId));
+
+  useEffect(() => {
+    setOwnedInsightIds(readOwnedInsightIds(userId));
+  }, [userId]);
+
+  const handlePurchaseInsight = async (insightId: string, tokenPrice: number) => {
+    if (tokenBalance < tokenPrice) {
+      toast({ title: "Not enough tokens", description: `You need ${tokenPrice} tokens.` });
+      return;
+    }
+    try {
+      const newBalance = await spendTokens(userId, tokenPrice);
+      pushTokenBalance(userId, newBalance);
+      const next = addOwnedInsightId(userId, insightId);
+      setOwnedInsightIds(new Set(next));
+      window.dispatchEvent(new CustomEvent("raw:insights-updated"));
+      toast({ title: "Report unlocked", description: `${tokenPrice} tokens spent.` });
+    } catch {
+      toast({ title: "Unlock failed", description: "Please try again." });
+    }
+  };
+
   return (
     <div className="space-y-8">
       <header>
@@ -29,7 +75,7 @@ export function DashboardStore({
           Store
         </h1>
         <p className="mt-1 text-xs text-raw-silver/40">
-          Unlock new avatars with tokens. Owned items live in your Inventory.
+          Buy avatars and identity reports, or spin for rarity rewards. Owned items live in your Inventory.
         </p>
       </header>
 
@@ -43,6 +89,21 @@ export function DashboardStore({
           avatarPricesByLevel={avatarPricesByLevel}
           tokenBalance={tokenBalance}
           userId={userId}
+        />
+      </section>
+
+      <section>
+        <h2 className="mb-3 font-display text-sm tracking-wide text-raw-text">Loot Spin</h2>
+        <LootSpin tokenBalance={tokenBalance} />
+      </section>
+
+      <section>
+        <PersonalityInsightsInventory
+          pollsAnswered={votedPolls.size}
+          totalPolls={polls.length}
+          tokenBalance={tokenBalance}
+          ownedIds={ownedInsightIds}
+          onPurchase={handlePurchaseInsight}
         />
       </section>
     </div>
