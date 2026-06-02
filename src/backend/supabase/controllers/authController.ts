@@ -7,6 +7,7 @@ export interface AuthUser {
   status: string;
   avatar_level: number;
   onboarding_completed?: boolean;
+  profile_public?: boolean;
 }
 
 const SESSION_KEY = 'raw.auth.session.v2';
@@ -28,7 +29,7 @@ function normalizeAuthUser(user: AuthUser): AuthUser {
 async function refreshAuthUser(user: AuthUser): Promise<AuthUser> {
   const { data, error } = await supabase
     .from('users')
-    .select('id, username, role, status, avatar_level, onboarding_completed')
+    .select('id, username, role, status, avatar_level, onboarding_completed, profile_public')
     .eq('id', user.id)
     .maybeSingle();
 

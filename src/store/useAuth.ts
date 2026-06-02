@@ -26,6 +26,7 @@ function toUser(a: AuthUser): User {
         : "active",
     warnings: 0,
     onboardingCompleted: a.onboarding_completed,
+    profilePublic: a.profile_public,
   };
 }
 

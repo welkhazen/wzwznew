@@ -73,6 +73,7 @@ import {
   type CommunityAccess,
 } from "@/lib/communityAccess";
 import { readAvatarCatalogLocal } from "@/lib/avatarCatalog";
+import { getPublicUserProfile, type PublicUserProfile } from "@/backend/supabase/controllers/userController";
 import {
   getCommunitySenderBlockKey,
   readBlockedCommunitySenders,
@@ -82,6 +83,7 @@ import type { User } from "@/store/types";
 import { CommunityMessageTimeline } from "@/components/dashboard/CommunityMessageTimeline";
 import { CommunityMessageComposer } from "@/components/dashboard/CommunityMessageComposer";
 import { CommunityRoomList } from "@/components/dashboard/CommunityRoomList";
+import { AvatarFigure } from "@/components/ui/avatar-figure";
 
 const WAITLIST_UNLOCK_THRESHOLD = 200;
 const MESSAGE_PAGE_SIZE = 10;
@@ -158,6 +160,18 @@ function upsertCommunityMessage(
   return communities.map((community) =>
     community.id === communityId
       ? { ...community, messages: mergeCommunityMessages(community.messages, message) }
+      : community
+  );
+}
+
+function removeCommunityMessage(
+  communities: PersistedCommunityRecord[],
+  communityId: string,
+  messageId: string,
+): PersistedCommunityRecord[] {
+  return communities.map((community) =>
+    community.id === communityId
+      ? { ...community, messages: community.messages.filter((message) => message.id !== messageId) }
       : community
   );
 }
@@ -354,6 +368,12 @@ const COMMUNITY_LOGOS: Record<string, string> = {
   const [requestDraft, setRequestDraft] = useState<CommunityRequestDraft>(INITIAL_REQUEST_DRAFT);
   const [reportDraft, setReportDraft] = useState<ReportDraft>(INITIAL_REPORT_DRAFT);
   const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+  const [profileTarget, setProfileTarget] = useState<{
+    message: CommunityChatMessageRecord;
+    profile: PublicUserProfile | null;
+    loading: boolean;
+  } | null>(null);
   const [communityRequests, setCommunityRequests] = useState<CommunityRequestRecord[]>([]);
   const [chatReports, setChatReports] = useState<ChatReportRecord[]>([]);
   const [communityJoinRequests, setCommunityJoinRequests] = useState<CommunityJoinRequestRecord[]>([]);
@@ -782,6 +802,10 @@ const COMMUNITY_LOGOS: Record<string, string> = {
           },
           (payload) => {
             if (payload.eventType === "DELETE") {
+              const deletedId = (payload.old as { id?: string } | null)?.id;
+              if (deletedId) {
+                updateCommunities((current) => removeCommunityMessage(current, activeCommunityId, deletedId));
+              }
               return;
             }
             const nextMessage = mapCommunityMessage(payload.new as DbCommunityMessage);
@@ -797,6 +821,22 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         void supabase.removeChannel(channel);
       };
     }, [activeCommunityId, updateCommunities]);
+
+    const handleOpenSenderProfile = useCallback((message: CommunityChatMessageRecord) => {
+      setProfileDialogOpen(true);
+      setProfileTarget({ message, profile: null, loading: true });
+      getPublicUserProfile(message.senderId)
+        .then((profile) => {
+          setProfileTarget((current) => (
+            current?.message.id === message.id ? { message, profile, loading: false } : current
+          ));
+        })
+        .catch(() => {
+          setProfileTarget((current) => (
+            current?.message.id === message.id ? { message, profile: null, loading: false } : current
+          ));
+        });
+    }, []);
 
     useEffect(() => {
       if (!selectedCommunity || !isJoined) {
@@ -1679,6 +1719,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
               onVotePoll={(pollId, optionId) => { void handleVoteOnPoll(pollId, optionId); }}
               onRetryMessage={(message) => { void handleRetryMessage(message); }}
               onLikeMessage={(message) => { void handleLikeMessage(message); }}
+              onOpenSenderProfile={handleOpenSenderProfile}
               onOpenMessageReport={handleOpenMessageReport}
               onBlockMessageSender={handleBlockMessageSender}
             />
@@ -1882,6 +1923,57 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                   )}
                 </div>
               ))}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={profileDialogOpen} onOpenChange={setProfileDialogOpen}>
+          <DialogContent className="border border-raw-border/40 bg-raw-black p-0 text-raw-text sm:max-w-sm sm:rounded-3xl">
+            <div className="border-b border-raw-border/20 bg-gradient-to-br from-raw-gold/[0.08] via-raw-black to-raw-black px-6 py-6">
+              <DialogHeader className="space-y-2 text-left">
+                <DialogTitle className="font-display text-xl tracking-wide text-raw-text">Chat profile</DialogTitle>
+                <DialogDescription className="text-sm leading-relaxed text-raw-silver/45">
+                  People choose how much of their profile appears in community chat.
+                </DialogDescription>
+              </DialogHeader>
+            </div>
+            <div className="px-6 py-6">
+              {profileTarget?.loading ? (
+                <p className="text-sm text-raw-silver/50">Loading profile...</p>
+              ) : profileTarget?.profile?.profilePublic ? (
+                <div className="flex items-center gap-4">
+                  <AvatarFigure avatarIndex={profileTarget.profile.avatarLevel} size="lg" selected />
+                  <div className="min-w-0">
+                    <p className="truncate font-display text-lg tracking-wide text-raw-text">
+                      @{profileTarget.profile.username ?? profileTarget.message.senderName}
+                    </p>
+                    <p className="mt-1 text-xs uppercase tracking-[0.16em] text-raw-silver/40">
+                      {profileTarget.profile.role ?? "member"}
+                    </p>
+                    {profileTarget.profile.createdAt && (
+                      <p className="mt-2 text-xs text-raw-silver/45">
+                        Joined {formatChatTimestamp(profileTarget.profile.createdAt)}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-4">
+                  <AvatarFigure
+                    avatarIndex={
+                      profileTarget?.message.senderAvatarLevel
+                      ?? (profileTarget ? senderAvatarLevels[profileTarget.message.senderId] : undefined)
+                      ?? 1
+                    }
+                    size="lg"
+                    selected
+                  />
+                  <div className="min-w-0">
+                    <p className="font-display text-lg tracking-wide text-raw-text">Private user</p>
+                    <p className="mt-1 text-sm text-raw-silver/45">This user keeps their profile private.</p>
+                  </div>
+                </div>
+              )}
             </div>
           </DialogContent>
         </Dialog>

@@ -5,6 +5,7 @@ export interface User {
   moderationStatus: "active" | "warned" | "banned";
   warnings: number;
   onboardingCompleted?: boolean;
+  profilePublic?: boolean;
 }
 
 export interface AuthResult {

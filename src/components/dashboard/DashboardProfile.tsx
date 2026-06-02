@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Calendar,
   Eye,
@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { changePassword, deleteAccount } from "@/backend/supabase/controllers/authController";
+import { updateProfileVisibility } from "@/backend/supabase/controllers/userController";
 
 import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { LevelProgressBanner } from "@/components/dashboard/LevelProgressBanner";
@@ -28,6 +29,7 @@ interface DashboardProfileProps {
   pollsAnswered: number;
   xp?: number;
   xpLevel?: number;
+  profilePublic?: boolean;
   onLogout: () => void;
 }
 
@@ -48,6 +50,7 @@ export function DashboardProfile({
   pollsAnswered,
   xp = 0,
   xpLevel = 1,
+  profilePublic = false,
   onLogout,
 }: DashboardProfileProps) {
   const { toast } = useToast();
@@ -67,6 +70,29 @@ export function DashboardProfile({
   const [showNewPw, setShowNewPw] = useState(false);
   const [showConfirmPw, setShowConfirmPw] = useState(false);
   const [showDelPw, setShowDelPw] = useState(false);
+  const [isProfilePublic, setIsProfilePublic] = useState(profilePublic);
+  const [profileVisibilitySaving, setProfileVisibilitySaving] = useState(false);
+
+  useEffect(() => {
+    setIsProfilePublic(profilePublic);
+  }, [profilePublic]);
+
+  async function handleProfileVisibilityChange(nextPublic: boolean) {
+    setIsProfilePublic(nextPublic);
+    setProfileVisibilitySaving(true);
+    try {
+      await updateProfileVisibility(userId, nextPublic);
+      toast({
+        title: nextPublic ? "Profile is visible" : "Profile is private",
+        description: nextPublic ? "People can see your basic chat profile." : "People will only see your avatar.",
+      });
+    } catch {
+      setIsProfilePublic(!nextPublic);
+      toast({ title: "Could not update profile privacy", description: "Please try again." });
+    } finally {
+      setProfileVisibilitySaving(false);
+    }
+  }
 
   async function handleChangePassword() {
     if (newPw.length < 6) {
@@ -189,6 +215,31 @@ export function DashboardProfile({
 
       {/* Account Settings */}
       <div className="space-y-2">
+        <div className="overflow-hidden rounded-2xl border border-raw-border/30 bg-raw-surface/30">
+          <div className="flex items-center justify-between gap-3 px-4 py-3.5">
+            <div>
+              <p className="text-sm font-medium text-raw-text">Public chat profile</p>
+              <p className="mt-1 text-xs text-raw-silver/40">Show your username, avatar, role, and join date when someone taps your message.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => { void handleProfileVisibilityChange(!isProfilePublic); }}
+              disabled={profileVisibilitySaving}
+              className={`relative h-7 w-12 shrink-0 rounded-full border transition-colors disabled:opacity-60 ${
+                isProfilePublic ? "border-raw-gold/60 bg-raw-gold/30" : "border-raw-border/40 bg-raw-black/50"
+              }`}
+              aria-pressed={isProfilePublic}
+              aria-label="Toggle public chat profile"
+            >
+              <span
+                className={`absolute top-1 h-5 w-5 rounded-full bg-raw-text transition-transform ${
+                  isProfilePublic ? "translate-x-5" : "translate-x-1"
+                }`}
+              />
+            </button>
+          </div>
+        </div>
+
         <div className="rounded-2xl border border-raw-border/30 bg-raw-surface/30 overflow-hidden">
           <button
             type="button"
