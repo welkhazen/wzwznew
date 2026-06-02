@@ -43,7 +43,12 @@
       "Bash(git commit -m 'Persist DashboardNav accent unlocks per user *)",
       "Bash(git commit -m 'Lock all accents except gold and currently active by default *)",
       "Bash(git commit -m 'Make indigo a second free accent alongside gold *)",
-      "Bash(git commit -m 'Embed spin wheel preview inside home Daily Spin card *)"
+      "Bash(git commit -m 'Embed spin wheel preview inside home Daily Spin card *)",
+      "Bash(gh pr *)",
+      "Bash(git commit -m 'Preload communities at dashboard mount so home Trending populates *)",
+      "Bash(git commit -m 'Gate landing render on sessionLoaded to stop poll popup flash on dashboard refresh *)",
+      "Bash(git fetch *)",
+      "Bash(git commit -m 'Add Store tab, lift sidebar icons under navbar, scope Inventory to owned items *)"
     ]
   }
 }
