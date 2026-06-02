@@ -29,6 +29,7 @@ interface CommunityMessageTimelineProps {
   onVotePoll: (pollId: string, optionId: string) => void;
   onRetryMessage: (message: CommunityChatMessageRecord) => void;
   onLikeMessage: (message: CommunityChatMessageRecord) => void;
+  onOpenSenderProfile: (message: CommunityChatMessageRecord) => void;
   onOpenMessageReport: (message: CommunityChatMessageRecord) => void;
   onBlockMessageSender: (message: CommunityChatMessageRecord) => void;
 }
@@ -46,6 +47,7 @@ export function CommunityMessageTimeline({
   onVotePoll,
   onRetryMessage,
   onLikeMessage,
+  onOpenSenderProfile,
   onOpenMessageReport,
   onBlockMessageSender,
 }: CommunityMessageTimelineProps) {
@@ -142,7 +144,12 @@ export function CommunityMessageTimeline({
                   border: "1px solid rgba(255,255,255,0.07)",
                 }}
               >
-                <div className="absolute left-2.5 top-2.5">
+                <button
+                  type="button"
+                  onClick={() => onOpenSenderProfile(message)}
+                  className="absolute left-2.5 top-2.5 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/50"
+                  aria-label={`Open ${message.senderName}'s profile`}
+                >
                   <AvatarFigure
                     avatarIndex={senderAvatarLevel}
                     size="sm"
@@ -150,7 +157,7 @@ export function CommunityMessageTimeline({
                     className="opacity-90"
                     style={{ width: 28, height: 28 }}
                   />
-                </div>
+                </button>
                 {message.replyToText && (
                   <div className="mb-1.5 ml-9 rounded-lg border border-raw-border/20 bg-raw-black/20 px-2.5 py-1.5 text-xs text-raw-silver/55">
                     <p className="font-medium text-raw-gold/75">↩ {message.replyToSenderName}</p>
@@ -158,12 +165,14 @@ export function CommunityMessageTimeline({
                   </div>
                 )}
                 <p className={`ml-9 break-words pr-16 [overflow-wrap:anywhere] text-sm leading-snug ${message.deletedAt ? "italic text-raw-silver/45" : ""}`}>
-                  <span
+                  <button
+                    type="button"
+                    onClick={() => onOpenSenderProfile(message)}
                     className="mr-0.5 font-semibold uppercase tracking-wide text-[11px]"
                     style={{ color: isOwnMessage ? "rgb(var(--raw-accent))" : "rgb(var(--raw-accent) / 0.65)" }}
                   >
                     {message.senderName}:
-                  </span>{" "}
+                  </button>{" "}
                   <span className={isOwnMessage ? "text-raw-text" : "text-raw-silver/75"}>
                     {message.text.split(/(@\w+)/g).map((part, i) =>
                       /^@\w+$/.test(part)

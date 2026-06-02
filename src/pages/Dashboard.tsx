@@ -299,6 +299,7 @@ export default function Dashboard({
                 pollsAnswered={votedPolls.size}
                 xp={progress?.xp ?? 0}
                 xpLevel={progress?.level ?? 1}
+                profilePublic={user.profilePublic}
                 onLogout={onLogout}
               />
             </DashboardSectionShell>
