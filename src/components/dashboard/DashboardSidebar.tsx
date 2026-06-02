@@ -3,6 +3,7 @@ import { Archive, Home, MessageCircle, Store, Target, Trophy, Shield, LogOut } f
 import { Link } from "react-router-dom";
 import { FloatingDock } from "@/components/ui/floating-dock";
 import { countUnreadMessages, type PersistedCommunityRecord } from "@/lib/communityChat";
+import { COMMUNITY_COVER_IMAGES } from "@/lib/communityConstants";
 import type { DashboardTab } from "./DashboardNav";
 
 interface DashboardSidebarProps {
@@ -16,6 +17,7 @@ interface DashboardSidebarProps {
   isHome: boolean;
   onLogout: () => void;
   communities: PersistedCommunityRecord[];
+  onOpenCommunity: (communityId: string) => void;
 }
 
 const NAV: { icon: typeof Home; label: string; tab: DashboardTab | "home" }[] = [
@@ -36,7 +38,13 @@ export function DashboardSidebar({
   isHome,
   onLogout,
   communities,
+  onOpenCommunity,
 }: DashboardSidebarProps) {
+  const joinedCommunities = useMemo(
+    () => communities.filter((community) => community.members.some((member) => member.userId === userId)),
+    [communities, userId],
+  );
+
   const totalUnread = useMemo(() =>
     communities.reduce((sum, c) => {
       if (!c.members.some((m) => m.userId === userId)) return sum;
@@ -79,6 +87,37 @@ export function DashboardSidebar({
           items={dockItems}
         />
       </div>
+
+      {joinedCommunities.length > 0 && (
+        <div className="mt-5 flex w-full flex-col items-center gap-3 px-3">
+          {joinedCommunities.map((community) => {
+            const imageUrl = community.logoUrl ?? COMMUNITY_COVER_IMAGES[community.id];
+            const unread = countUnreadMessages(community, userId);
+
+            return (
+              <button
+                key={community.id}
+                type="button"
+                onClick={() => onOpenCommunity(community.id)}
+                title={community.title}
+                className="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-raw-border/35 bg-raw-surface/35 text-[10px] font-semibold text-raw-text shadow-sm transition hover:border-raw-gold/55 hover:bg-raw-gold/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/50"
+                aria-label={`Open ${community.title}`}
+              >
+                {imageUrl ? (
+                  <img src={imageUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
+                ) : (
+                  <span>{community.abbr}</span>
+                )}
+                {unread > 0 && (
+                  <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-raw-ink">
+                    {unread > 9 ? "9+" : unread}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       <div className="flex-1" />
 

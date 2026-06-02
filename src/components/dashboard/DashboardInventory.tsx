@@ -13,6 +13,7 @@ interface DashboardInventoryProps {
   polls: Poll[];
   votedPolls: Set<string>;
   avatarLevel: number;
+  onAvatarChange: (level: number) => void;
   ownedAvatarLevels: Set<number>;
   onUnlockAvatar: (level: number) => Promise<boolean>;
   onAvatarPurchased: (level: number) => void;
@@ -385,6 +386,8 @@ export function LootSpin({ tokenBalance }: { tokenBalance: number }) {
 export function DashboardInventory({
   polls,
   votedPolls,
+  avatarLevel,
+  onAvatarChange,
   ownedAvatarLevels,
   avatarCatalog,
   tokenBalance,
@@ -430,20 +433,30 @@ export function DashboardInventory({
               const rarity = avatar.rarity ?? "common";
               const rarityConfig = RARITY_CONFIG[rarity];
               return (
-                <div
+                <button
+                  type="button"
                   key={avatar.id}
-                  className="relative flex flex-col items-center gap-2 overflow-hidden rounded-2xl border bg-raw-black/45 p-3"
-                  style={{ borderColor: `${rarityConfig.color}40` }}
+                  onClick={() => onAvatarChange(avatar.level)}
+                  className="relative flex flex-col items-center gap-2 overflow-hidden rounded-2xl border bg-raw-black/45 p-3 text-center transition hover:-translate-y-0.5 hover:bg-raw-black/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/50"
+                  style={{
+                    borderColor: avatar.level === avatarLevel ? rarityConfig.color : `${rarityConfig.color}40`,
+                    boxShadow: avatar.level === avatarLevel ? `0 0 0 1px ${rarityConfig.color}55` : undefined,
+                  }}
+                  aria-pressed={avatar.level === avatarLevel}
+                  aria-label={`Use ${avatar.name} avatar`}
                 >
                   <div className="pointer-events-none absolute inset-0 opacity-30 [background-image:radial-gradient(rgba(255,255,255,0.12)_0.6px,transparent_0.6px)] [background-size:8px_8px]" />
-                  <AvatarFigure avatarIndex={avatar.level} size="md" selected rarity={rarity} />
+                  <AvatarFigure avatarIndex={avatar.level} size="md" selected={avatar.level === avatarLevel} rarity={rarity} />
                   <div className="relative text-center">
                     <p className="text-xs font-medium text-raw-text line-clamp-1">{avatar.name}</p>
                     <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: rarityConfig.color }}>
                       {rarityConfig.label}
                     </p>
+                    <p className="mt-1 text-[10px] text-raw-silver/45">
+                      {avatar.level === avatarLevel ? "Selected" : "Tap to use"}
+                    </p>
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>

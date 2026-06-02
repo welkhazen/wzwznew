@@ -288,6 +288,7 @@ export default function Dashboard({
                 polls={polls}
                 votedPolls={votedPolls}
                 avatarLevel={avatarLevel}
+                onAvatarChange={setAvatarLevel}
                 ownedAvatarLevels={ownedAvatarLevels}
                 onUnlockAvatar={unlockAvatarLevel}
                 onAvatarPurchased={markAvatarOwned}
@@ -403,6 +404,7 @@ export default function Dashboard({
         isHome={isHome}
         onLogout={onLogout}
         communities={dashboardCommunities}
+        onOpenCommunity={handleOpenCommunity}
       />
 
       {/* Mobile bottom nav replaced with FloatingDock */}
