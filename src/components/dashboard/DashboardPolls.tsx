@@ -290,7 +290,6 @@ export function DashboardPolls({
   const [sharedPollId, setSharedPollId] = useState<string | null>(null);
   const [shareCopied, setShareCopied] = useState(false);
   const [sharePickerOpen, setSharePickerOpen] = useState(false);
-  const [expandedSharePollId, setExpandedSharePollId] = useState<string | null>(null);
 
   const commentsEndRef = useRef<HTMLDivElement>(null);
 
@@ -811,53 +810,19 @@ export function DashboardPolls({
                     >
                       Review
                     </button>
-                    <div className="shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => setExpandedSharePollId((current) => (current === poll.id ? null : poll.id))}
-                        className="inline-flex items-center justify-center gap-2 border border-raw-border/35 px-3 py-2 text-[11px] uppercase tracking-[0.12em] text-raw-silver/65 transition hover:border-raw-gold/45 hover:text-raw-gold"
-                        aria-expanded={expandedSharePollId === poll.id}
+                    <div className="w-full shrink-0 sm:w-44">
+                      <ShareButton
+                        links={[
+                          { icon: Smartphone, onClick: () => handleWhatsAppShare(poll), label: "Share on WhatsApp" },
+                          { icon: Instagram, onClick: () => handleInstagramShare(poll), label: "Share on Instagram" },
+                          { icon: Facebook, onClick: () => handleFacebookShare(poll), label: "Share on Facebook" },
+                          { icon: Link2, onClick: () => copyShareLink(poll), label: "Copy link" },
+                        ]}
+                        className="min-w-0 w-full border-raw-border/35 bg-raw-surface/20 px-3 py-2 text-[11px] uppercase tracking-[0.12em] text-raw-silver/65 hover:border-raw-gold/45 hover:bg-raw-gold/10 hover:text-raw-gold dark:border-raw-border/35 dark:bg-raw-surface/20 dark:text-raw-silver/65 dark:hover:bg-raw-gold/10 dark:hover:text-raw-gold"
                       >
                         <Copy className="size-3" />
                         Share
-                      </button>
-                    </div>
-                  </div>
-                  <div
-                    className={`overflow-hidden transition-all duration-300 ${
-                      expandedSharePollId === poll.id ? "mt-3 max-h-16 opacity-100" : "max-h-0 opacity-0"
-                    }`}
-                  >
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleWhatsAppShare(poll)}
-                        className="border border-raw-border/35 px-2.5 py-1.5 text-[10px] uppercase tracking-[0.12em] text-raw-silver/70 transition hover:border-raw-gold/45 hover:text-raw-gold"
-                      >
-                        WhatsApp
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleInstagramShare(poll)}
-                        className="border border-raw-border/35 px-2.5 py-1.5 text-[10px] uppercase tracking-[0.12em] text-raw-silver/70 transition hover:border-raw-gold/45 hover:text-raw-gold"
-                      >
-                        Instagram
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleFacebookShare(poll)}
-                        className="border border-raw-border/35 px-2.5 py-1.5 text-[10px] uppercase tracking-[0.12em] text-raw-silver/70 transition hover:border-raw-gold/45 hover:text-raw-gold"
-                      >
-                        Facebook
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => copyShareLink(poll)}
-                        className="inline-flex items-center gap-1.5 border border-raw-border/35 px-2.5 py-1.5 text-[10px] uppercase tracking-[0.12em] text-raw-silver/70 transition hover:border-raw-gold/45 hover:text-raw-gold"
-                      >
-                        <Copy className="size-3" />
-                        Copy link
-                      </button>
+                      </ShareButton>
                     </div>
                   </div>
                 </article>

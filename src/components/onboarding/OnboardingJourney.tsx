@@ -12,6 +12,7 @@ import { fetchPolls } from "@/lib/api/polls";
 import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
 import { LANDING_WHEEL_SPIN_KEY } from "@/lib/avatarCatalog";
 import { WheelOfFortune, type WheelPrize } from "@/components/wheel/WheelOfFortune";
+import { SpinWheelClaimBanner } from "@/components/wheel/SpinWheelClaimBanner";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -512,6 +513,8 @@ export function OnboardingJourney({
               </p>
 
               <div className="mt-6 flex flex-col items-center gap-5 sm:gap-7">
+                <SpinWheelClaimBanner />
+
                 <WheelOfFortune
                   prizes={spinPrizes}
                   disabled={!!claimedSpinResult || isClaimingSpin}
