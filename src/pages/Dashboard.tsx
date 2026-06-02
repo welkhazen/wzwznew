@@ -522,14 +522,14 @@ export default function Dashboard({
       />
 
       {mobileCommunityPickerOpen && joinedMobileCommunities.length > 0 && (
-        <div className="fixed bottom-24 left-[30%] z-[60] h-36 w-36 -translate-x-1/2 lg:hidden">
-          {joinedMobileCommunities.slice(0, 5).map((community, index, visibleCommunities) => {
+        <div className="fixed bottom-[4.7rem] left-[30%] z-[60] h-24 w-28 -translate-x-1/2 lg:hidden">
+          {joinedMobileCommunities.slice(0, 3).map((community, index, visibleCommunities) => {
             const imageUrl = COMMUNITY_LOGOS[community.id] ?? community.logoUrl ?? COMMUNITY_COVER_IMAGES[community.id];
             const count = visibleCommunities.length;
-            const startAngle = count === 1 ? -90 : -165;
-            const endAngle = count === 1 ? -90 : -15;
+            const startAngle = count === 1 ? -90 : -150;
+            const endAngle = count === 1 ? -90 : -30;
             const angle = startAngle + ((endAngle - startAngle) * index) / Math.max(1, count - 1);
-            const radius = 66;
+            const radius = 46;
             const x = Math.cos((angle * Math.PI) / 180) * radius;
             const y = Math.sin((angle * Math.PI) / 180) * radius;
             return (

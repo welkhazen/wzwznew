@@ -19,9 +19,7 @@ interface CommunityRoomListProps {
   waitlistUnlockThreshold: number;
   hasSubscriptionAccess: boolean;
   unlockedCommunityIds: Set<string>;
-  freeCommunitySlotsRemaining: number;
   unlockingId: string | null;
-  unlockTokenCost: number;
   onToggleDescription: (communityId: string) => void;
   onPaidJoinCommunity: (communityId: string, shouldOpenPage: boolean) => void;
   onJoinWaitlist: (community: PersistedCommunityRecord) => void;
@@ -43,9 +41,7 @@ export function CommunityRoomList({
   waitlistUnlockThreshold,
   hasSubscriptionAccess,
   unlockedCommunityIds,
-  freeCommunitySlotsRemaining,
   unlockingId,
-  unlockTokenCost,
   onToggleDescription,
   onPaidJoinCommunity,
   onJoinWaitlist,
@@ -130,7 +126,7 @@ export function CommunityRoomList({
                         onClick={() => onPaidJoinCommunity(community.id, true)}
                         className="w-full rounded-xl bg-raw-gold px-2 py-2 text-xs text-raw-ink hover:bg-raw-gold/90"
                       >
-                        Join Group - {unlockTokenCost} tokens
+                        Join Group
                       </Button>
                     );
                   }
@@ -155,7 +151,6 @@ export function CommunityRoomList({
                   );
                 })() : (() => {
                   const isUnlocked = joined || hasSubscriptionAccess || unlockedCommunityIds.has(community.id);
-                  const canGetFree = freeCommunitySlotsRemaining > 0;
                   const isUnlocking = unlockingId === community.id;
                   if (isUnlocked) {
                     return (
@@ -167,33 +162,14 @@ export function CommunityRoomList({
                       </Button>
                     );
                   }
-                  if (canGetFree) {
-                    return (
-                      <div className="space-y-1.5">
-                        <Button
-                          onClick={() => onUnlockCommunity(community.id)}
-                          disabled={isUnlocking}
-                          className="w-full rounded-xl bg-raw-gold px-2 py-2 text-xs text-raw-ink hover:bg-raw-gold/90 disabled:opacity-70"
-                        >
-                          {isUnlocking ? "Opening…" : "Open Chat — Free"}
-                        </Button>
-                        <p className="text-center text-[10px] text-raw-silver/40">
-                          {freeCommunitySlotsRemaining} free slot{freeCommunitySlotsRemaining === 1 ? "" : "s"} remaining
-                        </p>
-                      </div>
-                    );
-                  }
                   return (
-                    <div className="space-y-1.5">
-                      <Button
-                        onClick={() => onUnlockCommunity(community.id)}
-                        disabled={isUnlocking}
-                        className="w-full rounded-xl border border-raw-gold/40 bg-transparent px-2 py-2 text-xs text-raw-gold hover:bg-raw-gold/10 disabled:opacity-70"
-                      >
-                        <Lock className="h-3 w-3" /> {isUnlocking ? "Unlocking…" : `Unlock — ${unlockTokenCost} tokens`}
-                      </Button>
-                      <p className="text-center text-[10px] text-raw-silver/40">or subscribe for all access</p>
-                    </div>
+                    <Button
+                      onClick={() => onUnlockCommunity(community.id)}
+                      disabled={isUnlocking}
+                      className="w-full rounded-xl bg-raw-gold px-2 py-2 text-xs text-raw-ink hover:bg-raw-gold/90 disabled:opacity-70"
+                    >
+                      {isUnlocking ? "Joining..." : "Open Chat"}
+                    </Button>
                   );
                 })()}
               </div>
