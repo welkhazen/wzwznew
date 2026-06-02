@@ -551,10 +551,10 @@ export default function Dashboard({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.88, y: 6 }}
             transition={{ duration: 0.16, ease: "easeOut" }}
-            className="fixed z-[60] h-24 w-36 -translate-x-1/2 lg:hidden"
+            className="fixed z-[60] h-36 w-36 -translate-x-1/2 lg:hidden"
             style={{
               left: mobileCommunityAnchorRect.left + mobileCommunityAnchorRect.width / 2,
-              bottom: window.innerHeight - mobileCommunityAnchorRect.top + 10,
+              bottom: window.innerHeight - mobileCommunityAnchorRect.top + 8,
               WebkitTouchCallout: "none",
               WebkitUserSelect: "none",
               userSelect: "none",
@@ -562,16 +562,29 @@ export default function Dashboard({
             onPointerDown={(event) => event.stopPropagation()}
             onContextMenu={(event) => event.preventDefault()}
           >
-            <div className="absolute bottom-0 left-1/2 h-3 w-px -translate-x-1/2 bg-gradient-to-t from-raw-gold/55 to-transparent" />
+            <div className="absolute bottom-0 left-1/2 h-3 w-px -translate-x-1/2 bg-gradient-to-t from-raw-gold/65 to-transparent" />
+            <div
+              className="absolute inset-x-1 bottom-3 aspect-square overflow-hidden rounded-full border border-raw-border/40 bg-raw-black/80 shadow-[0_18px_42px_rgba(0,0,0,0.45),0_0_28px_rgba(255,207,92,0.12)] backdrop-blur-xl"
+              style={{
+                background:
+                  "radial-gradient(circle at 50% 50%, rgba(255,207,92,0.15) 0 18%, rgba(12,12,14,0.92) 19% 48%, rgba(0,0,0,0.88) 49% 100%), conic-gradient(from 210deg, rgba(255,207,92,0.24) 0deg 118deg, rgba(255,255,255,0.07) 118deg 122deg, rgba(255,255,255,0.045) 122deg 238deg, rgba(255,255,255,0.07) 238deg 242deg, rgba(255,255,255,0.045) 242deg 360deg)",
+              }}
+            >
+              <div className="absolute inset-[18px] rounded-full border border-raw-border/25" />
+              <div className="absolute left-1/2 top-1/2 h-px w-full -translate-x-1/2 -translate-y-1/2 rotate-[30deg] bg-gradient-to-r from-transparent via-raw-silver/25 to-transparent" />
+              <div className="absolute left-1/2 top-1/2 h-px w-full -translate-x-1/2 -translate-y-1/2 rotate-[150deg] bg-gradient-to-r from-transparent via-raw-silver/25 to-transparent" />
+              <div className="absolute left-1/2 top-1/2 h-8 w-8 -translate-x-1/2 -translate-y-1/2 rounded-full border border-raw-gold/45 bg-raw-black/80 shadow-[0_0_18px_rgba(255,207,92,0.18)]" />
+            </div>
             {joinedMobileCommunities.slice(0, 3).map((community, index, visibleCommunities) => {
               const imageUrl = COMMUNITY_LOGOS[community.id] ?? community.logoUrl ?? COMMUNITY_COVER_IMAGES[community.id];
               const positions =
                 visibleCommunities.length === 1
-                  ? [{ x: 0, y: -10 }]
+                  ? [{ x: 0, y: -68 }]
                   : visibleCommunities.length === 2
-                    ? [{ x: -30, y: -22 }, { x: 30, y: -22 }]
-                    : [{ x: -54, y: -14 }, { x: 0, y: -50 }, { x: 54, y: -14 }];
+                    ? [{ x: -36, y: -48 }, { x: 36, y: -48 }]
+                    : [{ x: -43, y: -39 }, { x: 0, y: -70 }, { x: 43, y: -39 }];
               const { x, y } = positions[index];
+              const isActiveCommunity = community.id === activeCommunityId;
               return (
                 <motion.button
                   key={community.id}
@@ -587,7 +600,11 @@ export default function Dashboard({
                   onContextMenu={(event) => event.preventDefault()}
                   title={community.title}
                   aria-label={`Open ${community.title}`}
-                  className="absolute bottom-0 left-1/2 flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-raw-border/35 bg-raw-surface text-[10px] font-semibold text-raw-text shadow-xl shadow-black/30 ring-1 ring-raw-gold/10 transition hover:border-raw-gold/55 focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/50"
+                  className={`absolute bottom-0 left-1/2 flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border bg-raw-surface text-[10px] font-semibold text-raw-text shadow-xl shadow-black/30 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/50 ${
+                    isActiveCommunity
+                      ? "border-raw-gold/70 ring-2 ring-raw-gold/35"
+                      : "border-raw-border/35 ring-1 ring-raw-gold/10 hover:border-raw-gold/55"
+                  }`}
                   style={{
                     transform: `translate(calc(-50% + ${x}px), ${y}px)`,
                     WebkitTouchCallout: "none",
