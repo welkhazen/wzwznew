@@ -1,0 +1,302 @@
+{
+  "batchIndex": 7,
+  "nodes": [
+    {
+      "id": "document:docs/callflow.html",
+      "type": "document",
+      "name": "callflow.html",
+      "filePath": "docs/callflow.html",
+      "summary": "Auto-generated Mermaid call-flow diagram (HTML page) visualizing the src/ module dependency graph rooted at App.tsx, including page routes, providers, controllers, and library modules.",
+      "tags": ["documentation", "diagram", "callflow", "generated"],
+      "complexity": "complex",
+      "languageNotes": "Static HTML page embedding a Mermaid graph LR diagram rendered client-side."
+    },
+    {
+      "id": "document:docs/codebase-graph.md",
+      "type": "document",
+      "name": "codebase-graph.md",
+      "filePath": "docs/codebase-graph.md",
+      "summary": "Markdown rendering of the same Mermaid src/ dependency graph as callflow.html, intended for inline review on GitHub and other Markdown viewers.",
+      "tags": ["documentation", "diagram", "dependency-graph", "generated"],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:docs/codebase-map.md",
+      "type": "document",
+      "name": "codebase-map.md",
+      "filePath": "docs/codebase-map.md",
+      "summary": "Hand-written zoomed-out codebase map covering domain glossary, bounded contexts, client/server control rooms, module-to-caller mapping, and diagnostic entry points for new engineers.",
+      "tags": ["documentation", "architecture", "domain-map", "onboarding"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:docs/crash-reporting-and-monitoring.md",
+      "type": "document",
+      "name": "crash-reporting-and-monitoring.md",
+      "filePath": "docs/crash-reporting-and-monitoring.md",
+      "summary": "Describes the Sentry plus Resend email crash alert pipeline, the ErrorBoundary capture flow, and the Vercel environment variables required for delivery.",
+      "tags": ["documentation", "monitoring", "operations", "sentry"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/finishing-a-development-branch.md",
+      "type": "document",
+      "name": "finishing-a-development-branch.md",
+      "filePath": "docs/finishing-a-development-branch.md",
+      "summary": "Engineer checklist for closing out a dev branch: rebase, lint/test/build gates, commit hygiene, and pull request preparation guidance.",
+      "tags": ["documentation", "workflow", "process", "contributing"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/mobile-permissions-inventory.md",
+      "type": "document",
+      "name": "mobile-permissions-inventory.md",
+      "filePath": "docs/mobile-permissions-inventory.md",
+      "summary": "Inventory of mobile platform permissions actually used by the iOS Swift Playgrounds wrapper and the planned Android build, scoped to notifications only.",
+      "tags": ["documentation", "mobile", "permissions", "ios", "android"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/push-notifications-setup.md",
+      "type": "document",
+      "name": "push-notifications-setup.md",
+      "filePath": "docs/push-notifications-setup.md",
+      "summary": "Setup guide for the OneSignal Web/PWA push path and the scaffolded Apple APNs sender, including required env vars, Apple developer steps, and a curl test invocation.",
+      "tags": ["documentation", "push-notifications", "onesignal", "apns", "configuration"],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "document:docs/callflow.html",
+      "target": "file:src/App.tsx",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/codebase-graph.md",
+      "target": "file:src/App.tsx",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/codebase-graph.md",
+      "target": "document:docs/callflow.html",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/codebase-map.md",
+      "target": "file:src/App.tsx",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/codebase-map.md",
+      "target": "file:src/pages/Index.tsx",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/codebase-map.md",
+      "target": "file:src/store/useRawStore.ts",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/codebase-map.md",
+      "target": "file:src/store/useOnboarding.ts",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/codebase-map.md",
+      "target": "file:src/store/useCommunities.ts",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/codebase-map.md",
+      "target": "file:src/store/usePolls.ts",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/codebase-map.md",
+      "target": "file:src/store/useRewards.ts",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/codebase-map.md",
+      "target": "file:src/components/onboarding/OnboardingJourney.tsx",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/codebase-map.md",
+      "target": "file:src/lib/communityChat.ts",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/codebase-map.md",
+      "target": "file:server/index.ts",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/codebase-map.md",
+      "target": "file:server/routes/auth.ts",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/codebase-map.md",
+      "target": "file:server/routes/polls.ts",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/codebase-map.md",
+      "target": "file:server/types.ts",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/codebase-map.md",
+      "target": "file:server/lib/store.ts",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/codebase-map.md",
+      "target": "file:server/lib/pollRepository.ts",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/codebase-map.md",
+      "target": "file:server/lib/otp.ts",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/codebase-map.md",
+      "target": "file:server/lib/phoneHash.ts",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/codebase-map.md",
+      "target": "file:server/lib/streakCron.ts",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/crash-reporting-and-monitoring.md",
+      "target": "file:src/components/ErrorBoundary.tsx",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/crash-reporting-and-monitoring.md",
+      "target": "file:src/lib/crashAlerts.ts",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/crash-reporting-and-monitoring.md",
+      "target": "file:src/lib/sentry.ts",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/crash-reporting-and-monitoring.md",
+      "target": "file:api/monitoring/crash-alert.ts",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/push-notifications-setup.md",
+      "target": "file:api/notifications/send.ts",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/push-notifications-setup.md",
+      "target": "file:src/hooks/useNotificationConsent.ts",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/push-notifications-setup.md",
+      "target": "file:src/hooks/useWebPush.ts",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/push-notifications-setup.md",
+      "target": "file:src/lib/communityPushNotifications.ts",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/push-notifications-setup.md",
+      "target": "file:api/users/[userId]/notification-consent.ts",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/push-notifications-setup.md",
+      "target": "file:api/users/[userId]/tokens.ts",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/mobile-permissions-inventory.md",
+      "target": "document:docs/push-notifications-setup.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:docs/mobile-permissions-inventory.md",
+      "target": "file:src/components/notifications/NotificationConsentPrompt.tsx",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

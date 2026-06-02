@@ -47,8 +47,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
-import { ChevronDown } from "lucide-react";
-import { spendTokens } from "@/utils/supabasePolls";
+import { spendTokens } from "@/lib/api/tokens";
 
 export type DashboardTab = "home" | "polls" | "challenges" | "daily-spin" | "communities" | "profile" | "wallet" | "inventory";
 
@@ -87,8 +86,6 @@ type DashboardNotification = {
   createdAt: string;
   likeCount?: number;
 };
-
-type NavIdentity = Pick<UserAliasRow, "alias" | "avatar_level" | "is_public">;
 
 function deliveredNotificationsKey(userId: string) {
   return `${DELIVERED_NOTIFICATIONS_PREFIX}.${userId}`;
@@ -139,7 +136,6 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
   const [reportOpen, setReportOpen] = useState(false);
   const [blockedUsersOpen, setBlockedUsersOpen] = useState(false);
   const [blockedSenderKeys, setBlockedSenderKeys] = useState<string[]>(() => readBlockedCommunitySenders(userId));
-  const [identityPickerOpen, setIdentityPickerOpen] = useState(false);
   const [issueType, setIssueType] = useState(ISSUE_TYPE_OPTIONS[0]);
   const [issueDetails, setIssueDetails] = useState("");
   const [screenshotName, setScreenshotName] = useState("");
@@ -566,7 +562,7 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
                 className="flex items-center transition-opacity hover:opacity-80"
                 aria-label="Open profile menu"
               >
-                <AvatarFigure avatarIndex={selectedIdentity.avatar_level} size="sm" selected />
+                <AvatarFigure avatarIndex={avatarLevel} size="sm" selected />
               </button>
             </DropdownMenuTrigger>
 
@@ -590,63 +586,12 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
                     : "border-raw-gold/20 bg-raw-gold/[0.08] hover:bg-raw-gold/[0.12]",
                 )}
               >
-                <AvatarFigure avatarIndex={selectedIdentity.avatar_level} size="sm" selected />
+                <AvatarFigure avatarIndex={avatarLevel} size="sm" selected />
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-raw-text">View Profile</p>
-                  <p className={cn("truncate text-xs", isEffectiveLight ? "text-slate-600" : "text-raw-silver/50")}>@{selectedIdentity.alias}</p>
+                  <p className={cn("truncate text-xs", isEffectiveLight ? "text-slate-600" : "text-raw-silver/50")}>@{username}</p>
                 </div>
               </button>
-
-              <div className={cn("mx-1 mb-1 rounded-xl border p-2", isEffectiveLight ? "border-slate-200 bg-slate-50" : "border-raw-border/25 bg-raw-black/25")}>
-                <button
-                  type="button"
-                  onClick={() => setIdentityPickerOpen((open) => !open)}
-                  className="flex w-full items-center gap-2 rounded-lg border border-raw-gold/35 bg-raw-gold/10 px-2 py-1.5 text-left text-raw-gold transition-colors hover:bg-raw-gold/15"
-                  aria-expanded={identityPickerOpen}
-                >
-                  <AvatarFigure avatarIndex={selectedIdentity.avatar_level} size="sm" selected className="scale-75" />
-                  <span className="min-w-0 flex-1">
-                    <span className={cn("block text-[10px] uppercase tracking-[0.16em]", isEffectiveLight ? "text-slate-500" : "text-raw-silver/45")}>
-                      Talk as
-                    </span>
-                    <span className="block truncate text-xs font-semibold">@{selectedIdentity.alias}</span>
-                  </span>
-                  <span className="text-[9px] uppercase tracking-[0.14em] opacity-70">
-                    {selectedIdentity.is_public ? "Public" : "Private"}
-                  </span>
-                  <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", identityPickerOpen ? "rotate-180" : "")} />
-                </button>
-
-                {identityPickerOpen && (
-                  <div className="mt-1.5 space-y-1.5">
-                    {identities
-                      .filter((identity) => identity.alias !== selectedIdentity.alias)
-                      .map((identity) => (
-                        <button
-                          key={`${identity.alias}-${identity.avatar_level}`}
-                          type="button"
-                          onClick={() => {
-                            setSelectedIdentityAlias(identity.alias);
-                            writeSelectedIdentityAlias(userId, identity.alias);
-                            setIdentityPickerOpen(false);
-                          }}
-                          className={cn(
-                            "flex w-full items-center gap-2 rounded-lg border px-2 py-1.5 text-left transition-colors",
-                            isEffectiveLight
-                              ? "border-slate-200 bg-white/70 text-slate-600 hover:border-raw-gold/30 hover:text-raw-gold"
-                              : "border-raw-border/20 bg-raw-black/20 text-raw-silver/60 hover:border-raw-gold/30 hover:text-raw-gold"
-                          )}
-                        >
-                          <AvatarFigure avatarIndex={identity.avatar_level} size="sm" selected={false} className="scale-75" />
-                          <span className="min-w-0 flex-1 truncate text-xs font-semibold">@{identity.alias}</span>
-                          <span className="text-[9px] uppercase tracking-[0.14em] opacity-70">
-                            {identity.is_public ? "Public" : "Private"}
-                          </span>
-                        </button>
-                      ))}
-                  </div>
-                )}
-              </div>
 
               <div className={cn("mx-1 mb-1 rounded-lg border px-2 py-1.5 sm:hidden", isEffectiveLight ? "border-slate-200 bg-slate-50" : "border-raw-border/25 bg-raw-black/30")}>
                 <div className="mb-1 flex items-center justify-between gap-2">

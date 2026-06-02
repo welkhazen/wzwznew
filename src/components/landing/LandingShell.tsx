@@ -12,9 +12,10 @@ import { Communities } from "@/components/landing/Communities";
 import { PersonalityInsightsSection } from "@/components/landing/PersonalityInsightsSection";
 import { AvatarShowcaseSection } from "@/components/landing/AvatarShowcaseSection";
 import { LandingPollsSection } from "@/components/landing/LandingPollsSection";
-import { WheelReward } from "@/components/landing/WheelReward";
 import { WhyAnonymity } from "@/components/landing/WhyAnonymity";
-import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
+const TestimonialsSection = lazy(() =>
+  import("@/components/landing/TestimonialsSection").then((m) => ({ default: m.TestimonialsSection }))
+);
 import { EarnedWarUpgradesSection } from "@/components/landing/EarnedWarUpgradesSection";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import PerforatedBackground from "@/components/ui/perforated-background";
@@ -71,14 +72,39 @@ export default function LandingShell({
             </Suspense>
             <ProblemSection />
             <HowItWorks />
-            <AvatarShowcaseSection />
+            <AvatarShowcaseSection onSignupClick={() => setShowSignup(true)} />
             <LandingPollsSection onSignupClick={() => setShowSignup(true)} />
             <Communities onSignupClick={() => setShowSignup(true)} />
-            <PersonalityInsightsSection />
-            <EarnedWarUpgradesSection />
-            <WheelReward onSignupClick={() => setShowSignup(true)} />
-            <WhyAnonymity />
-            <TestimonialsSection />
+
+            <section className="landing-section px-4 py-8 sm:px-6 sm:py-12">
+              <div
+                className="relative mx-auto w-full max-w-6xl overflow-hidden rounded-3xl border-2 border-raw-gold/35 bg-gradient-to-b from-raw-gold/[0.04] to-transparent px-2 py-6 sm:px-4 sm:py-10"
+                style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 0 60px rgba(241,196,45,0.06)" }}
+              >
+                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/70 to-transparent" />
+                <div className="px-6 pb-2 pt-2 text-center sm:pb-6">
+                  <p className="font-display text-[10px] tracking-[0.3em] uppercase text-raw-gold/70">
+                    On the way
+                  </p>
+                  <h3 className="mt-2 landing-heading text-raw-gold">
+                    Coming soon.
+                  </h3>
+                  <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-raw-silver/55">
+                    Everything in this frame is still being built. Sign up to be first
+                    in line when these features go live.
+                  </p>
+                </div>
+
+                <PersonalityInsightsSection />
+                <EarnedWarUpgradesSection />
+                <WhyAnonymity />
+              </div>
+            </section>
+
+            <Suspense fallback={<div className="h-16" />}>
+              <TestimonialsSection />
+            </Suspense>
+
             <LandingFooter />
           </div>
         </motion.div>

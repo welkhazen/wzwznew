@@ -7,7 +7,7 @@ import {
   Sparkles,
   Trophy,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DashboardDailySpin } from "@/components/dashboard/DashboardDailySpin";
 import { toast } from "@/components/ui/use-toast";
 import { getTodayKey } from "@/store/useRawStore.storage";
@@ -23,6 +23,7 @@ interface DashboardChallengesProps {
   onAwardXP?: (amount: number) => Promise<void>;
   onClaimXP?: (source: string, claimKey: string, amount: number) => Promise<boolean>;
   onAwardTokens?: (amount: number) => void;
+  onAvatarWon?: (level: number) => void;
 }
 
 type ChallengeReset = "daily" | "weekly" | "monthly";
@@ -148,18 +149,19 @@ export function DashboardChallenges({
   onAwardXP,
   onClaimXP,
   onAwardTokens,
+  onAvatarWon,
 }: DashboardChallengesProps) {
   const [claimedChallenges, setClaimedChallenges] = useState<Set<string>>(new Set());
   const [dailyLoginClaimKeys, setDailyLoginClaimKeys] = useState<string[]>([]);
   const [testProgress, setTestProgress] = useState<Record<string, number>>({});
   const autoClaimingRef = useRef<Set<string>>(new Set());
   const streakDays = countConsecutiveDays(dailyLoginClaimKeys);
-  const progressSourceMap: Record<ChallengeDefinition["progressKey"], number> = {
+  const progressSourceMap = useMemo<Record<ChallengeDefinition["progressKey"], number>>(() => ({
     dailyPolls: dailyAnsweredCount,
     totalPolls: pollsAnswered,
     streakDays,
     avatarLevel,
-  };
+  }), [avatarLevel, dailyAnsweredCount, pollsAnswered, streakDays]);
 
   useEffect(() => {
     loadUserXPClaimKeys(userId, "challenge").then((claimKeys) => {
@@ -173,7 +175,7 @@ export function DashboardChallenges({
     return current >= challenge.target;
   }).length;
 
-  const handleClaimChallenge = (challenge: ChallengeDefinition) => {
+  const handleClaimChallenge = useCallback((challenge: ChallengeDefinition) => {
     const claimKey = `${challenge.id}:${getResetKey(challenge.reset)}`;
     if (!isAdmin && (claimedChallenges.has(claimKey) || autoClaimingRef.current.has(claimKey))) return;
     autoClaimingRef.current.add(claimKey);
@@ -223,7 +225,7 @@ export function DashboardChallenges({
     }
 
     autoClaimingRef.current.delete(claimKey);
-  };
+  }, [claimedChallenges, isAdmin, onAwardTokens, onAwardXP, onClaimXP]);
 
   useEffect(() => {
     if (isAdmin) return;
@@ -235,11 +237,11 @@ export function DashboardChallenges({
         handleClaimChallenge(challenge);
       }
     });
-  }, [avatarLevel, claimedChallenges, dailyAnsweredCount, isAdmin, pollsAnswered, streakDays, testProgress]);
+  }, [claimedChallenges, handleClaimChallenge, isAdmin, progressSourceMap, testProgress]);
 
   return (
     <div className="space-y-5">
-      <DashboardDailySpin userId={userId} isAdmin={isAdmin} onAwardXP={onAwardXP} />
+      <DashboardDailySpin userId={userId} isAdmin={isAdmin} onAwardXP={onAwardXP} onAvatarWon={onAvatarWon} />
 
       <header className="space-y-2">
         <h1 className="font-display text-xl tracking-wide text-raw-text sm:text-2xl">Challenges</h1>

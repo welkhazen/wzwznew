@@ -22,6 +22,8 @@ const CATALOG_STORAGE_KEY = "raw.avatar.catalog.v2";
 const FULL_CATALOG_STORAGE_KEY = "raw.avatar.catalog.full.v2";
 const INVENTORY_STORAGE_PREFIX = "raw.avatar.inventory.v1.";
 const SELECTED_STORAGE_PREFIX = "raw.avatar.selected.v1.";
+const DAILY_SPIN_AVATAR_CLAIM_PREFIX = "raw.daily-spin.avatar-claim.v1.";
+export const LANDING_WHEEL_SPIN_KEY = "raw.landing-wheel.spin.v1";
 let avatarBackendMissingTables = false;
 let avatarCatalogLocalWriteFailed = false;
 
@@ -61,7 +63,7 @@ export const DEFAULT_AVATAR_CATALOG: readonly AvatarCatalogItem[] = [
   { id: "neon-lynx", level: 10, name: "Neon Lynx", price: "50", imageSrc: "/avatars/2.webp", bg: "#170f2e", figure: "#a855f7", ring: "#c084fc", glow: "#a855f780", isActive: true, showIn: "both", rarity: "common" },
   { id: "blue-signal", level: 11, name: "Blue Signal", price: "50", imageSrc: "/avatars/3.webp", bg: "#06131f", figure: "#22d3ee", ring: "#22d3ee", glow: "#22d3ee80", isActive: true, showIn: "both", rarity: "common" },
   { id: "violet-mask", level: 12, name: "Violet Mask", price: "50", imageSrc: "/avatars/04.webp", bg: "#1a1028", figure: "#d946ef", ring: "#d946ef", glow: "#d946ef80", isActive: true, showIn: "both", rarity: "common" },
-  { id: "horned-iron", level: 13, name: "Horned Iron", price: "50", imageSrc: "/avatars/5.webp", bg: "#1f0a05", figure: "#fb923c", ring: "#fb923c", glow: "#fb923c80", isActive: true, showIn: "both", rarity: "common" },
+  { id: "horned-iron", level: 13, name: "Viozen", price: "50", imageSrc: "/avatars/5.png", bg: "#1f0a05", figure: "#fb923c", ring: "#fb923c", glow: "#fb923c80", isActive: true, showIn: "both", rarity: "common" },
   { id: "crimson-muse", level: 14, name: "Crimson Muse", price: "50", imageSrc: "/avatars/6.webp", bg: "#2a0b0b", figure: "#f97316", ring: "#f97316", glow: "#f9731680", isActive: true, showIn: "both", rarity: "common" },
   { id: "solar-flame", level: 15, name: "Solar Flame", price: "50", imageSrc: "/avatars/07.webp", bg: "#241005", figure: "#facc15", ring: "#facc15", glow: "#facc1590", isActive: true, showIn: "both", rarity: "common" },
   { id: "pink-circuit", level: 16, name: "Pink Circuit", price: "50", imageSrc: "/avatars/08.webp", bg: "#2a0b1c", figure: "#fb7185", ring: "#fb7185", glow: "#fb718580", isActive: true, showIn: "both", rarity: "common" },
@@ -77,6 +79,22 @@ const WHEEL_AVATAR_IDS = new Set([
   "solar-flame",
   "pink-circuit",
 ]);
+
+const LANDING_WHEEL_PRIZE_TO_AVATAR_ID: Record<string, string> = {
+  "wheel-avatar-1": "silver-void",
+  "wheel-avatar-2": "neon-lynx",
+  "wheel-avatar-3": "blue-signal",
+  "wheel-avatar-4": "violet-mask",
+  "wheel-avatar-5": "horned-iron",
+  "wheel-avatar-6": "crimson-muse",
+  "wheel-avatar-7": "solar-flame",
+  "wheel-avatar-8": "pink-circuit",
+};
+
+export type DailySpinAvatarGrantResult =
+  | { status: "granted"; avatarId: string; level: number }
+  | { status: "already_claimed"; avatarId: string; level: number }
+  | { status: "unknown_avatar" };
 
 function cloneCatalog(items: readonly AvatarCatalogItem[]): AvatarCatalogItem[] {
   return items.map((item) => ({ ...item }));
@@ -388,6 +406,44 @@ function selectedKey(userId: string): string {
   return `${SELECTED_STORAGE_PREFIX}${userId}`;
 }
 
+function dailySpinAvatarClaimKey(userId: string): string {
+  return `${DAILY_SPIN_AVATAR_CLAIM_PREFIX}${userId}`;
+}
+
+function readDailySpinAvatarClaimLocal(userId: string): string | null {
+  if (!isBrowser()) return null;
+  return window.localStorage.getItem(dailySpinAvatarClaimKey(userId));
+}
+
+function writeDailySpinAvatarClaimLocal(userId: string, avatarId: string): void {
+  if (!isBrowser()) return;
+  window.localStorage.setItem(dailySpinAvatarClaimKey(userId), avatarId);
+}
+
+function readLandingWheelAvatarIdLocal(catalog: AvatarCatalogItem[]): string | null {
+  if (!isBrowser()) return null;
+
+  try {
+    const raw = window.localStorage.getItem(LANDING_WHEEL_SPIN_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { prizeId?: unknown; avatarId?: unknown };
+    const candidate = typeof parsed.avatarId === "string"
+      ? parsed.avatarId
+      : typeof parsed.prizeId === "string"
+        ? LANDING_WHEEL_PRIZE_TO_AVATAR_ID[parsed.prizeId]
+        : null;
+    if (!candidate) return null;
+    return catalog.some((item) => item.id === candidate) ? candidate : null;
+  } catch {
+    return null;
+  }
+}
+
+function clearLandingWheelAvatarLocal(): void {
+  if (!isBrowser()) return;
+  window.localStorage.removeItem(LANDING_WHEEL_SPIN_KEY);
+}
+
 function defaultOwnedIds(catalog: AvatarCatalogItem[]): string[] {
   const freeIds = catalog
     .filter((item) => item.price === "Free" || item.price === "0" || Number(item.price) === 0)
@@ -503,6 +559,58 @@ export async function purchaseAvatarForUser(userId: string, avatarId: string): P
   } catch {
     // Local save already completed.
   }
+}
+
+export async function grantDailySpinAvatarOnceForUser(userId: string, avatarId: string): Promise<DailySpinAvatarGrantResult> {
+  const catalog = readAvatarCatalogLocal();
+  const avatar = catalog.find((item) => item.id === avatarId);
+  if (!avatar) {
+    return { status: "unknown_avatar" };
+  }
+
+  const existingLocalClaim = readDailySpinAvatarClaimLocal(userId);
+  if (existingLocalClaim) {
+    const existingAvatar = catalog.find((item) => item.id === existingLocalClaim) ?? avatar;
+    return { status: "already_claimed", avatarId: existingAvatar.id, level: existingAvatar.level };
+  }
+
+  try {
+    const { data, error } = await supabase.rpc("award_xp_once", {
+      p_user_id: userId,
+      p_source: "daily-spin-avatar",
+      p_claim_key: "free-avatar",
+      p_amount: 0,
+    });
+
+    const result = data as { awarded?: unknown } | null;
+    if (!error && result?.awarded === false) {
+      writeDailySpinAvatarClaimLocal(userId, avatar.id);
+      return { status: "already_claimed", avatarId: avatar.id, level: avatar.level };
+    }
+
+    if (error) {
+      const localClaim = readDailySpinAvatarClaimLocal(userId);
+      if (localClaim) {
+        const existingAvatar = catalog.find((item) => item.id === localClaim) ?? avatar;
+        return { status: "already_claimed", avatarId: existingAvatar.id, level: existingAvatar.level };
+      }
+    }
+  } catch {
+    // Fall back to local-only claim state below.
+  }
+
+  await purchaseAvatarForUser(userId, avatar.id);
+  writeDailySpinAvatarClaimLocal(userId, avatar.id);
+  return { status: "granted", avatarId: avatar.id, level: avatar.level };
+}
+
+export async function claimPendingLandingWheelAvatarForUser(userId: string): Promise<DailySpinAvatarGrantResult | null> {
+  const catalog = readAvatarCatalogLocal();
+  const avatarId = readLandingWheelAvatarIdLocal(catalog);
+  if (!avatarId) return null;
+  const result = await grantDailySpinAvatarOnceForUser(userId, avatarId);
+  clearLandingWheelAvatarLocal();
+  return result;
 }
 
 export async function equipAvatarForUser(userId: string, avatarId: string): Promise<void> {

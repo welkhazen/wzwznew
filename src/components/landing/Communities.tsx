@@ -236,23 +236,6 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
 
         </div>
 
-        {/* Communities worldwide */}
-        <div
-          className="relative mx-auto mt-10 w-full max-w-5xl overflow-hidden rounded-2xl border border-raw-border/40 bg-raw-surface/20 px-6 py-10 text-center sm:mt-16 sm:px-10 sm:py-14"
-          style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 0 40px rgba(0,0,0,0.3)" }}
-        >
-          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/30 to-transparent" />
-          <p className="font-display text-[10px] tracking-[0.3em] uppercase text-raw-silver/40">
-            Communities worldwide
-          </p>
-          <h3 className="mt-3 landing-heading">
-            Where mind meets heart.
-          </h3>
-          <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-raw-silver/50">
-            Real connection starts when intellect and emotion align. raW communities
-            are built for people who think deeply and feel deeply — worldwide, 24/7.
-          </p>
-        </div>
       </div>
 
       {previewOpen && selectedCommunity && clickedCardRect && createPortal(

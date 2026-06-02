@@ -1,26 +1,5 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Poll } from "../types";
-
-let cachedClient: SupabaseClient | null | undefined;
-
-function getSupabaseClient(): SupabaseClient | null {
-  if (cachedClient !== undefined) {
-    return cachedClient;
-  }
-
-  const url = process.env.VITE_SUPABASE_URL;
-  const key = process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-
-  if (!url || !key) {
-    cachedClient = null;
-    return cachedClient;
-  }
-
-  cachedClient = createClient(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-  return cachedClient;
-}
+import { supabaseAdmin } from "./supabaseClient";
 
 function randomize<T>(items: T[]): T[] {
   return items
@@ -72,7 +51,7 @@ function normalizeOptionsFromJson(pollId: string, input: unknown): Poll["options
 }
 
 export async function fetchActivePolls(limit: number): Promise<Poll[] | null> {
-  const supabase = getSupabaseClient();
+  const supabase = supabaseAdmin;
   if (!supabase) return null;
 
   const { data: pollRows, error: pollError } = await supabase

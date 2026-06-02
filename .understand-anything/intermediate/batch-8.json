@@ -1,0 +1,144 @@
+{
+  "batchIndex": 8,
+  "nodes": [
+    {
+      "id": "document:docs/llm-memory-pack/README.md",
+      "type": "document",
+      "name": "LLM Memory Pack README",
+      "filePath": "docs/llm-memory-pack/README.md",
+      "summary": "Entry point for the LLM Memory Pack: explains the cross-model handoff format, lists the six memory files plus BOOTSTRAP_PROMPT, and outlines the suggested flow for exporting/summarizing/importing project memory between LLMs.",
+      "tags": ["docs", "llm-handoff", "memory-pack", "readme"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/llm-memory-pack/BOOTSTRAP_PROMPT.md",
+      "type": "document",
+      "name": "Bootstrap Prompt",
+      "filePath": "docs/llm-memory-pack/BOOTSTRAP_PROMPT.md",
+      "summary": "Copy-paste bootstrap prompt for a destination LLM: instructs it to read the six memory files in order, treat them as source of truth, and produce an understanding summary, risk list, top-3 actions, and clarifying questions.",
+      "tags": ["docs", "llm-handoff", "prompt", "memory-pack"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/llm-memory-pack/00_identity.md",
+      "type": "document",
+      "name": "00_identity",
+      "filePath": "docs/llm-memory-pack/00_identity.md",
+      "summary": "Template for capturing the user's working identity: collaboration preferences, engineering preferences, hard constraints, and communication notes for the destination LLM.",
+      "tags": ["docs", "memory-pack", "template", "identity"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/llm-memory-pack/01_projects.md",
+      "type": "document",
+      "name": "01_projects",
+      "filePath": "docs/llm-memory-pack/01_projects.md",
+      "summary": "Template for per-project status snapshots: repo, goal, current status/branch, top-3 priorities, blockers, risks, and next best action.",
+      "tags": ["docs", "memory-pack", "template", "project-status"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/llm-memory-pack/02_decisions.md",
+      "type": "document",
+      "name": "02_decisions",
+      "filePath": "docs/llm-memory-pack/02_decisions.md",
+      "summary": "Template for recording major engineering decisions: date, context, decision, alternatives, tradeoffs, consequences, and references to PRs/issues/files.",
+      "tags": ["docs", "memory-pack", "template", "decisions", "adr-lite"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/llm-memory-pack/03_open_loops.md",
+      "type": "document",
+      "name": "03_open_loops",
+      "filePath": "docs/llm-memory-pack/03_open_loops.md",
+      "summary": "Template for tracking unresolved threads: owner, current state, missing info, blockers, unblock step, and due date/priority.",
+      "tags": ["docs", "memory-pack", "template", "open-loops", "todo"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/llm-memory-pack/04_timeline.md",
+      "type": "document",
+      "name": "04_timeline",
+      "filePath": "docs/llm-memory-pack/04_timeline.md",
+      "summary": "Template for date-based milestone log: what happened, why it mattered, and links, in chronological order.",
+      "tags": ["docs", "memory-pack", "template", "timeline", "milestones"],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/llm-memory-pack/05_glossary.md",
+      "type": "document",
+      "name": "05_glossary",
+      "filePath": "docs/llm-memory-pack/05_glossary.md",
+      "summary": "Template for project glossary: terms, acronyms, and system names with project-specific definitions.",
+      "tags": ["docs", "memory-pack", "template", "glossary"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "from": "document:docs/llm-memory-pack/README.md",
+      "to": "document:docs/llm-memory-pack/00_identity.md",
+      "type": "documents"
+    },
+    {
+      "from": "document:docs/llm-memory-pack/README.md",
+      "to": "document:docs/llm-memory-pack/01_projects.md",
+      "type": "documents"
+    },
+    {
+      "from": "document:docs/llm-memory-pack/README.md",
+      "to": "document:docs/llm-memory-pack/02_decisions.md",
+      "type": "documents"
+    },
+    {
+      "from": "document:docs/llm-memory-pack/README.md",
+      "to": "document:docs/llm-memory-pack/03_open_loops.md",
+      "type": "documents"
+    },
+    {
+      "from": "document:docs/llm-memory-pack/README.md",
+      "to": "document:docs/llm-memory-pack/04_timeline.md",
+      "type": "documents"
+    },
+    {
+      "from": "document:docs/llm-memory-pack/README.md",
+      "to": "document:docs/llm-memory-pack/05_glossary.md",
+      "type": "documents"
+    },
+    {
+      "from": "document:docs/llm-memory-pack/README.md",
+      "to": "document:docs/llm-memory-pack/BOOTSTRAP_PROMPT.md",
+      "type": "documents"
+    },
+    {
+      "from": "document:docs/llm-memory-pack/BOOTSTRAP_PROMPT.md",
+      "to": "document:docs/llm-memory-pack/00_identity.md",
+      "type": "related"
+    },
+    {
+      "from": "document:docs/llm-memory-pack/BOOTSTRAP_PROMPT.md",
+      "to": "document:docs/llm-memory-pack/01_projects.md",
+      "type": "related"
+    },
+    {
+      "from": "document:docs/llm-memory-pack/BOOTSTRAP_PROMPT.md",
+      "to": "document:docs/llm-memory-pack/02_decisions.md",
+      "type": "related"
+    },
+    {
+      "from": "document:docs/llm-memory-pack/BOOTSTRAP_PROMPT.md",
+      "to": "document:docs/llm-memory-pack/03_open_loops.md",
+      "type": "related"
+    },
+    {
+      "from": "document:docs/llm-memory-pack/BOOTSTRAP_PROMPT.md",
+      "to": "document:docs/llm-memory-pack/04_timeline.md",
+      "type": "related"
+    },
+    {
+      "from": "document:docs/llm-memory-pack/BOOTSTRAP_PROMPT.md",
+      "to": "document:docs/llm-memory-pack/05_glossary.md",
+      "type": "related"
+    }
+  ]
+}

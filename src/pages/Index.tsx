@@ -7,6 +7,9 @@ import { SignupModal } from "@/components/landing/SignupModal";
 import { POLL_SHARE_PARAM } from "@/lib/pollShare";
 import { useRawStore } from "@/store/useRawStore";
 import { awardXP, XP_REWARDS } from "@/lib/userProgress";
+import { claimPendingLandingWheelAvatarForUser } from "@/lib/avatarCatalog";
+import { unlockCommunity } from "@/lib/communityAccess";
+import { joinCommunity } from "@/backend/supabase/controllers/communityController";
 
 const LandingShellLazy = lazy(() => import("@/components/landing/LandingShell"));
 
@@ -53,6 +56,18 @@ const Index = () => {
   const sharedPollRef = typeof window !== "undefined"
     ? new URLSearchParams(window.location.search).get(POLL_SHARE_PARAM)
     : null;
+
+  const joinOnboardingCommunities = async () => {
+    if (!user) return;
+
+    for (const communityId of onboardingSelectedCommunityIds) {
+      const result = await unlockCommunity(user.id, communityId);
+      if (!result.ok && !result.already) {
+        throw new Error("Could not save your selected community. Please try again.");
+      }
+      await joinCommunity(communityId, user.id, user.username);
+    }
+  };
 
   useEffect(() => {
     if (!isLoggedIn || !user || !isTheRawMe || typeof window === "undefined") {
@@ -118,6 +133,8 @@ const Index = () => {
           polls={polls}
           avatarIndex={avatarLevel}
           onAvatarChange={selectAvatarForOnboarding}
+          ownedAvatarLevels={ownedAvatarLevels}
+          avatarCatalog={avatarCatalog}
           onboardingStep={onboardingStep}
           onboardingAnsweredPollIds={onboardingAnsweredPollIds}
           onSetOnboardingStep={setOnboardingStep}
@@ -136,11 +153,18 @@ const Index = () => {
               return [...previous, communityId];
             });
           }}
-          onCompleteOnboarding={() => {
+          onCompleteOnboarding={async () => {
+            await joinOnboardingCommunities();
             completeOnboarding();
             void awardXP(user.id, XP_REWARDS.ONBOARDING_COMPLETE);
           }}
           onLogout={logout}
+          onClaimLandingWheelAvatar={async () => {
+            const result = await claimPendingLandingWheelAvatarForUser(user.id);
+            if (result && (result.status === "granted" || result.status === "already_claimed")) {
+              markAvatarOwned(result.level);
+            }
+          }}
         />
       );
     }

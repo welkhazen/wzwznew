@@ -14,6 +14,8 @@ import {
   readDailySpinAvatarPool,
   type DailySpinAvatarPoolItem,
 } from "@/lib/dailySpinAvatarPool";
+import { grantDailySpinAvatarOnceForUser } from "@/lib/avatarCatalog";
+import { toast } from "@/components/ui/use-toast";
 
 const SPIN_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
@@ -21,6 +23,7 @@ interface DashboardDailySpinProps {
   userId: string;
   isAdmin?: boolean;
   onAwardXP?: (amount: number) => Promise<void>;
+  onAvatarWon?: (level: number) => void;
 }
 
 function toRgba(rgbSpaceSeparated: string, alpha: number): string {
@@ -83,7 +86,7 @@ const prizeMessages: Record<string, { title: string; desc: string; icon: typeof 
   "xp-50c": { title: "50 XP Earned!", desc: "Every bit counts on your journey.", icon: Zap, poolLabel: "50 XP", rarity: "Common", poolColor: "text-raw-silver/50" },
 };
 
-export function DashboardDailySpin({ userId, isAdmin = false, onAwardXP }: DashboardDailySpinProps) {
+export function DashboardDailySpin({ userId, isAdmin = false, onAwardXP, onAvatarWon }: DashboardDailySpinProps) {
   const { mode, accent, accentPresets } = useTheme();
   const storageKey = useMemo(() => `raw.daily-spin.${userId}`, [userId]);
   const accentRgb = useMemo(
@@ -125,6 +128,7 @@ export function DashboardDailySpin({ userId, isAdmin = false, onAwardXP }: Dashb
   const [adminSelectedRewardId, setAdminSelectedRewardId] = useState<string>("random");
   const [themeRewardAvatar, setThemeRewardAvatar] = useState<DailySpinAvatarPoolItem | null>(null);
   const [themeRewardPool, setThemeRewardPool] = useState<DailySpinAvatarPoolItem[]>(() => readDailySpinAvatarPool());
+  const [isClaimingAvatar, setIsClaimingAvatar] = useState(false);
 
   useEffect(() => {
     try {
@@ -189,6 +193,7 @@ export function DashboardDailySpin({ userId, isAdmin = false, onAwardXP }: Dashb
   }, [isAdmin, storageKey]);
 
   const handleSpinEnd = (prize: WheelPrize) => {
+    setIsClaimingAvatar(false);
     if (prize.id === "theme") {
       const pool = themeRewardPool.length > 0 ? themeRewardPool : readDailySpinAvatarPool();
       if (pool.length > 0) {
@@ -208,6 +213,43 @@ export function DashboardDailySpin({ userId, isAdmin = false, onAwardXP }: Dashb
     if (xpMatch && onAwardXP) {
       void onAwardXP(Number.parseInt(xpMatch[1], 10)).catch(() => {});
     }
+  };
+
+  const handleClaimPrize = async () => {
+    if (prizeModal?.id !== "theme") {
+      setPrizeModal(null);
+      return;
+    }
+
+    if (!themeRewardAvatar) {
+      setPrizeModal(null);
+      return;
+    }
+
+    if (isClaimingAvatar) {
+      return;
+    }
+
+    setIsClaimingAvatar(true);
+    const result = await grantDailySpinAvatarOnceForUser(userId, themeRewardAvatar.id);
+    setIsClaimingAvatar(false);
+
+    if (result.status === "unknown_avatar") {
+      toast({
+        title: "Avatar not available",
+        description: "This wheel reward is not in the avatar catalog yet.",
+      });
+      return;
+    }
+
+    onAvatarWon?.(result.level);
+    toast({
+      title: result.status === "granted" ? "Avatar added" : "Avatar already claimed",
+      description: result.status === "granted"
+        ? `${themeRewardAvatar.name} is now in your inventory.`
+        : "Each user can claim one free wheel avatar.",
+    });
+    setPrizeModal(null);
   };
 
   const selectedMessage = selectedPrize ? prizeMessages[selectedPrize.id] : null;
@@ -351,14 +393,15 @@ export function DashboardDailySpin({ userId, isAdmin = false, onAwardXP }: Dashb
             )}
           </DialogHeader>
           <button
-            onClick={() => setPrizeModal(null)}
+            onClick={handleClaimPrize}
+            disabled={isClaimingAvatar}
             className={`mt-4 w-full rounded-full py-3 text-sm font-display uppercase tracking-[0.15em] transition-all ${
               isWin
                 ? "bg-raw-gold text-raw-black hover:bg-raw-gold/90"
                 : "border border-raw-border/40 text-raw-silver/50 hover:bg-raw-surface/50"
             } ${isJackpot ? "jackpot-claim-button" : ""}`}
           >
-            {isWin ? "Claim" : "Close"}
+            {isClaimingAvatar ? "Claiming..." : isWin ? "Claim" : "Close"}
           </button>
         </DialogContent>
       </Dialog>

@@ -11,17 +11,22 @@
   "categories": ["social", "entertainment"],
   "icons": [
     {
-      "src": "/android-chrome-192x192.png",
+      "src": "/raw-logo-96.png",
+      "sizes": "96x96",
+      "type": "image/png"
+    },
+    {
+      "src": "/raw-logo-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/android-chrome-512x512.png",
+      "src": "/raw-logo-512.png",
       "sizes": "512x512",
       "type": "image/png"
     },
     {
-      "src": "/android-chrome-512x512.png",
+      "src": "/raw-logo-512-maskable.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
@@ -31,12 +36,12 @@
     {
       "name": "Polls",
       "url": "/?tab=polls",
-      "icons": [{ "src": "/android-chrome-192x192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/raw-logo-96.png", "sizes": "96x96" }]
     },
     {
       "name": "Communities",
       "url": "/?tab=communities",
-      "icons": [{ "src": "/android-chrome-192x192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/raw-logo-96.png", "sizes": "96x96" }]
     }
   ]
 }

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } f
 import { Link, Navigate } from "react-router-dom";
 import { ArrowLeft, Ban, BellRing, CheckCircle2, Copy, Database, Download, Flag, GripVertical, Lock, Plus, Scissors, Shield, Trash2, Upload, Users, XCircle } from "lucide-react";
 import { RARITY_CONFIG, RARITY_ORDER, type AvatarRarity } from "@/lib/avatarRarity";
-import { fetchPollsFromSupabase, insertPollToSupabase, deletePollFromSupabase, testSupabaseConnection } from "@/lib/supabasePolls";
+import { createAdminPoll as createAdminPollInApi, deleteAdminPoll as deleteAdminPollFromApi, fetchAdminPolls, testPollConnection } from "@/lib/api/polls";
 import { fetchCommunityRequests, updateCommunityRequestStatus } from "@/backend/supabase/controllers/communityRequestController";
 import { createCommunityFromRequest } from "@/backend/supabase/controllers/communityController";
 import { Button } from "@/components/ui/button";
@@ -40,13 +40,11 @@ import {
   deleteAdminPoll,
   formatAdminTimestamp,
   readAdminPolls,
-  readChatReports,
   readCommunityJoinRequests,
   readCommunityRequests,
   readIssueReports,
   readPersistedUsers,
   updateUserModerationStatus,
-  writeChatReports,
   writeCommunityJoinRequests,
   writeCommunityRequests,
   writeIssueReports,
@@ -59,6 +57,13 @@ import {
 } from "@/lib/adminData";
 import { approveCommunityJoinRequest, createCommunityFromApprovedRequest } from "@/lib/communityChat";
 import { getAvatar } from "@/lib/avataridentity";
+
+import {
+  listChatReports,
+  subscribeToChatReports,
+  updateChatReportStatus,
+  applyUserModeration,
+} from "@/backend/supabase/controllers/chatReportsController";
 
 function SummaryCard({ label, value, hint }: { label: string; value: string | number; hint: string }) {
   return (
@@ -163,7 +168,7 @@ export default function Admin() {
 
   const refreshAdminData = useCallback(async () => {
     setUsers(readPersistedUsers());
-    setChatReports(readChatReports());
+    listChatReports().then(setChatReports).catch(() => undefined);
     setCommunityJoinRequests(readCommunityJoinRequests());
     try {
       const response = await apiFetch("/api/moderation/issue-reports");
@@ -186,12 +191,12 @@ export default function Admin() {
   const loadPolls = useCallback(async () => {
     setIsLoadingPolls(true);
     try {
-      const result = await testSupabaseConnection();
+      const result = await testPollConnection();
       setSupabaseStatus(result.ok ? "ok" : "error");
       setSupabaseMessage(result.message);
       if (result.ok) {
         try {
-          const polls = await fetchPollsFromSupabase();
+          const polls = await fetchAdminPolls();
           setAdminPolls(polls);
         } catch {
           setAdminPolls(readAdminPolls());
@@ -240,6 +245,16 @@ export default function Admin() {
   useEffect(() => {
     sheetPreviewUrlRef.current = sheetPreviewUrl;
   }, [sheetPreviewUrl]);
+
+  useEffect(() => {
+    listChatReports().then(setChatReports).catch(() => undefined);
+    const unsubscribe = subscribeToChatReports(() => {
+      listChatReports().then(setChatReports).catch(() => undefined);
+    });
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     slicedAvatarsRef.current = slicedAvatars;
@@ -547,6 +562,9 @@ export default function Admin() {
       cancelled = true;
       window.clearTimeout(timer);
     };
+  // drawManualCropToCanvas is defined later in this component and only uses stable
+  // state setters plus the provided item/canvas arguments.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentReviewItem, sheetFile, slicedAvatars]);
 
   useEffect(() => {
@@ -666,44 +684,46 @@ export default function Admin() {
     });
   };
 
-  const handleModeration = (reportId: string, action: "dismissed" | "warned" | "banned") => {
+  const handleModeration = async (reportId: string, action: "dismissed" | "warned" | "banned") => {
     const targetReport = chatReports.find((report) => report.id === reportId);
     if (!targetReport) {
       return;
     }
 
-    if (action === "warned") {
-      updateUserModerationStatus(targetReport.reportedUserId, "warned", user.username, 1);
-      track("admin_action_performed", { action: "warn", target_user_id: targetReport.reportedUserId, resource_id: reportId });
+    try {
+      if (action === "warned" || action === "banned") {
+        if (targetReport.reportedUserId) {
+          await applyUserModeration(targetReport.reportedUserId, action, user.username);
+        }
+        // Keep local cache in sync for the legacy users list view.
+        updateUserModerationStatus(
+          targetReport.reportedUserId,
+          action,
+          user.username,
+          action === "warned" ? 1 : 0,
+        );
+        track("admin_action_performed", {
+          action: action === "warned" ? "warn" : "ban",
+          target_user_id: targetReport.reportedUserId,
+          resource_id: reportId,
+        });
+      } else {
+        track("admin_action_performed", { action: "dismiss_report", resource_id: reportId });
+      }
+
+      const updated = await updateChatReportStatus(reportId, action, user.username);
+      setChatReports((previous) => previous.map((report) => (report.id === reportId ? updated : report)));
+      refreshAdminData();
+      toast({
+        title: action === "dismissed" ? "Report dismissed" : action === "warned" ? "User warned" : "User banned",
+        description: `${targetReport.reportedUsername} has been reviewed by admin.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Could not update report",
+        description: error instanceof Error ? error.message : "Please try again.",
+      });
     }
-
-    if (action === "banned") {
-      updateUserModerationStatus(targetReport.reportedUserId, "banned", user.username);
-      track("admin_action_performed", { action: "ban", target_user_id: targetReport.reportedUserId, resource_id: reportId });
-    }
-
-    if (action === "dismissed") {
-      track("admin_action_performed", { action: "dismiss_report", resource_id: reportId });
-    }
-
-    const nextReports = chatReports.map((report) =>
-      report.id === reportId
-        ? {
-            ...report,
-            status: action,
-            resolvedAt: new Date().toISOString(),
-            resolvedBy: user.username,
-          }
-        : report
-    );
-
-    setChatReports(nextReports);
-    writeChatReports(nextReports);
-    refreshAdminData();
-    toast({
-      title: action === "dismissed" ? "Report dismissed" : action === "warned" ? "User warned" : "User banned",
-      description: `${targetReport.reportedUsername} has been reviewed by admin.`,
-    });
   };
 
   const handleIssueReportStatus = async (reportId: string, status: "dismissed" | "reviewed") => {
@@ -754,8 +774,8 @@ export default function Admin() {
     setPollOptions(["", ""]);
     if (supabaseStatus === "ok") {
       try {
-        await insertPollToSupabase(poll);
-        const polls = await fetchPollsFromSupabase();
+        await createAdminPollInApi(poll);
+        const polls = await fetchAdminPolls();
         setAdminPolls(polls);
         toast({ title: "Poll created", description: "Saved to Supabase." });
       } catch {
@@ -772,8 +792,8 @@ export default function Admin() {
     deleteAdminPoll(pollId);
     if (supabaseStatus === "ok") {
       try {
-        await deletePollFromSupabase(pollId);
-        const polls = await fetchPollsFromSupabase();
+        await deleteAdminPollFromApi(pollId);
+        const polls = await fetchAdminPolls();
         setAdminPolls(polls);
       } catch {
         setAdminPolls(readAdminPolls());
