@@ -22,6 +22,9 @@ export const FloatingDock = ({
     icon: React.ReactNode;
     href: string;
     onClick?: () => void;
+    onPointerDown?: () => void;
+    onPointerUp?: () => void;
+    onPointerLeave?: () => void;
     active?: boolean;
   }[];
   desktopClassName?: string;
@@ -44,6 +47,9 @@ const FloatingDockMobile = ({
     icon: React.ReactNode;
     href: string;
     onClick?: () => void;
+    onPointerDown?: () => void;
+    onPointerUp?: () => void;
+    onPointerLeave?: () => void;
     active?: boolean;
   }[];
   className?: string;
@@ -74,6 +80,10 @@ const FloatingDockMobile = ({
               item.onClick();
             }
           }}
+          onPointerDown={item.onPointerDown}
+          onPointerUp={item.onPointerUp}
+          onPointerCancel={item.onPointerUp}
+          onPointerLeave={item.onPointerLeave}
           className={cn(
             "flex flex-col items-center gap-1 px-3 transition-colors",
             item.active
