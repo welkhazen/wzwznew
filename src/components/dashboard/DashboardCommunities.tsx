@@ -1755,7 +1755,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                   description: "Fill out the form to suggest a new community for review.",
                 });
               }}
-              className="fixed left-4 z-50 flex items-center gap-2 rounded-2xl bg-raw-gold px-5 py-3 text-sm font-semibold text-raw-ink shadow-xl hover:bg-raw-gold/90 focus:outline-none"
+              className="fixed left-4 z-50 hidden items-center gap-2 rounded-2xl bg-raw-gold px-5 py-3 text-sm font-semibold text-raw-ink shadow-xl hover:bg-raw-gold/90 focus:outline-none md:flex"
               style={{ bottom: "calc(5rem + env(safe-area-inset-bottom))", boxShadow: "0 8px 32px rgba(0,0,0,0.18)" }}
             >
               <motion.span
