@@ -48,6 +48,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
 import { spendTokens } from "@/lib/api/tokens";
+import { supabase } from "@/lib/supabase";
 
 export type DashboardTab = "home" | "polls" | "challenges" | "daily-spin" | "communities" | "profile" | "wallet" | "inventory";
 
@@ -75,6 +76,36 @@ const TOKEN_BALANCE_UPDATED_EVENT = "raw:token-balance-updated";
 const TOKEN_BALANCE_STORAGE_KEY = "raw.polls.token-balance";
 const ACCENT_UNLOCK_COST = 10;
 const LOCKED_ACCENT_IDS: AccentPresetId[] = ["cyan", "emerald", "lime"];
+const ACCENT_FREE_ID: AccentPresetId = "gold";
+const OWNED_ACCENTS_CACHE_PREFIX = "raw.theme.accent.owned.v2.";
+
+function readOwnedAccentsCache(userId: string): AccentPresetId[] {
+  if (typeof window === "undefined") return [ACCENT_FREE_ID];
+  try {
+    const raw = window.localStorage.getItem(`${OWNED_ACCENTS_CACHE_PREFIX}${userId}`);
+    if (!raw) return [ACCENT_FREE_ID];
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [ACCENT_FREE_ID];
+    return Array.from(new Set([
+      ACCENT_FREE_ID,
+      ...parsed.filter((id): id is AccentPresetId => typeof id === "string"),
+    ]));
+  } catch {
+    return [ACCENT_FREE_ID];
+  }
+}
+
+function writeOwnedAccentsCache(userId: string, ids: AccentPresetId[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(
+      `${OWNED_ACCENTS_CACHE_PREFIX}${userId}`,
+      JSON.stringify(Array.from(new Set(ids))),
+    );
+  } catch {
+    // Cache is best-effort; server remains the source of truth.
+  }
+}
 
 const DEADLINE_TARGET = new Date(2026, 5, 19, 13, 0, 0).getTime();
 
@@ -212,6 +243,7 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
   const [screenshotName, setScreenshotName] = useState("");
   const [screenshotDataUrl, setScreenshotDataUrl] = useState("");
   const [unlockingAccentId, setUnlockingAccentId] = useState<AccentPresetId | null>(null);
+  const [ownedAccentIds, setOwnedAccentIds] = useState<AccentPresetId[]>(() => readOwnedAccentsCache(userId));
   const [tokenBalanceForUnlocks, setTokenBalanceForUnlocks] = useState<number>(() => readStoredTokenBalance(userId));
   const notifRef = useRef<HTMLDivElement>(null);
 
@@ -308,8 +340,31 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
     window.dispatchEvent(new StorageEvent("storage", { key: "raw.community.blocked-senders.v1" }));
   };
 
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    setOwnedAccentIds(readOwnedAccentsCache(userId));
+    void (async () => {
+      const { data, error } = await supabase
+        .from("user_accent_unlocks")
+        .select("accent_id")
+        .eq("user_id", userId);
+      if (cancelled || error || !data) return;
+      const serverIds = data.map((row) => row.accent_id as AccentPresetId);
+      const merged = Array.from(new Set([ACCENT_FREE_ID, ...serverIds])) as AccentPresetId[];
+      setOwnedAccentIds(merged);
+      writeOwnedAccentsCache(userId, merged);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
+
+  const isAccentOwned = (presetId: AccentPresetId): boolean =>
+    !LOCKED_ACCENT_IDS.includes(presetId) || ownedAccentIds.includes(presetId);
+
   const handleAccentClick = async (presetId: AccentPresetId) => {
-    if (!LOCKED_ACCENT_IDS.includes(presetId)) {
+    if (isAccentOwned(presetId)) {
       setAccent(presetId);
       setHoveredAccent(null);
       return;
@@ -322,9 +377,19 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
     setUnlockingAccentId(presetId);
     try {
       const balance = await spendTokens(userId, ACCENT_UNLOCK_COST);
+      const { error: persistError } = await supabase
+        .from("user_accent_unlocks")
+        .upsert({ user_id: userId, accent_id: presetId }, { onConflict: "user_id,accent_id" });
+      if (persistError) {
+        toast({ title: "Unlock failed", description: "Tokens refunded. Please try again." });
+        return;
+      }
       const storageKey = `${TOKEN_BALANCE_STORAGE_KEY}.${userId}`;
       window.localStorage.setItem(storageKey, String(balance));
       window.dispatchEvent(new CustomEvent(TOKEN_BALANCE_UPDATED_EVENT, { detail: { storageKey, balance } }));
+      const nextOwned = Array.from(new Set([...ownedAccentIds, presetId])) as AccentPresetId[];
+      setOwnedAccentIds(nextOwned);
+      writeOwnedAccentsCache(userId, nextOwned);
       setAccent(presetId);
       setHoveredAccent(null);
       toast({ title: "Theme unlocked", description: `${ACCENT_UNLOCK_COST} tokens spent.` });
@@ -812,7 +877,7 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
                     <div className="grid grid-cols-5 gap-1 sm:gap-2">
                       {accentPresets.map((preset) => {
                         const selected = preset.id === effectiveAccent;
-                        const locked = LOCKED_ACCENT_IDS.includes(preset.id);
+                        const locked = !isAccentOwned(preset.id);
                         const unlocking = unlockingAccentId === preset.id;
                         return (
                           <button
