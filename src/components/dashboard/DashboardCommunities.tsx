@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import LNTLogo from "@/assets/LNT.webp";
 import SYTLogo from "@/assets/logospeak.webp";
 import IIJMLogo from "@/assets/itisjustme.webp";
-import { AlertTriangle, ArrowLeft, BarChart3, Bell, BellOff, ImagePlus, Lock, Plus, Search, Trash2, UserMinus, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, BarChart3, Bell, BellOff, ImagePlus, Lock, Plus, Search, Star, Trash2, UserMinus, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1557,6 +1557,32 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                 </button>
                 </>
               )}
+              {isJoined && (() => {
+                const isFavorite = favoriteCommunityIds.includes(selectedCommunity.id);
+                const favLimitHit = !isFavorite && favoriteCommunityIds.length >= MAX_FAVORITE_COMMUNITIES;
+                return (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (favLimitHit) return;
+                      void handleToggleFavorite(selectedCommunity.id);
+                    }}
+                    disabled={favLimitHit}
+                    aria-pressed={isFavorite}
+                    title={isFavorite ? "Remove from favorites" : favLimitHit ? "Favorites limit reached (3)" : "Add to favorites"}
+                    className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] transition-colors ${
+                      isFavorite
+                        ? "border-raw-gold/55 bg-raw-gold/15 text-raw-gold"
+                        : favLimitHit
+                          ? "border-raw-border/25 bg-raw-black/30 text-raw-silver/35"
+                          : "border-raw-border/30 text-raw-silver/55 hover:border-raw-gold/30 hover:text-raw-gold"
+                    }`}
+                  >
+                    <Star className={`h-3.5 w-3.5 ${isFavorite ? "fill-current" : ""}`} />
+                    <span>{isFavorite ? "Favorited" : "Favorite"}</span>
+                  </button>
+                );
+              })()}
               {isJoined && (
                 <button
                   onClick={handleLeaveCommunity}
