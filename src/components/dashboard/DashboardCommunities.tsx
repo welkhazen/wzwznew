@@ -66,9 +66,6 @@ import { sendCommunityPushNotification } from "@/lib/communityPushNotifications"
 import type { CommunityChatMessageRecord, PersistedCommunityRecord } from "@/lib/communityChat.types";
 import {
   loadCommunityAccess,
-  unlockCommunity,
-  FREE_COMMUNITY_SLOTS,
-  COMMUNITY_UNLOCK_TOKEN_COST,
   type CommunityAccess,
 } from "@/lib/communityAccess";
 import { readAvatarCatalogLocal } from "@/lib/avatarCatalog";
@@ -86,15 +83,6 @@ import { AvatarFigure } from "@/components/ui/avatar-figure";
 
 const WAITLIST_UNLOCK_THRESHOLD = 200;
 const MESSAGE_PAGE_SIZE = 10;
-const TOKEN_BALANCE_STORAGE_PREFIX = "raw.polls.token-balance";
-const TOKEN_BALANCE_UPDATED_EVENT = "raw:token-balance-updated";
-
-function updateTokenBalanceCache(userId: string, balance: number): void {
-  if (typeof window === "undefined") return;
-  const key = `${TOKEN_BALANCE_STORAGE_PREFIX}.${userId}`;
-  window.localStorage.setItem(key, String(balance));
-  window.dispatchEvent(new CustomEvent(TOKEN_BALANCE_UPDATED_EVENT, { detail: { storageKey: key, balance } }));
-}
 const MAX_COMMUNITY_MESSAGE_LENGTH = 150;
 
 function getMessageSenderBlockKey(message: Pick<CommunityChatMessageRecord, "senderId" | "senderName">): string {
@@ -222,7 +210,6 @@ export function DashboardCommunities(props) {
   const {
     user,
     avatarLevel = 1,
-    tokenBalance = 0,
     activeCommunityId = null,
     onOpenCommunity,
     onBackToCommunities,
@@ -270,7 +257,6 @@ export function DashboardCommunities(props) {
 
 interface DashboardCommunitiesProps {
   user: User;
-  tokenBalance?: number;
   activeCommunityId?: string | null;
   onOpenCommunity: (communityId: string) => void;
   onBackToCommunities?: () => void;
@@ -375,6 +361,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
   const [isLoadingOlderMessages, setIsLoadingOlderMessages] = useState(false);
   const lastTouchedCommunityRef = useRef<string>("");
   const latestMessagesRequestRef = useRef(0);
+  const loadedMessagesCommunityRef = useRef<string | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const messageInputRef = useRef<HTMLInputElement | null>(null);
   const preserveScrollAfterOlderLoadRef = useRef<{ previousHeight: number } | null>(null);
@@ -389,16 +376,33 @@ const COMMUNITY_LOGOS: Record<string, string> = {
 
     const reloadChatData = useCallback(async () => {
       try {
-        const [communitiesData, requestsData, waitlistData, accessData] = await Promise.all([
+        if (activeCommunityId) {
+          setMessagesLoading(true);
+          setMessagesError(false);
+        }
+
+        const [communitiesData, requestsData, waitlistData, accessData, activeCommunityMessages] = await Promise.all([
           fetchCommunities(),
           fetchCommunityRequests(user.id),
           fetchWaitlistSummary(user.id).catch(() => createEmptyWaitlistSummary()),
           loadCommunityAccess(user.id).catch(() => ({ hasSubscription: false, unlockedIds: new Set<string>() })),
+          activeCommunityId
+            ? fetchCommunityMessages(activeCommunityId, { limit: MESSAGE_PAGE_SIZE }).catch(() => null)
+            : Promise.resolve(null),
         ]);
+        if (activeCommunityId && activeCommunityMessages === null) {
+          setMessagesError(true);
+        }
+        if (activeCommunityId && activeCommunityMessages) {
+          loadedMessagesCommunityRef.current = activeCommunityId;
+          setHasOlderMessages(activeCommunityMessages.length === MESSAGE_PAGE_SIZE);
+        }
         setCommunities((previous) => {
           const next = communitiesData.map((community) => ({
             ...community,
-            messages: previous.find((item) => item.id === community.id)?.messages ?? community.messages,
+            messages: community.id === activeCommunityId && activeCommunityMessages
+              ? activeCommunityMessages
+              : previous.find((item) => item.id === community.id)?.messages ?? community.messages,
           }));
           onCommunitiesChange?.(next);
           return next;
@@ -409,9 +413,10 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         setWaitlistJoinedIds(waitlistData.joinedCommunityIds);
         setCommunityAccess(accessData);
       } finally {
+        setMessagesLoading(false);
         setIsInitialCommunitiesLoading(false);
       }
-    }, [onCommunitiesChange, user.id]);
+    }, [activeCommunityId, onCommunitiesChange, user.id]);
 
     const fallbackCommunities = useMemo(() => buildDefaultCommunities(), []);
     const selectedCommunity = useMemo(() => {
@@ -456,6 +461,9 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         setMessagesError(false);
         return;
       }
+      if (loadedMessagesCommunityRef.current === activeCommunityId) {
+        return;
+      }
 
       const requestId = latestMessagesRequestRef.current + 1;
       latestMessagesRequestRef.current = requestId;
@@ -465,6 +473,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         const communityId = activeCommunityId;
         const messages = await fetchCommunityMessages(communityId, { limit: MESSAGE_PAGE_SIZE });
         if (latestMessagesRequestRef.current !== requestId) return;
+        loadedMessagesCommunityRef.current = communityId;
         setHasOlderMessages(messages.length === MESSAGE_PAGE_SIZE);
         updateCommunities((current) => setCommunityMessages(current, communityId, messages));
       } catch {
@@ -586,13 +595,6 @@ const COMMUNITY_LOGOS: Record<string, string> = {
     const directoryCommunities = useMemo(() => {
       return communities;
     }, [communities]);
-    const joinedCommunityCount = useMemo(
-      () => directoryCommunities.filter((community) => community.members.some((member) => member.userId === user.id)).length,
-      [directoryCommunities, user.id]
-    );
-    const effectiveUnlockCount = Math.max(communityAccess.unlockedIds.size, joinedCommunityCount);
-    const freeCommunitySlotsRemaining = Math.max(0, FREE_COMMUNITY_SLOTS - effectiveUnlockCount);
-
     useEffect(() => {
       setSearchQuery("");
       setCommunityPollsExpanded(false);
@@ -896,41 +898,8 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         return;
       }
 
-      const canJoinFree = freeCommunitySlotsRemaining > 0;
-
-      if (!canJoinFree && tokenBalance < COMMUNITY_UNLOCK_TOKEN_COST) {
-        toast({
-          title: "Not enough tokens",
-          description: `Joining ${targetCommunity.title} costs ${COMMUNITY_UNLOCK_TOKEN_COST} tokens.`,
-        });
-        return;
-      }
-
-      if (!canJoinFree) {
-        const confirmed = await confirm({
-          title: `Join ${targetCommunity.title}?`,
-          description: `This will use ${COMMUNITY_UNLOCK_TOKEN_COST} tokens from your balance.`,
-          confirmLabel: `Spend ${COMMUNITY_UNLOCK_TOKEN_COST} tokens`,
-        });
-        if (!confirmed) {
-          return;
-        }
-      }
-
       setUnlockingId(communityId);
       try {
-        const result = await unlockCommunity(user.id, communityId);
-        if (!result.ok) {
-          toast({
-            title: result.error === "insufficient_tokens" ? "Not enough tokens" : "Could not unlock group",
-            description: result.error === "insufficient_tokens"
-              ? `You need ${COMMUNITY_UNLOCK_TOKEN_COST} tokens to join.`
-              : "Please try again.",
-          });
-          return;
-        }
-
-        updateTokenBalanceCache(user.id, result.balance);
         setCommunityAccess((prev) => ({
           ...prev,
           unlockedIds: new Set([...prev.unlockedIds, communityId]),
@@ -1028,49 +997,15 @@ const COMMUNITY_LOGOS: Record<string, string> = {
 
     const handleUnlockCommunity = async (communityId: string) => {
       if (unlockingId === communityId) return;
-      const targetCommunity = communities.find((community) => community.id === communityId);
-      const isAlreadyUnlocked = communityAccess.hasSubscription || communityAccess.unlockedIds.has(communityId);
-      if (!isAlreadyUnlocked) {
-        const canUnlockFree = freeCommunitySlotsRemaining > 0;
-        if (!canUnlockFree && tokenBalance < COMMUNITY_UNLOCK_TOKEN_COST) {
-          toast({
-            title: "Not enough tokens",
-            description: `You need ${COMMUNITY_UNLOCK_TOKEN_COST} tokens to unlock this group.`,
-          });
-          return;
-        }
-        if (!canUnlockFree) {
-          const confirmed = await confirm({
-            title: `Unlock ${targetCommunity?.title ?? "this group"}?`,
-            description: `This will use ${COMMUNITY_UNLOCK_TOKEN_COST} tokens from your balance.`,
-            confirmLabel: `Spend ${COMMUNITY_UNLOCK_TOKEN_COST} tokens`,
-          });
-          if (!confirmed) return;
-        }
-      }
       setUnlockingId(communityId);
       try {
-        const result = await unlockCommunity(user.id, communityId);
-        if (!result.ok) {
-          if (result.error === "insufficient_tokens") {
-            toast({
-              title: "Not enough tokens",
-              description: `You need ${COMMUNITY_UNLOCK_TOKEN_COST} tokens. Buy more in Billing.`,
-            });
-            return;
-          }
-          // RPC missing or network error — open anyway, access check will re-run on next load
-          toast({ title: "Could not unlock group", description: "Please try again." });
-          return;
-        }
-        updateTokenBalanceCache(user.id, result.balance);
         setCommunityAccess((prev) => ({
           ...prev,
           unlockedIds: new Set([...prev.unlockedIds, communityId]),
         }));
-        onOpenCommunity(communityId);
+        await handleJoinCommunity(communityId, true);
       } catch {
-        toast({ title: "Could not unlock group", description: "Please try again." });
+        toast({ title: "Could not join group", description: "Please try again." });
       } finally {
         setUnlockingId(null);
       }
@@ -1418,9 +1353,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
           waitlistUnlockThreshold={WAITLIST_UNLOCK_THRESHOLD}
           hasSubscriptionAccess={communityAccess.hasSubscription}
           unlockedCommunityIds={communityAccess.unlockedIds}
-          freeCommunitySlotsRemaining={freeCommunitySlotsRemaining}
           unlockingId={unlockingId}
-          unlockTokenCost={COMMUNITY_UNLOCK_TOKEN_COST}
           onToggleDescription={(communityId) => setExpandedDescs((previous) => {
             const next = new Set(previous);
             if (next.has(communityId)) next.delete(communityId);
@@ -1477,7 +1410,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                   onClick={() => handlePaidJoinCommunity(selectedCommunity.id)}
                   className="flex items-center gap-2 rounded-full bg-raw-gold px-3 py-1.5 text-[11px] font-semibold text-raw-ink transition-colors hover:bg-raw-gold/90"
                 >
-                  Join Group - {COMMUNITY_UNLOCK_TOKEN_COST} tokens
+                  Join Group
                 </button>
               )}
               {!isJoined && selectedCommunity.locked && (() => {
@@ -1490,7 +1423,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                       onClick={() => handlePaidJoinCommunity(selectedCommunity.id)}
                       className="flex items-center gap-2 rounded-full bg-raw-gold px-3 py-1.5 text-[11px] font-semibold text-raw-ink transition-colors hover:bg-raw-gold/90"
                     >
-                      Join Group - {COMMUNITY_UNLOCK_TOKEN_COST} tokens
+                      Join Group
                     </button>
                   );
                 }
