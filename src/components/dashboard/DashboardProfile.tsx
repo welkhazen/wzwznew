@@ -50,7 +50,7 @@ export function DashboardProfile({
   pollsAnswered,
   xp = 0,
   xpLevel = 1,
-  profilePublic = false,
+  profilePublic = true,
   onLogout,
 }: DashboardProfileProps) {
   const { toast } = useToast();
