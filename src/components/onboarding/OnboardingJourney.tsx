@@ -123,7 +123,6 @@ const LANDING_ONBOARDING_AVATARS: readonly AvatarCatalogItem[] = [
   { id: "preview-crimson-muse", level: 14, name: "Crimson Muse", price: "Preview", imageSrc: "/avatars/6.webp", bg: "#2a0b0b", figure: "#f97316", ring: "#f97316", glow: "#f9731680", isActive: true, rarity: "common" },
   { id: "preview-solar-flame", level: 15, name: "Solar Flame", price: "Preview", imageSrc: "/avatars/7.webp", bg: "#241005", figure: "#facc15", ring: "#facc15", glow: "#facc1590", isActive: true, rarity: "common" },
   { id: "preview-pink-circuit", level: 16, name: "Pink Circuit", price: "Preview", imageSrc: "/avatars/8.webp", bg: "#2a0b1c", figure: "#fb7185", ring: "#fb7185", glow: "#fb718580", isActive: true, rarity: "common" },
-  { id: "preview-golden-muse", level: 17, name: "Golden Muse", price: "Preview", imageSrc: "/avatars/9.png", bg: "#201604", figure: "#facc15", ring: "#facc15", glow: "#facc1590", isActive: true, rarity: "common" },
 ];
 
 function fallbackAvatarCatalog(): AvatarCatalogItem[] {
@@ -149,8 +148,6 @@ function getPreviewOnlyAvatarImageScale(avatarId: string): React.CSSProperties |
     case "preview-horned-iron":
     case "preview-solar-flame":
       return { transform: "scale(1.45)" };
-    case "preview-golden-muse":
-      return { transform: "scale(1.35)" };
     case "preview-pink-circuit":
       return { transform: "scale(1.08)" };
     default:
