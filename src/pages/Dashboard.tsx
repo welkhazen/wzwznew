@@ -304,6 +304,8 @@ export default function Dashboard({
           <Suspense fallback={dashboardSectionFallback}>
             <DashboardSectionShell>
               <DashboardStore
+                polls={polls}
+                votedPolls={votedPolls}
                 avatarCatalog={avatarCatalog}
                 ownedAvatarLevels={ownedAvatarLevels}
                 onUnlockAvatar={unlockAvatarLevel}
