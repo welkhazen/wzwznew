@@ -404,6 +404,7 @@ export default function Dashboard({
         isHome={isHome}
         onLogout={onLogout}
         communities={dashboardCommunities}
+        onOpenCommunity={handleOpenCommunity}
       />
 
       {/* Mobile bottom nav replaced with FloatingDock */}
