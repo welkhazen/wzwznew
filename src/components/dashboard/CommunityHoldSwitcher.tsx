@@ -13,9 +13,9 @@ interface CommunityHoldSwitcherProps {
   onClose: () => void;
 }
 
-const FAN_RADIUS = 72;
-const ITEM_SIZE = 52;
-const HIT_RADIUS = 32;
+const FAN_RADIUS = 64;
+const ITEM_SIZE = 42;
+const HIT_RADIUS = 26;
 
 function getFanOffsets(count: number): { x: number; y: number }[] {
   // Angles measured from +x axis, CCW. Screen y is inverted (up = negative).
