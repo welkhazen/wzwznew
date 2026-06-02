@@ -14,7 +14,7 @@ import { DashboardNav, type DashboardTab } from "@/components/dashboard/Dashboar
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { DashboardHome } from "@/components/dashboard/DashboardHome";
 import { DashboardSectionShell } from "@/components/dashboard/DashboardSectionShell";
-import { CommunityQuickSwitchWheel } from "@/components/dashboard/CommunityQuickSwitchWheel";
+import { CommunityHoldSwitcher, getCommunityHoldSwitcherTargets } from "@/components/dashboard/CommunityHoldSwitcher";
 import { NotificationConsentPrompt } from "@/components/notifications/NotificationConsentPrompt";
 import { LevelUpCelebration } from "@/components/ui/LevelUpCelebration";
 import { useUserProgress } from "@/store/useUserProgress";
@@ -50,6 +50,8 @@ const COMMUNITY_LOGOS: Record<string, string> = {
   syt: SYTLogo,
   iijm: IIJMLogo,
 };
+const LONG_PRESS_MS = 400;
+const MOVE_CANCEL_PX = 10;
 const DashboardStore = lazy(() =>
   import("@/components/dashboard/DashboardStore").then((module) => ({ default: module.DashboardStore }))
 );
@@ -116,9 +118,12 @@ export default function Dashboard({
   const [mobileCommunityPickerOpen, setMobileCommunityPickerOpen] = useState(false);
   const [mobileCommunityAnchorRect, setMobileCommunityAnchorRect] = useState<DOMRect | null>(null);
   const [mobileCommunityCenterId, setMobileCommunityCenterId] = useState<string | null>(null);
+  const [hoveredHoldCommunityId, setHoveredHoldCommunityId] = useState<string | null>(null);
   const mobileCommunityPressTimerRef = useRef<number | null>(null);
   const mobileCommunityPressStartRef = useRef<{ x: number; y: number } | null>(null);
+  const mobileCommunityHoveredRef = useRef<string | null>(null);
   const mobileCommunityLongPressRef = useRef(false);
+  const mobileCommunitySuppressClickRef = useRef(false);
   const communityRouteMatch = matchPath("/dashboard/communities/:communityId", location.pathname);
   const activeCommunityId = communityRouteMatch?.params.communityId ?? null;
 
@@ -221,27 +226,44 @@ export default function Dashboard({
   const handleMobileCommunityPressStart = (event: React.TouchEvent<HTMLElement> | React.PointerEvent<HTMLElement>) => {
     if ("pointerType" in event && event.pointerType === "mouse") return;
     if (mobileCommunityPressTimerRef.current !== null || mobileCommunityPickerOpen) return;
+    if ("pointerId" in event) {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }
     const point = getMobileCommunityPressPoint(event);
     if (!point) return;
     mobileCommunityPressStartRef.current = point;
     setMobileCommunityAnchorRect(event.currentTarget.getBoundingClientRect());
     clearMobileCommunityPressTimer();
+    setHoveredHoldCommunityId(null);
+    mobileCommunityHoveredRef.current = null;
     mobileCommunityLongPressRef.current = false;
     mobileCommunityPressTimerRef.current = window.setTimeout(() => {
       if (joinedMobileCommunities.length > 0) {
         const currentCommunity = joinedMobileCommunities.find((community) => community.id === activeCommunityId) ?? joinedMobileCommunities[0];
         setMobileCommunityCenterId(currentCommunity.id);
         mobileCommunityLongPressRef.current = true;
+        mobileCommunitySuppressClickRef.current = true;
         setMobileCommunityPickerOpen(true);
       }
-    }, 420);
+    }, LONG_PRESS_MS);
+  };
+
+  const closeMobileCommunitySwitcher = () => {
+    clearMobileCommunityPressTimer();
+    mobileCommunityPressStartRef.current = null;
+    mobileCommunityHoveredRef.current = null;
+    setHoveredHoldCommunityId(null);
+    setMobileCommunityPickerOpen(false);
   };
 
   const handleMobileCommunityPressEnd = () => {
-    clearMobileCommunityPressTimer();
-    mobileCommunityPressStartRef.current = null;
+    const selectedCommunityId = mobileCommunityLongPressRef.current ? mobileCommunityHoveredRef.current : null;
+    closeMobileCommunitySwitcher();
     if (mobileCommunityLongPressRef.current) {
-      setMobileCommunityPickerOpen(false);
+      mobileCommunityLongPressRef.current = false;
+      if (selectedCommunityId) {
+        handleOpenCommunity(selectedCommunityId);
+      }
     }
   };
 
@@ -249,14 +271,23 @@ export default function Dashboard({
     const start = mobileCommunityPressStartRef.current;
     const point = getMobileCommunityPressPoint(event);
     if (!start || !point) return;
-    if (Math.hypot(point.x - start.x, point.y - start.y) > 10) {
+    if (!mobileCommunityLongPressRef.current && Math.hypot(point.x - start.x, point.y - start.y) > MOVE_CANCEL_PX) {
       handleMobileCommunityPressEnd();
+      return;
+    }
+    if (mobileCommunityLongPressRef.current) {
+      event.preventDefault();
+      const targets = getCommunityHoldSwitcherTargets(mobileCommunityAnchorRect, mobileWheelCenterCommunity, joinedMobileCommunities);
+      const hoveredTarget = targets.find((target) => Math.hypot(point.x - target.x, point.y - target.y) <= target.radius);
+      const nextHoveredId = hoveredTarget?.community.id ?? null;
+      mobileCommunityHoveredRef.current = nextHoveredId;
+      setHoveredHoldCommunityId(nextHoveredId);
     }
   };
 
   useEffect(() => {
     if (!mobileCommunityPickerOpen) return;
-    const closePicker = () => setMobileCommunityPickerOpen(false);
+    const closePicker = () => closeMobileCommunitySwitcher();
     window.addEventListener("pointerdown", closePicker);
     window.addEventListener("resize", closePicker);
     window.addEventListener("scroll", closePicker, true);
@@ -546,8 +577,8 @@ export default function Dashboard({
             ),
             href: "#",
             onClick: () => {
-              if (mobileCommunityLongPressRef.current) {
-                mobileCommunityLongPressRef.current = false;
+              if (mobileCommunitySuppressClickRef.current) {
+                mobileCommunitySuppressClickRef.current = false;
                 return;
               }
               setMobileCommunityPickerOpen(false);
@@ -595,16 +626,18 @@ export default function Dashboard({
         ]}
       />
 
-      <CommunityQuickSwitchWheel
+      <CommunityHoldSwitcher
         open={mobileCommunityPickerOpen}
         anchorRect={mobileCommunityAnchorRect}
         currentCommunity={mobileWheelCenterCommunity}
         joinedCommunities={joinedMobileCommunities}
+        hoveredCommunityId={hoveredHoldCommunityId}
         logoUrlsByCommunityId={COMMUNITY_LOGOS}
         onSelectCommunity={(communityId) => {
-          setMobileCommunityPickerOpen(false);
+          closeMobileCommunitySwitcher();
           handleOpenCommunity(communityId);
         }}
+        onClose={closeMobileCommunitySwitcher}
       />
 
       {/* Main content */}
