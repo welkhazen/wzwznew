@@ -522,9 +522,16 @@ export default function Dashboard({
       />
 
       {mobileCommunityPickerOpen && joinedMobileCommunities.length > 0 && (
-        <div className="fixed bottom-24 left-1/2 z-[60] flex -translate-x-1/2 flex-col items-center gap-3 rounded-full border border-raw-border/25 bg-raw-black/90 px-2 py-3 shadow-2xl shadow-black/35 backdrop-blur-xl lg:hidden">
-          {joinedMobileCommunities.map((community) => {
+        <div className="fixed bottom-24 left-[30%] z-[60] h-36 w-36 -translate-x-1/2 lg:hidden">
+          {joinedMobileCommunities.slice(0, 5).map((community, index, visibleCommunities) => {
             const imageUrl = COMMUNITY_LOGOS[community.id] ?? community.logoUrl ?? COMMUNITY_COVER_IMAGES[community.id];
+            const count = visibleCommunities.length;
+            const startAngle = count === 1 ? -90 : -165;
+            const endAngle = count === 1 ? -90 : -15;
+            const angle = startAngle + ((endAngle - startAngle) * index) / Math.max(1, count - 1);
+            const radius = 66;
+            const x = Math.cos((angle * Math.PI) / 180) * radius;
+            const y = Math.sin((angle * Math.PI) / 180) * radius;
             return (
               <button
                 key={community.id}
@@ -535,7 +542,8 @@ export default function Dashboard({
                 }}
                 title={community.title}
                 aria-label={`Open ${community.title}`}
-                className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-raw-border/35 bg-raw-surface text-[10px] font-semibold text-raw-text shadow-lg transition hover:border-raw-gold/55 focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/50"
+                className="absolute left-1/2 top-1/2 flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-raw-border/35 bg-raw-surface text-[10px] font-semibold text-raw-text shadow-xl shadow-black/25 transition hover:border-raw-gold/55 focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/50"
+                style={{ transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))` }}
               >
                 {imageUrl ? (
                   <img src={imageUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
