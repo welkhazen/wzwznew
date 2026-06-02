@@ -116,6 +116,7 @@ export default function Dashboard({
   const [isHome, setIsHome] = useState(true);
   const [mobileCommunityPickerOpen, setMobileCommunityPickerOpen] = useState(false);
   const [mobileCommunityAnchorRect, setMobileCommunityAnchorRect] = useState<DOMRect | null>(null);
+  const [mobileCommunityCenterId, setMobileCommunityCenterId] = useState<string | null>(null);
   const mobileCommunityPressTimerRef = useRef<number | null>(null);
   const mobileCommunityLongPressRef = useRef(false);
   const communityRouteMatch = matchPath("/dashboard/communities/:communityId", location.pathname);
@@ -188,6 +189,18 @@ export default function Dashboard({
     () => dashboardCommunities.filter((community) => community.members.some((member) => member.userId === user.id)),
     [dashboardCommunities, user.id],
   );
+  const mobileWheelCenterCommunity = useMemo(() => {
+    if (joinedMobileCommunities.length === 0) return null;
+    return joinedMobileCommunities.find((community) => community.id === mobileCommunityCenterId)
+      ?? joinedMobileCommunities.find((community) => community.id === activeCommunityId)
+      ?? joinedMobileCommunities[0];
+  }, [activeCommunityId, joinedMobileCommunities, mobileCommunityCenterId]);
+  const mobileWheelOuterCommunities = useMemo(() => {
+    if (!mobileWheelCenterCommunity) return [];
+    return joinedMobileCommunities
+      .filter((community) => community.id !== mobileWheelCenterCommunity.id)
+      .slice(0, 3);
+  }, [joinedMobileCommunities, mobileWheelCenterCommunity]);
 
   const clearMobileCommunityPressTimer = () => {
     if (mobileCommunityPressTimerRef.current !== null) {
@@ -203,6 +216,8 @@ export default function Dashboard({
     mobileCommunityLongPressRef.current = false;
     mobileCommunityPressTimerRef.current = window.setTimeout(() => {
       if (joinedMobileCommunities.length > 0) {
+        const currentCommunity = joinedMobileCommunities.find((community) => community.id === activeCommunityId) ?? joinedMobileCommunities[0];
+        setMobileCommunityCenterId(currentCommunity.id);
         mobileCommunityLongPressRef.current = true;
         setMobileCommunityPickerOpen(true);
       }
@@ -545,7 +560,7 @@ export default function Dashboard({
       />
 
       <AnimatePresence>
-        {mobileCommunityPickerOpen && joinedMobileCommunities.length > 0 && mobileCommunityAnchorRect && (
+        {mobileCommunityPickerOpen && mobileWheelCenterCommunity && mobileCommunityAnchorRect && (
           <motion.div
             initial={{ opacity: 0, scale: 0.86, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -573,9 +588,33 @@ export default function Dashboard({
               <div className="absolute inset-[18px] rounded-full border border-raw-border/25" />
               <div className="absolute left-1/2 top-1/2 h-px w-full -translate-x-1/2 -translate-y-1/2 rotate-[30deg] bg-gradient-to-r from-transparent via-raw-silver/25 to-transparent" />
               <div className="absolute left-1/2 top-1/2 h-px w-full -translate-x-1/2 -translate-y-1/2 rotate-[150deg] bg-gradient-to-r from-transparent via-raw-silver/25 to-transparent" />
-              <div className="absolute left-1/2 top-1/2 h-8 w-8 -translate-x-1/2 -translate-y-1/2 rounded-full border border-raw-gold/45 bg-raw-black/80 shadow-[0_0_18px_rgba(255,207,92,0.18)]" />
             </div>
-            {joinedMobileCommunities.slice(0, 3).map((community, index, visibleCommunities) => {
+            <button
+              type="button"
+              onClick={() => {
+                setMobileCommunityPickerOpen(false);
+                handleOpenCommunity(mobileWheelCenterCommunity.id);
+              }}
+              onContextMenu={(event) => event.preventDefault()}
+              title={mobileWheelCenterCommunity.title}
+              aria-label={`Current community ${mobileWheelCenterCommunity.title}`}
+              className="absolute bottom-3 left-1/2 flex h-14 w-14 -translate-x-1/2 -translate-y-[33px] items-center justify-center overflow-hidden rounded-full border border-raw-gold/70 bg-raw-black text-[10px] font-semibold text-raw-text shadow-[0_0_22px_rgba(255,207,92,0.22)] ring-2 ring-raw-gold/30"
+              style={{
+                WebkitTouchCallout: "none",
+                WebkitUserSelect: "none",
+                userSelect: "none",
+              }}
+            >
+              {(() => {
+                const imageUrl = COMMUNITY_LOGOS[mobileWheelCenterCommunity.id] ?? mobileWheelCenterCommunity.logoUrl ?? COMMUNITY_COVER_IMAGES[mobileWheelCenterCommunity.id];
+                return imageUrl ? (
+                  <img src={imageUrl} alt="" className="h-full w-full object-cover" loading="lazy" draggable={false} />
+                ) : (
+                  <span>{mobileWheelCenterCommunity.abbr}</span>
+                );
+              })()}
+            </button>
+            {mobileWheelOuterCommunities.map((community, index, visibleCommunities) => {
               const imageUrl = COMMUNITY_LOGOS[community.id] ?? community.logoUrl ?? COMMUNITY_COVER_IMAGES[community.id];
               const positions =
                 visibleCommunities.length === 1
@@ -584,7 +623,6 @@ export default function Dashboard({
                     ? [{ x: -36, y: -48 }, { x: 36, y: -48 }]
                     : [{ x: -43, y: -39 }, { x: 0, y: -70 }, { x: 43, y: -39 }];
               const { x, y } = positions[index];
-              const isActiveCommunity = community.id === activeCommunityId;
               return (
                 <motion.button
                   key={community.id}
@@ -600,11 +638,7 @@ export default function Dashboard({
                   onContextMenu={(event) => event.preventDefault()}
                   title={community.title}
                   aria-label={`Open ${community.title}`}
-                  className={`absolute bottom-0 left-1/2 flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border bg-raw-surface text-[10px] font-semibold text-raw-text shadow-xl shadow-black/30 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/50 ${
-                    isActiveCommunity
-                      ? "border-raw-gold/70 ring-2 ring-raw-gold/35"
-                      : "border-raw-border/35 ring-1 ring-raw-gold/10 hover:border-raw-gold/55"
-                  }`}
+                  className="absolute bottom-0 left-1/2 flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-raw-border/35 bg-raw-surface text-[10px] font-semibold text-raw-text shadow-xl shadow-black/30 ring-1 ring-raw-gold/10 transition hover:border-raw-gold/55 focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/50"
                   style={{
                     transform: `translate(calc(-50% + ${x}px), ${y}px)`,
                     WebkitTouchCallout: "none",
