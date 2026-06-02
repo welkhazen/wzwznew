@@ -4,6 +4,14 @@ Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-s
 
 **Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
 
+## 0. Minimal File Inspection
+
+**Only inspect the exact files needed. Do not scan the whole repo.**
+
+- Do not read large generated files, lock files, build folders, `node_modules`, or Supabase dumps unless strictly necessary.
+- Prefer targeted `Read`/`Grep`/`Glob` on known paths over broad exploration.
+- If you don't know which file to open, ask or narrow the search first — don't bulk-read.
+
 ## 1. Think Before Coding
 
 **Don't assume. Don't hide confusion. Surface tradeoffs.**

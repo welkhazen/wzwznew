@@ -48,7 +48,7 @@ export default function LandingShell({
 
   return (
     <div className="landing-page-shell min-h-screen overflow-x-hidden bg-raw-black">
-      <PollShowcase onResolved={() => setSiteReady(true)} />
+      <PollShowcase initialOpen onResolved={() => setSiteReady(true)} />
 
       <Navbar
         isLoggedIn={isLoggedIn}
