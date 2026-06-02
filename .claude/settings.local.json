@@ -50,7 +50,12 @@
       "Bash(git fetch *)",
       "Bash(git commit -m 'Add Store tab, lift sidebar icons under navbar, scope Inventory to owned items *)",
       "Bash(git commit -m 'Hide '\\\\''Didn'\\\\''t find your community?'\\\\'' CTA on mobile *)",
-      "Bash(git commit -m 'Add favorite communities \\(max 3\\) and pinned chat message *)"
+      "Bash(git commit -m 'Add favorite communities \\(max 3\\) and pinned chat message *)",
+      "Bash(git cherry-pick *)",
+      "Bash(git commit -m 'Add favorite toggle to community chat header *)",
+      "Bash(git commit -m 'Fix favorites/pinned migration: text user_id + permissive RLS *)",
+      "mcp__f1213d47-aa2e-4293-93fe-7cc5dff8a50b__apply_migration",
+      "Bash(git commit -m 'Default new accounts to public profile *)"
     ]
   }
 }
