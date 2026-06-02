@@ -76,6 +76,77 @@ const TOKEN_BALANCE_STORAGE_KEY = "raw.polls.token-balance";
 const ACCENT_UNLOCK_COST = 10;
 const LOCKED_ACCENT_IDS: AccentPresetId[] = ["cyan", "emerald", "lime"];
 
+const DEADLINE_TARGET = new Date(2026, 5, 19, 13, 0, 0).getTime();
+
+type DeadlineCountdown = {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+  isComplete: boolean;
+};
+
+function getDeadlineCountdown(now = Date.now()): DeadlineCountdown {
+  const remaining = Math.max(DEADLINE_TARGET - now, 0);
+  const totalSeconds = Math.floor(remaining / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  return {
+    days,
+    hours,
+    minutes,
+    seconds,
+    isComplete: remaining === 0,
+  };
+}
+
+function DeadlineCountdownBadge({ isLight }: { isLight: boolean }) {
+  const [countdown, setCountdown] = useState(() => getDeadlineCountdown());
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setCountdown(getDeadlineCountdown());
+    }, 1000);
+
+    return () => window.clearInterval(intervalId);
+  }, []);
+
+  if (countdown.isComplete) {
+    return (
+      <div
+        className={cn(
+          "hidden rounded-full border px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] sm:block",
+          isLight ? "border-amber-300 bg-amber-50 text-amber-800" : "border-raw-gold/35 bg-raw-gold/10 text-raw-gold",
+        )}
+        aria-label="Deadline countdown complete"
+      >
+        Deadline reached
+      </div>
+    );
+  }
+
+  const timeLabel = `${countdown.days}d ${countdown.hours}h ${countdown.minutes}m ${countdown.seconds}s`;
+
+  return (
+    <div
+      className={cn(
+        "rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] shadow-sm sm:px-3 sm:py-1.5 sm:text-[11px]",
+        isLight
+          ? "border-amber-300 bg-amber-50 text-amber-800 shadow-amber-100"
+          : "border-raw-gold/35 bg-raw-gold/10 text-raw-gold shadow-raw-gold/10",
+      )}
+      aria-label={`Deadline countdown: ${timeLabel}`}
+      title="Deadline: June 19, 2026 at 1:00 PM"
+    >
+      <span className="hidden sm:inline">Deadline </span>
+      {timeLabel}
+    </div>
+  );
+}
+
 type DashboardNotification = {
   id: string;
   type: "mention" | "like" | "community";
@@ -430,10 +501,13 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
       )}
     >
       <div className="flex h-14 items-center justify-between px-3 sm:px-6">
-        {/* Logo — hidden on mobile when inside a community */}
-        <a href="/" className={cn("font-display text-base tracking-[0.3em] shrink-0 sm:text-lg", isEffectiveLight ? "text-slate-950" : "text-raw-text", communityTitle ? "hidden sm:block" : "")}>
-          ra<span className="text-raw-gold">W</span>
-        </a>
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+          {/* Logo — hidden on mobile when inside a community */}
+          <a href="/" className={cn("font-display text-base tracking-[0.3em] shrink-0 sm:text-lg", isEffectiveLight ? "text-slate-950" : "text-raw-text", communityTitle ? "hidden sm:block" : "")}>
+            ra<span className="text-raw-gold">W</span>
+          </a>
+          <DeadlineCountdownBadge isLight={isEffectiveLight} />
+        </div>
 
         {/* Community name — mobile only, shown instead of logo when in a community */}
         {communityTitle && (
