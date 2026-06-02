@@ -85,12 +85,12 @@ export function PollShowcase({ initialOpen = false, onResolved }: PollShowcasePr
 
         {/* Counter and progress dashes */}
         <div className="mb-4 flex flex-col items-center">
-          <div className="flex items-center gap-3">
-            <span className="h-px w-7 bg-white/35" />
-            <p className="text-[12px] font-medium tracking-[0.42em] text-white/85">
+          <div className="flex items-center gap-3 rounded-full bg-black/55 px-4 py-1.5 backdrop-blur-sm">
+            <span className="h-px w-7 bg-white/60" />
+            <p className="text-[12px] font-medium tracking-[0.42em] text-white">
               {index + 1} / {total}
             </p>
-            <span className="h-px w-7 bg-white/35" />
+            <span className="h-px w-7 bg-white/60" />
           </div>
           <div className="mt-3 flex items-center gap-2">
             {Array.from({ length: total }, (_, i) => (
@@ -99,7 +99,7 @@ export function PollShowcase({ initialOpen = false, onResolved }: PollShowcasePr
                 className={`h-[3px] transition-all ${
                   i === index
                     ? "w-9 bg-raw-gold shadow-[0_0_8px_rgb(var(--raw-accent)/0.7)]"
-                    : "w-6 bg-white/20"
+                    : "w-6 bg-black/30"
                 }`}
               />
             ))}
