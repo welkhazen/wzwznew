@@ -30,6 +30,7 @@ interface WheelOfFortuneProps {
   prizeWeights?: Partial<Record<string, number>>;
   forcedPrizeId?: string | null;
   radius?: number;
+  previewOnly?: boolean;
 }
 
 const SPIN_DURATION = 5000;
@@ -79,7 +80,7 @@ function getLabelLines(label: string): string[] {
   return [parts.slice(0, midpoint).join(" "), parts.slice(midpoint).join(" ")];
 }
 
-export function WheelOfFortune({ prizes, onSpinEnd, onSpinStart, disabled = false, prizeWeights, forcedPrizeId = null, radius: radiusProp = 200 }: WheelOfFortuneProps) {
+export function WheelOfFortune({ prizes, onSpinEnd, onSpinStart, disabled = false, prizeWeights, forcedPrizeId = null, radius: radiusProp = 200, previewOnly = false }: WheelOfFortuneProps) {
   const { mode } = useTheme();
   const pointerId = useId().replace(/:/g, "");
   const baseId = useId().replace(/:/g, "");
@@ -277,17 +278,19 @@ export function WheelOfFortune({ prizes, onSpinEnd, onSpinStart, disabled = fals
         </svg>
       </div>
 
-      <button
-        onClick={handleSpin}
-        disabled={isSpinning || disabled}
-        className={`mt-6 sm:mt-8 relative overflow-hidden rounded-full px-10 py-3.5 font-display text-sm uppercase tracking-[0.2em] transition-all ${
-          isSpinning || disabled
-            ? "cursor-not-allowed border border-raw-border/30 bg-raw-surface text-raw-silver/30"
-            : "bg-raw-gold text-raw-black hover:scale-105 hover:shadow-[0_0_30px_rgb(var(--raw-accent)/0.3)] active:scale-95"
-        }`}
-      >
-        {isSpinning ? "Spinning..." : disabled ? "Spin Complete" : "Spin"}
-      </button>
+      {!previewOnly && (
+        <button
+          onClick={handleSpin}
+          disabled={isSpinning || disabled}
+          className={`mt-6 sm:mt-8 relative overflow-hidden rounded-full px-10 py-3.5 font-display text-sm uppercase tracking-[0.2em] transition-all ${
+            isSpinning || disabled
+              ? "cursor-not-allowed border border-raw-border/30 bg-raw-surface text-raw-silver/30"
+              : "bg-raw-gold text-raw-black hover:scale-105 hover:shadow-[0_0_30px_rgb(var(--raw-accent)/0.3)] active:scale-95"
+          }`}
+        >
+          {isSpinning ? "Spinning..." : disabled ? "Spin Complete" : "Spin"}
+        </button>
+      )}
     </div>
   );
 }

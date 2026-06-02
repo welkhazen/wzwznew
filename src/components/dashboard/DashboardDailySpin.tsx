@@ -31,7 +31,7 @@ function toRgba(rgbSpaceSeparated: string, alpha: number): string {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-function buildSpinPrizes(mode: "light" | "dark", accentRgb: string): WheelPrize[] {
+export function buildSpinPrizes(mode: "light" | "dark", accentRgb: string): WheelPrize[] {
   const isLight = mode === "light";
   const neutralA = isLight ? "#c9d7ea" : "#1d2533";
   const neutralB = isLight ? "#b8c7dc" : "#131b29";
