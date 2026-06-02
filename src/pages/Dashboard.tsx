@@ -1,8 +1,12 @@
 import { FloatingDock } from "@/components/ui/floating-dock";
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
 import { fetchCommunities } from "@/backend/supabase/controllers/communityController";
 import { Archive, Home as HomeIcon, MessageCircle, Target, User as UserIcon, LogOut, Shield, Trophy, Sparkles, Moon, CloudMoon, Sun } from "lucide-react";
+import { COMMUNITY_COVER_IMAGES } from "@/lib/communityConstants";
+import LNTLogo from "@/assets/LNT.webp";
+import SYTLogo from "@/assets/logospeak.webp";
+import IIJMLogo from "@/assets/itisjustme.webp";
 import { useTheme } from "@/providers/useTheme";
 import type { ThemeMode } from "@/providers/theme-context";
 import { matchPath, useLocation, useNavigate } from "react-router-dom";
@@ -39,6 +43,12 @@ const DashboardWallet = lazy(() =>
 const DashboardInventory = lazy(() =>
   import("@/components/dashboard/DashboardInventory").then((module) => ({ default: module.DashboardInventory }))
 );
+
+const COMMUNITY_LOGOS: Record<string, string> = {
+  lnt: LNTLogo,
+  syt: SYTLogo,
+  iijm: IIJMLogo,
+};
 const DashboardStore = lazy(() =>
   import("@/components/dashboard/DashboardStore").then((module) => ({ default: module.DashboardStore }))
 );
@@ -102,6 +112,9 @@ export default function Dashboard({
   const [activeTab, setActiveTab] = useState<DashboardTab>("home");
   const [dashboardCommunities, setDashboardCommunities] = useState<PersistedCommunityRecord[]>([]);
   const [isHome, setIsHome] = useState(true);
+  const [mobileCommunityPickerOpen, setMobileCommunityPickerOpen] = useState(false);
+  const mobileCommunityPressTimerRef = useRef<number | null>(null);
+  const mobileCommunityLongPressRef = useRef(false);
   const communityRouteMatch = matchPath("/dashboard/communities/:communityId", location.pathname);
   const activeCommunityId = communityRouteMatch?.params.communityId ?? null;
 
@@ -168,6 +181,32 @@ export default function Dashboard({
     if (!activeCommunityId) return undefined;
     return dashboardCommunities.find((c) => c.id === activeCommunityId)?.title;
   }, [activeCommunityId, dashboardCommunities]);
+  const joinedMobileCommunities = useMemo(
+    () => dashboardCommunities.filter((community) => community.members.some((member) => member.userId === user.id)),
+    [dashboardCommunities, user.id],
+  );
+
+  const clearMobileCommunityPressTimer = () => {
+    if (mobileCommunityPressTimerRef.current !== null) {
+      window.clearTimeout(mobileCommunityPressTimerRef.current);
+      mobileCommunityPressTimerRef.current = null;
+    }
+  };
+
+  const handleMobileCommunityPressStart = () => {
+    clearMobileCommunityPressTimer();
+    mobileCommunityLongPressRef.current = false;
+    mobileCommunityPressTimerRef.current = window.setTimeout(() => {
+      if (joinedMobileCommunities.length > 0) {
+        mobileCommunityLongPressRef.current = true;
+        setMobileCommunityPickerOpen(true);
+      }
+    }, 420);
+  };
+
+  const handleMobileCommunityPressEnd = () => {
+    clearMobileCommunityPressTimer();
+  };
 
   const handleProfileClick = () => {
     setActiveTab("profile");
@@ -438,7 +477,17 @@ export default function Dashboard({
             title: "Communities",
             icon: <MessageCircle className="h-5 w-5" />,
             href: "#",
-            onClick: () => handleTabChange("communities"),
+            onClick: () => {
+              if (mobileCommunityLongPressRef.current) {
+                mobileCommunityLongPressRef.current = false;
+                return;
+              }
+              setMobileCommunityPickerOpen(false);
+              handleTabChange("communities");
+            },
+            onPointerDown: handleMobileCommunityPressStart,
+            onPointerUp: handleMobileCommunityPressEnd,
+            onPointerLeave: handleMobileCommunityPressEnd,
             active: !isHome && activeTab === "communities",
           },
           {
@@ -471,6 +520,33 @@ export default function Dashboard({
           }] : []),
         ]}
       />
+
+      {mobileCommunityPickerOpen && joinedMobileCommunities.length > 0 && (
+        <div className="fixed bottom-24 left-1/2 z-[60] flex -translate-x-1/2 flex-col items-center gap-3 rounded-full border border-raw-border/25 bg-raw-black/90 px-2 py-3 shadow-2xl shadow-black/35 backdrop-blur-xl lg:hidden">
+          {joinedMobileCommunities.map((community) => {
+            const imageUrl = COMMUNITY_LOGOS[community.id] ?? community.logoUrl ?? COMMUNITY_COVER_IMAGES[community.id];
+            return (
+              <button
+                key={community.id}
+                type="button"
+                onClick={() => {
+                  setMobileCommunityPickerOpen(false);
+                  handleOpenCommunity(community.id);
+                }}
+                title={community.title}
+                aria-label={`Open ${community.title}`}
+                className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-raw-border/35 bg-raw-surface text-[10px] font-semibold text-raw-text shadow-lg transition hover:border-raw-gold/55 focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/50"
+              >
+                {imageUrl ? (
+                  <img src={imageUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
+                ) : (
+                  <span>{community.abbr}</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* Main content */}
       <main className="relative z-10 pt-14 pb-28 lg:pl-[80px] lg:pb-8">
