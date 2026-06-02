@@ -50,7 +50,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
   syt: SYTLogo,
   iijm: IIJMLogo,
 };
-const LONG_PRESS_MS = 400;
+const LONG_PRESS_MS = 500;
 const MOVE_CANCEL_PX = 10;
 const DashboardStore = lazy(() =>
   import("@/components/dashboard/DashboardStore").then((module) => ({ default: module.DashboardStore }))
