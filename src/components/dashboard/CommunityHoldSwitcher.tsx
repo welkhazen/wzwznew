@@ -88,7 +88,7 @@ export function CommunityHoldSwitcher({
             aria-label="Close community switcher"
             onClick={onClose}
             onContextMenu={(e) => e.preventDefault()}
-            className="fixed inset-0 z-[59] bg-transparent lg:hidden"
+            className="fixed inset-0 z-[65] bg-transparent lg:hidden"
             style={{
               WebkitTouchCallout: "none",
               WebkitUserSelect: "none",
@@ -119,7 +119,7 @@ export function CommunityHoldSwitcher({
                 onContextMenu={(e) => e.preventDefault()}
                 title={community.title}
                 aria-label={`Open ${community.title}`}
-                className={`fixed z-[60] flex items-center justify-center overflow-hidden rounded-full border-2 bg-raw-black text-[10px] font-semibold text-raw-text shadow-[0_8px_22px_rgba(0,0,0,0.45)] transition-colors lg:hidden ${
+                className={`fixed z-[70] flex items-center justify-center overflow-hidden rounded-full border-2 bg-raw-black text-[10px] font-semibold text-raw-text shadow-[0_8px_22px_rgba(0,0,0,0.45)] transition-transform active:scale-90 active:border-raw-gold active:ring-4 active:ring-raw-gold/50 lg:hidden ${
                   hovered
                     ? "border-raw-gold ring-4 ring-raw-gold/40"
                     : "border-raw-border/50 ring-1 ring-raw-gold/15"

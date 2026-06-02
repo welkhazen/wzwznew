@@ -223,26 +223,21 @@ export default function Dashboard({
 
   const handleMobileCommunityPressStart = (event: React.TouchEvent<HTMLElement> | React.PointerEvent<HTMLElement>) => {
     if ("pointerType" in event && event.pointerType === "mouse") return;
-    if (mobileCommunityPressTimerRef.current !== null || mobileCommunityPickerOpen) return;
-    if ("pointerId" in event) {
-      event.currentTarget.setPointerCapture(event.pointerId);
-    }
+    if (mobileCommunityPressTimerRef.current !== null) return;
     const point = getMobileCommunityPressPoint(event);
     if (!point) return;
     mobileCommunityPressStartRef.current = point;
-    setMobileCommunityAnchorRect(event.currentTarget.getBoundingClientRect());
-    clearMobileCommunityPressTimer();
-    setHoveredHoldCommunityId(null);
-    mobileCommunityHoveredRef.current = null;
+    const rect = event.currentTarget.getBoundingClientRect();
     mobileCommunityLongPressRef.current = false;
     mobileCommunityPressTimerRef.current = window.setTimeout(() => {
-      if (joinedMobileCommunities.length > 0) {
-        const currentCommunity = joinedMobileCommunities.find((community) => community.id === activeCommunityId) ?? joinedMobileCommunities[0];
-        setMobileCommunityCenterId(currentCommunity.id);
-        mobileCommunityLongPressRef.current = true;
-        mobileCommunitySuppressClickRef.current = true;
-        setMobileCommunityPickerOpen(true);
-      }
+      mobileCommunityPressTimerRef.current = null;
+      if (joinedMobileCommunities.length === 0) return;
+      const currentCommunity = joinedMobileCommunities.find((c) => c.id === activeCommunityId) ?? joinedMobileCommunities[0];
+      setMobileCommunityCenterId(currentCommunity.id);
+      setMobileCommunityAnchorRect(rect);
+      mobileCommunityLongPressRef.current = true;
+      mobileCommunitySuppressClickRef.current = true;
+      setMobileCommunityPickerOpen(true);
     }, LONG_PRESS_MS);
   };
 
@@ -255,44 +250,32 @@ export default function Dashboard({
   };
 
   const handleMobileCommunityPressEnd = () => {
-    const selectedCommunityId = mobileCommunityLongPressRef.current ? mobileCommunityHoveredRef.current : null;
-    closeMobileCommunitySwitcher();
-    if (mobileCommunityLongPressRef.current) {
-      mobileCommunityLongPressRef.current = false;
-      if (selectedCommunityId) {
-        handleOpenCommunity(selectedCommunityId);
-      }
-    }
+    clearMobileCommunityPressTimer();
+    mobileCommunityPressStartRef.current = null;
   };
 
   const handleMobileCommunityPressMove = (event: React.TouchEvent<HTMLElement> | React.PointerEvent<HTMLElement>) => {
+    if (mobileCommunityLongPressRef.current) return;
     const start = mobileCommunityPressStartRef.current;
     const point = getMobileCommunityPressPoint(event);
     if (!start || !point) return;
-    if (!mobileCommunityLongPressRef.current && Math.hypot(point.x - start.x, point.y - start.y) > MOVE_CANCEL_PX) {
-      handleMobileCommunityPressEnd();
-      return;
-    }
-    if (mobileCommunityLongPressRef.current) {
-      event.preventDefault();
-      const targets = getCommunityHoldSwitcherTargets(mobileCommunityAnchorRect, mobileWheelCenterCommunity, joinedMobileCommunities);
-      const hoveredTarget = targets.find((target) => Math.hypot(point.x - target.x, point.y - target.y) <= target.radius);
-      const nextHoveredId = hoveredTarget?.community.id ?? null;
-      mobileCommunityHoveredRef.current = nextHoveredId;
-      setHoveredHoldCommunityId(nextHoveredId);
+    if (Math.hypot(point.x - start.x, point.y - start.y) > MOVE_CANCEL_PX) {
+      clearMobileCommunityPressTimer();
+      mobileCommunityPressStartRef.current = null;
     }
   };
 
   useEffect(() => {
     if (!mobileCommunityPickerOpen) return;
-    const closePicker = () => closeMobileCommunitySwitcher();
-    window.addEventListener("pointerdown", closePicker);
-    window.addEventListener("resize", closePicker);
-    window.addEventListener("scroll", closePicker, true);
+    const closeOnResize = () => closeMobileCommunitySwitcher();
+    const closeOnKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeMobileCommunitySwitcher();
+    };
+    window.addEventListener("resize", closeOnResize);
+    window.addEventListener("keydown", closeOnKey);
     return () => {
-      window.removeEventListener("pointerdown", closePicker);
-      window.removeEventListener("resize", closePicker);
-      window.removeEventListener("scroll", closePicker, true);
+      window.removeEventListener("resize", closeOnResize);
+      window.removeEventListener("keydown", closeOnKey);
     };
   }, [mobileCommunityPickerOpen]);
 
@@ -570,7 +553,10 @@ export default function Dashboard({
                 mobileCommunitySuppressClickRef.current = false;
                 return;
               }
-              setMobileCommunityPickerOpen(false);
+              if (mobileCommunityPickerOpen) {
+                closeMobileCommunitySwitcher();
+                return;
+              }
               handleTabChange("communities");
             },
             onPointerDown: handleMobileCommunityPressStart,
