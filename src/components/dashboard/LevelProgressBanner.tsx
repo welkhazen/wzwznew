@@ -61,15 +61,21 @@ export function LevelProgressBanner({ xp, level, compact = false, className }: L
         </div>
       </div>
       {/* Progress bar */}
-      <div className="relative h-3 overflow-hidden rounded-full bg-raw-border/20">
+      <div className={cn(
+        "relative overflow-hidden rounded-full bg-raw-border/20",
+        compact ? "h-3.5" : "h-4",
+      )}>
         <div
           className="h-full rounded-full bg-gradient-to-r from-raw-gold/75 to-raw-gold transition-all duration-500 shadow-[0_0_10px_rgba(241,196,45,0.35)]"
           style={{ width: `${pct}%` }}
         />
-        <span className={cn(
-          "absolute inset-0 flex items-center justify-center font-semibold leading-none text-raw-silver/65",
-          compact ? "text-[8px]" : "text-[10px]",
-        )}>
+        <span
+          className={cn(
+            "absolute inset-0 flex items-center justify-center font-bold leading-none tracking-wide text-white",
+            compact ? "text-[9px]" : "text-[11px]",
+          )}
+          style={{ textShadow: "0 0 3px rgba(0,0,0,0.85), 0 1px 1px rgba(0,0,0,0.7)" }}
+        >
           {progressLabel}
         </span>
       </div>
