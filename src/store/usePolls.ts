@@ -248,16 +248,7 @@ export function usePolls(isLoggedIn: boolean, userId?: string) {
           }
         })
         .catch(() => {
-          setTokenBalance((previous) => {
-            const next = Math.max(0, previous - safeAmount);
-            try {
-              window.localStorage.setItem(TOKEN_BALANCE_KEY, String(next));
-              emitTokenBalanceUpdated(TOKEN_BALANCE_KEY, next);
-            } catch {
-              // ignore storage errors
-            }
-            return next;
-          });
+          // Token rewards stay local until a trusted reward/payment API mints them server-side.
         });
       return;
     }
