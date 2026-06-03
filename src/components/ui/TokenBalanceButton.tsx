@@ -3,12 +3,14 @@ import tokenImg from "@/assets/tokens.webp";
 import { useRawStore } from "@/store/useRawStore";
 import { useTheme } from "@/providers/useTheme";
 
-type TokenPack = { id: string; tokens: number; priceUsd: number; tag?: string };
+type TokenPack = { id: string; tokens: number; priceUsd: number; label: string; tag?: string };
 
 const TOKEN_PACKS: TokenPack[] = [
-  { id: "starter", tokens: 100, priceUsd: 0.99 },
-  { id: "boost", tokens: 500, priceUsd: 3.99, tag: "Popular" },
-  { id: "stash", tokens: 1500, priceUsd: 9.99, tag: "Best value" },
+  { id: "tokens-50", tokens: 50, priceUsd: 5, label: "Starter" },
+  { id: "tokens-100", tokens: 100, priceUsd: 10, label: "Basic" },
+  { id: "tokens-200", tokens: 200, priceUsd: 18, label: "Popular", tag: "Popular" },
+  { id: "tokens-500", tokens: 500, priceUsd: 40, label: "Best Value", tag: "Best value" },
+  { id: "tokens-1000", tokens: 1000, priceUsd: 85, label: "Power User" },
 ];
 
 export function TokenBalanceButton() {
@@ -154,9 +156,7 @@ export function TokenBalanceButton() {
                     <img src={tokenImg} alt="" width={20} height={20} className="shrink-0 object-contain" />
                     <span>
                       <span className="block text-sm font-semibold text-raw-gold">{pack.tokens.toLocaleString()} tokens</span>
-                      {pack.tag ? (
-                        <span className={`text-[10px] uppercase tracking-[0.16em] ${isLight ? "text-slate-500" : "text-raw-silver/45"}`}>{pack.tag}</span>
-                      ) : null}
+                      <span className={`text-[10px] uppercase tracking-[0.16em] ${isLight ? "text-slate-500" : "text-raw-silver/45"}`}>{pack.tag ?? pack.label}</span>
                     </span>
                   </span>
                   <span className={`text-xs font-semibold ${isLight ? "text-slate-700" : "text-raw-text"}`}>
