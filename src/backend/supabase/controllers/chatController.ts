@@ -37,35 +37,50 @@ export function mapCommunityMessage(row: DbCommunityMessage): CommunityChatMessa
   };
 }
 
+/**
+ * Send a community message.
+ *
+ * Security: the frontend no longer supplies senderId / senderName /
+ * senderAvatarLevel. The send_community_message SECURITY DEFINER RPC reads
+ * the authenticated user via current_user_id(), checks not-banned + community
+ * membership, and inserts the real sender fields server-side. The legacy
+ * senderId / senderName / senderAvatarLevel on SendCommunityMessageInput are
+ * ignored for trust purposes; we keep them in the type only to avoid touching
+ * every call site in this pass.
+ *
+ * TODO(auth-migration): once custom username/password auth is fully replaced
+ * with Supabase Auth, the SendCommunityMessageInput type can drop those
+ * sender fields entirely. They are currently passed but not trusted.
+ */
 export async function sendMessage(
   communityId: string,
-  { senderId, senderName, senderAvatarLevel, text, replyToMessage }: SendCommunityMessageInput
+  input: SendCommunityMessageInput
 ): Promise<CommunityChatMessageRecord> {
-  const { data, error } = await supabase
-    .from('community_messages')
-    .insert({
-      community_id: communityId,
-      sender_id: senderId,
-      sender_name: senderName,
-      sender_avatar_level: senderAvatarLevel ?? null,
-      text,
-      reply_to_message_id: replyToMessage?.id ?? null,
-      reply_to_sender_name: replyToMessage?.senderName ?? null,
-      reply_to_text: replyToMessage?.text ?? null,
-    })
-    .select()
-    .single();
+  const { data, error } = await supabase.rpc('send_community_message', {
+    p_community_id: communityId,
+    p_text: input.text,
+    p_reply_to_message_id: input.replyToMessage?.id ?? null,
+  });
 
   if (error) throw error;
+  if (!data) throw new Error('send_community_message_returned_empty');
 
   return mapCommunityMessage(data as DbCommunityMessage);
 }
 
-export async function deleteMessage(messageId: string, requesterId: string): Promise<void> {
-  const { error } = await supabase
-    .from('community_messages')
-    .update({ deleted_at: new Date().toISOString(), deleted_by_user_id: requesterId })
-    .eq('id', messageId);
+/**
+ * Soft-delete a community message.
+ *
+ * Security: delete_community_message verifies the authenticated user matches
+ * sender_id OR is an admin, then sets deleted_at + deleted_by_user_id from
+ * server context. The requesterId argument is kept for backward compatibility
+ * with the existing call sites and is NOT trusted by the database.
+ */
+export async function deleteMessage(messageId: string, _requesterId: string): Promise<void> {
+  void _requesterId;
+  const { error } = await supabase.rpc('delete_community_message', {
+    p_message_id: messageId,
+  });
   if (error) throw error;
 }
 
