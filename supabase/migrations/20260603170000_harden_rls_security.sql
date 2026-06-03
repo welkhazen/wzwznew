@@ -108,20 +108,20 @@ CREATE POLICY "members_self_insert"
 ON public.community_members
 FOR INSERT
 TO authenticated
-WITH CHECK (user_id = public.current_user_id());
+WITH CHECK (user_id = public.current_user_id()::text);
 
 CREATE POLICY "members_self_update"
 ON public.community_members
 FOR UPDATE
 TO authenticated
-USING (user_id = public.current_user_id())
-WITH CHECK (user_id = public.current_user_id());
+USING (user_id = public.current_user_id()::text)
+WITH CHECK (user_id = public.current_user_id()::text);
 
 CREATE POLICY "members_self_or_admin_delete"
 ON public.community_members
 FOR DELETE
 TO authenticated
-USING (user_id = public.current_user_id() OR public.is_admin());
+USING (user_id = public.current_user_id()::text OR public.is_admin());
 
 -- ─── community_waitlist: owner-scoped insert ──────────────────────────────
 
@@ -134,7 +134,7 @@ CREATE POLICY "waitlist_self_insert"
 ON public.community_waitlist
 FOR INSERT
 TO authenticated
-WITH CHECK (user_id = public.current_user_id());
+WITH CHECK (user_id = public.current_user_id()::text);
 
 CREATE POLICY "waitlist_admin_manage"
 ON public.community_waitlist
@@ -155,7 +155,7 @@ CREATE POLICY "requests_self_insert"
 ON public.community_requests
 FOR INSERT
 TO authenticated
-WITH CHECK (requester_id = public.current_user_id());
+WITH CHECK (requester_id = public.current_user_id()::text);
 
 CREATE POLICY "requests_admin_update"
 ON public.community_requests
@@ -182,8 +182,8 @@ CREATE POLICY "avatar_inventory_owner_write"
 ON public.user_avatar_inventory
 FOR ALL
 TO authenticated
-USING (user_id = public.current_user_id() OR public.is_admin())
-WITH CHECK (user_id = public.current_user_id() OR public.is_admin());
+USING (user_id = public.current_user_id()::text OR public.is_admin())
+WITH CHECK (user_id = public.current_user_id()::text OR public.is_admin());
 
 -- ─── user_avatar_selection: owner-scoped ──────────────────────────────────
 
@@ -203,8 +203,8 @@ CREATE POLICY "avatar_selection_owner_write"
 ON public.user_avatar_selection
 FOR ALL
 TO authenticated
-USING (user_id = public.current_user_id() OR public.is_admin())
-WITH CHECK (user_id = public.current_user_id() OR public.is_admin());
+USING (user_id = public.current_user_id()::text OR public.is_admin())
+WITH CHECK (user_id = public.current_user_id()::text OR public.is_admin());
 
 -- ─── daily_spin_pool: curated, admin-only writes ──────────────────────────
 
@@ -339,7 +339,7 @@ BEGIN
   SELECT EXISTS (
     SELECT 1 FROM public.community_members
      WHERE community_id = p_community_id
-       AND user_id = v_uid
+       AND user_id = v_uid::text
   ) INTO v_is_member;
 
   IF NOT v_is_member AND NOT public.is_admin() THEN
@@ -359,7 +359,7 @@ BEGIN
     text, reply_to_message_id, reply_to_sender_name, reply_to_text
   ) VALUES (
     p_community_id,
-    v_uid,
+    v_uid::text,
     v_user.username,
     v_user.avatar_level,
     v_clean_text,
@@ -395,10 +395,10 @@ BEGIN
 
   UPDATE public.community_messages
      SET deleted_at = now(),
-         deleted_by_user_id = v_uid
+         deleted_by_user_id = v_uid::text
    WHERE id = p_message_id
      AND deleted_at IS NULL
-     AND (sender_id = v_uid OR public.is_admin())
+     AND (sender_id = v_uid::text OR public.is_admin())
   RETURNING * INTO v_row;
 
   IF NOT FOUND THEN
