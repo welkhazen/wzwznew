@@ -273,15 +273,6 @@ export function DashboardDailySpin({ userId, isAdmin = false, onAwardXP, onAvata
 
   return (
     <div className="space-y-6 sm:space-y-8">
-      <div className="text-center">
-        <p className="mb-2 font-display text-[10px] uppercase tracking-[0.28em] text-raw-gold/50 sm:mb-3 sm:tracking-[0.3em]">
-          Daily Reward
-        </p>
-        <h1 className="font-display text-xl tracking-wide text-raw-text sm:text-2xl md:text-3xl">Wheel of Fortune</h1>
-        <p className="mx-auto mt-2 max-w-md text-xs text-raw-silver/40 sm:mt-3 sm:text-sm">
-          Spin once daily for a chance to earn XP, avatar themes, streak shields, and more.
-        </p>
-      </div>
 
       {isAdmin && (
         <div className="mx-auto flex w-full max-w-md flex-col gap-2 rounded-2xl border border-raw-border/45 bg-raw-surface/35 p-3">
@@ -318,26 +309,17 @@ export function DashboardDailySpin({ userId, isAdmin = false, onAwardXP, onAvata
             prizeWeights={PRIZE_WEIGHTS}
             forcedPrizeId={forcedPrizeId}
             radius={160}
+            aboveButton={
+              isCooldownActive && !isAdmin ? (
+                <>
+                  <p className="text-[10px] uppercase tracking-[0.16em] text-raw-silver/35">Next spin in</p>
+                  <p className="mt-1 font-display text-2xl tracking-widest text-raw-gold/90">{countdown}</p>
+                </>
+              ) : null
+            }
           />
         </div>
       </div>
-
-      {(isCooldownActive || (isAdmin && selectedPrize)) && (
-        <div className="mx-auto max-w-sm rounded-2xl border border-raw-border/40 bg-raw-surface/40 p-5 text-center">
-          <p className="mb-1 text-xs text-raw-silver/40">Today&apos;s Result</p>
-          <p className="font-display text-sm tracking-wide text-raw-gold">
-            {selectedMessage?.title ?? "Spin complete"}
-          </p>
-          {isAdmin ? (
-            <p className="mt-2 text-xs text-raw-silver/30">Admin test mode: spin infinitely and force rewards one by one.</p>
-          ) : (
-            <div className="mt-3">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-raw-silver/35">Next spin in</p>
-              <p className="mt-1 font-display text-2xl tracking-widest text-raw-gold/90">{countdown}</p>
-            </div>
-          )}
-        </div>
-      )}
 
       <Dialog open={!!prizeModal} onOpenChange={() => setPrizeModal(null)}>
         {isJackpot && <div className="jackpot-screen-flash pointer-events-none fixed inset-0 z-[45]" />}
