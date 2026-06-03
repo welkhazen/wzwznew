@@ -235,7 +235,8 @@ export function DashboardHome({
     [allCommunities],
   );
 
-  const pollProgress = Math.min(100, (dailyAnsweredCount / dailyPollLimit) * 100);
+  const hasReachedDailyPollLimit = dailyAnsweredCount >= dailyPollLimit;
+  const pollProgress = dailyPollLimit > 0 ? Math.min(100, (dailyAnsweredCount / dailyPollLimit) * 100) : 0;
 
   return (
     <div className="space-y-10 pb-6">
@@ -352,7 +353,7 @@ export function DashboardHome({
                 onClick={() => onNavigate("polls")}
                 className="mt-auto w-full py-4 rounded-xl border border-raw-gold/30 text-raw-gold font-bold text-xs uppercase tracking-[0.2em] hover:bg-raw-gold/5 transition-all"
               >
-                Answer Now
+                {hasReachedDailyPollLimit ? "Buy More - 10 Tokens" : "Answer Now"}
               </button>
             </div>
 
