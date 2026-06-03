@@ -31,7 +31,8 @@ export async function fetchPolls(limit = 10): Promise<Poll[]> {
     .select("id, question, status")
     .eq("is_onboarding", false)
     .neq("status", "locked")
-    .order("created_at", { ascending: false })
+    .order("created_at", { ascending: true })
+    .order("id", { ascending: true })
     .limit(limit);
 
   if (pollError) throw pollError;
@@ -80,11 +81,7 @@ export async function fetchPolls(limit = 10): Promise<Poll[]> {
     })
     .filter((poll) => poll.question?.trim().length > 5 && poll.options.length >= 2);
 
-  // Shuffle so users see a random order each load instead of newest-first.
-  for (let i = built.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [built[i], built[j]] = [built[j], built[i]];
-  }
+  // Deterministic chronological order (oldest -> newest), no shuffle.
   return built;
 }
 
