@@ -16,6 +16,16 @@ import { WheelRewardInline } from "@/components/landing/WheelReward";
 const VISIBLE_COUNT = 4;
 const DESKTOP_COUNT = 8;
 const MOBILE_PHONE_SCALE = 0.5;
+const CHOOSER_AVATARS: readonly AvatarCatalogItem[] = [
+  { id: "ember", level: 2, name: "Ember", price: "0", imageSrc: "/avatars/avatar-2.svg", bg: "#0c1a24", figure: "#5ed6ff", ring: "#5ed6ff", glow: "#5ed6ff80", isActive: true, rarity: "common" },
+  { id: "verdant", level: 3, name: "Verdant", price: "0", imageSrc: "/avatars/avatar-3.svg", bg: "#0a1124", figure: "#3f8bff", ring: "#3f8bff", glow: "#3f8bff80", isActive: true, rarity: "common" },
+  { id: "horned", level: 5, name: "Horned", price: "0", imageSrc: "/avatars/avatar-5.svg", bg: "#0b1a0e", figure: "#16a34a", ring: "#16a34a", glow: "#16a34a80", isActive: true, rarity: "common" },
+  { id: "pharaoh", level: 6, name: "Pharaoh", price: "0", imageSrc: "/avatars/avatar-6.svg", bg: "#1f0d18", figure: "#ec4899", ring: "#ec4899", glow: "#ec489980", isActive: true, rarity: "common" },
+  { id: "violet", level: 7, name: "Violet", price: "0", imageSrc: "/avatars/avatar-7.svg", bg: "#150a22", figure: "#8b5cf6", ring: "#8b5cf6", glow: "#8b5cf680", isActive: true, rarity: "common" },
+  { id: "rose", level: 8, name: "Rose", price: "0", imageSrc: "/avatars/avatar-8.svg", bg: "#1f1208", figure: "#f97316", ring: "#f97316", glow: "#f9731680", isActive: true, rarity: "common" },
+  { id: "black", level: 9, name: "Black", price: "0", imageSrc: "/avatars/avatar-9.svg", bg: "#1f0a0a", figure: "#dc2626", ring: "#dc2626", glow: "#dc262680", isActive: true, rarity: "common" },
+  { id: "blue", level: 10, name: "Blue", price: "0", imageSrc: "/avatars/avatar-10.svg", bg: "#1f1705", figure: "#facc15", ring: "#facc15", glow: "#facc1590", isActive: true, rarity: "common" },
+];
 const REVEAL_AVATARS: readonly AvatarCatalogItem[] = [
   { id: "reveal-1", level: 11, name: "Silver Void", price: "0", imageSrc: "/avatars/1.webp", bg: "#111827", figure: "#cbd5e1", ring: "#cbd5e1", glow: "#cbd5e180", isActive: true, rarity: "common" },
   { id: "reveal-2", level: 12, name: "Neon Lynx", price: "0", imageSrc: "/avatars/2.webp", bg: "#170f2e", figure: "#a855f7", ring: "#c084fc", glow: "#a855f780", isActive: true, rarity: "common" },
@@ -27,7 +37,7 @@ const REVEAL_AVATARS: readonly AvatarCatalogItem[] = [
   { id: "reveal-8", level: 18, name: "Pink Circuit", price: "0", imageSrc: "/avatars/8.webp", bg: "#2a0b1c", figure: "#fb7185", ring: "#fb7185", glow: "#fb718580", isActive: true, rarity: "common" },
   { id: "reveal-10", level: 20, name: "Blu Fifer", price: "0", imageSrc: "/avatars/11.png", bg: "#0a1a2e", figure: "#3b82f6", ring: "#60a5fa", glow: "#3b82f680", isActive: true, rarity: "common" },
 ];
-const LANDING_AVATARS: readonly AvatarCatalogItem[] = REVEAL_AVATARS;
+const LANDING_AVATARS: readonly AvatarCatalogItem[] = [...CHOOSER_AVATARS, ...REVEAL_AVATARS];
 
 type RevealAvatarImageFit = { scale: number; objectPosition?: string };
 
@@ -52,13 +62,13 @@ export function AvatarShowcaseSection({ onSignupClick }: AvatarShowcaseSectionPr
   const sectionRef = useTrackSectionView("avatar");
   const { mode } = useTheme();
   const isLight = mode === "light";
-  const [avatarIndex, setAvatarIndex] = useState(REVEAL_AVATARS[0].level);
-  const [previewIndex, setPreviewIndex] = useState(REVEAL_AVATARS[0].level);
+  const [avatarIndex, setAvatarIndex] = useState(CHOOSER_AVATARS[0].level);
+  const [previewIndex, setPreviewIndex] = useState(CHOOSER_AVATARS[0].level);
   const [startIndex, setStartIndex] = useState(0);
   const [desktopStart, setDesktopStart] = useState(0);
   const [showAll, setShowAll] = useState(false);
   const [showExpandGrid, setShowExpandGrid] = useState(false);
-  const [expandedVisibleCount, setExpandedVisibleCount] = useState(REVEAL_AVATARS.length);
+  const [expandedVisibleCount, setExpandedVisibleCount] = useState(CHOOSER_AVATARS.length);
   const [showMore, setShowMore] = useState(false);
   const [themeVersion, setThemeVersion] = useState(0);
   const [extraPreviewAvatar, setExtraPreviewAvatar] = useState<LandingNewAvatar | null>(null);
@@ -82,7 +92,7 @@ export function AvatarShowcaseSection({ onSignupClick }: AvatarShowcaseSectionPr
     setThemeVersion((version) => version + 1);
   }, []);
 
-  const chooserAvatars = REVEAL_AVATARS;
+  const chooserAvatars = CHOOSER_AVATARS;
   const chooserTotal = chooserAvatars.length;
   const expandedAvatarSource = REVEAL_AVATARS;
   const expandedAvatarTotal = expandedAvatarSource.length;
