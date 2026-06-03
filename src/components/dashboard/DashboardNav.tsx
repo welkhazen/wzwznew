@@ -14,7 +14,6 @@ import {
   Palette,
   Receipt,
   Settings,
-  Shield,
   Sun,
   Sunset,
 } from "lucide-react";
@@ -56,8 +55,6 @@ interface DashboardNavProps {
   userId: string;
   username: string;
   avatarLevel: number;
-  showAdminLink?: boolean;
-  onAddTestXP?: () => void;
   onProfileClick: () => void;
   onBillingClick: () => void;
   onLogout: () => void;
@@ -228,7 +225,7 @@ function readStoredTokenBalance(userId: string): number {
   }
 }
 
-export function DashboardNav({ userId, username, avatarLevel, showAdminLink = false, onAddTestXP, onProfileClick, onBillingClick, onLogout, communityTitle, onBack, communities, xp = 0, level = 1 }: DashboardNavProps) {
+export function DashboardNav({ userId, username, avatarLevel, onProfileClick, onBillingClick, onLogout, communityTitle, onBack, communities, xp = 0, level = 1 }: DashboardNavProps) {
   const { mode, accent, accentPresets, setMode, setAccent } = useTheme();
   const [hoveredMode, setHoveredMode] = useState<ThemeMode | null>(null);
   const [hoveredAccent, setHoveredAccent] = useState<AccentPresetId | null>(null);
@@ -750,16 +747,6 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
                 className={cn("mx-1 mb-1 hidden sm:block", isEffectiveLight ? "border-slate-200 bg-slate-50" : "border-raw-border/25 bg-raw-black/30")}
               />
 
-              {showAdminLink && onAddTestXP ? (
-                <button
-                  type="button"
-                  onClick={onAddTestXP}
-                  className="mx-1 mb-1 flex w-[calc(100%-0.5rem)] items-center justify-center rounded-xl border border-raw-gold/35 bg-raw-gold/10 px-3 py-2 text-sm font-semibold text-raw-gold transition hover:bg-raw-gold/20"
-                >
-                  +100 XP
-                </button>
-              ) : null}
-
               <DropdownMenuItem
                 onClick={onBillingClick}
                 className={cn("cursor-pointer rounded-lg px-2 py-1.5 text-xs focus:text-raw-text sm:px-3 sm:py-2.5 sm:text-sm", isEffectiveLight ? "text-slate-700 focus:bg-slate-100" : "text-raw-silver/80 focus:bg-raw-surface/80")}
@@ -781,15 +768,6 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
               </DropdownMenuItem>
 
               <DropdownMenuSeparator className={cn("my-1 sm:my-2", isEffectiveLight ? "bg-slate-200" : "bg-raw-border/30")} />
-
-              {showAdminLink ? (
-                <DropdownMenuItem asChild className={cn("rounded-lg px-3 py-2.5 text-sm focus:text-raw-text", isEffectiveLight ? "text-slate-700 focus:bg-slate-100" : "text-raw-silver/80 focus:bg-raw-surface/80")}>
-                  <a href="/admin">
-                    <Shield className="mr-3 h-4 w-4" />
-                    Admin
-                  </a>
-                </DropdownMenuItem>
-              ) : null}
 
               <DropdownMenuItem
                 onSelect={(event) => {

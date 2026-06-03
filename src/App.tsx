@@ -9,7 +9,6 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const Index = lazy(() => import("./pages/Index"));
 const NotFound = lazy(() => import("./pages/NotFound"));
-const Admin = lazy(() => import("./pages/Admin"));
 const FAQ = lazy(() => import("./pages/FAQ"));
 const AskAI = lazy(() => import("./pages/AskAI"));
 const Security = lazy(() => import("./pages/Security"));
@@ -39,7 +38,6 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/dashboard" element={<Index />} />
                 <Route path="/dashboard/communities/:communityId" element={<Index />} />
-                <Route path="/admin" element={<Admin />} />
                 <Route path="/faq" element={<FAQ />} />
                 <Route path="/polls-explained" element={<PollsExplained />} />
                 <Route path="/communities-explained" element={<CommunitiesExplained />} />

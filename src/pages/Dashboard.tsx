@@ -4,7 +4,7 @@ import type React from "react";
 import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
 import { fetchCommunities } from "@/backend/supabase/controllers/communityController";
 import { getUserFavoriteCommunities, getUserPinnedMessage, type PinnedMessageRecord } from "@/backend/supabase/controllers/userExtrasController";
-import { Archive, Home as HomeIcon, MessageCircle, Target, User as UserIcon, LogOut, Shield, Trophy, Sparkles, Moon, CloudMoon, Sun } from "lucide-react";
+import { Archive, Home as HomeIcon, MessageCircle, Target, User as UserIcon, LogOut, Trophy, Sparkles, Moon, CloudMoon, Sun } from "lucide-react";
 import LNTLogo from "@/assets/LNT.webp";
 import SYTLogo from "@/assets/logospeak.webp";
 import IIJMLogo from "@/assets/itisjustme.webp";
@@ -544,8 +544,6 @@ export default function Dashboard({
         userId={user.id}
         username={user.username}
         avatarLevel={avatarLevel}
-        showAdminLink={user.role === "admin"}
-        onAddTestXP={() => void award(100)}
         onProfileClick={handleProfileClick}
         onBillingClick={handleBillingClick}
         onLogout={onLogout}
@@ -562,7 +560,6 @@ export default function Dashboard({
         userId={user.id}
         username={user.username}
         avatarLevel={avatarLevel}
-        showAdminLink={user.role === "admin"}
         onHomeClick={handleHomeClick}
         isHome={isHome}
         onLogout={onLogout}
@@ -645,13 +642,6 @@ export default function Dashboard({
             onClick: () => handleTabChange("inventory"),
             active: !isHome && activeTab === "inventory",
           },
-          ...(user.role === "admin" ? [{
-            title: "Admin",
-            icon: <Shield className="h-5 w-5" />,
-            href: "/admin",
-            onClick: () => navigate("/admin"),
-            active: false,
-          }] : []),
         ]}
       />
 
