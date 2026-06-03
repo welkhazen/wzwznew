@@ -5,9 +5,8 @@ import { ThemeCustomizer } from "@/components/theme/ThemeCustomizer";
 import { ThemeModeSwitcher } from "@/components/theme/ThemeModeSwitcher";
 import { track } from "@/lib/analytics";
 import { useTheme } from "@/providers/useTheme";
-import rawLogoSrc from "@/assets/icon.png";
 
-const RAW_LOGO_SRC = rawLogoSrc;
+const RAW_LOGO_SRC = "/raw-logo-96.png";
 
 interface NavbarProps {
   isLoggedIn: boolean;
