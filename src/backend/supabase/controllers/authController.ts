@@ -37,10 +37,9 @@ async function refreshAuthUser(user: AuthUser): Promise<AuthUser> {
   return normalizeAuthUser(data as AuthUser);
 }
 
-export async function completeUserOnboarding(userId: string): Promise<{ ok: boolean; error?: string }> {
-  const { data, error } = await supabase.rpc('complete_user_onboarding', {
-    p_user_id: userId,
-  });
+export async function completeUserOnboarding(_userId?: string): Promise<{ ok: boolean; error?: string }> {
+  void _userId;
+  const { data, error } = await supabase.rpc('complete_user_onboarding');
   if (error) return { ok: false, error: error.message };
   return (data as { ok: boolean; error?: string }) ?? { ok: true };
 }
@@ -108,12 +107,12 @@ export async function getSession(): Promise<AuthUser | null> {
 }
 
 export async function changePassword(
-  userId: string,
+  _userId: string,
   oldPassword: string,
   newPassword: string,
 ): Promise<{ ok: boolean; error?: string }> {
+  void _userId;
   const { data, error } = await supabase.rpc('change_password', {
-    p_user_id: userId,
     p_old_password: oldPassword,
     p_new_password: newPassword,
   });
@@ -122,11 +121,11 @@ export async function changePassword(
 }
 
 export async function deleteAccount(
-  userId: string,
+  _userId: string,
   password: string,
 ): Promise<{ ok: boolean; error?: string }> {
+  void _userId;
   const { data, error } = await supabase.rpc('delete_account', {
-    p_user_id: userId,
     p_password: password,
   });
   if (error) return { ok: false, error: error.message };

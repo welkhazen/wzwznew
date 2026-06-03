@@ -84,10 +84,10 @@ export async function deleteMessage(messageId: string, _requesterId: string): Pr
   if (error) throw error;
 }
 
-export async function likeMessage(messageId: string, userId: string): Promise<void> {
+export async function likeMessage(messageId: string, _userId: string): Promise<void> {
+  void _userId;
   const { error } = await supabase.rpc('toggle_message_like', {
     p_message_id: messageId,
-    p_user_id: userId,
   });
   if (error) throw error;
 }

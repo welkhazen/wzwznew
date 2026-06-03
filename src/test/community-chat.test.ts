@@ -111,7 +111,6 @@ describe("community chat Supabase persistence", () => {
     await likeMessage("message-1", "user-bob");
     expect(rpcMock).toHaveBeenCalledWith("toggle_message_like", {
       p_message_id: "message-1",
-      p_user_id: "user-bob",
     });
   });
 
