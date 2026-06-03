@@ -23,7 +23,6 @@
     "strictNullChecks": true,
     "noFallthroughCasesInSwitch": false,
 
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
     }
