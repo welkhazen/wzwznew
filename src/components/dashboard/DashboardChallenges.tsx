@@ -8,7 +8,6 @@ import {
   Trophy,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { DashboardDailySpin } from "@/components/dashboard/DashboardDailySpin";
 import { toast } from "@/components/ui/use-toast";
 import { getTodayKey } from "@/store/useRawStore.storage";
 import { loadLocalLoginDays, loadUserXPClaimKeys } from "@/lib/userProgress";
@@ -241,8 +240,6 @@ export function DashboardChallenges({
 
   return (
     <div className="space-y-5">
-      <DashboardDailySpin userId={userId} isAdmin={isAdmin} onAwardXP={onAwardXP} onAvatarWon={onAvatarWon} />
-
       <header className="space-y-2">
         <h1 className="font-display text-xl tracking-wide text-raw-text sm:text-2xl">Challenges</h1>
         <p className="text-xs text-raw-silver/45 sm:text-sm">

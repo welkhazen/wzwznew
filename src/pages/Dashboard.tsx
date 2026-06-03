@@ -369,6 +369,9 @@ export default function Dashboard({
             onNavigate={handleTabChange}
             onOpenCommunity={handleOpenCommunity}
             communities={dashboardCommunities}
+            isAdmin={user.role === "admin"}
+            onAwardXP={handleDailySpinAward}
+            onAvatarWon={markAvatarOwned}
           />
         </DashboardSectionShell>
       );
@@ -526,6 +529,9 @@ export default function Dashboard({
               onNavigate={handleTabChange}
               onOpenCommunity={handleOpenCommunity}
               communities={dashboardCommunities}
+              isAdmin={user.role === "admin"}
+              onAwardXP={handleDailySpinAward}
+              onAvatarWon={markAvatarOwned}
             />
           </DashboardSectionShell>
         );
