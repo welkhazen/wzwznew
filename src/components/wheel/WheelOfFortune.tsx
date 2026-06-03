@@ -31,8 +31,8 @@ interface WheelOfFortuneProps {
   forcedPrizeId?: string | null;
   radius?: number;
   previewOnly?: boolean;
-  /** Slot rendered just above the Spin button (e.g. countdown after spinning). */
-  aboveButton?: React.ReactNode;
+  /** Replaces the disabled button label after spinning (e.g. countdown text). */
+  disabledLabel?: React.ReactNode;
 }
 
 const SPIN_DURATION = 5000;
@@ -82,7 +82,7 @@ function getLabelLines(label: string): string[] {
   return [parts.slice(0, midpoint).join(" "), parts.slice(midpoint).join(" ")];
 }
 
-export function WheelOfFortune({ prizes, onSpinEnd, onSpinStart, disabled = false, prizeWeights, forcedPrizeId = null, radius: radiusProp = 200, previewOnly = false, aboveButton }: WheelOfFortuneProps) {
+export function WheelOfFortune({ prizes, onSpinEnd, onSpinStart, disabled = false, prizeWeights, forcedPrizeId = null, radius: radiusProp = 200, previewOnly = false, disabledLabel }: WheelOfFortuneProps) {
   const { mode } = useTheme();
   const pointerId = useId().replace(/:/g, "");
   const baseId = useId().replace(/:/g, "");
@@ -280,10 +280,6 @@ export function WheelOfFortune({ prizes, onSpinEnd, onSpinStart, disabled = fals
         </svg>
       </div>
 
-      {!previewOnly && aboveButton ? (
-        <div className="mt-6 sm:mt-8 w-full max-w-sm text-center">{aboveButton}</div>
-      ) : null}
-
       {!previewOnly && (
         <button
           onClick={handleSpin}
@@ -294,7 +290,11 @@ export function WheelOfFortune({ prizes, onSpinEnd, onSpinStart, disabled = fals
               : "bg-raw-gold text-raw-black hover:scale-105 hover:shadow-[0_0_30px_rgb(var(--raw-accent)/0.3)] active:scale-95"
           }`}
         >
-          {isSpinning ? "Spinning..." : disabled ? "Spin Complete" : "Spin"}
+          {isSpinning
+            ? "Spinning..."
+            : disabled
+              ? (disabledLabel ?? "Spin Complete")
+              : "Spin"}
         </button>
       )}
     </div>

@@ -309,14 +309,7 @@ export function DashboardDailySpin({ userId, isAdmin = false, onAwardXP, onAvata
             prizeWeights={PRIZE_WEIGHTS}
             forcedPrizeId={forcedPrizeId}
             radius={160}
-            aboveButton={
-              isCooldownActive && !isAdmin ? (
-                <>
-                  <p className="text-[10px] uppercase tracking-[0.16em] text-raw-silver/35">Next spin in</p>
-                  <p className="mt-1 font-display text-2xl tracking-widest text-raw-gold/90">{countdown}</p>
-                </>
-              ) : null
-            }
+            disabledLabel={isCooldownActive && !isAdmin ? countdown : undefined}
           />
         </div>
       </div>
