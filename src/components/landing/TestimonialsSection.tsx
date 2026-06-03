@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { TestimonialCard, type TestimonialCardPosition, type TestimonialCardItem } from "@/components/ui/testimonial-cards";
 import test1 from "@/assets/test1.png";
 import test2 from "@/assets/test2.png";
 import test3 from "@/assets/test3.png";
@@ -16,129 +18,74 @@ import test15 from "@/assets/test15.png";
 import test16 from "@/assets/test16.png";
 import test17 from "@/assets/test17.png";
 
-type TestimonialImage = {
-  src: string;
-  alt: string;
-};
-
-const testimonialImages: TestimonialImage[] = [
-  { src: test8, alt: "Community testimonial screenshot" },
-  { src: test1, alt: "Community testimonial screenshot" },
-  { src: test2, alt: "Community testimonial screenshot" },
-  { src: test3, alt: "Community testimonial screenshot" },
-  { src: test4, alt: "Community testimonial screenshot" },
-  { src: test5, alt: "Community testimonial screenshot" },
-  { src: test6, alt: "Community testimonial screenshot" },
-  { src: test7, alt: "Community testimonial screenshot" },
-  { src: test9, alt: "Community testimonial screenshot" },
-  { src: test10, alt: "Community testimonial screenshot" },
-  { src: test11, alt: "Community testimonial screenshot" },
-  { src: test12, alt: "Community testimonial screenshot" },
-  { src: test13, alt: "Community testimonial screenshot" },
-  { src: test14, alt: "Community testimonial screenshot" },
-  { src: test15, alt: "Community testimonial screenshot" },
-  { src: test16, alt: "Community testimonial screenshot" },
-  { src: test17, alt: "Community testimonial screenshot" },
+const testimonials: TestimonialCardItem[] = [
+  { id: 8, src: test8, alt: "raW community testimonial screenshot" },
+  { id: 1, src: test1, alt: "raW community testimonial screenshot" },
+  { id: 2, src: test2, alt: "raW community testimonial screenshot" },
+  { id: 3, src: test3, alt: "raW community testimonial screenshot" },
+  { id: 4, src: test4, alt: "raW community testimonial screenshot" },
+  { id: 5, src: test5, alt: "raW community testimonial screenshot" },
+  { id: 6, src: test6, alt: "raW community testimonial screenshot" },
+  { id: 7, src: test7, alt: "raW community testimonial screenshot" },
+  { id: 9, src: test9, alt: "raW community testimonial screenshot" },
+  { id: 10, src: test10, alt: "raW community testimonial screenshot" },
+  { id: 11, src: test11, alt: "raW community testimonial screenshot" },
+  { id: 12, src: test12, alt: "raW community testimonial screenshot" },
+  { id: 13, src: test13, alt: "raW community testimonial screenshot" },
+  { id: 14, src: test14, alt: "raW community testimonial screenshot" },
+  { id: 15, src: test15, alt: "raW community testimonial screenshot" },
+  { id: 16, src: test16, alt: "raW community testimonial screenshot" },
+  { id: 17, src: test17, alt: "raW community testimonial screenshot" },
 ];
 
-function splitColumns(items: TestimonialImage[]): [TestimonialImage[], TestimonialImage[]] {
-  return items.reduce<[TestimonialImage[], TestimonialImage[]]>(
-    (columns, item, index) => {
-      columns[index % 2].push(item);
-      return columns;
-    },
-    [[], []],
-  );
-}
-
-function TestimonialColumn({
-  items,
-  reverse = false,
-}: {
-  items: TestimonialImage[];
-  reverse?: boolean;
-}) {
-  if (items.length === 0) return null;
-
-  return (
-    <div className="testimonial-image-column overflow-hidden">
-      <div className={`flex flex-col gap-3 sm:gap-4 ${reverse ? "testimonial-scroll-reverse" : "testimonial-scroll"}`}>
-        {[...items, ...items, ...items].map((item, index) => (
-          <div
-            key={`${item.src}-${index}`}
-            className="testimonial-image-card overflow-hidden rounded-[18px] border border-white/10 bg-black shadow-[0_22px_70px_rgba(0,0,0,0.42)]"
-          >
-            <img
-              src={item.src}
-              alt={item.alt}
-              className="block h-auto w-full"
-              loading="lazy"
-              decoding="async"
-            />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
+const positions: TestimonialCardPosition[] = ["front", "middle", "back"];
 
 export function TestimonialsSection() {
-  const [leftColumn, rightColumn] = splitColumns(testimonialImages);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const visibleTestimonials = [
+    testimonials[activeIndex],
+    testimonials[(activeIndex + 1) % testimonials.length],
+    testimonials[(activeIndex + 2) % testimonials.length],
+  ];
+
+  const handleShuffle = () => {
+    setActiveIndex((current) => (current + 1) % testimonials.length);
+  };
 
   return (
     <section className="landing-section relative z-0 px-4 py-14 sm:px-6 sm:py-20">
-      <style>{`
-        @keyframes testimonial-scroll {
-          from { transform: translateY(0); }
-          to { transform: translateY(-33.333%); }
-        }
+      <div className="relative mx-auto w-full max-w-5xl overflow-hidden rounded-[30px] border border-raw-border/35 bg-[radial-gradient(circle_at_50%_0%,rgba(241,196,45,0.1),transparent_34%),rgba(15,15,13,0.78)] px-4 py-9 shadow-[0_32px_130px_rgba(0,0,0,0.34)] sm:px-10 sm:py-12">
+        <div className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:radial-gradient(circle,rgba(255,255,255,0.75)_1px,transparent_1px)] [background-size:12px_12px]" />
+        <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/50 to-transparent" />
 
-        .testimonial-image-column {
-          height: 430px;
-          min-width: 0;
-          mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);
-        }
-
-        .testimonial-image-card {
-          transform: translateZ(0);
-          transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
-        }
-
-        .testimonial-image-card:hover {
-          transform: scale(1.025);
-          border-color: rgba(241, 196, 45, 0.34);
-          box-shadow: 0 28px 90px rgba(0,0,0,0.56), 0 0 34px rgba(241,196,45,0.08);
-        }
-
-        .testimonial-scroll {
-          animation: testimonial-scroll 42s linear infinite;
-        }
-
-        .testimonial-scroll-reverse {
-          animation: testimonial-scroll 48s linear infinite reverse;
-        }
-
-        .testimonial-image-column:hover .testimonial-scroll,
-        .testimonial-image-column:hover .testimonial-scroll-reverse {
-          animation-play-state: paused;
-        }
-      `}</style>
-
-      <div className="relative mx-auto w-full max-w-5xl overflow-hidden rounded-[28px] border border-raw-border/35 bg-[radial-gradient(circle_at_50%_0%,rgba(241,196,45,0.08),transparent_34%),rgba(16,16,14,0.72)] px-3 py-8 shadow-[0_30px_120px_rgba(0,0,0,0.28)] sm:px-8 sm:py-10">
-        <div className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:radial-gradient(circle,rgba(255,255,255,0.7)_1px,transparent_1px)] [background-size:12px_12px]" />
-        <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/45 to-transparent" />
-
-        <p className="relative mb-8 text-center font-display text-[10px] uppercase tracking-[0.3em] text-raw-silver/45">
+        <p className="relative text-center font-display text-[10px] uppercase tracking-[0.3em] text-raw-silver/45">
           From the community
         </p>
 
-        <div className="relative mx-auto grid h-[430px] max-w-[650px] grid-cols-2 gap-3 overflow-hidden rounded-[22px] border border-raw-border/45 bg-raw-black/65 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] sm:gap-4 sm:p-4">
-          <TestimonialColumn items={leftColumn} />
-          <TestimonialColumn items={rightColumn} reverse />
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-raw-black/80 to-transparent" />
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-raw-black/80 to-transparent" />
-          <div className="pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-raw-black/50 to-transparent" />
-          <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-raw-black/50 to-transparent" />
+        <div className="relative mx-auto mt-9 h-[470px] w-full max-w-[640px] overflow-hidden rounded-[24px] border border-raw-border/45 bg-raw-black/65 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] sm:h-[540px]">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(241,196,45,0.08),transparent_36%)]" />
+          <div className="absolute left-1/2 top-8 h-[430px] w-[310px] -translate-x-[62%] sm:top-5 sm:h-[500px] sm:w-[380px] sm:-translate-x-[68%]">
+            {visibleTestimonials.map((testimonial, index) => (
+              <TestimonialCard
+                key={`${testimonial.id}-${activeIndex}`}
+                {...testimonial}
+                position={positions[index]}
+                handleShuffle={handleShuffle}
+              />
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={handleShuffle}
+            className="absolute bottom-4 left-1/2 z-10 -translate-x-1/2 rounded-full border border-raw-gold/35 bg-raw-gold/10 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-raw-gold transition hover:bg-raw-gold/20"
+          >
+            Next
+          </button>
+
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-raw-black/80 to-transparent" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-raw-black/85 to-transparent" />
         </div>
       </div>
     </section>
