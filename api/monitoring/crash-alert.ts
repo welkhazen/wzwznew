@@ -1,3 +1,5 @@
+import { isTrustedOrigin } from "../_lib/requestSecurity";
+
 export const config = { runtime: "edge" };
 
 type CrashAlertPayload = {
@@ -36,6 +38,10 @@ function formatBlock(label: string, value: string): string {
 export default async function handler(request: Request): Promise<Response> {
   if (request.method !== "POST") {
     return json({ error: "method_not_allowed" }, 405);
+  }
+
+  if (!isTrustedOrigin(request)) {
+    return json({ error: "untrusted_origin" }, 403);
   }
 
   if (!resendApiKey || !crashAlertTo || !crashAlertFrom) {

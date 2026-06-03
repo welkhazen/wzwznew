@@ -1,4 +1,5 @@
 import { supabaseServerClient } from "../../_lib/supabaseServerClient";
+import { isTrustedOrigin } from "../../_lib/requestSecurity";
 
 export const config = { runtime: "edge" };
 
@@ -27,6 +28,10 @@ export default async function handler(request: Request): Promise<Response> {
 
   if (!supabase) {
     return json({ error: "supabase_not_configured" }, 503);
+  }
+
+  if (!isTrustedOrigin(request)) {
+    return json({ error: "untrusted_origin" }, 403);
   }
 
   const userId = getUserId(request);

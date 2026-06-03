@@ -1,4 +1,5 @@
 import { supabaseServerClient } from "../../_lib/supabaseServerClient";
+import { isTrustedOrigin } from "../../_lib/requestSecurity";
 
 export const config = { runtime: "edge" };
 
@@ -35,6 +36,10 @@ export default async function handler(request: Request): Promise<Response> {
     return json({ error: "missing_user_id" }, 400);
   }
 
+  if (!isTrustedOrigin(request)) {
+    return json({ error: "forbidden_origin" }, 403);
+  }
+
   if (request.method === "GET") {
     const { data, error } = await supabase
       .from("users")
@@ -64,27 +69,7 @@ export default async function handler(request: Request): Promise<Response> {
   }
 
   if (body.action === "add") {
-    const { data: current, error: readError } = await supabase
-      .from("users")
-      .select("token_balance")
-      .eq("id", userId)
-      .single();
-
-    if (readError || !current) {
-      return json({ error: "failed_to_fetch_token_balance" }, 404);
-    }
-
-    const balance = (current as { token_balance: number }).token_balance + amount;
-    const { error: updateError } = await supabase
-      .from("users")
-      .update({ token_balance: balance })
-      .eq("id", userId);
-
-    if (updateError) {
-      return json({ error: "failed_to_add_tokens" }, 500);
-    }
-
-    return json({ balance });
+    return json({ error: "token_minting_requires_trusted_server" }, 403);
   }
 
   const { data, error } = await supabase.rpc("spend_tokens", {
