@@ -54,7 +54,7 @@ export function DashboardSidebar({
   );
 
   const displayedCommunities = useMemo(() => {
-    if (favoriteCommunityIds.length === 0) return joinedCommunities.slice(0, 3);
+    if (favoriteCommunityIds.length === 0) return [];
     const byId = new Map(joinedCommunities.map((c) => [c.id, c] as const));
     const picked = favoriteCommunityIds
       .map((id) => byId.get(id))
