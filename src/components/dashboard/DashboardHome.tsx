@@ -298,47 +298,13 @@ export function DashboardHome({
         <UpcomingCommunitiesPreview isLight={isLight} />
       </section>
 
-      {/* ── Daily Poll Progress ── */}
-      <section className="space-y-4">
-        <div className="flex items-center gap-2">
-          <BarChart3 className="size-4 text-raw-gold" />
-          <h2 className={`text-xl font-bold ${isLight ? "text-slate-950" : "text-white"}`}>Daily Poll Progress</h2>
-        </div>
-        <div className={`rounded-2xl p-5 flex flex-wrap items-center gap-4 ${isLight ? "border border-slate-200 bg-white shadow-[0_12px_28px_rgba(15,23,42,0.08)]" : "border border-white/10 bg-[#1a1a1a]"}`}>
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="w-10 h-10 rounded-xl bg-raw-gold/5 flex items-center justify-center border border-raw-gold/20">
-              <BarChart3 className="size-5 text-raw-gold" />
-            </div>
-            <div>
-              <p className={`text-sm font-bold ${isLight ? "text-slate-950" : "text-white"}`}>Voice Your Opinion</p>
-              <p className={`text-[11px] ${isLight ? "text-slate-500" : "text-white/40"}`}>50 XP per poll · anonymous</p>
-            </div>
-          </div>
-          <div className="flex-1 min-w-[140px] space-y-1.5">
-            <div className={`flex justify-between text-[11px] ${isLight ? "text-slate-500" : "text-white/40"}`}>
-              <span>Progress</span>
-              <span className="text-raw-gold font-bold">{dailyAnsweredCount} / {dailyPollLimit}</span>
-            </div>
-            <div className={`h-1.5 w-full rounded-full overflow-hidden ${isLight ? "bg-slate-200" : "bg-white/5"}`}>
-              <div className="h-full bg-raw-gold rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(241,196,45,0.4)]" style={{ width: `${pollProgress}%` }} />
-            </div>
-          </div>
-          <button
-            onClick={() => onNavigate("polls")}
-            className="shrink-0 px-5 py-2.5 rounded-xl border border-raw-gold/30 text-raw-gold font-bold text-xs uppercase tracking-[0.18em] hover:bg-raw-gold/5 transition-all"
-          >
-            Answer Now
-          </button>
-        </div>
-      </section>
-
       {/* ── Challenges ── */}
       <section className="space-y-5">
         <div className="flex items-center gap-2">
           <Zap className="size-4 text-raw-gold" />
           <h2 className={`text-xl font-bold ${isLight ? "text-slate-950" : "text-white"}`}>Challenges</h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 md:items-stretch gap-6">
           {/* Daily Spin */}
           <div className={`p-6 rounded-[1.5rem] space-y-5 ${isLight ? "border border-slate-200 bg-white shadow-[0_12px_28px_rgba(15,23,42,0.08)]" : "border border-white/10 bg-[#1a1a1a]"}`}>
             <div className="flex items-start justify-between">
@@ -360,24 +326,55 @@ export function DashboardHome({
             ) : null}
           </div>
 
-          {/* Level Up */}
-          <div className={`p-6 rounded-[1.5rem] space-y-6 ${isLight ? "border border-slate-200 bg-white shadow-[0_12px_28px_rgba(15,23,42,0.08)]" : "border border-white/10 bg-[#1a1a1a]"}`}>
-            <div className="flex items-start justify-between">
-              <div className="space-y-0.5">
-                <h3 className={`text-xl font-bold tracking-tight ${isLight ? "text-slate-950" : "text-white"}`}>Level Up</h3>
-                <p className={`text-xs ${isLight ? "text-slate-500" : "text-white/40"}`}>Complete interactions to earn XP</p>
+          {/* Right column: Level Up + Daily Poll Progress stacked */}
+          <div className="flex flex-col gap-6">
+            {/* Level Up */}
+            <div className={`p-6 rounded-[1.5rem] flex flex-1 flex-col space-y-6 ${isLight ? "border border-slate-200 bg-white shadow-[0_12px_28px_rgba(15,23,42,0.08)]" : "border border-white/10 bg-[#1a1a1a]"}`}>
+              <div className="flex items-start justify-between">
+                <div className="space-y-0.5">
+                  <h3 className={`text-xl font-bold tracking-tight ${isLight ? "text-slate-950" : "text-white"}`}>Level Up</h3>
+                  <p className={`text-xs ${isLight ? "text-slate-500" : "text-white/40"}`}>Complete interactions to earn XP</p>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-raw-gold/5 flex items-center justify-center border border-raw-gold/10">
+                  <Zap className="size-5 text-raw-gold" />
+                </div>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-raw-gold/5 flex items-center justify-center border border-raw-gold/10">
-                <Zap className="size-5 text-raw-gold" />
-              </div>
+              <LevelProgressBanner xp={xp} level={xpLevel} />
+              <button
+                onClick={() => onNavigate("challenges")}
+                className="w-full py-4 rounded-xl border border-raw-gold/30 text-raw-gold font-bold text-xs uppercase tracking-[0.2em] hover:bg-raw-gold/5 transition-all"
+              >
+                View Missions
+              </button>
             </div>
-            <LevelProgressBanner xp={xp} level={xpLevel} />
-            <button
-              onClick={() => onNavigate("challenges")}
-              className="w-full py-4 rounded-xl border border-raw-gold/30 text-raw-gold font-bold text-xs uppercase tracking-[0.2em] hover:bg-raw-gold/5 transition-all"
-            >
-              View Missions
-            </button>
+
+            {/* Daily Poll Progress */}
+            <div className={`p-6 rounded-[1.5rem] flex flex-1 flex-col space-y-5 ${isLight ? "border border-slate-200 bg-white shadow-[0_12px_28px_rgba(15,23,42,0.08)]" : "border border-white/10 bg-[#1a1a1a]"}`}>
+              <div className="flex items-start justify-between">
+                <div className="space-y-0.5">
+                  <h3 className={`text-xl font-bold tracking-tight ${isLight ? "text-slate-950" : "text-white"}`}>Daily Poll Progress</h3>
+                  <p className={`text-xs ${isLight ? "text-slate-500" : "text-white/40"}`}>50 XP per poll · anonymous</p>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-raw-gold/5 flex items-center justify-center border border-raw-gold/10">
+                  <BarChart3 className="size-5 text-raw-gold" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className={`flex justify-between text-[11px] ${isLight ? "text-slate-500" : "text-white/40"}`}>
+                  <span>Progress</span>
+                  <span className="text-raw-gold font-bold">{dailyAnsweredCount} / {dailyPollLimit}</span>
+                </div>
+                <div className={`h-1.5 w-full rounded-full overflow-hidden ${isLight ? "bg-slate-200" : "bg-white/5"}`}>
+                  <div className="h-full bg-raw-gold rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(241,196,45,0.4)]" style={{ width: `${pollProgress}%` }} />
+                </div>
+              </div>
+              <button
+                onClick={() => onNavigate("polls")}
+                className="mt-auto w-full py-4 rounded-xl border border-raw-gold/30 text-raw-gold font-bold text-xs uppercase tracking-[0.2em] hover:bg-raw-gold/5 transition-all"
+              >
+                Answer Now
+              </button>
+            </div>
           </div>
         </div>
       </section>
