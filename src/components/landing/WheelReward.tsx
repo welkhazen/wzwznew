@@ -85,7 +85,7 @@ export function WheelRewardInline({ onSignupClick }: WheelRewardProps) {
     }
     return readStoredSpin(getPool());
   });
-  const [rewardsImageMissing, setRewardsImageMissing] = useState(false);
+  const [rewardsImageMissing, setRewardsImageMissing] = useState(true);
   const hasSpun = Boolean(landedEntry);
 
   useEffect(() => {
@@ -164,7 +164,7 @@ export function WheelReward({ onSignupClick }: WheelRewardProps) {
     }
     return readStoredSpin(getPool());
   });
-  const [rewardsImageMissing, setRewardsImageMissing] = useState(false);
+  const [rewardsImageMissing, setRewardsImageMissing] = useState(true);
   const hasSpun = Boolean(landedEntry);
 
   useEffect(() => {
