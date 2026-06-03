@@ -49,8 +49,12 @@ export function TestimonialsSection() {
     testimonials[(activeIndex + 2) % testimonials.length],
   ];
 
-  const handleShuffle = () => {
-    setActiveIndex((current) => (current + 1) % testimonials.length);
+  const handleShuffle = (direction: "next" | "previous") => {
+    setActiveIndex((current) => (
+      direction === "next"
+        ? (current + 1) % testimonials.length
+        : (current - 1 + testimonials.length) % testimonials.length
+    ));
   };
 
   return (
@@ -75,14 +79,6 @@ export function TestimonialsSection() {
               />
             ))}
           </div>
-
-          <button
-            type="button"
-            onClick={handleShuffle}
-            className="absolute bottom-4 left-1/2 z-10 -translate-x-1/2 rounded-full border border-raw-gold/35 bg-raw-gold/10 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-raw-gold transition hover:bg-raw-gold/20"
-          >
-            Next
-          </button>
 
           <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-raw-black/80 to-transparent" />
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-raw-black/85 to-transparent" />

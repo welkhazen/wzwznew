@@ -10,7 +10,7 @@ export type TestimonialCardItem = {
 };
 
 interface TestimonialCardProps extends TestimonialCardItem {
-  handleShuffle: () => void;
+  handleShuffle: (direction: "next" | "previous") => void;
   position: TestimonialCardPosition;
 }
 
@@ -42,8 +42,11 @@ export function TestimonialCard({
         dragRef.current = event.clientX;
       }}
       onDragEnd={(event) => {
-        if (dragRef.current - event.clientX > 120) {
-          handleShuffle();
+        const dragDistance = dragRef.current - event.clientX;
+        if (dragDistance > 120) {
+          handleShuffle("next");
+        } else if (dragDistance < -120) {
+          handleShuffle("previous");
         }
         dragRef.current = 0;
       }}
