@@ -73,6 +73,7 @@ import { getPublicUserProfile, type PublicUserProfile } from "@/backend/supabase
 import {
   MAX_FAVORITE_COMMUNITIES,
   getUserFavoriteCommunities,
+  getUserPinnedMessage,
   setUserFavoriteCommunities,
   setUserPinnedMessage,
   clearUserPinnedMessage,
@@ -838,9 +839,30 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       };
     }, [user.id]);
 
+    useEffect(() => {
+      let cancelled = false;
+      void (async () => {
+        try {
+          const message = await getUserPinnedMessage(user.id);
+          if (!cancelled) setOwnPinnedMessage(message);
+        } catch {
+          // Best-effort.
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }, [user.id]);
+
     const broadcastFavoritesUpdated = useCallback((ids: string[]) => {
       window.dispatchEvent(new CustomEvent("raw:favorite-communities-updated", {
         detail: { userId: user.id, ids },
+      }));
+    }, [user.id]);
+
+    const broadcastPinnedMessageUpdated = useCallback((message: PinnedMessageRecord | null) => {
+      window.dispatchEvent(new CustomEvent("raw:pinned-message-updated", {
+        detail: { userId: user.id, message },
       }));
     }, [user.id]);
 
@@ -879,22 +901,25 @@ const COMMUNITY_LOGOS: Record<string, string> = {
           messageCreatedAt: message.createdAt,
         };
         await setUserPinnedMessage(user.id, payload);
-        setOwnPinnedMessage({ ...payload, pinnedAt: new Date().toISOString() });
+        const nextPinnedMessage = { ...payload, pinnedAt: new Date().toISOString() };
+        setOwnPinnedMessage(nextPinnedMessage);
+        broadcastPinnedMessageUpdated(nextPinnedMessage);
         toast({ title: "Pinned to your profile", description: "Others will see this message on your chat profile." });
       } catch {
         toast({ title: "Could not pin message", description: "Please try again." });
       }
-    }, [user.id]);
+    }, [broadcastPinnedMessageUpdated, user.id]);
 
     const handleClearPinnedMessage = useCallback(async () => {
       try {
         await clearUserPinnedMessage(user.id);
         setOwnPinnedMessage(null);
+        broadcastPinnedMessageUpdated(null);
         toast({ title: "Pinned message removed" });
       } catch {
         toast({ title: "Could not remove pinned message", description: "Please try again." });
       }
-    }, [user.id]);
+    }, [broadcastPinnedMessageUpdated, user.id]);
 
     const handleOpenSenderProfile = useCallback((message: CommunityChatMessageRecord) => {
       setProfileDialogOpen(true);
@@ -2006,12 +2031,6 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                       <p className="text-[10px] uppercase tracking-[0.16em] text-raw-gold/70">Pinned message</p>
                       <p className="mt-1.5 text-sm leading-relaxed text-raw-text/85">
                         {profileTarget.profile.pinnedMessage.messageText}
-                      </p>
-                      <p className="mt-2 text-[10px] text-raw-silver/45">
-                        {profileTarget.profile.pinnedMessage.communityTitle ?? "Community"}
-                        {profileTarget.profile.pinnedMessage.messageCreatedAt
-                          ? ` · ${formatChatTimestamp(profileTarget.profile.pinnedMessage.messageCreatedAt)}`
-                          : ""}
                       </p>
                     </div>
                   )}

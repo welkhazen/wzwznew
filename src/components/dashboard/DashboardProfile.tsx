@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Calendar,
   Eye,
@@ -13,6 +13,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { changePassword, deleteAccount } from "@/backend/supabase/controllers/authController";
 import { updateProfileVisibility } from "@/backend/supabase/controllers/userController";
+import type { PinnedMessageRecord } from "@/backend/supabase/controllers/userExtrasController";
 
 import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { LevelProgressBanner } from "@/components/dashboard/LevelProgressBanner";
@@ -29,7 +30,7 @@ interface DashboardProfileProps {
   pollsAnswered: number;
   xp?: number;
   xpLevel?: number;
-  profilePublic?: boolean;
+  pinnedMessage?: PinnedMessageRecord | null;
   onLogout: () => void;
 }
 
@@ -50,7 +51,7 @@ export function DashboardProfile({
   pollsAnswered,
   xp = 0,
   xpLevel = 1,
-  profilePublic = true,
+  pinnedMessage = null,
   onLogout,
 }: DashboardProfileProps) {
   const { toast } = useToast();
@@ -70,24 +71,17 @@ export function DashboardProfile({
   const [showNewPw, setShowNewPw] = useState(false);
   const [showConfirmPw, setShowConfirmPw] = useState(false);
   const [showDelPw, setShowDelPw] = useState(false);
-  const [isProfilePublic, setIsProfilePublic] = useState(profilePublic);
   const [profileVisibilitySaving, setProfileVisibilitySaving] = useState(false);
 
-  useEffect(() => {
-    setIsProfilePublic(profilePublic);
-  }, [profilePublic]);
-
-  async function handleProfileVisibilityChange(nextPublic: boolean) {
-    setIsProfilePublic(nextPublic);
+  async function handleProfileVisibilityChange() {
     setProfileVisibilitySaving(true);
     try {
-      await updateProfileVisibility(userId, nextPublic);
+      await updateProfileVisibility(userId, true);
       toast({
-        title: nextPublic ? "Profile is visible" : "Profile is private",
-        description: nextPublic ? "People can see your basic chat profile." : "People will only see your avatar.",
+        title: "Profile is visible",
+        description: "People can see your chat profile.",
       });
     } catch {
-      setIsProfilePublic(!nextPublic);
       toast({ title: "Could not update profile privacy", description: "Please try again." });
     } finally {
       setProfileVisibilitySaving(false);
@@ -219,26 +213,27 @@ export function DashboardProfile({
           <div className="flex items-center justify-between gap-3 px-4 py-3.5">
             <div>
               <p className="text-sm font-medium text-raw-text">Public chat profile</p>
-              <p className="mt-1 text-xs text-raw-silver/40">Show your username, avatar, role, and join date when someone taps your message.</p>
+              <p className="mt-1 text-xs text-raw-silver/40">Your username, avatar, role, join date, and pinned message appear when someone taps your message.</p>
             </div>
             <button
               type="button"
-              onClick={() => { void handleProfileVisibilityChange(!isProfilePublic); }}
+              onClick={() => { void handleProfileVisibilityChange(); }}
               disabled={profileVisibilitySaving}
-              className={`relative h-7 w-12 shrink-0 rounded-full border transition-colors disabled:opacity-60 ${
-                isProfilePublic ? "border-raw-gold/60 bg-raw-gold/30" : "border-raw-border/40 bg-raw-black/50"
-              }`}
-              aria-pressed={isProfilePublic}
-              aria-label="Toggle public chat profile"
+              className="relative h-7 w-12 shrink-0 rounded-full border border-raw-gold/60 bg-raw-gold/30 transition-colors disabled:opacity-60"
+              aria-pressed
+              aria-label="Public chat profile is always on"
             >
-              <span
-                className={`absolute top-1 h-5 w-5 rounded-full bg-raw-text transition-transform ${
-                  isProfilePublic ? "translate-x-5" : "translate-x-1"
-                }`}
-              />
+              <span className="absolute top-1 h-5 w-5 translate-x-5 rounded-full bg-raw-text transition-transform" />
             </button>
           </div>
         </div>
+
+        {pinnedMessage && (
+          <div className="rounded-2xl border border-raw-gold/25 bg-raw-gold/[0.06] px-4 py-3.5">
+            <p className="text-[10px] uppercase tracking-[0.16em] text-raw-gold/70">Pinned message</p>
+            <p className="mt-1.5 text-sm leading-relaxed text-raw-text/85">{pinnedMessage.messageText}</p>
+          </div>
+        )}
 
         <div className="rounded-2xl border border-raw-border/30 bg-raw-surface/30 overflow-hidden">
           <button

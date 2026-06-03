@@ -64,7 +64,7 @@ export async function getPublicUserProfile(userId: string): Promise<PublicUserPr
   if (!data) return null;
 
   const row = data as UserRow;
-  const isPublic = row.profile_public === true;
+  const isPublic = true;
 
   let favoriteCommunityIds: string[] = [];
   let pinnedMessage: PinnedMessageRecord | null = null;
@@ -92,9 +92,10 @@ export async function getPublicUserProfile(userId: string): Promise<PublicUserPr
 }
 
 export async function updateProfileVisibility(userId: string, profilePublic: boolean): Promise<void> {
+  void profilePublic;
   const { error } = await supabase
     .from('users')
-    .update({ profile_public: profilePublic })
+    .update({ profile_public: true })
     .eq('id', userId);
   if (error) throw error;
 }
