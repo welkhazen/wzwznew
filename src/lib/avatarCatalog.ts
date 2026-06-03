@@ -18,10 +18,12 @@ export type AvatarCatalogItem = {
   dropWeight?: number;
 };
 
-const CATALOG_STORAGE_KEY = "raw.avatar.catalog.v1";
-const FULL_CATALOG_STORAGE_KEY = "raw.avatar.catalog.full.v1";
+const CATALOG_STORAGE_KEY = "raw.avatar.catalog.v2";
+const FULL_CATALOG_STORAGE_KEY = "raw.avatar.catalog.full.v2";
 const INVENTORY_STORAGE_PREFIX = "raw.avatar.inventory.v1.";
 const SELECTED_STORAGE_PREFIX = "raw.avatar.selected.v1.";
+const DAILY_SPIN_AVATAR_CLAIM_PREFIX = "raw.daily-spin.avatar-claim.v1.";
+export const LANDING_WHEEL_SPIN_KEY = "raw.landing-wheel.spin.v1";
 let avatarBackendMissingTables = false;
 let avatarCatalogLocalWriteFailed = false;
 
@@ -49,15 +51,50 @@ function markBackendMissingIfNeeded(error: unknown): void {
 }
 
 export const DEFAULT_AVATAR_CATALOG: readonly AvatarCatalogItem[] = [
-  { id: "avatar-2", level: 2, name: "Chrome Ghost", price: "Free", imageSrc: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCA1MTIgNTEyJz4NCjxkZWZzPjxyYWRpYWxHcmFkaWVudCBpZD0nZycgY3g9JzUwJScgY3k9JzM1JSc+PHN0b3Agb2Zmc2V0PScwJScgc3RvcC1jb2xvcj0nI2I4NGRmZicgc3RvcC1vcGFjaXR5PScuMzUnLz48c3RvcCBvZmZzZXQ9JzEwMCUnIHN0b3AtY29sb3I9JyMwMjAyMDInLz48L3JhZGlhbEdyYWRpZW50PjwvZGVmcz4NCjxjaXJjbGUgY3g9JzI1NicgY3k9JzI1Nicgcj0nMjI4JyBmaWxsPSd1cmwoI2cpJyBzdHJva2U9JyNiODRkZmYnIHN0cm9rZS13aWR0aD0nMTgnLz4NCjxjaXJjbGUgY3g9JzI1NicgY3k9JzIxMCcgcj0nODYnIGZpbGw9JyNiODRkZmYnLz4NCjxlbGxpcHNlIGN4PScyNTYnIGN5PSczNjAnIHJ4PScxMzAnIHJ5PSc1OCcgZmlsbD0nI2I4NGRmZicvPg0KPHJlY3QgeD0nMTY1JyB5PScxOTMnIHdpZHRoPSc3OCcgaGVpZ2h0PSc0OCcgcng9JzIyJyBmaWxsPSdub25lJyBzdHJva2U9JyMwNjA2MDYnIHN0cm9rZS13aWR0aD0nMTInLz4NCjxyZWN0IHg9JzI2OScgeT0nMTkzJyB3aWR0aD0nNzgnIGhlaWdodD0nNDgnIHJ4PScyMicgZmlsbD0nbm9uZScgc3Ryb2tlPScjMDYwNjA2JyBzdHJva2Utd2lkdGg9JzEyJy8+DQo8cmVjdCB4PScyNDMnIHk9JzIxNCcgd2lkdGg9JzI2JyBoZWlnaHQ9JzgnIGZpbGw9JyMwNjA2MDYnLz4NCjwvc3ZnPg==", bg: "#0c1a24", figure: "#5ed6ff", ring: "#2ea6d6", glow: "#5ed6ff80", isActive: true },
-  { id: "avatar-3", level: 3, name: "Iron Specter", price: "0", imageSrc: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCA1MTIgNTEyJz4NCjxkZWZzPjxyYWRpYWxHcmFkaWVudCBpZD0nZycgY3g9JzUwJScgY3k9JzM1JSc+PHN0b3Agb2Zmc2V0PScwJScgc3RvcC1jb2xvcj0nI2ZmOGExZicgc3RvcC1vcGFjaXR5PScuMzUnLz48c3RvcCBvZmZzZXQ9JzEwMCUnIHN0b3AtY29sb3I9JyMwMjAyMDInLz48L3JhZGlhbEdyYWRpZW50PjwvZGVmcz4NCjxjaXJjbGUgY3g9JzI1NicgY3k9JzI1Nicgcj0nMjI4JyBmaWxsPSd1cmwoI2cpJyBzdHJva2U9JyNmZjhhMWYnIHN0cm9rZS13aWR0aD0nMTgnLz4NCjxjaXJjbGUgY3g9JzI1NicgY3k9JzIxMCcgcj0nODYnIGZpbGw9JyNmZjhhMWYnLz4NCjxlbGxpcHNlIGN4PScyNTYnIGN5PSczNjAnIHJ4PScxMzAnIHJ5PSc1OCcgZmlsbD0nI2ZmOGExZicvPg0KPHJlY3QgeD0nMTY1JyB5PScxOTMnIHdpZHRoPSc3OCcgaGVpZ2h0PSc0OCcgcng9JzIyJyBmaWxsPSdub25lJyBzdHJva2U9JyMwNjA2MDYnIHN0cm9rZS13aWR0aD0nMTInLz4NCjxyZWN0IHg9JzI2OScgeT0nMTkzJyB3aWR0aD0nNzgnIGhlaWdodD0nNDgnIHJ4PScyMicgZmlsbD0nbm9uZScgc3Ryb2tlPScjMDYwNjA2JyBzdHJva2Utd2lkdGg9JzEyJy8+DQo8cmVjdCB4PScyNDMnIHk9JzIxNCcgd2lkdGg9JzI2JyBoZWlnaHQ9JzgnIGZpbGw9JyMwNjA2MDYnLz4NCjwvc3ZnPg==", bg: "#0a1124", figure: "#3f8bff", ring: "#2557c4", glow: "#3f8bff80", isActive: true },
-  { id: "avatar-5", level: 5, name: "Solar Enforcer", price: "0", imageSrc: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCA1MTIgNTEyJz4NCjxkZWZzPjxyYWRpYWxHcmFkaWVudCBpZD0nZycgY3g9JzUwJScgY3k9JzM1JSc+PHN0b3Agb2Zmc2V0PScwJScgc3RvcC1jb2xvcj0nI2ZmMmQzZCcgc3RvcC1vcGFjaXR5PScuMzUnLz48c3RvcCBvZmZzZXQ9JzEwMCUnIHN0b3AtY29sb3I9JyMwMjAyMDInLz48L3JhZGlhbEdyYWRpZW50PjwvZGVmcz4NCjxjaXJjbGUgY3g9JzI1NicgY3k9JzI1Nicgcj0nMjI4JyBmaWxsPSd1cmwoI2cpJyBzdHJva2U9JyNmZjJkM2QnIHN0cm9rZS13aWR0aD0nMTgnLz4NCjxjaXJjbGUgY3g9JzI1NicgY3k9JzIxMCcgcj0nODYnIGZpbGw9JyNmZjJkM2QnLz4NCjxlbGxpcHNlIGN4PScyNTYnIGN5PSczNjAnIHJ4PScxMzAnIHJ5PSc1OCcgZmlsbD0nI2ZmMmQzZCcvPg0KPHJlY3QgeD0nMTY1JyB5PScxOTMnIHdpZHRoPSc3OCcgaGVpZ2h0PSc0OCcgcng9JzIyJyBmaWxsPSdub25lJyBzdHJva2U9JyMwNjA2MDYnIHN0cm9rZS13aWR0aD0nMTInLz4NCjxyZWN0IHg9JzI2OScgeT0nMTkzJyB3aWR0aD0nNzgnIGhlaWdodD0nNDgnIHJ4PScyMicgZmlsbD0nbm9uZScgc3Ryb2tlPScjMDYwNjA2JyBzdHJva2Utd2lkdGg9JzEyJy8+DQo8cmVjdCB4PScyNDMnIHk9JzIxNCcgd2lkdGg9JzI2JyBoZWlnaHQ9JzgnIGZpbGw9JyMwNjA2MDYnLz4NCjwvc3ZnPg==", bg: "#0b1a0e", figure: "#16a34a", ring: "#0f7a36", glow: "#16a34a80", isActive: true },
-  { id: "avatar-6", level: 6, name: "Neon Oracle", price: "0", imageSrc: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCA1MTIgNTEyJz4NCjxkZWZzPjxyYWRpYWxHcmFkaWVudCBpZD0nZycgY3g9JzUwJScgY3k9JzM1JSc+PHN0b3Agb2Zmc2V0PScwJScgc3RvcC1jb2xvcj0nI2YyZDIxYScgc3RvcC1vcGFjaXR5PScuMzUnLz48c3RvcCBvZmZzZXQ9JzEwMCUnIHN0b3AtY29sb3I9JyMwMjAyMDInLz48L3JhZGlhbEdyYWRpZW50PjwvZGVmcz4NCjxjaXJjbGUgY3g9JzI1NicgY3k9JzI1Nicgcj0nMjI4JyBmaWxsPSd1cmwoI2cpJyBzdHJva2U9JyNmMmQyMWEnIHN0cm9rZS13aWR0aD0nMTgnLz4NCjxjaXJjbGUgY3g9JzI1NicgY3k9JzIxMCcgcj0nODYnIGZpbGw9JyNmMmQyMWEnLz4NCjxlbGxpcHNlIGN4PScyNTYnIGN5PSczNjAnIHJ4PScxMzAnIHJ5PSc1OCcgZmlsbD0nI2YyZDIxYScvPg0KPHJlY3QgeD0nMTY1JyB5PScxOTMnIHdpZHRoPSc3OCcgaGVpZ2h0PSc0OCcgcng9JzIyJyBmaWxsPSdub25lJyBzdHJva2U9JyMwNjA2MDYnIHN0cm9rZS13aWR0aD0nMTInLz4NCjxyZWN0IHg9JzI2OScgeT0nMTkzJyB3aWR0aD0nNzgnIGhlaWdodD0nNDgnIHJ4PScyMicgZmlsbD0nbm9uZScgc3Ryb2tlPScjMDYwNjA2JyBzdHJva2Utd2lkdGg9JzEyJy8+DQo8cmVjdCB4PScyNDMnIHk9JzIxNCcgd2lkdGg9JzI2JyBoZWlnaHQ9JzgnIGZpbGw9JyMwNjA2MDYnLz4NCjwvc3ZnPg==", bg: "#1f0d18", figure: "#ec4899", ring: "#a6235f", glow: "#ec489980", isActive: true },
-  { id: "avatar-7", level: 7, name: "Void Phantom", price: "0", imageSrc: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCA1MTIgNTEyJz4NCjxkZWZzPjxyYWRpYWxHcmFkaWVudCBpZD0nZycgY3g9JzUwJScgY3k9JzM1JSc+PHN0b3Agb2Zmc2V0PScwJScgc3RvcC1jb2xvcj0nI2NmZDNkYScgc3RvcC1vcGFjaXR5PScuMzUnLz48c3RvcCBvZmZzZXQ9JzEwMCUnIHN0b3AtY29sb3I9JyMwMjAyMDInLz48L3JhZGlhbEdyYWRpZW50PjwvZGVmcz4NCjxjaXJjbGUgY3g9JzI1NicgY3k9JzI1Nicgcj0nMjI4JyBmaWxsPSd1cmwoI2cpJyBzdHJva2U9JyNjZmQzZGEnIHN0cm9rZS13aWR0aD0nMTgnLz4NCjxjaXJjbGUgY3g9JzI1NicgY3k9JzIxMCcgcj0nODYnIGZpbGw9JyNjZmQzZGEnLz4NCjxlbGxpcHNlIGN4PScyNTYnIGN5PSczNjAnIHJ4PScxMzAnIHJ5PSc1OCcgZmlsbD0nI2NmZDNkYScvPg0KPHJlY3QgeD0nMTY1JyB5PScxOTMnIHdpZHRoPSc3OCcgaGVpZ2h0PSc0OCcgcng9JzIyJyBmaWxsPSdub25lJyBzdHJva2U9JyMwNjA2MDYnIHN0cm9rZS13aWR0aD0nMTInLz4NCjxyZWN0IHg9JzI2OScgeT0nMTkzJyB3aWR0aD0nNzgnIGhlaWdodD0nNDgnIHJ4PScyMicgZmlsbD0nbm9uZScgc3Ryb2tlPScjMDYwNjA2JyBzdHJva2Utd2lkdGg9JzEyJy8+DQo8cmVjdCB4PScyNDMnIHk9JzIxNCcgd2lkdGg9JzI2JyBoZWlnaHQ9JzgnIGZpbGw9JyMwNjA2MDYnLz4NCjwvc3ZnPg==", bg: "#150a22", figure: "#8b5cf6", ring: "#5b2aa8", glow: "#8b5cf680", isActive: true },
-  { id: "avatar-8", level: 8, name: "Copper Wraith", price: "0", imageSrc: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCA1MTIgNTEyJz4NCjxkZWZzPjxyYWRpYWxHcmFkaWVudCBpZD0nZycgY3g9JzUwJScgY3k9JzM1JSc+PHN0b3Agb2Zmc2V0PScwJScgc3RvcC1jb2xvcj0nIzMxZDdmNycgc3RvcC1vcGFjaXR5PScuMzUnLz48c3RvcCBvZmZzZXQ9JzEwMCUnIHN0b3AtY29sb3I9JyMwMjAyMDInLz48L3JhZGlhbEdyYWRpZW50PjwvZGVmcz4NCjxjaXJjbGUgY3g9JzI1NicgY3k9JzI1Nicgcj0nMjI4JyBmaWxsPSd1cmwoI2cpJyBzdHJva2U9JyMzMWQ3ZjcnIHN0cm9rZS13aWR0aD0nMTgnLz4NCjxjaXJjbGUgY3g9JzI1NicgY3k9JzIxMCcgcj0nODYnIGZpbGw9JyMzMWQ3ZjcnLz4NCjxlbGxpcHNlIGN4PScyNTYnIGN5PSczNjAnIHJ4PScxMzAnIHJ5PSc1OCcgZmlsbD0nIzMxZDdmNycvPg0KPHJlY3QgeD0nMTY1JyB5PScxOTMnIHdpZHRoPSc3OCcgaGVpZ2h0PSc0OCcgcng9JzIyJyBmaWxsPSdub25lJyBzdHJva2U9JyMwNjA2MDYnIHN0cm9rZS13aWR0aD0nMTInLz4NCjxyZWN0IHg9JzI2OScgeT0nMTkzJyB3aWR0aD0nNzgnIGhlaWdodD0nNDgnIHJ4PScyMicgZmlsbD0nbm9uZScgc3Ryb2tlPScjMDYwNjA2JyBzdHJva2Utd2lkdGg9JzEyJy8+DQo8cmVjdCB4PScyNDMnIHk9JzIxNCcgd2lkdGg9JzI2JyBoZWlnaHQ9JzgnIGZpbGw9JyMwNjA2MDYnLz4NCjwvc3ZnPg==", bg: "#1f1208", figure: "#f97316", ring: "#b0550f", glow: "#f9731680", isActive: true },
-  { id: "avatar-9", level: 9, name: "Inferno Shade", price: "0", imageSrc: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCA1MTIgNTEyJz4NCjxkZWZzPjxyYWRpYWxHcmFkaWVudCBpZD0nZycgY3g9JzUwJScgY3k9JzM1JSc+PHN0b3Agb2Zmc2V0PScwJScgc3RvcC1jb2xvcj0nI2ZmM2FhOCcgc3RvcC1vcGFjaXR5PScuMzUnLz48c3RvcCBvZmZzZXQ9JzEwMCUnIHN0b3AtY29sb3I9JyMwMjAyMDInLz48L3JhZGlhbEdyYWRpZW50PjwvZGVmcz4NCjxjaXJjbGUgY3g9JzI1NicgY3k9JzI1Nicgcj0nMjI4JyBmaWxsPSd1cmwoI2cpJyBzdHJva2U9JyNmZjNhYTgnIHN0cm9rZS13aWR0aD0nMTgnLz4NCjxjaXJjbGUgY3g9JzI1NicgY3k9JzIxMCcgcj0nODYnIGZpbGw9JyNmZjNhYTgnLz4NCjxlbGxpcHNlIGN4PScyNTYnIGN5PSczNjAnIHJ4PScxMzAnIHJ5PSc1OCcgZmlsbD0nI2ZmM2FhOCcvPg0KPHJlY3QgeD0nMTY1JyB5PScxOTMnIHdpZHRoPSc3OCcgaGVpZ2h0PSc0OCcgcng9JzIyJyBmaWxsPSdub25lJyBzdHJva2U9JyMwNjA2MDYnIHN0cm9rZS13aWR0aD0nMTInLz4NCjxyZWN0IHg9JzI2OScgeT0nMTkzJyB3aWR0aD0nNzgnIGhlaWdodD0nNDgnIHJ4PScyMicgZmlsbD0nbm9uZScgc3Ryb2tlPScjMDYwNjA2JyBzdHJva2Utd2lkdGg9JzEyJy8+DQo8cmVjdCB4PScyNDMnIHk9JzIxNCcgd2lkdGg9JzI2JyBoZWlnaHQ9JzgnIGZpbGw9JyMwNjA2MDYnLz4NCjwvc3ZnPg==", bg: "#1f0a0a", figure: "#dc2626", ring: "#8a1515", glow: "#dc262680", isActive: true },
-  { id: "avatar-10", level: 10, name: "Golden Reaper", price: "0", imageSrc: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCA1MTIgNTEyJz4NCjxkZWZzPjxyYWRpYWxHcmFkaWVudCBpZD0nZycgY3g9JzUwJScgY3k9JzM1JSc+PHN0b3Agb2Zmc2V0PScwJScgc3RvcC1jb2xvcj0nIzdjZmY0Zicgc3RvcC1vcGFjaXR5PScuMzUnLz48c3RvcCBvZmZzZXQ9JzEwMCUnIHN0b3AtY29sb3I9JyMwMjAyMDInLz48L3JhZGlhbEdyYWRpZW50PjwvZGVmcz4NCjxjaXJjbGUgY3g9JzI1NicgY3k9JzI1Nicgcj0nMjI4JyBmaWxsPSd1cmwoI2cpJyBzdHJva2U9JyM3Y2ZmNGYnIHN0cm9rZS13aWR0aD0nMTgnLz4NCjxjaXJjbGUgY3g9JzI1NicgY3k9JzIxMCcgcj0nODYnIGZpbGw9JyM3Y2ZmNGYnLz4NCjxlbGxpcHNlIGN4PScyNTYnIGN5PSczNjAnIHJ4PScxMzAnIHJ5PSc1OCcgZmlsbD0nIzdjZmY0ZicvPg0KPHJlY3QgeD0nMTY1JyB5PScxOTMnIHdpZHRoPSc3OCcgaGVpZ2h0PSc0OCcgcng9JzIyJyBmaWxsPSdub25lJyBzdHJva2U9JyMwNjA2MDYnIHN0cm9rZS13aWR0aD0nMTInLz4NCjxyZWN0IHg9JzI2OScgeT0nMTkzJyB3aWR0aD0nNzgnIGhlaWdodD0nNDgnIHJ4PScyMicgZmlsbD0nbm9uZScgc3Ryb2tlPScjMDYwNjA2JyBzdHJva2Utd2lkdGg9JzEyJy8+DQo8cmVjdCB4PScyNDMnIHk9JzIxNCcgd2lkdGg9JzI2JyBoZWlnaHQ9JzgnIGZpbGw9JyMwNjA2MDYnLz4NCjwvc3ZnPg==", bg: "#1f1705", figure: "#facc15", ring: "#b8900b", glow: "#facc1590", isActive: true },
+  { id: "ember", level: 1, name: "Ember", price: "Free", imageSrc: "/avatars/avatar-2.svg", bg: "#0c1a24", figure: "#5ed6ff", ring: "#5ed6ff", glow: "#5ed6ff80", isActive: true, showIn: "both", rarity: "common" },
+  { id: "verdant", level: 2, name: "Verdant", price: "Free", imageSrc: "/avatars/avatar-3.svg", bg: "#0a1124", figure: "#3f8bff", ring: "#3f8bff", glow: "#3f8bff80", isActive: true, showIn: "both", rarity: "common" },
+  { id: "horned", level: 3, name: "Horned", price: "Free", imageSrc: "/avatars/avatar-5.svg", bg: "#0b1a0e", figure: "#16a34a", ring: "#16a34a", glow: "#16a34a80", isActive: true, showIn: "both", rarity: "common" },
+  { id: "pharaoh", level: 4, name: "Pharaoh", price: "Free", imageSrc: "/avatars/avatar-6.svg", bg: "#1f0d18", figure: "#ec4899", ring: "#ec4899", glow: "#ec489980", isActive: true, showIn: "both", rarity: "common" },
+  { id: "violet", level: 5, name: "Violet", price: "Free", imageSrc: "/avatars/avatar-7.svg", bg: "#150a22", figure: "#8b5cf6", ring: "#8b5cf6", glow: "#8b5cf680", isActive: true, showIn: "both", rarity: "common" },
+  { id: "rose", level: 6, name: "Rose", price: "Free", imageSrc: "/avatars/avatar-8.svg", bg: "#1f1208", figure: "#f97316", ring: "#f97316", glow: "#f9731680", isActive: true, showIn: "both", rarity: "common" },
+  { id: "black", level: 7, name: "Black", price: "Free", imageSrc: "/avatars/avatar-9.svg", bg: "#0a0a0a", figure: "#cbd5e1", ring: "#cbd5e1", glow: "#cbd5e180", isActive: true, showIn: "both", rarity: "common" },
+  { id: "blue", level: 8, name: "Blue", price: "Free", imageSrc: "/avatars/avatar-10.svg", bg: "#0a1424", figure: "#3b82f6", ring: "#3b82f6", glow: "#3b82f680", isActive: true, showIn: "both", rarity: "common" },
+  { id: "silver-void", level: 9, name: "Silver Void", price: "50", imageSrc: "/avatars/1.webp", bg: "#111827", figure: "#cbd5e1", ring: "#cbd5e1", glow: "#cbd5e180", isActive: true, showIn: "both", rarity: "common" },
+  { id: "neon-lynx", level: 10, name: "Neon Lynx", price: "50", imageSrc: "/avatars/2.webp", bg: "#170f2e", figure: "#a855f7", ring: "#c084fc", glow: "#a855f780", isActive: true, showIn: "both", rarity: "common" },
+  { id: "blue-signal", level: 11, name: "Blue Signal", price: "50", imageSrc: "/avatars/3.webp", bg: "#06131f", figure: "#22d3ee", ring: "#22d3ee", glow: "#22d3ee80", isActive: true, showIn: "both", rarity: "common" },
+  { id: "violet-mask", level: 12, name: "Violet Mask", price: "50", imageSrc: "/avatars/04.webp", bg: "#1a1028", figure: "#d946ef", ring: "#d946ef", glow: "#d946ef80", isActive: true, showIn: "both", rarity: "common" },
+  { id: "horned-iron", level: 13, name: "Viozen", price: "50", imageSrc: "/avatars/5.png", bg: "#1f0a05", figure: "#fb923c", ring: "#fb923c", glow: "#fb923c80", isActive: true, showIn: "both", rarity: "common" },
+  { id: "crimson-muse", level: 14, name: "Crimson Muse", price: "50", imageSrc: "/avatars/6.webp", bg: "#2a0b0b", figure: "#f97316", ring: "#f97316", glow: "#f9731680", isActive: true, showIn: "both", rarity: "common" },
+  { id: "solar-flame", level: 15, name: "Solar Flame", price: "50", imageSrc: "/avatars/07.webp", bg: "#241005", figure: "#facc15", ring: "#facc15", glow: "#facc1590", isActive: true, showIn: "both", rarity: "common" },
+  { id: "pink-circuit", level: 16, name: "Pink Circuit", price: "50", imageSrc: "/avatars/08.webp", bg: "#2a0b1c", figure: "#fb7185", ring: "#fb7185", glow: "#fb718580", isActive: true, showIn: "both", rarity: "common" },
 ];
+
+const WHEEL_AVATAR_IDS = new Set([
+  "silver-void",
+  "neon-lynx",
+  "blue-signal",
+  "violet-mask",
+  "horned-iron",
+  "crimson-muse",
+  "solar-flame",
+  "pink-circuit",
+]);
+
+const LANDING_WHEEL_PRIZE_TO_AVATAR_ID: Record<string, string> = {
+  "wheel-avatar-1": "silver-void",
+  "wheel-avatar-2": "neon-lynx",
+  "wheel-avatar-3": "blue-signal",
+  "wheel-avatar-4": "violet-mask",
+  "wheel-avatar-5": "horned-iron",
+  "wheel-avatar-6": "crimson-muse",
+  "wheel-avatar-7": "solar-flame",
+  "wheel-avatar-8": "pink-circuit",
+};
+
+export type DailySpinAvatarGrantResult =
+  | { status: "granted"; avatarId: string; level: number }
+  | { status: "already_claimed"; avatarId: string; level: number }
+  | { status: "unknown_avatar" };
 
 function cloneCatalog(items: readonly AvatarCatalogItem[]): AvatarCatalogItem[] {
   return items.map((item) => ({ ...item }));
@@ -369,8 +406,49 @@ function selectedKey(userId: string): string {
   return `${SELECTED_STORAGE_PREFIX}${userId}`;
 }
 
+function dailySpinAvatarClaimKey(userId: string): string {
+  return `${DAILY_SPIN_AVATAR_CLAIM_PREFIX}${userId}`;
+}
+
+function readDailySpinAvatarClaimLocal(userId: string): string | null {
+  if (!isBrowser()) return null;
+  return window.localStorage.getItem(dailySpinAvatarClaimKey(userId));
+}
+
+function writeDailySpinAvatarClaimLocal(userId: string, avatarId: string): void {
+  if (!isBrowser()) return;
+  window.localStorage.setItem(dailySpinAvatarClaimKey(userId), avatarId);
+}
+
+function readLandingWheelAvatarIdLocal(catalog: AvatarCatalogItem[]): string | null {
+  if (!isBrowser()) return null;
+
+  try {
+    const raw = window.localStorage.getItem(LANDING_WHEEL_SPIN_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { prizeId?: unknown; avatarId?: unknown };
+    const candidate = typeof parsed.avatarId === "string"
+      ? parsed.avatarId
+      : typeof parsed.prizeId === "string"
+        ? LANDING_WHEEL_PRIZE_TO_AVATAR_ID[parsed.prizeId]
+        : null;
+    if (!candidate) return null;
+    return catalog.some((item) => item.id === candidate) ? candidate : null;
+  } catch {
+    return null;
+  }
+}
+
+function clearLandingWheelAvatarLocal(): void {
+  if (!isBrowser()) return;
+  window.localStorage.removeItem(LANDING_WHEEL_SPIN_KEY);
+}
+
 function defaultOwnedIds(catalog: AvatarCatalogItem[]): string[] {
-  return catalog.length > 0 ? [catalog[0].id] : [];
+  const freeIds = catalog
+    .filter((item) => item.price === "Free" || item.price === "0" || Number(item.price) === 0)
+    .map((item) => item.id);
+  return freeIds.length > 0 ? freeIds : catalog.length > 0 ? [catalog[0].id] : [];
 }
 
 export function readOwnedAvatarIdsLocal(userId: string, catalog: AvatarCatalogItem[]): string[] {
@@ -436,12 +514,21 @@ export async function loadUserAvatarState(
 
     const allowed = new Set(catalog.map((item) => item.id));
     const serverOwned = (inventoryRows ?? []).map((row) => row.avatar_id).filter((id) => allowed.has(id));
-    const ownedAvatarIds = serverOwned.length > 0 ? Array.from(new Set(serverOwned)) : localOwned;
+    const serverOwnedSet = new Set(serverOwned);
+    const ownedAvatarIds = Array.from(new Set([
+      ...defaultOwnedIds(catalog),
+      ...localOwned.filter((id) => !WHEEL_AVATAR_IDS.has(id) || serverOwnedSet.has(id)),
+      ...serverOwned,
+    ]));
     const selectedCandidate = selectedRow?.avatar_id ?? localSelected;
     const selectedAvatarId = ownedAvatarIds.includes(selectedCandidate) ? selectedCandidate : ownedAvatarIds[0] ?? localSelected;
 
     writeOwnedAvatarIdsLocal(userId, ownedAvatarIds);
     writeSelectedAvatarIdLocal(userId, selectedAvatarId);
+    if (!selectedRow?.avatar_id) {
+      const selectedLevel = catalog.findIndex((item) => item.id === selectedAvatarId) + 1;
+      void persistSelectedAvatarForUser(userId, selectedAvatarId, selectedLevel > 0 ? selectedLevel : 1);
+    }
 
     return { ownedAvatarIds, selectedAvatarId };
   } catch {
@@ -474,6 +561,58 @@ export async function purchaseAvatarForUser(userId: string, avatarId: string): P
   }
 }
 
+export async function grantDailySpinAvatarOnceForUser(userId: string, avatarId: string): Promise<DailySpinAvatarGrantResult> {
+  const catalog = readAvatarCatalogLocal();
+  const avatar = catalog.find((item) => item.id === avatarId);
+  if (!avatar) {
+    return { status: "unknown_avatar" };
+  }
+
+  const existingLocalClaim = readDailySpinAvatarClaimLocal(userId);
+  if (existingLocalClaim) {
+    const existingAvatar = catalog.find((item) => item.id === existingLocalClaim) ?? avatar;
+    return { status: "already_claimed", avatarId: existingAvatar.id, level: existingAvatar.level };
+  }
+
+  try {
+    const { data, error } = await supabase.rpc("award_xp_once", {
+      p_user_id: userId,
+      p_source: "daily-spin-avatar",
+      p_claim_key: "free-avatar",
+      p_amount: 0,
+    });
+
+    const result = data as { awarded?: unknown } | null;
+    if (!error && result?.awarded === false) {
+      writeDailySpinAvatarClaimLocal(userId, avatar.id);
+      return { status: "already_claimed", avatarId: avatar.id, level: avatar.level };
+    }
+
+    if (error) {
+      const localClaim = readDailySpinAvatarClaimLocal(userId);
+      if (localClaim) {
+        const existingAvatar = catalog.find((item) => item.id === localClaim) ?? avatar;
+        return { status: "already_claimed", avatarId: existingAvatar.id, level: existingAvatar.level };
+      }
+    }
+  } catch {
+    // Fall back to local-only claim state below.
+  }
+
+  await purchaseAvatarForUser(userId, avatar.id);
+  writeDailySpinAvatarClaimLocal(userId, avatar.id);
+  return { status: "granted", avatarId: avatar.id, level: avatar.level };
+}
+
+export async function claimPendingLandingWheelAvatarForUser(userId: string): Promise<DailySpinAvatarGrantResult | null> {
+  const catalog = readAvatarCatalogLocal();
+  const avatarId = readLandingWheelAvatarIdLocal(catalog);
+  if (!avatarId) return null;
+  const result = await grantDailySpinAvatarOnceForUser(userId, avatarId);
+  clearLandingWheelAvatarLocal();
+  return result;
+}
+
 export async function equipAvatarForUser(userId: string, avatarId: string): Promise<void> {
   writeSelectedAvatarIdLocal(userId, avatarId);
 
@@ -481,10 +620,19 @@ export async function equipAvatarForUser(userId: string, avatarId: string): Prom
     return;
   }
 
+  const catalog = readAvatarCatalogLocal();
+  const selectedLevel = catalog.findIndex((item) => item.id === avatarId) + 1;
+  await persistSelectedAvatarForUser(userId, avatarId, selectedLevel > 0 ? selectedLevel : 1);
+}
+
+async function persistSelectedAvatarForUser(userId: string, avatarId: string, avatarLevel: number): Promise<void> {
   try {
-    const { error } = await supabase.from("user_avatar_selection").upsert({ user_id: userId, avatar_id: avatarId }, { onConflict: "user_id" });
-    if (error) {
-      markBackendMissingIfNeeded(error);
+    const [{ error: selectionError }, { error: userError }] = await Promise.all([
+      supabase.from("user_avatar_selection").upsert({ user_id: userId, avatar_id: avatarId }, { onConflict: "user_id" }),
+      supabase.from("users").update({ avatar_level: avatarLevel }).eq("id", userId),
+    ]);
+    if (selectionError || userError) {
+      markBackendMissingIfNeeded(selectionError ?? userError);
     }
   } catch {
     // Local save already completed.

@@ -1,45 +1,51 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { OnboardingStep } from "@/store/types";
+import type { OnboardingStep, User } from "@/store/types";
 import { readOnboardingMap, writeOnboardingMap } from "@/store/useRawStore.storage";
+import { LANDING_WHEEL_SPIN_KEY } from "@/lib/avatarCatalog";
+import { completeUserOnboarding } from "@/backend/supabase/controllers/authController";
 
-export function useOnboarding(isLoggedIn: boolean, username?: string) {
+function defaultInitialStep(): OnboardingStep {
+  if (typeof window === "undefined") return "spin";
+  return window.localStorage.getItem(LANDING_WHEEL_SPIN_KEY) ? "avatar" : "spin";
+}
+
+export function useOnboarding(isLoggedIn: boolean, user?: User | null) {
+  const username = user?.username;
   const storageKey = username ? `raw.onboarding.completed.${username}` : null;
 
-  const [onboardingStep, setOnboardingStep] = useState<OnboardingStep>("avatar");
+  const [onboardingStep, setOnboardingStep] = useState<OnboardingStep>(defaultInitialStep);
   const [onboardingAnsweredPollIds, setOnboardingAnsweredPollIds] = useState<Set<string>>(new Set());
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
   const [onboardingLoaded, setOnboardingLoaded] = useState(false);
 
   useEffect(() => {
-    if (!username) {
+    if (!username || !storageKey) {
+      setOnboardingLoaded(true);
       return;
     }
 
     const entry = readOnboardingMap()[username];
-    if (!entry) {
-      return;
-    }
-
-    setOnboardingStep(entry.step);
-    setOnboardingAnsweredPollIds(new Set(entry.answeredPollIds));
-    setOnboardingCompleted(entry.completed);
-  }, [username]);
-
-  useEffect(() => {
-    if (!storageKey) {
+    if (entry) {
+      const restoredStep = entry.step === "spin" && window.localStorage.getItem(LANDING_WHEEL_SPIN_KEY)
+        ? "avatar"
+        : entry.step;
+      setOnboardingStep(restoredStep);
+      setOnboardingAnsweredPollIds(new Set(entry.answeredPollIds));
+      setOnboardingCompleted(user?.onboardingCompleted ?? entry.completed);
       setOnboardingLoaded(true);
       return;
     }
-    setOnboardingCompleted(localStorage.getItem(storageKey) === "1");
+
+    setOnboardingCompleted(user?.onboardingCompleted ?? window.localStorage.getItem(storageKey) === "1");
     setOnboardingLoaded(true);
-  }, [storageKey]);
+  }, [storageKey, user?.onboardingCompleted, username]);
 
   const markOnboardingPollAnswered = useCallback((pollId: string) => {
     setOnboardingAnsweredPollIds((previous) => new Set(previous).add(pollId));
   }, []);
 
   useEffect(() => {
-    if (!username) {
+    if (!username || !onboardingLoaded) {
       return;
     }
 
@@ -51,10 +57,10 @@ export function useOnboarding(isLoggedIn: boolean, username?: string) {
       answeredPollIds: Array.from(onboardingAnsweredPollIds),
     };
     writeOnboardingMap(map);
-  }, [onboardingAnsweredPollIds, onboardingCompleted, onboardingStep, username]);
+  }, [onboardingAnsweredPollIds, onboardingCompleted, onboardingLoaded, onboardingStep, username]);
 
   const resetOnboardingProgress = useCallback(() => {
-    setOnboardingStep("avatar");
+    setOnboardingStep(defaultInitialStep());
     setOnboardingAnsweredPollIds(new Set());
     setOnboardingCompleted(false);
     if (storageKey) localStorage.removeItem(storageKey);
@@ -64,7 +70,8 @@ export function useOnboarding(isLoggedIn: boolean, username?: string) {
     setOnboardingCompleted(true);
     setOnboardingStep("communities");
     if (storageKey) localStorage.setItem(storageKey, "1");
-  }, [storageKey]);
+    if (user?.id) void completeUserOnboarding(user.id);
+  }, [storageKey, user?.id]);
 
   const isOnboardingResolved = !isLoggedIn || onboardingLoaded;
 

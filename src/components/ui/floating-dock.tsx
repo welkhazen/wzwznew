@@ -2,6 +2,7 @@
 import { cn } from "@/lib/utils";
 import { IconLayoutNavbarCollapse } from "@tabler/icons-react";
 import { useTheme } from "@/providers/useTheme";
+import type React from "react";
 import {
   AnimatePresence,
   MotionValue,
@@ -22,6 +23,15 @@ export const FloatingDock = ({
     icon: React.ReactNode;
     href: string;
     onClick?: () => void;
+    onPointerDown?: (event: React.PointerEvent<HTMLButtonElement>) => void;
+    onPointerMove?: (event: React.PointerEvent<HTMLButtonElement>) => void;
+    onPointerUp?: (event: React.PointerEvent<HTMLButtonElement>) => void;
+    onPointerLeave?: (event: React.PointerEvent<HTMLButtonElement>) => void;
+    onTouchStart?: (event: React.TouchEvent<HTMLButtonElement>) => void;
+    onTouchEnd?: (event: React.TouchEvent<HTMLButtonElement>) => void;
+    onTouchCancel?: (event: React.TouchEvent<HTMLButtonElement>) => void;
+    onTouchMove?: (event: React.TouchEvent<HTMLButtonElement>) => void;
+    onContextMenu?: (event: React.MouseEvent<HTMLButtonElement>) => void;
     active?: boolean;
   }[];
   desktopClassName?: string;
@@ -44,6 +54,15 @@ const FloatingDockMobile = ({
     icon: React.ReactNode;
     href: string;
     onClick?: () => void;
+    onPointerDown?: (event: React.PointerEvent<HTMLButtonElement>) => void;
+    onPointerMove?: (event: React.PointerEvent<HTMLButtonElement>) => void;
+    onPointerUp?: (event: React.PointerEvent<HTMLButtonElement>) => void;
+    onPointerLeave?: (event: React.PointerEvent<HTMLButtonElement>) => void;
+    onTouchStart?: (event: React.TouchEvent<HTMLButtonElement>) => void;
+    onTouchEnd?: (event: React.TouchEvent<HTMLButtonElement>) => void;
+    onTouchCancel?: (event: React.TouchEvent<HTMLButtonElement>) => void;
+    onTouchMove?: (event: React.TouchEvent<HTMLButtonElement>) => void;
+    onContextMenu?: (event: React.MouseEvent<HTMLButtonElement>) => void;
     active?: boolean;
   }[];
   className?: string;
@@ -64,15 +83,25 @@ const FloatingDockMobile = ({
       }}
     >
       {items.map((item) => (
-        <motion.a
+        <motion.button
           whileTap={{ scale: 0.88 }}
-          href={item.href}
+          type="button"
           key={item.title}
-          onClick={(event) => {
-            if (item.onClick) {
-              event.preventDefault();
-              item.onClick();
-            }
+          onClick={() => item.onClick?.()}
+          onPointerDown={item.onPointerDown}
+          onPointerMove={item.onPointerMove}
+          onPointerUp={item.onPointerUp}
+          onPointerCancel={item.onPointerUp}
+          onPointerLeave={item.onPointerLeave}
+          onTouchStart={item.onTouchStart}
+          onTouchEnd={item.onTouchEnd}
+          onTouchCancel={item.onTouchCancel}
+          onTouchMove={item.onTouchMove}
+          onContextMenu={item.onContextMenu}
+          style={{
+            WebkitTouchCallout: "none",
+            WebkitUserSelect: "none",
+            userSelect: "none",
           }}
           className={cn(
             "flex flex-col items-center gap-1 px-3 transition-colors",
@@ -85,7 +114,7 @@ const FloatingDockMobile = ({
         >
           <div className="h-5 w-5">{item.icon}</div>
           <span className="text-[9px] font-semibold tracking-wide uppercase">{item.title}</span>
-        </motion.a>
+        </motion.button>
       ))}
     </div>
   );

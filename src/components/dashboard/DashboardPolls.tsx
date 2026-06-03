@@ -3,10 +3,15 @@ import type { Poll } from "@/store/useRawStore";
 import { useTheme } from "@/providers/useTheme";
 import { PremiumPollCard } from "@/components/polls/PremiumPollCard";
 import { ShareButton } from "@/components/ui/share-button";
-import { addPollComment, fetchPollComments } from "@/utils/supabasePolls";
+import { addPollComment, fetchPollComments } from "@/lib/api/polls";
 import { isNoPollOption, isYesPollOption } from "@/lib/polls/normalizePollOptionText";
 import {
-  BarChart3,
+  getPollShareCode,
+  LEGACY_POLL_SHARE_PARAM,
+  POLL_SHARE_PARAM,
+  resolvePollShareCode,
+} from "@/lib/pollShare";
+import {
   Check,
   ChevronLeft,
   ChevronRight,
@@ -15,12 +20,9 @@ import {
   Facebook,
   Link2,
   Instagram,
-  MessageCircle,
   SendHorizontal,
   Share2,
   Smartphone,
-  Users,
-  AtSign,
 } from "lucide-react";
 
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
@@ -234,24 +236,6 @@ function resolveYesNoOptions(poll: Poll) {
   return yesOption && noOption ? { yesOption, noOption } : null;
 }
 
-function PollStat({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: typeof BarChart3;
-  label: string;
-  value: string | number;
-}) {
-  return (
-    <div className="border border-raw-border/35 bg-raw-surface/25 p-3 text-center sm:p-4">
-      <Icon className="mx-auto mb-2 size-4 text-raw-gold/45" />
-      <p className="text-lg font-semibold text-raw-text">{value}</p>
-      <p className="text-[10px] uppercase tracking-[0.16em] text-raw-silver/35">{label}</p>
-    </div>
-  );
-}
-
 function optionPercent(optionVotes: number, totalVotes: number): number {
   if (totalVotes <= 0) return 0;
   return Math.round((optionVotes / totalVotes) * 100);
@@ -274,7 +258,8 @@ function buildPollShareText(poll: Poll): string {
 function buildPollShareUrl(pollId: string): string {
   const url = new URL(window.location.href);
   url.pathname = "/dashboard";
-  url.searchParams.set("poll", pollId);
+  url.search = "";
+  url.searchParams.set(POLL_SHARE_PARAM, getPollShareCode(pollId));
   return url.toString();
 }
 
@@ -302,9 +287,9 @@ export function DashboardPolls({
   const [currentPollIndex, setCurrentPollIndex] = useState(0);
   const [hasSeenVoteHint, setHasSeenVoteHint] = useState(false);
   const [lockedPollId, setLockedPollId] = useState<string | null>(null);
+  const [sharedPollId, setSharedPollId] = useState<string | null>(null);
   const [shareCopied, setShareCopied] = useState(false);
   const [sharePickerOpen, setSharePickerOpen] = useState(false);
-  const [expandedSharePollId, setExpandedSharePollId] = useState<string | null>(null);
 
   const commentsEndRef = useRef<HTMLDivElement>(null);
 
@@ -375,6 +360,34 @@ export function DashboardPolls({
     }
   }, [currentPollIndex, displayPolls.length]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const searchParams = new URLSearchParams(window.location.search);
+    const shareCode = searchParams.get(POLL_SHARE_PARAM);
+    const legacyPollId = searchParams.get(LEGACY_POLL_SHARE_PARAM);
+    const nextSharedPollId = resolvePollShareCode(polls, shareCode) ?? legacyPollId;
+    setSharedPollId(nextSharedPollId);
+    if (!nextSharedPollId) return;
+
+    if (legacyPollId || searchParams.has(LEGACY_POLL_SHARE_PARAM)) {
+      const cleanUrl = new URL(window.location.href);
+      cleanUrl.search = "";
+      cleanUrl.searchParams.set(POLL_SHARE_PARAM, getPollShareCode(nextSharedPollId));
+      window.history.replaceState(null, "", cleanUrl.toString());
+    }
+
+    const displayIndex = displayPolls.findIndex((poll) => poll.id === nextSharedPollId);
+    if (displayIndex >= 0) {
+      setLockedPollId(null);
+      setCurrentPollIndex(displayIndex);
+      return;
+    }
+
+    if (polls.some((poll) => poll.id === nextSharedPollId)) {
+      setLockedPollId(nextSharedPollId);
+    }
+  }, [displayPolls, polls]);
+
 
   const rawCurrentPoll = lockedPollId
     ? (polls.find((p) => p.id === lockedPollId) ?? displayPolls[currentPollIndex])
@@ -397,8 +410,8 @@ export function DashboardPolls({
           ...previous,
           [currentPoll.id]: comments.map((comment) => ({
             id: comment.id,
-            author: "Anonymous",
-            content: comment.body,
+            author: comment.author_name?.trim() || "Anonymous",
+            content: comment.text,
             createdAt: new Date(comment.created_at).toLocaleTimeString([], {
               hour: "2-digit",
               minute: "2-digit",
@@ -417,17 +430,13 @@ export function DashboardPolls({
 
   const selectedOptionId = currentPoll ? answerHistory[currentPoll.id] : undefined;
   const hasVotedCurrent = Boolean(selectedOptionId);
+  const showSharedPollAnswerPrompt = Boolean(sharedPollId && currentPoll?.id === sharedPollId && hasVotedCurrent);
   const currentComments = currentPoll ? historyComments[currentPoll.id] ?? [] : [];
   const currentOptions = currentPoll ? resolveYesNoOptions(currentPoll) : null;
   const showVoteHint = currentPollIndex === 0 && !hasVotedCurrent && !hasSeenVoteHint;
   const progressIndex = isDailyPollLimitReached
     ? Math.min(currentPollIndex, dailyPollLimit - 1)
     : Math.min(dailyAnsweredCount + currentPollIndex, dailyPollLimit - 1);
-
-  const totalResponses = useMemo(
-    () => polls.reduce((sum, poll) => sum + poll.options.reduce((acc, option) => acc + option.votes, 0), 0),
-    [polls]
-  );
 
   const showMorePollsPaywall = isDailyPollLimitReached && dailyPollLimit > 0;
 
@@ -467,7 +476,7 @@ export function DashboardPolls({
     setTimeout(() => commentsEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
 
     try {
-      await addPollComment(currentPoll.id, content);
+      await addPollComment(currentPoll.id, content, { id: userId, name: username });
     } catch (error) {
       console.error("Failed to save dashboard comment to Supabase", error);
     }
@@ -554,12 +563,6 @@ export function DashboardPolls({
         </p>
       </header>
 
-      <section className="grid grid-cols-3 gap-2 sm:gap-3">
-        <PollStat icon={BarChart3} label="Live Polls" value={polls.length} />
-        <PollStat icon={Users} label="Total Votes" value={totalResponses.toLocaleString()} />
-        <PollStat icon={MessageCircle} label="Daily Progress" value={`${dailyAnsweredCount}/${dailyPollLimit}`} />
-      </section>
-
       {showMorePollsPaywall && (
         <section className="border border-raw-gold/35 bg-gradient-to-r from-raw-gold/12 via-raw-black/60 to-raw-black/60 p-4 sm:p-5">
           <div className="flex flex-col gap-4">
@@ -591,8 +594,21 @@ export function DashboardPolls({
         </section>
       )}
 
-      <section className="mx-auto flex w-full max-w-[460px] flex-col items-center gap-5 px-1">
-        <div className="w-full border border-raw-gold/20 bg-black/35 px-4 py-3 shadow-[inset_0_0_0_1px_rgba(241,196,45,0.08)]">
+      <section className="mx-auto flex w-full max-w-[460px] flex-col items-center gap-3 px-1 sm:gap-5">
+        <div className="flex w-full items-center justify-between gap-3 border border-raw-gold/25 bg-black/30 px-3 py-2 sm:hidden">
+          <p className="font-display text-[11px] uppercase tracking-[0.16em] text-raw-silver/75">Answer polls</p>
+          <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
+            <div className="h-1 w-full max-w-24 overflow-hidden bg-raw-border/50">
+              <div
+                className="h-full bg-[#F1C42D] shadow-[0_0_10px_rgba(241,196,45,0.45)]"
+                style={{ width: `${Math.min(100, Math.max(0, (dailyAnsweredCount / Math.max(1, dailyPollLimit)) * 100))}%` }}
+              />
+            </div>
+            <span className="shrink-0 text-[11px] font-semibold text-[#F1C42D]">{dailyAnsweredCount}/{dailyPollLimit}</span>
+          </div>
+        </div>
+
+        <div className="hidden w-full border border-raw-gold/20 bg-black/35 px-4 py-3 shadow-[inset_0_0_0_1px_rgba(241,196,45,0.08)] sm:block">
           <div className="flex items-center justify-between gap-3">
             <h3 className="min-w-0 font-display text-sm uppercase tracking-[0.18em] text-[#EBEBEB] sm:text-base">
               2. Answer 7 polls
@@ -642,8 +658,9 @@ export function DashboardPolls({
             <ShareButton
               links={[
                 { icon: Smartphone, onClick: () => handleWhatsAppShare(currentPoll), label: "Share on WhatsApp" },
-                { icon: AtSign, onClick: () => handleInstagramShare(currentPoll), label: "Share on Instagram" },
+                { icon: Instagram, onClick: () => handleInstagramShare(currentPoll), label: "Share on Instagram" },
                 { icon: Facebook, onClick: () => handleFacebookShare(currentPoll), label: "Share on Facebook" },
+                { icon: SendHorizontal, onClick: () => handleShare(currentPoll), label: "More apps" },
                 { icon: Link2, onClick: () => copyShareLink(currentPoll), label: "Copy link" },
               ]}
               className="w-full border-raw-gold/45 bg-raw-gold/10 text-[11px] font-semibold uppercase tracking-[0.16em] text-raw-gold hover:bg-raw-gold/15 dark:border-raw-gold/45 dark:bg-raw-gold/10 dark:text-raw-gold dark:hover:bg-raw-gold/15"
@@ -658,6 +675,17 @@ export function DashboardPolls({
               <Check className="size-3" />
               Copied share text
             </p>
+          )}
+
+          {showSharedPollAnswerPrompt && (
+            <div className="mt-3 border border-raw-gold/30 bg-raw-gold/10 px-4 py-3 text-center shadow-[0_0_24px_rgba(241,196,45,0.08)]">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-raw-gold/80">
+                Answer saved
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-raw-silver/65">
+                Sign in to answer more polls, keep your streak, and unlock your profile rewards.
+              </p>
+            </div>
           )}
 
           <button
@@ -782,53 +810,19 @@ export function DashboardPolls({
                     >
                       Review
                     </button>
-                    <div className="shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => setExpandedSharePollId((current) => (current === poll.id ? null : poll.id))}
-                        className="inline-flex items-center justify-center gap-2 border border-raw-border/35 px-3 py-2 text-[11px] uppercase tracking-[0.12em] text-raw-silver/65 transition hover:border-raw-gold/45 hover:text-raw-gold"
-                        aria-expanded={expandedSharePollId === poll.id}
+                    <div className="w-full shrink-0 sm:w-44">
+                      <ShareButton
+                        links={[
+                          { icon: Smartphone, onClick: () => handleWhatsAppShare(poll), label: "Share on WhatsApp" },
+                          { icon: Instagram, onClick: () => handleInstagramShare(poll), label: "Share on Instagram" },
+                          { icon: Facebook, onClick: () => handleFacebookShare(poll), label: "Share on Facebook" },
+                          { icon: Link2, onClick: () => copyShareLink(poll), label: "Copy link" },
+                        ]}
+                        className="min-w-0 w-full border-raw-border/35 bg-raw-surface/20 px-3 py-2 text-[11px] uppercase tracking-[0.12em] text-raw-silver/65 hover:border-raw-gold/45 hover:bg-raw-gold/10 hover:text-raw-gold dark:border-raw-border/35 dark:bg-raw-surface/20 dark:text-raw-silver/65 dark:hover:bg-raw-gold/10 dark:hover:text-raw-gold"
                       >
                         <Copy className="size-3" />
                         Share
-                      </button>
-                    </div>
-                  </div>
-                  <div
-                    className={`overflow-hidden transition-all duration-300 ${
-                      expandedSharePollId === poll.id ? "mt-3 max-h-16 opacity-100" : "max-h-0 opacity-0"
-                    }`}
-                  >
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleWhatsAppShare(poll)}
-                        className="border border-raw-border/35 px-2.5 py-1.5 text-[10px] uppercase tracking-[0.12em] text-raw-silver/70 transition hover:border-raw-gold/45 hover:text-raw-gold"
-                      >
-                        WhatsApp
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleInstagramShare(poll)}
-                        className="border border-raw-border/35 px-2.5 py-1.5 text-[10px] uppercase tracking-[0.12em] text-raw-silver/70 transition hover:border-raw-gold/45 hover:text-raw-gold"
-                      >
-                        Instagram
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleFacebookShare(poll)}
-                        className="border border-raw-border/35 px-2.5 py-1.5 text-[10px] uppercase tracking-[0.12em] text-raw-silver/70 transition hover:border-raw-gold/45 hover:text-raw-gold"
-                      >
-                        Facebook
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => copyShareLink(poll)}
-                        className="inline-flex items-center gap-1.5 border border-raw-border/35 px-2.5 py-1.5 text-[10px] uppercase tracking-[0.12em] text-raw-silver/70 transition hover:border-raw-gold/45 hover:text-raw-gold"
-                      >
-                        <Copy className="size-3" />
-                        Copy link
-                      </button>
+                      </ShareButton>
                     </div>
                   </div>
                 </article>

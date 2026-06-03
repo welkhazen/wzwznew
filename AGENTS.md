@@ -42,6 +42,16 @@ When your changes create orphans:
 
 The test: Every changed line should trace directly to the user's request.
 
+## 3.1 Context Scope
+
+**Inspect only the exact files needed. Keep context small and deliberate.**
+
+- Do not scan the whole repo unless the task truly requires it.
+- Do not read large generated files, lock files, build folders, `node_modules`, or Supabase dumps unless necessary.
+- Prefer targeted file reads and narrow searches over broad exploration.
+- When a task names specific files, start with those files and expand only when the immediate evidence requires it.
+- If broader inspection becomes necessary, say why before doing it.
+
 ## 4. Goal-Driven Execution
 
 **Define success criteria. Loop until verified.**

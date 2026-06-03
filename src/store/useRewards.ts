@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { track } from "@/lib/analytics";
 import {
   type AvatarCatalogItem,
+  claimPendingLandingWheelAvatarForUser,
   equipAvatarForUser,
   getDefaultAvatarCatalog,
   loadAvatarCatalog,
@@ -57,10 +58,23 @@ export function useRewards(user: User | null) {
       const state = await loadUserAvatarState(requestUserId, avatarCatalog);
       if (cancelled || requestUserId !== activeUserIdRef.current) return;
 
-      setOwnedAvatarIds(state.ownedAvatarIds);
+      const ownedIds = user.role === "admin"
+        ? avatarCatalog.map((item) => item.id)
+        : state.ownedAvatarIds;
+      setOwnedAvatarIds(ownedIds);
       const index = avatarCatalog.findIndex((item) => item.id === state.selectedAvatarId);
       setAvatarLevelState(index >= 0 ? index + 1 : 1);
       setInventoryLoaded(true);
+
+      if (user.role !== "admin") {
+        const landingClaim = await claimPendingLandingWheelAvatarForUser(requestUserId);
+        if (cancelled || requestUserId !== activeUserIdRef.current || !landingClaim) return;
+        if (landingClaim.status === "granted") {
+          setOwnedAvatarIds((previous) => (
+            previous.includes(landingClaim.avatarId) ? previous : [...previous, landingClaim.avatarId]
+          ));
+        }
+      }
     })();
 
     return () => {
@@ -108,6 +122,12 @@ export function useRewards(user: User | null) {
     }
   }, [avatarCatalog, inventoryLoaded, ownedAvatarIds, user]);
 
+  const markAvatarOwned = useCallback((level: number) => {
+    const candidate = avatarCatalog[level - 1];
+    if (!candidate) return;
+    setOwnedAvatarIds((previous) => (previous.includes(candidate.id) ? previous : [...previous, candidate.id]));
+  }, [avatarCatalog]);
+
   const ownedAvatarLevels = useMemo(() => {
     if (ownedAvatarIds.length === 0) {
       return new Set<number>(avatarCatalog.length > 0 ? [1] : []);
@@ -134,9 +154,14 @@ export function useRewards(user: User | null) {
   const selectAvatarForOnboarding = useCallback((toLevel: number) => {
     const maxLevel = avatarCatalog.length;
     const clamped = Math.min(Math.max(1, toLevel), Math.max(1, maxLevel));
-    if (!avatarCatalog[clamped - 1]) return;
+    const candidate = avatarCatalog[clamped - 1];
+    if (!candidate) return;
+    if (user && inventoryLoaded && !ownedAvatarIds.includes(candidate.id)) return;
     setAvatarLevelState(clamped);
-  }, [avatarCatalog]);
+    if (user && inventoryLoaded) {
+      void equipAvatarForUser(user.id, candidate.id);
+    }
+  }, [avatarCatalog, inventoryLoaded, ownedAvatarIds, user]);
 
   return useMemo(() => ({
     avatarLevel,
@@ -146,6 +171,7 @@ export function useRewards(user: User | null) {
     avatarCatalog,
     ownedAvatarLevels,
     unlockAvatarLevel,
+    markAvatarOwned,
     avatarPricesByLevel,
-  }), [avatarCatalog, avatarLevel, avatarPricesByLevel, changeAvatarLevel, ownedAvatarLevels, selectAvatarForOnboarding, setAvatarLevel, unlockAvatarLevel]);
+  }), [avatarCatalog, avatarLevel, avatarPricesByLevel, changeAvatarLevel, markAvatarOwned, ownedAvatarLevels, selectAvatarForOnboarding, setAvatarLevel, unlockAvatarLevel]);
 }

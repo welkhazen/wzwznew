@@ -4,6 +4,8 @@ export interface User {
   role: "member" | "admin";
   moderationStatus: "active" | "warned" | "banned";
   warnings: number;
+  onboardingCompleted?: boolean;
+  profilePublic?: boolean;
 }
 
 export interface AuthResult {
@@ -24,4 +26,4 @@ export interface Poll {
   locked: boolean;
 }
 
-export type OnboardingStep = "avatar" | "polls" | "communities" | "marketplace" | "ready";
+export type OnboardingStep = "spin" | "avatar" | "polls" | "communities" | "marketplace" | "ready";

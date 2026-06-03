@@ -3,41 +3,36 @@ import { motion, AnimatePresence } from "framer-motion";
 import LNTLogo from "@/assets/LNT.webp";
 import SYTLogo from "@/assets/logospeak.webp";
 import IIJMLogo from "@/assets/itisjustme.webp";
-import { AlertTriangle, ArrowLeft, BarChart3, Bell, BellOff, Heart, ImagePlus, Lock, Plus, Search, Send, Trash2, Users, X } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertTriangle, ArrowLeft, BarChart3, Bell, BellOff, Lock, Plus, Search, Star, Trash2, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
+import { useConfirmDialog } from "@/hooks/use-confirm-dialog";
 import { CommunityBadge } from "@/components/dashboard/CommunityBadge";
-
 import {
   ensureUserRecord,
   formatAdminTimestamp,
   getPersistedUserById,
-  readChatReports,
   readCommunityJoinRequests,
   type ChatReportRecord,
   type CommunityJoinRequestRecord,
-  writeChatReports,
   writeCommunityJoinRequests,
 } from "@/lib/adminData";
+import { submitChatReport } from "@/backend/supabase/controllers/chatReportsController";
 import {
   canManageCommunity,
   countUnreadMessages,
   countOnlineMembers,
   formatChatDayLabel,
-  formatChatTimestamp,
-  leaveCommunityChat,
-  updateCommunityPresentation,
 } from "@/lib/communityChat";
 import {
   fetchCommunities,
+  fetchCommunityMessages,
   joinCommunity as joinCommunitySupabase,
   leaveCommunity as leaveCommunitySupabase,
   touchMemberActivity,
   markCommunityRead as markCommunityReadSupabase,
   setCommunityNotifications as setCommunityNotificationsSupabase,
+  updateCommunityPresentation,
 } from "@/backend/supabase/controllers/communityController";
 import {
   sendMessage as sendMessageSupabase,
@@ -67,156 +62,42 @@ import { sendCommunityPushNotification } from "@/lib/communityPushNotifications"
 import type { CommunityChatMessageRecord, PersistedCommunityRecord } from "@/lib/communityChat.types";
 import {
   loadCommunityAccess,
-  unlockCommunity,
-  FREE_COMMUNITY_SLOTS,
-  COMMUNITY_UNLOCK_TOKEN_COST,
   type CommunityAccess,
 } from "@/lib/communityAccess";
+import { readAvatarCatalogLocal } from "@/lib/avatarCatalog";
+import { getPublicUserProfile, type PublicUserProfile } from "@/backend/supabase/controllers/userController";
+import {
+  MAX_FAVORITE_COMMUNITIES,
+  getUserFavoriteCommunities,
+  getUserPinnedMessage,
+  setUserFavoriteCommunities,
+  setUserPinnedMessage,
+  clearUserPinnedMessage,
+  type PinnedMessageRecord,
+} from "@/backend/supabase/controllers/userExtrasController";
+import {
+  getCommunitySenderBlockKey,
+  readBlockedCommunitySenders,
+  writeBlockedCommunitySenders,
+} from "@/lib/blockedCommunitySenders";
 import type { User } from "@/store/types";
+import { CommunityMessageTimeline } from "@/components/dashboard/CommunityMessageTimeline";
+import { CommunityMessageComposer } from "@/components/dashboard/CommunityMessageComposer";
+import { CommunityRoomList } from "@/components/dashboard/CommunityRoomList";
+import { CommunitySettingsDialog } from "@/components/dashboard/CommunitySettingsDialog";
+import { CommunityMembersDialog } from "@/components/dashboard/CommunityMembersDialog";
+import { CommunityRequestDialog } from "@/components/dashboard/CommunityRequestDialog";
+import { CommunityReportDialog } from "@/components/dashboard/CommunityReportDialog";
+import { CommunityPollComposerDialog } from "@/components/dashboard/CommunityPollComposerDialog";
+import { CommunityProfileDialog } from "@/components/dashboard/CommunityProfileDialog";
 
 const WAITLIST_UNLOCK_THRESHOLD = 200;
-const COMMUNITIES_CACHE_KEY = "raw.dashboard.communities.v1";
+const MESSAGE_PAGE_SIZE = 10;
 const MAX_COMMUNITY_MESSAGE_LENGTH = 150;
-
-function readCachedCommunities(): PersistedCommunityRecord[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.sessionStorage.getItem(COMMUNITIES_CACHE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function writeCachedCommunities(communities: PersistedCommunityRecord[]): void {
-  if (typeof window === "undefined") return;
-  try {
-    window.sessionStorage.setItem(COMMUNITIES_CACHE_KEY, JSON.stringify(communities));
-  } catch {
-    // ignore storage write errors
-  }
-}
-
-function mergeCommunityMessages(
-  messages: CommunityChatMessageRecord[],
-  incoming: CommunityChatMessageRecord,
-): CommunityChatMessageRecord[] {
-  const withoutSameId = messages.filter((message) => message.id !== incoming.id);
-  const pendingIndex = withoutSameId.findIndex((message) =>
-    message.deliveryStatus === "sending" &&
-    message.senderId === incoming.senderId &&
-    message.text === incoming.text
-  );
-
-  const nextMessages = [...withoutSameId];
-  if (pendingIndex >= 0) {
-    nextMessages[pendingIndex] = incoming;
-  } else {
-    nextMessages.push(incoming);
-  }
-
-  return nextMessages.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
-}
-
-function upsertCommunityMessage(
-  communities: PersistedCommunityRecord[],
-  communityId: string,
-  message: CommunityChatMessageRecord,
-): PersistedCommunityRecord[] {
-  return communities.map((community) =>
-    community.id === communityId
-      ? { ...community, messages: mergeCommunityMessages(community.messages, message) }
-      : community
-  );
-}
-
-function replaceCommunityMessage(
-  communities: PersistedCommunityRecord[],
-  communityId: string,
-  previousId: string,
-  message: CommunityChatMessageRecord,
-): PersistedCommunityRecord[] {
-  return communities.map((community) => {
-    if (community.id !== communityId) return community;
-    const withoutPrevious = community.messages.filter((entry) => entry.id !== previousId);
-    return { ...community, messages: mergeCommunityMessages(withoutPrevious, message) };
-  });
-}
-
-function markCommunityMessageFailed(
-  communities: PersistedCommunityRecord[],
-  communityId: string,
-  messageId: string,
-): PersistedCommunityRecord[] {
-  return communities.map((community) =>
-    community.id === communityId
-      ? {
-          ...community,
-          messages: community.messages.map((message) =>
-            message.id === messageId ? { ...message, deliveryStatus: "failed" } : message
-          ),
-        }
-      : community
-  );
-}
-
-export function DashboardCommunities(props) {
-      // Main search query state (fix ReferenceError)
-      const [searchQuery, setSearchQuery] = useState("");
-    // Main community state (fix ReferenceError)
-    const [communities, setCommunities] = useState<PersistedCommunityRecord[]>(() => readCachedCommunities());
-  // Destructure props for clarity and to avoid ReferenceError
-  const {
-    user,
-    activeCommunityId = null,
-    onOpenCommunity,
-    onBackToCommunities,
-    onCommunitiesChange,
-  } = props;
-  // --- Floating request button state/hooks ---
-  const [showRequestButton, setShowRequestButton] = useState(false);
-  const [requestBtnText, setRequestBtnText] = useState("Didn't find your community?");
-  const [mobileRequestExpanded, setMobileRequestExpanded] = useState(false);
-  const [isInitialCommunitiesLoading, setIsInitialCommunitiesLoading] = useState(() => readCachedCommunities().length === 0);
-
-  // Show button after scrolling 400px
-  useEffect(() => {
-    const onScroll = () => {
-      if (window.scrollY > 400) {
-        setShowRequestButton(true);
-      } else {
-        setShowRequestButton(false);
-      }
-    };
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  // Collapse mobile request button when tapping outside
-  useEffect(() => {
-    if (!mobileRequestExpanded) return;
-    const handler = () => setMobileRequestExpanded(false);
-    const timeout = setTimeout(() => document.addEventListener("click", handler), 0);
-    return () => { clearTimeout(timeout); document.removeEventListener("click", handler); };
-  }, [mobileRequestExpanded]);
-
-  // Animate text change after 2s
-  useEffect(() => {
-    if (!showRequestButton) {
-      setRequestBtnText("Didn't find your community?");
-      return;
-    }
-    const timeout = setTimeout(() => {
-      setRequestBtnText("Request to create yours now");
-    }, 2000);
-    return () => clearTimeout(timeout);
-  }, [showRequestButton]);
-// ...existing code...
 
 interface DashboardCommunitiesProps {
   user: User;
+  avatarLevel?: number;
   activeCommunityId?: string | null;
   onOpenCommunity: (communityId: string) => void;
   onBackToCommunities?: () => void;
@@ -275,7 +156,172 @@ const COMMUNITY_LOGOS: Record<string, string> = {
   iijm: IIJMLogo,
 };
 
-// ...existing code continues inside the function above...
+function getMessageSenderBlockKey(message: Pick<CommunityChatMessageRecord, "senderId" | "senderName">): string {
+  return getCommunitySenderBlockKey(message.senderId, message.senderName);
+}
+
+function mergeCommunityMessages(
+  messages: CommunityChatMessageRecord[],
+  incoming: CommunityChatMessageRecord,
+): CommunityChatMessageRecord[] {
+  const withoutSameId = messages.filter((message) => message.id !== incoming.id);
+  const pendingIndex = withoutSameId.findIndex((message) =>
+    message.deliveryStatus === "sending" &&
+    message.senderId === incoming.senderId &&
+    message.text === incoming.text
+  );
+
+  const nextMessages = [...withoutSameId];
+  if (pendingIndex >= 0) {
+    nextMessages[pendingIndex] = incoming;
+  } else {
+    nextMessages.push(incoming);
+  }
+
+  return nextMessages.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+}
+
+function upsertCommunityMessage(
+  communities: PersistedCommunityRecord[],
+  communityId: string,
+  message: CommunityChatMessageRecord,
+): PersistedCommunityRecord[] {
+  return communities.map((community) =>
+    community.id === communityId
+      ? { ...community, messages: mergeCommunityMessages(community.messages, message) }
+      : community
+  );
+}
+
+function removeCommunityMessage(
+  communities: PersistedCommunityRecord[],
+  communityId: string,
+  messageId: string,
+): PersistedCommunityRecord[] {
+  return communities.map((community) =>
+    community.id === communityId
+      ? { ...community, messages: community.messages.filter((message) => message.id !== messageId) }
+      : community
+  );
+}
+
+function setCommunityMessages(
+  communities: PersistedCommunityRecord[],
+  communityId: string,
+  messages: CommunityChatMessageRecord[],
+): PersistedCommunityRecord[] {
+  return communities.map((community) =>
+    community.id === communityId ? { ...community, messages } : community
+  );
+}
+
+function mergeCommunityMessageList(
+  messages: CommunityChatMessageRecord[],
+  incoming: CommunityChatMessageRecord[],
+): CommunityChatMessageRecord[] {
+  const byId = new Map<string, CommunityChatMessageRecord>();
+  [...messages, ...incoming].forEach((message) => {
+    byId.set(message.id, message);
+  });
+  return Array.from(byId.values()).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+}
+
+function replaceCommunityMessage(
+  communities: PersistedCommunityRecord[],
+  communityId: string,
+  previousId: string,
+  message: CommunityChatMessageRecord,
+): PersistedCommunityRecord[] {
+  return communities.map((community) => {
+    if (community.id !== communityId) return community;
+    const withoutPrevious = community.messages.filter((entry) => entry.id !== previousId);
+    return { ...community, messages: mergeCommunityMessages(withoutPrevious, message) };
+  });
+}
+
+function markCommunityMessageFailed(
+  communities: PersistedCommunityRecord[],
+  communityId: string,
+  messageId: string,
+): PersistedCommunityRecord[] {
+  return communities.map((community) =>
+    community.id === communityId
+      ? {
+          ...community,
+          messages: community.messages.map((message) =>
+            message.id === messageId ? { ...message, deliveryStatus: "failed" } : message
+          ),
+        }
+      : community
+  );
+}
+
+function appendOptimisticMessage(
+  communities: PersistedCommunityRecord[],
+  communityId: string,
+  message: CommunityChatMessageRecord,
+): PersistedCommunityRecord[] {
+  return communities.map((community) => {
+    if (community.id !== communityId) return community;
+    const withoutExisting = community.messages.filter((entry) => entry.id !== message.id);
+    return {
+      ...community,
+      messages: [...withoutExisting, { ...message, deliveryStatus: "sending" }]
+        .sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
+    };
+  });
+}
+
+export function DashboardCommunities({
+  user,
+  avatarLevel = 1,
+  activeCommunityId = null,
+  onOpenCommunity,
+  onBackToCommunities,
+  onCommunitiesChange,
+}: DashboardCommunitiesProps) {
+      // Main search query state (fix ReferenceError)
+      const [searchQuery, setSearchQuery] = useState("");
+    // Main community state (fix ReferenceError)
+    const [communities, setCommunities] = useState<PersistedCommunityRecord[]>([]);
+  // --- Floating request button state/hooks ---
+  const [showRequestButton, setShowRequestButton] = useState(false);
+  const [requestBtnText, setRequestBtnText] = useState("Didn't find your community?");
+  const [mobileRequestExpanded, setMobileRequestExpanded] = useState(false);
+  const [isInitialCommunitiesLoading, setIsInitialCommunitiesLoading] = useState(true);
+
+  // Show button after scrolling 400px
+  useEffect(() => {
+    const onScroll = () => {
+      if (window.scrollY > 400) {
+        setShowRequestButton(true);
+      } else {
+        setShowRequestButton(false);
+      }
+    };
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Collapse mobile request button when tapping outside
+  useEffect(() => {
+    if (!mobileRequestExpanded) return;
+    const handler = () => setMobileRequestExpanded(false);
+    const timeout = setTimeout(() => document.addEventListener("click", handler), 0);
+    return () => { clearTimeout(timeout); document.removeEventListener("click", handler); };
+  }, [mobileRequestExpanded]);
+
+  // Animate text change after 2s
+  useEffect(() => {
+    if (!showRequestButton) {
+      setRequestBtnText("Didn't find your community?");
+      return;
+    }
+    const timeout = setTimeout(() => {
+      setRequestBtnText("Request to create yours now");
+    }, 2000);
+    return () => clearTimeout(timeout);
+  }, [showRequestButton]);
   const [requestFormOpen, setRequestFormOpen] = useState(false);
   const [requestSubmitAttempted, setRequestSubmitAttempted] = useState(false);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
@@ -284,6 +330,12 @@ const COMMUNITY_LOGOS: Record<string, string> = {
   const [requestDraft, setRequestDraft] = useState<CommunityRequestDraft>(INITIAL_REQUEST_DRAFT);
   const [reportDraft, setReportDraft] = useState<ReportDraft>(INITIAL_REPORT_DRAFT);
   const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+  const [profileTarget, setProfileTarget] = useState<{
+    message: CommunityChatMessageRecord;
+    profile: PublicUserProfile | null;
+    loading: boolean;
+  } | null>(null);
   const [communityRequests, setCommunityRequests] = useState<CommunityRequestRecord[]>([]);
   const [chatReports, setChatReports] = useState<ChatReportRecord[]>([]);
   const [communityJoinRequests, setCommunityJoinRequests] = useState<CommunityJoinRequestRecord[]>([]);
@@ -292,6 +344,9 @@ const COMMUNITY_LOGOS: Record<string, string> = {
   const [waitlistJoiningId, setWaitlistJoiningId] = useState<string | null>(null);
   const [communityAccess, setCommunityAccess] = useState<CommunityAccess>({ hasSubscription: false, unlockedIds: new Set<string>() });
   const [unlockingId, setUnlockingId] = useState<string | null>(null);
+  const [favoriteCommunityIds, setFavoriteCommunityIds] = useState<string[]>([]);
+  const [ownPinnedMessage, setOwnPinnedMessage] = useState<PinnedMessageRecord | null>(null);
+  const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [leavingCommunityId, setLeavingCommunityId] = useState<string | null>(null);
   const [messageDraft, setMessageDraft] = useState("");
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
@@ -299,18 +354,29 @@ const COMMUNITY_LOGOS: Record<string, string> = {
   const [expandedDescs, setExpandedDescs] = useState<Set<string>>(new Set());
   const [communityPolls, setCommunityPolls] = useState<CommunityPollRecord[]>([]);
   const [communityPollsAvailable, setCommunityPollsAvailable] = useState(true);
+  const [communityPollsExpanded, setCommunityPollsExpanded] = useState(false);
+  const [hiddenAnsweredPollIds, setHiddenAnsweredPollIds] = useState<Set<string>>(new Set());
+  const [membersDialogOpen, setMembersDialogOpen] = useState(false);
   const [pollComposerOpen, setPollComposerOpen] = useState(false);
   const [pollQuestion, setPollQuestion] = useState("");
   const [pollOptionDrafts, setPollOptionDrafts] = useState<string[]>(["", ""]);
   const [pollSubmitting, setPollSubmitting] = useState(false);
+  const [blockedSenderKeys, setBlockedSenderKeys] = useState<string[]>(() => readBlockedCommunitySenders(user.id));
+  const [senderAvatarLevels, setSenderAvatarLevels] = useState<Record<string, number>>({});
+  const [hasOlderMessages, setHasOlderMessages] = useState(false);
+  const [messagesLoading, setMessagesLoading] = useState(false);
+  const [messagesError, setMessagesError] = useState(false);
+  const [isLoadingOlderMessages, setIsLoadingOlderMessages] = useState(false);
   const lastTouchedCommunityRef = useRef<string>("");
+  const latestMessagesRequestRef = useRef(0);
+  const loadedMessagesCommunityRef = useRef<string | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const messageInputRef = useRef<HTMLInputElement | null>(null);
+  const preserveScrollAfterOlderLoadRef = useRef<{ previousHeight: number } | null>(null);
 
     const updateCommunities = useCallback((updater: (communities: PersistedCommunityRecord[]) => PersistedCommunityRecord[]) => {
       setCommunities((previous) => {
         const next = updater(previous);
-        writeCachedCommunities(next);
         onCommunitiesChange?.(next);
         return next;
       });
@@ -318,25 +384,47 @@ const COMMUNITY_LOGOS: Record<string, string> = {
 
     const reloadChatData = useCallback(async () => {
       try {
-        const [communitiesData, requestsData, waitlistData, accessData] = await Promise.all([
+        if (activeCommunityId) {
+          setMessagesLoading(true);
+          setMessagesError(false);
+        }
+
+        const [communitiesData, requestsData, waitlistData, accessData, activeCommunityMessages] = await Promise.all([
           fetchCommunities(),
           fetchCommunityRequests(user.id),
           fetchWaitlistSummary(user.id).catch(() => createEmptyWaitlistSummary()),
           loadCommunityAccess(user.id).catch(() => ({ hasSubscription: false, unlockedIds: new Set<string>() })),
+          activeCommunityId
+            ? fetchCommunityMessages(activeCommunityId, { limit: MESSAGE_PAGE_SIZE }).catch(() => null)
+            : Promise.resolve(null),
         ]);
-        setCommunities(communitiesData);
-        writeCachedCommunities(communitiesData);
-        onCommunitiesChange?.(communitiesData);
+        if (activeCommunityId && activeCommunityMessages === null) {
+          setMessagesError(true);
+        }
+        if (activeCommunityId && activeCommunityMessages) {
+          loadedMessagesCommunityRef.current = activeCommunityId;
+          setHasOlderMessages(activeCommunityMessages.length === MESSAGE_PAGE_SIZE);
+        }
+        setCommunities((previous) => {
+          const next = communitiesData.map((community) => ({
+            ...community,
+            messages: community.id === activeCommunityId && activeCommunityMessages
+              ? activeCommunityMessages
+              : previous.find((item) => item.id === community.id)?.messages ?? community.messages,
+          }));
+          onCommunitiesChange?.(next);
+          return next;
+        });
         setCommunityRequests(requestsData);
-        setChatReports(readChatReports());
         setCommunityJoinRequests(readCommunityJoinRequests());
         setWaitlistCounts(waitlistData.counts);
         setWaitlistJoinedIds(waitlistData.joinedCommunityIds);
         setCommunityAccess(accessData);
       } finally {
+        setMessagesLoading(false);
         setIsInitialCommunitiesLoading(false);
       }
-    }, [onCommunitiesChange, user.id]);
+    }, [activeCommunityId, onCommunitiesChange, user.id]);
 
     const fallbackCommunities = useMemo(() => buildDefaultCommunities(), []);
     const selectedCommunity = useMemo(() => {
@@ -364,7 +452,122 @@ const COMMUNITY_LOGOS: Record<string, string> = {
     const visibleMembers = selectedCommunity?.members.slice(0, 5) ?? [];
     const unreadCount = selectedCommunity && isJoined ? countUnreadMessages(selectedCommunity, user.id) : 0;
 
-    const activeMessages = useMemo(() => selectedCommunity?.messages ?? [], [selectedCommunity]);
+    useEffect(() => {
+      setBlockedSenderKeys(readBlockedCommunitySenders(user.id));
+    }, [user.id]);
+
+    const blockedSenderKeySet = useMemo(() => new Set(blockedSenderKeys), [blockedSenderKeys]);
+    const activeMessages = useMemo(
+      () => (selectedCommunity?.messages ?? []).filter((message) => !blockedSenderKeySet.has(getMessageSenderBlockKey(message))),
+      [blockedSenderKeySet, selectedCommunity]
+    );
+
+    const loadLatestMessages = useCallback(async () => {
+      if (!activeCommunityId) {
+        setHasOlderMessages(false);
+        setMessagesLoading(false);
+        setMessagesError(false);
+        return;
+      }
+      if (loadedMessagesCommunityRef.current === activeCommunityId) {
+        return;
+      }
+
+      const requestId = latestMessagesRequestRef.current + 1;
+      latestMessagesRequestRef.current = requestId;
+      setMessagesLoading(true);
+      setMessagesError(false);
+      try {
+        const communityId = activeCommunityId;
+        const messages = await fetchCommunityMessages(communityId, { limit: MESSAGE_PAGE_SIZE });
+        if (latestMessagesRequestRef.current !== requestId) return;
+        loadedMessagesCommunityRef.current = communityId;
+        setHasOlderMessages(messages.length === MESSAGE_PAGE_SIZE);
+        updateCommunities((current) => setCommunityMessages(current, communityId, messages));
+      } catch {
+        if (latestMessagesRequestRef.current === requestId) {
+          setMessagesError(true);
+        }
+      } finally {
+        if (latestMessagesRequestRef.current === requestId) {
+          setMessagesLoading(false);
+        }
+      }
+    }, [activeCommunityId, updateCommunities]);
+
+    const loadOlderMessages = useCallback(async () => {
+      if (!activeCommunityId || isLoadingOlderMessages || activeMessages.length === 0 || !hasOlderMessages) {
+        return;
+      }
+
+      setIsLoadingOlderMessages(true);
+      preserveScrollAfterOlderLoadRef.current = {
+        previousHeight: messagesContainerRef.current?.scrollHeight ?? 0,
+      };
+      try {
+        const olderMessages = await fetchCommunityMessages(activeCommunityId, {
+          before: activeMessages[0].createdAt,
+          limit: MESSAGE_PAGE_SIZE,
+        });
+        setHasOlderMessages(olderMessages.length === MESSAGE_PAGE_SIZE);
+        updateCommunities((current) => {
+          const existing = current.find((community) => community.id === activeCommunityId)?.messages ?? [];
+          return setCommunityMessages(current, activeCommunityId, mergeCommunityMessageList(existing, olderMessages));
+        });
+      } finally {
+        setIsLoadingOlderMessages(false);
+      }
+    }, [activeCommunityId, activeMessages, hasOlderMessages, isLoadingOlderMessages, updateCommunities]);
+
+    useEffect(() => {
+      void loadLatestMessages();
+    }, [loadLatestMessages, selectedCommunity?.id]);
+
+    const messageSenderIds = useMemo(() => {
+      const ids = new Set<string>();
+      activeMessages.forEach((message) => {
+        if (message.senderId) ids.add(message.senderId);
+      });
+      return Array.from(ids).sort();
+    }, [activeMessages]);
+
+    useEffect(() => {
+      const catalog = readAvatarCatalogLocal();
+      const levelsById: Record<string, number> = { [user.id]: avatarLevel };
+      for (const senderId of messageSenderIds) {
+        try {
+          const selectedId = window.localStorage.getItem(`raw.avatar.selected.v1.${senderId}`);
+          const index = selectedId ? catalog.findIndex((item) => item.id === selectedId) : -1;
+          if (index >= 0) levelsById[senderId] = index + 1;
+        } catch {
+          // Keep default avatar if local selection cannot be read.
+        }
+      }
+      setSenderAvatarLevels(levelsById);
+
+      const lookupIds = messageSenderIds.filter((senderId) => senderId !== user.id);
+      if (lookupIds.length === 0) return;
+      let cancelled = false;
+      void supabase
+        .from("user_avatar_selection")
+        .select("user_id, avatar_id")
+        .in("user_id", lookupIds)
+        .then(({ data }) => {
+          if (cancelled || !data) return;
+          setSenderAvatarLevels((previous) => {
+            const next = { ...previous, [user.id]: avatarLevel };
+            data.forEach((row) => {
+              const index = catalog.findIndex((item) => item.id === row.avatar_id);
+              if (index >= 0) next[row.user_id] = index + 1;
+            });
+            return next;
+          });
+        });
+      return () => {
+        cancelled = true;
+      };
+    }, [avatarLevel, messageSenderIds, user.id]);
+
     const filteredMessages = useMemo(() => {
       const query = searchQuery.trim().toLowerCase();
       if (!query) {
@@ -400,9 +603,10 @@ const COMMUNITY_LOGOS: Record<string, string> = {
     const directoryCommunities = useMemo(() => {
       return communities;
     }, [communities]);
-
     useEffect(() => {
       setSearchQuery("");
+      setCommunityPollsExpanded(false);
+      setHiddenAnsweredPollIds(new Set());
     }, [activeCommunityId]);
 
     const reloadCommunityPolls = useCallback(async () => {
@@ -428,18 +632,36 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       void reloadCommunityPolls();
     }, [reloadCommunityPolls]);
 
+    useEffect(() => {
+      if (!activeCommunityId || !communityPollsAvailable) return;
+      const channel = supabase
+        .channel(`community-polls:${activeCommunityId}`)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "community_polls", filter: `community_id=eq.${activeCommunityId}` },
+          () => { void reloadCommunityPolls(); },
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "community_poll_votes" },
+          () => { void reloadCommunityPolls(); },
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "community_poll_options" },
+          () => { void reloadCommunityPolls(); },
+        )
+        .subscribe();
+
+      return () => {
+        void supabase.removeChannel(channel);
+      };
+    }, [activeCommunityId, communityPollsAvailable, reloadCommunityPolls]);
+
     const handleOpenPollComposer = useCallback(() => {
       setPollQuestion("");
       setPollOptionDrafts(["", ""]);
       setPollComposerOpen(true);
-    }, []);
-
-    const handleAddPollOption = useCallback(() => {
-      setPollOptionDrafts((drafts) => (drafts.length >= 6 ? drafts : [...drafts, ""]));
-    }, []);
-
-    const handleRemovePollOption = useCallback((index: number) => {
-      setPollOptionDrafts((drafts) => (drafts.length <= 2 ? drafts : drafts.filter((_, i) => i !== index)));
     }, []);
 
     const handleUpdatePollOption = useCallback((index: number, value: string) => {
@@ -496,12 +718,16 @@ const COMMUNITY_LOGOS: Record<string, string> = {
 
       try {
         await voteOnCommunityPoll(pollId, optionId, user.id);
+        await reloadCommunityPolls();
+        window.setTimeout(() => {
+          setHiddenAnsweredPollIds((previous) => new Set([...previous, pollId]));
+        }, 4500);
       } catch (error) {
         console.error("Failed to vote on poll", error);
         setCommunityPolls(previous);
         toast({ title: "Couldn't record vote", description: "Please try again in a moment." });
       }
-    }, [communityPolls, user.id]);
+    }, [communityPolls, reloadCommunityPolls, user.id]);
 
     const handleDeletePoll = useCallback(async (pollId: string) => {
       if (!canManagePolls) return;
@@ -515,6 +741,30 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         toast({ title: "Couldn't delete poll", description: "Please try again in a moment." });
       }
     }, [canManagePolls, communityPolls]);
+
+    const visibleCommunityPolls = useMemo(
+      () => communityPolls.filter((poll) => !hiddenAnsweredPollIds.has(poll.id)),
+      [communityPolls, hiddenAnsweredPollIds],
+    );
+
+    const handleKickMember = useCallback(async (memberId: string, memberName: string) => {
+      if (!selectedCommunity || !canManagePolls || memberId === user.id) return;
+      const confirmed = await confirm({
+        title: `Remove ${memberName}?`,
+        description: `They will lose access to ${selectedCommunity.title}.`,
+        confirmLabel: "Remove",
+        tone: "danger",
+      });
+      if (!confirmed) return;
+
+      try {
+        await leaveCommunitySupabase(selectedCommunity.id, memberId);
+        await reloadChatData();
+        toast({ title: "Member removed", description: `${memberName} was removed from the group.` });
+      } catch {
+        toast({ title: "Could not remove member", description: "Please try again." });
+      }
+    }, [canManagePolls, confirm, reloadChatData, selectedCommunity, user.id]);
 
     useEffect(() => {
       reloadChatData();
@@ -544,12 +794,19 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         .on(
           "postgres_changes",
           {
-            event: "INSERT",
+            event: "*",
             schema: "public",
             table: "community_messages",
             filter: `community_id=eq.${activeCommunityId}`,
           },
           (payload) => {
+            if (payload.eventType === "DELETE") {
+              const deletedId = (payload.old as { id?: string } | null)?.id;
+              if (deletedId) {
+                updateCommunities((current) => removeCommunityMessage(current, activeCommunityId, deletedId));
+              }
+              return;
+            }
             const nextMessage = mapCommunityMessage(payload.new as DbCommunityMessage);
             if (nextMessage.communityId !== activeCommunityId) {
               return;
@@ -563,6 +820,119 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         void supabase.removeChannel(channel);
       };
     }, [activeCommunityId, updateCommunities]);
+
+    useEffect(() => {
+      let cancelled = false;
+      void (async () => {
+        try {
+          const ids = await getUserFavoriteCommunities(user.id);
+          if (!cancelled) setFavoriteCommunityIds(ids);
+        } catch {
+          // Best-effort.
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }, [user.id]);
+
+    useEffect(() => {
+      let cancelled = false;
+      void (async () => {
+        try {
+          const message = await getUserPinnedMessage(user.id);
+          if (!cancelled) setOwnPinnedMessage(message);
+        } catch {
+          // Best-effort.
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }, [user.id]);
+
+    const broadcastFavoritesUpdated = useCallback((ids: string[]) => {
+      window.dispatchEvent(new CustomEvent("raw:favorite-communities-updated", {
+        detail: { userId: user.id, ids },
+      }));
+    }, [user.id]);
+
+    const broadcastPinnedMessageUpdated = useCallback((message: PinnedMessageRecord | null) => {
+      window.dispatchEvent(new CustomEvent("raw:pinned-message-updated", {
+        detail: { userId: user.id, message },
+      }));
+    }, [user.id]);
+
+    const handleToggleFavorite = useCallback(async (communityId: string) => {
+      const isFavorite = favoriteCommunityIds.includes(communityId);
+      let next: string[];
+      if (isFavorite) {
+        next = favoriteCommunityIds.filter((id) => id !== communityId);
+      } else {
+        if (favoriteCommunityIds.length >= MAX_FAVORITE_COMMUNITIES) {
+          toast({ title: "Favorites full", description: `You can pick up to ${MAX_FAVORITE_COMMUNITIES} favorite communities.` });
+          return;
+        }
+        next = [...favoriteCommunityIds, communityId];
+      }
+      const previous = favoriteCommunityIds;
+      setFavoriteCommunityIds(next);
+      broadcastFavoritesUpdated(next);
+      try {
+        await setUserFavoriteCommunities(user.id, next);
+      } catch {
+        setFavoriteCommunityIds(previous);
+        broadcastFavoritesUpdated(previous);
+        toast({ title: "Could not update favorites", description: "Please try again." });
+      }
+    }, [broadcastFavoritesUpdated, favoriteCommunityIds, user.id]);
+
+    const handlePinMessageToProfile = useCallback(async (message: CommunityChatMessageRecord, community: PersistedCommunityRecord) => {
+      try {
+        const payload = {
+          messageId: message.id,
+          communityId: community.id,
+          communityTitle: community.title,
+          senderName: message.senderName,
+          messageText: message.text,
+          messageCreatedAt: message.createdAt,
+        };
+        await setUserPinnedMessage(user.id, payload);
+        const nextPinnedMessage = { ...payload, pinnedAt: new Date().toISOString() };
+        setOwnPinnedMessage(nextPinnedMessage);
+        broadcastPinnedMessageUpdated(nextPinnedMessage);
+        toast({ title: "Pinned to your profile", description: "Others will see this message on your chat profile." });
+      } catch {
+        toast({ title: "Could not pin message", description: "Please try again." });
+      }
+    }, [broadcastPinnedMessageUpdated, user.id]);
+
+    const handleClearPinnedMessage = useCallback(async () => {
+      try {
+        await clearUserPinnedMessage(user.id);
+        setOwnPinnedMessage(null);
+        broadcastPinnedMessageUpdated(null);
+        toast({ title: "Pinned message removed" });
+      } catch {
+        toast({ title: "Could not remove pinned message", description: "Please try again." });
+      }
+    }, [broadcastPinnedMessageUpdated, user.id]);
+
+    const handleOpenSenderProfile = useCallback((message: CommunityChatMessageRecord) => {
+      setProfileDialogOpen(true);
+      setProfileTarget({ message, profile: null, loading: true });
+      getPublicUserProfile(message.senderId)
+        .then((profile) => {
+          setProfileTarget((current) => (
+            current?.message.id === message.id ? { message, profile, loading: false } : current
+          ));
+        })
+        .catch(() => {
+          setProfileTarget((current) => (
+            current?.message.id === message.id ? { message, profile: null, loading: false } : current
+          ));
+        });
+    }, []);
 
     useEffect(() => {
       if (!selectedCommunity || !isJoined) {
@@ -595,6 +965,13 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         return;
       }
 
+      if (preserveScrollAfterOlderLoadRef.current) {
+        const { previousHeight } = preserveScrollAfterOlderLoadRef.current;
+        preserveScrollAfterOlderLoadRef.current = null;
+        messagesContainerRef.current.scrollTop += messagesContainerRef.current.scrollHeight - previousHeight;
+        return;
+      }
+
       messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
     }, [activeMessages, activeCommunityId, searchQuery]);
 
@@ -620,6 +997,24 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       }
     };
 
+    const handlePaidJoinCommunity = async (communityId: string, shouldOpenPage = false) => {
+      const targetCommunity = communities.find((community) => community.id === communityId);
+      if (!targetCommunity || unlockingId === communityId) {
+        return;
+      }
+
+      setUnlockingId(communityId);
+      try {
+        setCommunityAccess((prev) => ({
+          ...prev,
+          unlockedIds: new Set([...prev.unlockedIds, communityId]),
+        }));
+        await handleJoinCommunity(communityId, shouldOpenPage);
+      } finally {
+        setUnlockingId(null);
+      }
+    };
+
     const handleLeaveCommunity = async () => {
       if (!selectedCommunity || !isJoined || leavingCommunityId) {
         return;
@@ -631,7 +1026,6 @@ const COMMUNITY_LOGOS: Record<string, string> = {
 
       try {
         await leaveCommunitySupabase(communityId, user.id);
-        leaveCommunityChat(communityId, user.id);
         lastTouchedCommunityRef.current = "";
         await reloadChatData();
         onBackToCommunities?.();
@@ -710,27 +1104,13 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       if (unlockingId === communityId) return;
       setUnlockingId(communityId);
       try {
-        const result = await unlockCommunity(user.id, communityId);
-        if (!result.ok) {
-          if (result.error === "insufficient_tokens") {
-            toast({
-              title: "Not enough tokens",
-              description: `You need ${COMMUNITY_UNLOCK_TOKEN_COST} tokens. Buy more in Billing.`,
-            });
-            return;
-          }
-          // RPC missing or network error — open anyway, access check will re-run on next load
-          onOpenCommunity(communityId);
-          return;
-        }
         setCommunityAccess((prev) => ({
           ...prev,
           unlockedIds: new Set([...prev.unlockedIds, communityId]),
         }));
-        onOpenCommunity(communityId);
+        await handleJoinCommunity(communityId, true);
       } catch {
-        // Fallback: open the community rather than blocking the user
-        onOpenCommunity(communityId);
+        toast({ title: "Could not join group", description: "Please try again." });
       } finally {
         setUnlockingId(null);
       }
@@ -770,6 +1150,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         const savedMessage = await sendMessageSupabase(selectedCommunity.id, {
           senderId: user.id,
           senderName: user.username,
+          senderAvatarLevel: avatarLevel,
           text: trimmedMessage,
         });
         updateCommunities((current) => replaceCommunityMessage(current, selectedCommunity.id, optimisticMessage.id, savedMessage));
@@ -785,7 +1166,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         updateCommunities((current) => markCommunityMessageFailed(current, selectedCommunity.id, optimisticMessage.id));
         toast({ title: "Failed to send message", description: "Please try again." });
       }
-    }, [isJoined, selectedCommunity, updateCommunities, user.id, user.username]);
+    }, [avatarLevel, isJoined, selectedCommunity, updateCommunities, user.id, user.username]);
 
     const handleSendMessage = async () => {
       if (!selectedCommunity) {
@@ -838,7 +1219,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       }
     };
 
-    const handleCommunitySettingsSave = () => {
+    const handleCommunitySettingsSave = async () => {
       if (!selectedCommunity || !canEditSelectedCommunity) {
         toast({
           title: "Creator access required",
@@ -856,14 +1237,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         return;
       }
 
-      const updatedCommunity = updateCommunityPresentation(selectedCommunity.id, {
-        actorUserId: user.id,
-        actorUsername: user.username,
-        title: trimmedTitle,
-        logoUrl: communitySettingsDraft.logoUrl,
-      });
-
-      if (!updatedCommunity) {
+      if (!canManageCommunity(selectedCommunity, user.id, user.username)) {
         toast({
           title: "Creator access required",
           description: "Only the community creator can change the group name or logo.",
@@ -871,15 +1245,23 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         return;
       }
 
-      reloadChatData();
-      setLogoDialogOpen(false);
-      toast({
-        title: "Community updated",
-        description: `${updatedCommunity.title} now shows the latest name and logo across the app.`,
-      });
+      try {
+        await updateCommunityPresentation(selectedCommunity.id, {
+          title: trimmedTitle,
+          logoUrl: communitySettingsDraft.logoUrl,
+        });
+        await reloadChatData();
+        setLogoDialogOpen(false);
+        toast({
+          title: "Community updated",
+          description: `${trimmedTitle} now shows the latest name and logo across the app.`,
+        });
+      } catch {
+        toast({ title: "Update failed", description: "Please try again." });
+      }
     };
 
-    const handleSubmitReport = () => {
+    const handleSubmitReport = async () => {
       if (!reportTarget) {
         return;
       }
@@ -895,33 +1277,66 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       }
 
       const reportedUser = ensureUserRecord(reportTarget.message.senderName);
-      const nextReport: ChatReportRecord = {
-        id: `chat-report-${Date.now()}`,
-        communityId: reportTarget.communityId,
-        communityTitle: reportTarget.communityTitle,
-        messageId: reportTarget.message.id,
-        messageText: reportTarget.message.text,
-        reportedUserId: reportTarget.message.senderId || reportedUser.id,
-        reportedUsername: reportTarget.message.senderName,
-        reporterId: user.id,
-        reporterName: user.username,
-        reason,
-        details,
-        createdAt: new Date().toISOString(),
-        status: "open",
-      };
+      const reportedUsername = reportTarget.message.senderName;
+      try {
+        const saved = await submitChatReport({
+          communityId: reportTarget.communityId,
+          communityTitle: reportTarget.communityTitle,
+          messageId: reportTarget.message.id,
+          messageText: reportTarget.message.text,
+          reportedUserId: reportTarget.message.senderId || reportedUser.id,
+          reportedUsername,
+          reporterId: user.id,
+          reporterName: user.username,
+          reason,
+          details,
+        });
+        setChatReports((previous) => [saved, ...previous]);
+        setReportDialogOpen(false);
+        setReportTarget(null);
+        setReportDraft(INITIAL_REPORT_DRAFT);
+        toast({
+          title: "Report sent for review",
+          description: `The message from ${reportedUsername} is now in the admin review queue.`,
+        });
+      } catch (error) {
+        toast({
+          title: "Could not send report",
+          description: error instanceof Error ? error.message : "Please try again.",
+        });
+      }
+    };
 
-      setChatReports((previous) => {
-        const nextReports = [nextReport, ...previous];
-        writeChatReports(nextReports);
-        return nextReports;
+    const handleOpenMessageReport = (message: CommunityChatMessageRecord) => {
+      if (!selectedCommunity) return;
+      setReportTarget({
+        communityId: selectedCommunity.id,
+        communityTitle: selectedCommunity.title,
+        message,
       });
-      setReportDialogOpen(false);
-      setReportTarget(null);
       setReportDraft(INITIAL_REPORT_DRAFT);
+      setReportDialogOpen(true);
+    };
+
+    const handleBlockMessageSender = (message: CommunityChatMessageRecord) => {
+      if (message.senderId === user.id || message.senderName === user.username) {
+        toast({
+          title: "Can't block yourself",
+          description: "This menu only blocks messages from other members.",
+        });
+        return;
+      }
+
+      const senderKey = getMessageSenderBlockKey(message);
+      setBlockedSenderKeys((previous) => {
+        if (previous.includes(senderKey)) return previous;
+        const next = [...previous, senderKey];
+        writeBlockedCommunitySenders(user.id, next);
+        return next;
+      });
       toast({
-        title: "Report sent for review",
-        description: `The message from ${nextReport.reportedUsername} is now in the admin review queue.`,
+        title: `${message.senderName} blocked`,
+        description: "Their messages are hidden from your community chat view.",
       });
     };
 
@@ -1028,169 +1443,35 @@ const COMMUNITY_LOGOS: Record<string, string> = {
           </div>
         )}
 
-        <div className="grid grid-cols-2 items-stretch gap-4 sm:gap-5 lg:grid-cols-2 xl:grid-cols-3">
-          {directoryCommunities.map((community) => {
-            const joined = community.members.some((member) => member.userId === user.id);
-            // Count joined communities toward free quota so existing members don't get unlimited free slots on new communities
-            const joinedCount = directoryCommunities.filter(c => c.members.some(m => m.userId === user.id)).length;
-            const effectiveUnlockCount = Math.max(communityAccess.unlockedIds.size, joinedCount);
-            const communityUnreadCount = joined ? countUnreadMessages(community, user.id) : 0;
-            const coverImage = COMMUNITY_COVER_IMAGES[community.id] ?? community.logoUrl;
-            const coverVideo = COMMUNITY_COVER_VIDEOS[community.id];
-            const isExpanded = expandedDescs.has(community.id);
-            const descLong = community.description.length > 120;
-
-            return (
-              <div key={community.id} className="flex flex-col overflow-hidden rounded-2xl border border-raw-border/30 bg-raw-surface/35 shadow-[0_8px_24px_rgba(0,0,0,0.22)]">
-                {/* Cover image */}
-                <div className="relative h-28 sm:h-44 shrink-0 overflow-hidden border-b border-raw-border/25">
-                  {coverVideo ? (
-                    <video src={coverVideo} className="h-full w-full object-cover" autoPlay loop muted playsInline preload="auto" />
-                  ) : coverImage ? (
-                    <img src={coverImage} alt={`${community.title} cover`} className="h-full w-full object-cover" loading="lazy" />
-                  ) : (
-                    <div className="h-full w-full bg-gradient-to-br from-raw-gold/12 via-raw-surface/30 to-raw-black/70" />
-                  )}
-                  {!coverVideo && <div className="absolute inset-0 bg-gradient-to-t from-raw-black/85 via-raw-black/30 to-transparent" />}
-                  <div className="absolute bottom-2 right-2 rounded-full border border-raw-border/40 bg-raw-black/60 px-2 py-0.5 text-[9px] text-raw-silver/70 backdrop-blur-sm">
-                    {joined ? "Joined" : community.locked ? "Locked" : "Not joined"}
-                  </div>
-                </div>
-
-                <div className="flex flex-1 flex-col p-3 sm:p-5">
-                  {/* Title row */}
-                  <div className="flex items-center gap-2">
-                    <CommunityBadge abbr={community.abbr} title={community.title} logoUrl={COMMUNITY_LOGOS[community.id] ?? community.logoUrl} />
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <p className="font-display text-xs sm:text-base tracking-wide text-raw-text leading-tight">{community.title}</p>
-                        {communityUnreadCount > 0 && (
-                          <span className="rounded-full bg-raw-gold px-1.5 py-0.5 text-[9px] font-semibold text-raw-ink">
-                            {communityUnreadCount}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-[9px] uppercase tracking-[0.14em] text-raw-gold/65">{community.status}</p>
-                    </div>
-                  </div>
-
-                  {/* Description */}
-                  <div className="mt-2">
-                    <p className={`text-[11px] sm:text-sm leading-relaxed text-raw-silver/50 line-clamp-2 sm:${!isExpanded && descLong ? "line-clamp-3" : ""}`}>
-                      {community.description}
-                    </p>
-                    {descLong && (
-                      <button
-                        onClick={() => setExpandedDescs((prev) => {
-                          const next = new Set(prev);
-                          if (isExpanded) next.delete(community.id);
-                          else next.add(community.id);
-                          return next;
-                        })}
-                        className="mt-0.5 hidden sm:block text-xs text-raw-gold/60 hover:text-raw-gold"
-                      >
-                        {isExpanded ? "Show less" : "Show more"}
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Members row */}
-                  <div className="mt-2 sm:mt-4 flex items-center gap-2 text-[10px] text-raw-silver/35">
-                    <span className="flex items-center gap-1">
-                      <Users className="h-3 w-3" /> {community.members.length}
-                    </span>
-                    {!community.locked && (
-                      <span className="flex items-center gap-1">
-                        <div className="h-1.5 w-1.5 rounded-full bg-emerald-400/70" /> {countOnlineMembers(community)}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Action button */}
-                  <div className="mt-auto pt-3">
-                    {community.locked && !joined ? (() => {
-                      const joinReq = communityJoinRequests.find(
-                        (r) => r.communityId === community.id && r.requesterId === user.id,
-                      );
-                      if (joinReq?.status === "approved") {
-                        return (
-                          <Button
-                            onClick={() => handleJoinCommunity(community.id, true)}
-                            className="w-full rounded-xl bg-raw-gold px-2 py-2 text-xs text-raw-ink hover:bg-raw-gold/90"
-                          >
-                            Open Chat
-                          </Button>
-                        );
-                      }
-                      const onWaitlist = waitlistJoinedIds.has(community.id);
-                      const waitlistCount = waitlistCounts[community.id] ?? 0;
-                      const isJoining = waitlistJoiningId === community.id;
-                      return (
-                        <div className="space-y-1.5">
-                          <Button
-                            onClick={() => handleJoinWaitlist(community)}
-                            disabled={onWaitlist || isJoining}
-                            className="w-full rounded-xl border border-raw-gold/30 bg-transparent px-2 py-2 text-xs text-raw-gold hover:bg-raw-gold/10 disabled:opacity-70"
-                          >
-                            <Lock className="h-3 w-3" /> {onWaitlist ? "On Waitlist" : "Join Waitlist"}
-                          </Button>
-                          <p className="text-center text-[10px] text-raw-silver/45">
-                            <span className="text-raw-gold/80">{waitlistCount}</span>
-                            <span className="text-raw-silver/35">/{WAITLIST_UNLOCK_THRESHOLD}</span>
-                            <span className="ml-1">to unlock</span>
-                          </p>
-                        </div>
-                      );
-                    })() : (() => {
-                      const isUnlocked = joined || communityAccess.hasSubscription || communityAccess.unlockedIds.has(community.id);
-                      const canGetFree = !isUnlocked && effectiveUnlockCount < FREE_COMMUNITY_SLOTS;
-                      const freeRemaining = Math.max(0, FREE_COMMUNITY_SLOTS - effectiveUnlockCount);
-                      const isUnlocking = unlockingId === community.id;
-                      if (isUnlocked) {
-                        return (
-                          <Button
-                            onClick={() => onOpenCommunity(community.id)}
-                            className="w-full rounded-xl bg-raw-gold px-2 py-2 text-xs text-raw-ink hover:bg-raw-gold/90"
-                          >
-                            Open Chat
-                          </Button>
-                        );
-                      }
-                      if (canGetFree) {
-                        return (
-                          <div className="space-y-1.5">
-                            <Button
-                              onClick={() => handleUnlockCommunity(community.id)}
-                              disabled={isUnlocking}
-                              className="w-full rounded-xl bg-raw-gold px-2 py-2 text-xs text-raw-ink hover:bg-raw-gold/90 disabled:opacity-70"
-                            >
-                              {isUnlocking ? "Opening…" : "Open Chat — Free"}
-                            </Button>
-                            <p className="text-center text-[10px] text-raw-silver/40">
-                              {freeRemaining} free slot{freeRemaining === 1 ? "" : "s"} remaining
-                            </p>
-                          </div>
-                        );
-                      }
-                      return (
-                        <div className="space-y-1.5">
-                          <Button
-                            onClick={() => handleUnlockCommunity(community.id)}
-                            disabled={isUnlocking}
-                            className="w-full rounded-xl border border-raw-gold/40 bg-transparent px-2 py-2 text-xs text-raw-gold hover:bg-raw-gold/10 disabled:opacity-70"
-                          >
-                            <Lock className="h-3 w-3" /> {isUnlocking ? "Unlocking…" : `Unlock — ${COMMUNITY_UNLOCK_TOKEN_COST} tokens`}
-                          </Button>
-                          <p className="text-center text-[10px] text-raw-silver/40">or subscribe for all access</p>
-                        </div>
-                      );
-                    })()}
-                  </div>
-                </div>
-              </div>
-            );
+        <CommunityRoomList
+          communities={directoryCommunities}
+          userId={user.id}
+          logoUrlsByCommunityId={COMMUNITY_LOGOS}
+          coverImagesByCommunityId={COMMUNITY_COVER_IMAGES}
+          coverVideosByCommunityId={COMMUNITY_COVER_VIDEOS}
+          expandedDescriptionIds={expandedDescs}
+          joinRequests={communityJoinRequests}
+          waitlistJoinedIds={waitlistJoinedIds}
+          waitlistCounts={waitlistCounts}
+          waitlistJoiningId={waitlistJoiningId}
+          waitlistUnlockThreshold={WAITLIST_UNLOCK_THRESHOLD}
+          hasSubscriptionAccess={communityAccess.hasSubscription}
+          unlockedCommunityIds={communityAccess.unlockedIds}
+          unlockingId={unlockingId}
+          onToggleDescription={(communityId) => setExpandedDescs((previous) => {
+            const next = new Set(previous);
+            if (next.has(communityId)) next.delete(communityId);
+            else next.add(communityId);
+            return next;
           })}
-        </div>
+          onPaidJoinCommunity={(communityId, shouldOpenPage) => { void handlePaidJoinCommunity(communityId, shouldOpenPage); }}
+          onJoinWaitlist={(community) => { void handleJoinWaitlist(community); }}
+          onOpenCommunity={onOpenCommunity}
+          onUnlockCommunity={(communityId) => { void handleUnlockCommunity(communityId); }}
+          favoriteCommunityIds={favoriteCommunityIds}
+          favoriteLimitReached={favoriteCommunityIds.length >= MAX_FAVORITE_COMMUNITIES}
+          onToggleFavorite={(communityId) => { void handleToggleFavorite(communityId); }}
+        />
       </div>
     );
 
@@ -1200,9 +1481,12 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       }
 
       return (
-        <div
+        <motion.div
           className="fixed inset-x-0 top-14 z-30 flex flex-col overflow-hidden sm:static sm:inset-auto sm:z-auto sm:block sm:h-auto sm:overflow-visible sm:space-y-6"
           style={{ bottom: "max(72px, calc(56px + env(safe-area-inset-bottom)))" }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.16, ease: "easeOut" }}
         >
           {/* Desktop: full header card */}
           <div className="hidden sm:flex sm:flex-wrap sm:items-start sm:justify-between sm:gap-4 sm:rounded-3xl sm:border sm:border-raw-border/30 sm:bg-raw-surface/25 sm:p-5">
@@ -1230,7 +1514,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
               )}
               {!isJoined && !selectedCommunity.locked && (
                 <button
-                  onClick={() => handleJoinCommunity(selectedCommunity.id)}
+                  onClick={() => handlePaidJoinCommunity(selectedCommunity.id)}
                   className="flex items-center gap-2 rounded-full bg-raw-gold px-3 py-1.5 text-[11px] font-semibold text-raw-ink transition-colors hover:bg-raw-gold/90"
                 >
                   Join Group
@@ -1243,7 +1527,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                 if (joinReq?.status === "approved") {
                   return (
                     <button
-                      onClick={() => handleJoinCommunity(selectedCommunity.id)}
+                      onClick={() => handlePaidJoinCommunity(selectedCommunity.id)}
                       className="flex items-center gap-2 rounded-full bg-raw-gold px-3 py-1.5 text-[11px] font-semibold text-raw-ink transition-colors hover:bg-raw-gold/90"
                     >
                       Join Group
@@ -1267,6 +1551,19 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                 );
               })()}
               {canEditSelectedCommunity && (
+                <>
+                <button
+                  onClick={() => setMembersDialogOpen(true)}
+                  className="flex items-center gap-2 rounded-full border border-raw-border/30 px-3 py-1.5 text-[11px] text-raw-silver/55 transition-colors hover:border-raw-gold/20 hover:text-raw-gold"
+                >
+                  <Users className="h-3.5 w-3.5" /> Members
+                </button>
+                <button
+                  onClick={() => setCommunityPollsExpanded((expanded) => !expanded)}
+                  className="flex items-center gap-2 rounded-full border border-raw-border/30 px-3 py-1.5 text-[11px] text-raw-silver/55 transition-colors hover:border-raw-gold/20 hover:text-raw-gold"
+                >
+                  <BarChart3 className="h-3.5 w-3.5" /> Poll Results
+                </button>
                 <button
                   onClick={() => {
                     setCommunitySettingsDraft({
@@ -1279,7 +1576,34 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                 >
                   Edit Group
                 </button>
+                </>
               )}
+              {isJoined && (() => {
+                const isFavorite = favoriteCommunityIds.includes(selectedCommunity.id);
+                const favLimitHit = !isFavorite && favoriteCommunityIds.length >= MAX_FAVORITE_COMMUNITIES;
+                return (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (favLimitHit) return;
+                      void handleToggleFavorite(selectedCommunity.id);
+                    }}
+                    disabled={favLimitHit}
+                    aria-pressed={isFavorite}
+                    title={isFavorite ? "Remove from favorites" : favLimitHit ? "Favorites limit reached (3)" : "Add to favorites"}
+                    className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] transition-colors ${
+                      isFavorite
+                        ? "border-raw-gold/55 bg-raw-gold/15 text-raw-gold"
+                        : favLimitHit
+                          ? "border-raw-border/25 bg-raw-black/30 text-raw-silver/35"
+                          : "border-raw-border/30 text-raw-silver/55 hover:border-raw-gold/30 hover:text-raw-gold"
+                    }`}
+                  >
+                    <Star className={`h-3.5 w-3.5 ${isFavorite ? "fill-current" : ""}`} />
+                    <span>{isFavorite ? "Favorited" : "Favorite"}</span>
+                  </button>
+                );
+              })()}
               {isJoined && (
                 <button
                   onClick={handleLeaveCommunity}
@@ -1347,6 +1671,80 @@ const COMMUNITY_LOGOS: Record<string, string> = {
 
           {(!selectedCommunity.locked || isJoined) && (
           <div className="flex flex-1 min-h-0 flex-col overflow-hidden sm:rounded-2xl sm:border sm:border-raw-border/20 sm:bg-raw-black/35 sm:flex-none sm:h-[calc(100dvh_-_260px)] sm:min-h-[360px]">
+            {visibleCommunityPolls.length > 0 && (
+              <div className="border-b border-raw-border/15 px-4 py-3">
+                <button
+                  type="button"
+                  onClick={() => setCommunityPollsExpanded((expanded) => !expanded)}
+                  className="flex w-full items-center justify-between gap-3 rounded-xl border border-raw-gold/25 bg-raw-gold/[0.04] px-3 py-2 text-left"
+                  aria-expanded={communityPollsExpanded}
+                >
+                  <span className="min-w-0">
+                    <span className="block text-[10px] uppercase tracking-[0.18em] text-raw-gold/75">
+                      Polls · Pinned
+                    </span>
+                    <span className="block truncate text-sm font-semibold text-raw-text">
+                      {visibleCommunityPolls.length === 1 ? visibleCommunityPolls[0].question : `${visibleCommunityPolls.length} active polls`}
+                    </span>
+                  </span>
+                  <span className="shrink-0 rounded-full border border-raw-border/30 px-2 py-0.5 text-[10px] text-raw-silver/55">
+                    {communityPollsExpanded ? "Hide" : "Answer"}
+                  </span>
+                </button>
+
+                {communityPollsExpanded && (
+                  <div className="mt-3 max-h-72 space-y-3 overflow-y-auto pr-1">
+                    {visibleCommunityPolls.map((poll) => {
+                      const totalVotes = poll.totalVotes;
+                      return (
+                        <div key={`poll-panel-${poll.id}`} className="rounded-2xl border border-raw-gold/25 p-3">
+                          <div className="mb-2 flex items-start justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-semibold text-raw-text">{poll.question}</p>
+                              <p className="mt-0.5 text-[10px] text-raw-silver/45">
+                                {totalVotes} {totalVotes === 1 ? "vote" : "votes"} · anonymous results only
+                              </p>
+                            </div>
+                            {canManagePolls && (
+                              <button
+                                onClick={() => { void handleDeletePoll(poll.id); }}
+                                className="rounded-full border border-raw-border/30 p-1.5 text-raw-silver/45 hover:border-red-400/40 hover:text-red-300"
+                                aria-label="Archive poll"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            )}
+                          </div>
+                          <div className="space-y-2">
+                            {poll.options.map((option) => {
+                              const isSelected = poll.userVoteOptionId === option.id;
+                              const pct = totalVotes === 0 ? 0 : Math.round((option.votes / totalVotes) * 100);
+                              return (
+                                <button
+                                  key={option.id}
+                                  onClick={() => { void handleVoteOnPoll(poll.id, option.id); }}
+                                  className={`relative w-full overflow-hidden rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
+                                    isSelected
+                                      ? "border-raw-gold/60 bg-raw-gold/15 text-raw-text"
+                                      : "border-raw-border/25 bg-raw-black/30 text-raw-silver/80 hover:border-raw-gold/40"
+                                  }`}
+                                >
+                                  <div className="absolute inset-y-0 left-0 bg-raw-gold/15" style={{ width: `${pct}%` }} aria-hidden />
+                                  <div className="relative flex items-center justify-between gap-2">
+                                    <span className="font-medium">{option.text}</span>
+                                    <span className="text-[11px] text-raw-silver/55">{option.votes} · {pct}%</span>
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
             {/* Search bar */}
             <div className="flex items-center gap-3 border-b border-raw-border/15 px-4 py-2.5">
               <Search className="h-4 w-4 shrink-0 text-raw-silver/35" />
@@ -1363,256 +1761,64 @@ const COMMUNITY_LOGOS: Record<string, string> = {
               )}
             </div>
 
-            {/* Messages */}
-            <div ref={messagesContainerRef} className="flex-1 space-y-3 overflow-y-auto p-4">
-              {communityPolls.map((poll) => {
-                const totalVotes = poll.totalVotes;
-                return (
-                  <div
-                    key={`poll-${poll.id}`}
-                    className="rounded-2xl border border-raw-gold/30 bg-raw-gold/5 p-4 backdrop-blur-sm"
-                  >
-                    <div className="mb-2 flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-[10px] uppercase tracking-[0.18em] text-raw-gold/70">
-                          <BarChart3 className="mr-1 inline h-3 w-3" />
-                          Poll · Pinned
-                        </p>
-                        <p className="mt-1 text-sm font-semibold text-raw-text">{poll.question}</p>
-                        <p className="mt-0.5 text-[10px] text-raw-silver/45">
-                          by {poll.createdByUsername} · {formatChatTimestamp(poll.createdAt)}
-                        </p>
-                      </div>
-                      {canManagePolls && (
-                        <button
-                          onClick={() => { void handleDeletePoll(poll.id); }}
-                          className="rounded-full border border-raw-border/30 p-1.5 text-raw-silver/45 hover:border-red-400/40 hover:text-red-300"
-                          aria-label="Delete poll"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      {poll.options.map((option) => {
-                        const isSelected = poll.userVoteOptionId === option.id;
-                        const pct = totalVotes === 0 ? 0 : Math.round((option.votes / totalVotes) * 100);
-                        return (
-                          <button
-                            key={option.id}
-                            onClick={() => { void handleVoteOnPoll(poll.id, option.id); }}
-                            className={`relative w-full overflow-hidden rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
-                              isSelected
-                                ? "border-raw-gold/60 bg-raw-gold/15 text-raw-text"
-                                : "border-raw-border/25 bg-raw-black/30 text-raw-silver/80 hover:border-raw-gold/40"
-                            }`}
-                          >
-                            <div
-                              className="absolute inset-y-0 left-0 bg-raw-gold/15"
-                              style={{ width: `${pct}%` }}
-                              aria-hidden
-                            />
-                            <div className="relative flex items-center justify-between gap-2">
-                              <span className="font-medium">{option.text}</span>
-                              <span className="text-[11px] text-raw-silver/55">
-                                {option.votes} · {pct}%
-                              </span>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <p className="mt-2 text-[10px] text-raw-silver/40">
-                      {totalVotes} {totalVotes === 1 ? "vote" : "votes"}
-                      {poll.userVoteOptionId ? " · You voted" : " · Tap an option to vote"}
-                    </p>
-                  </div>
-                );
-              })}
-              {groupedMessages.map((group) => (
-                <div key={group.label} className="space-y-3">
-                  <div className="sticky top-0 z-10 flex justify-center py-1">
-                    <span className="rounded-full border border-raw-border/20 bg-raw-black/85 px-3 py-1 text-[10px] uppercase tracking-[0.16em] text-raw-silver/40 backdrop-blur">
-                      {group.label}
-                    </span>
-                  </div>
-                  {group.messages.map((message) => {
-                    const isOwnMessage = message.senderId === user.id || message.senderName === user.username;
-                    const likedBy = message.likedBy ?? [];
-                    const alreadyLiked = likedBy.includes(user.id);
-                    const likeCount = likedBy.length;
+            <CommunityMessageTimeline
+              containerRef={messagesContainerRef}
+              polls={communityPolls}
+              groupedMessages={groupedMessages}
+              activeMessageCount={activeMessages.length}
+              messagesLoading={messagesLoading}
+              messagesError={messagesError}
+              canManagePolls={canManagePolls}
+              userId={user.id}
+              username={user.username}
+              senderAvatarLevels={senderAvatarLevels}
+              onDeletePoll={(pollId) => { void handleDeletePoll(pollId); }}
+              onVotePoll={(pollId, optionId) => { void handleVoteOnPoll(pollId, optionId); }}
+              onRetryMessage={(message) => { void handleRetryMessage(message); }}
+              onLikeMessage={(message) => { void handleLikeMessage(message); }}
+              onOpenSenderProfile={handleOpenSenderProfile}
+              onOpenMessageReport={handleOpenMessageReport}
+              onBlockMessageSender={handleBlockMessageSender}
+              pinnedMessageId={ownPinnedMessage?.messageId ?? null}
+              onPinMessageToProfile={(message) => {
+                if (!selectedCommunity) return;
+                void handlePinMessageToProfile(message, selectedCommunity);
+              }}
+              onUnpinMessageFromProfile={() => { void handleClearPinnedMessage(); }}
+            />
 
-                    return (
-                      <div key={message.id} className="group/msg relative w-full rounded-xl px-3.5 py-2.5 backdrop-blur-sm"
-                        style={isOwnMessage ? {
-                          background: "rgb(var(--raw-accent) / 0.10)",
-                          border: "1px solid rgb(var(--raw-accent) / 0.25)",
-                        } : {
-                          background: "rgba(255,255,255,0.03)",
-                          border: "1px solid rgba(255,255,255,0.07)",
-                        }}
-                      >
-                        {message.replyToText && (
-                          <div className="mb-1.5 rounded-lg border border-raw-border/20 bg-raw-black/20 px-2.5 py-1.5 text-xs text-raw-silver/55">
-                            <p className="font-medium text-raw-gold/75">↩ {message.replyToSenderName}</p>
-                            <p className="mt-0.5 truncate">{message.replyToText}</p>
-                          </div>
-                        )}
-                        <p className={`break-words [overflow-wrap:anywhere] text-sm leading-snug ${message.deletedAt ? "italic text-raw-silver/45" : ""}`}>
-                          <span
-                            className="mr-0.5 font-semibold uppercase tracking-wide text-[11px]"
-                            style={{ color: isOwnMessage ? "rgb(var(--raw-accent))" : "rgb(var(--raw-accent) / 0.65)" }}
-                          >
-                            {message.senderName}:
-                          </span>
-                          {" "}
-                          <span className={isOwnMessage ? "text-raw-text" : "text-raw-silver/75"}>
-                            {message.text.split(/(@\w+)/g).map((part, i) =>
-                              /^@\w+$/.test(part)
-                                ? <span key={i} className="font-semibold text-raw-gold">{part}</span>
-                                : part
-                            )}
-                          </span>
-                          <span className="ml-2 text-[9px] text-raw-silver/25">{formatChatTimestamp(message.createdAt)}</span>
-                          {message.pinned && <span className="ml-1 text-[9px] text-raw-gold/60">· Pinned</span>}
-                          {message.deliveryStatus === "sending" && <span className="ml-1 text-[9px] text-raw-silver/35">· Sending</span>}
-                          {message.deliveryStatus === "failed" && <span className="ml-1 text-[9px] text-red-300/80">· Failed</span>}
-                        </p>
-                        {message.deliveryStatus === "failed" && (
-                          <button
-                            onClick={() => { void handleRetryMessage(message); }}
-                            className="mt-1 text-[10px] font-semibold text-red-200/90 underline-offset-2 hover:underline"
-                          >
-                            Retry
-                          </button>
-                        )}
-                        {!message.deletedAt && !message.deliveryStatus && (
-                          <button
-                            onClick={() => { void handleLikeMessage(message); }}
-                            className={`absolute right-2.5 top-1/2 -translate-y-1/2 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] transition-all ${alreadyLiked ? "border-raw-gold/45 bg-raw-gold/10 text-raw-gold opacity-100" : "border-raw-border/20 text-raw-silver/40 opacity-0 group-hover/msg:opacity-100"}`}
-                          >
-                            <Heart className={`h-2.5 w-2.5 ${alreadyLiked ? "fill-current" : ""}`} />
-                            {likeCount > 0 && <span>{likeCount}</span>}
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              ))}
-
-              {!groupedMessages.length && !activeMessages.length && (
-                <div className="flex h-full items-center justify-center text-sm text-raw-silver/35">
-                  This group is quiet right now. Join and start the first real conversation.
-                </div>
-              )}
-              {!groupedMessages.length && activeMessages.length > 0 && (
-                <div className="flex h-full items-center justify-center text-sm text-raw-silver/35">
-                  No messages match your search.
-                </div>
-              )}
-            </div>
-
-            {/* Input */}
-            <div className="border-t border-raw-border/15 px-3 py-3">
-              {isUserBanned && (
-                <div className="mb-2 rounded-xl border border-red-400/20 bg-red-500/10 px-3 py-2 text-xs text-red-100">
-                  Chat posting is disabled for this account.
-                </div>
-              )}
-              {mentionQuery !== null && (() => {
-                const members = selectedCommunity?.members ?? [];
-                const filtered = members.filter((m) => m.username.toLowerCase().startsWith(mentionQuery.toLowerCase())).slice(0, 6);
-                if (!filtered.length) return null;
-                return (
-                  <div className="mb-2 rounded-xl border border-raw-border/30 bg-raw-black/90 overflow-hidden">
-                    {filtered.map((m, i) => (
-                      <button
-                        key={m.userId}
-                        type="button"
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          const atIdx = messageDraft.lastIndexOf("@");
-                          const newVal = messageDraft.slice(0, atIdx) + `@${m.username} `;
-                          setMessageDraft(newVal);
-                          setMentionQuery(null);
-                          setTimeout(() => messageInputRef.current?.focus(), 0);
-                        }}
-                        className={`w-full px-4 py-2 text-left text-sm text-raw-text hover:bg-raw-surface/40 ${i === mentionIndex ? "bg-raw-surface/30" : ""}`}
-                      >
-                        @{m.username}
-                      </button>
-                    ))}
-                  </div>
-                );
-              })()}
-              <div className="flex gap-2">
-                {canManagePolls && (
-                  <button
-                    onClick={handleOpenPollComposer}
-                    disabled={isUserBanned}
-                    title="Post a poll"
-                    aria-label="Post a poll"
-                    className="flex items-center justify-center rounded-xl border border-raw-border/30 bg-raw-surface/30 px-3 py-2.5 text-raw-silver/70 hover:border-raw-gold/40 hover:text-raw-gold disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    <BarChart3 className="h-4 w-4" />
-                  </button>
-                )}
-                <input
-                  ref={messageInputRef}
-                  value={messageDraft}
-                  maxLength={MAX_COMMUNITY_MESSAGE_LENGTH}
-                  onChange={(event) => {
-                    const val = event.target.value;
-                    setMessageDraft(val);
-                    const atIdx = val.lastIndexOf("@");
-                    if (atIdx !== -1 && (atIdx === 0 || val[atIdx - 1] === " ")) {
-                      setMentionQuery(val.slice(atIdx + 1));
-                      setMentionIndex(0);
-                    } else {
-                      setMentionQuery(null);
-                    }
-                  }}
-                  onKeyDown={(event) => {
-                    if (mentionQuery !== null) {
-                      const members = (selectedCommunity?.members ?? []).filter((m) => m.username.toLowerCase().startsWith(mentionQuery.toLowerCase())).slice(0, 6);
-                      if (event.key === "ArrowDown") { event.preventDefault(); setMentionIndex((i) => Math.min(i + 1, members.length - 1)); return; }
-                      if (event.key === "ArrowUp") { event.preventDefault(); setMentionIndex((i) => Math.max(i - 1, 0)); return; }
-                      if ((event.key === "Enter" || event.key === "Tab") && members[mentionIndex]) {
-                        event.preventDefault();
-                        const atIdx = messageDraft.lastIndexOf("@");
-                        setMessageDraft(messageDraft.slice(0, atIdx) + `@${members[mentionIndex].username} `);
-                        setMentionQuery(null);
-                        return;
-                      }
-                      if (event.key === "Escape") { setMentionQuery(null); return; }
-                    }
-                    if (event.key === "Enter") handleSendMessage();
-                  }}
-                  placeholder="Type a message..."
-                  disabled={isUserBanned}
-                  className="flex-1 rounded-xl border border-raw-border/30 bg-raw-surface/30 px-4 py-2.5 text-sm text-raw-text placeholder:text-raw-silver/25 focus:border-raw-gold/25 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
-                />
-                <button
-                  onClick={handleSendMessage}
-                  disabled={isUserBanned}
-                  className="flex items-center gap-1.5 rounded-xl bg-raw-gold px-4 py-2.5 text-sm font-semibold text-raw-ink disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <Send className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
+            <CommunityMessageComposer
+              inputRef={messageInputRef}
+              draft={messageDraft}
+              maxLength={MAX_COMMUNITY_MESSAGE_LENGTH}
+              members={selectedCommunity?.members ?? []}
+              mentionQuery={mentionQuery}
+              mentionIndex={mentionIndex}
+              canManagePolls={canManagePolls}
+              disabled={isUserBanned}
+              onDraftChange={setMessageDraft}
+              onMentionQueryChange={setMentionQuery}
+              onMentionIndexChange={setMentionIndex}
+              onOpenPollComposer={handleOpenPollComposer}
+              onSendMessage={handleSendMessage}
+            />
           </div>
           )}
-        </div>
+        </motion.div>
       );
     };
 
-    if (activeCommunityId && isInitialCommunitiesLoading) {
+    if (activeCommunityId && isInitialCommunitiesLoading && !selectedCommunity) {
       return (
-        <div className="rounded-3xl border border-raw-border/30 bg-raw-surface/20 p-8 text-center text-raw-silver/50">
-          <p className="font-display text-lg text-raw-text">Loading community…</p>
-        </div>
+        <motion.div
+          className="rounded-3xl border border-raw-border/30 bg-raw-surface/20 p-5"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.16, ease: "easeOut" }}
+        >
+          <div className="h-6 w-40 animate-pulse rounded-full bg-raw-surface/60" />
+          <div className="mt-4 h-56 animate-pulse rounded-2xl bg-raw-black/35" />
+        </motion.div>
       );
     }
 
@@ -1631,6 +1837,8 @@ const COMMUNITY_LOGOS: Record<string, string> = {
     }
 
     return (
+      <>
+      {confirmDialog}
       <div className="space-y-8">
         {activeCommunityId ? renderChatPage() : renderDirectoryView()}
 
@@ -1686,7 +1894,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                   description: "Fill out the form to suggest a new community for review.",
                 });
               }}
-              className="fixed left-4 z-50 flex items-center gap-2 rounded-2xl bg-raw-gold px-5 py-3 text-sm font-semibold text-raw-ink shadow-xl hover:bg-raw-gold/90 focus:outline-none"
+              className="fixed left-4 z-50 hidden items-center gap-2 rounded-2xl bg-raw-gold px-5 py-3 text-sm font-semibold text-raw-ink shadow-xl hover:bg-raw-gold/90 focus:outline-none md:flex"
               style={{ bottom: "calc(5rem + env(safe-area-inset-bottom))", boxShadow: "0 8px 32px rgba(0,0,0,0.18)" }}
             >
               <motion.span
@@ -1702,317 +1910,64 @@ const COMMUNITY_LOGOS: Record<string, string> = {
           )}
         </AnimatePresence>
 
-        <Dialog open={logoDialogOpen} onOpenChange={setLogoDialogOpen}>
-          <DialogContent className="border border-raw-border/40 bg-raw-black p-0 text-raw-text sm:max-w-lg sm:rounded-3xl">
-            <div className="border-b border-raw-border/20 bg-gradient-to-br from-raw-gold/[0.08] via-raw-black to-raw-black px-6 py-6">
-              <DialogHeader className="space-y-2 text-left">
-                <DialogTitle className="font-display text-xl tracking-wide text-raw-text">Edit community details</DialogTitle>
-                <DialogDescription className="text-sm leading-relaxed text-raw-silver/45">
-                  Only the community creator can change the group name or logo.
-                </DialogDescription>
-              </DialogHeader>
-            </div>
-            <div className="space-y-4 px-6 py-6">
-              <div className="space-y-2">
-                <label className="text-[11px] uppercase tracking-[0.16em] text-raw-silver/40">Community name</label>
-                <Input
-                  value={communitySettingsDraft.title}
-                  onChange={(event) => setCommunitySettingsDraft((previous) => ({ ...previous, title: event.target.value }))}
-                  placeholder="Community name"
-                  className="h-11 rounded-xl border-raw-border/30 bg-raw-surface/30 text-raw-text placeholder:text-raw-silver/25"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[11px] uppercase tracking-[0.16em] text-raw-silver/40">Logo URL</label>
-                <Input
-                  value={communitySettingsDraft.logoUrl}
-                  onChange={(event) => setCommunitySettingsDraft((previous) => ({ ...previous, logoUrl: event.target.value }))}
-                  placeholder="https://example.com/community-logo.png"
-                  className="h-11 rounded-xl border-raw-border/30 bg-raw-surface/30 text-raw-text placeholder:text-raw-silver/25"
-                />
-              </div>
-            </div>
-            <DialogFooter className="border-t border-raw-border/20 px-6 py-5 sm:justify-between">
-              <p className="text-xs text-raw-silver/40">Leave empty to remove the current logo.</p>
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => setLogoDialogOpen(false)}
-                  className="rounded-xl border-raw-border/30 bg-transparent text-raw-silver/70 hover:bg-raw-surface/30 hover:text-raw-text"
-                >
-                  Cancel
-                </Button>
-                <Button onClick={handleCommunitySettingsSave} className="rounded-xl bg-raw-gold px-4 text-raw-ink hover:bg-raw-gold/90">
-                  Save Changes
-                </Button>
-              </div>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <CommunitySettingsDialog
+          open={logoDialogOpen}
+          draft={communitySettingsDraft}
+          onOpenChange={setLogoDialogOpen}
+          onDraftChange={setCommunitySettingsDraft}
+          onSave={handleCommunitySettingsSave}
+        />
 
-        <Dialog open={requestFormOpen} onOpenChange={(open) => { setRequestFormOpen(open); if (!open) setRequestSubmitAttempted(false); }}>
-          <DialogContent bottomSheet className="flex flex-col bg-raw-black p-0 text-raw-text border-raw-border/40">
-            {/* Header — fixed */}
-            <div className="shrink-0 border-b border-raw-border/20 bg-gradient-to-br from-raw-gold/[0.08] via-raw-black to-raw-black px-5 py-4">
-              <DialogHeader className="space-y-1 text-left">
-                <DialogTitle className="font-display text-lg tracking-wide text-raw-text">Request a new community</DialogTitle>
-                <DialogDescription className="text-xs leading-relaxed text-raw-silver/45">
-                  Goes to admin review. Approved requests become live in-app communities.
-                </DialogDescription>
-              </DialogHeader>
-            </div>
+        <CommunityMembersDialog
+          open={membersDialogOpen}
+          members={selectedCommunity?.members ?? []}
+          currentUserId={user.id}
+          canManagePolls={canManagePolls}
+          onOpenChange={setMembersDialogOpen}
+          onKickMember={(memberId, username) => { void handleKickMember(memberId, username); }}
+        />
 
-            {/* Scrollable body */}
-            <div className="flex-1 overflow-y-auto space-y-4 px-5 py-5">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <label className="text-[11px] uppercase tracking-[0.16em] text-raw-silver/40">
-                    Community name <span className="text-primary">*</span>
-                  </label>
-                  <Input
-                    value={requestDraft.communityName}
-                    onChange={(event) => updateRequestDraft("communityName", event.target.value)}
-                    placeholder="Creator Burnout Circle"
-                    className={`h-10 rounded-xl bg-raw-surface/30 text-raw-text placeholder:text-raw-silver/25 ${requestSubmitAttempted && !requestDraft.communityName.trim() ? "border-primary/60 focus-visible:ring-primary/30" : "border-raw-border/30"}`}
-                  />
-                  {requestSubmitAttempted && !requestDraft.communityName.trim() && (
-                    <p className="text-[11px] text-primary/80">Required</p>
-                  )}
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[11px] uppercase tracking-[0.16em] text-raw-silver/40">
-                    Genre <span className="text-primary">*</span>
-                  </label>
-                  <Input
-                    value={requestDraft.genre}
-                    onChange={(event) => updateRequestDraft("genre", event.target.value)}
-                    placeholder="e.g. Mental Health, Tech, Sports"
-                    className={`h-10 rounded-xl bg-raw-surface/30 text-raw-text placeholder:text-raw-silver/25 ${requestSubmitAttempted && !requestDraft.genre.trim() ? "border-primary/60 focus-visible:ring-primary/30" : "border-raw-border/30"}`}
-                  />
-                  {requestSubmitAttempted && !requestDraft.genre.trim() && (
-                    <p className="text-[11px] text-primary/80">Required</p>
-                  )}
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[11px] uppercase tracking-[0.16em] text-raw-silver/40">
-                    Focus area <span className="text-primary">*</span>
-                  </label>
-                  <Input
-                    value={requestDraft.focusArea}
-                    onChange={(event) => updateRequestDraft("focusArea", event.target.value)}
-                    placeholder="Theme this room centers on"
-                    className={`h-10 rounded-xl bg-raw-surface/30 text-raw-text placeholder:text-raw-silver/25 ${requestSubmitAttempted && !requestDraft.focusArea.trim() ? "border-primary/60 focus-visible:ring-primary/30" : "border-raw-border/30"}`}
-                  />
-                  {requestSubmitAttempted && !requestDraft.focusArea.trim() && (
-                    <p className="text-[11px] text-primary/80">Required</p>
-                  )}
-                </div>
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-[11px] uppercase tracking-[0.16em] text-raw-silver/40">
-                  Who is this for? <span className="text-primary">*</span>
-                </label>
-                <Input
-                  value={requestDraft.audience}
-                  onChange={(event) => updateRequestDraft("audience", event.target.value)}
-                  placeholder="Who would join and benefit?"
-                  className={`h-10 rounded-xl bg-raw-surface/30 text-raw-text placeholder:text-raw-silver/25 ${requestSubmitAttempted && !requestDraft.audience.trim() ? "border-primary/60 focus-visible:ring-primary/30" : "border-raw-border/30"}`}
-                />
-                {requestSubmitAttempted && !requestDraft.audience.trim() && (
-                  <p className="text-[11px] text-primary/80">Required</p>
-                )}
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-[11px] uppercase tracking-[0.16em] text-raw-silver/40">
-                  Why should admin approve it? <span className="text-primary">*</span>
-                </label>
-                <Textarea
-                  value={requestDraft.whyNow}
-                  onChange={(event) => updateRequestDraft("whyNow", event.target.value)}
-                  placeholder="Explain the need and what conversations it unlocks."
-                  className={`min-h-[90px] rounded-2xl bg-raw-surface/30 text-raw-text placeholder:text-raw-silver/25 ${requestSubmitAttempted && !requestDraft.whyNow.trim() ? "border-primary/60 focus-visible:ring-primary/30" : "border-raw-border/30"}`}
-                />
-                {requestSubmitAttempted && !requestDraft.whyNow.trim() && (
-                  <p className="text-[11px] text-primary/80">Required</p>
-                )}
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-[11px] uppercase tracking-[0.16em] text-raw-silver/40">Sample opening prompt</label>
-                <Textarea
-                  value={requestDraft.samplePrompt}
-                  onChange={(event) => updateRequestDraft("samplePrompt", event.target.value)}
-                  placeholder="Optional: opening topic that sets the tone."
-                  className="min-h-[72px] rounded-2xl border-raw-border/30 bg-raw-surface/30 text-raw-text placeholder:text-raw-silver/25"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-[11px] uppercase tracking-[0.16em] text-raw-silver/40">Community image / video</label>
-                <button
-                  type="button"
-                  disabled
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-raw-border/35 bg-raw-surface/20 px-4 py-4 text-sm text-raw-silver/35 cursor-not-allowed"
-                >
-                  <ImagePlus className="h-4 w-4 shrink-0" />
-                  <span>Upload <span className="text-[10px] uppercase tracking-wider text-raw-silver/25 ml-1">Coming soon</span></span>
-                </button>
-              </div>
-            </div>
+        <CommunityProfileDialog
+          open={profileDialogOpen}
+          target={profileTarget}
+          communities={communities}
+          logoUrlsByCommunityId={COMMUNITY_LOGOS}
+          senderAvatarLevels={senderAvatarLevels}
+          onOpenChange={setProfileDialogOpen}
+          onOpenCommunity={onOpenCommunity}
+        />
 
-            {/* Footer — sticky */}
-            <div className="shrink-0 border-t border-raw-border/20 px-5 py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-xs text-raw-silver/40">Requesting as @{user.username}.</p>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => { setRequestFormOpen(false); setRequestSubmitAttempted(false); }}
-                  className="flex-1 sm:flex-none rounded-xl border-raw-border/30 bg-transparent text-raw-silver/70 hover:bg-raw-surface/30 hover:text-raw-text"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleSubmitCommunityRequest}
-                  className="flex-1 sm:flex-none rounded-xl bg-raw-gold px-4 text-raw-ink hover:bg-raw-gold/90"
-                >
-                  Submit
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <CommunityRequestDialog
+          open={requestFormOpen}
+          draft={requestDraft}
+          submitAttempted={requestSubmitAttempted}
+          username={user.username}
+          onOpenChange={setRequestFormOpen}
+          onSubmitAttemptedChange={setRequestSubmitAttempted}
+          onDraftFieldChange={updateRequestDraft}
+          onSubmit={handleSubmitCommunityRequest}
+        />
 
-        <Dialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
-          <DialogContent className="border border-raw-border/40 bg-raw-black p-0 text-raw-text sm:max-w-xl sm:rounded-3xl">
-            <div className="border-b border-raw-border/20 bg-gradient-to-br from-red-500/[0.08] via-raw-black to-raw-black px-6 py-6">
-              <DialogHeader className="space-y-2 text-left">
-                <DialogTitle className="font-display text-xl tracking-wide text-raw-text">Report this message</DialogTitle>
-                <DialogDescription className="max-w-xl text-sm leading-relaxed text-raw-silver/45">
-                  Admin can review reports here, then warn or ban the user if the report is valid.
-                </DialogDescription>
-              </DialogHeader>
-            </div>
-            <div className="space-y-5 px-6 py-6">
-              {reportTarget && (
-                <div className="rounded-2xl border border-raw-border/20 bg-raw-surface/20 p-4">
-                  <p className="text-[11px] uppercase tracking-[0.16em] text-raw-silver/35">Message under review</p>
-                  <p className="mt-2 font-display text-sm text-raw-text">{reportTarget.message.senderName}</p>
-                  <p className="mt-2 text-sm leading-relaxed text-raw-silver/55">{reportTarget.message.text}</p>
-                </div>
-              )}
-              <div className="space-y-2">
-                <label className="text-[11px] uppercase tracking-[0.16em] text-raw-silver/40">Why should this be reviewed?</label>
-                <Input
-                  value={reportDraft.reason}
-                  onChange={(event) => setReportDraft((previous) => ({ ...previous, reason: event.target.value }))}
-                  placeholder="Spam, harassment, harmful content, impersonation..."
-                  className="h-11 rounded-xl border-raw-border/30 bg-raw-surface/30 text-raw-text placeholder:text-raw-silver/25"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[11px] uppercase tracking-[0.16em] text-raw-silver/40">Extra context</label>
-                <Textarea
-                  value={reportDraft.details}
-                  onChange={(event) => setReportDraft((previous) => ({ ...previous, details: event.target.value }))}
-                  placeholder="Optional: explain what happened so admin can review faster."
-                  className="min-h-[110px] rounded-2xl border-raw-border/30 bg-raw-surface/30 text-raw-text placeholder:text-raw-silver/25"
-                />
-              </div>
-            </div>
-            <DialogFooter className="border-t border-raw-border/20 px-6 py-5 sm:justify-between">
-              <p className="text-xs leading-relaxed text-raw-silver/40">Reports are stored for admin review in the hidden admin page.</p>
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => setReportDialogOpen(false)}
-                  className="rounded-xl border-raw-border/30 bg-transparent text-raw-silver/70 hover:bg-raw-surface/30 hover:text-raw-text"
-                >
-                  Cancel
-                </Button>
-                <Button onClick={handleSubmitReport} className="rounded-xl bg-red-400 px-4 text-raw-ink hover:bg-red-300">
-                  Submit report
-                </Button>
-              </div>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <CommunityReportDialog
+          open={reportDialogOpen}
+          target={reportTarget}
+          draft={reportDraft}
+          onOpenChange={setReportDialogOpen}
+          onDraftChange={setReportDraft}
+          onSubmit={handleSubmitReport}
+        />
 
-        <Dialog open={pollComposerOpen} onOpenChange={setPollComposerOpen}>
-          <DialogContent className="border-raw-border/30 bg-raw-black/95 sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="text-raw-text">Post a poll to the room</DialogTitle>
-              <DialogDescription className="text-raw-silver/60">
-                Only the community owner and admins can post polls. Members get one vote each.
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-xs uppercase tracking-[0.16em] text-raw-silver/55">Question</label>
-                <Input
-                  value={pollQuestion}
-                  onChange={(event) => setPollQuestion(event.target.value)}
-                  placeholder="What do you want to ask the room?"
-                  maxLength={200}
-                  className="border-raw-border/30 bg-raw-surface/30 text-raw-text"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs uppercase tracking-[0.16em] text-raw-silver/55">Options</label>
-                <div className="space-y-2">
-                  {pollOptionDrafts.map((option, index) => (
-                    <div key={index} className="flex items-center gap-2">
-                      <Input
-                        value={option}
-                        onChange={(event) => handleUpdatePollOption(index, event.target.value)}
-                        placeholder={`Option ${index + 1}`}
-                        maxLength={80}
-                        className="flex-1 border-raw-border/30 bg-raw-surface/30 text-raw-text"
-                      />
-                      {pollOptionDrafts.length > 2 && (
-                        <button
-                          type="button"
-                          onClick={() => handleRemovePollOption(index)}
-                          className="rounded-full border border-raw-border/30 p-1.5 text-raw-silver/50 hover:border-red-400/40 hover:text-red-300"
-                          aria-label="Remove option"
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                {pollOptionDrafts.length < 6 && (
-                  <button
-                    type="button"
-                    onClick={handleAddPollOption}
-                    className="text-xs font-semibold uppercase tracking-[0.18em] text-raw-gold/80 hover:text-raw-gold"
-                  >
-                    + Add another option
-                  </button>
-                )}
-              </div>
-            </div>
-
-            <DialogFooter>
-              <div className="flex w-full justify-end gap-2">
-                <Button
-                  variant="ghost"
-                  onClick={() => setPollComposerOpen(false)}
-                  className="rounded-xl text-raw-silver/70 hover:text-raw-text"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={() => { void handleSubmitPoll(); }}
-                  disabled={pollSubmitting}
-                  className="rounded-xl bg-raw-gold px-4 text-raw-ink hover:bg-raw-gold/90"
-                >
-                  {pollSubmitting ? "Posting…" : "Post poll"}
-                </Button>
-              </div>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <CommunityPollComposerDialog
+          open={pollComposerOpen}
+          question={pollQuestion}
+          optionDrafts={pollOptionDrafts}
+          submitting={pollSubmitting}
+          onOpenChange={setPollComposerOpen}
+          onQuestionChange={setPollQuestion}
+          onOptionChange={handleUpdatePollOption}
+          onSubmit={() => { void handleSubmitPoll(); }}
+        />
       </div>
+      </>
     );
   }

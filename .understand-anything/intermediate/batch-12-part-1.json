@@ -1,0 +1,404 @@
+{
+  "nodes": [
+    {
+      "id": "file:server/data/assistant-feedback.json",
+      "type": "table",
+      "name": "assistant-feedback.json",
+      "filePath": "server/data/assistant-feedback.json",
+      "summary": "Persistent JSON store seed file used by the assistant feedback subsystem to record question/answer/correction entries.",
+      "tags": ["data", "persistence", "assistant", "feedback"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:server/index.ts",
+      "type": "file",
+      "name": "index.ts",
+      "filePath": "server/index.ts",
+      "summary": "Express server entry point that wires session middleware, mounts feature routers (auth, polls, users, notifications, assistant, cron), and runs a UTC scheduler for streak resets and at-risk emails.",
+      "tags": ["entry-point", "server", "express", "scheduler", "bootstrap"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:server/lib/admin.ts",
+      "type": "file",
+      "name": "admin.ts",
+      "filePath": "server/lib/admin.ts",
+      "summary": "Resolves admin role status by comparing a user's username against the comma-separated ADMIN_USERNAMES env allowlist.",
+      "tags": ["authorization", "admin", "utility", "role-resolution"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:server/lib/admin.ts:isUserAdmin",
+      "type": "function",
+      "name": "isUserAdmin",
+      "filePath": "server/lib/admin.ts",
+      "lineRange": [16, 24],
+      "summary": "Checks whether a user (looked up by id) belongs to the configured admin username allowlist.",
+      "tags": ["authorization", "admin"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:server/lib/admin.ts:resolveUserRole",
+      "type": "function",
+      "name": "resolveUserRole",
+      "filePath": "server/lib/admin.ts",
+      "lineRange": [26, 28],
+      "summary": "Returns 'admin' or 'user' role string for a given user id.",
+      "tags": ["authorization", "role"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:server/lib/assistantStore.ts",
+      "type": "file",
+      "name": "assistantStore.ts",
+      "filePath": "server/lib/assistantStore.ts",
+      "summary": "Filesystem-backed JSON store for assistant Q&A feedback entries with token-based scoring to surface relevant prior corrections.",
+      "tags": ["persistence", "assistant", "feedback", "search"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:server/lib/assistantStore.ts:readFeedbackEntries",
+      "type": "function",
+      "name": "readFeedbackEntries",
+      "filePath": "server/lib/assistantStore.ts",
+      "lineRange": [25, 34],
+      "summary": "Reads and parses the assistant feedback JSON file, returning an array of entries.",
+      "tags": ["io", "persistence", "feedback"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:server/lib/assistantStore.ts:appendFeedbackEntry",
+      "type": "function",
+      "name": "appendFeedbackEntry",
+      "filePath": "server/lib/assistantStore.ts",
+      "lineRange": [36, 40],
+      "summary": "Appends a feedback entry and persists the trimmed list back to disk.",
+      "tags": ["io", "persistence", "feedback", "write"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:server/lib/assistantStore.ts:findRelevantFeedback",
+      "type": "function",
+      "name": "findRelevantFeedback",
+      "filePath": "server/lib/assistantStore.ts",
+      "lineRange": [42, 69],
+      "summary": "Ranks stored feedback entries by token overlap with an input question and returns the top results.",
+      "tags": ["search", "ranking", "feedback"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:server/lib/audit.ts",
+      "type": "file",
+      "name": "audit.ts",
+      "filePath": "server/lib/audit.ts",
+      "summary": "Centralised audit logger that emits structured console output and asynchronously persists rows to the Supabase audit_logs table.",
+      "tags": ["logging", "audit", "observability", "supabase"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:server/lib/audit.ts:audit",
+      "type": "function",
+      "name": "audit",
+      "filePath": "server/lib/audit.ts",
+      "lineRange": [5, 27],
+      "summary": "Logs an audit event at the given level and persists it to Supabase audit_logs without blocking the caller.",
+      "tags": ["logging", "audit", "side-effect"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:server/lib/email.ts",
+      "type": "file",
+      "name": "email.ts",
+      "filePath": "server/lib/email.ts",
+      "summary": "Transactional email delivery service supporting Resend and Postmark providers with template rendering for OTP, verification, welcome, and streak-at-risk messages.",
+      "tags": ["email", "transactional", "provider-integration", "templates"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:server/lib/email.ts:sendWithResend",
+      "type": "function",
+      "name": "sendWithResend",
+      "filePath": "server/lib/email.ts",
+      "lineRange": [12, 36],
+      "summary": "Sends an email payload through the Resend HTTP API.",
+      "tags": ["email", "provider", "resend", "http"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:server/lib/email.ts:sendWithPostmark",
+      "type": "function",
+      "name": "sendWithPostmark",
+      "filePath": "server/lib/email.ts",
+      "lineRange": [38, 63],
+      "summary": "Sends an email payload through the Postmark HTTP API.",
+      "tags": ["email", "provider", "postmark", "http"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:server/lib/email.ts:sendTransactionalEmail",
+      "type": "function",
+      "name": "sendTransactionalEmail",
+      "filePath": "server/lib/email.ts",
+      "lineRange": [79, 130],
+      "summary": "Renders one of several transactional email templates by name and dispatches it through the configured provider.",
+      "tags": ["email", "templates", "factory"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:server/lib/otp.ts",
+      "type": "file",
+      "name": "otp.ts",
+      "filePath": "server/lib/otp.ts",
+      "summary": "In-memory phone OTP issuance and verification module: generates 6-digit codes, stores hashed values with TTL, and audits send/verify outcomes.",
+      "tags": ["otp", "authentication", "phone", "security"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:server/lib/otp.ts:sendOtp",
+      "type": "function",
+      "name": "sendOtp",
+      "filePath": "server/lib/otp.ts",
+      "lineRange": [28, 43],
+      "summary": "Generates a fresh OTP, stores its hash with expiry, and emits an audit event for the recipient phone.",
+      "tags": ["otp", "issue", "audit"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:server/lib/otp.ts:verifyOtp",
+      "type": "function",
+      "name": "verifyOtp",
+      "filePath": "server/lib/otp.ts",
+      "lineRange": [45, 68],
+      "summary": "Validates a submitted OTP against the stored hash, enforces TTL and attempt limits, and clears state on success.",
+      "tags": ["otp", "verify", "security"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:server/lib/password.ts",
+      "type": "file",
+      "name": "password.ts",
+      "filePath": "server/lib/password.ts",
+      "summary": "Thin bcrypt wrapper exposing hashPassword and verifyPassword helpers for credential storage.",
+      "tags": ["password", "bcrypt", "security", "utility"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:server/lib/phoneHash.ts",
+      "type": "file",
+      "name": "phoneHash.ts",
+      "filePath": "server/lib/phoneHash.ts",
+      "summary": "Phone number normalisation, HMAC-SHA256 hashing using PHONE_HMAC_KEY, and human-friendly masking utilities.",
+      "tags": ["phone", "hashing", "hmac", "privacy"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:server/lib/pollRepository.ts",
+      "type": "file",
+      "name": "pollRepository.ts",
+      "filePath": "server/lib/pollRepository.ts",
+      "summary": "Supabase-backed poll fetcher that loads active polls plus their options, normalises JSON option shapes, and returns a randomised subset.",
+      "tags": ["repository", "polls", "supabase", "data-access"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:server/lib/pollRepository.ts:fetchActivePolls",
+      "type": "function",
+      "name": "fetchActivePolls",
+      "filePath": "server/lib/pollRepository.ts",
+      "lineRange": [74, 143],
+      "summary": "Queries polls and poll_options from Supabase, drops locked or malformed rows, and returns a randomised limited list.",
+      "tags": ["query", "polls", "supabase", "randomize"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:server/lib/pollRepository.ts:normalizeOptionsFromJson",
+      "type": "function",
+      "name": "normalizeOptionsFromJson",
+      "filePath": "server/lib/pollRepository.ts",
+      "lineRange": [47, 72],
+      "summary": "Coerces a raw JSON options array into well-formed PollOption objects, accepting both string and object shapes.",
+      "tags": ["normalization", "polls", "parsing"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:server/lib/store.ts",
+      "type": "file",
+      "name": "store.ts",
+      "filePath": "server/lib/store.ts",
+      "summary": "In-memory user and poll store with referral code generation, anonymous vote tracking, bootstrap building, and vote eligibility/application logic.",
+      "tags": ["store", "in-memory", "users", "polls", "voting"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:server/lib/store.ts:createUser",
+      "type": "function",
+      "name": "createUser",
+      "filePath": "server/lib/store.ts",
+      "lineRange": [57, 80],
+      "summary": "Creates and indexes a new user record with referral code, updating username/phoneHash/referral lookup maps.",
+      "tags": ["users", "create", "indexing"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:server/lib/store.ts:updateUserProfile",
+      "type": "function",
+      "name": "updateUserProfile",
+      "filePath": "server/lib/store.ts",
+      "lineRange": [90, 125],
+      "summary": "Applies partial profile updates to a user, keeping username and notification indexes consistent.",
+      "tags": ["users", "update", "profile"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:server/lib/store.ts:updateUserPasswordHash",
+      "type": "function",
+      "name": "updateUserPasswordHash",
+      "filePath": "server/lib/store.ts",
+      "lineRange": [127, 138],
+      "summary": "Replaces the stored password hash for a user and stamps the change timestamp.",
+      "tags": ["users", "password", "update"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:server/lib/store.ts:canVote",
+      "type": "function",
+      "name": "canVote",
+      "filePath": "server/lib/store.ts",
+      "lineRange": [180, 199],
+      "summary": "Determines whether a user (or anonymous session) is permitted to vote on a given poll.",
+      "tags": ["voting", "authorization", "polls"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:server/lib/store.ts:applyVote",
+      "type": "function",
+      "name": "applyVote",
+      "filePath": "server/lib/store.ts",
+      "lineRange": [201, 221],
+      "summary": "Records a vote on a poll option, updating both authenticated user state and anonymous session state.",
+      "tags": ["voting", "polls", "mutation"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:server/lib/store.ts:buildBootstrap",
+      "type": "function",
+      "name": "buildBootstrap",
+      "filePath": "server/lib/store.ts",
+      "lineRange": [155, 165],
+      "summary": "Assembles the client bootstrap payload combining public user data, anonymous votes, and cloned polls.",
+      "tags": ["bootstrap", "serialization"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:server/lib/store.ts:toPublicUser",
+      "type": "function",
+      "name": "toPublicUser",
+      "filePath": "server/lib/store.ts",
+      "lineRange": [167, 178],
+      "summary": "Strips sensitive fields and shapes a stored user into the public DTO returned by the API.",
+      "tags": ["serialization", "users", "dto"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:server/lib/store.ts:recordPollVote",
+      "type": "function",
+      "name": "recordPollVote",
+      "filePath": "server/lib/store.ts",
+      "lineRange": [223, 230],
+      "summary": "Marks a poll as voted-on for either the authenticated user or the anonymous session.",
+      "tags": ["voting", "polls", "side-effect"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:server/lib/streakCron.ts",
+      "type": "file",
+      "name": "streakCron.ts",
+      "filePath": "server/lib/streakCron.ts",
+      "summary": "Stub module exporting placeholder UTC streak reset and at-risk email jobs invoked by the server scheduler.",
+      "tags": ["cron", "streak", "stub", "scheduler"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:server/lib/supabaseClient.ts",
+      "type": "file",
+      "name": "supabaseClient.ts",
+      "filePath": "server/lib/supabaseClient.ts",
+      "summary": "Constructs a singleton Supabase admin client using the service role key from environment configuration.",
+      "tags": ["supabase", "client", "singleton", "admin"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {"source": "file:server/index.ts", "target": "file:server/config/env", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:server/index.ts", "target": "file:server/lib/streakCron", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:server/index.ts", "target": "file:server/middleware/requireTrustedOrigin", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:server/index.ts", "target": "file:server/routes/assistant", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:server/index.ts", "target": "file:server/routes/auth", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:server/index.ts", "target": "file:server/routes/cron", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:server/index.ts", "target": "file:server/routes/notifications", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:server/index.ts", "target": "file:server/routes/polls", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:server/index.ts", "target": "file:server/routes/users", "type": "imports", "direction": "forward", "weight": 0.7},
+
+    {"source": "file:server/lib/admin.ts", "target": "file:server/config/env", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:server/lib/admin.ts", "target": "file:server/lib/userRepository", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:server/lib/admin.ts", "target": "function:server/lib/admin.ts:isUserAdmin", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:server/lib/admin.ts", "target": "function:server/lib/admin.ts:resolveUserRole", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:server/lib/admin.ts", "target": "function:server/lib/admin.ts:isUserAdmin", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:server/lib/admin.ts", "target": "function:server/lib/admin.ts:resolveUserRole", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "function:server/lib/admin.ts:isUserAdmin", "target": "file:server/lib/userRepository.ts", "type": "calls", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:server/lib/assistantStore.ts", "target": "function:server/lib/assistantStore.ts:readFeedbackEntries", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:server/lib/assistantStore.ts", "target": "function:server/lib/assistantStore.ts:appendFeedbackEntry", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:server/lib/assistantStore.ts", "target": "function:server/lib/assistantStore.ts:findRelevantFeedback", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:server/lib/assistantStore.ts", "target": "function:server/lib/assistantStore.ts:readFeedbackEntries", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:server/lib/assistantStore.ts", "target": "function:server/lib/assistantStore.ts:appendFeedbackEntry", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:server/lib/assistantStore.ts", "target": "function:server/lib/assistantStore.ts:findRelevantFeedback", "type": "exports", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:server/lib/audit.ts", "target": "file:server/lib/supabaseClient", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:server/lib/audit.ts", "target": "function:server/lib/audit.ts:audit", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:server/lib/audit.ts", "target": "function:server/lib/audit.ts:audit", "type": "exports", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:server/lib/email.ts", "target": "file:server/config/env", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:server/lib/email.ts", "target": "function:server/lib/email.ts:sendWithResend", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:server/lib/email.ts", "target": "function:server/lib/email.ts:sendWithPostmark", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:server/lib/email.ts", "target": "function:server/lib/email.ts:sendTransactionalEmail", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:server/lib/email.ts", "target": "function:server/lib/email.ts:sendTransactionalEmail", "type": "exports", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:server/lib/otp.ts", "target": "file:server/lib/audit", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:server/lib/otp.ts", "target": "function:server/lib/otp.ts:sendOtp", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:server/lib/otp.ts", "target": "function:server/lib/otp.ts:verifyOtp", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:server/lib/otp.ts", "target": "function:server/lib/otp.ts:sendOtp", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:server/lib/otp.ts", "target": "function:server/lib/otp.ts:verifyOtp", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "function:server/lib/otp.ts:sendOtp", "target": "function:server/lib/audit.ts:audit", "type": "calls", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:server/lib/password.ts", "target": "file:server/config/env", "type": "imports", "direction": "forward", "weight": 0.7},
+
+    {"source": "file:server/lib/phoneHash.ts", "target": "file:server/config/env", "type": "imports", "direction": "forward", "weight": 0.7},
+
+    {"source": "file:server/lib/pollRepository.ts", "target": "file:server/types", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:server/lib/pollRepository.ts", "target": "function:server/lib/pollRepository.ts:fetchActivePolls", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:server/lib/pollRepository.ts", "target": "function:server/lib/pollRepository.ts:normalizeOptionsFromJson", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:server/lib/pollRepository.ts", "target": "function:server/lib/pollRepository.ts:fetchActivePolls", "type": "exports", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:server/lib/store.ts", "target": "file:server/types", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:server/lib/store.ts", "target": "file:src/features/polls/pollQuestions", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:server/lib/store.ts", "target": "function:server/lib/store.ts:createUser", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:server/lib/store.ts", "target": "function:server/lib/store.ts:updateUserProfile", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:server/lib/store.ts", "target": "function:server/lib/store.ts:updateUserPasswordHash", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:server/lib/store.ts", "target": "function:server/lib/store.ts:canVote", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:server/lib/store.ts", "target": "function:server/lib/store.ts:applyVote", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:server/lib/store.ts", "target": "function:server/lib/store.ts:buildBootstrap", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:server/lib/store.ts", "target": "function:server/lib/store.ts:toPublicUser", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:server/lib/store.ts", "target": "function:server/lib/store.ts:recordPollVote", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:server/lib/store.ts", "target": "function:server/lib/store.ts:createUser", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:server/lib/store.ts", "target": "function:server/lib/store.ts:updateUserProfile", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:server/lib/store.ts", "target": "function:server/lib/store.ts:updateUserPasswordHash", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:server/lib/store.ts", "target": "function:server/lib/store.ts:canVote", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:server/lib/store.ts", "target": "function:server/lib/store.ts:applyVote", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:server/lib/store.ts", "target": "function:server/lib/store.ts:buildBootstrap", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:server/lib/store.ts", "target": "function:server/lib/store.ts:toPublicUser", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:server/lib/store.ts", "target": "function:server/lib/store.ts:recordPollVote", "type": "exports", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:server/lib/supabaseClient.ts", "target": "file:server/config/env", "type": "imports", "direction": "forward", "weight": 0.7}
+  ]
+}

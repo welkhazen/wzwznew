@@ -1,6 +1,18 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useTheme } from "@/providers/useTheme";
 
+const IMAGE_SCALE_BY_SRC: Record<string, number> = {
+  "/avatars/1.webp": 1.0,
+  "/avatars/2.webp": 1.45,
+  "/avatars/3.webp": 1.45,
+  "/avatars/04.webp": 1.45,
+  "/avatars/5.png": 1.45,
+  "/avatars/6.webp": 1.0,
+  "/avatars/07.webp": 1.45,
+  "/avatars/08.webp": 1.08,
+  "/avatars/11.png": 1.42,
+};
+
 export interface WheelPrize {
   id: string;
   label: string;
@@ -18,6 +30,7 @@ interface WheelOfFortuneProps {
   prizeWeights?: Partial<Record<string, number>>;
   forcedPrizeId?: string | null;
   radius?: number;
+  previewOnly?: boolean;
 }
 
 const SPIN_DURATION = 5000;
@@ -67,12 +80,15 @@ function getLabelLines(label: string): string[] {
   return [parts.slice(0, midpoint).join(" "), parts.slice(midpoint).join(" ")];
 }
 
-export function WheelOfFortune({ prizes, onSpinEnd, onSpinStart, disabled = false, prizeWeights, forcedPrizeId = null, radius: radiusProp = 200 }: WheelOfFortuneProps) {
+export function WheelOfFortune({ prizes, onSpinEnd, onSpinStart, disabled = false, prizeWeights, forcedPrizeId = null, radius: radiusProp = 200, previewOnly = false }: WheelOfFortuneProps) {
   const { mode } = useTheme();
   const pointerId = useId().replace(/:/g, "");
+  const baseId = useId().replace(/:/g, "");
   const [rotation, setRotation] = useState(0);
   const [isSpinning, setIsSpinning] = useState(false);
   const currentPrizeRef = useRef<WheelPrize | null>(null);
+  const onSpinEndRef = useRef(onSpinEnd);
+  const onSpinStartRef = useRef(onSpinStart);
 
   const radius = radiusProp;
   const size = radius * 2;
@@ -83,13 +99,21 @@ export function WheelOfFortune({ prizes, onSpinEnd, onSpinStart, disabled = fals
   const pointerGradientId = `pointerGrad-${pointerId}`;
   const pointerShadowId = `pointerShadow-${pointerId}`;
 
+  useEffect(() => {
+    onSpinEndRef.current = onSpinEnd;
+  }, [onSpinEnd]);
+
+  useEffect(() => {
+    onSpinStartRef.current = onSpinStart;
+  }, [onSpinStart]);
+
   const handleSpin = useCallback(() => {
     if (isSpinning || disabled || total === 0) {
       return;
     }
 
     setIsSpinning(true);
-    onSpinStart?.();
+    onSpinStartRef.current?.();
 
     let prizeIndex = Math.floor(Math.random() * total);
 
@@ -132,7 +156,7 @@ export function WheelOfFortune({ prizes, onSpinEnd, onSpinStart, disabled = fals
     const finalRotation = rotation + fullRotations + deltaToTarget;
 
     setRotation(finalRotation);
-  }, [disabled, forcedPrizeId, isSpinning, onSpinStart, prizeWeights, prizes, rotation, total]);
+  }, [disabled, forcedPrizeId, isSpinning, prizeWeights, prizes, rotation, total]);
 
   useEffect(() => {
     if (!isSpinning) {
@@ -142,12 +166,12 @@ export function WheelOfFortune({ prizes, onSpinEnd, onSpinStart, disabled = fals
     const timer = window.setTimeout(() => {
       setIsSpinning(false);
       if (currentPrizeRef.current) {
-        onSpinEnd(currentPrizeRef.current);
+        onSpinEndRef.current(currentPrizeRef.current);
       }
     }, SPIN_DURATION + 180);
 
     return () => window.clearTimeout(timer);
-  }, [isSpinning, onSpinEnd]);
+  }, [isSpinning]);
 
   return (
     <div className="relative flex flex-col items-center">
@@ -196,19 +220,30 @@ export function WheelOfFortune({ prizes, onSpinEnd, onSpinStart, disabled = fals
           {prizes.map((prize, index) => {
             const textPosition = getTextPosition(index, total, radius);
             const imgSize = 50;
+            const clipId = `wheel-clip-${baseId}-${index}`;
+            const scale = (prize.imageSrc && IMAGE_SCALE_BY_SRC[prize.imageSrc]) || 1;
+            const scaledSize = imgSize * scale;
             return (
               <g key={prize.id}>
                 <path d={getSegmentPath(index, total, radius)} fill={prize.color} stroke={isLight ? "#9ca9bb" : "#1f1f1f"} strokeWidth="1" />
                 {prize.imageSrc ? (
-                  <image
-                    href={prize.imageSrc}
-                    x={textPosition.x - imgSize / 2}
-                    y={textPosition.y - imgSize / 2}
-                    width={imgSize}
-                    height={imgSize}
-                    transform={`rotate(${textPosition.rotation + 90} ${textPosition.x} ${textPosition.y})`}
-                    style={{ borderRadius: "50%" }}
-                  />
+                  <g transform={`rotate(${textPosition.rotation + 90} ${textPosition.x} ${textPosition.y})`}>
+                    <defs>
+                      <clipPath id={clipId}>
+                        <circle cx={textPosition.x} cy={textPosition.y} r={imgSize / 2} />
+                      </clipPath>
+                    </defs>
+                    <circle cx={textPosition.x} cy={textPosition.y} r={imgSize / 2} fill={isLight ? "#1a1a1a" : "#000000"} />
+                    <image
+                      href={prize.imageSrc}
+                      x={textPosition.x - scaledSize / 2}
+                      y={textPosition.y - scaledSize / 2}
+                      width={scaledSize}
+                      height={scaledSize}
+                      preserveAspectRatio="xMidYMid slice"
+                      clipPath={`url(#${clipId})`}
+                    />
+                  </g>
                 ) : (
                   <text
                     x={textPosition.x}
@@ -243,17 +278,19 @@ export function WheelOfFortune({ prizes, onSpinEnd, onSpinStart, disabled = fals
         </svg>
       </div>
 
-      <button
-        onClick={handleSpin}
-        disabled={isSpinning || disabled}
-        className={`mt-6 sm:mt-8 relative overflow-hidden rounded-full px-10 py-3.5 font-display text-sm uppercase tracking-[0.2em] transition-all ${
-          isSpinning || disabled
-            ? "cursor-not-allowed border border-raw-border/30 bg-raw-surface text-raw-silver/30"
-            : "bg-raw-gold text-raw-black hover:scale-105 hover:shadow-[0_0_30px_rgb(var(--raw-accent)/0.3)] active:scale-95"
-        }`}
-      >
-        {isSpinning ? "Spinning..." : disabled ? "Spin Complete" : "Spin"}
-      </button>
+      {!previewOnly && (
+        <button
+          onClick={handleSpin}
+          disabled={isSpinning || disabled}
+          className={`mt-6 sm:mt-8 relative overflow-hidden rounded-full px-10 py-3.5 font-display text-sm uppercase tracking-[0.2em] transition-all ${
+            isSpinning || disabled
+              ? "cursor-not-allowed border border-raw-border/30 bg-raw-surface text-raw-silver/30"
+              : "bg-raw-gold text-raw-black hover:scale-105 hover:shadow-[0_0_30px_rgb(var(--raw-accent)/0.3)] active:scale-95"
+          }`}
+        >
+          {isSpinning ? "Spinning..." : disabled ? "Spin Complete" : "Spin"}
+        </button>
+      )}
     </div>
   );
 }

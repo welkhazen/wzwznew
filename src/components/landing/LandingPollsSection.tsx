@@ -5,7 +5,7 @@ import { ChevronLeft, ChevronRight, Send } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { LandingSectionShell } from "@/components/landing/LandingSectionShell";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
-import { fetchSupabasePolls } from "@/utils/supabasePolls";
+import { fetchPolls } from "@/lib/api/polls";
 import { POLL_QUESTION_SEEDS } from "@/features/polls/pollQuestions";
 import { PremiumPollCard } from "@/components/polls/PremiumPollCard";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
@@ -17,7 +17,7 @@ interface PollItem {
   noPercent: number;
 }
 
-const FALLBACK: PollItem[] = POLL_QUESTION_SEEDS.map((s) => ({
+const FALLBACK: PollItem[] = POLL_QUESTION_SEEDS.slice(0, 4).map((s) => ({
   question: s.question,
   yesPercent: Math.round((s.yesVotes / (s.yesVotes + s.noVotes)) * 100),
   noPercent: Math.round((s.noVotes / (s.yesVotes + s.noVotes)) * 100),
@@ -70,9 +70,9 @@ export function LandingPollsSection({ onSignupClick }: LandingPollsSectionProps)
   const { data: fetchedPolls } = useQuery({
     queryKey: ["landing-polls-section"],
     queryFn: async () => {
-      const polls = await fetchSupabasePolls(5);
+      const polls = await fetchPolls(4);
       if (polls.length === 0) return null;
-      return polls.map((poll) => {
+      return polls.slice(0, 4).map((poll) => {
         const yesVotes = poll.options.find((o) => o.text.toLowerCase() === "yes")?.votes ?? 0;
         const noVotes = poll.options.find((o) => o.text.toLowerCase() === "no")?.votes ?? 0;
         const totalVotes = yesVotes + noVotes;

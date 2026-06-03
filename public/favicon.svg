@@ -1,10 +1,36 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="raW icon">
-  <rect width="512" height="512" fill="#000"/>
-  <circle cx="256" cy="256" r="188" fill="none" stroke="#fff" stroke-width="22"/>
-  <path d="M256 92v328" stroke="#000" stroke-width="14"/>
-  <path d="M170 210c0-52 39-88 86-88v206c-54 0-86-35-86-84z" fill="#fff"/>
-  <path d="M256 144c58 0 98 44 98 98 0 20-6 39-18 55 27 33 35 66 44 96-33-5-59-15-82-34-12 6-27 10-42 10z" fill="#fff"/>
-  <path d="M148 330c36 52 102 80 182 72" fill="none" stroke="#fff" stroke-width="14" stroke-linecap="round"/>
-  <path d="M183 278c-7 0-12-6-12-12v-32c0-6 5-12 12-12s12 6 12 12v32c0 6-5 12-12 12z" fill="#fff"/>
-  <path d="M362 286c-14-16-18-35-22-53-7-29-24-47-44-55" fill="none" stroke="#000" stroke-width="10" stroke-linecap="round"/>
+  <!-- Background -->
+  <rect width="512" height="512" fill="#0c0c0c"/>
+
+  <!-- Outer gold ring -->
+  <circle cx="256" cy="256" r="220" fill="none" stroke="#F1C42D" stroke-width="18"/>
+
+  <!-- Inner silver ring -->
+  <circle cx="256" cy="256" r="180" fill="none" stroke="#c0c0c0" stroke-width="12"/>
+
+  <!-- Center sphere/core -->
+  <circle cx="256" cy="256" r="140" fill="#1a1a1a"/>
+
+  <!-- Gradient overlay for depth -->
+  <defs>
+    <radialGradient id="sphereGradient" cx="35%" cy="35%">
+      <stop offset="0%" style="stop-color:#333333;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0a0a0a;stop-opacity:1" />
+    </radialGradient>
+    <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#F1C42D;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#d4a017;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <circle cx="256" cy="256" r="140" fill="url(#sphereGradient)"/>
+
+  <!-- Central geometric element -->
+  <circle cx="256" cy="256" r="80" fill="none" stroke="url(#accentGradient)" stroke-width="8"/>
+
+  <!-- Inner accent lines -->
+  <line x1="256" y1="176" x2="256" y2="120" stroke="#F1C42D" stroke-width="6" stroke-linecap="round"/>
+  <line x1="256" y1="336" x2="256" y2="392" stroke="#F1C42D" stroke-width="6" stroke-linecap="round"/>
+  <line x1="176" y1="256" x2="120" y2="256" stroke="#F1C42D" stroke-width="6" stroke-linecap="round"/>
+  <line x1="336" y1="256" x2="392" y2="256" stroke="#F1C42D" stroke-width="6" stroke-linecap="round"/>
 </svg>

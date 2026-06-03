@@ -1,0 +1,35 @@
+{
+  "batchIndex": 1,
+  "nodes": [
+    {
+      "id": "pipeline:.github/workflows/codacy.yml",
+      "type": "pipeline",
+      "name": "codacy.yml",
+      "filePath": ".github/workflows/codacy.yml",
+      "summary": "GitHub Actions workflow that runs the Codacy security scan on pushes and PRs to main (plus a weekly cron) and uploads SARIF results to GitHub code scanning.",
+      "tags": ["ci-cd", "security", "code-scanning", "sarif"],
+      "complexity": "simple",
+      "languageNotes": "Uses a pinned SHA for the third-party codacy-analysis-cli-action and sets max-allowed-issues to int max so SARIF generation always succeeds."
+    },
+    {
+      "id": "pipeline:.github/workflows/codeql.yml",
+      "type": "pipeline",
+      "name": "codeql.yml",
+      "filePath": ".github/workflows/codeql.yml",
+      "summary": "GitHub Actions CodeQL Advanced workflow that analyzes the repo across an actions/javascript-typescript/swift language matrix on pushes, PRs, and a weekly cron.",
+      "tags": ["ci-cd", "security", "code-scanning", "static-analysis"],
+      "complexity": "moderate",
+      "languageNotes": "Matrix dynamically picks macos-latest for Swift analysis and ubuntu-latest for the rest; build-mode differs per language (none vs. autobuild)."
+    },
+    {
+      "id": "pipeline:.github/workflows/proof-html.yml",
+      "type": "pipeline",
+      "name": "proof-html.yml",
+      "filePath": ".github/workflows/proof-html.yml",
+      "summary": "Minimal GitHub Actions workflow that runs anishathalye/proof-html against the ./site directory on PRs and pushes to main to validate HTML output.",
+      "tags": ["ci-cd", "validation", "html", "quality"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": []
+}

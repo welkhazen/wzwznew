@@ -1,8 +1,13 @@
-import { Check, MonitorCog } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Check, Lock, MonitorCog } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/providers/useTheme";
+import { useRawStore } from "@/store/useRawStore";
+import { spendTokens } from "@/lib/api/tokens";
+import { supabase } from "@/lib/supabase";
+import type { AccentPresetId } from "@/providers/theme-context";
 
 interface ThemeCustomizerProps {
   placement?: "floating" | "inline";
@@ -10,10 +15,121 @@ interface ThemeCustomizerProps {
   className?: string;
 }
 
+const ACCENT_UNLOCK_PRICE = 10;
+const ACCENT_FREE_ID: AccentPresetId = "gold";
+const OWNED_ACCENTS_CACHE_PREFIX = "raw.theme.accent.owned.v2.";
+
+function cacheKey(userId: string): string {
+  return `${OWNED_ACCENTS_CACHE_PREFIX}${userId}`;
+}
+
+function readOwnedAccentsCache(userId: string | undefined): AccentPresetId[] {
+  if (!userId || typeof window === "undefined") return [ACCENT_FREE_ID];
+  try {
+    const raw = window.localStorage.getItem(cacheKey(userId));
+    if (!raw) return [ACCENT_FREE_ID];
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [ACCENT_FREE_ID];
+    return Array.from(new Set([
+      ACCENT_FREE_ID,
+      ...parsed.filter((id): id is AccentPresetId => typeof id === "string"),
+    ]));
+  } catch {
+    return [ACCENT_FREE_ID];
+  }
+}
+
+function writeOwnedAccentsCache(userId: string | undefined, ids: AccentPresetId[]): void {
+  if (!userId || typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(cacheKey(userId), JSON.stringify(Array.from(new Set(ids))));
+  } catch {
+    // localStorage may be unavailable; server remains the source of truth.
+  }
+}
+
 export function ThemeCustomizer({ placement = "floating", triggerStyle = "icon", className }: ThemeCustomizerProps) {
   const { accent, accentPresets, setAccent } = useTheme();
+  const { user, tokenBalance, addTokens } = useRawStore();
   const isFloating = placement === "floating";
   const selectedAccent = accentPresets.find((preset) => preset.id === accent);
+
+  const [ownedAccents, setOwnedAccents] = useState<AccentPresetId[]>(() =>
+    readOwnedAccentsCache(user?.id),
+  );
+  const [unlocking, setUnlocking] = useState<AccentPresetId | null>(null);
+  const [errorId, setErrorId] = useState<AccentPresetId | null>(null);
+
+  // Hydrate from Supabase whenever the signed-in user changes so unlocks
+  // follow the account across devices and survive logout/login.
+  useEffect(() => {
+    if (!user?.id) {
+      setOwnedAccents([ACCENT_FREE_ID]);
+      return;
+    }
+    let cancelled = false;
+    setOwnedAccents(readOwnedAccentsCache(user.id));
+    void (async () => {
+      const { data, error } = await supabase
+        .from("user_accent_unlocks")
+        .select("accent_id")
+        .eq("user_id", user.id);
+      if (cancelled || error || !data) return;
+      const serverIds = data.map((row) => row.accent_id as AccentPresetId);
+      const merged = Array.from(new Set([ACCENT_FREE_ID, ...serverIds]));
+      setOwnedAccents(merged);
+      writeOwnedAccentsCache(user.id, merged);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
+  useEffect(() => {
+    writeOwnedAccentsCache(user?.id, ownedAccents);
+  }, [ownedAccents, user?.id]);
+
+  const ownedSet = useMemo(() => new Set(ownedAccents), [ownedAccents]);
+
+  const handleSelect = useCallback(
+    async (id: AccentPresetId) => {
+      setErrorId(null);
+      if (ownedSet.has(id)) {
+        setAccent(id);
+        return;
+      }
+      if (!user?.id) {
+        setErrorId(id);
+        return;
+      }
+      if (tokenBalance < ACCENT_UNLOCK_PRICE) {
+        setErrorId(id);
+        return;
+      }
+      setUnlocking(id);
+      try {
+        await spendTokens(user.id, ACCENT_UNLOCK_PRICE);
+        addTokens(-ACCENT_UNLOCK_PRICE);
+        const { error: insertError } = await supabase
+          .from("user_accent_unlocks")
+          .upsert({ user_id: user.id, accent_id: id }, { onConflict: "user_id,accent_id" });
+        if (insertError) {
+          // Server persist failed — refund the locally tracked tokens so the user
+          // can retry without being silently overcharged.
+          addTokens(ACCENT_UNLOCK_PRICE);
+          setErrorId(id);
+          return;
+        }
+        setOwnedAccents((prev) => Array.from(new Set([...prev, id])));
+        setAccent(id);
+      } catch {
+        setErrorId(id);
+      } finally {
+        setUnlocking(null);
+      }
+    },
+    [addTokens, ownedSet, setAccent, tokenBalance, user?.id],
+  );
 
   return (
     <div
@@ -65,36 +181,78 @@ export function ThemeCustomizer({ placement = "floating", triggerStyle = "icon",
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-xs uppercase tracking-[0.18em] text-raw-silver/45">Accent</p>
-                  <p className="mt-1 text-sm text-raw-silver/65">10 saved accent choices for the full app</p>
+                  <p className="mt-1 text-sm text-raw-silver/65">Unlock new colors for {ACCENT_UNLOCK_PRICE} tokens each</p>
                 </div>
                 <div className="rounded-full border border-raw-border/30 bg-raw-black/25 px-3 py-1 text-[10px] uppercase tracking-[0.16em] text-raw-gold/80">
-                  {accentPresets.find((preset) => preset.id === accent)?.label}
+                  {selectedAccent?.label}
                 </div>
               </div>
 
               <div className="mt-4 grid grid-cols-5 gap-3">
                 {accentPresets.map((preset) => {
                   const selected = preset.id === accent;
+                  const owned = ownedSet.has(preset.id);
+                  const isUnlocking = unlocking === preset.id;
+                  const hasError = errorId === preset.id;
+                  const canAfford = tokenBalance >= ACCENT_UNLOCK_PRICE;
 
                   return (
                     <button
                       key={preset.id}
-                      onClick={() => setAccent(preset.id)}
+                      type="button"
+                      disabled={isUnlocking}
+                      onClick={() => void handleSelect(preset.id)}
                       className={cn(
-                        "relative flex h-12 w-full items-center justify-center rounded-2xl border transition-all",
+                        "group relative flex h-12 w-full items-center justify-center overflow-hidden rounded-2xl border transition-all",
                         selected
                           ? "border-raw-text shadow-[0_0_0_1px_rgb(var(--raw-text)/0.25)]"
-                          : "border-raw-border/35 hover:border-raw-silver/30",
+                          : owned
+                            ? "border-raw-border/35 hover:border-raw-silver/40"
+                            : "border-raw-border/30 hover:border-raw-gold/55",
+                        hasError && "ring-2 ring-red-500/60",
+                        isUnlocking && "cursor-wait opacity-80",
                       )}
                       style={{ backgroundColor: `rgb(${preset.rgb})` }}
-                      aria-label={`Use ${preset.label} accent`}
-                      title={preset.label}
+                      aria-label={
+                        owned
+                          ? `Use ${preset.label} accent`
+                          : `Unlock ${preset.label} accent for ${ACCENT_UNLOCK_PRICE} tokens`
+                      }
+                      title={
+                        owned
+                          ? preset.label
+                          : canAfford
+                            ? `Unlock ${preset.label} · ${ACCENT_UNLOCK_PRICE} tokens`
+                            : `Need ${ACCENT_UNLOCK_PRICE} tokens to unlock ${preset.label}`
+                      }
                     >
-                      {selected && <Check className="h-4 w-4 text-raw-ink" />}
+                      {selected && owned && <Check className="h-4 w-4 text-raw-ink" />}
+
+                      {!owned && (
+                        <span
+                          className={cn(
+                            "absolute inset-0 flex items-center justify-center bg-black/55 backdrop-blur-[2px] transition",
+                            isUnlocking ? "opacity-100" : "group-hover:bg-black/45",
+                          )}
+                        >
+                          <span className="flex items-center gap-1 rounded-full bg-black/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-raw-gold shadow-[0_0_0_1px_rgb(var(--raw-accent)/0.4)]">
+                            <Lock className="h-2.5 w-2.5" strokeWidth={2.5} />
+                            <span className="tabular-nums">{ACCENT_UNLOCK_PRICE}</span>
+                          </span>
+                        </span>
+                      )}
                     </button>
                   );
                 })}
               </div>
+
+              {errorId && (
+                <p className="mt-3 text-[11px] text-red-300">
+                  {user?.id
+                    ? `Need ${ACCENT_UNLOCK_PRICE} tokens to unlock this color.`
+                    : "Sign in to unlock more colors."}
+                </p>
+              )}
             </div>
           </div>
         </PopoverContent>

@@ -1,6 +1,5 @@
-const CACHE = 'raw-v2';
+const CACHE = 'raw-v3';
 const STATIC = [
-  '/',
   '/raw-logo-96.png',
   '/raw-logo-192.png',
   '/raw-logo-512.png',
@@ -64,7 +63,7 @@ self.addEventListener('fetch', (event) => {
         }
         return res;
       })
-      .catch(() => caches.match(request))
+      .catch(() => caches.match(request).then((hit) => hit ?? offlineResponse(request)))
   );
 });
 
@@ -80,4 +79,19 @@ function fetchAndCache(request) {
 
 function canCache(request, response) {
   return response.ok && response.status !== 206 && !request.headers.has('range');
+}
+
+function offlineResponse(request) {
+  if (request.mode === 'navigate') {
+    return caches.match('/').then((shell) => shell ?? new Response('Offline', {
+      status: 503,
+      statusText: 'Service Unavailable',
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+    }));
+  }
+
+  return Promise.resolve(new Response('', {
+    status: 504,
+    statusText: 'Gateway Timeout',
+  }));
 }

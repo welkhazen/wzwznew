@@ -3,11 +3,13 @@ import { ContainerTextFlipLazy } from "@/components/ui/container-text-flip.lazy"
 import { ChevronRight, Dices, Zap, Flame, Users, BarChart3 } from "lucide-react";
 import type { Poll } from "@/store/useRawStore";
 import type { DashboardTab } from "./DashboardNav";
-import { readCommunityChats } from "@/lib/communityChat";
+import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
 import { COMMUNITY_COVER_IMAGES, COMMUNITY_COVER_VIDEOS } from "@/lib/communityConstants";
 import { getTodayKey } from "@/store/useRawStore.storage";
 import { useTheme } from "@/providers/useTheme";
 import { LevelProgressBanner } from "@/components/dashboard/LevelProgressBanner";
+import { WheelOfFortune } from "@/components/wheel/WheelOfFortune";
+import { buildSpinPrizes } from "@/components/dashboard/DashboardDailySpin";
 
 interface DashboardHomeProps {
   username: string;
@@ -19,6 +21,7 @@ interface DashboardHomeProps {
   dailyPollLimit: number;
   xp: number;
   xpLevel: number;
+  communities: PersistedCommunityRecord[];
   onNavigate: (tab: DashboardTab) => void;
   onOpenCommunity: (communityId: string) => void;
 }
@@ -29,7 +32,7 @@ function CommunityCard({
   isLight,
   onOpenCommunity,
 }: {
-  community: ReturnType<typeof readCommunityChats>[number];
+  community: PersistedCommunityRecord;
   rank?: number;
   isLight: boolean;
   onOpenCommunity: (id: string) => void;
@@ -175,13 +178,22 @@ export function DashboardHome({
   dailyPollLimit,
   xp,
   xpLevel,
+  communities,
   onNavigate,
   onOpenCommunity,
 }: DashboardHomeProps) {
-  const { mode } = useTheme();
+  const { mode, accent, accentPresets } = useTheme();
+  const accentRgb = useMemo(
+    () => accentPresets.find((preset) => preset.id === accent)?.rgb ?? "241 196 45",
+    [accent, accentPresets],
+  );
+  const spinPrizes = useMemo(
+    () => buildSpinPrizes(mode === "light" ? "light" : "dark", accentRgb),
+    [mode, accentRgb],
+  );
   const isLight = mode === "light";
   const dailyItemsLeft = Math.max(0, dailyPollLimit - dailyAnsweredCount);
-  const allCommunities = useMemo(() => readCommunityChats(), []);
+  const allCommunities = communities;
 
   const spinStorageKey = userId ? `raw.daily-spin.${userId}` : null;
   const hasSpunToday = useMemo(() => {
@@ -225,13 +237,13 @@ export function DashboardHome({
       {/* ── Hero ── */}
       <section className="relative">
         <div className="relative z-10">
-          <h1 className={`font-display text-3xl md:text-4xl max-w-2xl leading-[1.15] ${isLight ? "text-slate-950" : "text-white"}`}>
+          <h1 className={`font-display max-w-2xl text-2xl leading-[1.08] sm:text-3xl md:text-4xl md:leading-[1.15] ${isLight ? "text-slate-950" : "text-white"}`}>
             Stay{" "}
             <Suspense fallback={<span className="text-raw-gold italic">anonymous</span>}>
               <ContainerTextFlipLazy
                 words={["anonymous", "connected", "growing", "raW"]}
                 interval={2800}
-                className="!text-3xl md:!text-4xl"
+                className="!text-2xl sm:!text-3xl md:!text-4xl"
               />
             </Suspense>
             . Speak your truth without identity.
@@ -340,7 +352,17 @@ export function DashboardHome({
                 <Dices className="size-5 text-raw-gold" />
               </div>
             </div>
-            <p className={`text-sm leading-relaxed ${isLight ? "text-slate-600" : "text-white/50"}`}>Spin the wheel once a day for a chance to earn XP, badges, and avatar themes.</p>
+            <div className="flex justify-center -mb-1">
+              <div className="w-[160px] sm:w-[180px] pointer-events-none">
+                <WheelOfFortune
+                  prizes={spinPrizes}
+                  onSpinEnd={() => undefined}
+                  disabled
+                  previewOnly
+                  radius={80}
+                />
+              </div>
+            </div>
             {hasSpunToday && spinCountdown ? (
               <div className={`rounded-xl border p-4 text-center ${isLight ? "border-slate-200 bg-slate-50" : "border-white/5 bg-white/[0.03]"}`}>
                 <p className={`text-[10px] uppercase tracking-[0.16em] ${isLight ? "text-slate-500" : "text-white/30"}`}>Next spin in</p>

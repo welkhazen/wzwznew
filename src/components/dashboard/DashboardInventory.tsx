@@ -1,22 +1,37 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Archive, BookOpen, Brain, CircleGauge, Fingerprint, Lock, Map, Sparkles, WandSparkles } from "lucide-react";
+import { readOwnedInsightIds } from "@/lib/insightsOwnership";
 import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { WheelOfFortune, type WheelPrize } from "@/components/wheel/WheelOfFortune";
 import { RARITY_CONFIG, RARITY_ORDER } from "@/lib/avatarRarity";
 import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
 import type { Poll } from "@/store/useRawStore";
 import TokenImage from "@/assets/tokens.webp";
+import { spendTokens } from "@/lib/api/tokens";
 
 interface DashboardInventoryProps {
   polls: Poll[];
   votedPolls: Set<string>;
   avatarLevel: number;
+  onAvatarChange: (level: number) => void;
   ownedAvatarLevels: Set<number>;
   onUnlockAvatar: (level: number) => Promise<boolean>;
+  onAvatarPurchased: (level: number) => void;
   avatarPricesByLevel: Record<number, string>;
   avatarCatalog: AvatarCatalogItem[];
   tokenBalance: number;
   userId: string;
+}
+
+const AVATAR_SHOP_PRICE = 50;
+const TOKEN_BALANCE_STORAGE_PREFIX = "raw.polls.token-balance";
+const TOKEN_BALANCE_UPDATED_EVENT = "raw:token-balance-updated";
+
+function updateTokenBalanceCache(userId: string, balance: number): void {
+  if (typeof window === "undefined") return;
+  const key = `${TOKEN_BALANCE_STORAGE_PREFIX}.${userId}`;
+  window.localStorage.setItem(key, String(balance));
+  window.dispatchEvent(new CustomEvent(TOKEN_BALANCE_UPDATED_EVENT, { detail: { storageKey: key, balance } }));
 }
 
 const PERSONALITY_INSIGHTS = [
@@ -88,14 +103,20 @@ const PERSONALITY_INSIGHTS = [
   },
 ];
 
-function PersonalityInsightsInventory({
+export const PERSONALITY_INSIGHTS_CATALOG = PERSONALITY_INSIGHTS;
+
+export function PersonalityInsightsInventory({
   pollsAnswered,
   totalPolls,
   tokenBalance,
+  ownedIds = new Set<string>(),
+  onPurchase,
 }: {
   pollsAnswered: number;
   totalPolls: number;
   tokenBalance: number;
+  ownedIds?: Set<string>;
+  onPurchase?: (insightId: string, tokenPrice: number) => Promise<void> | void;
 }) {
   const readyCount = PERSONALITY_INSIGHTS.filter(
     (insight) => pollsAnswered >= insight.requiredPolls && tokenBalance >= insight.tokenPrice
@@ -125,7 +146,7 @@ function PersonalityInsightsInventory({
       </div>
 
       <div className="grid gap-3 p-3 sm:grid-cols-2 sm:p-4">
-        {PERSONALITY_INSIGHTS.map((insight) => {
+        {PERSONALITY_INSIGHTS.filter((i) => !ownedIds.has(i.id)).map((insight) => {
           const Icon = insight.icon;
           const hasPolls = pollsAnswered >= insight.requiredPolls;
           const hasTokens = tokenBalance >= insight.tokenPrice;
@@ -171,6 +192,20 @@ function PersonalityInsightsInventory({
                       {insight.tokenPrice} tokens
                     </span>
                   </div>
+                  {onPurchase && (
+                    <button
+                      type="button"
+                      disabled={!ready}
+                      onClick={() => void onPurchase(insight.id, insight.tokenPrice)}
+                      className={`mt-3 w-full rounded-full border px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] transition ${
+                        ready
+                          ? "border-raw-gold/55 bg-raw-gold/15 text-raw-gold hover:bg-raw-gold/25"
+                          : "border-raw-border/30 bg-raw-surface/20 text-raw-silver/40"
+                      }`}
+                    >
+                      {ready ? `Unlock · ${insight.tokenPrice} tokens` : "Locked"}
+                    </button>
+                  )}
                 </div>
               </div>
             </article>
@@ -187,12 +222,15 @@ function PersonalityInsightsInventory({
 
 // ─── Avatar Shop ────────────────────────────────────────────────────────────
 
-function AvatarShop({
+export function AvatarShop({
   avatarCatalog,
   ownedAvatarLevels,
   onUnlockAvatar,
   avatarPricesByLevel,
-}: Pick<DashboardInventoryProps, "avatarCatalog" | "ownedAvatarLevels" | "onUnlockAvatar" | "avatarPricesByLevel">) {
+  tokenBalance,
+  userId,
+  onAvatarPurchased,
+}: Pick<DashboardInventoryProps, "avatarCatalog" | "ownedAvatarLevels" | "onUnlockAvatar" | "avatarPricesByLevel" | "tokenBalance" | "userId" | "onAvatarPurchased">) {
   const [unlocking, setUnlocking] = useState<number | null>(null);
 
   const purchasable = avatarCatalog.filter(
@@ -211,7 +249,8 @@ function AvatarShop({
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
       {purchasable.map((avatar) => {
         const owned = ownedAvatarLevels.has(avatar.level);
-        const price = avatarPricesByLevel[avatar.level] ?? avatar.price;
+        const price = Number(avatarPricesByLevel[avatar.level] ?? avatar.price) || AVATAR_SHOP_PRICE;
+        const canBuy = tokenBalance >= price;
         const rarity = avatar.rarity ?? "common";
         const rarityConfig = RARITY_CONFIG[rarity];
 
@@ -245,14 +284,23 @@ function AvatarShop({
               <button
                 onClick={async () => {
                   setUnlocking(avatar.level);
-                  await onUnlockAvatar(avatar.level).catch(() => null);
+                  try {
+                    const balance = await spendTokens(userId, price);
+                    const ok = await onUnlockAvatar(avatar.level);
+                    if (ok) {
+                      updateTokenBalanceCache(userId, balance);
+                      onAvatarPurchased(avatar.level);
+                    }
+                  } catch {
+                    // Keep shop state unchanged on payment or unlock failure.
+                  }
                   setUnlocking(null);
                 }}
-                disabled={unlocking === avatar.level}
+                disabled={unlocking === avatar.level || !canBuy}
                 className="relative flex items-center gap-1.5 rounded-full border border-raw-gold/35 bg-raw-gold/10 px-3 py-1 text-[10px] text-raw-gold transition hover:bg-raw-gold/20 disabled:opacity-50"
               >
                 <img src={TokenImage} alt="" className="h-3 w-3 object-contain" />
-                {unlocking === avatar.level ? "..." : price}
+                {unlocking === avatar.level ? "..." : `${price} tokens`}
               </button>
             )}
           </div>
@@ -274,7 +322,7 @@ const SPIN_PRIZES = RARITY_ORDER.map((r) => ({
   weight: RARITY_CONFIG[r].defaultWeight,
 }));
 
-function LootSpin({ tokenBalance }: { tokenBalance: number }) {
+export function LootSpin({ tokenBalance }: { tokenBalance: number }) {
   const [result, setResult] = useState<(typeof SPIN_PRIZES)[number] | null>(null);
 
   const canSpin = tokenBalance >= SPIN_COST;
@@ -338,13 +386,27 @@ function LootSpin({ tokenBalance }: { tokenBalance: number }) {
 export function DashboardInventory({
   polls,
   votedPolls,
+  avatarLevel,
+  onAvatarChange,
   ownedAvatarLevels,
-  onUnlockAvatar,
-  avatarPricesByLevel,
   avatarCatalog,
   tokenBalance,
+  userId,
 }: DashboardInventoryProps) {
   const pollsAnswered = votedPolls.size;
+
+  const ownedAvatars = avatarCatalog.filter((avatar) => ownedAvatarLevels.has(avatar.level));
+  const [ownedInsightIds, setOwnedInsightIds] = useState<Set<string>>(() => readOwnedInsightIds(userId));
+  useEffect(() => {
+    const refresh = () => setOwnedInsightIds(readOwnedInsightIds(userId));
+    window.addEventListener("storage", refresh);
+    window.addEventListener("raw:insights-updated", refresh);
+    return () => {
+      window.removeEventListener("storage", refresh);
+      window.removeEventListener("raw:insights-updated", refresh);
+    };
+  }, [userId]);
+  const ownedInsights = PERSONALITY_INSIGHTS_CATALOG.filter((i) => ownedInsightIds.has(i.id));
 
   return (
     <div className="space-y-8">
@@ -354,35 +416,92 @@ export function DashboardInventory({
           Inventory
         </h1>
         <p className="mt-1 text-xs text-raw-silver/40">
-          Your insights, collectible avatars, and loot rolls.
+          Everything you've collected — avatars, insights, and rewards.
         </p>
       </header>
 
-      {/* Avatar Shop */}
+      {/* Owned Avatars */}
       <section>
-        <h2 className="mb-3 font-display text-sm tracking-wide text-raw-text">Avatar Shop</h2>
-        <AvatarShop
-          avatarCatalog={avatarCatalog}
-          ownedAvatarLevels={ownedAvatarLevels}
-          onUnlockAvatar={onUnlockAvatar}
-          avatarPricesByLevel={avatarPricesByLevel}
-        />
+        <h2 className="mb-3 font-display text-sm tracking-wide text-raw-text">Your Avatars</h2>
+        {ownedAvatars.length === 0 ? (
+          <div className="rounded-2xl border border-raw-border/30 bg-raw-surface/20 p-6 text-center text-xs text-raw-silver/40">
+            You don't own any avatars yet. Visit the Store to unlock some.
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            {ownedAvatars.map((avatar) => {
+              const rarity = avatar.rarity ?? "common";
+              const rarityConfig = RARITY_CONFIG[rarity];
+              return (
+                <button
+                  type="button"
+                  key={avatar.id}
+                  onClick={() => onAvatarChange(avatar.level)}
+                  className="relative flex flex-col items-center gap-2 overflow-hidden rounded-2xl border bg-raw-black/45 p-3 text-center transition hover:-translate-y-0.5 hover:bg-raw-black/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/50"
+                  style={{
+                    borderColor: avatar.level === avatarLevel ? rarityConfig.color : `${rarityConfig.color}40`,
+                    boxShadow: avatar.level === avatarLevel ? `0 0 0 1px ${rarityConfig.color}55` : undefined,
+                  }}
+                  aria-pressed={avatar.level === avatarLevel}
+                  aria-label={`Use ${avatar.name} avatar`}
+                >
+                  <div className="pointer-events-none absolute inset-0 opacity-30 [background-image:radial-gradient(rgba(255,255,255,0.12)_0.6px,transparent_0.6px)] [background-size:8px_8px]" />
+                  <AvatarFigure avatarIndex={avatar.level} size="md" selected={avatar.level === avatarLevel} rarity={rarity} />
+                  <div className="relative text-center">
+                    <p className="text-xs font-medium text-raw-text line-clamp-1">{avatar.name}</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: rarityConfig.color }}>
+                      {rarityConfig.label}
+                    </p>
+                    <p className="mt-1 text-[10px] text-raw-silver/45">
+                      {avatar.level === avatarLevel ? "Selected" : "Tap to use"}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </section>
 
-      {/* Loot Spin */}
+      {/* Owned Identity Reports */}
       <section>
-        <h2 className="mb-3 font-display text-sm tracking-wide text-raw-text">Loot Spin</h2>
-        <LootSpin tokenBalance={tokenBalance} />
+        <h2 className="mb-3 font-display text-sm tracking-wide text-raw-text">Identity Reports</h2>
+        {ownedInsights.length === 0 ? (
+          <div className="rounded-2xl border border-raw-border/30 bg-raw-surface/20 p-6 text-center text-xs text-raw-silver/40">
+            You haven't unlocked any identity reports yet. Visit the Store to buy one.
+          </div>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2">
+            {ownedInsights.map((insight) => {
+              const Icon = insight.icon;
+              return (
+                <article
+                  key={insight.id}
+                  className={`relative overflow-hidden rounded-2xl border ${insight.border} bg-gradient-to-br ${insight.accent} p-4`}
+                >
+                  <div className="pointer-events-none absolute inset-0 bg-raw-black/20" />
+                  <div className="relative flex items-start gap-3">
+                    <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-white/10 ${insight.iconColor}`}>
+                      <Icon className="h-5 w-5" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="font-display text-base leading-tight text-raw-text">{insight.name}</h3>
+                        <span className="shrink-0 rounded-full border border-emerald-300/45 bg-emerald-400/15 px-2.5 py-1 text-[10px] text-emerald-200">
+                          Owned
+                        </span>
+                      </div>
+                      <p className="mt-2 text-xs leading-relaxed text-raw-silver/65">{insight.description}</p>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
       </section>
-
-      {/* Personality Insights */}
-      <section>
-        <PersonalityInsightsInventory
-          pollsAnswered={pollsAnswered}
-          totalPolls={polls.length}
-          tokenBalance={tokenBalance}
-        />
-      </section>
+      {/* Placeholder for unused props to avoid TS warnings without dropping the interface */}
+      <span className="hidden" data-polls={polls.length} data-polls-answered={pollsAnswered} data-balance={tokenBalance} />
     </div>
   );
 }

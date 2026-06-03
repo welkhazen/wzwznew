@@ -1,6 +1,8 @@
 import { useState } from "react";
 import {
   Calendar,
+  Eye,
+  EyeOff,
   Flame,
   KeyRound,
   MessageCircle,
@@ -10,6 +12,8 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { changePassword, deleteAccount } from "@/backend/supabase/controllers/authController";
+import { updateProfileVisibility } from "@/backend/supabase/controllers/userController";
+import type { PinnedMessageRecord } from "@/backend/supabase/controllers/userExtrasController";
 
 import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { LevelProgressBanner } from "@/components/dashboard/LevelProgressBanner";
@@ -26,6 +30,7 @@ interface DashboardProfileProps {
   pollsAnswered: number;
   xp?: number;
   xpLevel?: number;
+  pinnedMessage?: PinnedMessageRecord | null;
   onLogout: () => void;
 }
 
@@ -43,16 +48,14 @@ export function DashboardProfile({
   avatarLevel,
   onAvatarChange,
   ownedAvatarLevels,
-  onUnlockAvatar,
-  avatarPricesByLevel,
   pollsAnswered,
   xp = 0,
   xpLevel = 1,
+  pinnedMessage = null,
   onLogout,
 }: DashboardProfileProps) {
   const { toast } = useToast();
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  const [unlockingLevel, setUnlockingLevel] = useState<number | null>(null);
 
   const [pwOpen, setPwOpen] = useState(false);
   const [oldPw, setOldPw] = useState("");
@@ -63,6 +66,27 @@ export function DashboardProfile({
   const [delOpen, setDelOpen] = useState(false);
   const [delPw, setDelPw] = useState("");
   const [delLoading, setDelLoading] = useState(false);
+
+  const [showOldPw, setShowOldPw] = useState(false);
+  const [showNewPw, setShowNewPw] = useState(false);
+  const [showConfirmPw, setShowConfirmPw] = useState(false);
+  const [showDelPw, setShowDelPw] = useState(false);
+  const [profileVisibilitySaving, setProfileVisibilitySaving] = useState(false);
+
+  async function handleProfileVisibilityChange() {
+    setProfileVisibilitySaving(true);
+    try {
+      await updateProfileVisibility(userId, true);
+      toast({
+        title: "Profile is visible",
+        description: "People can see your chat profile.",
+      });
+    } catch {
+      toast({ title: "Could not update profile privacy", description: "Please try again." });
+    } finally {
+      setProfileVisibilitySaving(false);
+    }
+  }
 
   async function handleChangePassword() {
     if (newPw.length < 6) {
@@ -97,6 +121,8 @@ export function DashboardProfile({
 
   const displayIndex = hoveredIndex ?? avatarLevel;
   const theme = getAvatar(displayIndex);
+  const ownedLevels = Array.from({ length: LEVEL_THEMES.length }, (_, i) => i + 1)
+    .filter((lvl) => ownedAvatarLevels.has(lvl));
 
   return (
     <div className="space-y-5">
@@ -116,6 +142,7 @@ export function DashboardProfile({
         <p className="mt-3 font-display text-lg tracking-wide text-raw-text">
           {username}
         </p>
+        <p className="text-[10px] uppercase tracking-[0.22em] text-raw-silver/30">Public name</p>
         <p className="text-xs text-raw-gold/60">Level {displayIndex}</p>
         <p className="text-[10px] text-raw-silver/30">{theme.name}</p>
 
@@ -128,33 +155,19 @@ export function DashboardProfile({
             gridTemplateColumns: `repeat(${Math.ceil(MAX_LEVEL / 2)}, minmax(0, 1fr))`,
           }}
         >
-          {Array.from({ length: LEVEL_THEMES.length }, (_, i) => i + 1).map(
+          {ownedLevels.map(
             (lvl) => (
               <button
                 key={lvl}
                 type="button"
                 onClick={() => {
-                  if (ownedAvatarLevels.has(lvl)) {
-                    onAvatarChange(lvl);
-                    return;
-                  }
-
-                  setUnlockingLevel(lvl);
-                  void onUnlockAvatar(lvl).then((ok) => {
-                    if (ok) onAvatarChange(lvl);
-                  }).catch(() => {
-                    // Keep current selection if unlock fails.
-                  }).finally(() => {
-                    setUnlockingLevel((previous) => (previous === lvl ? null : previous));
-                  });
+                  onAvatarChange(lvl);
                 }}
                 onMouseEnter={() => setHoveredIndex(lvl)}
                 onMouseLeave={() => setHoveredIndex(null)}
                 onFocus={() => setHoveredIndex(lvl)}
                 onBlur={() => setHoveredIndex(null)}
-                className={`relative flex h-10 w-10 items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/40 ${
-                  ownedAvatarLevels.has(lvl) ? "" : "opacity-75"
-                }`}
+                className="relative flex h-10 w-10 items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/40"
                 aria-label={`Preview level ${lvl}`}
                 aria-pressed={lvl === avatarLevel}
               >
@@ -163,11 +176,6 @@ export function DashboardProfile({
                   size="sm"
                   selected={lvl === avatarLevel}
                 />
-                {!ownedAvatarLevels.has(lvl) && (
-                  <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap text-[9px] text-raw-silver/40">
-                    {unlockingLevel === lvl ? "Unlocking..." : (avatarPricesByLevel[lvl] || "Locked")}
-                  </span>
-                )}
               </button>
             )
           )}
@@ -201,6 +209,32 @@ export function DashboardProfile({
 
       {/* Account Settings */}
       <div className="space-y-2">
+        <div className="overflow-hidden rounded-2xl border border-raw-border/30 bg-raw-surface/30">
+          <div className="flex items-center justify-between gap-3 px-4 py-3.5">
+            <div>
+              <p className="text-sm font-medium text-raw-text">Public chat profile</p>
+              <p className="mt-1 text-xs text-raw-silver/40">Your username, avatar, role, join date, and pinned message appear when someone taps your message.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => { void handleProfileVisibilityChange(); }}
+              disabled={profileVisibilitySaving}
+              className="relative h-7 w-12 shrink-0 rounded-full border border-raw-gold/60 bg-raw-gold/30 transition-colors disabled:opacity-60"
+              aria-pressed
+              aria-label="Public chat profile is always on"
+            >
+              <span className="absolute top-1 h-5 w-5 translate-x-5 rounded-full bg-raw-text transition-transform" />
+            </button>
+          </div>
+        </div>
+
+        {pinnedMessage && (
+          <div className="rounded-2xl border border-raw-gold/25 bg-raw-gold/[0.06] px-4 py-3.5">
+            <p className="text-[10px] uppercase tracking-[0.16em] text-raw-gold/70">Pinned message</p>
+            <p className="mt-1.5 text-sm leading-relaxed text-raw-text/85">{pinnedMessage.messageText}</p>
+          </div>
+        )}
+
         <div className="rounded-2xl border border-raw-border/30 bg-raw-surface/30 overflow-hidden">
           <button
             type="button"
@@ -215,27 +249,57 @@ export function DashboardProfile({
           </button>
           {pwOpen && (
             <div className="border-t border-raw-border/20 px-4 pb-4 pt-3 space-y-2.5">
-              <input
-                type="password"
-                placeholder="Current password"
-                value={oldPw}
-                onChange={(e) => setOldPw(e.target.value)}
-                className="w-full rounded-xl border border-raw-border/30 bg-raw-black/40 px-3 py-2.5 text-sm text-raw-text placeholder:text-raw-silver/25 focus:border-raw-gold/40 focus:outline-none"
-              />
-              <input
-                type="password"
-                placeholder="New password"
-                value={newPw}
-                onChange={(e) => setNewPw(e.target.value)}
-                className="w-full rounded-xl border border-raw-border/30 bg-raw-black/40 px-3 py-2.5 text-sm text-raw-text placeholder:text-raw-silver/25 focus:border-raw-gold/40 focus:outline-none"
-              />
-              <input
-                type="password"
-                placeholder="Confirm new password"
-                value={confirmPw}
-                onChange={(e) => setConfirmPw(e.target.value)}
-                className="w-full rounded-xl border border-raw-border/30 bg-raw-black/40 px-3 py-2.5 text-sm text-raw-text placeholder:text-raw-silver/25 focus:border-raw-gold/40 focus:outline-none"
-              />
+              <div className="relative">
+                <input
+                  type={showOldPw ? "text" : "password"}
+                  placeholder="Current password"
+                  value={oldPw}
+                  onChange={(e) => setOldPw(e.target.value)}
+                  className="w-full rounded-xl border border-raw-border/30 bg-raw-black/40 px-3 py-2.5 pr-10 text-sm text-raw-text placeholder:text-raw-silver/25 focus:border-raw-gold/40 focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowOldPw((v) => !v)}
+                  aria-label={showOldPw ? "Hide password" : "Show password"}
+                  className="absolute inset-y-0 right-2 flex items-center px-1 text-raw-silver/50 hover:text-raw-gold"
+                >
+                  {showOldPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              <div className="relative">
+                <input
+                  type={showNewPw ? "text" : "password"}
+                  placeholder="New password"
+                  value={newPw}
+                  onChange={(e) => setNewPw(e.target.value)}
+                  className="w-full rounded-xl border border-raw-border/30 bg-raw-black/40 px-3 py-2.5 pr-10 text-sm text-raw-text placeholder:text-raw-silver/25 focus:border-raw-gold/40 focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPw((v) => !v)}
+                  aria-label={showNewPw ? "Hide password" : "Show password"}
+                  className="absolute inset-y-0 right-2 flex items-center px-1 text-raw-silver/50 hover:text-raw-gold"
+                >
+                  {showNewPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              <div className="relative">
+                <input
+                  type={showConfirmPw ? "text" : "password"}
+                  placeholder="Confirm new password"
+                  value={confirmPw}
+                  onChange={(e) => setConfirmPw(e.target.value)}
+                  className="w-full rounded-xl border border-raw-border/30 bg-raw-black/40 px-3 py-2.5 pr-10 text-sm text-raw-text placeholder:text-raw-silver/25 focus:border-raw-gold/40 focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPw((v) => !v)}
+                  aria-label={showConfirmPw ? "Hide password" : "Show password"}
+                  className="absolute inset-y-0 right-2 flex items-center px-1 text-raw-silver/50 hover:text-raw-gold"
+                >
+                  {showConfirmPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
               <button
                 type="button"
                 onClick={handleChangePassword}
@@ -263,13 +327,23 @@ export function DashboardProfile({
           {delOpen && (
             <div className="border-t border-red-500/10 px-4 pb-4 pt-3 space-y-2.5">
               <p className="text-xs text-raw-silver/40">This is permanent. All your data will be deleted and cannot be recovered.</p>
-              <input
-                type="password"
-                placeholder="Enter your password to confirm"
-                value={delPw}
-                onChange={(e) => setDelPw(e.target.value)}
-                className="w-full rounded-xl border border-red-500/20 bg-raw-black/40 px-3 py-2.5 text-sm text-raw-text placeholder:text-raw-silver/25 focus:border-red-400/40 focus:outline-none"
-              />
+              <div className="relative">
+                <input
+                  type={showDelPw ? "text" : "password"}
+                  placeholder="Enter your password to confirm"
+                  value={delPw}
+                  onChange={(e) => setDelPw(e.target.value)}
+                  className="w-full rounded-xl border border-red-500/20 bg-raw-black/40 px-3 py-2.5 pr-10 text-sm text-raw-text placeholder:text-raw-silver/25 focus:border-red-400/40 focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowDelPw((v) => !v)}
+                  aria-label={showDelPw ? "Hide password" : "Show password"}
+                  className="absolute inset-y-0 right-2 flex items-center px-1 text-raw-silver/50 hover:text-red-400"
+                >
+                  {showDelPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
               <button
                 type="button"
                 onClick={handleDeleteAccount}

@@ -2,9 +2,14 @@ import { Suspense, lazy, useEffect } from "react";
 import { OnboardingJourney } from "@/components/onboarding/OnboardingJourney";
 import { useHostMode } from "@/hooks/use-host-mode";
 import Dashboard from "@/pages/Dashboard";
+import { SharedPollPage } from "@/components/polls/SharedPollPage";
+import { SignupModal } from "@/components/landing/SignupModal";
+import { POLL_SHARE_PARAM } from "@/lib/pollShare";
 import { useRawStore } from "@/store/useRawStore";
-import { joinCommunityChat } from "@/lib/communityChat";
 import { awardXP, XP_REWARDS } from "@/lib/userProgress";
+import { claimPendingLandingWheelAvatarForUser } from "@/lib/avatarCatalog";
+import { unlockCommunity } from "@/lib/communityAccess";
+import { joinCommunity } from "@/backend/supabase/controllers/communityController";
 
 const LandingShellLazy = lazy(() => import("@/components/landing/LandingShell"));
 
@@ -13,6 +18,7 @@ const Index = () => {
   const {
     user,
     isLoggedIn,
+    sessionLoaded,
     polls,
     votedPolls,
     freeVotesUsed,
@@ -23,6 +29,7 @@ const Index = () => {
     selectAvatarForOnboarding,
     ownedAvatarLevels,
     unlockAvatarLevel,
+    markAvatarOwned,
     avatarPricesByLevel,
     avatarCatalog,
     onboardingStep,
@@ -47,6 +54,21 @@ const Index = () => {
     logout,
   } = useRawStore();
   const { hostname, isTheRawMe } = useHostMode();
+  const sharedPollRef = typeof window !== "undefined"
+    ? new URLSearchParams(window.location.search).get(POLL_SHARE_PARAM)
+    : null;
+
+  const joinOnboardingCommunities = async () => {
+    if (!user) return;
+
+    for (const communityId of onboardingSelectedCommunityIds) {
+      const result = await unlockCommunity(user.id, communityId);
+      if (!result.ok && !result.already) {
+        throw new Error("Could not save your selected community. Please try again.");
+      }
+      await joinCommunity(communityId, user.id, user.username);
+    }
+  };
 
   useEffect(() => {
     if (!isLoggedIn || !user || !isTheRawMe || typeof window === "undefined") {
@@ -59,6 +81,16 @@ const Index = () => {
     }
   }, [hostname, isLoggedIn, isTheRawMe, user]);
 
+  // Don't flash the landing page (and its poll popup) while auth is still
+  // resolving on refresh. Wait for the session to load first.
+  if (!sessionLoaded && !sharedPollRef) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-raw-black">
+        <div className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-raw-border border-t-raw-gold" />
+      </div>
+    );
+  }
+
   if (isLoggedIn && user && isTheRawMe) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-raw-black px-6 text-center text-raw-silver/60">
@@ -67,6 +99,28 @@ const Index = () => {
           <p className="mt-3 text-sm">Taking you to myraw.app...</p>
         </div>
       </div>
+    );
+  }
+
+  if (!isLoggedIn && sharedPollRef) {
+    return (
+      <>
+        <SharedPollPage
+          polls={polls}
+          shareCode={sharedPollRef}
+          votedPolls={votedPolls}
+          onVote={vote}
+          onSignup={() => setShowSignup(true)}
+        />
+        <SignupModal
+          open={showSignup}
+          onClose={() => setShowSignup(false)}
+          onRequestSignupOtp={requestSignupOtp}
+          onVerifySignupOtp={verifySignupOtp}
+          onLogin={login}
+          source="shared-poll"
+        />
+      </>
     );
   }
 
@@ -90,6 +144,8 @@ const Index = () => {
           polls={polls}
           avatarIndex={avatarLevel}
           onAvatarChange={selectAvatarForOnboarding}
+          ownedAvatarLevels={ownedAvatarLevels}
+          avatarCatalog={avatarCatalog}
           onboardingStep={onboardingStep}
           onboardingAnsweredPollIds={onboardingAnsweredPollIds}
           onSetOnboardingStep={setOnboardingStep}
@@ -108,14 +164,18 @@ const Index = () => {
               return [...previous, communityId];
             });
           }}
-          onCompleteOnboarding={() => {
-            onboardingSelectedCommunityIds.forEach((communityId) => {
-              joinCommunityChat(communityId, { userId: user.id, username: user.username });
-            });
+          onCompleteOnboarding={async () => {
+            await joinOnboardingCommunities();
             completeOnboarding();
             void awardXP(user.id, XP_REWARDS.ONBOARDING_COMPLETE);
           }}
           onLogout={logout}
+          onClaimLandingWheelAvatar={async () => {
+            const result = await claimPendingLandingWheelAvatarForUser(user.id);
+            if (result && (result.status === "granted" || result.status === "already_claimed")) {
+              markAvatarOwned(result.level);
+            }
+          }}
         />
       );
     }
@@ -129,6 +189,7 @@ const Index = () => {
         setAvatarLevel={setAvatarLevel}
         ownedAvatarLevels={ownedAvatarLevels}
         unlockAvatarLevel={unlockAvatarLevel}
+        markAvatarOwned={markAvatarOwned}
         avatarPricesByLevel={avatarPricesByLevel}
         avatarCatalog={avatarCatalog}
         dailyAnsweredCount={dailyAnsweredCount}

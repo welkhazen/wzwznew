@@ -1,0 +1,49 @@
+{
+  "batchIndex": 9,
+  "nodes": [
+    {
+      "id": "document:graphify-out/GRAPH_REPORT.md",
+      "type": "document",
+      "name": "GRAPH_REPORT.md",
+      "filePath": "graphify-out/GRAPH_REPORT.md",
+      "summary": "Generated graph report (2026-05-26) summarizing 41 nodes and 39 edges of the src callflow. Lists top connected nodes (backend/supabase/client.ts has degree 8; lib/analytics/index.ts, lib/communityChat.types.ts, lib/communityChat.ts each degree 4) and scoring notes flagging core-utility/analytics-core/theme-core as primitives to deprioritize in risk triage.",
+      "tags": ["docs", "graph", "report", "generated", "architecture"],
+      "complexity": "low"
+    },
+    {
+      "id": "document:graphify-out/graph.html",
+      "type": "document",
+      "name": "graph.html",
+      "filePath": "graphify-out/graph.html",
+      "summary": "Static HTML viewer for the codebase callflow rendered via Mermaid (graph LR). Embeds the dependency edges between backend controllers, dashboard/onboarding components, features/insights, lib/analytics, lib/communityChat, store/useRawStore, and utils/supabase modules. Loads mermaid ESM from jsdelivr CDN.",
+      "tags": ["docs", "html", "mermaid", "visualization", "graph", "generated"],
+      "complexity": "low"
+    },
+    {
+      "id": "resource:graphify-out/graph.json",
+      "type": "resource",
+      "name": "graph.json",
+      "filePath": "graphify-out/graph.json",
+      "summary": "Machine-readable callflow graph (41 nodes, 39 edges) generated from src on 2026-05-26. Each node has id (relative path), degree, and class (all 'other'); edges enumerate import relationships across backend/supabase controllers and models, components, features/insights, lib/analytics, lib/communityChat, store, and utils modules.",
+      "tags": ["data", "json", "graph", "generated", "architecture"],
+      "complexity": "medium"
+    }
+  ],
+  "edges": [
+    {
+      "from": "document:graphify-out/GRAPH_REPORT.md",
+      "to": "resource:graphify-out/graph.json",
+      "type": "documents"
+    },
+    {
+      "from": "document:graphify-out/graph.html",
+      "to": "resource:graphify-out/graph.json",
+      "type": "related"
+    },
+    {
+      "from": "document:graphify-out/GRAPH_REPORT.md",
+      "to": "document:graphify-out/graph.html",
+      "type": "related"
+    }
+  ]
+}

@@ -5,12 +5,11 @@ import {
   Lock,
   MessageCircle,
   Sparkles,
-  Star,
   Trophy,
-  UserPlus,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DashboardDailySpin } from "@/components/dashboard/DashboardDailySpin";
+import { toast } from "@/components/ui/use-toast";
 import { getTodayKey } from "@/store/useRawStore.storage";
 import { loadLocalLoginDays, loadUserXPClaimKeys } from "@/lib/userProgress";
 
@@ -24,6 +23,7 @@ interface DashboardChallengesProps {
   onAwardXP?: (amount: number) => Promise<void>;
   onClaimXP?: (source: string, claimKey: string, amount: number) => Promise<boolean>;
   onAwardTokens?: (amount: number) => void;
+  onAvatarWon?: (level: number) => void;
 }
 
 type ChallengeReset = "daily" | "weekly" | "monthly";
@@ -99,39 +99,6 @@ const challengeDefinitions = [
     accent: "from-[#F1C42D]/26 via-[#EBEBEB]/10 to-transparent",
     Icon: Flame,
   },
-  {
-    id: "review-master",
-    title: "Review Master",
-    description: "Leave a review after your session",
-    target: 1,
-    rewardXP: 50,
-    reset: "monthly",
-    progressKey: "totalPolls",
-    accent: "from-[#D9D9D9]/18 via-[#B82E2E]/10 to-transparent",
-    Icon: Star,
-  },
-  {
-    id: "refer-a-friend",
-    title: "Refer a Friend",
-    description: "Invite a friend who books their first session",
-    target: 1,
-    rewardXP: 150,
-    reset: "monthly",
-    progressKey: "totalPolls",
-    accent: "from-[#EBEBEB]/16 via-[#F1C42D]/14 to-transparent",
-    Icon: UserPlus,
-  },
-  {
-    id: "signal-builder",
-    title: "Signal Builder",
-    description: "Reach avatar level 5",
-    target: 5,
-    rewardXP: 100,
-    reset: "monthly",
-    progressKey: "avatarLevel",
-    accent: "from-[#F1C42D]/16 via-[#D9D9D9]/18 to-transparent",
-    Icon: Flame,
-  },
 ] satisfies ChallengeDefinition[];
 
 function getWeekKey(): string {
@@ -182,17 +149,19 @@ export function DashboardChallenges({
   onAwardXP,
   onClaimXP,
   onAwardTokens,
+  onAvatarWon,
 }: DashboardChallengesProps) {
   const [claimedChallenges, setClaimedChallenges] = useState<Set<string>>(new Set());
   const [dailyLoginClaimKeys, setDailyLoginClaimKeys] = useState<string[]>([]);
   const [testProgress, setTestProgress] = useState<Record<string, number>>({});
+  const autoClaimingRef = useRef<Set<string>>(new Set());
   const streakDays = countConsecutiveDays(dailyLoginClaimKeys);
-  const progressSourceMap: Record<ChallengeDefinition["progressKey"], number> = {
+  const progressSourceMap = useMemo<Record<ChallengeDefinition["progressKey"], number>>(() => ({
     dailyPolls: dailyAnsweredCount,
     totalPolls: pollsAnswered,
     streakDays,
     avatarLevel,
-  };
+  }), [avatarLevel, dailyAnsweredCount, pollsAnswered, streakDays]);
 
   useEffect(() => {
     loadUserXPClaimKeys(userId, "challenge").then((claimKeys) => {
@@ -206,9 +175,10 @@ export function DashboardChallenges({
     return current >= challenge.target;
   }).length;
 
-  const handleClaimChallenge = (challenge: ChallengeDefinition) => {
+  const handleClaimChallenge = useCallback((challenge: ChallengeDefinition) => {
     const claimKey = `${challenge.id}:${getResetKey(challenge.reset)}`;
-    if (!isAdmin && claimedChallenges.has(claimKey)) return;
+    if (!isAdmin && (claimedChallenges.has(claimKey) || autoClaimingRef.current.has(claimKey))) return;
+    autoClaimingRef.current.add(claimKey);
 
     const awardTokens = () => {
       if (challenge.rewardTokens && onAwardTokens) {
@@ -218,7 +188,9 @@ export function DashboardChallenges({
 
     if (isAdmin && onAwardXP) {
       awardTokens();
-      void onAwardXP(challenge.rewardXP);
+      void onAwardXP(challenge.rewardXP).finally(() => {
+        autoClaimingRef.current.delete(claimKey);
+      });
       return;
     }
 
@@ -227,7 +199,13 @@ export function DashboardChallenges({
         if (awarded) {
           awardTokens();
           setClaimedChallenges((previous) => new Set(previous).add(claimKey));
+          toast({
+            title: `${challenge.title} complete`,
+            description: `+${challenge.rewardXP} XP${challenge.rewardTokens ? ` and +${challenge.rewardTokens} tokens` : ""} claimed automatically.`,
+          });
         }
+      }).finally(() => {
+        autoClaimingRef.current.delete(claimKey);
       });
       return;
     }
@@ -236,13 +214,34 @@ export function DashboardChallenges({
       void onAwardXP(challenge.rewardXP).then(() => {
         awardTokens();
         setClaimedChallenges((previous) => new Set(previous).add(claimKey));
+        toast({
+          title: `${challenge.title} complete`,
+          description: `+${challenge.rewardXP} XP${challenge.rewardTokens ? ` and +${challenge.rewardTokens} tokens` : ""} claimed automatically.`,
+        });
+      }).finally(() => {
+        autoClaimingRef.current.delete(claimKey);
       });
+      return;
     }
-  };
+
+    autoClaimingRef.current.delete(claimKey);
+  }, [claimedChallenges, isAdmin, onAwardTokens, onAwardXP, onClaimXP]);
+
+  useEffect(() => {
+    if (isAdmin) return;
+
+    challengeDefinitions.forEach((challenge) => {
+      const current = testProgress[challenge.id] ?? progressSourceMap[challenge.progressKey] ?? 0;
+      const claimKey = `${challenge.id}:${getResetKey(challenge.reset)}`;
+      if (current >= challenge.target && !claimedChallenges.has(claimKey)) {
+        handleClaimChallenge(challenge);
+      }
+    });
+  }, [claimedChallenges, handleClaimChallenge, isAdmin, progressSourceMap, testProgress]);
 
   return (
     <div className="space-y-5">
-      <DashboardDailySpin userId={userId} isAdmin={isAdmin} onAwardXP={onAwardXP} />
+      <DashboardDailySpin userId={userId} isAdmin={isAdmin} onAwardXP={onAwardXP} onAvatarWon={onAvatarWon} />
 
       <header className="space-y-2">
         <h1 className="font-display text-xl tracking-wide text-raw-text sm:text-2xl">Challenges</h1>
