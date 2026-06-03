@@ -49,24 +49,27 @@ describe("community chat Supabase persistence", () => {
     vi.clearAllMocks();
   });
 
-  it("sends community messages through Supabase only", async () => {
+  it("sends community messages through the send_community_message RPC", async () => {
     const setItemSpy = vi.spyOn(window.localStorage.__proto__, "setItem");
-    fromMock.mockReturnValueOnce(successfulSingle({
-      id: "message-1",
-      community_id: "community-1",
-      sender_id: "user-alice",
-      sender_name: "alice",
-      text: "hello everyone",
-      created_at: "2026-06-02T09:00:00.000Z",
-      pinned: false,
-      reply_to_message_id: null,
-      reply_to_sender_name: null,
-      reply_to_text: null,
-      deleted_at: null,
-      deleted_by_user_id: null,
-      liked_by: null,
-      sender_avatar_level: 3,
-    }));
+    rpcMock.mockResolvedValueOnce({
+      data: {
+        id: "message-1",
+        community_id: "community-1",
+        sender_id: "user-alice",
+        sender_name: "alice",
+        text: "hello everyone",
+        created_at: "2026-06-02T09:00:00.000Z",
+        pinned: false,
+        reply_to_message_id: null,
+        reply_to_sender_name: null,
+        reply_to_text: null,
+        deleted_at: null,
+        deleted_by_user_id: null,
+        liked_by: null,
+        sender_avatar_level: 3,
+      },
+      error: null,
+    });
 
     const message = await sendMessage("community-1", {
       senderId: "user-alice",
@@ -75,20 +78,36 @@ describe("community chat Supabase persistence", () => {
       text: "hello everyone",
     });
 
-    expect(fromMock).toHaveBeenCalledWith("community_messages");
+    expect(rpcMock).toHaveBeenCalledWith("send_community_message", {
+      p_community_id: "community-1",
+      p_text: "hello everyone",
+      p_reply_to_message_id: null,
+    });
+    // Frontend-supplied senderId / senderName / senderAvatarLevel must NOT be
+    // forwarded — the SECURITY DEFINER RPC derives those from the verified
+    // session user.
+    const rpcArgs = rpcMock.mock.calls[0]?.[1] as Record<string, unknown> | undefined;
+    expect(rpcArgs).toBeDefined();
+    expect(Object.keys(rpcArgs ?? {})).not.toContain("p_sender_id");
+    expect(Object.keys(rpcArgs ?? {})).not.toContain("p_sender_name");
+    expect(Object.keys(rpcArgs ?? {})).not.toContain("p_sender_avatar_level");
     expect(message.text).toBe("hello everyone");
     expect(message.senderAvatarLevel).toBe(3);
     expect(setItemSpy).not.toHaveBeenCalled();
   });
 
-  it("updates message deletes and likes through Supabase only", async () => {
-    const deleteQuery = successfulMutation();
-    fromMock.mockReturnValueOnce(deleteQuery);
+  it("deletes messages through delete_community_message and likes through toggle_message_like", async () => {
+    rpcMock.mockResolvedValueOnce({ data: null, error: null });
     await deleteMessage("message-1", "user-alice");
-    expect(fromMock).toHaveBeenCalledWith("community_messages");
-    expect(deleteQuery.update).toHaveBeenCalledWith(expect.objectContaining({ deleted_by_user_id: "user-alice" }));
+    expect(rpcMock).toHaveBeenCalledWith("delete_community_message", {
+      p_message_id: "message-1",
+    });
+    // The requesterId argument is NOT forwarded — the RPC verifies ownership
+    // against the session user, not against a client-supplied id.
+    const deleteArgs = rpcMock.mock.calls[0]?.[1] as Record<string, unknown> | undefined;
+    expect(Object.keys(deleteArgs ?? {})).not.toContain("p_requester_id");
 
-    rpcMock.mockResolvedValueOnce({ error: null });
+    rpcMock.mockResolvedValueOnce({ data: null, error: null });
     await likeMessage("message-1", "user-bob");
     expect(rpcMock).toHaveBeenCalledWith("toggle_message_like", {
       p_message_id: "message-1",
