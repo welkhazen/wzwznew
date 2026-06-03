@@ -9,7 +9,7 @@ import { getTodayKey } from "@/store/useRawStore.storage";
 import { useTheme } from "@/providers/useTheme";
 import { LevelProgressBanner } from "@/components/dashboard/LevelProgressBanner";
 import { WheelOfFortune } from "@/components/wheel/WheelOfFortune";
-import { buildSpinPrizes } from "@/components/dashboard/DashboardDailySpin";
+import { buildSpinPrizes, DashboardDailySpin } from "@/components/dashboard/DashboardDailySpin";
 
 interface DashboardHomeProps {
   username: string;
@@ -24,6 +24,9 @@ interface DashboardHomeProps {
   communities: PersistedCommunityRecord[];
   onNavigate: (tab: DashboardTab) => void;
   onOpenCommunity: (communityId: string) => void;
+  isAdmin?: boolean;
+  onAwardXP?: (amount: number) => Promise<void>;
+  onAvatarWon?: (level: number) => void;
 }
 
 function CommunityCard({
@@ -181,6 +184,9 @@ export function DashboardHome({
   communities,
   onNavigate,
   onOpenCommunity,
+  isAdmin,
+  onAwardXP,
+  onAvatarWon,
 }: DashboardHomeProps) {
   const { mode, accent, accentPresets } = useTheme();
   const accentRgb = useMemo(
@@ -344,30 +350,14 @@ export function DashboardHome({
                 <Dices className="size-5 text-raw-gold" />
               </div>
             </div>
-            <div className="flex justify-center -mb-1">
-              <div className="w-[160px] sm:w-[180px] pointer-events-none">
-                <WheelOfFortune
-                  prizes={spinPrizes}
-                  onSpinEnd={() => undefined}
-                  disabled
-                  previewOnly
-                  radius={80}
-                />
-              </div>
-            </div>
-            {hasSpunToday && spinCountdown ? (
-              <div className={`rounded-xl border p-4 text-center ${isLight ? "border-slate-200 bg-slate-50" : "border-white/5 bg-white/[0.03]"}`}>
-                <p className={`text-[10px] uppercase tracking-[0.16em] ${isLight ? "text-slate-500" : "text-white/30"}`}>Next spin in</p>
-                <p className="mt-1.5 font-display text-2xl tracking-widest text-raw-gold/90">{spinCountdown}</p>
-              </div>
-            ) : (
-              <button
-                onClick={() => onNavigate("challenges")}
-                className="w-full py-3 rounded-xl border border-raw-gold/30 text-raw-gold font-bold text-xs uppercase tracking-[0.2em] hover:bg-raw-gold/5 transition-all"
-              >
-                Spin Now
-              </button>
-            )}
+            {userId ? (
+              <DashboardDailySpin
+                userId={userId}
+                isAdmin={isAdmin ?? false}
+                onAwardXP={onAwardXP}
+                onAvatarWon={onAvatarWon}
+              />
+            ) : null}
           </div>
 
           {/* Level Up */}
