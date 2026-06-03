@@ -83,6 +83,7 @@ vi.mock("@/store/useRawStore", () => ({
   useRawStore: () => ({
     user: { id: "user-returning-user", username: "returning-user", role: "member" },
     isLoggedIn: true,
+    sessionLoaded: true,
     polls: [],
     votedPolls: [],
     freeVotesUsed: 0,
