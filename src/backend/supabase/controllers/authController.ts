@@ -10,31 +10,36 @@ export interface AuthUser {
   profile_public?: boolean;
 }
 
-const SESSION_KEY = 'raw.auth.session.v2';
-
-function saveSession(user: AuthUser): void {
-  localStorage.setItem(SESSION_KEY, JSON.stringify(user));
-}
-
-function clearSession(): void {
-  localStorage.removeItem(SESSION_KEY);
-}
-
 type RpcResult = { ok: boolean; user?: AuthUser; error?: string };
+
+function usernameToEmail(username: string): string {
+  return `${encodeURIComponent(username.trim().toLowerCase())}@users.raw.local`;
+}
+
+function normalizeUsername(username: string): string {
+  return username.trim();
+}
 
 function normalizeAuthUser(user: AuthUser): AuthUser {
   return user;
 }
 
-async function refreshAuthUser(user: AuthUser): Promise<AuthUser> {
+async function fetchProfile(userId: string): Promise<AuthUser | null> {
   const { data, error } = await supabase
     .from('users')
     .select('id, username, role, status, avatar_level, onboarding_completed, profile_public')
-    .eq('id', user.id)
+    .eq('id', userId)
     .maybeSingle();
 
-  if (error || !data) return user;
+  if (error || !data) return null;
   return normalizeAuthUser(data as AuthUser);
+}
+
+async function requireProfile(userId: string): Promise<RpcResult> {
+  const user = await fetchProfile(userId);
+  if (!user) return { ok: false, error: 'Profile not found. Please contact support.' };
+  if (user.status === 'banned' || user.status === 'deleted') return { ok: false, error: 'Account is not active.' };
+  return { ok: true, user };
 }
 
 export async function completeUserOnboarding(_userId?: string): Promise<{ ok: boolean; error?: string }> {
@@ -45,65 +50,65 @@ export async function completeUserOnboarding(_userId?: string): Promise<{ ok: bo
 }
 
 export async function signUp(username: string, password: string): Promise<RpcResult> {
- let data = null;
-let error = null;
+  const normalizedUsername = normalizeUsername(username);
+  if (!normalizedUsername) return { ok: false, error: 'Username is required.' };
 
-try {
-  const response = await supabase.rpc('signup_user', {
-    p_username: username,
-    p_password: password,
+  const { data: existingUser } = await supabase
+    .from('users')
+    .select('id')
+    .eq('username', normalizedUsername)
+    .maybeSingle();
+  if (existingUser) return { ok: false, error: 'Username is already taken.' };
+
+  const email = usernameToEmail(normalizedUsername);
+  const { data: authData, error: authError } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { data: { username: normalizedUsername } },
   });
 
-  data = response.data;
-  error = response.error;
-} catch (err) {
-  data = null;
-  error = err;
-}
-  if (error || !data) return { ok: false, error: 'Could not create account. Please try again.' };
-  const result = data as RpcResult;
-  if (result.ok && result.user) saveSession(result.user);
-  return result;
+  if (authError || !authData.user) {
+    return { ok: false, error: authError?.message ?? 'Could not create account. Please try again.' };
+  }
+  if (!authData.session) {
+    await supabase.auth.signOut();
+    return { ok: false, error: 'Signup requires verified session support. Disable email confirmation for username auth or add a server signup endpoint.' };
+  }
+
+  const { error: profileError } = await supabase
+    .from('users')
+    .insert({
+      id: authData.user.id,
+      username: normalizedUsername,
+    });
+
+  if (profileError) {
+    await supabase.auth.signOut();
+    return { ok: false, error: profileError.message };
+  }
+
+  return requireProfile(authData.user.id);
 }
 
 export async function signIn(username: string, password: string): Promise<RpcResult> {
-  let data = null;
-  let error = null;
+  const email = usernameToEmail(username);
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
-  try {
-    const response = await supabase.rpc('login_user', {
-      p_username: username,
-      p_password: password,
-    });
-
-    data = response.data;
-    error = response.error;
-  } catch (err) {
-    data = null;
-    error = err;
+  if (error || !data.user) {
+    return { ok: false, error: 'Could not sign in. Please try again.' };
   }
 
-  if (error || !data) return { ok: false, error: 'Could not sign in. Please try again.' };
-
-  const result = data as RpcResult;
-  if (result.ok && result.user) saveSession(result.user);
-  return result;
+  return requireProfile(data.user.id);
 }
 
 export async function signOut(): Promise<void> {
-  clearSession();
+  await supabase.auth.signOut();
 }
 
 export async function getSession(): Promise<AuthUser | null> {
-  try {
-    const raw = localStorage.getItem(SESSION_KEY);
-    if (!raw) return null;
-    const user = await refreshAuthUser(normalizeAuthUser(JSON.parse(raw) as AuthUser));
-    saveSession(user);
-    return user;
-  } catch {
-    return null;
-  }
+  const { data, error } = await supabase.auth.getUser();
+  if (error || !data.user) return null;
+  return fetchProfile(data.user.id);
 }
 
 export async function changePassword(
@@ -112,12 +117,18 @@ export async function changePassword(
   newPassword: string,
 ): Promise<{ ok: boolean; error?: string }> {
   void _userId;
-  const { data, error } = await supabase.rpc('change_password', {
-    p_old_password: oldPassword,
-    p_new_password: newPassword,
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData.user?.email) return { ok: false, error: 'auth_migration_required' };
+
+  const { error: verifyError } = await supabase.auth.signInWithPassword({
+    email: userData.user.email,
+    password: oldPassword,
   });
+  if (verifyError) return { ok: false, error: 'Invalid current password' };
+
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
   if (error) return { ok: false, error: error.message };
-  return (data as { ok: boolean; error?: string }) ?? { ok: true };
+  return { ok: true };
 }
 
 export async function deleteAccount(
@@ -125,11 +136,18 @@ export async function deleteAccount(
   password: string,
 ): Promise<{ ok: boolean; error?: string }> {
   void _userId;
-  const { data, error } = await supabase.rpc('delete_account', {
-    p_password: password,
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData.user?.email) return { ok: false, error: 'auth_migration_required' };
+
+  const { error: verifyError } = await supabase.auth.signInWithPassword({
+    email: userData.user.email,
+    password,
   });
+  if (verifyError) return { ok: false, error: 'Invalid password' };
+
+  const { data, error } = await supabase.rpc('delete_account', { p_password: password });
   if (error) return { ok: false, error: error.message };
   const result = (data as { ok: boolean; error?: string }) ?? { ok: true };
-  if (result.ok) clearSession();
+  if (result.ok) await supabase.auth.signOut();
   return result;
 }

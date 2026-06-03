@@ -26,6 +26,17 @@ async function readBody(request: Request): Promise<{ action?: unknown; amount?: 
   }
 }
 
+async function getVerifiedUserId(request: Request): Promise<string | null> {
+  if (!supabase) return null;
+  const authorization = request.headers.get("authorization") ?? "";
+  const match = authorization.match(/^Bearer\s+(.+)$/i);
+  if (!match) return null;
+
+  const { data, error } = await supabase.auth.getUser(match[1]);
+  if (error || !data.user) return null;
+  return data.user.id;
+}
+
 export default async function handler(request: Request): Promise<Response> {
   if (!supabase) {
     return json({ error: "supabase_not_configured" }, 503);
@@ -40,14 +51,26 @@ export default async function handler(request: Request): Promise<Response> {
     return json({ error: "forbidden_origin" }, 403);
   }
 
+  const verifiedUserId = await getVerifiedUserId(request);
+  if (!verifiedUserId) {
+    return json({ error: "unauthorized" }, 401);
+  }
+  if (verifiedUserId !== routeUserId) {
+    return json({ error: "forbidden_user" }, 403);
+  }
+
   if (request.method === "GET") {
-    return json(
-      {
-        error: "auth_migration_required",
-        todo: "TODO(auth-migration): verify a real server session before reading token balance",
-      },
-      501,
-    );
+    const { data, error } = await supabase
+      .from("users")
+      .select("token_balance")
+      .eq("id", verifiedUserId)
+      .single();
+
+    if (error || !data) {
+      return json({ error: "failed_to_fetch_token_balance" }, 404);
+    }
+
+    return json({ balance: (data as { token_balance: number }).token_balance });
   }
 
   if (request.method !== "POST") {
@@ -68,11 +91,33 @@ export default async function handler(request: Request): Promise<Response> {
     return json({ error: "invalid_token_amount" }, 400);
   }
 
-  return json(
-    {
-      error: "auth_migration_required",
-      todo: "TODO(auth-migration): verify a real server session before spending tokens",
-    },
-    501,
-  );
+  const { data, error: readError } = await supabase
+    .from("users")
+    .select("token_balance")
+    .eq("id", verifiedUserId)
+    .single();
+
+  if (readError || !data) {
+    return json({ error: "failed_to_fetch_token_balance" }, 404);
+  }
+
+  const currentBalance = Number((data as { token_balance: number }).token_balance);
+  if (!Number.isFinite(currentBalance)) {
+    return json({ error: "invalid_token_balance" }, 500);
+  }
+  if (currentBalance < amount) {
+    return json({ error: "insufficient_tokens" }, 400);
+  }
+
+  const balance = currentBalance - amount;
+  const { error: updateError } = await supabase
+    .from("users")
+    .update({ token_balance: balance })
+    .eq("id", verifiedUserId);
+
+  if (updateError) {
+    return json({ error: "failed_to_spend_tokens" }, 500);
+  }
+
+  return json({ balance });
 }

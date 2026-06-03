@@ -576,7 +576,6 @@ export async function grantDailySpinAvatarOnceForUser(userId: string, avatarId: 
 
   try {
     const { data, error } = await supabase.rpc("award_xp_once", {
-      p_user_id: userId,
       p_source: "daily-spin-avatar",
       p_claim_key: "free-avatar",
       p_amount: 0,

@@ -31,13 +31,13 @@ export async function fetchWaitlistSummary(userId: string): Promise<WaitlistSumm
 
 export async function joinCommunityWaitlist(
   communityId: string,
-  userId: string,
-  username: string,
+  _userId: string,
+  _username: string,
 ): Promise<number> {
+  void _userId;
+  void _username;
   const { data, error } = await supabase.rpc('join_community_waitlist', {
     p_community_id: communityId,
-    p_user_id: userId,
-    p_username: username,
   });
 
   if (error) throw error;

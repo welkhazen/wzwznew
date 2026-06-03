@@ -88,7 +88,7 @@ export async function loadUserProgress(userId: string): Promise<UserProgress | n
   let data: unknown = null;
   let error: unknown = null;
   try {
-    const result = await supabase.rpc("get_user_progress", { p_user_id: userId });
+    const result = await supabase.rpc("get_user_progress");
     data = result.data;
     error = result.error;
   } catch {
@@ -114,7 +114,7 @@ export async function awardXP(
   let data: unknown = null;
   let error: unknown = null;
   try {
-    const result = await supabase.rpc("award_xp", { p_user_id: userId, p_amount: amount });
+    const result = await supabase.rpc("award_xp", { p_amount: amount });
     data = result.data;
     error = result.error;
   } catch {
@@ -151,7 +151,6 @@ export async function awardXPOnce(
   let error: unknown = null;
   try {
     const result = await supabase.rpc("award_xp_once", {
-      p_user_id: userId,
       p_source: source,
       p_claim_key: claimKey,
       p_amount: amount,
@@ -188,7 +187,7 @@ export async function loadUserXPClaimKeys(userId: string, source: string): Promi
   let data: unknown = null;
   let error: unknown = null;
   try {
-    const result = await supabase.rpc("get_user_xp_claim_keys", { p_user_id: userId, p_source: source });
+    const result = await supabase.rpc("get_user_xp_claim_keys", { p_source: source });
     data = result.data;
     error = result.error;
   } catch {
