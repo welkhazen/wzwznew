@@ -17,7 +17,6 @@ function computeDeviceClass(): DeviceClass {
 }
 
 function computeSurface(pathname: string): Surface {
-  if (pathname.startsWith("/admin")) return "admin";
   if (
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/authenticate")

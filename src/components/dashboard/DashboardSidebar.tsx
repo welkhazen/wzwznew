@@ -1,6 +1,5 @@
 import { useMemo } from "react";
-import { Archive, Home, MessageCircle, Store, Target, Trophy, Shield, LogOut } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Archive, Home, MessageCircle, Store, Target, Trophy, LogOut } from "lucide-react";
 import { FloatingDock } from "@/components/ui/floating-dock";
 import { countUnreadMessages, type PersistedCommunityRecord } from "@/lib/communityChat";
 import { COMMUNITY_COVER_IMAGES } from "@/lib/communityConstants";
@@ -15,7 +14,6 @@ interface DashboardSidebarProps {
   userId: string;
   username: string;
   avatarLevel: number;
-  showAdminLink?: boolean;
   onHomeClick: () => void;
   isHome: boolean;
   onLogout: () => void;
@@ -43,7 +41,6 @@ export function DashboardSidebar({
   activeTab,
   onTabChange,
   userId,
-  showAdminLink = false,
   onHomeClick,
   isHome,
   onLogout,
@@ -143,15 +140,6 @@ export function DashboardSidebar({
 
       {/* Bottom actions */}
       <div className="flex flex-col items-center gap-2 pb-5">
-        {showAdminLink && (
-          <Link
-            to="/admin"
-            title="Admin"
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-raw-border/30 bg-raw-black/25 text-raw-silver/45 transition-all hover:border-primary/40 hover:bg-primary/10 hover:text-primary"
-          >
-            <Shield className="h-4 w-4" />
-          </Link>
-        )}
         <button
           title="Log Out"
           onClick={onLogout}

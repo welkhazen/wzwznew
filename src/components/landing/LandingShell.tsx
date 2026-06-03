@@ -44,11 +44,17 @@ export default function LandingShell({
   verifySignupOtp,
   login,
 }: LandingShellProps) {
-  const [siteReady, setSiteReady] = useState(true);
+  const [siteReady, setSiteReady] = useState(false);
 
   return (
     <div className="landing-page-shell min-h-screen overflow-x-hidden bg-raw-black">
-      <PollShowcase initialOpen onResolved={() => setSiteReady(true)} />
+      <PollShowcase
+        initialOpen
+        onOpenChange={(open) => {
+          if (open) setSiteReady(false);
+        }}
+        onResolved={() => setSiteReady(true)}
+      />
 
       <Navbar
         isLoggedIn={isLoggedIn}
@@ -56,13 +62,20 @@ export default function LandingShell({
         onSignupClick={() => setShowSignup(true)}
       />
 
-      {siteReady && (
-        <motion.div
-          className="relative overflow-x-hidden"
-          initial={{ opacity: 0, filter: "blur(14px)" }}
-          animate={{ opacity: 1, filter: "blur(0px)" }}
-          transition={{ duration: 0.75, ease: "easeOut" }}
-        >
+      <div className="relative min-h-screen overflow-x-hidden">
+        {!siteReady && (
+          <div className="fixed inset-0 z-0 bg-raw-black">
+            <PerforatedBackground />
+          </div>
+        )}
+
+        {siteReady && (
+          <motion.div
+            className="relative overflow-x-hidden"
+            initial={{ opacity: 0, filter: "blur(14px)" }}
+            animate={{ opacity: 1, filter: "blur(0px)" }}
+            transition={{ duration: 0.75, ease: "easeOut" }}
+          >
           <PerforatedBackground />
           <MatrixBackground />
 
@@ -107,8 +120,9 @@ export default function LandingShell({
 
             <LandingFooter />
           </div>
-        </motion.div>
-      )}
+          </motion.div>
+        )}
+      </div>
 
       <Suspense fallback={null}>
         <SignupModalLazy

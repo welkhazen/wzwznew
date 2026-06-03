@@ -15,6 +15,7 @@ interface PollData {
 interface PollShowcaseProps {
   initialOpen?: boolean;
   onResolved?: () => void;
+  onOpenChange?: (open: boolean) => void;
 }
 
 const FALLBACK_POLLS: PollData[] = POLL_QUESTION_SEEDS.map((s) => ({
@@ -23,7 +24,7 @@ const FALLBACK_POLLS: PollData[] = POLL_QUESTION_SEEDS.map((s) => ({
   noPercent: Math.round((s.noVotes / (s.yesVotes + s.noVotes)) * 100),
 }));
 
-export function PollShowcase({ initialOpen = false, onResolved }: PollShowcaseProps) {
+export function PollShowcase({ initialOpen = false, onResolved, onOpenChange }: PollShowcaseProps) {
   const [index, setIndex] = useState(0);
   const [open, setOpen] = useState(initialOpen);
   const [mounted, setMounted] = useState(false);
@@ -37,6 +38,10 @@ export function PollShowcase({ initialOpen = false, onResolved }: PollShowcasePr
     window.addEventListener("open-poll-showcase", handler);
     return () => window.removeEventListener("open-poll-showcase", handler);
   }, []);
+
+  useEffect(() => {
+    onOpenChange?.(open);
+  }, [onOpenChange, open]);
 
   const closeShowcase = useCallback(() => {
     setOpen(false);

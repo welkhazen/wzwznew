@@ -2248,13 +2248,13 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                 <Textarea
                   value={reportDraft.details}
                   onChange={(event) => setReportDraft((previous) => ({ ...previous, details: event.target.value }))}
-                  placeholder="Optional: explain what happened so admin can review faster."
+                  placeholder="Optional: explain what happened so the moderation team can review faster."
                   className="min-h-[110px] rounded-2xl border-raw-border/30 bg-raw-surface/30 text-raw-text placeholder:text-raw-silver/25"
                 />
               </div>
             </div>
             <DialogFooter className="border-t border-raw-border/20 px-6 py-5 sm:justify-between">
-              <p className="text-xs leading-relaxed text-raw-silver/40">Reports are stored for admin review in the hidden admin page.</p>
+              <p className="text-xs leading-relaxed text-raw-silver/40">Reports are stored for moderation review.</p>
               <div className="flex items-center gap-3">
                 <Button
                   variant="outline"
