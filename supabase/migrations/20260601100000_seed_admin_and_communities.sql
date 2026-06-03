@@ -1,11 +1,17 @@
 -- Idempotent seed: admin user + core communities.
 -- Safe to re-run; uses ON CONFLICT DO NOTHING.
+--
+-- The admin row is inserted with a locked password_hash placeholder that no
+-- bcrypt comparison will ever match. The admin password MUST be rotated
+-- out-of-band (e.g. via secure server-side RPC, the auth/users API, or a
+-- one-off psql update) after this migration runs. Do NOT commit a real
+-- password or any hash derived from a known plaintext into source control.
 
 INSERT INTO public.users (id, username, password_hash, role, status, warnings, avatar_level)
 VALUES (
   gen_random_uuid(),
   'admin',
-  crypt('Admin123!', gen_salt('bf')),
+  '!locked-set-via-secure-channel',
   'admin',
   'active',
   0,

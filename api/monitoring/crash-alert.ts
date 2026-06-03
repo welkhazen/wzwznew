@@ -1,6 +1,28 @@
-import { isTrustedOrigin } from "../_lib/requestSecurity";
+import { hasBearerSecret, isTrustedOrigin } from "../_lib/requestSecurity";
 
 export const config = { runtime: "edge" };
+
+const crashAlertSecret = process.env.CRASH_ALERT_SECRET;
+const isProduction = process.env.NODE_ENV === "production";
+
+// Best-effort per-IP rate limit. Edge runtimes are not guaranteed to share
+// state across invocations, so this is a hint, not a hard guarantee. The
+// bearer token + trusted origin checks are the real gate.
+const RATE_WINDOW_MS = 60_000;
+const RATE_MAX = 20;
+const rateBuckets = new Map<string, { count: number; resetAt: number }>();
+
+function rateLimit(key: string): boolean {
+  const now = Date.now();
+  const entry = rateBuckets.get(key);
+  if (!entry || entry.resetAt <= now) {
+    rateBuckets.set(key, { count: 1, resetAt: now + RATE_WINDOW_MS });
+    return true;
+  }
+  if (entry.count >= RATE_MAX) return false;
+  entry.count += 1;
+  return true;
+}
 
 type CrashAlertPayload = {
   message?: unknown;
@@ -40,8 +62,24 @@ export default async function handler(request: Request): Promise<Response> {
     return json({ error: "method_not_allowed" }, 405);
   }
 
+  if (isProduction && !crashAlertSecret) {
+    return json({ error: "crash_alert_secret_not_configured" }, 503);
+  }
+
+  if (!hasBearerSecret(request, crashAlertSecret)) {
+    return json({ error: "unauthorized" }, 401);
+  }
+
   if (!isTrustedOrigin(request)) {
     return json({ error: "untrusted_origin" }, 403);
+  }
+
+  const clientIp =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    request.headers.get("x-real-ip") ||
+    "unknown";
+  if (!rateLimit(clientIp)) {
+    return json({ error: "rate_limited" }, 429);
   }
 
   if (!resendApiKey || !crashAlertTo || !crashAlertFrom) {

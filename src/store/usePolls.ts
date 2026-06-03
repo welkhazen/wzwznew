@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchPolls, submitPollVote } from "@/lib/api/polls";
-import { addTokensToBalance, fetchTokenBalance, spendTokens } from "@/lib/api/tokens";
+import { fetchTokenBalance, spendTokens } from "@/lib/api/tokens";
 import { track } from "@/lib/analytics";
 import type { Poll } from "@/store/types";
 import { getTodayKey } from "@/store/useRawStore.storage";
@@ -237,19 +237,8 @@ export function usePolls(isLoggedIn: boolean, userId?: string) {
         return next;
       });
 
-      addTokensToBalance(userId, safeAmount)
-        .then((balance) => {
-          setTokenBalance(balance);
-          try {
-            window.localStorage.setItem(TOKEN_BALANCE_KEY, String(balance));
-            emitTokenBalanceUpdated(TOKEN_BALANCE_KEY, balance);
-          } catch {
-            // ignore storage errors
-          }
-        })
-        .catch(() => {
-          // Token rewards stay local until a trusted reward/payment API mints them server-side.
-        });
+      // Token rewards stay local until a trusted reward/payment API mints them server-side.
+      // Direct frontend minting is disabled by design — the /tokens endpoint refuses { action: "add" }.
       return;
     }
 
