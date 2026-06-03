@@ -3,11 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import LNTLogo from "@/assets/LNT.webp";
 import SYTLogo from "@/assets/logospeak.webp";
 import IIJMLogo from "@/assets/itisjustme.webp";
-import { AlertTriangle, ArrowLeft, BarChart3, Bell, BellOff, ImagePlus, Lock, Plus, Search, Star, Trash2, UserMinus, X } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertTriangle, ArrowLeft, BarChart3, Bell, BellOff, Lock, Plus, Search, Star, Trash2, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
 import { useConfirmDialog } from "@/hooks/use-confirm-dialog";
 import { CommunityBadge } from "@/components/dashboard/CommunityBadge";
@@ -26,7 +23,6 @@ import {
   countUnreadMessages,
   countOnlineMembers,
   formatChatDayLabel,
-  formatChatTimestamp,
 } from "@/lib/communityChat";
 import {
   fetchCommunities,
@@ -88,11 +84,77 @@ import type { User } from "@/store/types";
 import { CommunityMessageTimeline } from "@/components/dashboard/CommunityMessageTimeline";
 import { CommunityMessageComposer } from "@/components/dashboard/CommunityMessageComposer";
 import { CommunityRoomList } from "@/components/dashboard/CommunityRoomList";
-import { AvatarFigure } from "@/components/ui/avatar-figure";
+import { CommunitySettingsDialog } from "@/components/dashboard/CommunitySettingsDialog";
+import { CommunityMembersDialog } from "@/components/dashboard/CommunityMembersDialog";
+import { CommunityRequestDialog } from "@/components/dashboard/CommunityRequestDialog";
+import { CommunityReportDialog } from "@/components/dashboard/CommunityReportDialog";
+import { CommunityPollComposerDialog } from "@/components/dashboard/CommunityPollComposerDialog";
+import { CommunityProfileDialog } from "@/components/dashboard/CommunityProfileDialog";
 
 const WAITLIST_UNLOCK_THRESHOLD = 200;
 const MESSAGE_PAGE_SIZE = 10;
 const MAX_COMMUNITY_MESSAGE_LENGTH = 150;
+
+interface DashboardCommunitiesProps {
+  user: User;
+  avatarLevel?: number;
+  activeCommunityId?: string | null;
+  onOpenCommunity: (communityId: string) => void;
+  onBackToCommunities?: () => void;
+  onCommunitiesChange?: (communities: PersistedCommunityRecord[]) => void;
+}
+
+interface CommunityRequestDraft {
+  communityName: string;
+  genre: string;
+  focusArea: string;
+  audience: string;
+  whyNow: string;
+  samplePrompt: string;
+}
+
+interface ReportDraft {
+  reason: string;
+  details: string;
+}
+
+interface ReportTarget {
+  communityId: string;
+  communityTitle: string;
+  message: CommunityChatMessageRecord;
+}
+
+interface CommunitySettingsDraft {
+  title: string;
+  logoUrl: string;
+}
+
+const INITIAL_REQUEST_DRAFT: CommunityRequestDraft = {
+  communityName: "",
+  genre: "",
+  focusArea: "",
+  audience: "",
+  whyNow: "",
+  samplePrompt: "",
+};
+
+const INITIAL_REPORT_DRAFT: ReportDraft = {
+  reason: "",
+  details: "",
+};
+
+const INITIAL_COMMUNITY_SETTINGS_DRAFT: CommunitySettingsDraft = {
+  title: "",
+  logoUrl: "",
+};
+
+const createEmptyWaitlistSummary = () => ({ counts: {}, joinedCommunityIds: new Set<string>() });
+
+const COMMUNITY_LOGOS: Record<string, string> = {
+  lnt: LNTLogo,
+  syt: SYTLogo,
+  iijm: IIJMLogo,
+};
 
 function getMessageSenderBlockKey(message: Pick<CommunityChatMessageRecord, "senderId" | "senderName">): string {
   return getCommunitySenderBlockKey(message.senderId, message.senderName);
@@ -210,20 +272,18 @@ function appendOptimisticMessage(
   });
 }
 
-export function DashboardCommunities(props) {
+export function DashboardCommunities({
+  user,
+  avatarLevel = 1,
+  activeCommunityId = null,
+  onOpenCommunity,
+  onBackToCommunities,
+  onCommunitiesChange,
+}: DashboardCommunitiesProps) {
       // Main search query state (fix ReferenceError)
       const [searchQuery, setSearchQuery] = useState("");
     // Main community state (fix ReferenceError)
     const [communities, setCommunities] = useState<PersistedCommunityRecord[]>([]);
-  // Destructure props for clarity and to avoid ReferenceError
-  const {
-    user,
-    avatarLevel = 1,
-    activeCommunityId = null,
-    onOpenCommunity,
-    onBackToCommunities,
-    onCommunitiesChange,
-  } = props;
   // --- Floating request button state/hooks ---
   const [showRequestButton, setShowRequestButton] = useState(false);
   const [requestBtnText, setRequestBtnText] = useState("Didn't find your community?");
@@ -262,69 +322,6 @@ export function DashboardCommunities(props) {
     }, 2000);
     return () => clearTimeout(timeout);
   }, [showRequestButton]);
-// ...existing code...
-
-interface DashboardCommunitiesProps {
-  user: User;
-  activeCommunityId?: string | null;
-  onOpenCommunity: (communityId: string) => void;
-  onBackToCommunities?: () => void;
-  onCommunitiesChange?: (communities: PersistedCommunityRecord[]) => void;
-}
-
-interface CommunityRequestDraft {
-  communityName: string;
-  genre: string;
-  focusArea: string;
-  audience: string;
-  whyNow: string;
-  samplePrompt: string;
-}
-
-interface ReportDraft {
-  reason: string;
-  details: string;
-}
-
-interface ReportTarget {
-  communityId: string;
-  communityTitle: string;
-  message: CommunityChatMessageRecord;
-}
-
-interface CommunitySettingsDraft {
-  title: string;
-  logoUrl: string;
-}
-
-const INITIAL_REQUEST_DRAFT: CommunityRequestDraft = {
-  communityName: "",
-  genre: "",
-  focusArea: "",
-  audience: "",
-  whyNow: "",
-  samplePrompt: "",
-};
-
-const INITIAL_REPORT_DRAFT: ReportDraft = {
-  reason: "",
-  details: "",
-};
-
-const INITIAL_COMMUNITY_SETTINGS_DRAFT: CommunitySettingsDraft = {
-  title: "",
-  logoUrl: "",
-};
-
-const createEmptyWaitlistSummary = () => ({ counts: {}, joinedCommunityIds: new Set<string>() });
-
-const COMMUNITY_LOGOS: Record<string, string> = {
-  lnt: LNTLogo,
-  syt: SYTLogo,
-  iijm: IIJMLogo,
-};
-
-// ...existing code continues inside the function above...
   const [requestFormOpen, setRequestFormOpen] = useState(false);
   const [requestSubmitAttempted, setRequestSubmitAttempted] = useState(false);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
@@ -767,7 +764,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       } catch {
         toast({ title: "Could not remove member", description: "Please try again." });
       }
-    }, [canManagePolls, reloadChatData, selectedCommunity, user.id]);
+    }, [canManagePolls, confirm, reloadChatData, selectedCommunity, user.id]);
 
     useEffect(() => {
       reloadChatData();
@@ -1914,427 +1911,63 @@ const COMMUNITY_LOGOS: Record<string, string> = {
           )}
         </AnimatePresence>
 
-        <Dialog open={logoDialogOpen} onOpenChange={setLogoDialogOpen}>
-          <DialogContent className="border border-raw-border/40 bg-raw-black p-0 text-raw-text sm:max-w-lg sm:rounded-3xl">
-            <div className="border-b border-raw-border/20 bg-gradient-to-br from-raw-gold/[0.08] via-raw-black to-raw-black px-6 py-6">
-              <DialogHeader className="space-y-2 text-left">
-                <DialogTitle className="font-display text-xl tracking-wide text-raw-text">Edit community details</DialogTitle>
-                <DialogDescription className="text-sm leading-relaxed text-raw-silver/45">
-                  Only the community creator can change the group name or logo.
-                </DialogDescription>
-              </DialogHeader>
-            </div>
-            <div className="space-y-4 px-6 py-6">
-              <div className="space-y-2">
-                <label className="text-[11px] uppercase tracking-[0.16em] text-raw-silver/40">Community name</label>
-                <Input
-                  value={communitySettingsDraft.title}
-                  onChange={(event) => setCommunitySettingsDraft((previous) => ({ ...previous, title: event.target.value }))}
-                  placeholder="Community name"
-                  className="h-11 rounded-xl border-raw-border/30 bg-raw-surface/30 text-raw-text placeholder:text-raw-silver/25"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[11px] uppercase tracking-[0.16em] text-raw-silver/40">Logo URL</label>
-                <Input
-                  value={communitySettingsDraft.logoUrl}
-                  onChange={(event) => setCommunitySettingsDraft((previous) => ({ ...previous, logoUrl: event.target.value }))}
-                  placeholder="https://example.com/community-logo.png"
-                  className="h-11 rounded-xl border-raw-border/30 bg-raw-surface/30 text-raw-text placeholder:text-raw-silver/25"
-                />
-              </div>
-            </div>
-            <DialogFooter className="border-t border-raw-border/20 px-6 py-5 sm:justify-between">
-              <p className="text-xs text-raw-silver/40">Leave empty to remove the current logo.</p>
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => setLogoDialogOpen(false)}
-                  className="rounded-xl border-raw-border/30 bg-transparent text-raw-silver/70 hover:bg-raw-surface/30 hover:text-raw-text"
-                >
-                  Cancel
-                </Button>
-                <Button onClick={handleCommunitySettingsSave} className="rounded-xl bg-raw-gold px-4 text-raw-ink hover:bg-raw-gold/90">
-                  Save Changes
-                </Button>
-              </div>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <CommunitySettingsDialog
+          open={logoDialogOpen}
+          draft={communitySettingsDraft}
+          onOpenChange={setLogoDialogOpen}
+          onDraftChange={setCommunitySettingsDraft}
+          onSave={handleCommunitySettingsSave}
+        />
 
-        <Dialog open={membersDialogOpen} onOpenChange={setMembersDialogOpen}>
-          <DialogContent className="border border-raw-border/40 bg-raw-black p-0 text-raw-text sm:max-w-lg sm:rounded-3xl">
-            <div className="border-b border-raw-border/20 bg-gradient-to-br from-raw-gold/[0.08] via-raw-black to-raw-black px-6 py-6">
-              <DialogHeader className="space-y-2 text-left">
-                <DialogTitle className="font-display text-xl tracking-wide text-raw-text">Group members</DialogTitle>
-                <DialogDescription className="text-sm leading-relaxed text-raw-silver/45">
-                  Admin and group owners can remove members. Poll answers stay anonymous.
-                </DialogDescription>
-              </DialogHeader>
-            </div>
-            <div className="max-h-[60vh] space-y-2 overflow-y-auto px-6 py-5">
-              {(selectedCommunity?.members ?? []).map((member) => (
-                <div key={member.userId} className="flex items-center justify-between gap-3 rounded-xl border border-raw-border/20 bg-raw-surface/20 px-3 py-2.5">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-raw-text">@{member.username}</p>
-                    <p className="text-[10px] text-raw-silver/40">Joined {formatChatTimestamp(member.joinedAt)}</p>
-                  </div>
-                  {canManagePolls && member.userId !== user.id && (
-                    <button
-                      type="button"
-                      onClick={() => { void handleKickMember(member.userId, member.username); }}
-                      className="flex shrink-0 items-center gap-1.5 rounded-full border border-red-400/25 px-2.5 py-1 text-[10px] font-semibold text-red-200/80 hover:bg-red-500/10"
-                    >
-                      <UserMinus className="h-3.5 w-3.5" /> Kick
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          </DialogContent>
-        </Dialog>
+        <CommunityMembersDialog
+          open={membersDialogOpen}
+          members={selectedCommunity?.members ?? []}
+          currentUserId={user.id}
+          canManagePolls={canManagePolls}
+          onOpenChange={setMembersDialogOpen}
+          onKickMember={(memberId, username) => { void handleKickMember(memberId, username); }}
+        />
 
-        <Dialog open={profileDialogOpen} onOpenChange={setProfileDialogOpen}>
-          <DialogContent className="border border-raw-border/40 bg-raw-black p-0 text-raw-text sm:max-w-sm sm:rounded-3xl">
-            <div className="border-b border-raw-border/20 bg-gradient-to-br from-raw-gold/[0.08] via-raw-black to-raw-black px-6 py-6">
-              <DialogHeader className="space-y-2 text-left">
-                <DialogTitle className="font-display text-xl tracking-wide text-raw-text">Chat profile</DialogTitle>
-                <DialogDescription className="text-sm leading-relaxed text-raw-silver/45">
-                  People choose how much of their profile appears in community chat.
-                </DialogDescription>
-              </DialogHeader>
-            </div>
-            <div className="px-6 py-6">
-              {profileTarget?.loading ? (
-                <p className="text-sm text-raw-silver/50">Loading profile...</p>
-              ) : profileTarget?.profile?.profilePublic ? (
-                <div className="space-y-5">
-                  <div className="flex items-center gap-4">
-                    <AvatarFigure avatarIndex={profileTarget.profile.avatarLevel} size="lg" selected />
-                    <div className="min-w-0">
-                      <p className="truncate font-display text-lg tracking-wide text-raw-text">
-                        @{profileTarget.profile.username ?? profileTarget.message.senderName}
-                      </p>
-                      <p className="mt-1 text-xs uppercase tracking-[0.16em] text-raw-silver/40">
-                        {profileTarget.profile.role ?? "member"}
-                      </p>
-                      {profileTarget.profile.createdAt && (
-                        <p className="mt-2 text-xs text-raw-silver/45">
-                          Joined {formatChatTimestamp(profileTarget.profile.createdAt)}
-                        </p>
-                      )}
-                    </div>
-                  </div>
+        <CommunityProfileDialog
+          open={profileDialogOpen}
+          target={profileTarget}
+          communities={communities}
+          logoUrlsByCommunityId={COMMUNITY_LOGOS}
+          senderAvatarLevels={senderAvatarLevels}
+          onOpenChange={setProfileDialogOpen}
+          onOpenCommunity={onOpenCommunity}
+        />
 
-                  {profileTarget.profile.pinnedMessage && (
-                    <div className="rounded-2xl border border-raw-gold/25 bg-raw-gold/[0.06] p-3">
-                      <p className="text-[10px] uppercase tracking-[0.16em] text-raw-gold/70">Pinned message</p>
-                      <p className="mt-1.5 text-sm leading-relaxed text-raw-text/85">
-                        {profileTarget.profile.pinnedMessage.messageText}
-                      </p>
-                      <p className="mt-2 text-[10px] text-raw-silver/45">
-                        {profileTarget.profile.pinnedMessage.communityTitle ?? "Community"}
-                        {profileTarget.profile.pinnedMessage.messageCreatedAt
-                          ? ` · ${formatChatTimestamp(profileTarget.profile.pinnedMessage.messageCreatedAt)}`
-                          : ""}
-                      </p>
-                    </div>
-                  )}
+        <CommunityRequestDialog
+          open={requestFormOpen}
+          draft={requestDraft}
+          submitAttempted={requestSubmitAttempted}
+          username={user.username}
+          onOpenChange={setRequestFormOpen}
+          onSubmitAttemptedChange={setRequestSubmitAttempted}
+          onDraftFieldChange={updateRequestDraft}
+          onSubmit={handleSubmitCommunityRequest}
+        />
 
-                  {profileTarget.profile.favoriteCommunityIds.length > 0 && (
-                    <div>
-                      <p className="text-[10px] uppercase tracking-[0.16em] text-raw-silver/45">Favorite communities</p>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {profileTarget.profile.favoriteCommunityIds.map((id) => {
-                          const community = communities.find((c) => c.id === id);
-                          const logo = COMMUNITY_LOGOS[id] ?? community?.logoUrl ?? COMMUNITY_COVER_IMAGES[id];
-                          return (
-                            <button
-                              key={id}
-                              type="button"
-                              onClick={() => {
-                                setProfileDialogOpen(false);
-                                onOpenCommunity(id);
-                              }}
-                              title={community?.title ?? id}
-                              className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-raw-border/35 bg-raw-surface/40 text-[10px] font-semibold text-raw-text transition hover:border-raw-gold/55"
-                            >
-                              {logo ? (
-                                <img src={logo} alt="" className="h-full w-full object-cover" loading="lazy" />
-                              ) : (
-                                <span>{community?.abbr ?? id.slice(0, 2).toUpperCase()}</span>
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="flex items-center gap-4">
-                  <AvatarFigure
-                    avatarIndex={
-                      profileTarget?.message.senderAvatarLevel
-                      ?? (profileTarget ? senderAvatarLevels[profileTarget.message.senderId] : undefined)
-                      ?? 1
-                    }
-                    size="lg"
-                    selected
-                  />
-                  <div className="min-w-0">
-                    <p className="font-display text-lg tracking-wide text-raw-text">Private user</p>
-                    <p className="mt-1 text-sm text-raw-silver/45">This user keeps their profile private.</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </DialogContent>
-        </Dialog>
+        <CommunityReportDialog
+          open={reportDialogOpen}
+          target={reportTarget}
+          draft={reportDraft}
+          onOpenChange={setReportDialogOpen}
+          onDraftChange={setReportDraft}
+          onSubmit={handleSubmitReport}
+        />
 
-        <Dialog open={requestFormOpen} onOpenChange={(open) => { setRequestFormOpen(open); if (!open) setRequestSubmitAttempted(false); }}>
-          <DialogContent bottomSheet className="flex flex-col bg-raw-black p-0 text-raw-text border-raw-border/40">
-            {/* Header — fixed */}
-            <div className="shrink-0 border-b border-raw-border/20 bg-gradient-to-br from-raw-gold/[0.08] via-raw-black to-raw-black px-5 py-4">
-              <DialogHeader className="space-y-1 text-left">
-                <DialogTitle className="font-display text-lg tracking-wide text-raw-text">Request a new community</DialogTitle>
-                <DialogDescription className="text-xs leading-relaxed text-raw-silver/45">
-                  Goes to admin review. Approved requests become live in-app communities.
-                </DialogDescription>
-              </DialogHeader>
-            </div>
-
-            {/* Scrollable body */}
-            <div className="flex-1 overflow-y-auto space-y-4 px-5 py-5">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <label className="text-[11px] uppercase tracking-[0.16em] text-raw-silver/40">
-                    Community name <span className="text-primary">*</span>
-                  </label>
-                  <Input
-                    value={requestDraft.communityName}
-                    onChange={(event) => updateRequestDraft("communityName", event.target.value)}
-                    placeholder="Creator Burnout Circle"
-                    className={`h-10 rounded-xl bg-raw-surface/30 text-raw-text placeholder:text-raw-silver/25 ${requestSubmitAttempted && !requestDraft.communityName.trim() ? "border-primary/60 focus-visible:ring-primary/30" : "border-raw-border/30"}`}
-                  />
-                  {requestSubmitAttempted && !requestDraft.communityName.trim() && (
-                    <p className="text-[11px] text-primary/80">Required</p>
-                  )}
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[11px] uppercase tracking-[0.16em] text-raw-silver/40">
-                    Genre <span className="text-primary">*</span>
-                  </label>
-                  <Input
-                    value={requestDraft.genre}
-                    onChange={(event) => updateRequestDraft("genre", event.target.value)}
-                    placeholder="e.g. Mental Health, Tech, Sports"
-                    className={`h-10 rounded-xl bg-raw-surface/30 text-raw-text placeholder:text-raw-silver/25 ${requestSubmitAttempted && !requestDraft.genre.trim() ? "border-primary/60 focus-visible:ring-primary/30" : "border-raw-border/30"}`}
-                  />
-                  {requestSubmitAttempted && !requestDraft.genre.trim() && (
-                    <p className="text-[11px] text-primary/80">Required</p>
-                  )}
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[11px] uppercase tracking-[0.16em] text-raw-silver/40">
-                    Focus area <span className="text-primary">*</span>
-                  </label>
-                  <Input
-                    value={requestDraft.focusArea}
-                    onChange={(event) => updateRequestDraft("focusArea", event.target.value)}
-                    placeholder="Theme this room centers on"
-                    className={`h-10 rounded-xl bg-raw-surface/30 text-raw-text placeholder:text-raw-silver/25 ${requestSubmitAttempted && !requestDraft.focusArea.trim() ? "border-primary/60 focus-visible:ring-primary/30" : "border-raw-border/30"}`}
-                  />
-                  {requestSubmitAttempted && !requestDraft.focusArea.trim() && (
-                    <p className="text-[11px] text-primary/80">Required</p>
-                  )}
-                </div>
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-[11px] uppercase tracking-[0.16em] text-raw-silver/40">
-                  Who is this for? <span className="text-primary">*</span>
-                </label>
-                <Input
-                  value={requestDraft.audience}
-                  onChange={(event) => updateRequestDraft("audience", event.target.value)}
-                  placeholder="Who would join and benefit?"
-                  className={`h-10 rounded-xl bg-raw-surface/30 text-raw-text placeholder:text-raw-silver/25 ${requestSubmitAttempted && !requestDraft.audience.trim() ? "border-primary/60 focus-visible:ring-primary/30" : "border-raw-border/30"}`}
-                />
-                {requestSubmitAttempted && !requestDraft.audience.trim() && (
-                  <p className="text-[11px] text-primary/80">Required</p>
-                )}
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-[11px] uppercase tracking-[0.16em] text-raw-silver/40">
-                  Why should admin approve it? <span className="text-primary">*</span>
-                </label>
-                <Textarea
-                  value={requestDraft.whyNow}
-                  onChange={(event) => updateRequestDraft("whyNow", event.target.value)}
-                  placeholder="Explain the need and what conversations it unlocks."
-                  className={`min-h-[90px] rounded-2xl bg-raw-surface/30 text-raw-text placeholder:text-raw-silver/25 ${requestSubmitAttempted && !requestDraft.whyNow.trim() ? "border-primary/60 focus-visible:ring-primary/30" : "border-raw-border/30"}`}
-                />
-                {requestSubmitAttempted && !requestDraft.whyNow.trim() && (
-                  <p className="text-[11px] text-primary/80">Required</p>
-                )}
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-[11px] uppercase tracking-[0.16em] text-raw-silver/40">Sample opening prompt</label>
-                <Textarea
-                  value={requestDraft.samplePrompt}
-                  onChange={(event) => updateRequestDraft("samplePrompt", event.target.value)}
-                  placeholder="Optional: opening topic that sets the tone."
-                  className="min-h-[72px] rounded-2xl border-raw-border/30 bg-raw-surface/30 text-raw-text placeholder:text-raw-silver/25"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-[11px] uppercase tracking-[0.16em] text-raw-silver/40">Community image / video</label>
-                <button
-                  type="button"
-                  disabled
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-raw-border/35 bg-raw-surface/20 px-4 py-4 text-sm text-raw-silver/35 cursor-not-allowed"
-                >
-                  <ImagePlus className="h-4 w-4 shrink-0" />
-                  <span>Upload <span className="text-[10px] uppercase tracking-wider text-raw-silver/25 ml-1">Coming soon</span></span>
-                </button>
-              </div>
-            </div>
-
-            {/* Footer — sticky */}
-            <div className="shrink-0 border-t border-raw-border/20 px-5 py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-xs text-raw-silver/40">Requesting as @{user.username}.</p>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => { setRequestFormOpen(false); setRequestSubmitAttempted(false); }}
-                  className="flex-1 sm:flex-none rounded-xl border-raw-border/30 bg-transparent text-raw-silver/70 hover:bg-raw-surface/30 hover:text-raw-text"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleSubmitCommunityRequest}
-                  className="flex-1 sm:flex-none rounded-xl bg-raw-gold px-4 text-raw-ink hover:bg-raw-gold/90"
-                >
-                  Submit
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
-          <DialogContent className="border border-raw-border/40 bg-raw-black p-0 text-raw-text sm:max-w-xl sm:rounded-3xl">
-            <div className="border-b border-raw-border/20 bg-gradient-to-br from-red-500/[0.08] via-raw-black to-raw-black px-6 py-6">
-              <DialogHeader className="space-y-2 text-left">
-                <DialogTitle className="font-display text-xl tracking-wide text-raw-text">Report this message</DialogTitle>
-                <DialogDescription className="max-w-xl text-sm leading-relaxed text-raw-silver/45">
-                  Admin can review reports here, then warn or ban the user if the report is valid.
-                </DialogDescription>
-              </DialogHeader>
-            </div>
-            <div className="space-y-5 px-6 py-6">
-              {reportTarget && (
-                <div className="rounded-2xl border border-raw-border/20 bg-raw-surface/20 p-4">
-                  <p className="text-[11px] uppercase tracking-[0.16em] text-raw-silver/35">Message under review</p>
-                  <p className="mt-2 font-display text-sm text-raw-text">{reportTarget.message.senderName}</p>
-                  <p className="mt-2 text-sm leading-relaxed text-raw-silver/55">{reportTarget.message.text}</p>
-                </div>
-              )}
-              <div className="space-y-2">
-                <label className="text-[11px] uppercase tracking-[0.16em] text-raw-silver/40">Why should this be reviewed?</label>
-                <Input
-                  value={reportDraft.reason}
-                  onChange={(event) => setReportDraft((previous) => ({ ...previous, reason: event.target.value }))}
-                  placeholder="Spam, harassment, harmful content, impersonation..."
-                  className="h-11 rounded-xl border-raw-border/30 bg-raw-surface/30 text-raw-text placeholder:text-raw-silver/25"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[11px] uppercase tracking-[0.16em] text-raw-silver/40">Extra context</label>
-                <Textarea
-                  value={reportDraft.details}
-                  onChange={(event) => setReportDraft((previous) => ({ ...previous, details: event.target.value }))}
-                  placeholder="Optional: explain what happened so the moderation team can review faster."
-                  className="min-h-[110px] rounded-2xl border-raw-border/30 bg-raw-surface/30 text-raw-text placeholder:text-raw-silver/25"
-                />
-              </div>
-            </div>
-            <DialogFooter className="border-t border-raw-border/20 px-6 py-5 sm:justify-between">
-              <p className="text-xs leading-relaxed text-raw-silver/40">Reports are stored for moderation review.</p>
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => setReportDialogOpen(false)}
-                  className="rounded-xl border-raw-border/30 bg-transparent text-raw-silver/70 hover:bg-raw-surface/30 hover:text-raw-text"
-                >
-                  Cancel
-                </Button>
-                <Button onClick={handleSubmitReport} className="rounded-xl bg-red-400 px-4 text-raw-ink hover:bg-red-300">
-                  Submit report
-                </Button>
-              </div>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={pollComposerOpen} onOpenChange={setPollComposerOpen}>
-          <DialogContent className="border-raw-border/30 bg-raw-black/95 sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="text-raw-text">Post a poll to the room</DialogTitle>
-              <DialogDescription className="text-raw-silver/60">
-                Only the community owner and admins can post polls. Members get one vote each.
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-xs uppercase tracking-[0.16em] text-raw-silver/55">Question</label>
-                <Input
-                  value={pollQuestion}
-                  onChange={(event) => setPollQuestion(event.target.value)}
-                  placeholder="What do you want to ask the room?"
-                  maxLength={200}
-                  className="border-raw-border/30 bg-raw-surface/30 text-raw-text"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs uppercase tracking-[0.16em] text-raw-silver/55">Options</label>
-                <div className="space-y-2">
-                  {pollOptionDrafts.map((option, index) => (
-                    <Input
-                      key={index}
-                      value={option}
-                      onChange={(event) => handleUpdatePollOption(index, event.target.value)}
-                      placeholder={`Option ${index + 1}`}
-                      maxLength={80}
-                      className="border-raw-border/30 bg-raw-surface/30 text-raw-text"
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <DialogFooter>
-              <div className="flex w-full justify-end gap-2">
-                <Button
-                  variant="ghost"
-                  onClick={() => setPollComposerOpen(false)}
-                  className="rounded-xl text-raw-silver/70 hover:text-raw-text"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={() => { void handleSubmitPoll(); }}
-                  disabled={pollSubmitting}
-                  className="rounded-xl bg-raw-gold px-4 text-raw-ink hover:bg-raw-gold/90"
-                >
-                  {pollSubmitting ? "Posting…" : "Post poll"}
-                </Button>
-              </div>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <CommunityPollComposerDialog
+          open={pollComposerOpen}
+          question={pollQuestion}
+          optionDrafts={pollOptionDrafts}
+          submitting={pollSubmitting}
+          onOpenChange={setPollComposerOpen}
+          onQuestionChange={setPollQuestion}
+          onOptionChange={handleUpdatePollOption}
+          onSubmit={() => { void handleSubmitPoll(); }}
+        />
       </div>
       </>
     );
