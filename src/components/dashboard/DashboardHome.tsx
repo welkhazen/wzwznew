@@ -326,28 +326,8 @@ export function DashboardHome({
             ) : null}
           </div>
 
-          {/* Right column: Level Up + Daily Poll Progress stacked */}
+          {/* Right column: Daily Poll Progress on top, Level Up below */}
           <div className="flex flex-col gap-6">
-            {/* Level Up */}
-            <div className={`p-6 rounded-[1.5rem] flex flex-1 flex-col space-y-6 ${isLight ? "border border-slate-200 bg-white shadow-[0_12px_28px_rgba(15,23,42,0.08)]" : "border border-white/10 bg-[#1a1a1a]"}`}>
-              <div className="flex items-start justify-between">
-                <div className="space-y-0.5">
-                  <h3 className={`text-xl font-bold tracking-tight ${isLight ? "text-slate-950" : "text-white"}`}>Level Up</h3>
-                  <p className={`text-xs ${isLight ? "text-slate-500" : "text-white/40"}`}>Complete interactions to earn XP</p>
-                </div>
-                <div className="w-10 h-10 rounded-xl bg-raw-gold/5 flex items-center justify-center border border-raw-gold/10">
-                  <Zap className="size-5 text-raw-gold" />
-                </div>
-              </div>
-              <LevelProgressBanner xp={xp} level={xpLevel} />
-              <button
-                onClick={() => onNavigate("challenges")}
-                className="w-full py-4 rounded-xl border border-raw-gold/30 text-raw-gold font-bold text-xs uppercase tracking-[0.2em] hover:bg-raw-gold/5 transition-all"
-              >
-                View Missions
-              </button>
-            </div>
-
             {/* Daily Poll Progress */}
             <div className={`p-6 rounded-[1.5rem] flex flex-1 flex-col space-y-5 ${isLight ? "border border-slate-200 bg-white shadow-[0_12px_28px_rgba(15,23,42,0.08)]" : "border border-white/10 bg-[#1a1a1a]"}`}>
               <div className="flex items-start justify-between">
@@ -373,6 +353,26 @@ export function DashboardHome({
                 className="mt-auto w-full py-4 rounded-xl border border-raw-gold/30 text-raw-gold font-bold text-xs uppercase tracking-[0.2em] hover:bg-raw-gold/5 transition-all"
               >
                 Answer Now
+              </button>
+            </div>
+
+            {/* Level Up */}
+            <div className={`p-6 rounded-[1.5rem] flex flex-1 flex-col space-y-6 ${isLight ? "border border-slate-200 bg-white shadow-[0_12px_28px_rgba(15,23,42,0.08)]" : "border border-white/10 bg-[#1a1a1a]"}`}>
+              <div className="flex items-start justify-between">
+                <div className="space-y-0.5">
+                  <h3 className={`text-xl font-bold tracking-tight ${isLight ? "text-slate-950" : "text-white"}`}>Level Up</h3>
+                  <p className={`text-xs ${isLight ? "text-slate-500" : "text-white/40"}`}>Complete interactions to earn XP</p>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-raw-gold/5 flex items-center justify-center border border-raw-gold/10">
+                  <Zap className="size-5 text-raw-gold" />
+                </div>
+              </div>
+              <LevelProgressBanner xp={xp} level={xpLevel} />
+              <button
+                onClick={() => onNavigate("challenges")}
+                className="mt-auto w-full py-4 rounded-xl border border-raw-gold/30 text-raw-gold font-bold text-xs uppercase tracking-[0.2em] hover:bg-raw-gold/5 transition-all"
+              >
+                View Missions
               </button>
             </div>
           </div>
