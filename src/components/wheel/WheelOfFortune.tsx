@@ -31,6 +31,8 @@ interface WheelOfFortuneProps {
   forcedPrizeId?: string | null;
   radius?: number;
   previewOnly?: boolean;
+  /** Slot rendered just above the Spin button (e.g. countdown after spinning). */
+  aboveButton?: React.ReactNode;
 }
 
 const SPIN_DURATION = 5000;
@@ -80,7 +82,7 @@ function getLabelLines(label: string): string[] {
   return [parts.slice(0, midpoint).join(" "), parts.slice(midpoint).join(" ")];
 }
 
-export function WheelOfFortune({ prizes, onSpinEnd, onSpinStart, disabled = false, prizeWeights, forcedPrizeId = null, radius: radiusProp = 200, previewOnly = false }: WheelOfFortuneProps) {
+export function WheelOfFortune({ prizes, onSpinEnd, onSpinStart, disabled = false, prizeWeights, forcedPrizeId = null, radius: radiusProp = 200, previewOnly = false, aboveButton }: WheelOfFortuneProps) {
   const { mode } = useTheme();
   const pointerId = useId().replace(/:/g, "");
   const baseId = useId().replace(/:/g, "");
@@ -277,6 +279,10 @@ export function WheelOfFortune({ prizes, onSpinEnd, onSpinStart, disabled = fals
           })}
         </svg>
       </div>
+
+      {!previewOnly && aboveButton ? (
+        <div className="mt-6 sm:mt-8 w-full max-w-sm text-center">{aboveButton}</div>
+      ) : null}
 
       {!previewOnly && (
         <button
