@@ -1,5 +1,6 @@
 -- Replace avatar catalog contents with the curated 8-avatar set.
 -- This removes previously inserted catalog entries and keeps only the requested avatars.
+-- WARNING: user_avatar_inventory and user_avatar_selection rows for removed avatar ids will be cascaded.
 
 DELETE FROM public.avatar_catalog;
 

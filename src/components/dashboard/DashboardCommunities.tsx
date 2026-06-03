@@ -1126,10 +1126,9 @@ export function DashboardCommunities({
         communityId: selectedCommunity.id,
         senderId: user.id,
         senderName: user.username,
-        senderAvatarLevel: avatarLevel,
         text: trimmedMessage,
         createdAt: new Date().toISOString(),
-        deliveryStatus: "sending" as const,
+        deliveryStatus: "pending" as const,
         likedBy: [],
       };
 

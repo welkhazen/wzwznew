@@ -108,22 +108,14 @@ const AVATAR_PAGE_SIZE = 10;
 const AGE_GATE_STORAGE_PREFIX = "raw.ageGateVerified";
 
 const LANDING_ONBOARDING_AVATARS: readonly AvatarCatalogItem[] = [
-  { id: "ember", level: 1, name: "Ember", price: "Free", imageSrc: "/avatars/avatar-2.svg", bg: "#0c1a24", figure: "#5ed6ff", ring: "#5ed6ff", glow: "#5ed6ff80", isActive: true, rarity: "common" },
-  { id: "verdant", level: 2, name: "Verdant", price: "Free", imageSrc: "/avatars/avatar-3.svg", bg: "#0a1124", figure: "#3f8bff", ring: "#3f8bff", glow: "#3f8bff80", isActive: true, rarity: "common" },
-  { id: "horned", level: 3, name: "Horned", price: "Free", imageSrc: "/avatars/avatar-5.svg", bg: "#0b1a0e", figure: "#16a34a", ring: "#16a34a", glow: "#16a34a80", isActive: true, rarity: "common" },
-  { id: "pharaoh", level: 4, name: "Pharaoh", price: "Free", imageSrc: "/avatars/avatar-6.svg", bg: "#1f0d18", figure: "#ec4899", ring: "#ec4899", glow: "#ec489980", isActive: true, rarity: "common" },
-  { id: "violet", level: 5, name: "Violet", price: "Free", imageSrc: "/avatars/avatar-7.svg", bg: "#150a22", figure: "#8b5cf6", ring: "#8b5cf6", glow: "#8b5cf680", isActive: true, rarity: "common" },
-  { id: "rose", level: 6, name: "Rose", price: "Free", imageSrc: "/avatars/avatar-8.svg", bg: "#1f1208", figure: "#f97316", ring: "#f97316", glow: "#f9731680", isActive: true, rarity: "common" },
-  { id: "black", level: 7, name: "Black", price: "Free", imageSrc: "/avatars/avatar-9.svg", bg: "#1f0a0a", figure: "#dc2626", ring: "#dc2626", glow: "#dc262680", isActive: true, rarity: "common" },
-  { id: "blue", level: 8, name: "Blue", price: "Free", imageSrc: "/avatars/avatar-10.svg", bg: "#1f1705", figure: "#facc15", ring: "#facc15", glow: "#facc1590", isActive: true, rarity: "common" },
-  { id: "preview-silver-void", level: 9, name: "Silver Void", price: "Preview", imageSrc: "/avatars/1.webp", bg: "#111827", figure: "#cbd5e1", ring: "#cbd5e1", glow: "#cbd5e180", isActive: true, rarity: "common" },
-  { id: "preview-neon-lynx", level: 10, name: "Neon Lynx", price: "Preview", imageSrc: "/avatars/2.webp", bg: "#170f2e", figure: "#a855f7", ring: "#c084fc", glow: "#a855f780", isActive: true, rarity: "common" },
-  { id: "preview-blue-signal", level: 11, name: "Blue Signal", price: "Preview", imageSrc: "/avatars/3.webp", bg: "#06131f", figure: "#22d3ee", ring: "#22d3ee", glow: "#22d3ee80", isActive: true, rarity: "common" },
-  { id: "preview-violet-mask", level: 12, name: "Violet Mask", price: "Preview", imageSrc: "/avatars/4.webp", bg: "#1a1028", figure: "#d946ef", ring: "#d946ef", glow: "#d946ef80", isActive: true, rarity: "common" },
-  { id: "preview-horned-iron", level: 13, name: "Viozen", price: "Preview", imageSrc: "/avatars/5.png", bg: "#1f0a05", figure: "#fb923c", ring: "#fb923c", glow: "#fb923c80", isActive: true, rarity: "common" },
-  { id: "preview-crimson-muse", level: 14, name: "Crimson Muse", price: "Preview", imageSrc: "/avatars/6.webp", bg: "#2a0b0b", figure: "#f97316", ring: "#f97316", glow: "#f9731680", isActive: true, rarity: "common" },
-  { id: "preview-solar-flame", level: 15, name: "Solar Flame", price: "Preview", imageSrc: "/avatars/7.webp", bg: "#241005", figure: "#facc15", ring: "#facc15", glow: "#facc1590", isActive: true, rarity: "common" },
-  { id: "preview-pink-circuit", level: 16, name: "Pink Circuit", price: "Preview", imageSrc: "/avatars/8.webp", bg: "#2a0b1c", figure: "#fb7185", ring: "#fb7185", glow: "#fb718580", isActive: true, rarity: "common" },
+  { id: "silver-void", level: 1, name: "Silver Void", price: "Free", imageSrc: "/avatars/1.webp", bg: "#111827", figure: "#cbd5e1", ring: "#cbd5e1", glow: "#cbd5e180", isActive: true, rarity: "common" },
+  { id: "neon-lynx", level: 2, name: "Neon Lynx", price: "Free", imageSrc: "/avatars/2.webp", bg: "#170f2e", figure: "#a855f7", ring: "#c084fc", glow: "#a855f780", isActive: true, rarity: "common" },
+  { id: "blue-signal", level: 3, name: "Blue Signal", price: "Free", imageSrc: "/avatars/3.webp", bg: "#06131f", figure: "#22d3ee", ring: "#22d3ee", glow: "#22d3ee80", isActive: true, rarity: "common" },
+  { id: "violet-mask", level: 4, name: "Violet Mask", price: "Free", imageSrc: "/avatars/4.webp", bg: "#1a1028", figure: "#d946ef", ring: "#d946ef", glow: "#d946ef80", isActive: true, rarity: "common" },
+  { id: "horned-iron", level: 5, name: "Horned Iron", price: "Free", imageSrc: "/avatars/5.webp", bg: "#1f0a05", figure: "#fb923c", ring: "#fb923c", glow: "#fb923c80", isActive: true, rarity: "common" },
+  { id: "crimson-muse", level: 6, name: "Crimson Muse", price: "Free", imageSrc: "/avatars/6.webp", bg: "#2a0b0b", figure: "#f97316", ring: "#f97316", glow: "#f9731680", isActive: true, rarity: "common" },
+  { id: "solar-flame", level: 7, name: "Solar Flame", price: "Free", imageSrc: "/avatars/7.webp", bg: "#241005", figure: "#facc15", ring: "#facc15", glow: "#facc1590", isActive: true, rarity: "common" },
+  { id: "pink-circuit", level: 8, name: "Pink Circuit", price: "Free", imageSrc: "/avatars/8.webp", bg: "#2a0b1c", figure: "#fb7185", ring: "#fb7185", glow: "#fb718580", isActive: true, rarity: "common" },
 ];
 
 function fallbackAvatarCatalog(): AvatarCatalogItem[] {
@@ -656,121 +648,38 @@ export function OnboardingJourney({
                     </div>
                   </div>
 
-                  {ownedPreviewAvatarChoices.length > 0 ? (
-                    <div className="min-w-0">
-                      <p className="mb-3 text-center font-display text-[9px] uppercase tracking-[0.2em] text-raw-gold/70 md:text-left">
-                        Claimed reward
-                      </p>
-                      <div className="mx-auto grid w-full max-w-[11rem] grid-cols-2 gap-x-1 gap-y-2 min-[390px]:max-w-[12rem] min-[390px]:gap-x-2 sm:max-w-[24rem] sm:grid-cols-4 sm:gap-x-3 sm:gap-y-4 md:mx-0">
-                        {ownedPreviewAvatarChoices.map((avatar) => {
-                          const index = avatar.level;
-                          const isActive = index === avatarIndex;
-                          const isPreviewed = index === previewAvatarIndex;
-                          return (
-                            <button
-                              key={avatar.id}
-                              type="button"
-                              onClick={() => {
-                                setPreviewAvatarIndex(index);
-                                phonePreviewRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-                                track("onboarding_avatar_selected", { avatar_level: index, attempts: 1 });
-                                onAvatarChange(index);
-                              }}
-                              className="group relative flex min-w-0 flex-col items-center gap-0.5 rounded-xl p-1 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/50 sm:gap-1 sm:p-1.5"
-                              aria-label={`Select claimed reward ${avatar.name}`}
-                              aria-pressed={isActive}
-                            >
-                              <div className={`relative rounded-full transition-all duration-300 ${
-                                isActive
-                                  ? "scale-105"
-                                  : isPreviewed
-                                    ? "scale-100 opacity-100"
-                                    : "opacity-80 group-hover:opacity-100 group-hover:scale-105"
-                              }`}>
-                                <AvatarFigure avatarIndex={index} size="sm" selected={isActive || isPreviewed} className="sm:hidden" rarity={avatar.rarity} themeOverride={avatar} />
-                                <AvatarFigure avatarIndex={index} size="md" selected={isActive || isPreviewed} className="hidden sm:block" rarity={avatar.rarity} themeOverride={avatar} />
-                              </div>
-                              <span className={`max-w-full truncate text-center font-display text-[7px] leading-tight tracking-[0.08em] transition-colors sm:text-[8px] ${
-                                isActive
-                                  ? "text-raw-text"
-                                  : isPreviewed
-                                    ? "text-raw-gold/80"
-                                    : "text-raw-silver/45 group-hover:text-raw-silver/80"
-                              }`}>
-                                {avatar.name.split(" ")[0]}
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ) : null}
-
-                </div>
-
-                <div className="flex flex-col items-center justify-start md:justify-center">
-                  <div className="h-[322px] w-[140px] overflow-visible min-[390px]:h-[360px] min-[390px]:w-[157px] md:hidden">
-                    <div
-                      style={{
-                        width: 280,
-                        transform: "scale(0.5)",
-                        transformOrigin: "top left",
-                      }}
-                      className="min-[390px]:[transform:scale(0.56)!important]"
-                    >
-                      <PhoneMockup className="w-[280px]" showStatusBar={false}>
-                        <AvatarPhoneHomeScreen avatarIndex={previewAvatarIndex} compact previewAvatar={previewAvatar} />
-                      </PhoneMockup>
-                    </div>
-                  </div>
-                  <div className="hidden w-full max-w-[290px] md:block">
-                    <PhoneMockup className="w-full" showStatusBar={false}>
-                      <AvatarPhoneHomeScreen avatarIndex={previewAvatarIndex} compact={false} previewAvatar={previewAvatar} />
-                    </PhoneMockup>
-                  </div>
-                  <p className="mt-3 text-center text-[10px] uppercase tracking-[0.18em] text-raw-silver/40">
-                    {previewAvatarChoices.length === 0 || previewAvatarIndex <= FREE_ONBOARDING_AVATAR_COUNT || ownedAvatarLevels.has(previewAvatarIndex) ? "Pick this starter" : "Preview only"}
-                  </p>
-                </div>
-
-                {previewAvatarChoices.length > 0 ? (
-                    <div className="col-span-2">
-                      <div className="mx-auto mb-3 flex w-full max-w-[15rem] items-center justify-center gap-3 min-[420px]:max-w-[22rem] sm:max-w-[30rem] md:max-w-none">
-                        {previewAvatarPageCount > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => setAvatarPage((page) => Math.max(0, page - 1))}
-                            disabled={avatarPage === 0}
-                            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-raw-border/45 bg-raw-black/70 text-raw-gold transition hover:border-raw-gold/45 disabled:cursor-not-allowed disabled:opacity-25 sm:h-10 sm:w-10"
-                            aria-label="Previous preview avatars"
-                          >
-                            <ChevronLeft className="h-5 w-5" />
-                          </button>
-                        )}
+                  {previewAvatarChoices.length > 0 ? (
+                    <div>
+                      <div className="mx-auto mb-3 flex w-full max-w-[15rem] items-center justify-between gap-3 min-[420px]:max-w-[22rem] sm:max-w-[30rem] md:mx-0">
+                        <button
+                          type="button"
+                          onClick={() => setAvatarPage((page) => Math.max(0, page - 1))}
+                          disabled={avatarPage === 0}
+                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-raw-border/45 bg-raw-black/70 text-raw-gold transition hover:border-raw-gold/45 disabled:cursor-not-allowed disabled:opacity-25 sm:h-10 sm:w-10"
+                          aria-label="Previous preview avatars"
+                        >
+                          <ChevronLeft className="h-5 w-5" />
+                        </button>
                         <div className="text-center">
                           <p className="font-display text-[9px] uppercase tracking-[0.2em] text-raw-gold/70">
                             Preview only
                           </p>
-                          {previewAvatarPageCount > 1 && (
-                            <p className="mt-1 text-[10px] text-raw-silver/40">
-                              Page {avatarPage + 1} / {previewAvatarPageCount}
-                            </p>
-                          )}
+                          <p className="mt-1 text-[10px] text-raw-silver/40">
+                            Page {avatarPage + 1} / {previewAvatarPageCount}
+                          </p>
                         </div>
-                        {previewAvatarPageCount > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => setAvatarPage((page) => Math.min(previewAvatarPageCount - 1, page + 1))}
-                            disabled={avatarPage >= previewAvatarPageCount - 1}
-                            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-raw-border/45 bg-raw-black/70 text-raw-gold transition hover:border-raw-gold/45 disabled:cursor-not-allowed disabled:opacity-25 sm:h-10 sm:w-10"
-                            aria-label="Next preview avatars"
-                          >
-                            <ChevronRight className="h-5 w-5" />
-                          </button>
-                        )}
+                        <button
+                          type="button"
+                          onClick={() => setAvatarPage((page) => Math.min(previewAvatarPageCount - 1, page + 1))}
+                          disabled={avatarPage >= previewAvatarPageCount - 1}
+                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-raw-border/45 bg-raw-black/70 text-raw-gold transition hover:border-raw-gold/45 disabled:cursor-not-allowed disabled:opacity-25 sm:h-10 sm:w-10"
+                          aria-label="Next preview avatars"
+                        >
+                          <ChevronRight className="h-5 w-5" />
+                        </button>
                       </div>
 
-                      <div className="mx-auto grid w-full max-w-[24rem] grid-cols-4 gap-x-3 gap-y-3 sm:gap-x-3 sm:gap-y-4 md:max-w-none md:grid-cols-8">
+                      <div className="mx-auto grid w-full max-w-[24rem] grid-cols-4 gap-x-3 gap-y-3 sm:gap-x-3 sm:gap-y-4 md:mx-0">
                       {isLoadingPreviewAvatars && visiblePreviewAvatarChoices.length === 0
                         ? Array.from({ length: AVATAR_PAGE_SIZE }).map((_, i) => (
                             <div key={i} className="flex flex-col items-center gap-1 p-1.5">
@@ -840,6 +749,31 @@ export function OnboardingJourney({
                       </div>
                     </div>
                   ) : null}
+                </div>
+
+                <div className="order-first flex flex-col items-center justify-start md:order-none md:justify-center">
+                  <div className="h-[360px] w-[157px] overflow-visible md:hidden">
+                    <div
+                      style={{
+                        width: 280,
+                        transform: "scale(0.56)",
+                        transformOrigin: "top left",
+                      }}
+                    >
+                      <PhoneMockup className="w-[280px]" showStatusBar={false}>
+                        <AvatarPhoneHomeScreen avatarIndex={previewAvatarIndex} compact previewAvatar={previewAvatar} />
+                      </PhoneMockup>
+                    </div>
+                  </div>
+                  <div className="hidden w-full max-w-[290px] md:block">
+                    <PhoneMockup className="w-full" showStatusBar={false}>
+                      <AvatarPhoneHomeScreen avatarIndex={previewAvatarIndex} compact={false} previewAvatar={previewAvatar} />
+                    </PhoneMockup>
+                  </div>
+                  <p className="mt-3 text-center text-[10px] uppercase tracking-[0.18em] text-raw-silver/40">
+                    {previewAvatarChoices.length === 0 || previewAvatarIndex <= FREE_ONBOARDING_AVATAR_COUNT ? "Pick this starter" : "Preview only"}
+                  </p>
+                </div>
               </div>
 
               <div className="mt-6 flex items-center justify-between gap-3 sm:mt-8">
