@@ -3,7 +3,7 @@ import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import type React from "react";
 import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
 import { fetchCommunities } from "@/backend/supabase/controllers/communityController";
-import { getUserFavoriteCommunities } from "@/backend/supabase/controllers/userExtrasController";
+import { getUserFavoriteCommunities, getUserPinnedMessage, type PinnedMessageRecord } from "@/backend/supabase/controllers/userExtrasController";
 import { Archive, Home as HomeIcon, MessageCircle, Target, User as UserIcon, LogOut, Shield, Trophy, Sparkles, Moon, CloudMoon, Sun } from "lucide-react";
 import LNTLogo from "@/assets/LNT.webp";
 import SYTLogo from "@/assets/logospeak.webp";
@@ -116,6 +116,7 @@ export default function Dashboard({
   const [activeTab, setActiveTab] = useState<DashboardTab>("home");
   const [dashboardCommunities, setDashboardCommunities] = useState<PersistedCommunityRecord[]>([]);
   const [favoriteCommunityIds, setFavoriteCommunityIds] = useState<string[]>([]);
+  const [pinnedMessage, setPinnedMessage] = useState<PinnedMessageRecord | null>(null);
   const [isHome, setIsHome] = useState(true);
   const [mobileCommunityPickerOpen, setMobileCommunityPickerOpen] = useState(false);
   const [mobileCommunityAnchorRect, setMobileCommunityAnchorRect] = useState<DOMRect | null>(null);
@@ -184,6 +185,28 @@ export default function Dashboard({
     return () => {
       cancelled = true;
       window.removeEventListener("raw:favorite-communities-updated", onChange);
+    };
+  }, [user.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const message = await getUserPinnedMessage(user.id);
+        if (!cancelled) setPinnedMessage(message);
+      } catch {
+        // Pinned profile message is best-effort; the profile still renders.
+      }
+    })();
+    const onChange = (event: Event) => {
+      const detail = (event as CustomEvent<{ userId?: string; message?: PinnedMessageRecord | null }>).detail;
+      if (!detail || detail.userId !== user.id) return;
+      setPinnedMessage(detail.message ?? null);
+    };
+    window.addEventListener("raw:pinned-message-updated", onChange);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("raw:pinned-message-updated", onChange);
     };
   }, [user.id]);
 
@@ -481,7 +504,7 @@ export default function Dashboard({
                 pollsAnswered={votedPolls.size}
                 xp={progress?.xp ?? 0}
                 xpLevel={progress?.level ?? 1}
-                profilePublic={user.profilePublic}
+                pinnedMessage={pinnedMessage}
                 onLogout={onLogout}
               />
             </DashboardSectionShell>
