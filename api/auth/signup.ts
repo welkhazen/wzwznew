@@ -6,6 +6,18 @@ export const config = { runtime: "edge" };
 
 type SignupBody = { username?: unknown; password?: unknown };
 
+function isUniqueViolation(error: { code?: string; message?: string } | null): boolean {
+  const message = error?.message?.toLowerCase() ?? "";
+  return error?.code === "23505" || message.includes("duplicate") || message.includes("unique");
+}
+
+function isExistingAuthUser(error: { message?: string } | null): boolean {
+  const message = error?.message?.toLowerCase() ?? "";
+  return message.includes("already") || message.includes("registered") || message.includes("exists");
+}
+
+// TODO(rate-limit): block production deploy until this endpoint is protected
+// by IP/user throttling at the edge or gateway layer.
 export default async function handler(request: Request): Promise<Response> {
   if (!supabaseServerClient) return json({ error: "supabase_not_configured" }, 503);
   if (request.method !== "POST") return json({ error: "method_not_allowed" }, 405);
@@ -33,7 +45,8 @@ export default async function handler(request: Request): Promise<Response> {
   });
 
   if (authError || !authData.user) {
-    return json({ error: authError?.message ?? "failed_to_create_auth_user" }, 400);
+    if (isExistingAuthUser(authError)) return json({ error: "username_taken" }, 409);
+    return json({ error: "failed_to_create_auth_user" }, 400);
   }
 
   const { error: profileError } = await supabaseServerClient
@@ -42,7 +55,8 @@ export default async function handler(request: Request): Promise<Response> {
 
   if (profileError) {
     await supabaseServerClient.auth.admin.deleteUser(authData.user.id);
-    return json({ error: profileError.message }, 400);
+    if (isUniqueViolation(profileError)) return json({ error: "username_taken" }, 409);
+    return json({ error: "failed_to_create_profile" }, 400);
   }
 
   const profile = await fetchPublicProfile(authData.user.id);

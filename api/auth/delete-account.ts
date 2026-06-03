@@ -6,6 +6,12 @@ export const config = { runtime: "edge" };
 
 type DeleteBody = { password?: unknown };
 
+// TODO(rate-limit): block production deploy until this endpoint is protected
+// by IP/user throttling at the edge or gateway layer.
+// Recovery behavior: Auth deletion is attempted before app-data cleanup. If
+// cleanup fails afterward, the user cannot authenticate anymore and the
+// response returns app_cleanup_failed so an operator can safely rerun cleanup
+// for the returned user_id with the service role.
 function getBearerToken(request: Request): string | null {
   const authorization = request.headers.get("authorization") ?? "";
   const match = authorization.match(/^Bearer\s+(.+)$/i);
@@ -31,10 +37,14 @@ export default async function handler(request: Request): Promise<Response> {
   const passwordOk = await verifyPassword(user.email, password);
   if (!passwordOk) return json({ error: "invalid_password" }, 403);
 
-  await cleanupAppUserData(user.id);
-
   const { error: deleteError } = await supabaseServerClient.auth.admin.deleteUser(user.id);
-  if (deleteError) return json({ error: deleteError.message }, 500);
+  if (deleteError) return json({ error: "auth_delete_failed" }, 500);
+
+  try {
+    await cleanupAppUserData(user.id);
+  } catch {
+    return json({ error: "app_cleanup_failed", user_id: user.id }, 500);
+  }
 
   return json({ ok: true });
 }

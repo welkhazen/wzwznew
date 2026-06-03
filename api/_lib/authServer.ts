@@ -1,4 +1,8 @@
-import { supabasePublicServerClient, supabaseServerClient } from "./supabaseServerClient";
+import { createClient } from "@supabase/supabase-js";
+import { supabaseServerClient } from "./supabaseServerClient";
+
+const supabaseUrl = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? "";
+const supabaseAnonKey = process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "";
 
 export type PublicUserProfile = {
   id: string;
@@ -46,8 +50,11 @@ export async function fetchPublicProfile(userId: string): Promise<PublicUserProf
 }
 
 export async function verifyPassword(email: string, password: string): Promise<boolean> {
-  if (!supabasePublicServerClient) return false;
-  const { error } = await supabasePublicServerClient.auth.signInWithPassword({ email, password });
+  if (!supabaseUrl || !supabaseAnonKey) return false;
+  const publicClient = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const { error } = await publicClient.auth.signInWithPassword({ email, password });
   return !error;
 }
 
@@ -55,22 +62,22 @@ export async function cleanupAppUserData(userId: string): Promise<void> {
   if (!supabaseServerClient) throw new Error("supabase_not_configured");
   const userIdText = userId;
 
-  await supabaseServerClient.from("user_aliases").delete().eq("user_id", userId);
-  await supabaseServerClient.from("user_xp_claims").delete().eq("user_id", userId);
-  await supabaseServerClient.from("user_progress").delete().eq("user_id", userId);
-  await supabaseServerClient.from("user_avatar_selection").delete().eq("user_id", userIdText);
-  await supabaseServerClient.from("user_avatar_inventory").delete().eq("user_id", userIdText);
-  await supabaseServerClient.from("user_community_unlocks").delete().eq("user_id", userIdText);
-  await supabaseServerClient.from("user_subscriptions").delete().eq("user_id", userIdText);
-  await supabaseServerClient.from("notification_consents").delete().eq("user_id", userIdText);
-  await supabaseServerClient.from("community_waitlist").delete().eq("user_id", userIdText);
-  await supabaseServerClient.from("community_members").delete().eq("user_id", userIdText);
-  await supabaseServerClient.from("community_poll_votes").delete().eq("user_id", userIdText);
-  await supabaseServerClient.from("community_polls").delete().eq("created_by_user_id", userIdText);
-  await supabaseServerClient.from("community_messages").delete().eq("sender_id", userIdText);
+  await supabaseServerClient.from("user_aliases").delete().eq("user_id", userId).throwOnError();
+  await supabaseServerClient.from("user_xp_claims").delete().eq("user_id", userId).throwOnError();
+  await supabaseServerClient.from("user_progress").delete().eq("user_id", userId).throwOnError();
+  await supabaseServerClient.from("user_avatar_selection").delete().eq("user_id", userIdText).throwOnError();
+  await supabaseServerClient.from("user_avatar_inventory").delete().eq("user_id", userIdText).throwOnError();
+  await supabaseServerClient.from("user_community_unlocks").delete().eq("user_id", userIdText).throwOnError();
+  await supabaseServerClient.from("user_subscriptions").delete().eq("user_id", userIdText).throwOnError();
+  await supabaseServerClient.from("notification_consents").delete().eq("user_id", userIdText).throwOnError();
+  await supabaseServerClient.from("community_waitlist").delete().eq("user_id", userIdText).throwOnError();
+  await supabaseServerClient.from("community_members").delete().eq("user_id", userIdText).throwOnError();
+  await supabaseServerClient.from("community_poll_votes").delete().eq("user_id", userIdText).throwOnError();
+  await supabaseServerClient.from("community_polls").delete().eq("created_by_user_id", userIdText).throwOnError();
+  await supabaseServerClient.from("community_messages").delete().eq("sender_id", userIdText).throwOnError();
   await supabaseServerClient.rpc("remove_user_from_message_likes", { p_user_id: userIdText }).throwOnError();
-  await supabaseServerClient.from("community_requests").delete().eq("requester_id", userIdText);
-  await supabaseServerClient.from("issue_reports").delete().eq("reporter_id", userIdText);
-  await supabaseServerClient.from("communities").update({ created_by: null }).eq("created_by", userIdText);
-  await supabaseServerClient.from("users").delete().eq("id", userId);
+  await supabaseServerClient.from("community_requests").delete().eq("requester_id", userIdText).throwOnError();
+  await supabaseServerClient.from("issue_reports").delete().eq("reporter_id", userIdText).throwOnError();
+  await supabaseServerClient.from("communities").update({ created_by: null }).eq("created_by", userIdText).throwOnError();
+  await supabaseServerClient.from("users").delete().eq("id", userId).throwOnError();
 }

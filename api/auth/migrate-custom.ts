@@ -12,6 +12,8 @@ type LegacyLoginResult = {
   error?: string;
 };
 
+// TODO(rate-limit): block production deploy until this endpoint is protected
+// by IP/user throttling at the edge or gateway layer.
 export default async function handler(request: Request): Promise<Response> {
   if (!supabaseServerClient) return json({ error: "supabase_not_configured" }, 503);
   if (request.method !== "POST") return json({ error: "method_not_allowed" }, 405);
@@ -44,11 +46,13 @@ export default async function handler(request: Request): Promise<Response> {
     const message = createError?.message ?? "failed_to_create_auth_user";
     if (message.toLowerCase().includes("already")) {
       const profile = await fetchPublicProfile(legacy.user.id);
+      if (!profile) return json({ error: "profile_not_found" }, 404);
       return json({ ok: true, user: profile });
     }
-    return json({ error: message }, 400);
+    return json({ error: "failed_to_create_auth_user" }, 400);
   }
 
   const profile = await fetchPublicProfile(legacy.user.id);
+  if (!profile) return json({ error: "profile_not_found" }, 500);
   return json({ ok: true, user: profile });
 }
