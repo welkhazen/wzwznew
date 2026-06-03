@@ -42,6 +42,20 @@ async function requireProfile(userId: string): Promise<RpcResult> {
   return { ok: true, user };
 }
 
+async function postAuthJson(path: string, body: unknown, accessToken?: string): Promise<RpcResult> {
+  const response = await fetch(path, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      ...(accessToken ? { authorization: `Bearer ${accessToken}` } : {}),
+    },
+    body: JSON.stringify(body),
+  });
+  const payload = (await response.json().catch(() => null)) as RpcResult | null;
+  if (!response.ok) return { ok: false, error: payload?.error ?? 'Request failed.' };
+  return payload ?? { ok: true };
+}
+
 export async function completeUserOnboarding(_userId?: string): Promise<{ ok: boolean; error?: string }> {
   void _userId;
   const { data, error } = await supabase.rpc('complete_user_onboarding');
@@ -53,41 +67,13 @@ export async function signUp(username: string, password: string): Promise<RpcRes
   const normalizedUsername = normalizeUsername(username);
   if (!normalizedUsername) return { ok: false, error: 'Username is required.' };
 
-  const { data: existingUser } = await supabase
-    .from('users')
-    .select('id')
-    .eq('username', normalizedUsername)
-    .maybeSingle();
-  if (existingUser) return { ok: false, error: 'Username is already taken.' };
-
   const email = usernameToEmail(normalizedUsername);
-  const { data: authData, error: authError } = await supabase.auth.signUp({
-    email,
-    password,
-    options: { data: { username: normalizedUsername } },
-  });
+  const created = await postAuthJson('/api/auth/signup', { username: normalizedUsername, password });
+  if (!created.ok) return created;
 
-  if (authError || !authData.user) {
-    return { ok: false, error: authError?.message ?? 'Could not create account. Please try again.' };
-  }
-  if (!authData.session) {
-    await supabase.auth.signOut();
-    return { ok: false, error: 'Signup requires verified session support. Disable email confirmation for username auth or add a server signup endpoint.' };
-  }
-
-  const { error: profileError } = await supabase
-    .from('users')
-    .insert({
-      id: authData.user.id,
-      username: normalizedUsername,
-    });
-
-  if (profileError) {
-    await supabase.auth.signOut();
-    return { ok: false, error: profileError.message };
-  }
-
-  return requireProfile(authData.user.id);
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error || !data.user) return { ok: false, error: error?.message ?? 'Could not sign in after signup.' };
+  return requireProfile(data.user.id);
 }
 
 export async function signIn(username: string, password: string): Promise<RpcResult> {
@@ -95,7 +81,12 @@ export async function signIn(username: string, password: string): Promise<RpcRes
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error || !data.user) {
-    return { ok: false, error: 'Could not sign in. Please try again.' };
+    const migrated = await postAuthJson('/api/auth/migrate-custom', { username, password });
+    if (!migrated.ok) return { ok: false, error: 'Could not sign in. Please try again.' };
+
+    const retry = await supabase.auth.signInWithPassword({ email, password });
+    if (retry.error || !retry.data.user) return { ok: false, error: 'Could not sign in. Please try again.' };
+    return requireProfile(retry.data.user.id);
   }
 
   return requireProfile(data.user.id);
@@ -145,9 +136,11 @@ export async function deleteAccount(
   });
   if (verifyError) return { ok: false, error: 'Invalid password' };
 
-  const { data, error } = await supabase.rpc('delete_account', { p_password: password });
-  if (error) return { ok: false, error: error.message };
-  const result = (data as { ok: boolean; error?: string }) ?? { ok: true };
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData.session?.access_token;
+  if (!token) return { ok: false, error: 'auth_migration_required' };
+
+  const result = await postAuthJson('/api/auth/delete-account', { password }, token);
   if (result.ok) await supabase.auth.signOut();
   return result;
 }
