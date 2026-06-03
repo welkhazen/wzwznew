@@ -2032,12 +2032,6 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                       <p className="mt-1.5 text-sm leading-relaxed text-raw-text/85">
                         {profileTarget.profile.pinnedMessage.messageText}
                       </p>
-                      <p className="mt-2 text-[10px] text-raw-silver/45">
-                        {profileTarget.profile.pinnedMessage.communityTitle ?? "Community"}
-                        {profileTarget.profile.pinnedMessage.messageCreatedAt
-                          ? ` · ${formatChatTimestamp(profileTarget.profile.pinnedMessage.messageCreatedAt)}`
-                          : ""}
-                      </p>
                     </div>
                   )}
 

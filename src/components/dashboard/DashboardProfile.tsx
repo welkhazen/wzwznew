@@ -232,10 +232,6 @@ export function DashboardProfile({
           <div className="rounded-2xl border border-raw-gold/25 bg-raw-gold/[0.06] px-4 py-3.5">
             <p className="text-[10px] uppercase tracking-[0.16em] text-raw-gold/70">Pinned message</p>
             <p className="mt-1.5 text-sm leading-relaxed text-raw-text/85">{pinnedMessage.messageText}</p>
-            <p className="mt-2 text-[10px] text-raw-silver/45">
-              {pinnedMessage.senderName ? `@${pinnedMessage.senderName} in ` : ""}
-              {pinnedMessage.communityTitle ?? "Community"}
-            </p>
           </div>
         )}
 
