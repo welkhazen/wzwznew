@@ -66,7 +66,9 @@
       "mcp__f1213d47-aa2e-4293-93fe-7cc5dff8a50b__execute_sql",
       "Bash(stat -c \"%n %s\" src/assets/favicon2.png public/raw-logo-96.png public/raw-logo-192.png public/favicon.png 2>/dev/null || ls -la src/assets/favicon2.png public/raw-logo-96.png public/raw-logo-192.png public/favicon.png)",
       "Bash(grep -rn \"png\\\\|src=\\\\\"/\\\\|logo\\\\|favicon\" src/components/ui/radial-orbital-timeline*.tsx)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(npx vitest *)",
+      "Bash(git stash *)"
     ]
   }
 }
