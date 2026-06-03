@@ -234,7 +234,11 @@ export function AvatarShop({
   const [unlocking, setUnlocking] = useState<number | null>(null);
 
   const purchasable = avatarCatalog.filter(
-    (a) => a.price !== "Free" && a.price !== "0" && Number(a.price) > 0
+    (a) =>
+      a.price !== "Free" &&
+      a.price !== "0" &&
+      Number(a.price) > 0 &&
+      !ownedAvatarLevels.has(a.level),
   );
 
   if (purchasable.length === 0) {
