@@ -417,4 +417,18 @@ GRANT EXECUTE ON FUNCTION public.award_xp_once(text, text, integer) TO authentic
 GRANT EXECUTE ON FUNCTION public.get_user_progress() TO authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.get_user_xp_claim_keys(text) TO authenticated, service_role;
 
+CREATE OR REPLACE FUNCTION public.remove_user_from_message_likes(p_user_id text)
+RETURNS void
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  UPDATE public.community_messages
+  SET liked_by = array_remove(liked_by, p_user_id)
+  WHERE p_user_id = ANY(liked_by);
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.remove_user_from_message_likes(text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.remove_user_from_message_likes(text) TO service_role;
+
 NOTIFY pgrst, 'reload schema';
