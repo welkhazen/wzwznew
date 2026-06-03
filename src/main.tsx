@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { track } from "@/lib/analytics";
+import { setClient } from "@/lib/analytics/client";
 import { installGlobalCrashAlerts } from "@/lib/crashAlerts";
 import { initSentry } from "@/lib/sentry";
 import App from "./App.tsx";
@@ -16,10 +17,35 @@ const queryClient = new QueryClient();
 initSentry();
 installGlobalCrashAlerts();
 
-posthog.init(import.meta.env.VITE_POSTHOG_KEY, {
-  api_host: import.meta.env.VITE_POSTHOG_HOST || "https://us.i.posthog.com",
-  capture_pageview: true,
-});
+const posthogKey = import.meta.env.VITE_POSTHOG_KEY;
+if (posthogKey) {
+  posthog.init(posthogKey, {
+    api_host: import.meta.env.VITE_POSTHOG_HOST || "https://us.i.posthog.com",
+    capture_pageview: true,
+  });
+
+  setClient({
+    capture: (name, properties) => {
+      posthog.capture(name, properties);
+    },
+    identify: (userId, traits) => {
+      posthog.identify(userId, traits);
+    },
+    alias: (newId, previousId) => {
+      posthog.alias(newId, previousId);
+    },
+    reset: () => {
+      posthog.reset();
+    },
+    group: (groupType, groupKey, traits) => {
+      posthog.group(groupType, groupKey, traits);
+    },
+    register: (props) => {
+      posthog.register(props);
+    },
+    get_distinct_id: () => posthog.get_distinct_id(),
+  });
+}
 
 if (typeof window !== "undefined") {
   const originalWarn = console.warn;
