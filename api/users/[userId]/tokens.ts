@@ -26,29 +26,15 @@ async function readBody(request: Request): Promise<{ action?: unknown; amount?: 
   }
 }
 
-/**
- * Resolve the verified session user id from the request.
- *
- * TODO(auth-migration): until proper Supabase Auth / Stytch server-session
- * verification is wired up, the only identity signal we trust on the
- * server is the (forthcoming) `raw.sid` httpOnly session cookie set by the
- * Express server. That cookie is opaque to this edge function today.
- *
- * Transitional rule: if the X-Raw-Session-User header is present AND its
- * value matches the route userId AND the request is from a trusted origin,
- * we accept it as the session user. This is *not* sufficient long-term —
- * the header can be set by the browser — but it lets us harden the obvious
- * "spend someone else's tokens by typing their UUID in the URL" attack
- * without breaking the existing UX while the real session layer ships.
- *
- * Returns null when the caller cannot be matched to the route user; the
- * caller of this helper must then 401/403.
- */
-function getVerifiedSessionUserId(request: Request, routeUserId: string): string | null {
-  const headerUserId = request.headers.get("x-raw-session-user");
-  if (!headerUserId) return null;
-  if (headerUserId !== routeUserId) return null;
-  return headerUserId;
+async function getVerifiedUserId(request: Request): Promise<string | null> {
+  if (!supabase) return null;
+  const authorization = request.headers.get("authorization") ?? "";
+  const match = authorization.match(/^Bearer\s+(.+)$/i);
+  if (!match) return null;
+
+  const { data, error } = await supabase.auth.getUser(match[1]);
+  if (error || !data.user) return null;
+  return data.user.id;
 }
 
 export default async function handler(request: Request): Promise<Response> {
@@ -65,18 +51,19 @@ export default async function handler(request: Request): Promise<Response> {
     return json({ error: "forbidden_origin" }, 403);
   }
 
-  // Identity check: the URL userId is NOT trusted on its own. Cross-user
-  // access is blocked until the proper session layer lands.
-  const sessionUserId = getVerifiedSessionUserId(request, routeUserId);
-  if (!sessionUserId) {
+  const verifiedUserId = await getVerifiedUserId(request);
+  if (!verifiedUserId) {
     return json({ error: "unauthorized" }, 401);
+  }
+  if (verifiedUserId !== routeUserId) {
+    return json({ error: "forbidden_user" }, 403);
   }
 
   if (request.method === "GET") {
     const { data, error } = await supabase
       .from("users")
       .select("token_balance")
-      .eq("id", sessionUserId)
+      .eq("id", verifiedUserId)
       .single();
 
     if (error || !data) {
@@ -95,8 +82,6 @@ export default async function handler(request: Request): Promise<Response> {
     return json({ error: "invalid_json" }, 400);
   }
 
-  // Client-side token minting stays blocked. Only payment webhooks / trusted
-  // server reward paths may add tokens, and those don't run through this route.
   if (body.action === "add") {
     return json({ error: "token_minting_requires_trusted_server" }, 403);
   }
@@ -106,19 +91,33 @@ export default async function handler(request: Request): Promise<Response> {
     return json({ error: "invalid_token_amount" }, 400);
   }
 
-  // spend_tokens derives the user from current_user_id() inside the RPC, so
-  // even if the route userId were spoofed the spend lands on the verified
-  // session user. The header check above adds a second layer.
-  const { data, error } = await supabase.rpc("spend_tokens", { p_amount: amount });
+  const { data, error: readError } = await supabase
+    .from("users")
+    .select("token_balance")
+    .eq("id", verifiedUserId)
+    .single();
 
-  if (error) {
+  if (readError || !data) {
+    return json({ error: "failed_to_fetch_token_balance" }, 404);
+  }
+
+  const currentBalance = Number((data as { token_balance: number }).token_balance);
+  if (!Number.isFinite(currentBalance)) {
+    return json({ error: "invalid_token_balance" }, 500);
+  }
+  if (currentBalance < amount) {
+    return json({ error: "insufficient_tokens" }, 400);
+  }
+
+  const balance = currentBalance - amount;
+  const { error: updateError } = await supabase
+    .from("users")
+    .update({ token_balance: balance })
+    .eq("id", verifiedUserId);
+
+  if (updateError) {
     return json({ error: "failed_to_spend_tokens" }, 500);
   }
 
-  const result = data as { ok?: boolean; balance?: number; error?: string } | null;
-  if (!result?.ok) {
-    return json({ error: result?.error ?? "failed_to_spend_tokens" }, 400);
-  }
-
-  return json({ balance: result.balance });
+  return json({ balance });
 }

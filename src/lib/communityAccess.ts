@@ -9,10 +9,11 @@ export interface CommunityAccess {
 }
 
 export async function loadCommunityAccess(userId: string): Promise<CommunityAccess> {
+  void userId;
   let data: unknown = null;
   let error: unknown = null;
   try {
-    const result = await supabase.rpc("get_community_access", { p_user_id: userId });
+    const result = await supabase.rpc("get_community_access");
     data = result.data;
     error = result.error;
   } catch {
@@ -37,10 +38,11 @@ export interface UnlockResult {
 }
 
 export async function unlockCommunity(userId: string, communityId: string): Promise<UnlockResult> {
+  void userId;
   let data: unknown = null;
   let error: unknown = null;
   try {
-    const result = await supabase.rpc("unlock_community", { p_user_id: userId, p_community_id: communityId });
+    const result = await supabase.rpc("unlock_community", { p_community_id: communityId });
     data = result.data;
     error = result.error;
   } catch {

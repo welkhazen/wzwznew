@@ -1,21 +1,15 @@
-// Frontend token endpoint bindings.
-//
-// The userId argument is sent in the URL for routing only — the server does
-// NOT trust it as identity. It also goes in the X-Raw-Session-User header so
-// the edge function can verify it matches the active session user. This is a
-// transitional bridge until full Supabase Auth lands; see
-// docs/supabase-access-boundary.md.
-//
-// TODO(auth-migration): drop the userId argument from these helpers once the
-// server derives identity from a real verified session cookie.
+import { supabase } from "@/backend/supabase/client";
 
-function sessionHeaders(userId: string): HeadersInit {
-  return { "x-raw-session-user": userId };
+async function authHeaders(): Promise<HeadersInit> {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) throw new Error("Verified auth required");
+  return { authorization: `Bearer ${token}` };
 }
 
 export async function fetchTokenBalance(userId: string): Promise<number> {
   const response = await fetch(`/api/users/${encodeURIComponent(userId)}/tokens`, {
-    headers: sessionHeaders(userId),
+    headers: await authHeaders(),
   });
   if (!response.ok) {
     throw new Error("Failed to fetch token balance");
@@ -30,7 +24,7 @@ export async function fetchTokenBalance(userId: string): Promise<number> {
 export async function spendTokens(userId: string, amount: number): Promise<number> {
   const response = await fetch(`/api/users/${encodeURIComponent(userId)}/tokens`, {
     method: "POST",
-    headers: { "content-type": "application/json", ...sessionHeaders(userId) },
+    headers: { "content-type": "application/json", ...(await authHeaders()) },
     body: JSON.stringify({ amount }),
   });
 
