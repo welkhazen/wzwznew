@@ -66,12 +66,15 @@ export default async function handler(request: Request): Promise<Response> {
     return json({ error: "crash_alert_secret_not_configured" }, 503);
   }
 
-  if (!hasBearerSecret(request, crashAlertSecret)) {
+  // Two accepted auth paths:
+  // 1. Browser callers from a trusted origin (origin/referer matches APP_BASE_URL).
+  // 2. Server-to-server callers with Authorization: Bearer ${CRASH_ALERT_SECRET}.
+  // Browsers cannot safely hold a bearer secret (it would be baked into the
+  // public bundle), so we rely on trusted-origin + rate limit for them.
+  const trustedOrigin = isTrustedOrigin(request);
+  const bearerOk = hasBearerSecret(request, crashAlertSecret);
+  if (!trustedOrigin && !bearerOk) {
     return json({ error: "unauthorized" }, 401);
-  }
-
-  if (!isTrustedOrigin(request)) {
-    return json({ error: "untrusted_origin" }, 403);
   }
 
   const clientIp =

@@ -22,18 +22,12 @@ export async function sendCrashAlert(input: CrashAlertInput): Promise<void> {
   }
   sentCrashKeys.add(crashKey);
 
-  const crashAlertToken = import.meta.env.VITE_CRASH_ALERT_TOKEN as string | undefined;
-  if (!crashAlertToken) {
-    // Without a token the server returns 401. Skip the call rather than spam the network.
-    return;
-  }
-
+  // The server gates this endpoint with trusted-origin + per-IP rate limit for
+  // browser callers, and additionally requires Bearer CRASH_ALERT_SECRET for
+  // server-to-server callers. Do not ship the secret to the browser bundle.
   await apiFetch("/api/monitoring/crash-alert", {
     method: "POST",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${crashAlertToken}`,
-    },
+    headers: { "content-type": "application/json" },
     body: JSON.stringify({
       ...input,
       route,
