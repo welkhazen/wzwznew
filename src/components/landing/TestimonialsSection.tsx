@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ChevronLeft, ChevronRight, Layers3 } from "lucide-react";
 import { TestimonialCard, type TestimonialCardPosition, type TestimonialCardItem } from "@/components/ui/testimonial-cards";
 import test1 from "@/assets/test1.png";
 import test2 from "@/assets/test2.png";
@@ -42,6 +43,7 @@ const positions: TestimonialCardPosition[] = ["front", "middle", "back"];
 
 export function TestimonialsSection() {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [showAll, setShowAll] = useState(false);
 
   const visibleTestimonials = [
     testimonials[activeIndex],
@@ -67,7 +69,37 @@ export function TestimonialsSection() {
           From the community
         </p>
 
-        <div className="relative mx-auto mt-9 h-[470px] w-full max-w-[640px] overflow-hidden rounded-[24px] border border-raw-border/45 bg-raw-black/65 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] sm:h-[540px]">
+        <div className="relative mt-4 flex items-center justify-center gap-3">
+          <span className="text-[10px] uppercase tracking-[0.18em] text-raw-silver/35">
+            {testimonials.length} real messages
+          </span>
+          <button
+            type="button"
+            onClick={() => setShowAll((current) => !current)}
+            className="rounded-full border border-raw-gold/30 bg-raw-gold/10 px-4 py-1.5 text-[10px] uppercase tracking-[0.16em] text-raw-gold transition hover:bg-raw-gold/20"
+          >
+            {showAll ? "Back to stack" : "View all testimonials"}
+          </button>
+        </div>
+
+        {showAll ? (
+          <div className="relative mt-8 grid max-h-[680px] grid-cols-1 gap-4 overflow-y-auto rounded-[24px] border border-raw-border/45 bg-raw-black/65 p-4 sm:grid-cols-2 lg:grid-cols-3">
+            {testimonials.map((testimonial) => (
+              <div
+                key={testimonial.id}
+                className="overflow-hidden rounded-[18px] border border-white/10 bg-black/70 p-2 shadow-[0_16px_45px_rgba(0,0,0,0.35)]"
+              >
+                <img
+                  src={testimonial.src}
+                  alt={testimonial.alt}
+                  loading="lazy"
+                  className="h-full w-full rounded-[13px] object-contain"
+                />
+              </div>
+            ))}
+          </div>
+        ) : (
+        <div className="relative mx-auto mt-8 h-[470px] w-full max-w-[640px] overflow-hidden rounded-[24px] border border-raw-border/45 bg-raw-black/65 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] sm:h-[540px]">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(241,196,45,0.08),transparent_36%)]" />
           <div className="absolute left-1/2 top-8 h-[430px] w-[310px] -translate-x-[62%] sm:top-5 sm:h-[500px] sm:w-[380px] sm:-translate-x-[68%]">
             {visibleTestimonials.map((testimonial, index) => (
@@ -82,7 +114,30 @@ export function TestimonialsSection() {
 
           <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-raw-black/80 to-transparent" />
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-raw-black/85 to-transparent" />
+          <div className="absolute inset-x-0 bottom-5 z-10 flex items-center justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => handleShuffle("previous")}
+              className="rounded-full border border-white/10 bg-black/65 p-2 text-raw-silver/60 transition hover:border-raw-gold/35 hover:text-raw-gold"
+              aria-label="Previous testimonial"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <span className="flex items-center gap-2 rounded-full border border-white/10 bg-black/65 px-3 py-2 text-[10px] tracking-[0.16em] text-raw-silver/50">
+              <Layers3 className="h-3.5 w-3.5 text-raw-gold/65" />
+              {activeIndex + 1} / {testimonials.length}
+            </span>
+            <button
+              type="button"
+              onClick={() => handleShuffle("next")}
+              className="rounded-full border border-white/10 bg-black/65 p-2 text-raw-silver/60 transition hover:border-raw-gold/35 hover:text-raw-gold"
+              aria-label="Next testimonial"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
         </div>
+        )}
       </div>
     </section>
   );
