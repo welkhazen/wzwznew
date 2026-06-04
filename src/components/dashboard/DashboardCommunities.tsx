@@ -61,6 +61,16 @@ import { buildDefaultCommunities } from "@/lib/communityChat.seed";
 import { sendCommunityPushNotification } from "@/lib/communityPushNotifications";
 import type { CommunityChatMessageRecord, PersistedCommunityRecord } from "@/lib/communityChat.types";
 import {
+  appendOptimisticMessage,
+  getMessageSenderBlockKey,
+  markCommunityMessageFailed,
+  mergeCommunityMessageList,
+  removeCommunityMessage,
+  replaceCommunityMessage,
+  setCommunityMessages,
+  upsertCommunityMessage,
+} from "@/lib/communityChatState";
+import {
   loadCommunityAccess,
   type CommunityAccess,
 } from "@/lib/communityAccess";
@@ -155,122 +165,6 @@ const COMMUNITY_LOGOS: Record<string, string> = {
   syt: SYTLogo,
   iijm: IIJMLogo,
 };
-
-function getMessageSenderBlockKey(message: Pick<CommunityChatMessageRecord, "senderId" | "senderName">): string {
-  return getCommunitySenderBlockKey(message.senderId, message.senderName);
-}
-
-function mergeCommunityMessages(
-  messages: CommunityChatMessageRecord[],
-  incoming: CommunityChatMessageRecord,
-): CommunityChatMessageRecord[] {
-  const withoutSameId = messages.filter((message) => message.id !== incoming.id);
-  const pendingIndex = withoutSameId.findIndex((message) =>
-    message.deliveryStatus === "sending" &&
-    message.senderId === incoming.senderId &&
-    message.text === incoming.text
-  );
-
-  const nextMessages = [...withoutSameId];
-  if (pendingIndex >= 0) {
-    nextMessages[pendingIndex] = incoming;
-  } else {
-    nextMessages.push(incoming);
-  }
-
-  return nextMessages.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
-}
-
-function upsertCommunityMessage(
-  communities: PersistedCommunityRecord[],
-  communityId: string,
-  message: CommunityChatMessageRecord,
-): PersistedCommunityRecord[] {
-  return communities.map((community) =>
-    community.id === communityId
-      ? { ...community, messages: mergeCommunityMessages(community.messages, message) }
-      : community
-  );
-}
-
-function removeCommunityMessage(
-  communities: PersistedCommunityRecord[],
-  communityId: string,
-  messageId: string,
-): PersistedCommunityRecord[] {
-  return communities.map((community) =>
-    community.id === communityId
-      ? { ...community, messages: community.messages.filter((message) => message.id !== messageId) }
-      : community
-  );
-}
-
-function setCommunityMessages(
-  communities: PersistedCommunityRecord[],
-  communityId: string,
-  messages: CommunityChatMessageRecord[],
-): PersistedCommunityRecord[] {
-  return communities.map((community) =>
-    community.id === communityId ? { ...community, messages } : community
-  );
-}
-
-function mergeCommunityMessageList(
-  messages: CommunityChatMessageRecord[],
-  incoming: CommunityChatMessageRecord[],
-): CommunityChatMessageRecord[] {
-  const byId = new Map<string, CommunityChatMessageRecord>();
-  [...messages, ...incoming].forEach((message) => {
-    byId.set(message.id, message);
-  });
-  return Array.from(byId.values()).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
-}
-
-function replaceCommunityMessage(
-  communities: PersistedCommunityRecord[],
-  communityId: string,
-  previousId: string,
-  message: CommunityChatMessageRecord,
-): PersistedCommunityRecord[] {
-  return communities.map((community) => {
-    if (community.id !== communityId) return community;
-    const withoutPrevious = community.messages.filter((entry) => entry.id !== previousId);
-    return { ...community, messages: mergeCommunityMessages(withoutPrevious, message) };
-  });
-}
-
-function markCommunityMessageFailed(
-  communities: PersistedCommunityRecord[],
-  communityId: string,
-  messageId: string,
-): PersistedCommunityRecord[] {
-  return communities.map((community) =>
-    community.id === communityId
-      ? {
-          ...community,
-          messages: community.messages.map((message) =>
-            message.id === messageId ? { ...message, deliveryStatus: "failed" } : message
-          ),
-        }
-      : community
-  );
-}
-
-function appendOptimisticMessage(
-  communities: PersistedCommunityRecord[],
-  communityId: string,
-  message: CommunityChatMessageRecord,
-): PersistedCommunityRecord[] {
-  return communities.map((community) => {
-    if (community.id !== communityId) return community;
-    const withoutExisting = community.messages.filter((entry) => entry.id !== message.id);
-    return {
-      ...community,
-      messages: [...withoutExisting, { ...message, deliveryStatus: "sending" }]
-        .sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
-    };
-  });
-}
 
 export function DashboardCommunities({
   user,
