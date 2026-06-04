@@ -192,7 +192,7 @@ export function AvatarShowcaseSection({ onSignupClick }: AvatarShowcaseSectionPr
           className={`relative rounded-full transition-all duration-300 ${scaleClass}`}
           style={{ transition: "transform 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}
         >
-          <AvatarFigure key={`${avatar.level}-${themeVersion}`} avatarIndex={avatar.level} size="md" selected={isSelected || isActive} />
+          <AvatarFigure key={`${avatar.level}-${themeVersion}`} avatarIndex={avatar.level} size="md" selected={isSelected || isActive} themeOverride={avatar} />
         </div>
 
         {/* Name */}
@@ -323,7 +323,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
                   <div
                     className={`rounded-full transition-all duration-200 ${scaleClass}`}
                   >
-                    <AvatarFigure key={`${avatar.level}-${themeVersion}`} avatarIndex={avatar.level} size="sm" selected={avatarIndex === index} />
+                    <AvatarFigure key={`${avatar.level}-${themeVersion}`} avatarIndex={avatar.level} size="sm" selected={avatarIndex === index} themeOverride={avatar} />
                   </div>
                   <span
                     className="max-w-[46px] text-center font-display uppercase leading-tight transition-colors duration-200"
@@ -487,7 +487,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
                                 style={getRevealAvatarImageStyle(avatar.id)}
                               />
                             ) : (
-                              <AvatarFigure key={`${themeIndex}-${themeVersion}`} avatarIndex={themeIndex} size="sm" selected={avatarIndex === themeIndex} />
+                              <AvatarFigure key={`${themeIndex}-${themeVersion}`} avatarIndex={themeIndex} size="sm" selected={avatarIndex === themeIndex} themeOverride={avatar} />
                             )}
                           </div>
                           <span
