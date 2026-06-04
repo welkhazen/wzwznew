@@ -6,6 +6,7 @@ import {
   fetchSessionProfile,
   mintAccessToken,
 } from "../_lib/sessionAuth.js";
+import { checkRateLimit, clientIp, rateLimitErrorResponse } from "../_lib/rateLimit.js";
 
 export const config = { runtime: "edge" };
 
@@ -20,6 +21,11 @@ export default async function handler(request: Request): Promise<Response> {
   const username = typeof body?.username === "string" ? normalizeUsername(body.username) : "";
   const password = typeof body?.password === "string" ? body.password : "";
   if (!username || !password) return json({ error: "invalid_credentials" }, 401);
+
+  // Per-username+IP throttle: 10 attempts / 10 min. Slows credential stuffing
+  // and per-user brute force without blocking a real user from retrying after.
+  const rate = await checkRateLimit("login", `${username}:${clientIp(request)}`);
+  if (!rate.ok) return rateLimitErrorResponse(rate);
 
   const { data, error } = await supabaseServerClient.rpc("verify_user_password", {
     p_username: username,

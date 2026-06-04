@@ -6,17 +6,21 @@ import {
   fetchSessionProfile,
   mintAccessToken,
 } from "../_lib/sessionAuth.js";
+import { checkRateLimit, clientIp, rateLimitErrorResponse } from "../_lib/rateLimit.js";
 
 export const config = { runtime: "edge" };
 
 type SignupBody = { username?: unknown; password?: unknown };
 
-// TODO(rate-limit): block production deploy until this endpoint is protected
-// by IP throttling at the edge or gateway layer.
 export default async function handler(request: Request): Promise<Response> {
   if (!supabaseServerClient) return json({ error: "supabase_not_configured" }, 503);
   if (request.method !== "POST") return json({ error: "method_not_allowed" }, 405);
   if (!isTrustedOrigin(request)) return json({ error: "forbidden_origin" }, 403);
+
+  // Per-IP throttle: 5 signups / 10 min. Fail-closed in prod if Upstash
+  // isn't configured so a forgotten env var doesn't silently open this up.
+  const rate = await checkRateLimit("signup", clientIp(request));
+  if (!rate.ok) return rateLimitErrorResponse(rate);
 
   const body = await readJsonBody<SignupBody>(request);
   const username = typeof body?.username === "string" ? normalizeUsername(body.username) : "";

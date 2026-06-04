@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { supabaseServerClient } from "../../_lib/supabaseServerClient.js";
 import { isTrustedOrigin } from "../../_lib/requestSecurity.js";
 import { getRequestUserId, mintAccessToken } from "../../_lib/sessionAuth.js";
+import { checkRateLimit, clientIp, rateLimitErrorResponse } from "../../_lib/rateLimit.js";
 
 export const config = { runtime: "edge" };
 
@@ -46,6 +47,11 @@ export default async function handler(request: Request): Promise<Response> {
 
   const userId = await getRequestUserId(request);
   if (!userId) return json({ error: "unauthorized" }, 401);
+
+  // Per-IP throttle: 30 votes / 10 min. The DB unique index is the hard
+  // dedup guarantee; this just blunts scripted mass-voting before it hits DB.
+  const rate = await checkRateLimit("poll_vote", clientIp(request));
+  if (!rate.ok) return rateLimitErrorResponse(rate);
 
   const pollId = getPollId(request);
   if (!pollId) return json({ error: "missing_poll_id" }, 400);
