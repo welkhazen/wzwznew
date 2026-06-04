@@ -117,6 +117,14 @@ function cloneCatalog(items: readonly AvatarCatalogItem[]): AvatarCatalogItem[] 
   return items.map((item) => ({ ...item }));
 }
 
+function includeMissingDefaultAvatars(items: AvatarCatalogItem[]): AvatarCatalogItem[] {
+  const ids = new Set(items.map((item) => item.id));
+  return [
+    ...items,
+    ...DEFAULT_AVATAR_CATALOG.filter((item) => !ids.has(item.id)).map((item) => ({ ...item })),
+  ].sort((a, b) => a.level - b.level);
+}
+
 function sanitizeCatalog(items: AvatarCatalogItem[]): AvatarCatalogItem[] {
   const unique = new Map<string, AvatarCatalogItem>();
 
@@ -164,7 +172,7 @@ export function readAvatarCatalogLocal(): AvatarCatalogItem[] {
     if (!raw) return cloneCatalog(DEFAULT_AVATAR_CATALOG);
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return cloneCatalog(DEFAULT_AVATAR_CATALOG);
-    return sanitizeCatalog(parsed as AvatarCatalogItem[]);
+    return includeMissingDefaultAvatars(sanitizeCatalog(parsed as AvatarCatalogItem[]));
   } catch {
     return cloneCatalog(DEFAULT_AVATAR_CATALOG);
   }
