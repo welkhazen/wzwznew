@@ -17,14 +17,14 @@ const VISIBLE_COUNT = 4;
 const DESKTOP_COUNT = 8;
 const MOBILE_PHONE_SCALE = 0.5;
 const CHOOSER_AVATARS: readonly AvatarCatalogItem[] = [
-  { id: "ember", level: 2, name: "Ember", price: "0", imageSrc: "/avatars/avatar-2.svg", bg: "#0c1a24", figure: "#5ed6ff", ring: "#5ed6ff", glow: "#5ed6ff80", isActive: true, rarity: "common" },
-  { id: "verdant", level: 3, name: "Verdant", price: "0", imageSrc: "/avatars/avatar-3.svg", bg: "#0a1124", figure: "#3f8bff", ring: "#3f8bff", glow: "#3f8bff80", isActive: true, rarity: "common" },
-  { id: "horned", level: 5, name: "Horned", price: "0", imageSrc: "/avatars/avatar-5.svg", bg: "#0b1a0e", figure: "#16a34a", ring: "#16a34a", glow: "#16a34a80", isActive: true, rarity: "common" },
-  { id: "pharaoh", level: 6, name: "Pharaoh", price: "0", imageSrc: "/avatars/avatar-6.svg", bg: "#1f0d18", figure: "#ec4899", ring: "#ec4899", glow: "#ec489980", isActive: true, rarity: "common" },
-  { id: "violet", level: 7, name: "Violet", price: "0", imageSrc: "/avatars/avatar-7.svg", bg: "#150a22", figure: "#8b5cf6", ring: "#8b5cf6", glow: "#8b5cf680", isActive: true, rarity: "common" },
-  { id: "rose", level: 8, name: "Rose", price: "0", imageSrc: "/avatars/avatar-8.svg", bg: "#1f1208", figure: "#f97316", ring: "#f97316", glow: "#f9731680", isActive: true, rarity: "common" },
-  { id: "black", level: 9, name: "Black", price: "0", imageSrc: "/avatars/avatar-9.svg", bg: "#1f0a0a", figure: "#dc2626", ring: "#dc2626", glow: "#dc262680", isActive: true, rarity: "common" },
-  { id: "blue", level: 10, name: "Blue", price: "0", imageSrc: "/avatars/avatar-10.svg", bg: "#1f1705", figure: "#facc15", ring: "#facc15", glow: "#facc1590", isActive: true, rarity: "common" },
+  { id: "ember", level: 2, name: "Ember", price: "0", imageSrc: "/avatars/avatar-3.svg", bg: "#1f0a05", figure: "#ff8a1f", ring: "#ff8a1f", glow: "#ff8a1f80", isActive: true, rarity: "common" },
+  { id: "verdant", level: 3, name: "Verdant", price: "0", imageSrc: "/avatars/avatar-1.svg", bg: "#08160b", figure: "#22c55e", ring: "#22c55e", glow: "#22c55e80", isActive: true, rarity: "common" },
+  { id: "horned", level: 5, name: "Horned", price: "0", imageSrc: "/avatars/avatar-5.svg", bg: "#1f0808", figure: "#ff2d3d", ring: "#ff2d3d", glow: "#ff2d3d80", isActive: true, rarity: "common" },
+  { id: "pharaoh", level: 6, name: "Pharaoh", price: "0", imageSrc: "/avatars/avatar-6.svg", bg: "#1f1605", figure: "#f2d21a", ring: "#f2d21a", glow: "#f2d21a80", isActive: true, rarity: "common" },
+  { id: "violet", level: 7, name: "Violet", price: "0", imageSrc: "/avatars/avatar-2.svg", bg: "#150a22", figure: "#b84dff", ring: "#b84dff", glow: "#b84dff80", isActive: true, rarity: "common" },
+  { id: "rose", level: 8, name: "Rose", price: "0", imageSrc: "/avatars/avatar-4.svg", bg: "#1f0a14", figure: "#f43f5e", ring: "#f43f5e", glow: "#f43f5e80", isActive: true, rarity: "common" },
+  { id: "black", level: 9, name: "Black", price: "0", imageSrc: "/avatars/avatar-7.svg", bg: "#0a0a0a", figure: "#cfd3da", ring: "#cfd3da", glow: "#cfd3da80", isActive: true, rarity: "common" },
+  { id: "blue", level: 10, name: "Blue", price: "0", imageSrc: "/avatars/avatar-10.svg", bg: "#0a1424", figure: "#3b82f6", ring: "#3b82f6", glow: "#3b82f680", isActive: true, rarity: "common" },
 ];
 const REVEAL_AVATARS: readonly AvatarCatalogItem[] = [
   { id: "reveal-1", level: 11, name: "Silver Void", price: "0", imageSrc: "/avatars/1.webp", bg: "#111827", figure: "#cbd5e1", ring: "#cbd5e1", glow: "#cbd5e180", isActive: true, rarity: "common" },
