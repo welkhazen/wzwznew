@@ -108,14 +108,30 @@ const AVATAR_PAGE_SIZE = 10;
 const AGE_GATE_STORAGE_PREFIX = "raw.ageGateVerified";
 
 const LANDING_ONBOARDING_AVATARS: readonly AvatarCatalogItem[] = [
-  { id: "silver-void", level: 1, name: "Silver Void", price: "Free", imageSrc: "/avatars/1.webp", bg: "#111827", figure: "#cbd5e1", ring: "#cbd5e1", glow: "#cbd5e180", isActive: true, rarity: "common" },
-  { id: "neon-lynx", level: 2, name: "Neon Lynx", price: "Free", imageSrc: "/avatars/18.png", bg: "#170f2e", figure: "#a855f7", ring: "#c084fc", glow: "#a855f780", isActive: true, rarity: "common" },
-  { id: "blue-signal", level: 3, name: "Blue Signal", price: "Free", imageSrc: "/avatars/23.png", bg: "#06131f", figure: "#22d3ee", ring: "#22d3ee", glow: "#22d3ee80", isActive: true, rarity: "common" },
-  { id: "violet-mask", level: 4, name: "Violet Mask", price: "Free", imageSrc: "/avatars/24.png", bg: "#1a1028", figure: "#d946ef", ring: "#d946ef", glow: "#d946ef80", isActive: true, rarity: "common" },
-  { id: "horned-iron", level: 5, name: "Horned Iron", price: "Free", imageSrc: "/avatars/5.webp", bg: "#1f0a05", figure: "#fb923c", ring: "#fb923c", glow: "#fb923c80", isActive: true, rarity: "common" },
-  { id: "crimson-muse", level: 6, name: "Crimson Muse", price: "Free", imageSrc: "/avatars/6.webp", bg: "#2a0b0b", figure: "#f97316", ring: "#f97316", glow: "#f9731680", isActive: true, rarity: "common" },
-  { id: "solar-flame", level: 7, name: "Solar Flame", price: "Free", imageSrc: "/avatars/7.webp", bg: "#241005", figure: "#facc15", ring: "#facc15", glow: "#facc1590", isActive: true, rarity: "common" },
-  { id: "pink-circuit", level: 8, name: "Pink Circuit", price: "Free", imageSrc: "/avatars/35.png", bg: "#2a0b1c", figure: "#fb7185", ring: "#fb7185", glow: "#fb718580", isActive: true, rarity: "common" },
+  { id: "ember", level: 1, name: "Ember", price: "Free", imageSrc: "/avatars/avatar-3.svg", bg: "#1f0a05", figure: "#ff8a1f", ring: "#ff8a1f", glow: "#ff8a1f80", isActive: true, rarity: "common" },
+  { id: "verdant", level: 2, name: "Verdant", price: "Free", imageSrc: "/avatars/avatar-1.svg", bg: "#08160b", figure: "#22c55e", ring: "#22c55e", glow: "#22c55e80", isActive: true, rarity: "common" },
+  { id: "horned", level: 3, name: "Horned", price: "Free", imageSrc: "/avatars/avatar-5.svg", bg: "#1f0808", figure: "#ff2d3d", ring: "#ff2d3d", glow: "#ff2d3d80", isActive: true, rarity: "common" },
+  { id: "pharaoh", level: 4, name: "Pharaoh", price: "Free", imageSrc: "/avatars/avatar-6.svg", bg: "#1f1605", figure: "#f2d21a", ring: "#f2d21a", glow: "#f2d21a80", isActive: true, rarity: "common" },
+  { id: "violet", level: 5, name: "Violet", price: "Free", imageSrc: "/avatars/avatar-2.svg", bg: "#150a22", figure: "#b84dff", ring: "#b84dff", glow: "#b84dff80", isActive: true, rarity: "common" },
+  { id: "rose", level: 6, name: "Rose", price: "Free", imageSrc: "/avatars/avatar-4.svg", bg: "#1f0a14", figure: "#f43f5e", ring: "#f43f5e", glow: "#f43f5e80", isActive: true, rarity: "common" },
+  { id: "black", level: 7, name: "Black", price: "Free", imageSrc: "/avatars/avatar-7.svg", bg: "#0a0a0a", figure: "#cfd3da", ring: "#cfd3da", glow: "#cfd3da80", isActive: true, rarity: "common" },
+  { id: "blue", level: 8, name: "Blue", price: "Free", imageSrc: "/avatars/avatar-10.svg", bg: "#0a1424", figure: "#3b82f6", ring: "#3b82f6", glow: "#3b82f680", isActive: true, rarity: "common" },
+  ...Array.from({ length: 24 }, (_, index): AvatarCatalogItem => {
+    const imageNumber = index + 12;
+    return {
+      id: `preview-avatar-${imageNumber}`,
+      level: index + FREE_ONBOARDING_AVATAR_COUNT + 1,
+      name: `Avatar ${imageNumber}`,
+      price: "50",
+      imageSrc: `/avatars/${imageNumber}.png`,
+      bg: "#111827",
+      figure: "#cbd5e1",
+      ring: "#cbd5e1",
+      glow: "#cbd5e180",
+      isActive: true,
+      rarity: "common",
+    };
+  }),
 ];
 
 function fallbackAvatarCatalog(): AvatarCatalogItem[] {
@@ -327,9 +343,7 @@ export function OnboardingJourney({
   const [spinResult, setSpinResult] = useState<WheelPoolEntry | null>(readStoredSpinResult);
   const [spinClaimError, setSpinClaimError] = useState<string | null>(null);
   const [isClaimingSpin, setIsClaimingSpin] = useState(false);
-  const onboardingAvatars = useMemo(() => (
-    avatarCatalog.length > 0 ? avatarCatalog : fallbackAvatarCatalog()
-  ), [avatarCatalog]);
+  const onboardingAvatars = useMemo(() => fallbackAvatarCatalog(), []);
   const [isLoadingPreviewAvatars] = useState(false);
   const [previewAvatarIndex, setPreviewAvatarIndex] = useState(() => Math.min(Math.max(avatarIndex, 1), Math.max(1, onboardingAvatars.length)));
   const [avatarPage, setAvatarPage] = useState(() => Math.floor((Math.min(Math.max(avatarIndex, 1), Math.max(1, onboardingAvatars.length)) - 1) / AVATAR_PAGE_SIZE));
@@ -367,11 +381,7 @@ export function OnboardingJourney({
   const canSelectPreviewAvatar = previewAvatarIndex <= FREE_ONBOARDING_AVATAR_COUNT || ownedAvatarLevels.has(previewAvatarIndex);
   const canContinueWithPreviewAvatar = canContinueFromAvatar && previewAvatarIndex === avatarIndex;
   const freeAvatarChoices = onboardingAvatars.slice(0, FREE_ONBOARDING_AVATAR_COUNT);
-  const previewAvatarChoices = onboardingAvatars.filter((avatar) => {
-    const match = avatar.imageSrc?.match(/^\/avatars\/(\d+)\.png$/);
-    const imageNumber = match ? Number(match[1]) : 0;
-    return imageNumber >= 12 && imageNumber <= 35;
-  });
+  const previewAvatarChoices = onboardingAvatars.slice(FREE_ONBOARDING_AVATAR_COUNT);
   const ownedPreviewAvatarChoices = previewAvatarChoices.filter((avatar) => ownedAvatarLevels.has(avatar.level));
   const claimedSpinResult = spinResult ?? findOwnedSpinResult(ownedAvatarLevels, onboardingAvatars);
   const previewAvatarPageCount = Math.max(1, Math.ceil(previewAvatarChoices.length / AVATAR_PAGE_SIZE));
