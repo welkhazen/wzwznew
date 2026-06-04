@@ -1,5 +1,4 @@
 import { json, normalizeUsername, readJsonBody } from "../_lib/authServer.js";
-import { hashPassword } from "../_lib/passwordHash.js";
 import { isTrustedOrigin } from "../_lib/requestSecurity.js";
 import { supabaseServerClient } from "../_lib/supabaseServerClient.js";
 import {
@@ -11,11 +10,6 @@ import {
 export const config = { runtime: "edge" };
 
 type SignupBody = { username?: unknown; password?: unknown };
-
-function isUniqueViolation(error: { code?: string; message?: string } | null): boolean {
-  const message = error?.message?.toLowerCase() ?? "";
-  return error?.code === "23505" || message.includes("duplicate") || message.includes("unique");
-}
 
 // TODO(rate-limit): block production deploy until this endpoint is protected
 // by IP throttling at the edge or gateway layer.
@@ -30,23 +24,19 @@ export default async function handler(request: Request): Promise<Response> {
   if (!username) return json({ error: "username_required" }, 400);
   if (password.length < 6) return json({ error: "password_too_short" }, 400);
 
-  const { data: existing } = await supabaseServerClient
-    .from("users")
-    .select("id")
-    .eq("username", username)
-    .maybeSingle();
-  if (existing) return json({ error: "username_taken" }, 409);
-
-  const passwordHash = await hashPassword(password);
-  const userId = crypto.randomUUID();
-
-  const { error: insertError } = await supabaseServerClient
-    .from("users")
-    .insert({ id: userId, username, password_hash: passwordHash });
-  if (insertError) {
-    if (isUniqueViolation(insertError)) return json({ error: "username_taken" }, 409);
+  const { data, error } = await supabaseServerClient.rpc("create_user_with_password", {
+    p_username: username,
+    p_password: password,
+  });
+  if (error) {
+    const msg = error.message?.toLowerCase() ?? "";
+    if (msg.includes("username_taken") || error.code === "23505") {
+      return json({ error: "username_taken" }, 409);
+    }
     return json({ error: "failed_to_create_profile" }, 400);
   }
+  const userId = typeof data === "string" ? data : null;
+  if (!userId) return json({ error: "failed_to_create_profile" }, 500);
 
   const profile = await fetchSessionProfile(userId);
   if (!profile) return json({ error: "profile_not_found" }, 500);

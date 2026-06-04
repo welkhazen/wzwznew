@@ -1,5 +1,4 @@
 import { json, normalizeUsername, readJsonBody } from "../_lib/authServer.js";
-import { verifyPassword } from "../_lib/passwordHash.js";
 import { isTrustedOrigin } from "../_lib/requestSecurity.js";
 import { supabaseServerClient } from "../_lib/supabaseServerClient.js";
 import {
@@ -22,21 +21,18 @@ export default async function handler(request: Request): Promise<Response> {
   const password = typeof body?.password === "string" ? body.password : "";
   if (!username || !password) return json({ error: "invalid_credentials" }, 401);
 
-  const { data: row, error } = await supabaseServerClient
-    .from("users")
-    .select("id, password_hash, status")
-    .eq("username", username)
-    .maybeSingle();
+  const { data, error } = await supabaseServerClient.rpc("verify_user_password", {
+    p_username: username,
+    p_password: password,
+  });
+  if (error) return json({ error: "invalid_credentials" }, 401);
+  const userId = typeof data === "string" ? data : null;
+  if (!userId) return json({ error: "invalid_credentials" }, 401);
 
-  if (error || !row || !row.password_hash) return json({ error: "invalid_credentials" }, 401);
-  if (row.status === "banned" || row.status === "deleted") return json({ error: "account_inactive" }, 403);
-  const ok = await verifyPassword(password, row.password_hash);
-  if (!ok) return json({ error: "invalid_credentials" }, 401);
-
-  const profile = await fetchSessionProfile(row.id);
+  const profile = await fetchSessionProfile(userId);
   if (!profile) return json({ error: "profile_not_found" }, 500);
 
-  const accessToken = await mintAccessToken(row.id);
+  const accessToken = await mintAccessToken(userId);
   if (!accessToken) return json({ error: "session_not_configured" }, 500);
 
   return new Response(JSON.stringify({ ok: true, user: profile, access_token: accessToken }), {
