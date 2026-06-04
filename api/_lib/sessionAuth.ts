@@ -20,23 +20,26 @@ function getJwtSecret(): Uint8Array | null {
   return new TextEncoder().encode(secret);
 }
 
-function getIssuer(): string {
+function getProjectRef(): string | null {
   const url = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? "";
-  if (!url) return "supabase";
-  return `${url.replace(/\/+$/, "")}/auth/v1`;
+  const m = url.match(/^https?:\/\/([^.]+)\.supabase\.co/);
+  return m ? m[1] : null;
 }
 
 export async function mintAccessToken(userId: string): Promise<string | null> {
   const key = getJwtSecret();
   if (!key) return null;
   const now = Math.floor(Date.now() / 1000);
-  return new SignJWT({ role: "authenticated" })
+  const ref = getProjectRef();
+  const claims: Record<string, unknown> = { role: "authenticated" };
+  if (ref) claims.ref = ref;
+  return new SignJWT(claims)
     .setProtectedHeader({ alg: "HS256", typ: "JWT" })
     .setSubject(userId)
     .setIssuedAt(now)
     .setExpirationTime(now + SESSION_TTL_SECONDS)
     .setAudience("authenticated")
-    .setIssuer(getIssuer())
+    .setIssuer("supabase")
     .sign(key);
 }
 
