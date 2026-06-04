@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ChevronLeft, ChevronRight, Layers3 } from "lucide-react";
+import { motion } from "framer-motion";
 import { TestimonialCard, type TestimonialCardPosition, type TestimonialCardItem } from "@/components/ui/testimonial-cards";
 import test1 from "@/assets/test1.png";
 import test2 from "@/assets/test2.png";
@@ -83,25 +84,33 @@ export function TestimonialsSection() {
         </div>
 
         {showAll ? (
-          <div className="relative mt-8 grid max-h-[680px] grid-cols-1 gap-4 overflow-y-auto rounded-[24px] border border-raw-border/45 bg-raw-black/65 p-4 sm:grid-cols-2 lg:grid-cols-3">
-            {testimonials.map((testimonial) => (
-              <div
+          <div className="relative mt-8 max-h-[680px] overflow-y-auto rounded-[24px] border border-raw-border/45 bg-raw-black/65 p-4 [scrollbar-color:rgba(129,140,248,0.75)_transparent]">
+            <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {testimonials.map((testimonial, index) => (
+              <motion.div
                 key={testimonial.id}
-                className="overflow-hidden rounded-[18px] border border-white/10 bg-black/70 p-2 shadow-[0_16px_45px_rgba(0,0,0,0.35)]"
+                initial={{ opacity: 0, y: 24, scale: 0.96 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                viewport={{ once: true, amount: 0.15 }}
+                transition={{ duration: 0.42, delay: (index % 6) * 0.045, ease: [0.22, 1, 0.36, 1] }}
+                whileHover={{ y: -4, scale: 1.015 }}
+                className="relative flex h-[250px] min-w-0 items-center justify-center overflow-hidden rounded-[18px] border border-white/10 bg-black/80 p-2 shadow-[0_16px_45px_rgba(0,0,0,0.35)] sm:h-[270px]"
               >
                 <img
                   src={testimonial.src}
                   alt={testimonial.alt}
                   loading="lazy"
-                  className="h-full w-full rounded-[13px] object-contain"
+                  className="max-h-full max-w-full rounded-[13px] object-contain"
                 />
-              </div>
+              </motion.div>
             ))}
+            </div>
           </div>
         ) : (
-        <div className="relative mx-auto mt-8 h-[470px] w-full max-w-[640px] overflow-hidden rounded-[24px] border border-raw-border/45 bg-raw-black/65 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] sm:h-[540px]">
+        <div className="relative mx-auto mt-8 h-[470px] w-full max-w-[680px] overflow-hidden rounded-[24px] border border-raw-border/45 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.07),transparent_36%),rgba(8,8,8,0.82)] shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_30px_90px_rgba(0,0,0,0.36)] sm:h-[540px]">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(241,196,45,0.08),transparent_36%)]" />
-          <div className="absolute left-1/2 top-8 h-[430px] w-[310px] -translate-x-[62%] sm:top-5 sm:h-[500px] sm:w-[380px] sm:-translate-x-[68%]">
+          <div className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:radial-gradient(circle,rgba(255,255,255,0.8)_1px,transparent_1px)] [background-size:10px_10px]" />
+          <div className="absolute left-1/2 top-8 h-[430px] w-[310px] -translate-x-[66%] sm:top-5 sm:h-[500px] sm:w-[380px] sm:-translate-x-[72%]">
             {visibleTestimonials.map((testimonial, index) => (
               <TestimonialCard
                 key={`${testimonial.id}-${activeIndex}`}
