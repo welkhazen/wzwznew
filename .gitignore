@@ -41,3 +41,5 @@ graphify-deploy/
 
 # Claude Flow / ruflo runtime files
 .claude-flow/
+/playwright-report
+/test-results
