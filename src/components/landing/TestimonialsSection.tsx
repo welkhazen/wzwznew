@@ -40,7 +40,7 @@ const testimonials: TestimonialCardItem[] = [
   { id: 17, src: test17, alt: "raW community testimonial screenshot" },
 ];
 
-const positions: TestimonialCardPosition[] = ["front", "middle", "back"];
+const positions: TestimonialCardPosition[] = ["front", "middle", "back", "far"];
 
 export function TestimonialsSection() {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -50,6 +50,7 @@ export function TestimonialsSection() {
     testimonials[activeIndex],
     testimonials[(activeIndex + 1) % testimonials.length],
     testimonials[(activeIndex + 2) % testimonials.length],
+    testimonials[(activeIndex + 3) % testimonials.length],
   ];
 
   const handleShuffle = (direction: "next" | "previous") => {
@@ -107,10 +108,10 @@ export function TestimonialsSection() {
             </div>
           </div>
         ) : (
-        <div className="relative mx-auto mt-8 h-[470px] w-full max-w-[680px] overflow-hidden rounded-[24px] border border-raw-border/45 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.07),transparent_36%),rgba(8,8,8,0.82)] shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_30px_90px_rgba(0,0,0,0.36)] sm:h-[540px]">
+        <div className="relative mx-auto mt-8 h-[440px] w-full max-w-[760px] overflow-hidden rounded-[24px] border border-raw-border/45 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.07),transparent_36%),rgba(8,8,8,0.82)] shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_30px_90px_rgba(0,0,0,0.36)] sm:h-[500px]">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(241,196,45,0.08),transparent_36%)]" />
           <div className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:radial-gradient(circle,rgba(255,255,255,0.8)_1px,transparent_1px)] [background-size:10px_10px]" />
-          <div className="absolute left-1/2 top-8 h-[430px] w-[310px] -translate-x-[66%] sm:top-5 sm:h-[500px] sm:w-[380px] sm:-translate-x-[72%]">
+          <div className="absolute left-1/2 top-8 h-[360px] w-[260px] -translate-x-[58%] sm:top-8 sm:h-[420px] sm:w-[320px] sm:-translate-x-[62%]">
             {visibleTestimonials.map((testimonial, index) => (
               <TestimonialCard
                 key={`${testimonial.id}-${activeIndex}`}

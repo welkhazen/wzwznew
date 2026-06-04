@@ -1,7 +1,7 @@
 import * as React from "react";
 import { motion } from "framer-motion";
 
-export type TestimonialCardPosition = "front" | "middle" | "back";
+export type TestimonialCardPosition = "front" | "middle" | "back" | "far";
 
 export type TestimonialCardItem = {
   id: number;
@@ -26,15 +26,15 @@ export function TestimonialCard({
   return (
     <motion.div
       style={{
-        zIndex: position === "front" ? 3 : position === "middle" ? 2 : 1,
+        zIndex: position === "front" ? 4 : position === "middle" ? 3 : position === "back" ? 2 : 1,
       }}
       animate={{
-        rotate: position === "front" ? -6 : position === "middle" ? 1 : 7,
-        x: position === "front" ? "0%" : position === "middle" ? "24%" : "46%",
-        y: position === "front" ? "0%" : position === "middle" ? "5%" : "10%",
-        scale: position === "front" ? 1 : position === "middle" ? 0.94 : 0.88,
-        opacity: position === "front" ? 1 : position === "middle" ? 0.68 : 0.38,
-        filter: position === "front" ? "brightness(1)" : position === "middle" ? "brightness(0.72)" : "brightness(0.48)",
+        rotate: position === "front" ? -6 : position === "middle" ? 1 : position === "back" ? 7 : 12,
+        x: position === "front" ? "-28%" : position === "middle" ? "18%" : position === "back" ? "58%" : "92%",
+        y: position === "front" ? "2%" : position === "middle" ? "0%" : position === "back" ? "5%" : "11%",
+        scale: position === "front" ? 1 : position === "middle" ? 0.94 : position === "back" ? 0.88 : 0.82,
+        opacity: position === "front" ? 1 : position === "middle" ? 0.72 : position === "back" ? 0.5 : 0.28,
+        filter: position === "front" ? "brightness(1)" : position === "middle" ? "brightness(0.78)" : position === "back" ? "brightness(0.62)" : "brightness(0.46)",
       }}
       initial={{ opacity: 0, scale: 0.84, x: "68%", rotate: 10 }}
       whileHover={isFront ? { scale: 1.015, rotate: -4 } : undefined}
@@ -54,7 +54,7 @@ export function TestimonialCard({
         dragRef.current = 0;
       }}
       transition={{ type: "spring", stiffness: 220, damping: 24, mass: 0.9 }}
-      className={`absolute left-0 top-0 flex h-[430px] w-[310px] select-none items-center justify-center overflow-hidden rounded-[24px] border border-white/10 bg-black/80 p-2 shadow-[0_28px_90px_rgba(0,0,0,0.48)] backdrop-blur-md sm:h-[500px] sm:w-[380px] ${
+      className={`absolute left-0 top-0 flex h-[360px] w-[260px] select-none items-center justify-center overflow-hidden rounded-[24px] border border-white/10 bg-black/80 p-2 shadow-[0_28px_90px_rgba(0,0,0,0.48)] backdrop-blur-md sm:h-[420px] sm:w-[320px] ${
         isFront ? "cursor-grab active:cursor-grabbing" : "pointer-events-none"
       }`}
     >
