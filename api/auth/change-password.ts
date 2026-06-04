@@ -2,6 +2,7 @@ import { json, readJsonBody } from "../_lib/authServer.js";
 import { isTrustedOrigin } from "../_lib/requestSecurity.js";
 import { supabaseServerClient } from "../_lib/supabaseServerClient.js";
 import { getRequestUserId } from "../_lib/sessionAuth.js";
+import { checkRateLimit, rateLimitErrorResponse } from "../_lib/rateLimit.js";
 
 export const config = { runtime: "edge" };
 
@@ -14,6 +15,10 @@ export default async function handler(request: Request): Promise<Response> {
 
   const userId = await getRequestUserId(request);
   if (!userId) return json({ error: "unauthorized" }, 401);
+
+  // Per-user throttle: 5 changes / 10 min limits abuse if a session leaks.
+  const rate = await checkRateLimit("change_password", userId);
+  if (!rate.ok) return rateLimitErrorResponse(rate);
 
   const body = await readJsonBody<ChangeBody>(request);
   const oldPassword = typeof body?.oldPassword === "string" ? body.oldPassword : "";

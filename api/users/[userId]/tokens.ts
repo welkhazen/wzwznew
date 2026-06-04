@@ -1,6 +1,7 @@
 import { supabaseServerClient } from "../../_lib/supabaseServerClient.js";
 import { isTrustedOrigin } from "../../_lib/requestSecurity.js";
 import { getRequestUserId, verifyAccessToken } from "../../_lib/sessionAuth.js";
+import { checkRateLimit, rateLimitErrorResponse } from "../../_lib/rateLimit.js";
 
 export const config = { runtime: "edge" };
 
@@ -56,6 +57,13 @@ export default async function handler(request: Request): Promise<Response> {
   }
   if (verifiedUserId !== routeUserId) {
     return json({ error: "forbidden_user" }, 403);
+  }
+
+  // Per-user throttle on writes only: 20 spend attempts / minute. GET path
+  // (balance read) is cheap and unmetered.
+  if (request.method === "POST") {
+    const rate = await checkRateLimit("token_spend", verifiedUserId);
+    if (!rate.ok) return rateLimitErrorResponse(rate);
   }
 
   if (request.method === "GET") {
