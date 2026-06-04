@@ -1,8 +1,8 @@
-import { json, readJsonBody } from "../_lib/authServer";
-import { hashPassword, verifyPassword } from "../_lib/passwordHash";
-import { isTrustedOrigin } from "../_lib/requestSecurity";
-import { supabaseServerClient } from "../_lib/supabaseServerClient";
-import { getRequestUserId } from "../_lib/sessionAuth";
+import { json, readJsonBody } from "../_lib/authServer.js";
+import { hashPassword, verifyPassword } from "../_lib/passwordHash.js";
+import { isTrustedOrigin } from "../_lib/requestSecurity.js";
+import { supabaseServerClient } from "../_lib/supabaseServerClient.js";
+import { getRequestUserId } from "../_lib/sessionAuth.js";
 
 export const config = { runtime: "nodejs" };
 

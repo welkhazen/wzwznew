@@ -68,7 +68,10 @@
       "Bash(grep -rn \"png\\\\|src=\\\\\"/\\\\|logo\\\\|favicon\" src/components/ui/radial-orbital-timeline*.tsx)",
       "Bash(git commit *)",
       "Bash(npx vitest *)",
-      "Bash(git stash *)"
+      "Bash(git stash *)",
+      "mcp__5585acb7-0f6f-48b6-b782-9ad0e7207b5b__get_runtime_logs",
+      "mcp__5585acb7-0f6f-48b6-b782-9ad0e7207b5b__list_deployments",
+      "mcp__5585acb7-0f6f-48b6-b782-9ad0e7207b5b__list_projects"
     ]
   }
 }

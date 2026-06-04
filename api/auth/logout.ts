@@ -1,6 +1,6 @@
-import { json } from "../_lib/authServer";
-import { isTrustedOrigin } from "../_lib/requestSecurity";
-import { buildClearedSessionCookie } from "../_lib/sessionAuth";
+import { json } from "../_lib/authServer.js";
+import { isTrustedOrigin } from "../_lib/requestSecurity.js";
+import { buildClearedSessionCookie } from "../_lib/sessionAuth.js";
 
 export const config = { runtime: "nodejs" };
 

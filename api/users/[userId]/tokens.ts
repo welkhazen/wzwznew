@@ -1,6 +1,6 @@
-import { supabaseServerClient } from "../../_lib/supabaseServerClient";
-import { isTrustedOrigin } from "../../_lib/requestSecurity";
-import { getRequestUserId, verifyAccessToken } from "../../_lib/sessionAuth";
+import { supabaseServerClient } from "../../_lib/supabaseServerClient.js";
+import { isTrustedOrigin } from "../../_lib/requestSecurity.js";
+import { getRequestUserId, verifyAccessToken } from "../../_lib/sessionAuth.js";
 
 export const config = { runtime: "nodejs" };
 
