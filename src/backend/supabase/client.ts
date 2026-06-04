@@ -1,3 +1,7 @@
+// Canonical browser-side Supabase client. Anon publishable key only — the
+// service-role key is never imported here and must never reach the bundle.
+// All in-app imports should resolve to this module via `@/lib/supabase`
+// (the public re-export) so we keep a single instance.
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
