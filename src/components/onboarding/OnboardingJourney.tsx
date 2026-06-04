@@ -367,7 +367,11 @@ export function OnboardingJourney({
   const canSelectPreviewAvatar = previewAvatarIndex <= FREE_ONBOARDING_AVATAR_COUNT || ownedAvatarLevels.has(previewAvatarIndex);
   const canContinueWithPreviewAvatar = canContinueFromAvatar && previewAvatarIndex === avatarIndex;
   const freeAvatarChoices = onboardingAvatars.slice(0, FREE_ONBOARDING_AVATAR_COUNT);
-  const previewAvatarChoices = onboardingAvatars.slice(FREE_ONBOARDING_AVATAR_COUNT);
+  const previewAvatarChoices = onboardingAvatars.filter((avatar) => {
+    const match = avatar.imageSrc?.match(/^\/avatars\/(\d+)\.png$/);
+    const imageNumber = match ? Number(match[1]) : 0;
+    return imageNumber >= 12 && imageNumber <= 35;
+  });
   const ownedPreviewAvatarChoices = previewAvatarChoices.filter((avatar) => ownedAvatarLevels.has(avatar.level));
   const claimedSpinResult = spinResult ?? findOwnedSpinResult(ownedAvatarLevels, onboardingAvatars);
   const previewAvatarPageCount = Math.max(1, Math.ceil(previewAvatarChoices.length / AVATAR_PAGE_SIZE));
@@ -701,13 +705,13 @@ export function OnboardingJourney({
                           </div>
                         ))
                       : null}
-                    {visiblePreviewAvatarChoices.map((avatar, i) => {
-                      const index = FREE_ONBOARDING_AVATAR_COUNT + avatarPage * AVATAR_PAGE_SIZE + i + 1;
+                    {visiblePreviewAvatarChoices.map((avatar) => {
+                      const index = avatar.level;
                       const isPreviewed = index === previewAvatarIndex;
                       const isOwned = ownedAvatarLevels.has(index);
                       return (
                         <button
-                          key={index}
+                          key={avatar.id}
                           type="button"
                           onClick={() => {
                             setPreviewAvatarIndex(index);
