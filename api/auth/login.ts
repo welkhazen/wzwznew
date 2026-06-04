@@ -7,6 +7,12 @@ import {
   mintAccessToken,
 } from "../_lib/sessionAuth.js";
 import { checkRateLimit, clientIp, rateLimitErrorResponse } from "../_lib/rateLimit.js";
+import {
+  checkLoginLockout,
+  clearLoginFailures,
+  lockoutResponse,
+  recordFailedLogin,
+} from "../_lib/loginLockout.js";
 
 export const config = { runtime: "edge" };
 
@@ -27,13 +33,27 @@ export default async function handler(request: Request): Promise<Response> {
   const rate = await checkRateLimit("login", `${username}:${clientIp(request)}`);
   if (!rate.ok) return rateLimitErrorResponse(rate);
 
+  // Account-level lockout: stops an attacker who rotates IPs to bypass the
+  // per-IP rate limit. Counter resets on successful login below.
+  const lock = await checkLoginLockout(username);
+  if (lock.locked) return lockoutResponse(lock);
+
   const { data, error } = await supabaseServerClient.rpc("verify_user_password", {
     p_username: username,
     p_password: password,
   });
-  if (error) return json({ error: "invalid_credentials" }, 401);
+  if (error) {
+    await recordFailedLogin(username);
+    return json({ error: "invalid_credentials" }, 401);
+  }
   const userId = typeof data === "string" ? data : null;
-  if (!userId) return json({ error: "invalid_credentials" }, 401);
+  if (!userId) {
+    await recordFailedLogin(username);
+    return json({ error: "invalid_credentials" }, 401);
+  }
+
+  // Successful auth — clear any prior failure counter for this username.
+  await clearLoginFailures(username);
 
   const profile = await fetchSessionProfile(userId);
   if (!profile) return json({ error: "profile_not_found" }, 500);
