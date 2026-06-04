@@ -785,33 +785,26 @@ export function DashboardCommunities({
     }, [reloadChatData]);
 
     useEffect(() => {
-      if (!activeCommunityId) {
-        return;
-      }
-
       const channel = supabase
-        .channel(`room:${activeCommunityId}`)
+        .channel("community-messages")
         .on(
           "postgres_changes",
-          {
-            event: "*",
-            schema: "public",
-            table: "community_messages",
-            filter: `community_id=eq.${activeCommunityId}`,
-          },
+          { event: "*", schema: "public", table: "community_messages" },
           (payload) => {
             if (payload.eventType === "DELETE") {
-              const deletedId = (payload.old as { id?: string } | null)?.id;
-              if (deletedId) {
-                updateCommunities((current) => removeCommunityMessage(current, activeCommunityId, deletedId));
+              const oldRow = payload.old as { id?: string; community_id?: string } | null;
+              if (oldRow?.id && oldRow.community_id) {
+                updateCommunities((current) =>
+                  removeCommunityMessage(current, oldRow.community_id!, oldRow.id!),
+                );
               }
               return;
             }
             const nextMessage = mapCommunityMessage(payload.new as DbCommunityMessage);
-            if (nextMessage.communityId !== activeCommunityId) {
-              return;
-            }
-            updateCommunities((current) => upsertCommunityMessage(current, activeCommunityId, nextMessage));
+            if (!nextMessage.communityId) return;
+            updateCommunities((current) =>
+              upsertCommunityMessage(current, nextMessage.communityId, nextMessage),
+            );
           },
         )
         .subscribe();
@@ -819,7 +812,7 @@ export function DashboardCommunities({
       return () => {
         void supabase.removeChannel(channel);
       };
-    }, [activeCommunityId, updateCommunities]);
+    }, [updateCommunities]);
 
     useEffect(() => {
       let cancelled = false;
