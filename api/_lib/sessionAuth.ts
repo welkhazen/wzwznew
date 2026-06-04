@@ -20,6 +20,12 @@ function getJwtSecret(): Uint8Array | null {
   return new TextEncoder().encode(secret);
 }
 
+function getIssuer(): string {
+  const url = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? "";
+  if (!url) return "supabase";
+  return `${url.replace(/\/+$/, "")}/auth/v1`;
+}
+
 export async function mintAccessToken(userId: string): Promise<string | null> {
   const key = getJwtSecret();
   if (!key) return null;
@@ -30,7 +36,7 @@ export async function mintAccessToken(userId: string): Promise<string | null> {
     .setIssuedAt(now)
     .setExpirationTime(now + SESSION_TTL_SECONDS)
     .setAudience("authenticated")
-    .setIssuer("supabase")
+    .setIssuer(getIssuer())
     .sign(key);
 }
 
