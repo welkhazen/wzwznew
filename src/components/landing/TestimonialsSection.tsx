@@ -44,7 +44,7 @@ const positions: TestimonialCardPosition[] = ["front", "middle", "back", "far"];
 
 export function TestimonialsSection() {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [showAll, setShowAll] = useState(false);
+  const [showStack, setShowStack] = useState(false);
 
   const visibleTestimonials = [
     testimonials[activeIndex],
@@ -75,27 +75,35 @@ export function TestimonialsSection() {
           <span className="text-[10px] uppercase tracking-[0.18em] text-raw-silver/35">
             {testimonials.length} real messages
           </span>
-          <button
-            type="button"
-            onClick={() => setShowAll((current) => !current)}
-            className="rounded-full border border-raw-gold/30 bg-raw-gold/10 px-4 py-1.5 text-[10px] uppercase tracking-[0.16em] text-raw-gold transition hover:bg-raw-gold/20"
-          >
-            {showAll ? "Back to stack" : "View all testimonials"}
-          </button>
+          {showStack ? (
+            <button
+              type="button"
+              onClick={() => setShowStack(false)}
+              className="rounded-full border border-raw-gold/30 bg-raw-gold/10 px-4 py-1.5 text-[10px] uppercase tracking-[0.16em] text-raw-gold transition hover:bg-raw-gold/20"
+            >
+              Back to all testimonials
+            </button>
+          ) : null}
         </div>
 
-        {showAll ? (
+        {!showStack ? (
           <div className="relative mt-8 max-h-[680px] overflow-y-auto rounded-[24px] border border-raw-border/45 bg-raw-black/65 p-4 [scrollbar-color:rgba(129,140,248,0.75)_transparent]">
             <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {testimonials.map((testimonial, index) => (
-              <motion.div
+              <motion.button
                 key={testimonial.id}
+                type="button"
+                onClick={() => {
+                  setActiveIndex(index);
+                  setShowStack(true);
+                }}
                 initial={{ opacity: 0, y: 24, scale: 0.96 }}
                 whileInView={{ opacity: 1, y: 0, scale: 1 }}
                 viewport={{ once: true, amount: 0.15 }}
                 transition={{ duration: 0.42, delay: (index % 6) * 0.045, ease: [0.22, 1, 0.36, 1] }}
                 whileHover={{ y: -4, scale: 1.015 }}
-                className="relative flex h-[250px] min-w-0 items-center justify-center overflow-hidden rounded-[18px] border border-white/10 bg-black/80 p-2 shadow-[0_16px_45px_rgba(0,0,0,0.35)] sm:h-[270px]"
+                className="relative flex h-[250px] min-w-0 items-center justify-center overflow-hidden rounded-[18px] border border-white/10 bg-black/80 p-2 shadow-[0_16px_45px_rgba(0,0,0,0.35)] outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/60 sm:h-[270px]"
+                aria-label={`Open testimonial ${index + 1} in stack`}
               >
                 <img
                   src={testimonial.src}
@@ -103,7 +111,7 @@ export function TestimonialsSection() {
                   loading="lazy"
                   className="max-h-full max-w-full rounded-[13px] object-contain"
                 />
-              </motion.div>
+              </motion.button>
             ))}
             </div>
           </div>
