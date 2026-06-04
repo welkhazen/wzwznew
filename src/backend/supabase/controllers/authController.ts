@@ -17,9 +17,87 @@ function normalizeUsername(username: string): string {
   return username.trim();
 }
 
+function decodeJwtPayload(token: string): { sub?: string; exp?: number } {
+  try {
+    const part = token.split('.')[1];
+    if (!part) return {};
+    const padded = part.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(part.length / 4) * 4, '=');
+    return JSON.parse(atob(padded));
+  } catch {
+    return {};
+  }
+}
+
 async function applySupabaseSession(accessToken: string | undefined): Promise<void> {
-  if (!accessToken) return;
-  await supabase.auth.setSession({ access_token: accessToken, refresh_token: accessToken });
+  if (!accessToken || typeof window === 'undefined') return;
+
+  const payload = decodeJwtPayload(accessToken);
+  const now = Math.floor(Date.now() / 1000);
+  const sb = supabase as unknown as {
+    supabaseUrl?: string;
+    headers?: Record<string, string>;
+    rest?: { headers?: Record<string, string> };
+    realtime?: { setAuth?: (token: string) => void };
+    functions?: { setAuth?: (token: string) => void };
+  };
+
+  const projectRef = (() => {
+    try {
+      return new URL(sb.supabaseUrl ?? '').hostname.split('.')[0];
+    } catch {
+      return null;
+    }
+  })();
+
+  const session = {
+    access_token: accessToken,
+    refresh_token: accessToken,
+    token_type: 'bearer',
+    expires_at: payload.exp ?? now + 3600,
+    expires_in: (payload.exp ?? now + 3600) - now,
+    user: {
+      id: payload.sub ?? '',
+      aud: 'authenticated',
+      role: 'authenticated',
+      email: '',
+      phone: '',
+      user_metadata: {},
+      app_metadata: {},
+      created_at: new Date().toISOString(),
+    },
+  };
+
+  if (projectRef) {
+    try {
+      window.localStorage.setItem(`sb-${projectRef}-auth-token`, JSON.stringify(session));
+    } catch {
+      /* storage unavailable */
+    }
+  }
+
+  const bearer = `Bearer ${accessToken}`;
+  if (sb.headers) sb.headers.Authorization = bearer;
+  if (sb.rest?.headers) sb.rest.headers.Authorization = bearer;
+  sb.realtime?.setAuth?.(accessToken);
+  sb.functions?.setAuth?.(accessToken);
+}
+
+async function clearSupabaseSession(): Promise<void> {
+  if (typeof window === 'undefined') return;
+  const sb = supabase as unknown as {
+    supabaseUrl?: string;
+    headers?: Record<string, string>;
+    rest?: { headers?: Record<string, string> };
+    realtime?: { setAuth?: (token: string) => void };
+  };
+  try {
+    const projectRef = new URL(sb.supabaseUrl ?? '').hostname.split('.')[0];
+    if (projectRef) window.localStorage.removeItem(`sb-${projectRef}-auth-token`);
+  } catch {
+    /* ignore */
+  }
+  if (sb.headers) delete sb.headers.Authorization;
+  if (sb.rest?.headers) delete sb.rest.headers.Authorization;
 }
 
 async function postAuth(path: string, body: unknown): Promise<AuthEndpointResponse> {
@@ -68,7 +146,12 @@ export async function signOut(): Promise<void> {
   } catch {
     // ignore network errors on logout
   }
-  await supabase.auth.signOut();
+  await clearSupabaseSession();
+  try {
+    await supabase.auth.signOut();
+  } catch {
+    // ignore: signOut may throw if no supabase-native session exists
+  }
 }
 
 export async function getSession(): Promise<AuthUser | null> {
