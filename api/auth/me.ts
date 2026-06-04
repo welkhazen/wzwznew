@@ -1,11 +1,11 @@
-import { json } from "../_lib/authServer";
-import { isTrustedOrigin } from "../_lib/requestSecurity";
-import { supabaseServerClient } from "../_lib/supabaseServerClient";
+import { json } from "../_lib/authServer.js";
+import { isTrustedOrigin } from "../_lib/requestSecurity.js";
+import { supabaseServerClient } from "../_lib/supabaseServerClient.js";
 import {
   fetchSessionProfile,
   getRequestUserId,
   mintAccessToken,
-} from "../_lib/sessionAuth";
+} from "../_lib/sessionAuth.js";
 
 export const config = { runtime: "nodejs" };
 
