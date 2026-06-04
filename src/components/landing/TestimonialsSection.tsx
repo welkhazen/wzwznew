@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronLeft, ChevronRight, Layers3 } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { TestimonialCard, type TestimonialCardPosition, type TestimonialCardItem } from "@/components/ui/testimonial-cards";
 import test1 from "@/assets/test1.png";
@@ -72,9 +72,6 @@ export function TestimonialsSection() {
         </p>
 
         <div className="relative mt-4 flex items-center justify-center gap-3">
-          <span className="text-[10px] uppercase tracking-[0.18em] text-raw-silver/35">
-            {testimonials.length} real messages
-          </span>
           {showStack ? (
             <button
               type="button"
@@ -132,28 +129,22 @@ export function TestimonialsSection() {
 
           <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-raw-black/80 to-transparent" />
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-raw-black/85 to-transparent" />
-          <div className="absolute inset-x-0 bottom-5 z-10 flex items-center justify-center gap-3">
-            <button
-              type="button"
-              onClick={() => handleShuffle("previous")}
-              className="rounded-full border border-white/10 bg-black/65 p-2 text-raw-silver/60 transition hover:border-raw-gold/35 hover:text-raw-gold"
-              aria-label="Previous testimonial"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            <span className="flex items-center gap-2 rounded-full border border-white/10 bg-black/65 px-3 py-2 text-[10px] tracking-[0.16em] text-raw-silver/50">
-              <Layers3 className="h-3.5 w-3.5 text-raw-gold/65" />
-              {activeIndex + 1} / {testimonials.length}
-            </span>
-            <button
-              type="button"
-              onClick={() => handleShuffle("next")}
-              className="rounded-full border border-white/10 bg-black/65 p-2 text-raw-silver/60 transition hover:border-raw-gold/35 hover:text-raw-gold"
-              aria-label="Next testimonial"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => handleShuffle("previous")}
+            className="absolute left-3 top-1/2 z-10 -translate-y-1/2 rounded-full border border-white/10 bg-black/65 p-3 text-raw-silver/60 transition hover:border-raw-gold/35 hover:text-raw-gold sm:left-5"
+            aria-label="Previous testimonial"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => handleShuffle("next")}
+            className="absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-full border border-white/10 bg-black/65 p-3 text-raw-silver/60 transition hover:border-raw-gold/35 hover:text-raw-gold sm:right-5"
+            aria-label="Next testimonial"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
         </div>
         )}
       </div>
