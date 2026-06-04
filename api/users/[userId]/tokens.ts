@@ -1,11 +1,10 @@
+import { createClient } from "@supabase/supabase-js";
 import { supabaseServerClient } from "../../_lib/supabaseServerClient.js";
 import { isTrustedOrigin } from "../../_lib/requestSecurity.js";
 import { getRequestUserId, verifyAccessToken } from "../../_lib/sessionAuth.js";
 import { checkRateLimit, rateLimitErrorResponse } from "../../_lib/rateLimit.js";
 
 export const config = { runtime: "edge" };
-
-const supabase = supabaseServerClient;
 
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -37,27 +36,29 @@ async function getVerifiedUserId(request: Request): Promise<string | null> {
   return verifyAccessToken(match[1]);
 }
 
+// Build a Supabase client scoped to the user's JWT so PostgREST sees
+// auth.uid() inside SECURITY DEFINER RPCs (e.g. spend_tokens).
+function buildUserScopedClient(accessToken: string) {
+  const supabaseUrl = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? "";
+  const supabaseAnonKey =
+    process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "";
+  if (!supabaseUrl || !supabaseAnonKey) return null;
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: { headers: { Authorization: `Bearer ${accessToken}` } },
+  });
+}
+
 export default async function handler(request: Request): Promise<Response> {
-  if (!supabase) {
-    return json({ error: "supabase_not_configured" }, 503);
-  }
+  if (!supabaseServerClient) return json({ error: "supabase_not_configured" }, 503);
 
   const routeUserId = getRouteUserId(request);
-  if (!routeUserId) {
-    return json({ error: "missing_user_id" }, 400);
-  }
-
-  if (!isTrustedOrigin(request)) {
-    return json({ error: "forbidden_origin" }, 403);
-  }
+  if (!routeUserId) return json({ error: "missing_user_id" }, 400);
+  if (!isTrustedOrigin(request)) return json({ error: "forbidden_origin" }, 403);
 
   const verifiedUserId = await getVerifiedUserId(request);
-  if (!verifiedUserId) {
-    return json({ error: "unauthorized" }, 401);
-  }
-  if (verifiedUserId !== routeUserId) {
-    return json({ error: "forbidden_user" }, 403);
-  }
+  if (!verifiedUserId) return json({ error: "unauthorized" }, 401);
+  if (verifiedUserId !== routeUserId) return json({ error: "forbidden_user" }, 403);
 
   // Per-user throttle on writes only: 20 spend attempts / minute. GET path
   // (balance read) is cheap and unmetered.
@@ -67,28 +68,22 @@ export default async function handler(request: Request): Promise<Response> {
   }
 
   if (request.method === "GET") {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseServerClient
       .from("users")
       .select("token_balance")
       .eq("id", verifiedUserId)
       .single();
-
-    if (error || !data) {
-      return json({ error: "failed_to_fetch_token_balance" }, 404);
-    }
-
+    if (error || !data) return json({ error: "failed_to_fetch_token_balance" }, 404);
     return json({ balance: (data as { token_balance: number }).token_balance });
   }
 
-  if (request.method !== "POST") {
-    return json({ error: "method_not_allowed" }, 405);
-  }
+  if (request.method !== "POST") return json({ error: "method_not_allowed" }, 405);
 
   const body = await readBody(request);
-  if (!body) {
-    return json({ error: "invalid_json" }, 400);
-  }
+  if (!body) return json({ error: "invalid_json" }, 400);
 
+  // Minting tokens from the client is never allowed; only the trusted
+  // server-side reward flows may credit balances.
   if (body.action === "add") {
     return json({ error: "token_minting_requires_trusted_server" }, 403);
   }
@@ -98,33 +93,21 @@ export default async function handler(request: Request): Promise<Response> {
     return json({ error: "invalid_token_amount" }, 400);
   }
 
-  const { data, error: readError } = await supabase
-    .from("users")
-    .select("token_balance")
-    .eq("id", verifiedUserId)
-    .single();
+  // Atomic spend via the hardened RPC. Forward a freshly-minted JWT for the
+  // verified user so spend_tokens()'s current_user_id() resolves correctly.
+  const accessToken = await mintAccessToken(verifiedUserId);
+  if (!accessToken) return json({ error: "session_not_configured" }, 500);
+  const client = buildUserScopedClient(accessToken);
+  if (!client) return json({ error: "supabase_not_configured" }, 503);
 
-  if (readError || !data) {
-    return json({ error: "failed_to_fetch_token_balance" }, 404);
+  const { data, error } = await client.rpc("spend_tokens", { p_amount: amount });
+  if (error) return json({ error: "failed_to_spend_tokens" }, 500);
+
+  const payload = (data as { ok?: boolean; error?: string; balance?: number }) ?? {};
+  if (payload.ok === false) {
+    const status = payload.error === "insufficient_balance" ? 400 : 403;
+    return json({ error: payload.error ?? "spend_rejected" }, status);
   }
 
-  const currentBalance = Number((data as { token_balance: number }).token_balance);
-  if (!Number.isFinite(currentBalance)) {
-    return json({ error: "invalid_token_balance" }, 500);
-  }
-  if (currentBalance < amount) {
-    return json({ error: "insufficient_tokens" }, 400);
-  }
-
-  const balance = currentBalance - amount;
-  const { error: updateError } = await supabase
-    .from("users")
-    .update({ token_balance: balance })
-    .eq("id", verifiedUserId);
-
-  if (updateError) {
-    return json({ error: "failed_to_spend_tokens" }, 500);
-  }
-
-  return json({ balance });
+  return json({ balance: payload.balance ?? 0 });
 }

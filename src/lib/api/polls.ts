@@ -25,64 +25,34 @@ export async function testPollConnection(): Promise<{ ok: boolean; message: stri
   }
 }
 
+type RpcPollRow = {
+  id?: string;
+  question?: string;
+  locked?: boolean;
+  options?: Array<{ id?: string; text?: string; votes?: number }>;
+};
+
 export async function fetchPolls(limit = 10): Promise<Poll[]> {
-  const { data: pollRows, error: pollError } = await supabase
-    .from("polls")
-    .select("id, question, status")
-    .eq("is_onboarding", false)
-    .neq("status", "locked")
-    .order("created_at", { ascending: true })
-    .order("id", { ascending: true })
-    .limit(limit);
+  // Single round-trip: the RPC inlines poll filtering, option fetching, and
+  // vote tallying into one query (replaces the previous N+1 over options).
+  const { data, error } = await supabase.rpc("get_polls_with_vote_counts", { p_limit: limit });
+  if (error) throw error;
 
-  if (pollError) throw pollError;
-
-  const pollIds = (pollRows ?? []).map((row) => row.id).filter(Boolean) as string[];
-  if (pollIds.length === 0) return [];
-
-  const { data: optionRows, error: optionError } = await supabase
-    .from("poll_options")
-    .select("id, poll_id, label, position")
-    .in("poll_id", pollIds);
-  if (optionError) throw optionError;
-
-  const normalizedOptionRows = (optionRows ?? []).map((row) => ({
-    id: row.id,
-    poll_id: row.poll_id,
-    label: row.label,
-    position: row.position ?? 0,
-  }));
-
-  const optionsByPoll = new Map<string, { id: string; label: string; position: number }[]>();
-  normalizedOptionRows.forEach((row) => {
-    const list = optionsByPoll.get(row.poll_id) ?? [];
-    list.push(row);
-    optionsByPoll.set(row.poll_id, list);
-  });
-
-  const voteCountEntries = await Promise.all(
-    normalizedOptionRows.map(async (option) => {
-      const { count, error } = await supabase
-        .from("poll_votes")
-        .select("id", { count: "exact", head: true })
-        .eq("option_id", option.id);
-      if (error) throw error;
-      return [option.id, count ?? 0] as const;
-    })
-  );
-  const voteCounts = new Map<string, number>(voteCountEntries);
-
-  const built = (pollRows ?? [])
-    .map((row) => {
-      const options = [...(optionsByPoll.get(row.id) ?? [])]
-        .sort((a, b) => a.position - b.position)
-        .map((opt) => ({ id: opt.id, text: opt.label, votes: voteCounts.get(opt.id) ?? 0 }));
-      return { id: row.id as string, question: row.question as string, options, locked: false };
-    })
-    .filter((poll) => poll.question?.trim().length > 5 && poll.options.length >= 2);
-
-  // Deterministic chronological order (oldest -> newest), no shuffle.
-  return built;
+  const rows = Array.isArray(data) ? (data as RpcPollRow[]) : [];
+  return rows
+    .map((row) => ({
+      id: String(row.id ?? ""),
+      question: String(row.question ?? ""),
+      options: (row.options ?? [])
+        .map((opt) => ({
+          id: String(opt.id ?? ""),
+          text: String(opt.text ?? ""),
+          votes: Number.isFinite(Number(opt.votes)) ? Number(opt.votes) : 0,
+        }))
+        .filter((opt) => opt.id && opt.text),
+      locked: Boolean(row.locked ?? false),
+    }))
+    .filter((poll) => poll.id && poll.question.trim().length > 5 && poll.options.length >= 2);
 }
 
 export async function fetchAdminPolls(): Promise<AdminPoll[]> {
