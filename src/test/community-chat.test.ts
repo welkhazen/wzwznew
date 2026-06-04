@@ -114,40 +114,38 @@ describe("community chat Supabase persistence", () => {
     });
   });
 
-  it("stores community membership state in Supabase only", async () => {
-    fromMock
-      .mockReturnValueOnce(successfulMutation())
-      .mockReturnValueOnce(successfulMutation())
-      .mockReturnValueOnce(successfulMutation())
-      .mockReturnValueOnce(successfulMutation());
+  it("routes community membership writes through SECURITY DEFINER RPCs", async () => {
+    rpcMock.mockResolvedValue({ data: null, error: null });
 
     await joinCommunity("community-1", "user-alice", "alice");
     await leaveCommunity("community-1", "user-alice");
     await markCommunityRead("community-1", "user-alice");
     await setCommunityNotifications("community-1", "user-alice", false);
 
-    expect(fromMock).toHaveBeenCalledTimes(4);
-    expect(fromMock).toHaveBeenNthCalledWith(1, "community_members");
-    expect(fromMock).toHaveBeenNthCalledWith(2, "community_members");
-    expect(fromMock).toHaveBeenNthCalledWith(3, "community_members");
-    expect(fromMock).toHaveBeenNthCalledWith(4, "community_members");
+    expect(rpcMock).toHaveBeenNthCalledWith(1, "join_community", { p_community_id: "community-1" });
+    expect(rpcMock).toHaveBeenNthCalledWith(2, "leave_community", { p_community_id: "community-1" });
+    expect(rpcMock).toHaveBeenNthCalledWith(3, "mark_community_read", { p_community_id: "community-1" });
+    expect(rpcMock).toHaveBeenNthCalledWith(4, "set_community_notifications", {
+      p_community_id: "community-1",
+      p_enabled: false,
+    });
+    expect(fromMock).not.toHaveBeenCalled();
   });
 
-  it("updates community presentation in Supabase only", async () => {
-    const query = successfulMutation();
-    fromMock.mockReturnValueOnce(query);
+  it("updates community presentation via the admin-only RPC", async () => {
+    rpcMock.mockResolvedValueOnce({ data: null, error: null });
 
     await updateCommunityPresentation("community-1", {
       title: "Builder Signal",
       logoUrl: "https://example.com/logo.png",
     });
 
-    expect(fromMock).toHaveBeenCalledWith("communities");
-    expect(query.update).toHaveBeenCalledWith({
-      title: "Builder Signal",
-      abbr: "BS",
-      logo_url: "https://example.com/logo.png",
+    expect(rpcMock).toHaveBeenCalledWith("update_community_presentation", {
+      p_community_id: "community-1",
+      p_title: "Builder Signal",
+      p_logo_url: "https://example.com/logo.png",
     });
+    expect(fromMock).not.toHaveBeenCalled();
   });
 
   it("keeps unread counting as React-memory-only derived state", () => {
