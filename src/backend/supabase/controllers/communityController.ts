@@ -94,81 +94,70 @@ export async function fetchCommunityMessages(
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 }
 
-export async function joinCommunity(communityId: string, userId: string, username: string): Promise<void> {
-  const { error } = await supabase
-    .from('community_members')
-    .upsert(
-      { community_id: communityId, user_id: userId, username, last_seen_at: new Date().toISOString() },
-      { onConflict: 'community_id,user_id' }
-    );
+// All membership writes go through SECURITY DEFINER RPCs that derive the
+// caller from current_user_id() (auth.uid()). The frontend can no longer
+// pass an arbitrary user_id/username for membership or activity rows.
+// Function signatures are preserved so call sites don't need to change; the
+// userId/username args are now redundant and ignored server-side.
+
+export async function joinCommunity(communityId: string, _userId: string, _username: string): Promise<void> {
+  void _userId; void _username;
+  const { error } = await supabase.rpc('join_community', { p_community_id: communityId });
   if (error) throw error;
 }
 
-export async function leaveCommunity(communityId: string, userId: string): Promise<void> {
-  const { error } = await supabase
-    .from('community_members')
-    .delete()
-    .eq('community_id', communityId)
-    .eq('user_id', userId);
+export async function leaveCommunity(communityId: string, _userId: string): Promise<void> {
+  void _userId;
+  const { error } = await supabase.rpc('leave_community', { p_community_id: communityId });
   if (error) throw error;
 }
 
-export async function touchMemberActivity(communityId: string, userId: string, username: string): Promise<void> {
-  const { error } = await supabase
-    .from('community_members')
-    .update({ last_seen_at: new Date().toISOString(), username })
-    .eq('community_id', communityId)
-    .eq('user_id', userId);
+export async function touchMemberActivity(communityId: string, _userId: string, _username: string): Promise<void> {
+  void _userId; void _username;
+  const { error } = await supabase.rpc('touch_member_activity', { p_community_id: communityId });
   if (error) throw error;
 }
 
-export async function markCommunityRead(communityId: string, userId: string): Promise<void> {
-  const { error } = await supabase
-    .from('community_members')
-    .update({ last_read_at: new Date().toISOString() })
-    .eq('community_id', communityId)
-    .eq('user_id', userId);
+export async function markCommunityRead(communityId: string, _userId: string): Promise<void> {
+  void _userId;
+  const { error } = await supabase.rpc('mark_community_read', { p_community_id: communityId });
   if (error) throw error;
 }
 
-export async function setCommunityNotifications(communityId: string, userId: string, enabled: boolean): Promise<void> {
-  const { error } = await supabase
-    .from('community_members')
-    .update({ notifications_enabled: enabled })
-    .eq('community_id', communityId)
-    .eq('user_id', userId);
+export async function setCommunityNotifications(communityId: string, _userId: string, enabled: boolean): Promise<void> {
+  void _userId;
+  const { error } = await supabase.rpc('set_community_notifications', {
+    p_community_id: communityId,
+    p_enabled: enabled,
+  });
   if (error) throw error;
 }
 
+// Admin-only — RPC enforces is_admin() server-side.
 export async function updateCommunityPresentation(
   communityId: string,
   input: { title: string; logoUrl?: string },
 ): Promise<void> {
-  const title = input.title.trim();
-  const logoUrl = input.logoUrl?.trim() || null;
-  const { error } = await supabase
-    .from('communities')
-    .update({ title, abbr: buildCommunityAbbr(title), logo_url: logoUrl })
-    .eq('id', communityId);
+  void buildCommunityAbbr; // abbr derived inside the RPC; kept import for backward compat
+  const { error } = await supabase.rpc('update_community_presentation', {
+    p_community_id: communityId,
+    p_title: input.title,
+    p_logo_url: input.logoUrl ?? null,
+  });
   if (error) throw error;
 }
 
+// Admin-only — RPC enforces is_admin() server-side.
 export async function createCommunityFromRequest(request: CommunityRequestRecord): Promise<void> {
   const id = `request-${request.id}`;
-  const abbr = buildCommunityAbbr(request.communityName);
   const now = request.reviewedAt ?? new Date().toISOString();
-
-  const { error } = await supabase.from('communities').upsert({
-    id,
-    abbr,
-    title: request.communityName,
-    description: request.whyNow,
-    topic: request.samplePrompt || request.focusArea,
-    status: 'Early Access',
-    locked: false,
-    created_at: now,
-    created_by: request.requesterName,
-  }, { onConflict: 'id' });
-
+  const { error } = await supabase.rpc('create_community_from_request', {
+    p_id: id,
+    p_title: request.communityName,
+    p_description: request.whyNow,
+    p_topic: request.samplePrompt || request.focusArea,
+    p_created_by: request.requesterName,
+    p_created_at: now,
+  });
   if (error) throw error;
 }
