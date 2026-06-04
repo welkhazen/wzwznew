@@ -330,6 +330,10 @@ export default function Dashboard({
       window.removeEventListener("resize", closeOnResize);
       window.removeEventListener("keydown", closeOnKey);
     };
+    // closeMobileCommunitySwitcher intentionally omitted from deps — the
+    // listeners only need to fire once per open/close transition and the
+    // function is stable across the renders that matter here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mobileCommunityPickerOpen]);
 
   const handleProfileClick = () => {

@@ -33,6 +33,7 @@ function getFanOffsets(count: number): { x: number; y: number }[] {
   });
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- pure helper colocated with the component it serves; splitting would just add a one-line file
 export function getCommunityHoldSwitcherTargets(
   anchorRect: DOMRect | null,
   currentCommunity: PersistedCommunityRecord | null,

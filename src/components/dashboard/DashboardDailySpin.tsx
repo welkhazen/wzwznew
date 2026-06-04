@@ -31,6 +31,7 @@ function toRgba(rgbSpaceSeparated: string, alpha: number): string {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- prize-table builder colocated with the spin component; splitting would just add a one-line file
 export function buildSpinPrizes(mode: "light" | "dark", accentRgb: string): WheelPrize[] {
   const isLight = mode === "light";
   const neutralA = isLight ? "#c9d7ea" : "#1d2533";
