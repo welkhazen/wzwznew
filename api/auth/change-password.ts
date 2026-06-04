@@ -1,5 +1,4 @@
 import { json, readJsonBody } from "../_lib/authServer.js";
-import { hashPassword, verifyPassword } from "../_lib/passwordHash.js";
 import { isTrustedOrigin } from "../_lib/requestSecurity.js";
 import { supabaseServerClient } from "../_lib/supabaseServerClient.js";
 import { getRequestUserId } from "../_lib/sessionAuth.js";
@@ -21,21 +20,13 @@ export default async function handler(request: Request): Promise<Response> {
   const newPassword = typeof body?.newPassword === "string" ? body.newPassword : "";
   if (!oldPassword || newPassword.length < 6) return json({ error: "invalid_password" }, 400);
 
-  const { data: row } = await supabaseServerClient
-    .from("users")
-    .select("password_hash")
-    .eq("id", userId)
-    .maybeSingle();
-  if (!row?.password_hash) return json({ error: "invalid_password" }, 403);
-  const ok = await verifyPassword(oldPassword, row.password_hash);
-  if (!ok) return json({ error: "invalid_password" }, 403);
-
-  const newHash = await hashPassword(newPassword);
-  const { error: updateError } = await supabaseServerClient
-    .from("users")
-    .update({ password_hash: newHash })
-    .eq("id", userId);
-  if (updateError) return json({ error: "failed_to_update_password" }, 500);
+  const { data, error } = await supabaseServerClient.rpc("update_user_password", {
+    p_user_id: userId,
+    p_old_password: oldPassword,
+    p_new_password: newPassword,
+  });
+  if (error) return json({ error: "failed_to_update_password" }, 500);
+  if (data !== true) return json({ error: "invalid_password" }, 403);
 
   return json({ ok: true });
 }

@@ -1,5 +1,4 @@
 import { cleanupAppUserData, json, readJsonBody } from "../_lib/authServer.js";
-import { verifyPassword } from "../_lib/passwordHash.js";
 import { isTrustedOrigin } from "../_lib/requestSecurity.js";
 import { supabaseServerClient } from "../_lib/supabaseServerClient.js";
 import { buildClearedSessionCookie, getRequestUserId } from "../_lib/sessionAuth.js";
@@ -22,14 +21,19 @@ export default async function handler(request: Request): Promise<Response> {
   const password = typeof body?.password === "string" ? body.password : "";
   if (!password) return json({ error: "password_required" }, 400);
 
-  const { data: row } = await supabaseServerClient
+  const { data: profileRow } = await supabaseServerClient
     .from("users")
-    .select("password_hash")
+    .select("username")
     .eq("id", userId)
     .maybeSingle();
-  if (!row?.password_hash) return json({ error: "invalid_password" }, 403);
-  const ok = await verifyPassword(password, row.password_hash);
-  if (!ok) return json({ error: "invalid_password" }, 403);
+  if (!profileRow) return json({ error: "unauthorized" }, 401);
+  const username = (profileRow as { username: string }).username;
+
+  const { data: verifiedId, error: verifyErr } = await supabaseServerClient.rpc(
+    "verify_user_password",
+    { p_username: username, p_password: password },
+  );
+  if (verifyErr || verifiedId !== userId) return json({ error: "invalid_password" }, 403);
 
   try {
     await cleanupAppUserData(userId);
