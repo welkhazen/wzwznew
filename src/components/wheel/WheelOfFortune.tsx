@@ -3,13 +3,13 @@ import { useTheme } from "@/providers/useTheme";
 
 const IMAGE_SCALE_BY_SRC: Record<string, number> = {
   "/avatars/1.webp": 1.0,
-  "/avatars/2.webp": 1.45,
-  "/avatars/3.webp": 1.45,
-  "/avatars/04.webp": 1.45,
+  "/avatars/18.png": 1.45,
+  "/avatars/23.png": 1.45,
+  "/avatars/24.png": 1.45,
   "/avatars/5.png": 1.45,
   "/avatars/6.webp": 1.0,
   "/avatars/07.webp": 1.45,
-  "/avatars/08.webp": 1.08,
+  "/avatars/35.png": 1.08,
   "/avatars/11.png": 1.42,
 };
 
