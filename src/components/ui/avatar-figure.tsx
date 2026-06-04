@@ -11,6 +11,7 @@ interface AvatarFigureProps {
   disableRarityGlow?: boolean;
   style?: CSSProperties;
   themeOverride?: AvatarTheme;
+  loading?: "eager" | "lazy";
 }
 
 const sizes = {
@@ -20,7 +21,7 @@ const sizes = {
   xl: { outer: 180, inner: 148, face: 0.65 },
 };
 
-export function AvatarFigure({ avatarIndex, size = "md", selected = false, className = "", rarity, disableRarityGlow = false, style, themeOverride }: AvatarFigureProps) {
+export function AvatarFigure({ avatarIndex, size = "md", selected = false, className = "", rarity, disableRarityGlow = false, style, themeOverride, loading = "eager" }: AvatarFigureProps) {
   const theme = themeOverride || LEVEL_THEMES[avatarIndex - 1] || LEVEL_THEMES[0];
   const [imageFailed, setImageFailed] = useState(false);
   useEffect(() => {
@@ -54,7 +55,7 @@ export function AvatarFigure({ avatarIndex, size = "md", selected = false, class
           <img
             src={theme.imageSrc}
             alt={theme.name}
-            loading="eager"
+            loading={loading}
             decoding="async"
             onError={() => setImageFailed(true)}
             draggable={false}

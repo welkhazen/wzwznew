@@ -123,7 +123,7 @@ const LANDING_ONBOARDING_AVATARS: readonly AvatarCatalogItem[] = [
       level: index + FREE_ONBOARDING_AVATAR_COUNT + 1,
       name: `Avatar ${imageNumber}`,
       price: "50",
-      imageSrc: `/avatars/${imageNumber}.png`,
+      imageSrc: `/avatars/previews/${imageNumber}.png`,
       bg: "#111827",
       figure: "#cbd5e1",
       ring: "#cbd5e1",
@@ -747,6 +747,7 @@ export function OnboardingJourney({
                               rarity={avatar.rarity}
                               style={getPreviewOnlyAvatarImageScale(avatar.id)}
                               themeOverride={avatar}
+                              loading="lazy"
                             />
                             <AvatarFigure
                               avatarIndex={index}
@@ -756,6 +757,7 @@ export function OnboardingJourney({
                               rarity={avatar.rarity}
                               style={getPreviewOnlyAvatarImageScale(avatar.id)}
                               themeOverride={avatar}
+                              loading="lazy"
                             />
                           </div>
                           <span className={`max-w-full truncate text-center font-display text-[7px] leading-tight tracking-[0.08em] transition-colors sm:text-[8px] ${
