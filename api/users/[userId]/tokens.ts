@@ -2,7 +2,7 @@ import { supabaseServerClient } from "../../_lib/supabaseServerClient.js";
 import { isTrustedOrigin } from "../../_lib/requestSecurity.js";
 import { getRequestUserId, verifyAccessToken } from "../../_lib/sessionAuth.js";
 
-export const config = { runtime: "nodejs" };
+export const config = { runtime: "edge" };
 
 const supabase = supabaseServerClient;
 

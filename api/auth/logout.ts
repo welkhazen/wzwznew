@@ -2,7 +2,7 @@ import { json } from "../_lib/authServer.js";
 import { isTrustedOrigin } from "../_lib/requestSecurity.js";
 import { buildClearedSessionCookie } from "../_lib/sessionAuth.js";
 
-export const config = { runtime: "nodejs" };
+export const config = { runtime: "edge" };
 
 export default async function handler(request: Request): Promise<Response> {
   if (request.method !== "POST") return json({ error: "method_not_allowed" }, 405);

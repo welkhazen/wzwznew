@@ -8,7 +8,7 @@ import {
   mintAccessToken,
 } from "../_lib/sessionAuth.js";
 
-export const config = { runtime: "nodejs" };
+export const config = { runtime: "edge" };
 
 type LoginBody = { username?: unknown; password?: unknown };
 

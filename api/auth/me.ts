@@ -7,7 +7,7 @@ import {
   mintAccessToken,
 } from "../_lib/sessionAuth.js";
 
-export const config = { runtime: "nodejs" };
+export const config = { runtime: "edge" };
 
 export default async function handler(request: Request): Promise<Response> {
   if (!supabaseServerClient) return json({ error: "supabase_not_configured" }, 503);
