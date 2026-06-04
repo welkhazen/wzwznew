@@ -12,6 +12,7 @@ export type TestimonialCardItem = {
 interface TestimonialCardProps extends TestimonialCardItem {
   handleShuffle: (direction: "next" | "previous") => void;
   position: TestimonialCardPosition;
+  isLight?: boolean;
 }
 
 export function TestimonialCard({
@@ -19,6 +20,7 @@ export function TestimonialCard({
   src,
   alt,
   position,
+  isLight = false,
 }: TestimonialCardProps) {
   const dragRef = React.useRef(0);
   const isFront = position === "front";
@@ -54,7 +56,11 @@ export function TestimonialCard({
         dragRef.current = 0;
       }}
       transition={{ type: "spring", stiffness: 220, damping: 24, mass: 0.9 }}
-      className={`absolute left-0 top-0 flex h-[360px] w-[260px] select-none items-center justify-center overflow-hidden rounded-[24px] border border-white/10 bg-black/80 p-2 shadow-[0_28px_90px_rgba(0,0,0,0.48)] backdrop-blur-md sm:h-[420px] sm:w-[320px] ${
+      className={`absolute left-0 top-0 flex h-[360px] w-[260px] select-none items-center justify-center overflow-hidden rounded-[24px] border p-2 backdrop-blur-md sm:h-[420px] sm:w-[320px] ${
+        isLight
+          ? "border-slate-300/70 bg-white/85 shadow-[0_28px_70px_rgba(15,23,42,0.18)]"
+          : "border-white/10 bg-black/80 shadow-[0_28px_90px_rgba(0,0,0,0.48)]"
+      } ${
         isFront ? "cursor-grab active:cursor-grabbing" : "pointer-events-none"
       }`}
     >

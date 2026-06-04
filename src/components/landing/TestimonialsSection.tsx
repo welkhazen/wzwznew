@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
+import { useTheme } from "@/providers/useTheme";
 import { TestimonialCard, type TestimonialCardPosition, type TestimonialCardItem } from "@/components/ui/testimonial-cards";
 import test1 from "@/assets/test1.png";
 import test2 from "@/assets/test2.png";
@@ -43,6 +44,8 @@ const testimonials: TestimonialCardItem[] = [
 const positions: TestimonialCardPosition[] = ["front", "middle", "back", "far"];
 
 export function TestimonialsSection() {
+  const { mode } = useTheme();
+  const isLight = mode === "light";
   const [activeIndex, setActiveIndex] = useState(0);
   const [showStack, setShowStack] = useState(false);
 
@@ -63,7 +66,11 @@ export function TestimonialsSection() {
 
   return (
     <section className="landing-section relative z-0 px-4 py-14 sm:px-6 sm:py-20">
-      <div className="relative mx-auto w-full max-w-5xl overflow-hidden rounded-[30px] border border-raw-border/35 bg-[radial-gradient(circle_at_50%_0%,rgba(241,196,45,0.1),transparent_34%),rgba(15,15,13,0.78)] px-4 py-9 shadow-[0_32px_130px_rgba(0,0,0,0.34)] sm:px-10 sm:py-12">
+      <div className={`relative mx-auto w-full max-w-5xl overflow-hidden rounded-[30px] border px-4 py-9 sm:px-10 sm:py-12 ${
+        isLight
+          ? "border-slate-300/70 bg-[radial-gradient(circle_at_50%_0%,rgba(241,196,45,0.12),transparent_34%),rgba(255,255,255,0.82)] shadow-[0_32px_90px_rgba(15,23,42,0.12)]"
+          : "border-raw-border/35 bg-[radial-gradient(circle_at_50%_0%,rgba(241,196,45,0.1),transparent_34%),rgba(15,15,13,0.78)] shadow-[0_32px_130px_rgba(0,0,0,0.34)]"
+      }`}>
         <div className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:radial-gradient(circle,rgba(255,255,255,0.75)_1px,transparent_1px)] [background-size:12px_12px]" />
         <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/50 to-transparent" />
 
@@ -84,7 +91,9 @@ export function TestimonialsSection() {
         </div>
 
         {!showStack ? (
-          <div className="relative mt-8 max-h-[680px] overflow-y-auto rounded-[24px] border border-raw-border/45 bg-raw-black/65 p-4 [scrollbar-color:rgba(129,140,248,0.75)_transparent]">
+          <div className={`relative mt-8 max-h-[680px] overflow-y-auto rounded-[24px] border p-4 [scrollbar-color:rgba(129,140,248,0.75)_transparent] ${
+            isLight ? "border-slate-300/70 bg-slate-100/75" : "border-raw-border/45 bg-raw-black/65"
+          }`}>
             <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {testimonials.map((testimonial, index) => (
               <motion.button
@@ -99,7 +108,11 @@ export function TestimonialsSection() {
                 viewport={{ once: true, amount: 0.15 }}
                 transition={{ duration: 0.42, delay: (index % 6) * 0.045, ease: [0.22, 1, 0.36, 1] }}
                 whileHover={{ y: -4, scale: 1.015 }}
-                className="relative flex h-[250px] min-w-0 items-center justify-center overflow-hidden rounded-[18px] border border-white/10 bg-black/80 p-2 shadow-[0_16px_45px_rgba(0,0,0,0.35)] outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/60 sm:h-[270px]"
+                className={`relative flex h-[250px] min-w-0 items-center justify-center overflow-hidden rounded-[18px] border p-2 outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/60 sm:h-[270px] ${
+                  isLight
+                    ? "border-slate-300/80 bg-white shadow-[0_16px_35px_rgba(15,23,42,0.12)]"
+                    : "border-white/10 bg-black/80 shadow-[0_16px_45px_rgba(0,0,0,0.35)]"
+                }`}
                 aria-label={`Open testimonial ${index + 1} in stack`}
               >
                 <img
@@ -113,7 +126,11 @@ export function TestimonialsSection() {
             </div>
           </div>
         ) : (
-        <div className="relative mx-auto mt-8 h-[440px] w-full max-w-[760px] overflow-hidden rounded-[24px] border border-raw-border/45 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.07),transparent_36%),rgba(8,8,8,0.82)] shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_30px_90px_rgba(0,0,0,0.36)] sm:h-[500px]">
+        <div className={`relative mx-auto mt-8 h-[440px] w-full max-w-[760px] overflow-hidden rounded-[24px] border sm:h-[500px] ${
+          isLight
+            ? "border-slate-300/80 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.9),transparent_42%),rgba(241,245,249,0.92)] shadow-[inset_0_1px_0_white,0_30px_70px_rgba(15,23,42,0.14)]"
+            : "border-raw-border/45 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.07),transparent_36%),rgba(8,8,8,0.82)] shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_30px_90px_rgba(0,0,0,0.36)]"
+        }`}>
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(241,196,45,0.08),transparent_36%)]" />
           <div className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:radial-gradient(circle,rgba(255,255,255,0.8)_1px,transparent_1px)] [background-size:10px_10px]" />
           <div className="absolute left-1/2 top-8 h-[360px] w-[260px] -translate-x-[58%] sm:top-8 sm:h-[420px] sm:w-[320px] sm:-translate-x-[62%]">
@@ -123,16 +140,19 @@ export function TestimonialsSection() {
                 {...testimonial}
                 position={positions[index]}
                 handleShuffle={handleShuffle}
+                isLight={isLight}
               />
             ))}
           </div>
 
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-raw-black/80 to-transparent" />
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-raw-black/85 to-transparent" />
+          {!isLight ? <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-raw-black/80 to-transparent" /> : null}
+          {!isLight ? <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-raw-black/85 to-transparent" /> : null}
           <button
             type="button"
             onClick={() => handleShuffle("previous")}
-            className="absolute left-3 top-1/2 z-10 -translate-y-1/2 rounded-full border border-white/10 bg-black/65 p-3 text-raw-silver/60 transition hover:border-raw-gold/35 hover:text-raw-gold sm:left-5"
+            className={`absolute left-3 top-1/2 z-10 -translate-y-1/2 rounded-full border p-3 transition hover:border-raw-gold/35 hover:text-raw-gold sm:left-5 ${
+              isLight ? "border-slate-300 bg-white/90 text-slate-600 shadow-md" : "border-white/10 bg-black/65 text-raw-silver/60"
+            }`}
             aria-label="Previous testimonial"
           >
             <ChevronLeft className="h-5 w-5" />
@@ -140,7 +160,9 @@ export function TestimonialsSection() {
           <button
             type="button"
             onClick={() => handleShuffle("next")}
-            className="absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-full border border-white/10 bg-black/65 p-3 text-raw-silver/60 transition hover:border-raw-gold/35 hover:text-raw-gold sm:right-5"
+            className={`absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-full border p-3 transition hover:border-raw-gold/35 hover:text-raw-gold sm:right-5 ${
+              isLight ? "border-slate-300 bg-white/90 text-slate-600 shadow-md" : "border-white/10 bg-black/65 text-raw-silver/60"
+            }`}
             aria-label="Next testimonial"
           >
             <ChevronRight className="h-5 w-5" />
