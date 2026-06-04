@@ -13,7 +13,7 @@ export interface AuthUser {
 type RpcResult = { ok: boolean; user?: AuthUser; error?: string };
 
 function usernameToEmail(username: string): string {
-  return `${encodeURIComponent(username.trim().toLowerCase())}@users.raw.local`;
+  return `${encodeURIComponent(username.trim().toLowerCase())}@users.myraw.app`;
 }
 
 function normalizeUsername(username: string): string {
