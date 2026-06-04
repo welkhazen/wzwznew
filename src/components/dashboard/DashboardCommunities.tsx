@@ -65,11 +65,10 @@ import {
   getMessageSenderBlockKey,
   markCommunityMessageFailed,
   mergeCommunityMessageList,
-  removeCommunityMessage,
   replaceCommunityMessage,
   setCommunityMessages,
-  upsertCommunityMessage,
 } from "@/lib/communityChatState";
+import { useCommunityMessagesRealtime } from "@/hooks/useCommunityMessagesRealtime";
 import {
   loadCommunityAccess,
   type CommunityAccess,
@@ -678,35 +677,7 @@ export function DashboardCommunities({
       };
     }, [reloadChatData]);
 
-    useEffect(() => {
-      const channel = supabase
-        .channel("community-messages")
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "community_messages" },
-          (payload) => {
-            if (payload.eventType === "DELETE") {
-              const oldRow = payload.old as { id?: string; community_id?: string } | null;
-              if (oldRow?.id && oldRow.community_id) {
-                updateCommunities((current) =>
-                  removeCommunityMessage(current, oldRow.community_id!, oldRow.id!),
-                );
-              }
-              return;
-            }
-            const nextMessage = mapCommunityMessage(payload.new as DbCommunityMessage);
-            if (!nextMessage.communityId) return;
-            updateCommunities((current) =>
-              upsertCommunityMessage(current, nextMessage.communityId, nextMessage),
-            );
-          },
-        )
-        .subscribe();
-
-      return () => {
-        void supabase.removeChannel(channel);
-      };
-    }, [updateCommunities]);
+    useCommunityMessagesRealtime(updateCommunities);
 
     useEffect(() => {
       let cancelled = false;
