@@ -4,7 +4,7 @@ import { isTrustedOrigin } from "../_lib/requestSecurity.js";
 import { supabaseServerClient } from "../_lib/supabaseServerClient.js";
 import { buildClearedSessionCookie, getRequestUserId } from "../_lib/sessionAuth.js";
 
-export const config = { runtime: "nodejs" };
+export const config = { runtime: "edge" };
 
 type DeleteBody = { password?: unknown };
 

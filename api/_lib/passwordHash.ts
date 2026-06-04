@@ -7,7 +7,7 @@ function getPepper(): string {
 function getRounds(): number {
   const raw = Number.parseInt(process.env.BCRYPT_ROUNDS ?? "", 10);
   if (Number.isFinite(raw) && raw >= 4 && raw <= 15) return raw;
-  return 10;
+  return 6;
 }
 
 export async function hashPassword(rawPassword: string): Promise<string> {
