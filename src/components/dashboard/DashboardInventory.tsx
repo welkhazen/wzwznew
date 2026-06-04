@@ -320,7 +320,7 @@ export function AvatarShop({
           onClick={() => setShowAll((current) => !current)}
           className="mx-auto mt-5 block rounded-full border border-raw-gold/35 bg-raw-gold/10 px-5 py-2 text-xs font-medium text-raw-gold transition hover:bg-raw-gold/20"
         >
-          {showAll ? "Show Less" : `Show More (${purchasable.length - 8})`}
+          {showAll ? "Show Less" : "Show More"}
         </button>
       ) : null}
     </div>

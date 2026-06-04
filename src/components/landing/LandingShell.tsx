@@ -100,11 +100,11 @@ export default function LandingShell({
                     On the way
                   </p>
                   <h3 className="mt-2 landing-heading text-raw-gold">
-                    Coming soon.
+                    Roadmap.
                   </h3>
                   <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-raw-silver/55">
-                    Everything in this frame is still being built. Sign up to be first
-                    in line when these features go live.
+                    Explore the features we are building next and the direction raW is
+                    heading.
                   </p>
                 </div>
 
