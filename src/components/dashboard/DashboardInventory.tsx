@@ -267,7 +267,7 @@ export function AvatarShop({
             <div className="pointer-events-none absolute inset-0 opacity-30 [background-image:radial-gradient(rgba(255,255,255,0.12)_0.6px,transparent_0.6px)] [background-size:8px_8px]" />
 
             <div className="relative">
-              <AvatarFigure avatarIndex={avatar.level} size="md" selected={owned} rarity={rarity} />
+              <AvatarFigure avatarIndex={avatar.level} size="md" selected={owned} rarity={rarity} themeOverride={avatar} />
             </div>
 
             <div className="relative text-center">
