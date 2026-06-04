@@ -28,13 +28,13 @@ const CHOOSER_AVATARS: readonly AvatarCatalogItem[] = [
 ];
 const REVEAL_AVATARS: readonly AvatarCatalogItem[] = [
   { id: "reveal-1", level: 11, name: "Silver Void", price: "0", imageSrc: "/avatars/1.webp", bg: "#111827", figure: "#cbd5e1", ring: "#cbd5e1", glow: "#cbd5e180", isActive: true, rarity: "common" },
-  { id: "reveal-2", level: 12, name: "Neon Lynx", price: "0", imageSrc: "/avatars/2.webp", bg: "#170f2e", figure: "#a855f7", ring: "#c084fc", glow: "#a855f780", isActive: true, rarity: "common" },
-  { id: "reveal-3", level: 13, name: "Blue Signal", price: "0", imageSrc: "/avatars/3.webp", bg: "#06131f", figure: "#22d3ee", ring: "#22d3ee", glow: "#22d3ee80", isActive: true, rarity: "common" },
-  { id: "reveal-4", level: 14, name: "Violet Mask", price: "0", imageSrc: "/avatars/4.webp", bg: "#1a1028", figure: "#d946ef", ring: "#d946ef", glow: "#d946ef80", isActive: true, rarity: "common" },
+  { id: "reveal-2", level: 12, name: "Neon Lynx", price: "0", imageSrc: "/avatars/18.png", bg: "#170f2e", figure: "#a855f7", ring: "#c084fc", glow: "#a855f780", isActive: true, rarity: "common" },
+  { id: "reveal-3", level: 13, name: "Blue Signal", price: "0", imageSrc: "/avatars/23.png", bg: "#06131f", figure: "#22d3ee", ring: "#22d3ee", glow: "#22d3ee80", isActive: true, rarity: "common" },
+  { id: "reveal-4", level: 14, name: "Violet Mask", price: "0", imageSrc: "/avatars/24.png", bg: "#1a1028", figure: "#d946ef", ring: "#d946ef", glow: "#d946ef80", isActive: true, rarity: "common" },
   { id: "reveal-5", level: 15, name: "Viozen", price: "0", imageSrc: "/avatars/5.png", bg: "#1f0a05", figure: "#fb923c", ring: "#fb923c", glow: "#fb923c80", isActive: true, rarity: "common" },
   { id: "reveal-6", level: 16, name: "Crimson Muse", price: "0", imageSrc: "/avatars/6.webp", bg: "#2a0b0b", figure: "#f97316", ring: "#f97316", glow: "#f9731680", isActive: true, rarity: "common" },
   { id: "reveal-7", level: 17, name: "Solar Flame", price: "0", imageSrc: "/avatars/7.webp", bg: "#241005", figure: "#facc15", ring: "#facc15", glow: "#facc1590", isActive: true, rarity: "common" },
-  { id: "reveal-8", level: 18, name: "Pink Circuit", price: "0", imageSrc: "/avatars/8.webp", bg: "#2a0b1c", figure: "#fb7185", ring: "#fb7185", glow: "#fb718580", isActive: true, rarity: "common" },
+  { id: "reveal-8", level: 18, name: "Pink Circuit", price: "0", imageSrc: "/avatars/35.png", bg: "#2a0b1c", figure: "#fb7185", ring: "#fb7185", glow: "#fb718580", isActive: true, rarity: "common" },
   { id: "reveal-10", level: 20, name: "Blu Fifer", price: "0", imageSrc: "/avatars/11.png", bg: "#0a1a2e", figure: "#3b82f6", ring: "#60a5fa", glow: "#3b82f680", isActive: true, rarity: "common" },
 ];
 const LANDING_AVATARS: readonly AvatarCatalogItem[] = [...CHOOSER_AVATARS, ...REVEAL_AVATARS];

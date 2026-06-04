@@ -14,13 +14,13 @@ type PoolEntry = { id: string; avatarId: string; name: string; imageSrc: string 
 
 const WHEEL_REWARD_POOL: readonly PoolEntry[] = [
   { id: "wheel-avatar-1", avatarId: "silver-void", name: "Silver Void", imageSrc: "/avatars/1.webp" },
-  { id: "wheel-avatar-2", avatarId: "neon-lynx", name: "Neon Lynx", imageSrc: "/avatars/2.webp" },
-  { id: "wheel-avatar-3", avatarId: "blue-signal", name: "Blue Signal", imageSrc: "/avatars/3.webp" },
-  { id: "wheel-avatar-4", avatarId: "violet-mask", name: "Violet Mask", imageSrc: "/avatars/04.webp" },
+  { id: "wheel-avatar-2", avatarId: "neon-lynx", name: "Neon Lynx", imageSrc: "/avatars/18.png" },
+  { id: "wheel-avatar-3", avatarId: "blue-signal", name: "Blue Signal", imageSrc: "/avatars/23.png" },
+  { id: "wheel-avatar-4", avatarId: "violet-mask", name: "Violet Mask", imageSrc: "/avatars/24.png" },
   { id: "wheel-avatar-5", avatarId: "horned-iron", name: "Viozen", imageSrc: "/avatars/5.png" },
   { id: "wheel-avatar-6", avatarId: "crimson-muse", name: "Crimson Muse", imageSrc: "/avatars/6.webp" },
   { id: "wheel-avatar-7", avatarId: "solar-flame", name: "Solar Flame", imageSrc: "/avatars/07.webp" },
-  { id: "wheel-avatar-8", avatarId: "pink-circuit", name: "Pink Circuit", imageSrc: "/avatars/08.webp" },
+  { id: "wheel-avatar-8", avatarId: "pink-circuit", name: "Pink Circuit", imageSrc: "/avatars/35.png" },
   { id: "wheel-avatar-10", avatarId: "blu-fifer", name: "Blu Fifer", imageSrc: "/avatars/11.png" },
 ];
 
