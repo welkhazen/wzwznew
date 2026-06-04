@@ -232,6 +232,7 @@ export function AvatarShop({
   onAvatarPurchased,
 }: Pick<DashboardInventoryProps, "avatarCatalog" | "ownedAvatarLevels" | "onUnlockAvatar" | "avatarPricesByLevel" | "tokenBalance" | "userId" | "onAvatarPurchased">) {
   const [unlocking, setUnlocking] = useState<number | null>(null);
+  const [showAll, setShowAll] = useState(false);
 
   const purchasable = avatarCatalog.filter(
     (a) =>
@@ -240,6 +241,7 @@ export function AvatarShop({
       Number(a.price) > 0 &&
       !ownedAvatarLevels.has(a.level),
   );
+  const visibleAvatars = showAll ? purchasable : purchasable.slice(0, 8);
 
   if (purchasable.length === 0) {
     return (
@@ -250,8 +252,9 @@ export function AvatarShop({
   }
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-      {purchasable.map((avatar) => {
+    <div>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+      {visibleAvatars.map((avatar) => {
         const owned = ownedAvatarLevels.has(avatar.level);
         const price = Number(avatarPricesByLevel[avatar.level] ?? avatar.price) || AVATAR_SHOP_PRICE;
         const canBuy = tokenBalance >= price;
@@ -310,6 +313,16 @@ export function AvatarShop({
           </div>
         );
       })}
+      </div>
+      {purchasable.length > 8 ? (
+        <button
+          type="button"
+          onClick={() => setShowAll((current) => !current)}
+          className="mx-auto mt-5 block rounded-full border border-raw-gold/35 bg-raw-gold/10 px-5 py-2 text-xs font-medium text-raw-gold transition hover:bg-raw-gold/20"
+        >
+          {showAll ? "Show Less" : `Show More (${purchasable.length - 8})`}
+        </button>
+      ) : null}
     </div>
   );
 }
