@@ -24,7 +24,6 @@ export interface CommunityChatMessageRecord {
   deletedAt?: string;
   deletedByUserId?: string;
   likedBy?: string[];
-  senderAvatarLevel?: number;
   deliveryStatus?: "sending" | "failed";
 }
 
@@ -43,9 +42,10 @@ export interface PersistedCommunityRecord {
   messages: CommunityChatMessageRecord[];
 }
 
+// The send_community_message RPC derives the sender from current_user_id()
+// server-side, so the only fields the client may supply are the message
+// payload itself and an optional reply target.
 export interface SendCommunityMessageInput {
-  senderId: string;
-  senderName: string;
   text: string;
   replyToMessage?: CommunityChatMessageRecord | null;
 }

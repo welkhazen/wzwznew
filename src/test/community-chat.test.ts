@@ -72,25 +72,16 @@ describe("community chat Supabase persistence", () => {
     });
 
     const message = await sendMessage("community-1", {
-      senderId: "user-alice",
-      senderName: "alice",
-      senderAvatarLevel: 3,
       text: "hello everyone",
     });
 
+    // Identity fields are not even part of the input type now — the SECURITY
+    // DEFINER RPC derives sender from current_user_id().
     expect(rpcMock).toHaveBeenCalledWith("send_community_message", {
       p_community_id: "community-1",
       p_text: "hello everyone",
       p_reply_to_message_id: null,
     });
-    // Frontend-supplied senderId / senderName / senderAvatarLevel must NOT be
-    // forwarded — the SECURITY DEFINER RPC derives those from the verified
-    // session user.
-    const rpcArgs = rpcMock.mock.calls[0]?.[1] as Record<string, unknown> | undefined;
-    expect(rpcArgs).toBeDefined();
-    expect(Object.keys(rpcArgs ?? {})).not.toContain("p_sender_id");
-    expect(Object.keys(rpcArgs ?? {})).not.toContain("p_sender_name");
-    expect(Object.keys(rpcArgs ?? {})).not.toContain("p_sender_avatar_level");
     expect(message.text).toBe("hello everyone");
     expect(message.senderAvatarLevel).toBe(3);
     expect(setItemSpy).not.toHaveBeenCalled();
