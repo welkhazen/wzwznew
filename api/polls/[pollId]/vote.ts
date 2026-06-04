@@ -1,9 +1,9 @@
-import { supabaseServerClient } from "../../_lib/supabaseServerClient";
-import { isTrustedOrigin } from "../../_lib/requestSecurity";
+import { createClient } from "@supabase/supabase-js";
+import { supabaseServerClient } from "../../_lib/supabaseServerClient.js";
+import { isTrustedOrigin } from "../../_lib/requestSecurity.js";
+import { getRequestUserId, mintAccessToken } from "../../_lib/sessionAuth.js";
 
 export const config = { runtime: "edge" };
-
-const supabase = supabaseServerClient;
 
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -26,56 +26,56 @@ async function readBody(request: Request): Promise<{ optionId?: unknown } | null
   }
 }
 
-async function tallyOptionVotes(pollId: string): Promise<Record<string, number>> {
-  if (!supabase) return {};
-  const { data, error } = await supabase
-    .from("poll_votes")
-    .select("option_id")
-    .eq("poll_id", pollId);
-  if (error || !data) return {};
-  const counts: Record<string, number> = {};
-  for (const row of data as { option_id: string }[]) {
-    const key = row.option_id;
-    if (!key) continue;
-    counts[key] = (counts[key] ?? 0) + 1;
-  }
-  return counts;
+// Build a per-request Supabase client that carries the verified user's JWT
+// so PostgREST + Postgres see the right `auth.uid()` inside the RPC.
+function buildUserScopedClient(accessToken: string) {
+  const supabaseUrl = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? "";
+  const supabaseAnonKey =
+    process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "";
+  if (!supabaseUrl || !supabaseAnonKey) return null;
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: { headers: { Authorization: `Bearer ${accessToken}` } },
+  });
 }
 
 export default async function handler(request: Request): Promise<Response> {
-  if (request.method !== "POST") {
-    return json({ error: "method_not_allowed" }, 405);
-  }
+  if (request.method !== "POST") return json({ error: "method_not_allowed" }, 405);
+  if (!supabaseServerClient) return json({ error: "supabase_not_configured" }, 503);
+  if (!isTrustedOrigin(request)) return json({ error: "forbidden_origin" }, 403);
 
-  if (!supabase) {
-    return json({ error: "supabase_not_configured" }, 503);
-  }
-
-  if (!isTrustedOrigin(request)) {
-    return json({ error: "forbidden_origin" }, 403);
-  }
+  const userId = await getRequestUserId(request);
+  if (!userId) return json({ error: "unauthorized" }, 401);
 
   const pollId = getPollId(request);
-  if (!pollId) {
-    return json({ error: "missing_poll_id" }, 400);
-  }
+  if (!pollId) return json({ error: "missing_poll_id" }, 400);
 
   const body = await readBody(request);
-  if (!body || typeof body.optionId !== "string" || body.optionId.length === 0 || body.optionId.length > 64) {
+  if (
+    !body ||
+    typeof body.optionId !== "string" ||
+    body.optionId.length === 0 ||
+    body.optionId.length > 64
+  ) {
     return json({ error: "invalid_vote_payload" }, 400);
   }
 
-  const optionId = body.optionId;
+  const accessToken = await mintAccessToken(userId);
+  if (!accessToken) return json({ error: "session_not_configured" }, 500);
+  const client = buildUserScopedClient(accessToken);
+  if (!client) return json({ error: "supabase_not_configured" }, 503);
 
-  const { error } = await supabase
-    .from("poll_votes")
-    .insert({ poll_id: pollId, option_id: optionId });
+  const { data, error } = await client.rpc("submit_poll_vote", {
+    p_poll_id: pollId,
+    p_option_id: body.optionId,
+  });
 
-  if (error) {
-    return json({ error: "failed_to_record_vote" }, 500);
+  if (error) return json({ error: "failed_to_record_vote" }, 500);
+
+  const payload = (data as { ok?: boolean; error?: string; optionVotes?: Record<string, number> }) ?? {};
+  if (payload.ok === false) {
+    const status = payload.error === "already_voted" ? 409 : 400;
+    return json({ error: payload.error ?? "vote_rejected", optionVotes: payload.optionVotes ?? {} }, status);
   }
-
-  const optionVotes = await tallyOptionVotes(pollId);
-
-  return json({ ok: true, optionVotes });
+  return json({ ok: true, optionVotes: payload.optionVotes ?? {} });
 }
