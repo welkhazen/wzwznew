@@ -1141,9 +1141,6 @@ export function DashboardCommunities({
         }
 
         const savedMessage = await sendMessageSupabase(selectedCommunity.id, {
-          senderId: user.id,
-          senderName: user.username,
-          senderAvatarLevel: avatarLevel,
           text: trimmedMessage,
         });
         updateCommunities((current) => replaceCommunityMessage(current, selectedCommunity.id, optimisticMessage.id, savedMessage));
@@ -1159,7 +1156,7 @@ export function DashboardCommunities({
         updateCommunities((current) => markCommunityMessageFailed(current, selectedCommunity.id, optimisticMessage.id));
         toast({ title: "Failed to send message", description: "Please try again." });
       }
-    }, [avatarLevel, isJoined, selectedCommunity, updateCommunities, user.id, user.username]);
+    }, [isJoined, selectedCommunity, updateCommunities, user.id, user.username]);
 
     const handleSendMessage = async () => {
       if (!selectedCommunity) {

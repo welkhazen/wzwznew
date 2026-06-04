@@ -38,19 +38,9 @@ export function mapCommunityMessage(row: DbCommunityMessage): CommunityChatMessa
 }
 
 /**
- * Send a community message.
- *
- * Security: the frontend no longer supplies senderId / senderName /
- * senderAvatarLevel. The send_community_message SECURITY DEFINER RPC reads
- * the authenticated user via current_user_id(), checks not-banned + community
- * membership, and inserts the real sender fields server-side. The legacy
- * senderId / senderName / senderAvatarLevel on SendCommunityMessageInput are
- * ignored for trust purposes; we keep them in the type only to avoid touching
- * every call site in this pass.
- *
- * TODO(auth-migration): once custom username/password auth is fully replaced
- * with Supabase Auth, the SendCommunityMessageInput type can drop those
- * sender fields entirely. They are currently passed but not trusted.
+ * Send a community message. The SECURITY DEFINER RPC derives the sender from
+ * current_user_id() and enforces not-banned + community membership; the only
+ * client-supplied fields are the message text and an optional reply target.
  */
 export async function sendMessage(
   communityId: string,
