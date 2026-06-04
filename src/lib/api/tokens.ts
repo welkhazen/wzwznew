@@ -1,15 +1,6 @@
-import { supabase } from "@/backend/supabase/client";
-
-async function authHeaders(): Promise<HeadersInit> {
-  const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
-  if (!token) throw new Error("Verified auth required");
-  return { authorization: `Bearer ${token}` };
-}
-
 export async function fetchTokenBalance(userId: string): Promise<number> {
   const response = await fetch(`/api/users/${encodeURIComponent(userId)}/tokens`, {
-    headers: await authHeaders(),
+    credentials: "same-origin",
   });
   if (!response.ok) {
     throw new Error("Failed to fetch token balance");
@@ -24,7 +15,8 @@ export async function fetchTokenBalance(userId: string): Promise<number> {
 export async function spendTokens(userId: string, amount: number): Promise<number> {
   const response = await fetch(`/api/users/${encodeURIComponent(userId)}/tokens`, {
     method: "POST",
-    headers: { "content-type": "application/json", ...(await authHeaders()) },
+    headers: { "content-type": "application/json" },
+    credentials: "same-origin",
     body: JSON.stringify({ amount }),
   });
 

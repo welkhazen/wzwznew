@@ -11,49 +11,32 @@ export interface AuthUser {
 }
 
 type RpcResult = { ok: boolean; user?: AuthUser; error?: string };
-
-function usernameToEmail(username: string): string {
-  return `${encodeURIComponent(username.trim().toLowerCase())}@users.myraw.app`;
-}
+type AuthEndpointResponse = { ok?: boolean; user?: AuthUser; access_token?: string; error?: string };
 
 function normalizeUsername(username: string): string {
   return username.trim();
 }
 
-function normalizeAuthUser(user: AuthUser): AuthUser {
-  return user;
+async function applySupabaseSession(accessToken: string | undefined): Promise<void> {
+  if (!accessToken) return;
+  await supabase.auth.setSession({ access_token: accessToken, refresh_token: accessToken });
 }
 
-async function fetchProfile(userId: string): Promise<AuthUser | null> {
-  const { data, error } = await supabase
-    .from('users')
-    .select('id, username, role, status, avatar_level, onboarding_completed, profile_public')
-    .eq('id', userId)
-    .maybeSingle();
-
-  if (error || !data) return null;
-  return normalizeAuthUser(data as AuthUser);
-}
-
-async function requireProfile(userId: string): Promise<RpcResult> {
-  const user = await fetchProfile(userId);
-  if (!user) return { ok: false, error: 'Profile not found. Please contact support.' };
-  if (user.status === 'banned' || user.status === 'deleted') return { ok: false, error: 'Account is not active.' };
-  return { ok: true, user };
-}
-
-async function postAuthJson(path: string, body: unknown, accessToken?: string): Promise<RpcResult> {
+async function postAuth(path: string, body: unknown): Promise<AuthEndpointResponse> {
   const response = await fetch(path, {
     method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      ...(accessToken ? { authorization: `Bearer ${accessToken}` } : {}),
-    },
+    headers: { 'content-type': 'application/json' },
+    credentials: 'same-origin',
     body: JSON.stringify(body),
   });
-  const payload = (await response.json().catch(() => null)) as RpcResult | null;
+  const payload = (await response.json().catch(() => null)) as AuthEndpointResponse | null;
   if (!response.ok) return { ok: false, error: payload?.error ?? 'Request failed.' };
   return payload ?? { ok: true };
+}
+
+function toResult(payload: AuthEndpointResponse): RpcResult {
+  if (!payload.ok || !payload.user) return { ok: false, error: payload.error ?? 'Authentication failed.' };
+  return { ok: true, user: payload.user };
 }
 
 export async function completeUserOnboarding(_userId?: string): Promise<{ ok: boolean; error?: string }> {
@@ -64,42 +47,41 @@ export async function completeUserOnboarding(_userId?: string): Promise<{ ok: bo
 }
 
 export async function signUp(username: string, password: string): Promise<RpcResult> {
-  const normalizedUsername = normalizeUsername(username);
-  if (!normalizedUsername) return { ok: false, error: 'Username is required.' };
-
-  const email = usernameToEmail(normalizedUsername);
-  const created = await postAuthJson('/api/auth/signup', { username: normalizedUsername, password });
-  if (!created.ok) return created;
-
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error || !data.user) return { ok: false, error: error?.message ?? 'Could not sign in after signup.' };
-  return requireProfile(data.user.id);
+  const normalized = normalizeUsername(username);
+  if (!normalized) return { ok: false, error: 'Username is required.' };
+  const payload = await postAuth('/api/auth/signup', { username: normalized, password });
+  await applySupabaseSession(payload.access_token);
+  return toResult(payload);
 }
 
 export async function signIn(username: string, password: string): Promise<RpcResult> {
-  const email = usernameToEmail(username);
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-
-  if (error || !data.user) {
-    const migrated = await postAuthJson('/api/auth/migrate-custom', { username, password });
-    if (!migrated.ok) return { ok: false, error: 'Could not sign in. Please try again.' };
-
-    const retry = await supabase.auth.signInWithPassword({ email, password });
-    if (retry.error || !retry.data.user) return { ok: false, error: 'Could not sign in. Please try again.' };
-    return requireProfile(retry.data.user.id);
-  }
-
-  return requireProfile(data.user.id);
+  const normalized = normalizeUsername(username);
+  if (!normalized) return { ok: false, error: 'Username is required.' };
+  const payload = await postAuth('/api/auth/login', { username: normalized, password });
+  await applySupabaseSession(payload.access_token);
+  return toResult(payload);
 }
 
 export async function signOut(): Promise<void> {
+  try {
+    await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
+  } catch {
+    // ignore network errors on logout
+  }
   await supabase.auth.signOut();
 }
 
 export async function getSession(): Promise<AuthUser | null> {
-  const { data, error } = await supabase.auth.getUser();
-  if (error || !data.user) return null;
-  return fetchProfile(data.user.id);
+  try {
+    const response = await fetch('/api/auth/me', { credentials: 'same-origin' });
+    if (!response.ok) return null;
+    const payload = (await response.json()) as AuthEndpointResponse;
+    if (!payload.ok || !payload.user) return null;
+    await applySupabaseSession(payload.access_token);
+    return payload.user;
+  } catch {
+    return null;
+  }
 }
 
 export async function changePassword(
@@ -108,18 +90,8 @@ export async function changePassword(
   newPassword: string,
 ): Promise<{ ok: boolean; error?: string }> {
   void _userId;
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  if (userError || !userData.user?.email) return { ok: false, error: 'auth_migration_required' };
-
-  const { error: verifyError } = await supabase.auth.signInWithPassword({
-    email: userData.user.email,
-    password: oldPassword,
-  });
-  if (verifyError) return { ok: false, error: 'Invalid current password' };
-
-  const { error } = await supabase.auth.updateUser({ password: newPassword });
-  if (error) return { ok: false, error: error.message };
-  return { ok: true };
+  const payload = await postAuth('/api/auth/change-password', { oldPassword, newPassword });
+  return { ok: Boolean(payload.ok), error: payload.error };
 }
 
 export async function deleteAccount(
@@ -127,20 +99,7 @@ export async function deleteAccount(
   password: string,
 ): Promise<{ ok: boolean; error?: string }> {
   void _userId;
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  if (userError || !userData.user?.email) return { ok: false, error: 'auth_migration_required' };
-
-  const { error: verifyError } = await supabase.auth.signInWithPassword({
-    email: userData.user.email,
-    password,
-  });
-  if (verifyError) return { ok: false, error: 'Invalid password' };
-
-  const { data: sessionData } = await supabase.auth.getSession();
-  const token = sessionData.session?.access_token;
-  if (!token) return { ok: false, error: 'auth_migration_required' };
-
-  const result = await postAuthJson('/api/auth/delete-account', { password }, token);
-  if (result.ok) await supabase.auth.signOut();
-  return result;
+  const payload = await postAuth('/api/auth/delete-account', { password });
+  if (payload.ok) await supabase.auth.signOut();
+  return { ok: Boolean(payload.ok), error: payload.error };
 }

@@ -1,8 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
 import { supabaseServerClient } from "./supabaseServerClient";
-
-const supabaseUrl = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? "";
-const supabaseAnonKey = process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "";
 
 export type PublicUserProfile = {
   id: string;
@@ -16,10 +12,6 @@ export type PublicUserProfile = {
 
 export function normalizeUsername(username: string): string {
   return username.trim();
-}
-
-export function usernameToEmail(username: string): string {
-  return `${encodeURIComponent(normalizeUsername(username).toLowerCase())}@users.myraw.app`;
 }
 
 export function json(body: unknown, status = 200): Response {
@@ -47,15 +39,6 @@ export async function fetchPublicProfile(userId: string): Promise<PublicUserProf
 
   if (error || !data) return null;
   return data as PublicUserProfile;
-}
-
-export async function verifyPassword(email: string, password: string): Promise<boolean> {
-  if (!supabaseUrl || !supabaseAnonKey) return false;
-  const publicClient = createClient(supabaseUrl, supabaseAnonKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-  const { error } = await publicClient.auth.signInWithPassword({ email, password });
-  return !error;
 }
 
 export async function cleanupAppUserData(userId: string): Promise<void> {

@@ -1,7 +1,8 @@
 import { supabaseServerClient } from "../../_lib/supabaseServerClient";
 import { isTrustedOrigin } from "../../_lib/requestSecurity";
+import { getRequestUserId, verifyAccessToken } from "../../_lib/sessionAuth";
 
-export const config = { runtime: "edge" };
+export const config = { runtime: "nodejs" };
 
 const supabase = supabaseServerClient;
 
@@ -27,14 +28,12 @@ async function readBody(request: Request): Promise<{ action?: unknown; amount?: 
 }
 
 async function getVerifiedUserId(request: Request): Promise<string | null> {
-  if (!supabase) return null;
+  const cookieUserId = await getRequestUserId(request);
+  if (cookieUserId) return cookieUserId;
   const authorization = request.headers.get("authorization") ?? "";
   const match = authorization.match(/^Bearer\s+(.+)$/i);
   if (!match) return null;
-
-  const { data, error } = await supabase.auth.getUser(match[1]);
-  if (error || !data.user) return null;
-  return data.user.id;
+  return verifyAccessToken(match[1]);
 }
 
 export default async function handler(request: Request): Promise<Response> {
