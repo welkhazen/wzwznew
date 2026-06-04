@@ -19,7 +19,7 @@ export function normalizeUsername(username: string): string {
 }
 
 export function usernameToEmail(username: string): string {
-  return `${encodeURIComponent(normalizeUsername(username).toLowerCase())}@users.raw.local`;
+  return `${encodeURIComponent(normalizeUsername(username).toLowerCase())}@users.myraw.app`;
 }
 
 export function json(body: unknown, status = 200): Response {
