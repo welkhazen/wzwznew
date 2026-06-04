@@ -1,4 +1,4 @@
-import { supabaseServerClient } from "./supabaseServerClient";
+import { supabaseServerClient } from "./supabaseServerClient.js";
 
 export type PublicUserProfile = {
   id: string;
