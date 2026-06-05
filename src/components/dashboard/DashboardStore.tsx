@@ -94,7 +94,13 @@ export function DashboardStore({
 
       <section>
         <h2 className="mb-3 font-display text-sm tracking-wide text-raw-text">Loot Spin</h2>
-        <LootSpin tokenBalance={tokenBalance} />
+        <LootSpin
+          tokenBalance={tokenBalance}
+          avatarCatalog={avatarCatalog}
+          ownedAvatarLevels={ownedAvatarLevels}
+          userId={userId}
+          onAvatarPurchased={onAvatarPurchased}
+        />
       </section>
 
       <section>
