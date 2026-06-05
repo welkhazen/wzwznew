@@ -265,7 +265,7 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
                     whiteSpace: "normal",
                     fontSize: isTinyPhone ? "0.6rem" : isCompact ? "0.6rem" : "0.66rem",
                     lineHeight: 1.25,
-                    fontWeight: 1000,
+                    fontWeight: 800,
                     color: isLight
                       ? (isExpanded ? "#000000" : "rgba(0,0,0,0.82)")
                       : "hsl(var(--primary))",
