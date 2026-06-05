@@ -30,12 +30,10 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip non-GET and external APIs
+  // Skip non-GET and cross-origin requests. Let the browser handle third-party
+  // fonts/scripts directly so the worker does not trip document CSP connect-src.
   if (request.method !== 'GET') return;
-  if (url.hostname.includes('supabase.co')) return;
-  if (url.hostname.includes('googleapis.com')) return;
-  if (url.hostname.includes('clarity.ms')) return;
-  if (url.hostname.includes('googletagmanager.com')) return;
+  if (url.origin !== self.location.origin) return;
 
   // Always fetch HTML from the network so old app shells do not point at
   // hashed chunks that disappeared during a newer deployment.
