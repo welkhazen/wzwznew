@@ -42,7 +42,7 @@ export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
       {/* Globe behind text, centered and smaller */}
       <div className="absolute inset-0 flex items-center justify-center z-0 pointer-events-none">
         <div className="w-[340px] h-[340px] md:w-[420px] md:h-[420px] lg:w-[520px] lg:h-[520px]">
-          <Canvas>
+          <Canvas gl={{ powerPreference: "low-power", antialias: false }} dpr={[1, 1.5]}>
             <PerspectiveCamera makeDefault position={[0, 0, 3]} fov={75} />
             <Globe rotationSpeed={0.004} radius={1.1} color={globeColor} />
           </Canvas>
