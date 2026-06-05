@@ -107,7 +107,7 @@ const STEP_LABELS: Record<OnboardingStep, string> = {
   ready: "ready",
 };
 const FREE_ONBOARDING_AVATAR_COUNT = 8;
-const AVATAR_PAGE_SIZE = 16;
+const AVATAR_PAGE_SIZE = 8;
 const AGE_GATE_STORAGE_PREFIX = "raw.ageGateVerified";
 
 const LANDING_ONBOARDING_AVATARS: readonly AvatarCatalogItem[] = [
