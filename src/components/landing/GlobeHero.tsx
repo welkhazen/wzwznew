@@ -120,7 +120,7 @@ export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
             <p
               className="font-display text-lg font-medium leading-relaxed text-foreground sm:text-xl md:text-2xl"
             >
-              Your new 24/7 living and ever-growing world
+              Anonymous online communities for honest conversation and real connection
             </p>
             <p
               className="text-base font-semibold leading-relaxed text-primary sm:text-lg"
@@ -129,7 +129,7 @@ export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
                   "0 0 12px hsl(var(--primary) / 0.6), 0 0 28px hsl(var(--primary) / 0.35)",
               }}
             >
-              Username And Password Only
+              Join interest-based group chats with only a username and password
             </p>
           </motion.div>
         </motion.div>

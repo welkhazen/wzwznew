@@ -50,7 +50,7 @@ describe("onboarding persistence", () => {
 
     const { result } = renderHook(() => useOnboarding(true, alice));
 
-    expect(result.current.onboardingStep).toBe("avatar");
+    expect(result.current.onboardingStep).toBe("username");
   });
 
   it("does not overwrite restored onboarding state with the initial default step", () => {

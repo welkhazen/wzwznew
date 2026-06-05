@@ -10,19 +10,19 @@ import lateNightTalksVideo from "@/assets/2026-04-18 10_10_00.webm";
 const communities = [
   {
     title: "Late Night Talks",
-    description: "Founding community for deep, late-night conversations and real connection.",
+    description: "A 24/7 online group chat for deep late-night conversations, honest thoughts, and real connection.",
     badge: "Founding Community",
     video: lateNightTalksVideo,
   },
   {
     title: "Speak Your Truth",
-    description: "A safe space to share your story, be heard, and support others on their journey.",
+    description: "An anonymous community chat where you can share your story, be heard, and support people through real experiences.",
     badge: "Active",
     video: speakYourTruthVideo,
   },
   {
     title: "Is It Just Me?",
-    description: "Relatable moments, shared observations, and the quiet comfort of realizing you're not the only one.",
+    description: "An interest-based group chat for relatable moments, shared observations, and discovering that you are not alone.",
     badge: "Active",
     video: isItJustMeVideo,
   },
@@ -136,10 +136,10 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
           {/* title */}
           <div className="mb-8 text-center sm:mb-12">
             <h2 className="landing-heading">
-              24/7 communities for real talk.
+              Anonymous online communities and 24/7 group chats.
             </h2>
             <p className="mx-auto mt-3 max-w-xl text-sm text-raw-silver/50 sm:mt-4 sm:text-base">
-              Start with 3 founding categories. Smaller micro-communities unlock as raW grows.
+              Find interest-based community chats where you can speak honestly, meet people who understand you, and build real connections without using your real identity.
             </p>
           </div>
 

@@ -26,4 +26,4 @@ export interface Poll {
   locked: boolean;
 }
 
-export type OnboardingStep = "spin" | "avatar" | "polls" | "communities" | "marketplace" | "ready";
+export type OnboardingStep = "spin" | "username" | "avatar" | "polls" | "communities" | "marketplace" | "ready";

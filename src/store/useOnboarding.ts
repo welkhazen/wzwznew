@@ -6,7 +6,7 @@ import { completeUserOnboarding } from "@/backend/supabase/controllers/authContr
 
 function defaultInitialStep(): OnboardingStep {
   if (typeof window === "undefined") return "spin";
-  return window.localStorage.getItem(LANDING_WHEEL_SPIN_KEY) ? "avatar" : "spin";
+  return window.localStorage.getItem(LANDING_WHEEL_SPIN_KEY) ? "username" : "spin";
 }
 
 export function useOnboarding(isLoggedIn: boolean, user?: User | null) {
@@ -17,6 +17,8 @@ export function useOnboarding(isLoggedIn: boolean, user?: User | null) {
   const [onboardingAnsweredPollIds, setOnboardingAnsweredPollIds] = useState<Set<string>>(new Set());
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
   const [onboardingLoaded, setOnboardingLoaded] = useState(false);
+  const [onboardingPublicUsername, setOnboardingPublicUsername] = useState(username ?? "");
+  const [onboardingPrivateUsername, setOnboardingPrivateUsername] = useState("");
 
   useEffect(() => {
     if (!username || !storageKey) {
@@ -27,16 +29,19 @@ export function useOnboarding(isLoggedIn: boolean, user?: User | null) {
     const entry = readOnboardingMap()[username];
     if (entry) {
       const restoredStep = entry.step === "spin" && window.localStorage.getItem(LANDING_WHEEL_SPIN_KEY)
-        ? "avatar"
+        ? "username"
         : entry.step;
       setOnboardingStep(restoredStep);
       setOnboardingAnsweredPollIds(new Set(entry.answeredPollIds));
+      setOnboardingPublicUsername(entry.publicUsername ?? username);
+      setOnboardingPrivateUsername(entry.privateUsername ?? "");
       setOnboardingCompleted(user?.onboardingCompleted ?? entry.completed);
       setOnboardingLoaded(true);
       return;
     }
 
     setOnboardingCompleted(user?.onboardingCompleted ?? window.localStorage.getItem(storageKey) === "1");
+    setOnboardingPublicUsername(username);
     setOnboardingLoaded(true);
   }, [storageKey, user?.onboardingCompleted, username]);
 
@@ -55,9 +60,11 @@ export function useOnboarding(isLoggedIn: boolean, user?: User | null) {
       completed: onboardingCompleted,
       step: onboardingStep,
       answeredPollIds: Array.from(onboardingAnsweredPollIds),
+      publicUsername: onboardingPublicUsername,
+      privateUsername: onboardingPrivateUsername,
     };
     writeOnboardingMap(map);
-  }, [onboardingAnsweredPollIds, onboardingCompleted, onboardingLoaded, onboardingStep, username]);
+  }, [onboardingAnsweredPollIds, onboardingCompleted, onboardingLoaded, onboardingPrivateUsername, onboardingPublicUsername, onboardingStep, username]);
 
   const resetOnboardingProgress = useCallback(() => {
     setOnboardingStep(defaultInitialStep());
@@ -79,6 +86,10 @@ export function useOnboarding(isLoggedIn: boolean, user?: User | null) {
     onboardingStep,
     setOnboardingStep,
     onboardingAnsweredPollIds,
+    onboardingPublicUsername,
+    onboardingPrivateUsername,
+    setOnboardingPublicUsername,
+    setOnboardingPrivateUsername,
     markOnboardingPollAnswered,
     onboardingCompleted,
     completeOnboarding,
@@ -89,6 +100,8 @@ export function useOnboarding(isLoggedIn: boolean, user?: User | null) {
     isOnboardingResolved,
     markOnboardingPollAnswered,
     onboardingAnsweredPollIds,
+    onboardingPrivateUsername,
+    onboardingPublicUsername,
     onboardingCompleted,
     onboardingStep,
     resetOnboardingProgress,

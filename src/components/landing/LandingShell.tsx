@@ -18,6 +18,7 @@ const TestimonialsSection = lazy(() =>
 );
 import { EarnedWarUpgradesSection } from "@/components/landing/EarnedWarUpgradesSection";
 import { LandingFooter } from "@/components/landing/LandingFooter";
+import { FAQSection } from "@/components/landing/FAQSection";
 import PerforatedBackground from "@/components/ui/perforated-background";
 import type { AuthResult, User } from "@/store/types";
 
@@ -69,13 +70,12 @@ export default function LandingShell({
           </div>
         )}
 
-        {siteReady && (
-          <motion.div
-            className="relative overflow-x-hidden"
-            initial={{ opacity: 0, filter: "blur(14px)" }}
-            animate={{ opacity: 1, filter: "blur(0px)" }}
-            transition={{ duration: 0.75, ease: "easeOut" }}
-          >
+        <motion.div
+          className="relative overflow-x-hidden"
+          initial={{ opacity: 0, filter: "blur(14px)" }}
+          animate={{ opacity: siteReady ? 1 : 0.18, filter: siteReady ? "blur(0px)" : "blur(14px)" }}
+          transition={{ duration: 0.75, ease: "easeOut" }}
+        >
           <PerforatedBackground />
           <MatrixBackground />
 
@@ -117,10 +117,10 @@ export default function LandingShell({
               </div>
             </section>
 
+            <FAQSection />
             <LandingFooter />
           </div>
-          </motion.div>
-        )}
+        </motion.div>
       </div>
 
       <Suspense fallback={null}>

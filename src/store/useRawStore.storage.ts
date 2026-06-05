@@ -16,6 +16,8 @@ interface PersistedOnboardingEntry {
   answeredPollIds: string[];
   selectedCommunityIds?: string[];
   selectedCommunityId?: string | null;
+  publicUsername?: string;
+  privateUsername?: string;
 }
 
 type PersistedOnboardingMap = Record<string, PersistedOnboardingEntry>;

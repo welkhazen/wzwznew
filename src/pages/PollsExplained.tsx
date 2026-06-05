@@ -23,10 +23,10 @@ export default function PollsExplained() {
         <div className="mx-auto max-w-3xl">
           <p className="text-[11px] uppercase tracking-[0.2em] text-raw-gold/75">Insights</p>
           <h1 className="mt-2 font-display text-2xl tracking-wide text-raw-text sm:text-3xl md:text-4xl">
-            Live Polls — What They Are &amp; Why They Matter
+            Anonymous Live Polls That Help You Find Your Community
           </h1>
           <p className="mt-4 text-sm leading-relaxed text-raw-silver/60 sm:text-base">
-            Every question you answer on raW is a data point. Together they paint a picture of who you really are — not who you perform to be.
+            Answer honest questions, compare your views anonymously, and use your response patterns to discover online communities and group chats that better fit your interests and perspective.
           </p>
 
           <div className="mt-10 space-y-10 sm:mt-14">

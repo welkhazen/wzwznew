@@ -23,10 +23,10 @@ export default function CommunitiesExplained() {
         <div className="mx-auto max-w-3xl">
           <p className="text-[11px] uppercase tracking-[0.2em] text-raw-gold/75">Communities</p>
           <h1 className="mt-2 font-display text-2xl tracking-wide text-raw-text sm:text-3xl md:text-4xl">
-            Communities — Built Around Who You Actually Are
+            Anonymous Online Communities Built Around Who You Actually Are
           </h1>
           <p className="mt-4 text-sm leading-relaxed text-raw-silver/60 sm:text-base">
-            Communities on raW are not just topic threads. They are identity-based spaces where your presence is earned through behavior, not follower counts.
+            raW offers anonymous online communities and interest-based group chats where people can speak honestly, meet like-minded people, and build meaningful connections without using a real name or photo.
           </p>
 
           <div className="mt-10 space-y-10 sm:mt-14">
@@ -36,9 +36,9 @@ export default function CommunitiesExplained() {
                 <Users className="h-4 w-4 text-raw-gold" />
               </div>
               <div>
-                <h2 className="text-base font-semibold text-raw-text sm:text-lg">What Are Communities?</h2>
+                <h2 className="text-base font-semibold text-raw-text sm:text-lg">What Are Anonymous Online Communities?</h2>
                 <p className="mt-2 text-sm leading-relaxed text-raw-silver/65">
-                  Each community on raW is a space organized around a shared identity signal — not just an interest. You do not join a community by clicking a button. You are matched to communities based on how you answer polls, which reveals your real values, tendencies, and personality traits. The community finds you as much as you find it.
+                  Each raW community is an online group chat organized around shared interests, experiences, and identity signals. Your live-poll answers help recommend communities where people are more likely to understand your perspective. You can also explore available communities and choose where you feel most comfortable joining the conversation.
                 </p>
               </div>
             </div>
@@ -85,9 +85,9 @@ export default function CommunitiesExplained() {
                 <MessageSquare className="h-4 w-4 text-raw-gold" />
               </div>
               <div>
-                <h2 className="text-base font-semibold text-raw-text sm:text-lg">What Happens Inside a Community</h2>
+                <h2 className="text-base font-semibold text-raw-text sm:text-lg">What Happens Inside an Online Group Chat?</h2>
                 <p className="mt-2 text-sm leading-relaxed text-raw-silver/65">
-                  Community feeds surface discussions, community-specific polls, and shared reactions to global polls. Members can post, comment, and react. The algorithm surfaces content that is most relevant to the community's identity signal — not most viral, not most recent, but most aligned.
+                  Community chats include ongoing discussions, community-specific polls, and shared reactions to wider topics. Members can post, reply, react, and talk with people who share similar interests or experiences. Relevant conversations are prioritized over follower counts and viral popularity.
                 </p>
               </div>
             </div>
@@ -134,7 +134,7 @@ export default function CommunitiesExplained() {
           <div className="mt-12 rounded-xl border border-raw-gold/20 bg-raw-gold/5 px-5 py-5 sm:mt-16">
             <p className="text-sm font-medium text-raw-gold">The bottom line</p>
             <p className="mt-2 text-sm leading-relaxed text-raw-silver/70">
-              Communities on raW exist because identity needs context. Polls tell us who you are. Communities give that identity somewhere to live — with others who resonate, moderated by people who actually belong there, and built around signal rather than noise.
+              raW helps you find anonymous online communities where honest conversation feels easier. Answer polls, discover interest-based group chats, and connect with people who understand your experiences without bringing real-world social pressure into the room.
             </p>
           </div>
         </div>
