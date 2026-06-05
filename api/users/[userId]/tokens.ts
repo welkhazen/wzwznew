@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { supabaseServerClient } from "../../_lib/supabaseServerClient.js";
 import { isTrustedOrigin } from "../../_lib/requestSecurity.js";
-import { getRequestUserId, verifyAccessToken } from "../../_lib/sessionAuth.js";
+import { getRequestUserId, mintAccessToken, verifyAccessToken } from "../../_lib/sessionAuth.js";
 import { checkRateLimit, rateLimitErrorResponse } from "../../_lib/rateLimit.js";
 
 export const config = { runtime: "edge" };
