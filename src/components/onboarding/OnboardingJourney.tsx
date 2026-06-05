@@ -40,6 +40,8 @@ interface OnboardingJourneyProps {
   onMarkPollAnswered: (pollId: string) => void;
   selectedCommunityIds: string[];
   onToggleCommunity: (communityId: string) => void;
+  profilePublic: boolean | null;
+  onSetProfilePublic: (value: boolean) => void;
   onCompleteOnboarding: () => void | Promise<void>;
   onLogout: () => void;
   onClaimLandingWheelAvatar: () => Promise<void>;
@@ -54,7 +56,7 @@ const SPIN_WHEEL_POOL: readonly WheelPoolEntry[] = [
   { id: "wheel-avatar-4", avatarId: "violet-mask", name: "Violet Mask", imageSrc: "/avatars/24.png" },
   { id: "wheel-avatar-5", avatarId: "horned-iron", name: "Viozen", imageSrc: "/avatars/5.png" },
   { id: "wheel-avatar-6", avatarId: "crimson-muse", name: "Crimson Muse", imageSrc: "/avatars/6.webp" },
-  { id: "wheel-avatar-7", avatarId: "solar-flame", name: "Solar Flame", imageSrc: "/avatars/07.webp" },
+  { id: "wheel-avatar-7", avatarId: "solar-flame", name: "Solar Flame", imageSrc: "/avatars/7.png" },
   { id: "wheel-avatar-8", avatarId: "pink-circuit", name: "Pink Circuit", imageSrc: "/avatars/35.png" },
 ];
 
@@ -94,11 +96,12 @@ function findOwnedSpinResult(ownedAvatarLevels: Set<number>, avatarCatalog: Avat
   return null;
 }
 
-const STEP_ORDER: OnboardingStep[] = ["spin", "avatar", "polls", "communities"];
+const STEP_ORDER: OnboardingStep[] = ["spin", "avatar", "polls", "profile", "communities"];
 const STEP_LABELS: Record<OnboardingStep, string> = {
   spin: "spin",
   avatar: "avatar",
   polls: "polls",
+  profile: "profile",
   communities: "communities",
   marketplace: "insights",
   ready: "ready",
@@ -308,6 +311,8 @@ export function OnboardingJourney({
   onMarkPollAnswered,
   selectedCommunityIds,
   onToggleCommunity,
+  profilePublic,
+  onSetProfilePublic,
   onCompleteOnboarding,
   onLogout,
   onClaimLandingWheelAvatar,
@@ -369,14 +374,15 @@ export function OnboardingJourney({
 
   useEffect(() => {
     const stepIndex = STEP_ORDER.indexOf(onboardingStep);
-    track("onboarding_step_viewed", { step: onboardingStep as "spin" | "avatar" | "polls" | "communities" | "ready", step_index: stepIndex });
+    track("onboarding_step_viewed", { step: onboardingStep as "spin" | "avatar" | "polls" | "profile" | "communities" | "ready", step_index: stepIndex });
     stepStartTimeRef.current = Date.now();
   }, [onboardingStep]);
 
   const canContinueFromAvatar = avatarIndex >= 1 && (avatarIndex <= FREE_ONBOARDING_AVATAR_COUNT || ownedAvatarLevels.has(avatarIndex));
   const canContinueFromPolls = answeredCount >= onboardingPolls.length;
+  const canContinueFromProfile = profilePublic !== null;
   const canContinueFromCommunities = selectedCommunityIds.length >= 1;
-  const canCompleteOnboarding = canContinueFromAvatar && canContinueFromPolls && canContinueFromCommunities;
+  const canCompleteOnboarding = canContinueFromAvatar && canContinueFromPolls && canContinueFromProfile && canContinueFromCommunities;
   const previewAvatar = onboardingAvatars[previewAvatarIndex - 1] ?? onboardingAvatars[0];
   const canSelectPreviewAvatar = previewAvatarIndex <= FREE_ONBOARDING_AVATAR_COUNT || ownedAvatarLevels.has(previewAvatarIndex);
   const canContinueWithPreviewAvatar = canContinueFromAvatar && previewAvatarIndex === avatarIndex;
@@ -436,7 +442,7 @@ export function OnboardingJourney({
     }
 
     track("onboarding_step_completed", {
-      step: onboardingStep as "spin" | "avatar" | "polls" | "communities" | "ready",
+      step: onboardingStep as "spin" | "avatar" | "polls" | "profile" | "communities" | "ready",
       duration_ms: Date.now() - stepStartTimeRef.current,
     });
     onSetOnboardingStep(getNextStep(onboardingStep));
@@ -915,6 +921,90 @@ export function OnboardingJourney({
                 <button
                   onClick={goToNextStep}
                   disabled={!canContinueFromPolls}
+                  className="rounded-xl border border-raw-gold/40 bg-raw-gold/15 px-5 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-raw-gold transition-all hover:bg-raw-gold/25 disabled:cursor-not-allowed disabled:opacity-40 sm:py-2.5"
+                >
+                  Continue to profile →
+                </button>
+              </div>
+            </section>
+          )}
+
+          {onboardingStep === "profile" && (
+            <section>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="font-display text-lg tracking-wide text-raw-text sm:text-xl">
+                    IV. Choose your profile visibility
+                  </h2>
+                  <p className="mt-2 text-xs leading-relaxed text-raw-silver/55 sm:text-sm">
+                    This sets whether other members can open your profile. You can change it later from your settings.
+                  </p>
+                </div>
+                <span className={`shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
+                  canContinueFromProfile
+                    ? "border-raw-gold/60 bg-raw-gold/10 text-raw-gold"
+                    : "border-raw-border/40 text-raw-gold/75"
+                }`}>
+                  {canContinueFromProfile ? "1/1" : "0/1"}
+                </span>
+              </div>
+
+              <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
+                {([
+                  {
+                    value: true,
+                    title: "Public profile",
+                    blurb: "Anyone in the community can tap your avatar to see your username, level, and join date.",
+                    detail: "Recommended if you want to be discoverable and join more conversations.",
+                  },
+                  {
+                    value: false,
+                    title: "Private profile",
+                    blurb: "Only you see your profile details. Other members see your avatar and messages but cannot open your profile card.",
+                    detail: "Each account can be private — pick this if you prefer to keep things low-key.",
+                  },
+                ] as const).map((option) => {
+                  const isSelected = profilePublic === option.value;
+                  return (
+                    <button
+                      key={String(option.value)}
+                      type="button"
+                      onClick={() => onSetProfilePublic(option.value)}
+                      className={`group relative overflow-hidden rounded-2xl border bg-transparent p-4 text-left transition-all duration-300 sm:p-5 ${
+                        isSelected
+                          ? "border-raw-gold/70 shadow-[0_0_0_1px_rgba(241,196,45,0.25),0_12px_28px_rgba(241,196,45,0.15)]"
+                          : "border-raw-border/35 hover:border-raw-gold/40 hover:shadow-[0_8px_20px_rgba(0,0,0,0.4)]"
+                      }`}
+                    >
+                      {isSelected && (
+                        <div className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-raw-gold shadow-lg">
+                          <span className="text-[11px] font-bold text-black">✓</span>
+                        </div>
+                      )}
+                      <p className="font-display text-base text-raw-text sm:text-lg">{option.title}</p>
+                      <p className="mt-2 text-xs leading-relaxed text-raw-silver/65 sm:text-sm">{option.blurb}</p>
+                      <p className="mt-3 text-[11px] leading-relaxed text-raw-silver/40">{option.detail}</p>
+                      <div className="mt-4">
+                        <span
+                          className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] transition-colors sm:px-3 ${
+                            isSelected
+                              ? "border-raw-gold/80 bg-raw-gold/15 text-raw-gold"
+                              : "border-raw-border/50 text-raw-gold/85 group-hover:border-raw-gold/45"
+                          }`}
+                        >
+                          {isSelected ? "✓ Selected" : "Choose"}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="mt-5 flex items-center justify-between gap-3 sm:mt-6">
+                <BackButton onClick={goToPreviousStep} />
+                <button
+                  onClick={goToNextStep}
+                  disabled={!canContinueFromProfile}
                   className="rounded-xl border border-raw-gold/40 bg-raw-gold/15 px-5 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-raw-gold transition-all hover:bg-raw-gold/25 disabled:cursor-not-allowed disabled:opacity-40 sm:py-2.5"
                 >
                   Continue to communities →

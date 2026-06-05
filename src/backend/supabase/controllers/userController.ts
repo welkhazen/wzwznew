@@ -92,10 +92,9 @@ export async function getPublicUserProfile(userId: string): Promise<PublicUserPr
 }
 
 export async function updateProfileVisibility(userId: string, profilePublic: boolean): Promise<void> {
-  void profilePublic;
   const { error } = await supabase
     .from('users')
-    .update({ profile_public: true })
+    .update({ profile_public: profilePublic })
     .eq('id', userId);
   if (error) throw error;
 }
