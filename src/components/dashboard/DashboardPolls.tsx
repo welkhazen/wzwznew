@@ -3,7 +3,12 @@ import type { Poll } from "@/store/useRawStore";
 import { useTheme } from "@/providers/useTheme";
 import { PremiumPollCard } from "@/components/polls/PremiumPollCard";
 import { ShareButton } from "@/components/ui/share-button";
+<<<<<<< Updated upstream
 import { addPollComment, fetchPollComments } from "@/lib/api/polls";
+=======
+import { addPollComment, fetchPollComments } from "@/utils/supabasePolls";
+import { getUserTextModerationMessage, moderateUserText } from "@/lib/inputSecurity";
+>>>>>>> Stashed changes
 import { isNoPollOption, isYesPollOption } from "@/lib/polls/normalizePollOptionText";
 import {
   getPollShareCode,
@@ -284,6 +289,7 @@ export function DashboardPolls({
   const [answerHistory, setAnswerHistory] = useState<Record<string, string>>(() => readStoredAnswerHistory(answersStorageKey));
   const [historyComments, setHistoryComments] = useState<Record<string, PollHistoryComment[]>>({});
   const [commentDraft, setCommentDraft] = useState("");
+  const [commentModerationError, setCommentModerationError] = useState<string | null>(null);
   const [currentPollIndex, setCurrentPollIndex] = useState(0);
   const [hasSeenVoteHint, setHasSeenVoteHint] = useState(false);
   const [lockedPollId, setLockedPollId] = useState<string | null>(null);
@@ -459,11 +465,17 @@ export function DashboardPolls({
 
     const content = commentDraft.trim();
     if (!content) return;
+    const moderation = moderateUserText(content);
+    if (!moderation.allowed) {
+      setCommentModerationError(getUserTextModerationMessage(moderation));
+      return;
+    }
+    setCommentModerationError(null);
 
     const nextComment: PollHistoryComment = {
       id: `${currentPoll.id}-${Date.now()}`,
       author: username,
-      content,
+      content: moderation.text,
       createdAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
 
@@ -476,7 +488,11 @@ export function DashboardPolls({
     setTimeout(() => commentsEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
 
     try {
+<<<<<<< Updated upstream
       await addPollComment(currentPoll.id, content, { id: userId, name: username });
+=======
+      await addPollComment(currentPoll.id, moderation.text);
+>>>>>>> Stashed changes
     } catch (error) {
       console.error("Failed to save dashboard comment to Supabase", error);
     }
@@ -738,7 +754,10 @@ export function DashboardPolls({
             >
               <input
                 value={commentDraft}
-                onChange={(event) => setCommentDraft(event.target.value)}
+                onChange={(event) => {
+                  setCommentDraft(event.target.value);
+                  setCommentModerationError(null);
+                }}
                 onKeyDown={handleCommentKeyDown}
                 placeholder="Add a comment..."
                 className={`flex-1 bg-transparent text-sm focus:outline-none ${
@@ -758,6 +777,9 @@ export function DashboardPolls({
                 <SendHorizontal className="size-3.5" />
               </button>
             </form>
+            {commentModerationError && (
+              <p className="text-xs text-red-300">{commentModerationError}</p>
+            )}
           </div>
         )}
       </section>

@@ -1,0 +1,117 @@
+{
+  "agents": {
+    "agent-1780243739599-uo84gv": {
+      "agentId": "agent-1780243739599-uo84gv",
+      "agentType": "reviewer",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "model": "sonnet"
+      },
+      "createdAt": "2026-05-31T16:08:59.599Z",
+      "domain": "frontend-backend-typescript",
+      "model": "sonnet",
+      "modelRoutedBy": "explicit"
+    },
+    "agent-1780243739648-7nvuo8": {
+      "agentId": "agent-1780243739648-7nvuo8",
+      "agentType": "tester",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "model": "sonnet"
+      },
+      "createdAt": "2026-05-31T16:08:59.648Z",
+      "domain": "typescript-react-build",
+      "model": "sonnet",
+      "modelRoutedBy": "explicit"
+    },
+    "agent-1780431013284-lpslvd": {
+      "agentId": "agent-1780431013284-lpslvd",
+      "agentType": "researcher",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "model": "haiku"
+      },
+      "createdAt": "2026-06-02T20:10:13.284Z",
+      "domain": "repo-safety-surfaces",
+      "model": "haiku",
+      "modelRoutedBy": "explicit"
+    },
+    "agent-1780431013327-zzp3nn": {
+      "agentId": "agent-1780431013327-zzp3nn",
+      "agentType": "security",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "model": "sonnet"
+      },
+      "createdAt": "2026-06-02T20:10:13.328Z",
+      "domain": "input-moderation",
+      "model": "sonnet",
+      "modelRoutedBy": "explicit"
+    },
+    "agent-1780431013370-phyzl6": {
+      "agentId": "agent-1780431013370-phyzl6",
+      "agentType": "tester",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "model": "haiku"
+      },
+      "createdAt": "2026-06-02T20:10:13.370Z",
+      "domain": "moderation-tests",
+      "model": "haiku",
+      "modelRoutedBy": "explicit"
+    },
+    "agent-1780431111355-u1givt": {
+      "agentId": "agent-1780431111355-u1givt",
+      "agentType": "planner",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "model": "sonnet"
+      },
+      "createdAt": "2026-06-02T20:11:51.355Z",
+      "domain": "ml-training",
+      "model": "sonnet",
+      "modelRoutedBy": "explicit"
+    },
+    "agent-1780431111407-w1950h": {
+      "agentId": "agent-1780431111407-w1950h",
+      "agentType": "tester",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "model": "haiku"
+      },
+      "createdAt": "2026-06-02T20:11:51.408Z",
+      "domain": "dataset-validation",
+      "model": "haiku",
+      "modelRoutedBy": "explicit"
+    },
+    "agent-1780431111851-z9p442": {
+      "agentId": "agent-1780431111851-z9p442",
+      "agentType": "reviewer",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "model": "haiku"
+      },
+      "createdAt": "2026-06-02T20:11:51.851Z",
+      "domain": "model-quality",
+      "model": "haiku",
+      "modelRoutedBy": "explicit"
+    }
+  },
+  "version": "3.0.0"
+}

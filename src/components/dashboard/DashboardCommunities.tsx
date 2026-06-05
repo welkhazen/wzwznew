@@ -89,6 +89,7 @@ import {
   readBlockedCommunitySenders,
   writeBlockedCommunitySenders,
 } from "@/lib/blockedCommunitySenders";
+import { getUserTextModerationMessage, moderateUserText } from "@/lib/inputSecurity";
 import type { User } from "@/store/types";
 import { CommunityMessageTimeline } from "@/components/dashboard/CommunityMessageTimeline";
 import { CommunityMessageComposer } from "@/components/dashboard/CommunityMessageComposer";
@@ -104,6 +105,177 @@ const WAITLIST_UNLOCK_THRESHOLD = 200;
 const MESSAGE_PAGE_SIZE = 10;
 const MAX_COMMUNITY_MESSAGE_LENGTH = 150;
 
+<<<<<<< Updated upstream
+=======
+const COMMUNITY_REQUEST_FIELD_LABELS: Record<string, string> = {
+  communityName: "Community name",
+  genre: "Genre",
+  focusArea: "Focus area",
+  audience: "Audience",
+  whyNow: "Why now",
+  samplePrompt: "Sample prompt",
+};
+
+function getMessageSenderBlockKey(message: Pick<CommunityChatMessageRecord, "senderId" | "senderName">): string {
+  return getCommunitySenderBlockKey(message.senderId, message.senderName);
+}
+
+function readCachedCommunities(): PersistedCommunityRecord[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.sessionStorage.getItem(COMMUNITIES_CACHE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeCachedCommunities(communities: PersistedCommunityRecord[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.setItem(COMMUNITIES_CACHE_KEY, JSON.stringify(communities));
+  } catch {
+    // ignore storage write errors
+  }
+}
+
+function mergeCommunityMessages(
+  messages: CommunityChatMessageRecord[],
+  incoming: CommunityChatMessageRecord,
+): CommunityChatMessageRecord[] {
+  const withoutSameId = messages.filter((message) => message.id !== incoming.id);
+  const pendingIndex = withoutSameId.findIndex((message) =>
+    message.deliveryStatus === "sending" &&
+    message.senderId === incoming.senderId &&
+    message.text === incoming.text
+  );
+
+  const nextMessages = [...withoutSameId];
+  if (pendingIndex >= 0) {
+    nextMessages[pendingIndex] = incoming;
+  } else {
+    nextMessages.push(incoming);
+  }
+
+  return nextMessages.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+}
+
+function upsertCommunityMessage(
+  communities: PersistedCommunityRecord[],
+  communityId: string,
+  message: CommunityChatMessageRecord,
+): PersistedCommunityRecord[] {
+  return communities.map((community) =>
+    community.id === communityId
+      ? { ...community, messages: mergeCommunityMessages(community.messages, message) }
+      : community
+  );
+}
+
+function replaceCommunityMessage(
+  communities: PersistedCommunityRecord[],
+  communityId: string,
+  previousId: string,
+  message: CommunityChatMessageRecord,
+): PersistedCommunityRecord[] {
+  return communities.map((community) => {
+    if (community.id !== communityId) return community;
+    const withoutPrevious = community.messages.filter((entry) => entry.id !== previousId);
+    return { ...community, messages: mergeCommunityMessages(withoutPrevious, message) };
+  });
+}
+
+function markCommunityMessageFailed(
+  communities: PersistedCommunityRecord[],
+  communityId: string,
+  messageId: string,
+): PersistedCommunityRecord[] {
+  return communities.map((community) =>
+    community.id === communityId
+      ? {
+          ...community,
+          messages: community.messages.map((message) =>
+            message.id === messageId ? { ...message, deliveryStatus: "failed" } : message
+          ),
+        }
+      : community
+  );
+}
+
+function appendOptimisticMessage(
+  communities: PersistedCommunityRecord[],
+  communityId: string,
+  message: CommunityChatMessageRecord,
+): PersistedCommunityRecord[] {
+  return communities.map((community) => {
+    if (community.id !== communityId) return community;
+    const withoutExisting = community.messages.filter((entry) => entry.id !== message.id);
+    return {
+      ...community,
+      messages: [...withoutExisting, { ...message, deliveryStatus: "sending" }]
+        .sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
+    };
+  });
+}
+
+export function DashboardCommunities(props) {
+      // Main search query state (fix ReferenceError)
+      const [searchQuery, setSearchQuery] = useState("");
+    // Main community state (fix ReferenceError)
+    const [communities, setCommunities] = useState<PersistedCommunityRecord[]>(() => readCachedCommunities());
+  // Destructure props for clarity and to avoid ReferenceError
+  const {
+    user,
+    avatarLevel = 1,
+    tokenBalance = 0,
+    activeCommunityId = null,
+    onOpenCommunity,
+    onBackToCommunities,
+    onCommunitiesChange,
+  } = props;
+  // --- Floating request button state/hooks ---
+  const [showRequestButton, setShowRequestButton] = useState(false);
+  const [requestBtnText, setRequestBtnText] = useState("Didn't find your community?");
+  const [mobileRequestExpanded, setMobileRequestExpanded] = useState(false);
+  const [isInitialCommunitiesLoading, setIsInitialCommunitiesLoading] = useState(() => readCachedCommunities().length === 0);
+
+  // Show button after scrolling 400px
+  useEffect(() => {
+    const onScroll = () => {
+      if (window.scrollY > 400) {
+        setShowRequestButton(true);
+      } else {
+        setShowRequestButton(false);
+      }
+    };
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Collapse mobile request button when tapping outside
+  useEffect(() => {
+    if (!mobileRequestExpanded) return;
+    const handler = () => setMobileRequestExpanded(false);
+    const timeout = setTimeout(() => document.addEventListener("click", handler), 0);
+    return () => { clearTimeout(timeout); document.removeEventListener("click", handler); };
+  }, [mobileRequestExpanded]);
+
+  // Animate text change after 2s
+  useEffect(() => {
+    if (!showRequestButton) {
+      setRequestBtnText("Didn't find your community?");
+      return;
+    }
+    const timeout = setTimeout(() => {
+      setRequestBtnText("Request to create yours now");
+    }, 2000);
+    return () => clearTimeout(timeout);
+  }, [showRequestButton]);
+// ...existing code...
+
+>>>>>>> Stashed changes
 interface DashboardCommunitiesProps {
   user: User;
   avatarLevel?: number;
@@ -564,21 +736,35 @@ export function DashboardCommunities({
     const handleSubmitPoll = useCallback(async () => {
       if (!selectedCommunity || !canManagePolls) return;
       const trimmedOptions = pollOptionDrafts.map((option) => option.trim()).filter(Boolean);
+      const questionModeration = moderateUserText(pollQuestion);
       if (!pollQuestion.trim()) {
         toast({ title: "Add a question", description: "Polls need a question to ask the room." });
+        return;
+      }
+      if (!questionModeration.allowed) {
+        toast({ title: "Poll question blocked", description: getUserTextModerationMessage(questionModeration) });
         return;
       }
       if (trimmedOptions.length < 2) {
         toast({ title: "Add at least two options", description: "Members need something to choose between." });
         return;
       }
+      const moderatedOptions: string[] = [];
+      for (const option of trimmedOptions) {
+        const optionModeration = moderateUserText(option);
+        if (!optionModeration.allowed) {
+          toast({ title: "Poll option blocked", description: getUserTextModerationMessage(optionModeration) });
+          return;
+        }
+        moderatedOptions.push(optionModeration.text);
+      }
 
       setPollSubmitting(true);
       try {
         await createCommunityPoll({
           communityId: selectedCommunity.id,
-          question: pollQuestion.trim(),
-          options: trimmedOptions,
+          question: questionModeration.text,
+          options: moderatedOptions,
           createdByUserId: user.id,
           createdByUsername: user.username,
         });
@@ -1044,7 +1230,12 @@ export function DashboardCommunities({
         toast({ title: "Message too long", description: `Max ${MAX_COMMUNITY_MESSAGE_LENGTH} characters.` });
         return;
       }
-      await sendOptimisticMessage(trimmedMessage);
+      const messageModeration = moderateUserText(trimmedMessage);
+      if (!messageModeration.allowed) {
+        toast({ title: "Message blocked", description: getUserTextModerationMessage(messageModeration) });
+        return;
+      }
+      await sendOptimisticMessage(messageModeration.text);
     };
 
     const handleRetryMessage = async (message: CommunityChatMessageRecord) => {
@@ -1091,8 +1282,24 @@ export function DashboardCommunities({
         });
         return;
       }
+      const titleModeration = moderateUserText(trimmedTitle);
+      if (!titleModeration.allowed) {
+        toast({ title: "Community name blocked", description: getUserTextModerationMessage(titleModeration) });
+        return;
+      }
 
+<<<<<<< Updated upstream
       if (!canManageCommunity(selectedCommunity, user.id, user.username)) {
+=======
+      const updatedCommunity = updateCommunityPresentation(selectedCommunity.id, {
+        actorUserId: user.id,
+        actorUsername: user.username,
+        title: titleModeration.text,
+        logoUrl: communitySettingsDraft.logoUrl,
+      });
+
+      if (!updatedCommunity) {
+>>>>>>> Stashed changes
         toast({
           title: "Creator access required",
           description: "Only the community creator can change the group name or logo.",
@@ -1229,16 +1436,33 @@ export function DashboardCommunities({
         return;
       }
 
+      const moderatedDraft = { ...trimmedDraft };
+      for (const field of Object.keys(trimmedDraft) as Array<keyof CommunityRequestDraft>) {
+        if (!trimmedDraft[field]) {
+          continue;
+        }
+
+        const moderation = moderateUserText(trimmedDraft[field]);
+        if (!moderation.allowed) {
+          toast({
+            title: "Request wording blocked",
+            description: `${COMMUNITY_REQUEST_FIELD_LABELS[field]}: ${getUserTextModerationMessage(moderation)}`,
+          });
+          return;
+        }
+        moderatedDraft[field] = moderation.text;
+      }
+
       try {
         const newRequest = await submitCommunityRequest({
           requesterId: user.id,
           requesterName: user.username,
-          communityName: trimmedDraft.communityName,
-          genre: trimmedDraft.genre,
-          focusArea: trimmedDraft.focusArea,
-          audience: trimmedDraft.audience,
-          whyNow: trimmedDraft.whyNow,
-          samplePrompt: trimmedDraft.samplePrompt,
+          communityName: moderatedDraft.communityName,
+          genre: moderatedDraft.genre,
+          focusArea: moderatedDraft.focusArea,
+          audience: moderatedDraft.audience,
+          whyNow: moderatedDraft.whyNow,
+          samplePrompt: moderatedDraft.samplePrompt,
         });
         await reloadChatData();
         setRequestDraft(INITIAL_REQUEST_DRAFT);

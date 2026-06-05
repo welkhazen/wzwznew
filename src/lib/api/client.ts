@@ -92,7 +92,8 @@ async function getCommentsMockResponse(input: string, init?: RequestInit): Promi
     const { supabase } = await import('@/backend/supabase/client');
     if (init?.method === "POST" && init.body) {
       const { text } = JSON.parse(init.body as string) as { text: string };
-      await supabase.from('poll_comments').insert({ poll_id: pollId, body: text });
+      const { assertUserTextAllowed } = await import('@/lib/inputSecurity');
+      await supabase.from('poll_comments').insert({ poll_id: pollId, body: assertUserTextAllowed(text) });
       return { ok: true };
     }
     // GET

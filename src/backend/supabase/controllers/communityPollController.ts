@@ -6,6 +6,7 @@ import type {
   CommunityPollVoteRow,
   CreateCommunityPollInput,
 } from '../models/community-poll';
+import { assertUserTextAllowed } from '@/lib/inputSecurity';
 
 function mapPoll(row: CommunityPollRow, currentUserId: string | null): CommunityPollRecord {
   const options = [...((row.community_poll_options as CommunityPollOptionRow[]) ?? [])]
@@ -55,11 +56,12 @@ export async function fetchCommunityPolls(
 export async function createCommunityPoll(
   input: CreateCommunityPollInput,
 ): Promise<CommunityPollRecord> {
+  const question = assertUserTextAllowed(input.question);
   const cleanedOptions = input.options
-    .map((option) => option.trim())
+    .map((option) => option.trim() ? assertUserTextAllowed(option) : "")
     .filter((option) => option.length > 0);
 
-  if (!input.question.trim()) {
+  if (!question) {
     throw new Error('Poll question is required.');
   }
   if (cleanedOptions.length < 2) {
@@ -70,7 +72,7 @@ export async function createCommunityPoll(
     .from('community_polls')
     .insert({
       community_id: input.communityId,
-      question: input.question.trim(),
+      question,
       created_by_user_id: input.createdByUserId,
       created_by_username: input.createdByUsername,
     })

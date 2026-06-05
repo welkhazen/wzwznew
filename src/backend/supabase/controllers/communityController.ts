@@ -1,8 +1,9 @@
 import { supabase } from '../client';
-import type { PersistedCommunityRecord, CommunityChatMessageRecord, CommunityChatMemberRecord } from '@/lib/communityChat.types';
+import type { PersistedCommunityRecord, CommunityChatMemberRecord } from '@/lib/communityChat.types';
 import type { CommunityRequestRecord } from '@/lib/adminData';
 import { buildCommunityAbbr } from '@/lib/communityChat.utils';
 import { mapCommunityMessage, type DbCommunityMessage } from './chatController';
+import { assertUserTextAllowed } from '@/lib/inputSecurity';
 
 type DbMessage = DbCommunityMessage;
 
@@ -150,6 +151,7 @@ export async function updateCommunityPresentation(
 // Admin-only — RPC enforces is_admin() server-side.
 export async function createCommunityFromRequest(request: CommunityRequestRecord): Promise<void> {
   const id = `request-${request.id}`;
+<<<<<<< Updated upstream
   const now = request.reviewedAt ?? new Date().toISOString();
   const { error } = await supabase.rpc('create_community_from_request', {
     p_id: id,
@@ -159,5 +161,26 @@ export async function createCommunityFromRequest(request: CommunityRequestRecord
     p_created_by: request.requesterName,
     p_created_at: now,
   });
+=======
+  const communityName = assertUserTextAllowed(request.communityName);
+  const whyNow = assertUserTextAllowed(request.whyNow);
+  const focusArea = assertUserTextAllowed(request.focusArea);
+  const samplePrompt = request.samplePrompt.trim() ? assertUserTextAllowed(request.samplePrompt) : "";
+  const abbr = buildCommunityAbbr(communityName);
+  const now = request.reviewedAt ?? new Date().toISOString();
+
+  const { error } = await supabase.from('communities').upsert({
+    id,
+    abbr,
+    title: communityName,
+    description: whyNow,
+    topic: samplePrompt || focusArea,
+    status: 'Early Access',
+    locked: false,
+    created_at: now,
+    created_by: request.requesterName,
+  }, { onConflict: 'id' });
+
+>>>>>>> Stashed changes
   if (error) throw error;
 }

@@ -1,5 +1,6 @@
 import { supabase } from '../client';
 import type { CommunityRequestRecord } from '@/lib/adminData';
+import { assertUserTextAllowed } from '@/lib/inputSecurity';
 
 type DbRequest = {
   id: string;
@@ -45,17 +46,24 @@ export async function submitCommunityRequest(params: {
   whyNow: string;
   samplePrompt: string;
 }): Promise<CommunityRequestRecord> {
+  const communityName = assertUserTextAllowed(params.communityName);
+  const genre = assertUserTextAllowed(params.genre);
+  const focusArea = assertUserTextAllowed(params.focusArea);
+  const audience = assertUserTextAllowed(params.audience);
+  const whyNow = assertUserTextAllowed(params.whyNow);
+  const samplePrompt = params.samplePrompt.trim() ? assertUserTextAllowed(params.samplePrompt) : "";
+
   const { data, error } = await supabase
     .from('community_requests')
     .insert({
       requester_id: params.requesterId,
       requester_name: params.requesterName,
-      community_name: params.communityName,
-      genre: params.genre,
-      focus_area: params.focusArea,
-      audience: params.audience,
-      why_now: params.whyNow,
-      sample_prompt: params.samplePrompt,
+      community_name: communityName,
+      genre,
+      focus_area: focusArea,
+      audience,
+      why_now: whyNow,
+      sample_prompt: samplePrompt,
     })
     .select()
     .single();
