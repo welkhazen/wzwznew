@@ -10,6 +10,7 @@ import { awardXP, XP_REWARDS } from "@/lib/userProgress";
 import { claimPendingLandingWheelAvatarForUser } from "@/lib/avatarCatalog";
 import { unlockCommunity } from "@/lib/communityAccess";
 import { joinCommunity } from "@/backend/supabase/controllers/communityController";
+import { updateProfileVisibility } from "@/backend/supabase/controllers/userController";
 
 const LandingShellLazy = lazy(() => import("@/components/landing/LandingShell"));
 
@@ -168,6 +169,10 @@ const Index = () => {
             await joinOnboardingCommunities();
             completeOnboarding();
             void awardXP(user.id, XP_REWARDS.ONBOARDING_COMPLETE);
+          }}
+          profilePublic={user.profilePublic ?? null}
+          onSetProfilePublic={async (value) => {
+            await updateProfileVisibility(user.id, value);
           }}
           onLogout={logout}
           onClaimLandingWheelAvatar={async () => {
