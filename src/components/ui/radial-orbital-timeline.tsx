@@ -69,7 +69,7 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
     const x = radius * Math.cos(radian);
     const y = radius * Math.sin(radian);
     const zIndex = Math.round(100 + 50 * Math.cos(radian));
-    const opacity = Math.max(0.78, Math.min(1, 0.78 + 0.22 * ((1 + Math.sin(radian)) / 2)));
+    const opacity = Math.max(0.45, Math.min(1, 0.45 + 0.55 * ((1 + Math.sin(radian)) / 2)));
     return { x, y, zIndex, opacity };
   }, []);
 
@@ -263,26 +263,17 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
                   style={{
                     maxWidth: isTinyPhone ? 70 : isCompact ? 84 : 120,
                     whiteSpace: "normal",
-                    fontSize: isTinyPhone ? "0.6rem" : isCompact ? "0.6rem" : "0.66rem",
-                    lineHeight: 1.25,
-                    fontWeight: 800,
+                    fontSize: isTinyPhone ? "0.6rem" : isCompact ? "0.575rem" : "0.6rem",
+                    lineHeight: 1.3,
+                    fontWeight: 700,
                     color: isLight
-                      ? (isExpanded ? "#000000" : "rgba(0,0,0,0.82)")
-                      : "hsl(var(--primary))",
-                    backgroundImage: isLight
-                      ? "none"
-                      : "linear-gradient(180deg, #fff8d8 0%, hsl(var(--primary)) 42%, hsl(var(--primary) / 0.82) 100%)",
-                    backgroundClip: isLight ? "border-box" : "text",
-                    WebkitBackgroundClip: isLight ? "border-box" : "text",
-                    WebkitTextFillColor: isLight ? "currentColor" : "transparent",
-                    WebkitTextStroke: isLight
-                      ? "0.15px rgba(0,0,0,0.5)"
-                      : "0.2px hsl(var(--primary) / 0.9)",
+                      ? (isExpanded ? "#000000" : "rgba(0,0,0,0.45)")
+                      : (isExpanded ? "hsl(var(--primary))" : "hsl(var(--primary) / 0.55)"),
                     textShadow: isLight
-                      ? "0 1px 1px rgba(255,255,255,0.9), 0 0 6px rgba(255,255,255,0.7)"
+                      ? "none"
                       : (isExpanded
-                          ? "0 1px 2px rgba(0,0,0,1), 0 0 8px hsl(var(--primary) / 0.95), 0 0 18px hsl(var(--primary) / 0.72), 0 0 32px hsl(var(--primary) / 0.42)"
-                          : "0 1px 2px rgba(0,0,0,1), 0 0 6px hsl(var(--primary) / 0.92), 0 0 14px hsl(var(--primary) / 0.62), 0 0 24px hsl(var(--primary) / 0.32)"),
+                          ? "0 0 10px hsl(var(--primary) / 0.7), 0 0 20px hsl(var(--primary) / 0.4)"
+                          : "0 1px 4px rgba(0,0,0,1), 0 0 8px rgba(0,0,0,0.9)"),
                   }}
                 >
                   {item.title}
