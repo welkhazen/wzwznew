@@ -1,13 +1,21 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Check, Lock, MonitorCog } from "lucide-react";
+import { Check, Eye, Lock, MonitorCog } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/providers/useTheme";
 import { useRawStore } from "@/store/useRawStore";
 import { spendTokens } from "@/lib/api/tokens";
 import { supabase } from "@/lib/supabase";
-import type { AccentPresetId } from "@/providers/theme-context";
+import { ACCENT_PRESETS, type AccentPreset, type AccentPresetId } from "@/providers/theme-context";
 
 interface ThemeCustomizerProps {
   placement?: "floating" | "inline";
@@ -59,6 +67,8 @@ export function ThemeCustomizer({ placement = "floating", triggerStyle = "icon",
   );
   const [unlocking, setUnlocking] = useState<AccentPresetId | null>(null);
   const [errorId, setErrorId] = useState<AccentPresetId | null>(null);
+  const [pendingUnlock, setPendingUnlock] = useState<AccentPresetId | null>(null);
+  const [previewingId, setPreviewingId] = useState<AccentPresetId | null>(null);
 
   // Hydrate from Supabase whenever the signed-in user changes so unlocks
   // follow the account across devices and survive logout/login.
@@ -91,45 +101,107 @@ export function ThemeCustomizer({ placement = "floating", triggerStyle = "icon",
 
   const ownedSet = useMemo(() => new Set(ownedAccents), [ownedAccents]);
 
+  const pendingPreset = useMemo<AccentPreset | null>(
+    () => (pendingUnlock ? ACCENT_PRESETS.find((p) => p.id === pendingUnlock) ?? null : null),
+    [pendingUnlock],
+  );
+
+  // Live-preview a locked accent by overriding the root CSS variables without
+  // persisting state. Reverting just removes the inline overrides so the
+  // ThemeProvider effect's values (driven by the current `accent`) take over.
+  const applyAccentPreview = useCallback((preset: AccentPreset) => {
+    if (typeof document === "undefined") return;
+    const root = document.documentElement;
+    root.style.setProperty("--raw-accent", preset.rgb);
+    root.style.setProperty("--raw-accent-shadow", preset.shadowRgb);
+    root.style.setProperty("--primary", preset.hsl);
+    root.style.setProperty("--accent", preset.hsl);
+    root.style.setProperty("--ring", preset.hsl);
+    root.style.setProperty("--sidebar-primary", preset.hsl);
+    root.style.setProperty("--sidebar-ring", preset.hsl);
+  }, []);
+
+  const clearAccentPreview = useCallback(() => {
+    if (typeof document === "undefined") return;
+    const root = document.documentElement;
+    const current = ACCENT_PRESETS.find((p) => p.id === accent) ?? ACCENT_PRESETS[0];
+    root.style.setProperty("--raw-accent", current.rgb);
+    root.style.setProperty("--raw-accent-shadow", current.shadowRgb);
+    root.style.setProperty("--primary", current.hsl);
+    root.style.setProperty("--accent", current.hsl);
+    root.style.setProperty("--ring", current.hsl);
+    root.style.setProperty("--sidebar-primary", current.hsl);
+    root.style.setProperty("--sidebar-ring", current.hsl);
+  }, [accent]);
+
   const handleSelect = useCallback(
-    async (id: AccentPresetId) => {
+    (id: AccentPresetId) => {
       setErrorId(null);
       if (ownedSet.has(id)) {
         setAccent(id);
         return;
       }
-      if (!user?.id) {
+      setPendingUnlock(id);
+    },
+    [ownedSet, setAccent],
+  );
+
+  const confirmUnlock = useCallback(async () => {
+    const id = pendingUnlock;
+    if (!id) return;
+    if (!user?.id) {
+      setErrorId(id);
+      setPendingUnlock(null);
+      clearAccentPreview();
+      setPreviewingId(null);
+      return;
+    }
+    if (tokenBalance < ACCENT_UNLOCK_PRICE) {
+      setErrorId(id);
+      setPendingUnlock(null);
+      clearAccentPreview();
+      setPreviewingId(null);
+      return;
+    }
+    setUnlocking(id);
+    try {
+      await spendTokens(user.id, ACCENT_UNLOCK_PRICE);
+      addTokens(-ACCENT_UNLOCK_PRICE);
+      const { error: insertError } = await supabase
+        .from("user_accent_unlocks")
+        .upsert({ user_id: user.id, accent_id: id }, { onConflict: "user_id,accent_id" });
+      if (insertError) {
+        addTokens(ACCENT_UNLOCK_PRICE);
         setErrorId(id);
         return;
       }
-      if (tokenBalance < ACCENT_UNLOCK_PRICE) {
-        setErrorId(id);
-        return;
-      }
-      setUnlocking(id);
-      try {
-        await spendTokens(user.id, ACCENT_UNLOCK_PRICE);
-        addTokens(-ACCENT_UNLOCK_PRICE);
-        const { error: insertError } = await supabase
-          .from("user_accent_unlocks")
-          .upsert({ user_id: user.id, accent_id: id }, { onConflict: "user_id,accent_id" });
-        if (insertError) {
-          // Server persist failed — refund the locally tracked tokens so the user
-          // can retry without being silently overcharged.
-          addTokens(ACCENT_UNLOCK_PRICE);
-          setErrorId(id);
-          return;
-        }
-        setOwnedAccents((prev) => Array.from(new Set([...prev, id])));
-        setAccent(id);
-      } catch {
-        setErrorId(id);
-      } finally {
-        setUnlocking(null);
+      setOwnedAccents((prev) => Array.from(new Set([...prev, id])));
+      setAccent(id);
+      setPendingUnlock(null);
+      setPreviewingId(null);
+    } catch {
+      setErrorId(id);
+    } finally {
+      setUnlocking(null);
+    }
+  }, [addTokens, clearAccentPreview, pendingUnlock, setAccent, tokenBalance, user?.id]);
+
+  const handleDialogChange = useCallback(
+    (open: boolean) => {
+      if (!open) {
+        clearAccentPreview();
+        setPreviewingId(null);
+        setPendingUnlock(null);
       }
     },
-    [addTokens, ownedSet, setAccent, tokenBalance, user?.id],
+    [clearAccentPreview],
   );
+
+  const handlePreview = useCallback(() => {
+    if (!pendingPreset) return;
+    applyAccentPreview(pendingPreset);
+    setPreviewingId(pendingPreset.id);
+  }, [applyAccentPreview, pendingPreset]);
 
   return (
     <div
@@ -257,6 +329,76 @@ export function ThemeCustomizer({ placement = "floating", triggerStyle = "icon",
           </div>
         </PopoverContent>
       </Popover>
+
+      <Dialog open={pendingUnlock !== null} onOpenChange={handleDialogChange}>
+        <DialogContent className="max-w-sm rounded-3xl border border-raw-border/40 bg-raw-surface/95 text-raw-text shadow-2xl backdrop-blur-xl">
+          {pendingPreset && (
+            <>
+              <DialogHeader>
+                <div className="flex items-center gap-3">
+                  <span
+                    className="h-12 w-12 rounded-2xl border border-white/20 shadow-[0_8px_22px_rgb(var(--raw-black)/0.35)]"
+                    style={{ backgroundColor: `rgb(${pendingPreset.rgb})` }}
+                    aria-hidden="true"
+                  />
+                  <div className="flex flex-col">
+                    <DialogTitle className="font-display text-base tracking-[0.16em]">
+                      {pendingPreset.label} accent
+                    </DialogTitle>
+                    <DialogDescription className="text-xs text-raw-silver/60">
+                      {previewingId === pendingPreset.id
+                        ? "Previewing live. Confirm to unlock or close to revert."
+                        : `Preview this theme, or unlock it for ${ACCENT_UNLOCK_PRICE} tokens.`}
+                    </DialogDescription>
+                  </div>
+                </div>
+              </DialogHeader>
+
+              <div className="rounded-2xl border border-raw-border/30 bg-raw-black/25 px-4 py-3 text-xs text-raw-silver/70">
+                <div className="flex items-center justify-between">
+                  <span className="uppercase tracking-[0.16em] text-raw-silver/50">Your tokens</span>
+                  <span className="font-semibold tabular-nums text-raw-text">{tokenBalance}</span>
+                </div>
+                <div className="mt-2 flex items-center justify-between">
+                  <span className="uppercase tracking-[0.16em] text-raw-silver/50">Cost</span>
+                  <span className="font-semibold tabular-nums text-raw-gold">{ACCENT_UNLOCK_PRICE}</span>
+                </div>
+              </div>
+
+              <DialogFooter className="gap-2 sm:gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handlePreview}
+                  disabled={previewingId === pendingPreset.id}
+                  className="flex-1 rounded-full border-raw-border/50 bg-transparent text-raw-text hover:bg-raw-surface"
+                >
+                  <Eye className="mr-2 h-4 w-4" />
+                  {previewingId === pendingPreset.id ? "Previewing" : "View"}
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => void confirmUnlock()}
+                  disabled={
+                    unlocking === pendingPreset.id ||
+                    !user?.id ||
+                    tokenBalance < ACCENT_UNLOCK_PRICE
+                  }
+                  className="flex-1 rounded-full bg-raw-gold text-raw-ink hover:bg-raw-gold/90"
+                >
+                  {unlocking === pendingPreset.id
+                    ? "Unlocking…"
+                    : !user?.id
+                      ? "Sign in"
+                      : tokenBalance < ACCENT_UNLOCK_PRICE
+                        ? `Need ${ACCENT_UNLOCK_PRICE}`
+                        : `Confirm · ${ACCENT_UNLOCK_PRICE}`}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
