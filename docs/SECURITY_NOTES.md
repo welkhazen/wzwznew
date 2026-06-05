@@ -78,8 +78,8 @@ These must be set in Vercel project env (Production scope at minimum):
 | `SUPABASE_JWT_SECRET` | Mint + verify session JWTs | Sessions fail; `/api/auth/me` 500 |
 | `VITE_SUPABASE_URL` | Browser client | App can't load |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | Browser anon key | App can't load |
-| `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` | Rate limiter | 503 on rate-limited endpoints |
-| `KV_REST_API_URL` + `KV_REST_API_TOKEN` *(alternative)* | Vercel KV/Redis rate limiter aliases | 503 if neither complete credential pair is set |
+| `KV_REST_API_URL` *(or `UPSTASH_REDIS_REST_URL`)* | Rate limiter | 503 on rate-limited endpoints |
+| `KV_REST_API_TOKEN` *(or `UPSTASH_REDIS_REST_TOKEN`)* | Rate limiter | 503 on rate-limited endpoints |
 | `APP_BASE_URL` *(optional)* | Trusted-origin check | Falls back to same-host detection |
 | `VITE_POSTHOG_KEY` *(optional)* | Analytics | Analytics no-ops gracefully |
 

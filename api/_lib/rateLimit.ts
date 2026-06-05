@@ -27,9 +27,13 @@ export function rateLimitRedisConfig(): { url: string; token: string } | null {
 
 function getRedis(): Redis | null {
   if (redis) return redis;
-  const config = rateLimitRedisConfig();
-  if (!config) return null;
-  redis = new Redis(config);
+  // Vercel's Upstash Marketplace integration creates KV_REST_API_URL/KV_REST_API_TOKEN.
+  // Older Upstash-native installs use UPSTASH_REDIS_REST_URL/UPSTASH_REDIS_REST_TOKEN.
+  // Accept either so the rate limiter works without env-var renaming.
+  const url = process.env.KV_REST_API_URL ?? process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.KV_REST_API_TOKEN ?? process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) return null;
+  redis = new Redis({ url, token });
   return redis;
 }
 
