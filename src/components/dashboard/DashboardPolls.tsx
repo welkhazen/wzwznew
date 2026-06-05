@@ -3,12 +3,8 @@ import type { Poll } from "@/store/useRawStore";
 import { useTheme } from "@/providers/useTheme";
 import { PremiumPollCard } from "@/components/polls/PremiumPollCard";
 import { ShareButton } from "@/components/ui/share-button";
-<<<<<<< Updated upstream
 import { addPollComment, fetchPollComments } from "@/lib/api/polls";
-=======
-import { addPollComment, fetchPollComments } from "@/utils/supabasePolls";
 import { getUserTextModerationMessage, moderateUserText } from "@/lib/inputSecurity";
->>>>>>> Stashed changes
 import { isNoPollOption, isYesPollOption } from "@/lib/polls/normalizePollOptionText";
 import {
   getPollShareCode,
@@ -488,11 +484,7 @@ export function DashboardPolls({
     setTimeout(() => commentsEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
 
     try {
-<<<<<<< Updated upstream
-      await addPollComment(currentPoll.id, content, { id: userId, name: username });
-=======
-      await addPollComment(currentPoll.id, moderation.text);
->>>>>>> Stashed changes
+      await addPollComment(currentPoll.id, moderation.text, { id: userId, name: username });
     } catch (error) {
       console.error("Failed to save dashboard comment to Supabase", error);
     }

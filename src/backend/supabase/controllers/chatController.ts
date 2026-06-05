@@ -47,29 +47,12 @@ export async function sendMessage(
   communityId: string,
   input: SendCommunityMessageInput
 ): Promise<CommunityChatMessageRecord> {
-<<<<<<< Updated upstream
+  const text = assertUserTextAllowed(input.text);
   const { data, error } = await supabase.rpc('send_community_message', {
     p_community_id: communityId,
-    p_text: input.text,
+    p_text: text,
     p_reply_to_message_id: input.replyToMessage?.id ?? null,
   });
-=======
-  const moderatedText = assertUserTextAllowed(text);
-
-  const { data, error } = await supabase
-    .from('community_messages')
-    .insert({
-      community_id: communityId,
-      sender_id: senderId,
-      sender_name: senderName,
-      text: moderatedText,
-      reply_to_message_id: replyToMessage?.id ?? null,
-      reply_to_sender_name: replyToMessage?.senderName ?? null,
-      reply_to_text: replyToMessage?.text ?? null,
-    })
-    .select()
-    .single();
->>>>>>> Stashed changes
 
   if (error) throw error;
   if (!data) throw new Error('send_community_message_returned_empty');

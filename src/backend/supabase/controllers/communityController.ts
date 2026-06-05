@@ -151,36 +151,18 @@ export async function updateCommunityPresentation(
 // Admin-only — RPC enforces is_admin() server-side.
 export async function createCommunityFromRequest(request: CommunityRequestRecord): Promise<void> {
   const id = `request-${request.id}`;
-<<<<<<< Updated upstream
-  const now = request.reviewedAt ?? new Date().toISOString();
-  const { error } = await supabase.rpc('create_community_from_request', {
-    p_id: id,
-    p_title: request.communityName,
-    p_description: request.whyNow,
-    p_topic: request.samplePrompt || request.focusArea,
-    p_created_by: request.requesterName,
-    p_created_at: now,
-  });
-=======
   const communityName = assertUserTextAllowed(request.communityName);
   const whyNow = assertUserTextAllowed(request.whyNow);
   const focusArea = assertUserTextAllowed(request.focusArea);
-  const samplePrompt = request.samplePrompt.trim() ? assertUserTextAllowed(request.samplePrompt) : "";
-  const abbr = buildCommunityAbbr(communityName);
+  const samplePrompt = request.samplePrompt.trim() ? assertUserTextAllowed(request.samplePrompt) : '';
   const now = request.reviewedAt ?? new Date().toISOString();
-
-  const { error } = await supabase.from('communities').upsert({
-    id,
-    abbr,
-    title: communityName,
-    description: whyNow,
-    topic: samplePrompt || focusArea,
-    status: 'Early Access',
-    locked: false,
-    created_at: now,
-    created_by: request.requesterName,
-  }, { onConflict: 'id' });
-
->>>>>>> Stashed changes
+  const { error } = await supabase.rpc('create_community_from_request', {
+    p_id: id,
+    p_title: communityName,
+    p_description: whyNow,
+    p_topic: samplePrompt || focusArea,
+    p_created_by: request.requesterName,
+    p_created_at: now,
+  });
   if (error) throw error;
 }
