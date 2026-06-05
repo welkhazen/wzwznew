@@ -16,12 +16,20 @@ const POLICIES: Record<RatePolicy, { tokens: number; window: `${number} ${"s" | 
 let redis: Redis | null = null;
 const limiterCache: Partial<Record<RatePolicy, Ratelimit>> = {};
 
+export function rateLimitRedisConfig(): { url: string; token: string } | null {
+  const credentialPairs = [
+    [process.env.UPSTASH_REDIS_REST_URL, process.env.UPSTASH_REDIS_REST_TOKEN],
+    [process.env.KV_REST_API_URL, process.env.KV_REST_API_TOKEN],
+  ];
+  const credentials = credentialPairs.find(([url, token]) => url && token);
+  return credentials ? { url: credentials[0]!, token: credentials[1]! } : null;
+}
+
 function getRedis(): Redis | null {
   if (redis) return redis;
-  const url = process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
-  if (!url || !token) return null;
-  redis = new Redis({ url, token });
+  const config = rateLimitRedisConfig();
+  if (!config) return null;
+  redis = new Redis(config);
   return redis;
 }
 
@@ -40,9 +48,11 @@ function getLimiter(policy: RatePolicy): Ratelimit | null {
   return limiter;
 }
 
-// In-memory fallback for `npm run dev` only. Resets on every cold start; not
-// safe in production. The handler caller decides whether to allow this path.
+// Per-instance fallback. Resets on every cold start, so it is weaker than the
+// shared Redis limiter. In production it is used only for login and signup so
+// a missing Redis integration cannot lock every user out.
 const memBuckets = new Map<string, number[]>();
+const AUTH_FALLBACK_POLICIES = new Set<RatePolicy>(["login", "signup"]);
 function memCheck(policy: RatePolicy, key: string): boolean {
   const spec = POLICIES[policy];
   const now = Date.now();
@@ -82,21 +92,28 @@ export type RateLimitDecision = { ok: true } | { ok: false; reason: "rate_limite
 /**
  * Returns ok:false when the key has exhausted its policy window.
  *
- * Production: if Upstash env vars are missing, returns config_missing — caller
- * must decide whether to fail closed (recommended for write-heavy endpoints) or
- * allow through. Dev (NODE_ENV !== "production") falls back to a per-instance
- * in-memory bucket so local testing keeps working.
+ * When the shared Redis limiter is unavailable, login and signup use a weaker
+ * per-instance in-memory bucket so users are not locked out. Other production
+ * write paths fail closed; development uses the in-memory bucket for all paths.
  */
-export async function checkRateLimit(policy: RatePolicy, key: string): Promise<RateLimitDecision> {
-  const limiter = getLimiter(policy);
-  if (limiter) {
-    const { success } = await limiter.limit(key);
-    return success ? { ok: true } : { ok: false, reason: "rate_limited" };
-  }
-  if (process.env.NODE_ENV !== "production") {
+function fallbackRateLimit(policy: RatePolicy, key: string): RateLimitDecision {
+  if (process.env.NODE_ENV !== "production" || AUTH_FALLBACK_POLICIES.has(policy)) {
     return memCheck(policy, key) ? { ok: true } : { ok: false, reason: "rate_limited" };
   }
   return { ok: false, reason: "config_missing" };
+}
+
+export async function checkRateLimit(policy: RatePolicy, key: string): Promise<RateLimitDecision> {
+  const limiter = getLimiter(policy);
+  if (!limiter) return fallbackRateLimit(policy, key);
+
+  try {
+    const { success } = await limiter.limit(key);
+    return success ? { ok: true } : { ok: false, reason: "rate_limited" };
+  } catch (error) {
+    console.error(`[rate-limit] Shared limiter unavailable for ${policy}.`, error);
+    return fallbackRateLimit(policy, key);
+  }
 }
 
 export function rateLimitErrorResponse(decision: Extract<RateLimitDecision, { ok: false }>): Response {
