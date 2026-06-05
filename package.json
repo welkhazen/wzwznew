@@ -18,7 +18,9 @@
     "test:e2e:ui": "playwright test --ui",
     "cap:sync": "npm run build && npx cap sync",
     "test:load:local": "node scripts/load-test.js",
-    "memory-pack:export-bootstrap": "node scripts/export-llm-bootstrap.mjs"
+    "memory-pack:export-bootstrap": "node scripts/export-llm-bootstrap.mjs",
+    "avatars:process": "node scripts/process-new-avatars.mjs",
+    "prepare": "husky"
   },
   "dependencies": {
     "@capacitor/cli": "^8.3.1",
@@ -111,9 +113,11 @@
     "express-session": "^1.19.0",
     "globals": "^15.15.0",
     "helmet": "^8.2.0",
+    "husky": "^9.1.7",
     "jsdom": "^29.0.2",
     "lovable-tagger": "^1.1.13",
     "postcss": "^8.5.6",
+    "sharp": "^0.34.5",
     "supabase": "^2.99.0-beta.8",
     "tailwindcss": "^3.4.17",
     "tsx": "^4.21.0",

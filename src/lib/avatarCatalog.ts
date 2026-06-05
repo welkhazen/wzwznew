@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import type { AvatarRarity } from "@/lib/avatarRarity";
+import { GENERATED_AVATAR_ENTRIES } from "@/lib/generatedAvatarEntries";
 
 export type AvatarCatalogItem = {
   id: string;
@@ -84,6 +85,7 @@ export const DEFAULT_AVATAR_CATALOG: readonly AvatarCatalogItem[] = [
       rarity: "common",
     };
   }),
+  ...GENERATED_AVATAR_ENTRIES,
 ];
 
 const WHEEL_AVATAR_IDS = new Set([
