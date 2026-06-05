@@ -1,5 +1,5 @@
-import { supabaseServerClient } from "../_lib/supabaseServerClient";
-import { hasBearerSecret, isTrustedOrigin } from "../_lib/requestSecurity";
+import { supabaseServerClient } from "../_lib/supabaseServerClient.js";
+import { hasBearerSecret, isTrustedOrigin } from "../_lib/requestSecurity.js";
 
 export const config = { runtime: "edge" };
 
