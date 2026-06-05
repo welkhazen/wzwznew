@@ -1,6 +1,6 @@
 "use client";
 
-import { Calendar, Clock, Code, FileText, User } from "lucide-react";
+import { Calendar, Clock, Code, FileText, User, Users } from "lucide-react";
 import RadialOrbitalTimeline from "@/components/ui/radial-orbital-timeline";
 
 const timelineData = [
@@ -60,7 +60,19 @@ const timelineData = [
       "Sometimes you don’t know what you need or where you belong. raW uses questions, conversations, and communities to help you understand yourself better.",
     category: "Lost",
     icon: Clock,
-    relatedIds: [4],
+    relatedIds: [4, 6],
+    status: "pending" as const,
+    energy: 10,
+  },
+  {
+    id: 6,
+    title: "Don’t know any interesting people?",
+    date: "Discovery",
+    content:
+      "Your circle should not limit who you get to know. raW helps you discover people through shared interests, honest answers, and conversations worth joining.",
+    category: "Discovery",
+    icon: Users,
+    relatedIds: [5],
     status: "pending" as const,
     energy: 10,
   },

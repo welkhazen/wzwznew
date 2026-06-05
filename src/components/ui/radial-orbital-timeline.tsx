@@ -305,7 +305,9 @@ export default function RadialOrbitalTimeline({ timelineData, showTitleButtons =
                 type="button"
                 aria-expanded={isActive}
                 onClick={() => toggleItem(item.id)}
-                className={`group relative overflow-hidden rounded-xl border px-4 py-4 text-left transition duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/70 sm:px-5 sm:py-5 last:sm:col-span-2 ${
+                className={`group relative overflow-hidden rounded-xl border px-4 py-4 text-left transition duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/70 sm:px-5 sm:py-5 ${
+                  index === timelineData.length - 1 && timelineData.length % 2 === 1 ? "sm:col-span-2" : ""
+                } ${
                   isActive
                     ? "border-raw-gold/65 bg-raw-gold/12 shadow-[0_0_28px_rgba(241,196,45,0.13)]"
                     : "border-raw-border/45 bg-raw-black/35 hover:-translate-y-0.5 hover:border-raw-gold/45 hover:bg-raw-gold/[0.06]"
