@@ -10,7 +10,7 @@ export type Surface = "landing" | "app" | "admin";
 export type DeviceClass = "mobile" | "tablet" | "desktop";
 export type AuthMethod = "username_password" | "oauth_google";
 export type OtpChannel = "sms" | "whatsapp" | "email";
-export type OnboardingStepName = "avatar" | "polls" | "communities" | "ready";
+export type OnboardingStepName = "avatar" | "polls" | "profile" | "communities" | "ready";
 export type WaitlistRole = "owner" | "provider" | "user";
 export type ModerationAction =
   | "warn"
