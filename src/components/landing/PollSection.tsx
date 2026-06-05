@@ -620,7 +620,7 @@ export function PollSection({
       description={
         <>
           Answer anonymously and see live results instantly.
-          {!isLoggedIn && " 3 free — then sign up to keep going."}
+          {!isLoggedIn && " 3 free — then continue to onboarding."}
         </>
       }
       innerClassName="p-0 overflow-hidden"
@@ -723,7 +723,7 @@ export function PollSection({
                       All polls answered!
                     </p>
                     <p className="text-sm text-center mt-2 leading-relaxed" style={{ color: isLight ? "rgba(0,0,0,0.45)" : "rgba(255,255,255,0.4)" }}>
-                      Sign up to keep answering<br />and earn rewards.
+                      Continue onboarding to keep answering<br />and earn rewards.
                     </p>
                     <p className="text-center text-[10px] mt-2" style={{ color: goldAccent }}>
                       +3 coins per poll answered
@@ -737,7 +737,7 @@ export function PollSection({
                     className="w-full rounded-2xl py-3.5 text-sm font-bold tracking-wider text-black"
                     style={{ background: "#F1C42D", boxShadow: isLight ? "none" : "0 0 20px rgba(241,196,45,0.35)" }}
                   >
-                    Sign Up & Earn Rewards
+                    Continue & Earn Rewards
                   </motion.button>
                 </div>
               </motion.div>

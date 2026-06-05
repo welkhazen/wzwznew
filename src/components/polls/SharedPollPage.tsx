@@ -11,7 +11,7 @@ interface SharedPollPageProps {
   shareCode: string;
   votedPolls: Set<string>;
   onVote: (pollId: string, optionId: string) => void;
-  onSignup: () => void;
+  onJoin: () => void;
 }
 
 export function SharedPollPage({
@@ -19,7 +19,7 @@ export function SharedPollPage({
   shareCode,
   votedPolls,
   onVote,
-  onSignup,
+  onJoin,
 }: SharedPollPageProps) {
   const pollId = resolvePollShareCode(polls, shareCode);
   const poll = pollId ? polls.find((item) => item.id === pollId) : null;
@@ -107,11 +107,11 @@ export function SharedPollPage({
             <p className="mt-2 text-sm font-medium leading-relaxed text-raw-text">
               {voteStatus === "duplicate"
                 ? "Looks like this device or network already answered this poll."
-                : "Create an anonymous profile to answer more polls and find your communities."}
+                : "Continue to onboarding to answer more polls and find your communities."}
             </p>
             <div className="mt-4 grid gap-2 sm:grid-cols-2">
-              <Button onClick={onSignup} className="rounded-none bg-raw-gold font-semibold text-raw-ink hover:bg-raw-gold/90">
-                Sign up
+              <Button onClick={onJoin} className="rounded-none bg-raw-gold font-semibold text-raw-ink hover:bg-raw-gold/90">
+                Join
               </Button>
               <Button asChild variant="outline" className="rounded-none border-raw-gold/45 bg-raw-surface/40 font-semibold text-raw-text hover:bg-raw-gold/10 hover:text-raw-gold">
                 <Link to="/">Explore raW</Link>

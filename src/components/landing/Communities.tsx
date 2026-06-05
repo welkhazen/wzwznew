@@ -28,7 +28,7 @@ const communities = [
   },
   {
     title: "Lebanon Initiatives",
-    description: "Sign up to join the waitlist.",
+    description: "Join to enter the waitlist.",
     badge: "Waitlist",
     image: lebanonImage,
     waitlist: true,
@@ -186,7 +186,7 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
                     )}
                     <h3 className="font-display text-sm tracking-wide text-raw-text">{c.title}</h3>
                     <p className={`mt-2 text-xs leading-relaxed text-raw-silver/50 md:line-clamp-none${expandedCards.has(c.title) ? "" : " line-clamp-2"}`}>
-                      {c.waitlist && hasJoinedWaitlist ? "Sign up to claim your place." : c.description}
+                      {c.waitlist && hasJoinedWaitlist ? "Continue to claim your place." : c.description}
                     </p>
                     {!expandedCards.has(c.title) && (
                       <button
@@ -206,7 +206,7 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
                         }}
                         className="mt-3 rounded-full border border-raw-gold/35 bg-raw-gold/5 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-raw-gold/80 transition hover:bg-raw-gold/10 hover:text-raw-gold"
                       >
-                        {hasJoinedWaitlist ? "Sign up" : "Join waitlist"}
+                        {hasJoinedWaitlist ? "Continue" : "Join waitlist"}
                       </button>
                     )}
                   </>

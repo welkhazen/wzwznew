@@ -6,6 +6,7 @@ export interface User {
   warnings: number;
   onboardingCompleted?: boolean;
   profilePublic?: boolean;
+  isGuest?: boolean;
 }
 
 export interface AuthResult {

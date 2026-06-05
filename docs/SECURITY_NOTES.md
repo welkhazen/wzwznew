@@ -59,12 +59,11 @@ Implemented in `api/_lib/rateLimit.ts` using Upstash sliding window.
 | `POST /api/users/[userId]/tokens` | user id | 20 / 1 min |
 
 Behaviour:
-- **Production with Upstash configured** → real sliding-window enforcement.
-- **Production without Upstash env vars** → 503 `rate_limit_unavailable` (fail
-  closed; forgetting the env var must trip a hard failure rather than silently
-  open the endpoint).
-- **Local development** (`NODE_ENV !== "production"`) → in-memory per-instance
-  bucket so local testing still works.
+- **Production with a supported Redis credential pair configured** → real sliding-window enforcement.
+- **Production without a complete supported Redis credential pair, or while Redis is unavailable** → login
+  and signup use a weaker per-instance in-memory bucket so users are not locked out; other rate-limited write
+  endpoints fail closed.
+- **Local development** (`NODE_ENV !== "production"`) → in-memory per-instance bucket for all policies.
 - **Limit reached** → 429 `rate_limited` with a `retry-after` header.
 
 ## Required production env vars
@@ -78,8 +77,8 @@ These must be set in Vercel project env (Production scope at minimum):
 | `SUPABASE_JWT_SECRET` | Mint + verify session JWTs | Sessions fail; `/api/auth/me` 500 |
 | `VITE_SUPABASE_URL` | Browser client | App can't load |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | Browser anon key | App can't load |
-| `UPSTASH_REDIS_REST_URL` | Rate limiter | 503 on rate-limited endpoints |
-| `UPSTASH_REDIS_REST_TOKEN` | Rate limiter | 503 on rate-limited endpoints |
+| `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` | Shared rate limiter | Auth falls back per-instance; other rate-limited writes return 503 |
+| `KV_REST_API_URL` + `KV_REST_API_TOKEN` *(alternative)* | Vercel KV/Redis rate limiter aliases | Same fallback behavior if neither complete pair is set |
 | `APP_BASE_URL` *(optional)* | Trusted-origin check | Falls back to same-host detection |
 | `VITE_POSTHOG_KEY` *(optional)* | Analytics | Analytics no-ops gracefully |
 

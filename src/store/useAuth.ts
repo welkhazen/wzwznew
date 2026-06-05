@@ -3,15 +3,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { identify, reset, track } from "@/lib/analytics";
 import { awardXPOnce, recordLocalLoginDay, XP_REWARDS } from "@/lib/userProgress";
 import { getTodayKey } from "@/store/useRawStore.storage";
-import type { AuthResult, User } from "@/store/types";
-import {
-  signIn,
-  signUp,
-  signOut,
-  getSession,
-  type AuthUser,
-} from "@/backend/supabase/controllers/authController";
-import { readOnboardingMap, writeOnboardingMap } from "@/store/useRawStore.storage";
+import type { User } from "@/store/types";
+import { signOut, getSession, type AuthUser } from "@/backend/supabase/controllers/authController";
 
 function toUser(a: AuthUser): User {
   return {
@@ -36,9 +29,34 @@ function awardDailyLoginXP(userId: string): void {
   void awardXPOnce(userId, "daily-login", todayKey, XP_REWARDS.DAILY_LOGIN);
 }
 
+const GUEST_SESSION_KEY = "raw.guest-session.v1";
+
+function createGuestUser(): User {
+  const guestId = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const id = `guest-${guestId}`;
+  return {
+    id,
+    username: "guest",
+    role: "member",
+    moderationStatus: "active",
+    warnings: 0,
+    onboardingCompleted: false,
+    profilePublic: false,
+    isGuest: true,
+  };
+}
+
+function readGuestUser(): User | null {
+  try {
+    const stored = sessionStorage.getItem(GUEST_SESSION_KEY);
+    return stored ? JSON.parse(stored) as User : null;
+  } catch {
+    return null;
+  }
+}
+
 export function useAuth() {
   const queryClient = useQueryClient();
-  const [showSignup, setShowSignup] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [sessionLoaded, setSessionLoaded] = useState(false);
 
@@ -51,66 +69,31 @@ export function useAuth() {
           setUser(u);
           awardDailyLoginXP(u.id);
           identify(u.id, { username: u.username });
+          return;
         }
+        setUser(readGuestUser());
       })
-      .catch(() => {})
+      .catch(() => setUser(readGuestUser()))
       .finally(() => {
         setSessionLoaded(true);
       });
   }, []);
 
-  const login = useCallback(
-    async (username: string, password: string): Promise<AuthResult> => {
-      const result = await signIn(username, password);
-      if (!result.ok || !result.user) return { ok: false, error: result.error };
-      const u = toUser(result.user);
-      setUser(u);
-      awardDailyLoginXP(u.id);
-      identify(u.id, { username: u.username });
-      track("login_completed", { method: "username_password" });
-      setShowSignup(false);
-      return { ok: true };
-    },
-    [],
-  );
-
-  const requestSignupOtp = useCallback(
-    async (username: string, password: string, _phone: string): Promise<AuthResult> => {
-      const result = await signUp(username, password);
-      if (!result.ok || !result.user) return { ok: false, error: result.error };
-      const u = toUser(result.user);
-      setUser(u);
-      if (typeof window !== "undefined") {
-        // New signup: wipe any prior onboarding state for this username so
-        // a recreated account walks through onboarding again, not skip
-        // straight to the dashboard.
-        localStorage.removeItem(`raw.onboarding.completed.${username}`);
-        const map = readOnboardingMap();
-        if (map[username]) {
-          delete map[username];
-          writeOnboardingMap(map);
-        }
-      }
-      awardDailyLoginXP(u.id);
-      identify(u.id, { username: u.username });
-      track("signup_completed", { source: "modal" });
-      setShowSignup(false);
-      return { ok: true };
-    },
-    [],
-  );
-
-  const verifySignupOtp = useCallback(async (_code: string): Promise<AuthResult> => {
-    return { ok: true };
+  const startOnboarding = useCallback(() => {
+    const guest = readGuestUser() ?? createGuestUser();
+    sessionStorage.setItem(GUEST_SESSION_KEY, JSON.stringify(guest));
+    setUser(guest);
+    track("onboarding_started", { source: "join", account_type: "guest" });
   }, []);
 
   const logout = useCallback(async () => {
-    await signOut();
+    if (!user?.isGuest) await signOut();
+    sessionStorage.removeItem(GUEST_SESSION_KEY);
     setUser(null);
     queryClient.clear();
     reset();
     window.location.href = "/";
-  }, [queryClient]);
+  }, [queryClient, user?.isGuest]);
 
   return useMemo(
     () => ({
@@ -118,13 +101,10 @@ export function useAuth() {
       isLoggedIn: Boolean(user),
       isAdmin: user?.role === "admin",
       sessionLoaded,
-      showSignup,
-      setShowSignup,
-      requestSignupOtp,
-      verifySignupOtp,
-      login,
+      isGuest: Boolean(user?.isGuest),
+      startOnboarding,
       logout,
     }),
-    [login, logout, requestSignupOtp, sessionLoaded, showSignup, user, verifySignupOtp],
+    [logout, sessionLoaded, startOnboarding, user],
   );
 }

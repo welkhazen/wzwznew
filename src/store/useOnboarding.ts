@@ -10,7 +10,7 @@ function defaultInitialStep(): OnboardingStep {
 }
 
 export function useOnboarding(isLoggedIn: boolean, user?: User | null) {
-  const username = user?.username;
+  const username = user?.isGuest ? user.id : user?.username;
   const storageKey = username ? `raw.onboarding.completed.${username}` : null;
 
   const [onboardingStep, setOnboardingStep] = useState<OnboardingStep>(defaultInitialStep);
@@ -70,8 +70,8 @@ export function useOnboarding(isLoggedIn: boolean, user?: User | null) {
     setOnboardingCompleted(true);
     setOnboardingStep("communities");
     if (storageKey) localStorage.setItem(storageKey, "1");
-    if (user?.id) void completeUserOnboarding(user.id);
-  }, [storageKey, user?.id]);
+    if (user?.id && !user.isGuest) void completeUserOnboarding(user.id);
+  }, [storageKey, user?.id, user?.isGuest]);
 
   const isOnboardingResolved = !isLoggedIn || onboardingLoaded;
 

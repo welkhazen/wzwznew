@@ -3,7 +3,6 @@ import { OnboardingJourney } from "@/components/onboarding/OnboardingJourney";
 import { useHostMode } from "@/hooks/use-host-mode";
 import Dashboard from "@/pages/Dashboard";
 import { SharedPollPage } from "@/components/polls/SharedPollPage";
-import { SignupModal } from "@/components/landing/SignupModal";
 import { POLL_SHARE_PARAM } from "@/lib/pollShare";
 import { useRawStore } from "@/store/useRawStore";
 import { awardXP, XP_REWARDS } from "@/lib/userProgress";
@@ -22,8 +21,6 @@ const Index = () => {
     polls,
     votedPolls,
     freeVotesUsed,
-    showSignup,
-    setShowSignup,
     avatarLevel,
     setAvatarLevel,
     selectAvatarForOnboarding,
@@ -48,9 +45,8 @@ const Index = () => {
     unlockExtraPolls,
     completeOnboarding,
     vote,
-    requestSignupOtp,
-    verifySignupOtp,
-    login,
+    isGuest,
+    startOnboarding,
     logout,
   } = useRawStore();
   const { hostname, isTheRawMe } = useHostMode();
@@ -59,7 +55,7 @@ const Index = () => {
     : null;
 
   const joinOnboardingCommunities = async () => {
-    if (!user) return;
+    if (!user || isGuest) return;
 
     for (const communityId of onboardingSelectedCommunityIds) {
       const result = await unlockCommunity(user.id, communityId);
@@ -71,7 +67,7 @@ const Index = () => {
   };
 
   useEffect(() => {
-    if (!isLoggedIn || !user || !isTheRawMe || typeof window === "undefined") {
+    if (!isLoggedIn || !user || isGuest || !isTheRawMe || typeof window === "undefined") {
       return;
     }
 
@@ -79,7 +75,7 @@ const Index = () => {
     if (window.location.hostname !== "myraw.app") {
       window.location.replace(targetUrl);
     }
-  }, [hostname, isLoggedIn, isTheRawMe, user]);
+  }, [hostname, isGuest, isLoggedIn, isTheRawMe, user]);
 
   // Don't flash the landing page (and its poll popup) while auth is still
   // resolving on refresh. Wait for the session to load first.
@@ -91,7 +87,7 @@ const Index = () => {
     );
   }
 
-  if (isLoggedIn && user && isTheRawMe) {
+  if (isLoggedIn && user && !isGuest && isTheRawMe) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-raw-black px-6 text-center text-raw-silver/60">
         <div>
@@ -104,23 +100,13 @@ const Index = () => {
 
   if (!isLoggedIn && sharedPollRef) {
     return (
-      <>
-        <SharedPollPage
-          polls={polls}
-          shareCode={sharedPollRef}
-          votedPolls={votedPolls}
-          onVote={vote}
-          onSignup={() => setShowSignup(true)}
-        />
-        <SignupModal
-          open={showSignup}
-          onClose={() => setShowSignup(false)}
-          onRequestSignupOtp={requestSignupOtp}
-          onVerifySignupOtp={verifySignupOtp}
-          onLogin={login}
-          source="shared-poll"
-        />
-      </>
+      <SharedPollPage
+        polls={polls}
+        shareCode={sharedPollRef}
+        votedPolls={votedPolls}
+        onVote={vote}
+        onJoin={startOnboarding}
+      />
     );
   }
 
@@ -167,10 +153,11 @@ const Index = () => {
           onCompleteOnboarding={async () => {
             await joinOnboardingCommunities();
             completeOnboarding();
-            void awardXP(user.id, XP_REWARDS.ONBOARDING_COMPLETE);
+            if (!isGuest) void awardXP(user.id, XP_REWARDS.ONBOARDING_COMPLETE);
           }}
           onLogout={logout}
           onClaimLandingWheelAvatar={async () => {
+            if (isGuest) return;
             const result = await claimPendingLandingWheelAvatarForUser(user.id);
             if (result && (result.status === "granted" || result.status === "already_claimed")) {
               markAvatarOwned(result.level);
@@ -215,11 +202,7 @@ const Index = () => {
       <LandingShellLazy
         user={user}
         isLoggedIn={isLoggedIn}
-        showSignup={showSignup}
-        setShowSignup={setShowSignup}
-        requestSignupOtp={requestSignupOtp}
-        verifySignupOtp={verifySignupOtp}
-        login={login}
+        onJoin={startOnboarding}
       />
     </Suspense>
   );

@@ -59,10 +59,6 @@ vi.mock("@/components/landing/FinalCTA", () => ({
   FinalCTA: () => <div data-testid="landing-cta" />,
 }));
 
-vi.mock("@/components/landing/SignupModal", () => ({
-  SignupModal: () => null,
-}));
-
 vi.mock("@/components/onboarding/OnboardingJourney", () => ({
   OnboardingJourney: () => <div data-testid="onboarding-journey" />,
 }));

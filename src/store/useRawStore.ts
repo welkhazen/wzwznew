@@ -9,21 +9,20 @@ export type { AuthResult, OnboardingStep, Poll, PollOption, User } from "@/store
 
 export function useRawStore() {
   const auth = useAuth();
-  const polls = usePolls(auth.isLoggedIn, auth.user?.id);
-  const rewards = useRewards(auth.user);
+  const polls = usePolls(auth.isLoggedIn && !auth.isGuest, auth.isGuest ? undefined : auth.user?.id);
+  const rewards = useRewards(auth.isGuest ? null : auth.user);
   const onboarding = useOnboarding(auth.isLoggedIn, auth.user);
-  const communities = useCommunities(auth.user?.username);
+  const communities = useCommunities(auth.user?.isGuest ? auth.user.id : auth.user?.username);
 
   return useMemo(() => ({
     user: auth.user,
     isLoggedIn: auth.isLoggedIn,
     isAdmin: auth.isAdmin,
+    isGuest: auth.isGuest,
     sessionLoaded: auth.sessionLoaded,
     polls: polls.polls,
     votedPolls: polls.votedPolls,
     freeVotesUsed: polls.freeVotesUsed,
-    showSignup: auth.showSignup,
-    setShowSignup: auth.setShowSignup,
     avatarLevel: rewards.avatarLevel,
     setAvatarLevel: rewards.setAvatarLevel,
     changeAvatarLevel: rewards.changeAvatarLevel,
@@ -50,9 +49,7 @@ export function useRawStore() {
     completeOnboarding: onboarding.completeOnboarding,
     resetOnboardingProgress: onboarding.resetOnboardingProgress,
     vote: polls.vote,
-    requestSignupOtp: auth.requestSignupOtp,
-    verifySignupOtp: auth.verifySignupOtp,
-    login: auth.login,
+    startOnboarding: auth.startOnboarding,
     logout: auth.logout,
   }), [auth, communities, onboarding, polls, rewards]);
 }

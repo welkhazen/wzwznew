@@ -19,30 +19,18 @@ const TestimonialsSection = lazy(() =>
 import { EarnedWarUpgradesSection } from "@/components/landing/EarnedWarUpgradesSection";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import PerforatedBackground from "@/components/ui/perforated-background";
-import type { AuthResult, User } from "@/store/types";
-
-const SignupModalLazy = lazy(() =>
-  import("@/components/landing/SignupModal").then((module) => ({ default: module.SignupModal }))
-);
+import type { User } from "@/store/types";
 
 export interface LandingShellProps {
   user: User | null;
   isLoggedIn: boolean;
-  showSignup: boolean;
-  setShowSignup: (open: boolean) => void;
-  requestSignupOtp: (email: string) => Promise<AuthResult>;
-  verifySignupOtp: (email: string, otp: string, username: string) => Promise<AuthResult>;
-  login: (email: string, otp: string) => Promise<AuthResult>;
+  onJoin: () => void;
 }
 
 export default function LandingShell({
   user,
   isLoggedIn,
-  showSignup,
-  setShowSignup,
-  requestSignupOtp,
-  verifySignupOtp,
-  login,
+  onJoin,
 }: LandingShellProps) {
   const [siteReady, setSiteReady] = useState(false);
 
@@ -59,7 +47,7 @@ export default function LandingShell({
       <Navbar
         isLoggedIn={isLoggedIn}
         username={user?.username}
-        onSignupClick={() => setShowSignup(true)}
+        onSignupClick={onJoin}
       />
 
       <div className="relative min-h-screen overflow-x-hidden">
@@ -81,13 +69,13 @@ export default function LandingShell({
 
           <div className="relative max-sm:z-10">
             <Suspense fallback={<div className="min-h-[620px] sm:min-h-[680px]" />}>
-              <GlobeHero onSignupClick={() => setShowSignup(true)} />
+              <GlobeHero onSignupClick={onJoin} />
             </Suspense>
             <ProblemSection />
             <HowItWorks />
-            <AvatarShowcaseSection onSignupClick={() => setShowSignup(true)} />
-            <LandingPollsSection onSignupClick={() => setShowSignup(true)} />
-            <Communities onSignupClick={() => setShowSignup(true)} />
+            <AvatarShowcaseSection onSignupClick={onJoin} />
+            <LandingPollsSection onSignupClick={onJoin} />
+            <Communities onSignupClick={onJoin} />
             <Suspense fallback={<div className="h-16" />}>
               <TestimonialsSection />
             </Suspense>
@@ -122,16 +110,6 @@ export default function LandingShell({
           </motion.div>
         )}
       </div>
-
-      <Suspense fallback={null}>
-        <SignupModalLazy
-          open={showSignup}
-          onClose={() => setShowSignup(false)}
-          onRequestSignupOtp={requestSignupOtp}
-          onVerifySignupOtp={verifySignupOtp}
-          onLogin={login}
-        />
-      </Suspense>
     </div>
   );
 }

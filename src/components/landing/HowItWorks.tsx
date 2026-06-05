@@ -3,7 +3,7 @@ import { Terminal } from "@/components/ui/terminal";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 
 const howItWorksSteps = [
-  "01 Sign up anonymously and enter your raW app",
+  "01 Join anonymously and enter your raW app",
   "02 Build your identity — choose your avatar and change it if earned",
   "03 Answer honest questions — AI reads your patterns in real time",
   "04 Your character takes shape from every answer you give",
