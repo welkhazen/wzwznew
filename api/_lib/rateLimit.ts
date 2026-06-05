@@ -16,12 +16,20 @@ const POLICIES: Record<RatePolicy, { tokens: number; window: `${number} ${"s" | 
 let redis: Redis | null = null;
 const limiterCache: Partial<Record<RatePolicy, Ratelimit>> = {};
 
+export function rateLimitRedisConfig(): { url: string; token: string } | null {
+  const credentialPairs = [
+    [process.env.UPSTASH_REDIS_REST_URL, process.env.UPSTASH_REDIS_REST_TOKEN],
+    [process.env.KV_REST_API_URL, process.env.KV_REST_API_TOKEN],
+  ];
+  const credentials = credentialPairs.find(([url, token]) => url && token);
+  return credentials ? { url: credentials[0]!, token: credentials[1]! } : null;
+}
+
 function getRedis(): Redis | null {
   if (redis) return redis;
-  const url = process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
-  if (!url || !token) return null;
-  redis = new Redis({ url, token });
+  const config = rateLimitRedisConfig();
+  if (!config) return null;
+  redis = new Redis(config);
   return redis;
 }
 
