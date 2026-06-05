@@ -801,6 +801,10 @@ export function OnboardingJourney({
               <div className="flex flex-wrap items-center justify-between gap-2 sm:items-end sm:gap-4">
                 <div className="min-w-0 flex-1">
                   <h2 className="font-display text-base tracking-wide text-raw-text sm:text-xl">III. Answer 4 launch polls</h2>
+                  <p className="mt-2 max-w-2xl text-xs leading-relaxed text-raw-silver/55 sm:text-sm">
+                    We collect a few answers to understand you better, then use that signal to work our matching magic
+                    and connect you with the right people, communities, and interests.
+                  </p>
                 </div>
                 <p className="shrink-0 rounded-full border border-raw-border/40 px-2.5 py-1 text-[10px] text-raw-gold/75 sm:px-3 sm:text-xs">
                   {answeredCount}/{onboardingPolls.length} completed
@@ -921,8 +925,15 @@ export function OnboardingJourney({
 
           {onboardingStep === "communities" && (
             <section>
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="font-display text-lg tracking-wide text-raw-text sm:text-xl">V. Pick a community</h2>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="font-display text-lg tracking-wide text-raw-text sm:text-xl">
+                    V. Pick 1 community as your favorite
+                  </h2>
+                  <p className="mt-2 text-xs leading-relaxed text-raw-silver/55 sm:text-sm">
+                    Start with the community that feels right for you now. You can discover the rest later.
+                  </p>
+                </div>
                 <span className={`shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
                   selectedCommunityIds.length >= 1
                     ? "border-raw-gold/60 bg-raw-gold/10 text-raw-gold"

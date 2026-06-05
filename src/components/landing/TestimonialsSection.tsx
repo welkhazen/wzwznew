@@ -74,9 +74,15 @@ export function TestimonialsSection() {
         <div className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:radial-gradient(circle,rgba(255,255,255,0.75)_1px,transparent_1px)] [background-size:12px_12px]" />
         <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/50 to-transparent" />
 
-        <p className="relative text-center font-display text-[10px] uppercase tracking-[0.3em] text-raw-silver/45">
+        <p className="relative text-center font-display text-[10px] uppercase tracking-[0.32em] text-raw-gold/70">
           From the community
         </p>
+        <h2 className={`relative mx-auto mt-3 max-w-3xl text-center font-display text-3xl font-black uppercase tracking-[0.04em] sm:text-4xl md:text-5xl ${
+          isLight ? "text-slate-950" : "text-raw-text"
+        }`}>
+          What the People Think
+        </h2>
+        <div className="relative mx-auto mt-4 h-px w-28 bg-gradient-to-r from-transparent via-raw-gold/80 to-transparent sm:w-40" />
 
         <div className="relative mt-4 flex items-center justify-center gap-3">
           {showStack ? (

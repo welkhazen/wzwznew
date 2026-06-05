@@ -63,8 +63,7 @@ export function HowItWorks() {
             delayBetweenCommands={950}
             initialDelay={200}
             enableSound={false}
-            largeLastCommand
-            commandClassName="text-sm"
+            commandClassName="py-1 text-[0.95rem] font-extrabold leading-snug tracking-[-0.02em] sm:text-lg"
           />
         </div>
       </div>

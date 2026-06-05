@@ -88,6 +88,9 @@ export default function LandingShell({
             <AvatarShowcaseSection onSignupClick={() => setShowSignup(true)} />
             <LandingPollsSection onSignupClick={() => setShowSignup(true)} />
             <Communities onSignupClick={() => setShowSignup(true)} />
+            <Suspense fallback={<div className="h-16" />}>
+              <TestimonialsSection />
+            </Suspense>
 
             <section className="landing-section px-4 py-8 sm:px-6 sm:py-12">
               <div
@@ -113,10 +116,6 @@ export default function LandingShell({
                 <WhyAnonymity />
               </div>
             </section>
-
-            <Suspense fallback={<div className="h-16" />}>
-              <TestimonialsSection />
-            </Suspense>
 
             <LandingFooter />
           </div>

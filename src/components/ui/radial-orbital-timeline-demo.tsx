@@ -67,5 +67,5 @@ const timelineData = [
 ];
 
 export function RadialOrbitalTimelineDemo() {
-  return <RadialOrbitalTimeline timelineData={timelineData} />;
+  return <RadialOrbitalTimeline timelineData={timelineData} showTitleButtons />;
 }

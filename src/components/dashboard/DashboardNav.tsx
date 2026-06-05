@@ -240,6 +240,7 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
   const [screenshotName, setScreenshotName] = useState("");
   const [screenshotDataUrl, setScreenshotDataUrl] = useState("");
   const [unlockingAccentId, setUnlockingAccentId] = useState<AccentPresetId | null>(null);
+  const [accentPurchaseId, setAccentPurchaseId] = useState<AccentPresetId | null>(null);
   const [ownedAccentIds, setOwnedAccentIds] = useState<AccentPresetId[]>(() => readOwnedAccentsCache(userId));
   const [tokenBalanceForUnlocks, setTokenBalanceForUnlocks] = useState<number>(() => readStoredTokenBalance(userId));
   const notifRef = useRef<HTMLDivElement>(null);
@@ -358,14 +359,19 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
   }, [userId]);
 
   const isAccentOwned = (presetId: AccentPresetId): boolean =>
-    FREE_ACCENT_IDS.includes(presetId) || presetId === effectiveAccent || ownedAccentIds.includes(presetId);
+    FREE_ACCENT_IDS.includes(presetId) || presetId === accent || ownedAccentIds.includes(presetId);
 
-  const handleAccentClick = async (presetId: AccentPresetId) => {
+  const handleAccentClick = (presetId: AccentPresetId) => {
     if (isAccentOwned(presetId)) {
       setAccent(presetId);
       setHoveredAccent(null);
       return;
     }
+    setHoveredAccent(presetId);
+    setAccentPurchaseId(presetId);
+  };
+
+  const handleAccentPurchase = async (presetId: AccentPresetId) => {
     if (unlockingAccentId) return;
     if (tokenBalanceForUnlocks < ACCENT_UNLOCK_COST) {
       toast({ title: "Not enough tokens", description: `You need ${ACCENT_UNLOCK_COST} tokens to unlock this theme.` });
@@ -389,6 +395,7 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
       writeOwnedAccentsCache(userId, nextOwned);
       setAccent(presetId);
       setHoveredAccent(null);
+      setAccentPurchaseId(null);
       toast({ title: "Theme unlocked", description: `${ACCENT_UNLOCK_COST} tokens spent.` });
     } catch {
       toast({ title: "Unlock failed", description: "Please try again." });
@@ -522,6 +529,9 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
 
   const effectiveMode = hoveredMode ?? mode;
   const effectiveAccent = hoveredAccent ?? accent;
+  const accentPurchasePreset = accentPurchaseId
+    ? accentPresets.find((preset) => preset.id === accentPurchaseId) ?? null
+    : null;
   const isEffectiveLight = effectiveMode === "light";
   const modeOptions: { mode: ThemeMode; label: string; icon: typeof Moon }[] = [
     { mode: "dark", label: "Dark", icon: Moon },
@@ -860,20 +870,20 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
                         return (
                           <button
                             key={preset.id}
-                            onClick={() => { void handleAccentClick(preset.id); }}
+                            onClick={() => handleAccentClick(preset.id)}
                             className={cn(
                               "relative h-5 overflow-hidden rounded-md border transition-all sm:h-10 sm:rounded-lg",
                               selected ? "border-raw-text shadow-[0_0_0_1px_rgb(var(--raw-text)/0.3)]" : "border-raw-border/35 hover:border-raw-silver/35",
                             )}
                             style={{ backgroundColor: `rgb(${preset.rgb})` }}
-                            aria-label={locked ? `Unlock ${preset.label} for ${ACCENT_UNLOCK_COST} tokens` : `Use ${preset.label} accent`}
-                            title={locked ? `${preset.label} • ${ACCENT_UNLOCK_COST} tokens` : preset.label}
+                            aria-label={locked ? `Preview or buy ${preset.label} accent` : `Use ${preset.label} accent`}
+                            title={locked ? `${preset.label} - Locked` : preset.label}
                           >
                             {locked && (
                               <>
                                 <span className="absolute inset-0 bg-black/30 backdrop-blur-[2px]" />
                                 <span className="absolute inset-x-0 bottom-0 z-10 border-t border-white/20 bg-black/55 px-1 py-[1px] text-[8px] uppercase tracking-[0.14em] text-white/90 sm:text-[9px]">
-                                  {unlocking ? "Unlocking..." : `Unlock • ${ACCENT_UNLOCK_COST}`}
+                                  {unlocking ? "Unlocking..." : "Locked"}
                                 </span>
                               </>
                             )}
@@ -902,6 +912,76 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
           </DropdownMenu>
         </div>
       </div>
+
+      <Dialog
+        open={accentPurchaseId !== null}
+        onOpenChange={(open) => {
+          if (open) return;
+          setAccentPurchaseId(null);
+          setHoveredAccent(null);
+        }}
+      >
+        <DialogContent className="overflow-hidden border-raw-border/40 bg-raw-black p-0 text-raw-text sm:max-w-md">
+          {accentPurchasePreset && (
+            <>
+              <div
+                className="h-24 border-b border-white/10"
+                style={{
+                  background: `radial-gradient(circle at 50% 30%, rgb(${accentPurchasePreset.rgb}) 0%, rgb(${accentPurchasePreset.rgb} / 0.35) 42%, rgba(0,0,0,0.92) 100%)`,
+                }}
+              />
+              <div className="p-6">
+                <DialogHeader>
+                  <div className="mb-3 flex items-center gap-3">
+                    <span
+                      className="h-10 w-10 rounded-xl border border-white/30 shadow-[0_0_22px_rgba(255,255,255,0.12)]"
+                      style={{ backgroundColor: `rgb(${accentPurchasePreset.rgb})` }}
+                    />
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-raw-gold/70">Locked accent</p>
+                      <DialogTitle className="font-display text-xl tracking-wide">{accentPurchasePreset.label}</DialogTitle>
+                    </div>
+                  </div>
+                  <DialogDescription className="text-raw-silver/55">
+                    Preview this color across the interface, or unlock it permanently for {ACCENT_UNLOCK_COST} tokens.
+                    No tokens are spent until you confirm the purchase.
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="mt-5 rounded-xl border border-raw-border/35 bg-raw-surface/25 px-4 py-3 text-xs text-raw-silver/60">
+                  Your balance: <span className="font-semibold text-raw-gold">{tokenBalanceForUnlocks} tokens</span>
+                </div>
+
+                <DialogFooter className="mt-6 gap-2 sm:justify-between">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => {
+                      setAccentPurchaseId(null);
+                      toast({ title: "Preview active", description: `${accentPurchasePreset.label} is previewed. Choose an owned accent to exit preview.` });
+                    }}
+                    className="rounded-xl border border-raw-border/40 text-raw-text hover:border-raw-gold/40 hover:bg-raw-gold/10"
+                  >
+                    Preview color
+                  </Button>
+                  <Button
+                    type="button"
+                    disabled={unlockingAccentId !== null || tokenBalanceForUnlocks < ACCENT_UNLOCK_COST}
+                    onClick={() => { void handleAccentPurchase(accentPurchasePreset.id); }}
+                    className="rounded-xl bg-raw-gold text-raw-ink hover:bg-raw-gold/90 disabled:opacity-45"
+                  >
+                    {unlockingAccentId === accentPurchasePreset.id
+                      ? "Buying..."
+                      : tokenBalanceForUnlocks < ACCENT_UNLOCK_COST
+                        ? `Need ${ACCENT_UNLOCK_COST} tokens`
+                        : `Buy for ${ACCENT_UNLOCK_COST} tokens`}
+                  </Button>
+                </DialogFooter>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={reportOpen} onOpenChange={setReportOpen}>
         <DialogContent className="border-raw-border/40 bg-raw-black text-raw-text sm:max-w-lg">
