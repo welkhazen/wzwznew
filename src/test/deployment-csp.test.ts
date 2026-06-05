@@ -29,4 +29,8 @@ describe("deployment Content Security Policy", () => {
     expect(externalScriptOrigins).not.toHaveLength(0);
     expect(getCspSources("script-src-elem")).toEqual(expect.arrayContaining(externalScriptOrigins));
   });
+
+  it("allows OneSignal source map fetches from the CDN", () => {
+    expect(getCspSources("connect-src")).toContain("https://cdn.onesignal.com");
+  });
 });

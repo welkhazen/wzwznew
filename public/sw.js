@@ -37,6 +37,13 @@ self.addEventListener('fetch', (event) => {
   if (url.hostname.includes('clarity.ms')) return;
   if (url.hostname.includes('googletagmanager.com')) return;
 
+  // Always fetch HTML from the network so old app shells do not point at
+  // hashed chunks that disappeared during a newer deployment.
+  if (request.mode === 'navigate' || request.headers.get('accept')?.includes('text/html')) {
+    event.respondWith(fetch(request).catch(() => offlineResponse(request)));
+    return;
+  }
+
   // Cache-first for hashed static assets
   if (url.pathname.startsWith('/assets/')) {
     event.respondWith(
@@ -78,7 +85,10 @@ function fetchAndCache(request) {
 }
 
 function canCache(request, response) {
-  return response.ok && response.status !== 206 && !request.headers.has('range');
+  return response.ok &&
+    response.status !== 206 &&
+    !request.headers.has('range') &&
+    !response.headers.get('content-type')?.includes('text/html');
 }
 
 function offlineResponse(request) {
