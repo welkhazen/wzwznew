@@ -72,6 +72,7 @@ const SEEN_NOTIFICATIONS_PREFIX = "raw.seen-notifications";
 const TOKEN_BALANCE_UPDATED_EVENT = "raw:token-balance-updated";
 const TOKEN_BALANCE_STORAGE_KEY = "raw.polls.token-balance";
 const ACCENT_UNLOCK_COST = 10;
+const ACCENT_PREVIEW_DURATION_MS = 60_000;
 const ACCENT_FREE_ID: AccentPresetId = "gold";
 const FREE_ACCENT_IDS: AccentPresetId[] = ["gold", "indigo"];
 const OWNED_ACCENTS_CACHE_PREFIX = "raw.theme.accent.owned.v2.";
@@ -248,6 +249,13 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
   useEffect(() => {
     setTokenBalanceForUnlocks(readStoredTokenBalance(userId));
   }, [userId]);
+
+  useEffect(() => {
+    if (!hoveredAccent) return;
+
+    const timeoutId = window.setTimeout(() => setHoveredAccent(null), ACCENT_PREVIEW_DURATION_MS);
+    return () => window.clearTimeout(timeoutId);
+  }, [hoveredAccent]);
 
   useEffect(() => {
     const storageKey = `${TOKEN_BALANCE_STORAGE_KEY}.${userId}`;
@@ -943,7 +951,7 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
                     </div>
                   </div>
                   <DialogDescription className="text-raw-silver/55">
-                    Preview this color across the interface, or unlock it permanently for {ACCENT_UNLOCK_COST} tokens.
+                    Preview this color across the interface for one minute, or unlock it permanently for {ACCENT_UNLOCK_COST} tokens.
                     No tokens are spent until you confirm the purchase.
                   </DialogDescription>
                 </DialogHeader>
@@ -958,7 +966,7 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
                     variant="ghost"
                     onClick={() => {
                       setAccentPurchaseId(null);
-                      toast({ title: "Preview active", description: `${accentPurchasePreset.label} is previewed. Choose an owned accent to exit preview.` });
+                      toast({ title: "Preview active", description: `${accentPurchasePreset.label} is previewed for one minute.` });
                     }}
                     className="rounded-xl border border-raw-border/40 text-raw-text hover:border-raw-gold/40 hover:bg-raw-gold/10"
                   >
