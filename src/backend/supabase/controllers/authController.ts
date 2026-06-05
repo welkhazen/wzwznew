@@ -100,6 +100,15 @@ async function clearSupabaseSession(): Promise<void> {
   if (sb.rest?.headers) delete sb.rest.headers.Authorization;
 }
 
+const AUTH_ERROR_MESSAGES: Record<string, string> = {
+  rate_limited: 'Too many attempts. Please wait a minute and try again.',
+  rate_limit_unavailable: 'Authentication is temporarily unavailable. Please try again shortly.',
+};
+
+function authErrorMessage(error: string | undefined): string {
+  return error ? AUTH_ERROR_MESSAGES[error] ?? error : 'Request failed.';
+}
+
 async function postAuth(path: string, body: unknown): Promise<AuthEndpointResponse> {
   const response = await fetch(path, {
     method: 'POST',
@@ -108,7 +117,7 @@ async function postAuth(path: string, body: unknown): Promise<AuthEndpointRespon
     body: JSON.stringify(body),
   });
   const payload = (await response.json().catch(() => null)) as AuthEndpointResponse | null;
-  if (!response.ok) return { ok: false, error: payload?.error ?? 'Request failed.' };
+  if (!response.ok) return { ok: false, error: authErrorMessage(payload?.error) };
   return payload ?? { ok: true };
 }
 

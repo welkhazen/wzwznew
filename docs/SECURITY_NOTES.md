@@ -59,8 +59,8 @@ Implemented in `api/_lib/rateLimit.ts` using Upstash sliding window.
 | `POST /api/users/[userId]/tokens` | user id | 20 / 1 min |
 
 Behaviour:
-- **Production with Upstash configured** → real sliding-window enforcement.
-- **Production without Upstash env vars** → 503 `rate_limit_unavailable` (fail
+- **Production with a supported Redis credential pair configured** → real sliding-window enforcement.
+- **Production without a complete supported Redis credential pair** → 503 `rate_limit_unavailable` (fail
   closed; forgetting the env var must trip a hard failure rather than silently
   open the endpoint).
 - **Local development** (`NODE_ENV !== "production"`) → in-memory per-instance

@@ -16,6 +16,15 @@ const POLICIES: Record<RatePolicy, { tokens: number; window: `${number} ${"s" | 
 let redis: Redis | null = null;
 const limiterCache: Partial<Record<RatePolicy, Ratelimit>> = {};
 
+export function rateLimitRedisConfig(): { url: string; token: string } | null {
+  const credentialPairs = [
+    [process.env.UPSTASH_REDIS_REST_URL, process.env.UPSTASH_REDIS_REST_TOKEN],
+    [process.env.KV_REST_API_URL, process.env.KV_REST_API_TOKEN],
+  ];
+  const credentials = credentialPairs.find(([url, token]) => url && token);
+  return credentials ? { url: credentials[0]!, token: credentials[1]! } : null;
+}
+
 function getRedis(): Redis | null {
   if (redis) return redis;
   // Vercel's Upstash Marketplace integration creates KV_REST_API_URL/KV_REST_API_TOKEN.
