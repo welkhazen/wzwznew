@@ -102,7 +102,6 @@ async function clearSupabaseSession(): Promise<void> {
 
 const AUTH_ERROR_MESSAGES: Record<string, string> = {
   rate_limited: 'Too many attempts. Please wait a minute and try again.',
-  rate_limit_unavailable: 'Authentication is temporarily unavailable. Please try again shortly.',
 };
 
 function authErrorMessage(error: string | undefined): string {
