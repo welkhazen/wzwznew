@@ -1,4 +1,4 @@
-import { hasBearerSecret, isTrustedOrigin } from "../_lib/requestSecurity";
+import { hasBearerSecret, isTrustedOrigin } from "../_lib/requestSecurity.js";
 
 export const config = { runtime: "edge" };
 
