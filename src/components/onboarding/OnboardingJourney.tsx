@@ -121,22 +121,16 @@ const LANDING_ONBOARDING_AVATARS: readonly AvatarCatalogItem[] = [
   { id: "rose", level: 6, name: "Rose", price: "Free", imageSrc: "/avatars/avatar-4.svg", bg: "#1f0a14", figure: "#f43f5e", ring: "#f43f5e", glow: "#f43f5e80", isActive: true, rarity: "common" },
   { id: "black", level: 7, name: "Black", price: "Free", imageSrc: "/avatars/avatar-7.svg", bg: "#0a0a0a", figure: "#cfd3da", ring: "#cfd3da", glow: "#cfd3da80", isActive: true, rarity: "common" },
   { id: "blue", level: 8, name: "Blue", price: "Free", imageSrc: "/avatars/avatar-10.svg", bg: "#0a1424", figure: "#3b82f6", ring: "#3b82f6", glow: "#3b82f680", isActive: true, rarity: "common" },
-  ...Array.from({ length: 24 }, (_, index): AvatarCatalogItem => {
-    const imageNumber = index + 12;
-    return {
-      id: `preview-avatar-${imageNumber}`,
-      level: index + FREE_ONBOARDING_AVATAR_COUNT + 1,
-      name: `Avatar ${imageNumber}`,
-      price: "50",
-      imageSrc: `/avatars/previews/${imageNumber}.png`,
-      bg: "#111827",
-      figure: "#cbd5e1",
-      ring: "#cbd5e1",
-      glow: "#cbd5e180",
-      isActive: true,
-      rarity: "common",
-    };
-  }),
+  // Preview-only tier mirrors the spin wheel: the same 9 avatars users can win.
+  { id: "preview-silver-void",  level: 9,  name: "Silver Void",  price: "50", imageSrc: "/avatars/1.webp",                       bg: "#111827", figure: "#cbd5e1", ring: "#cbd5e1", glow: "#cbd5e180", isActive: true, rarity: "common" },
+  { id: "preview-neon-lynx",    level: 10, name: "Neon Lynx",    price: "50", imageSrc: "/avatars/landing/neon-lynx.webp",       bg: "#170f2e", figure: "#a855f7", ring: "#c084fc", glow: "#a855f780", isActive: true, rarity: "common" },
+  { id: "preview-blue-signal",  level: 11, name: "Blue Signal",  price: "50", imageSrc: "/avatars/landing/blue-signal.webp",     bg: "#06131f", figure: "#22d3ee", ring: "#22d3ee", glow: "#22d3ee80", isActive: true, rarity: "common" },
+  { id: "preview-violet-mask",  level: 12, name: "Violet Mask",  price: "50", imageSrc: "/avatars/landing/violet-mask.webp",     bg: "#1a1028", figure: "#d946ef", ring: "#d946ef", glow: "#d946ef80", isActive: true, rarity: "common" },
+  { id: "preview-horned-iron",  level: 13, name: "Viozen",       price: "50", imageSrc: "/avatars/landing/viozen.webp",          bg: "#1f0a05", figure: "#fb923c", ring: "#fb923c", glow: "#fb923c80", isActive: true, rarity: "common" },
+  { id: "preview-crimson-muse", level: 14, name: "Crimson Muse", price: "50", imageSrc: "/avatars/6.webp",                       bg: "#2a0b0b", figure: "#f97316", ring: "#f97316", glow: "#f9731680", isActive: true, rarity: "common" },
+  { id: "preview-solar-flame",  level: 15, name: "Solar Flame",  price: "50", imageSrc: "/avatars/landing/solar-flame.webp",     bg: "#241005", figure: "#facc15", ring: "#facc15", glow: "#facc1590", isActive: true, rarity: "common" },
+  { id: "preview-pink-circuit", level: 16, name: "Pink Circuit", price: "50", imageSrc: "/avatars/landing/pink-circuit.webp",    bg: "#2a0b1c", figure: "#fb7185", ring: "#fb7185", glow: "#fb718580", isActive: true, rarity: "common" },
+  { id: "preview-blu-fifer",    level: 17, name: "Blu Fifer",    price: "50", imageSrc: "/avatars/landing/blu-fifer.webp",       bg: "#0a1a2e", figure: "#3b82f6", ring: "#60a5fa", glow: "#3b82f680", isActive: true, rarity: "common" },
 ];
 
 function fallbackAvatarCatalog(): AvatarCatalogItem[] {
@@ -161,9 +155,12 @@ function getPreviewOnlyAvatarImageScale(avatarId: string): React.CSSProperties |
     case "preview-violet-mask":
     case "preview-horned-iron":
     case "preview-solar-flame":
+    case "preview-blu-fifer":
       return { transform: "scale(1.45)" };
     case "preview-pink-circuit":
       return { transform: "scale(1.08)" };
+    case "preview-silver-void":
+      return { transform: "scale(1.18)" };
     default:
       return undefined;
   }
