@@ -49,13 +49,14 @@ import { toast } from "@/components/ui/use-toast";
 import { spendTokens } from "@/lib/api/tokens";
 import { supabase } from "@/lib/supabase";
 
-export type DashboardTab = "home" | "polls" | "challenges" | "daily-spin" | "communities" | "profile" | "wallet" | "inventory" | "store";
+export type DashboardTab = "home" | "polls" | "challenges" | "daily-spin" | "communities" | "profile" | "settings" | "wallet" | "inventory" | "store";
 
 interface DashboardNavProps {
   userId: string;
   username: string;
   avatarLevel: number;
   onProfileClick: () => void;
+  onSettingsClick: () => void;
   onBillingClick: () => void;
   onLogout: () => void;
   communityTitle?: string;
@@ -226,7 +227,7 @@ function readStoredTokenBalance(userId: string): number {
   }
 }
 
-export function DashboardNav({ userId, username, avatarLevel, onProfileClick, onBillingClick, onLogout, communityTitle, onBack, communities, xp = 0, level = 1 }: DashboardNavProps) {
+export function DashboardNav({ userId, username, avatarLevel, onProfileClick, onSettingsClick, onBillingClick, onLogout, communityTitle, onBack, communities, xp = 0, level = 1 }: DashboardNavProps) {
   const { mode, accent, accentPresets, setMode, setAccent } = useTheme();
   const [hoveredMode, setHoveredMode] = useState<ThemeMode | null>(null);
   const [hoveredAccent, setHoveredAccent] = useState<AccentPresetId | null>(null);
@@ -764,6 +765,14 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
                 compact
                 className={cn("mx-1 mb-1 hidden sm:block", isEffectiveLight ? "border-slate-200 bg-slate-50" : "border-raw-border/25 bg-raw-black/30")}
               />
+
+              <DropdownMenuItem
+                onClick={onSettingsClick}
+                className={cn("cursor-pointer rounded-lg px-2 py-1.5 text-xs focus:text-raw-text sm:px-3 sm:py-2.5 sm:text-sm", isEffectiveLight ? "text-slate-700 focus:bg-slate-100" : "text-raw-silver/80 focus:bg-raw-surface/80")}
+              >
+                <Settings className="mr-3 h-4 w-4" />
+                Settings
+              </DropdownMenuItem>
 
               <DropdownMenuItem
                 onClick={onBillingClick}

@@ -82,7 +82,10 @@
       "Bash(grep -v \"//\\\\|onSelectItem\\\\|onSelected\\\\|onSelectAvatar\\\\|onSelectPoll\\\\|selectedCommunity\\\\|onSetSelected\\\\|handleSelect\")",
       "Bash(grep -v \"import\\\\|//\")",
       "Bash(git restore *)",
-      "PowerShell(npx supabase --version)"
+      "PowerShell(npx supabase --version)",
+      "Bash(grep -n \"Account Settings\\\\|</div>\\\\s*$\\\\|return.*;\\\\|^}\" src/components/dashboard/DashboardProfile.tsx)",
+      "Bash(awk 'NR<=143 || NR>=354' src/components/dashboard/DashboardProfile.tsx)",
+      "Bash(mv /tmp/profile.tsx src/components/dashboard/DashboardProfile.tsx)"
     ]
   }
 }
