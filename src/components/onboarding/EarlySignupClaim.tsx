@@ -78,11 +78,14 @@ export function EarlySignupClaim({ userId, onResolved }: EarlySignupClaimProps) 
             >
               <img
                 src={entry.imageSrc}
-                alt={`Early signup avatar ${entry.imageId}`}
+                alt={entry.name}
                 className="h-full w-full object-cover"
                 loading="lazy"
                 decoding="async"
               />
+              <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-raw-black/85 via-raw-black/40 to-transparent px-2 py-2 text-center text-[10px] font-semibold uppercase tracking-[0.14em] text-raw-text">
+                {entry.name}
+              </span>
             </button>
           );
         })}

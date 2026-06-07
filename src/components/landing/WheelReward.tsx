@@ -18,7 +18,7 @@ import { SPIN_POOL } from "@/backend/supabase/controllers/avatarRewardsControlle
 const WHEEL_REWARD_POOL: readonly PoolEntry[] = SPIN_POOL.map((entry, i) => ({
   id: `wheel-avatar-${i + 1}`,
   avatarId: entry.catalogId,
-  name: `Avatar ${entry.imageId}`,
+  name: entry.name,
   imageSrc: entry.imageSrc,
 }));
 

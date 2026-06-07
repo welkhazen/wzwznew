@@ -26,33 +26,23 @@ const CHOOSER_AVATARS: readonly AvatarCatalogItem[] = [
   { id: "black", level: 9, name: "Black", price: "0", imageSrc: "/avatars/avatar-7.svg", bg: "#0a0a0a", figure: "#cfd3da", ring: "#cfd3da", glow: "#cfd3da80", isActive: true, rarity: "common" },
   { id: "blue", level: 10, name: "Blue", price: "0", imageSrc: "/avatars/avatar-10.svg", bg: "#0a1424", figure: "#3b82f6", ring: "#3b82f6", glow: "#3b82f680", isActive: true, rarity: "common" },
 ];
-// "Spin pool" + "early-signup pool" sourced from the shared config so
-// landing, onboarding, and wheel stay in lockstep.
-import {
-  SPIN_POOL,
-  EARLY_SIGNUP_POOL,
-} from "@/backend/supabase/controllers/avatarRewardsController";
+// Spin pool is publicly visible on the landing showcase.
+// The early-signup pool intentionally stays OUT of this list — it's
+// exclusive to the onboarding Early Signup Reward step and shouldn't
+// be advertised to visitors.
+import { SPIN_POOL } from "@/backend/supabase/controllers/avatarRewardsController";
 
-const REVEAL_AVATARS: readonly AvatarCatalogItem[] = [
-  ...SPIN_POOL.map((entry, i): AvatarCatalogItem => ({
+const REVEAL_AVATARS: readonly AvatarCatalogItem[] = SPIN_POOL.map(
+  (entry, i): AvatarCatalogItem => ({
     id: `reveal-spin-${i + 1}`,
     level: 11 + i,
-    name: `Avatar ${entry.imageId}`,
+    name: entry.name,
     price: "0",
     imageSrc: entry.imageSrc,
     bg: "#111827", figure: "#cbd5e1", ring: "#cbd5e1", glow: "#cbd5e180",
     isActive: true, rarity: "common",
-  })),
-  ...EARLY_SIGNUP_POOL.map((entry, i): AvatarCatalogItem => ({
-    id: `reveal-signup-${i + 1}`,
-    level: 11 + SPIN_POOL.length + i,
-    name: `Avatar ${entry.imageId}`,
-    price: "0",
-    imageSrc: entry.imageSrc,
-    bg: "#111827", figure: "#cbd5e1", ring: "#cbd5e1", glow: "#cbd5e180",
-    isActive: true, rarity: "common",
-  })),
-];
+  }),
+);
 const LANDING_AVATARS: readonly AvatarCatalogItem[] = [...CHOOSER_AVATARS, ...REVEAL_AVATARS];
 
 type RevealAvatarImageFit = { scale: number; objectPosition?: string };

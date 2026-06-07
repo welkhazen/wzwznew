@@ -2,6 +2,7 @@ import { supabase } from "../client";
 import {
   EARLY_SIGNUP_AVATAR_IDS,
   FREE_SPIN_AVATAR_IDS,
+  avatarDisplayName,
   avatarImageSrc,
 } from "@/config/avatarConfig";
 
@@ -12,6 +13,8 @@ export interface AvatarRewardEntry {
   imageId: number;
   /** Convenience: full image path. */
   imageSrc: string;
+  /** Display name (e.g. "Crimson Halo"). */
+  name: string;
 }
 
 function toEntry(prefix: "spin" | "signup", imageId: number): AvatarRewardEntry {
@@ -19,6 +22,7 @@ function toEntry(prefix: "spin" | "signup", imageId: number): AvatarRewardEntry 
     catalogId: `${prefix}-${imageId}`,
     imageId,
     imageSrc: avatarImageSrc(imageId),
+    name: avatarDisplayName(imageId),
   };
 }
 
