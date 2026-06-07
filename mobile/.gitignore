@@ -1,0 +1,34 @@
+node_modules/
+.expo/
+dist/
+web-build/
+
+# Native
+android/
+ios/
+
+# Macros
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+google-play-service-account.json
+
+# Metro / Watchman
+.metro-health-check*
+.haste_cache/
+
+# Debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+
+# Env
+.env
+.env.local
+.env.*.local
