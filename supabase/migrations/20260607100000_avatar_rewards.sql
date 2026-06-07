@@ -18,10 +18,13 @@ as $$
 $$;
 
 -- Eligibility check used by the RPC and (read-only) by the client.
+-- SECURITY DEFINER so users.row lookups aren't blocked by RLS. The
+-- function only returns a boolean, no data leak.
 create or replace function public.is_early_signup_eligible(p_user_id text)
 returns boolean
 language sql
 stable
+security definer
 set search_path to 'public'
 as $$
   select exists (
