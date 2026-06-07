@@ -3,7 +3,8 @@ import { Archive, BookOpen, Brain, CircleGauge, Fingerprint, Lock, Map, Sparkles
 import { readOwnedInsightIds } from "@/lib/insightsOwnership";
 import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { WheelOfFortune, type WheelPrize } from "@/components/wheel/WheelOfFortune";
-import { RARITY_CONFIG, RARITY_ORDER } from "@/lib/avatarRarity";
+import { RARITY_CONFIG, RANK_TIERS } from "@/lib/avatarRarity";
+import type { AvatarRarity } from "@/lib/avatarRarity";
 import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
 import type { Poll } from "@/store/useRawStore";
 import TokenImage from "@/assets/tokens.webp";
@@ -330,40 +331,60 @@ export function AvatarShop({
 // ─── Loot Spin ───────────────────────────────────────────────────────────────
 
 const SPIN_COST = 50;
-const SPIN_PRIZES = RARITY_ORDER.map((r) => ({
-  id: r,
-  rarity: r,
-  label: RARITY_CONFIG[r].label,
-  color: RARITY_CONFIG[r].color,
-  glow: RARITY_CONFIG[r].glow,
-  weight: RARITY_CONFIG[r].defaultWeight,
-}));
 
-export function LootSpin({ tokenBalance }: { tokenBalance: number }) {
-  const [result, setResult] = useState<(typeof SPIN_PRIZES)[number] | null>(null);
+type SpinResult = (typeof RANK_TIERS)[number] & { wonAvatar?: AvatarCatalogItem };
+
+interface LootSpinProps {
+  tokenBalance: number;
+  avatarCatalog: AvatarCatalogItem[];
+  ownedAvatarLevels: Set<number>;
+  userId: string;
+  onAvatarPurchased: (level: number) => void;
+}
+
+export function LootSpin({ tokenBalance, avatarCatalog, ownedAvatarLevels, userId, onAvatarPurchased }: LootSpinProps) {
+  const [result, setResult] = useState<SpinResult | null>(null);
+  const [isClaiming, setIsClaiming] = useState(false);
 
   const canSpin = tokenBalance >= SPIN_COST;
-  const wheelPrizes: WheelPrize[] = SPIN_PRIZES.map((prize) => ({
-    id: prize.id,
-    label: `${prize.label} Drop`,
-    shortLabel: prize.label.toUpperCase(),
-    color: `${prize.color}26`,
-    textColor: prize.color,
+
+  const wheelPrizes: WheelPrize[] = RANK_TIERS.map((tier) => ({
+    id: String(tier.rank),
+    label: tier.label,
+    shortLabel: tier.rank === 10 ? "R10" : `R${tier.rank}`,
+    color: `${tier.color}22`,
+    textColor: tier.color,
   }));
-  const prizeWeights = SPIN_PRIZES.reduce<Partial<Record<string, number>>>((acc, prize) => {
-    acc[prize.id] = prize.weight;
+
+  const prizeWeights = RANK_TIERS.reduce<Partial<Record<string, number>>>((acc, tier) => {
+    acc[String(tier.rank)] = tier.weight;
     return acc;
   }, {});
 
   const handleSpinEnd = (prize: WheelPrize) => {
-    setResult(SPIN_PRIZES.find((entry) => entry.id === prize.id) ?? SPIN_PRIZES[0]);
+    const tier = RANK_TIERS.find((t) => String(t.rank) === prize.id) ?? RANK_TIERS[0];
+    const eligible = avatarCatalog.filter(
+      (a) => (a.rarity as AvatarRarity) === tier.rarity && !ownedAvatarLevels.has(a.level),
+    );
+    const won = eligible.length > 0 ? eligible[Math.floor(Math.random() * eligible.length)] : undefined;
+    setResult({ ...tier, wonAvatar: won });
+  };
+
+  const handleClaim = async () => {
+    if (!result?.wonAvatar || isClaiming) return;
+    setIsClaiming(true);
+    try {
+      onAvatarPurchased(result.wonAvatar.level);
+    } finally {
+      setIsClaiming(false);
+    }
   };
 
   return (
     <div className="rounded-2xl border border-raw-border/35 bg-raw-black/45 p-5">
       <div className="mb-4 flex items-center gap-2">
         <Sparkles className="h-4 w-4 text-raw-gold/60" />
-        <h3 className="font-display text-sm tracking-wide text-raw-text">Rarity Spin</h3>
+        <h3 className="font-display text-sm tracking-wide text-raw-text">Rank Spin</h3>
         <span className="ml-auto flex items-center gap-1 rounded-full border border-raw-border/35 bg-raw-black/50 px-2.5 py-1 text-[10px] text-raw-silver/50">
           <img src={TokenImage} alt="" className="h-3 w-3 object-contain" />
           {SPIN_COST} per spin
@@ -375,20 +396,40 @@ export function LootSpin({ tokenBalance }: { tokenBalance: number }) {
           prizes={wheelPrizes}
           prizeWeights={prizeWeights}
           onSpinEnd={handleSpinEnd}
-          disabled={!canSpin}
+          disabled={!canSpin || !!result}
           radius={145}
         />
       </div>
 
       {result && (
         <div
-          className="mt-4 rounded-xl border px-4 py-3 text-center text-sm font-semibold"
-          style={{ borderColor: `${result.color}50`, color: result.color, background: `${result.glow}18` }}
+          className="mt-4 rounded-xl border px-4 py-3 text-center"
+          style={{ borderColor: `${result.color}50`, background: `${result.glow}18` }}
         >
-          {result.label} Rarity Drop!
+          <p className="text-sm font-bold" style={{ color: result.color }}>
+            {result.label}!
+          </p>
+          {result.wonAvatar ? (
+            <>
+              <p className="mt-1 text-xs text-raw-silver/60">
+                You won <span className="font-semibold text-raw-text">{result.wonAvatar.name}</span>
+              </p>
+              <button
+                onClick={handleClaim}
+                disabled={isClaiming}
+                className="mt-3 rounded-full border border-raw-gold/50 bg-raw-gold/15 px-4 py-1.5 text-xs font-semibold text-raw-gold transition hover:bg-raw-gold/25 disabled:opacity-50"
+              >
+                {isClaiming ? "Claiming…" : "Claim Avatar"}
+              </button>
+            </>
+          ) : (
+            <p className="mt-1 text-xs text-raw-silver/45">
+              No unclaimed avatars at this rank yet — check back later!
+            </p>
+          )}
         </div>
       )}
-      {!canSpin && (
+      {!canSpin && !result && (
         <div className="mt-4 flex items-center justify-center gap-1.5 rounded-xl border border-raw-border/30 bg-raw-surface/20 py-2.5 text-sm font-semibold text-raw-silver/45">
           <Lock className="h-3.5 w-3.5" />
           Need {SPIN_COST} tokens
