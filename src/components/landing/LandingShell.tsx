@@ -99,11 +99,8 @@ export default function LandingShell({
               >
                 <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/70 to-transparent" />
                 <div className="px-6 pb-2 pt-2 text-center sm:pb-6">
-                  <p className="font-display text-[10px] tracking-[0.3em] uppercase text-raw-gold/70">
-                    On the way
-                  </p>
-                  <h3 className="mt-2 landing-heading text-raw-gold">
-                    Roadmap.
+                  <h3 className="landing-heading text-raw-gold">
+                    raW Roadmap
                   </h3>
                   <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-raw-silver/55">
                     Explore the features we are building next and the direction raW is
