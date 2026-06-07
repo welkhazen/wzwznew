@@ -252,6 +252,22 @@ function readStoredAnswerHistory(storageKey: string): Record<string, string> {
   }
 }
 
+function readStoredAnswerTimestamps(storageKey: string): Record<string, number> {
+  try {
+    const raw = window.localStorage.getItem(storageKey);
+    const parsed = raw ? (JSON.parse(raw) as Record<string, number>) : {};
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function startOfTodayMs(): number {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
 function buildPollShareText(poll: Poll): string {
   return `Vote anonymously on raW: ${poll.question}`;
 }
@@ -279,10 +295,12 @@ export function DashboardPolls({
   const { mode } = useTheme();
   const isLightMode = mode === "light";
   const answersStorageKey = `raw.poll-history.answers.${userId}`;
+  const answerTimestampsStorageKey = `raw.poll-history.answers-ts.${userId}`;
   const commentsStorageKey = `raw.poll-history.comments.${userId}`;
   const voteHintStorageKey = `raw.polls.vote-hint-seen.${userId}`;
   const [loadedAnswersStorageKey, setLoadedAnswersStorageKey] = useState(answersStorageKey);
   const [answerHistory, setAnswerHistory] = useState<Record<string, string>>(() => readStoredAnswerHistory(answersStorageKey));
+  const [answerTimestamps, setAnswerTimestamps] = useState<Record<string, number>>(() => readStoredAnswerTimestamps(answerTimestampsStorageKey));
   const [historyComments, setHistoryComments] = useState<Record<string, PollHistoryComment[]>>({});
   const [commentDraft, setCommentDraft] = useState("");
   const [commentModerationError, setCommentModerationError] = useState<string | null>(null);
@@ -298,8 +316,23 @@ export function DashboardPolls({
   useEffect(() => {
     setLoadedAnswersStorageKey(answersStorageKey);
     setAnswerHistory(readStoredAnswerHistory(answersStorageKey));
+    setAnswerTimestamps(readStoredAnswerTimestamps(answerTimestampsStorageKey));
     setCurrentPollIndex(0);
-  }, [answersStorageKey]);
+  }, [answersStorageKey, answerTimestampsStorageKey]);
+
+  useEffect(() => {
+    if (loadedAnswersStorageKey !== answersStorageKey) return;
+    window.localStorage.setItem(answerTimestampsStorageKey, JSON.stringify(answerTimestamps));
+  }, [answerTimestamps, answerTimestampsStorageKey, answersStorageKey, loadedAnswersStorageKey]);
+
+  const todayStart = useMemo(() => startOfTodayMs(), []);
+  const answeredTodayIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const [pollId, ts] of Object.entries(answerTimestamps)) {
+      if (typeof ts === "number" && ts >= todayStart) ids.add(pollId);
+    }
+    return ids;
+  }, [answerTimestamps, todayStart]);
 
   useEffect(() => {
     try {
@@ -332,13 +365,13 @@ export function DashboardPolls({
   }, [hasSeenVoteHint, voteHintStorageKey]);
 
   const unseenPolls = useMemo(
-    () => polls.filter((p) => !answerHistory[p.id]),
-    [polls, answerHistory]
+    () => polls.filter((p) => !answeredTodayIds.has(p.id)),
+    [polls, answeredTodayIds]
   );
 
   const answeredPolls = useMemo(
-    () => polls.filter((p) => answerHistory[p.id]),
-    [polls, answerHistory]
+    () => polls.filter((p) => answeredTodayIds.has(p.id)),
+    [polls, answeredTodayIds]
   );
   const answeredPollHistory = useMemo(
     () => answeredPolls.slice().reverse(),
@@ -449,6 +482,10 @@ export function DashboardPolls({
     setAnswerHistory((previous) => ({
       ...previous,
       [pollId]: optionId,
+    }));
+    setAnswerTimestamps((previous) => ({
+      ...previous,
+      [pollId]: Date.now(),
     }));
 
     if (!votedPolls.has(pollId)) {
