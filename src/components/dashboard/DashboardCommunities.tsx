@@ -58,6 +58,7 @@ import {
   COMMUNITY_COVER_VIDEOS,
 } from "@/lib/communityConstants";
 import { buildDefaultCommunities } from "@/lib/communityChat.seed";
+import { readCachedMessages, writeCachedMessages } from "@/lib/communityCache";
 import { sendCommunityPushNotification } from "@/lib/communityPushNotifications";
 import type { CommunityChatMessageRecord, PersistedCommunityRecord } from "@/lib/communityChat.types";
 import {
@@ -369,8 +370,24 @@ export function DashboardCommunities({
 
       const requestId = latestMessagesRequestRef.current + 1;
       latestMessagesRequestRef.current = requestId;
-      setMessagesLoading(true);
-      setMessagesError(false);
+
+      // Hydrate from the persistent cache first so the room appears
+      // instantly. We only show the spinner if there's no cache at all —
+      // otherwise the network fetch revalidates in the background.
+      const cached = readCachedMessages(activeCommunityId);
+      if (cached) {
+        const communityId = activeCommunityId;
+        setHasOlderMessages(cached.data.length === MESSAGE_PAGE_SIZE);
+        updateCommunities((current) =>
+          setCommunityMessages(current, communityId, cached.data),
+        );
+        setMessagesLoading(false);
+        setMessagesError(false);
+      } else {
+        setMessagesLoading(true);
+        setMessagesError(false);
+      }
+
       try {
         const communityId = activeCommunityId;
         const messages = await fetchCommunityMessages(communityId, { limit: MESSAGE_PAGE_SIZE });
@@ -378,8 +395,10 @@ export function DashboardCommunities({
         loadedMessagesCommunityRef.current = communityId;
         setHasOlderMessages(messages.length === MESSAGE_PAGE_SIZE);
         updateCommunities((current) => setCommunityMessages(current, communityId, messages));
+        writeCachedMessages(communityId, messages);
       } catch {
-        if (latestMessagesRequestRef.current === requestId) {
+        if (latestMessagesRequestRef.current === requestId && !cached) {
+          // Only surface the error UI when there was nothing cached to fall back on.
           setMessagesError(true);
         }
       } finally {
