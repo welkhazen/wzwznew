@@ -12,18 +12,15 @@ const TRANSPARENT_REWARDS_IMAGE_SRC = "/images/avatar-rarity-chart.png";
 
 type PoolEntry = { id: string; avatarId: string; name: string; imageSrc: string };
 
-// Keep this list in sync with REVEAL_AVATARS in AvatarShowcaseSection.tsx ("ALL AVATARS").
-const WHEEL_REWARD_POOL: readonly PoolEntry[] = [
-  { id: "wheel-avatar-1", avatarId: "silver-void", name: "Silver Void", imageSrc: "/avatars/1.webp" },
-  { id: "wheel-avatar-2", avatarId: "neon-lynx", name: "Neon Lynx", imageSrc: "/avatars/landing/neon-lynx.webp" },
-  { id: "wheel-avatar-3", avatarId: "blue-signal", name: "Blue Signal", imageSrc: "/avatars/landing/blue-signal.webp" },
-  { id: "wheel-avatar-4", avatarId: "violet-mask", name: "Violet Mask", imageSrc: "/avatars/landing/violet-mask.webp" },
-  { id: "wheel-avatar-5", avatarId: "horned-iron", name: "Viozen", imageSrc: "/avatars/landing/viozen.webp" },
-  { id: "wheel-avatar-6", avatarId: "crimson-muse", name: "Crimson Muse", imageSrc: "/avatars/6.webp" },
-  { id: "wheel-avatar-7", avatarId: "solar-flame", name: "Solar Flame", imageSrc: "/avatars/landing/solar-flame.webp" },
-  { id: "wheel-avatar-8", avatarId: "pink-circuit", name: "Pink Circuit", imageSrc: "/avatars/landing/pink-circuit.webp" },
-  { id: "wheel-avatar-10", avatarId: "blu-fifer", name: "Blu Fifer", imageSrc: "/avatars/landing/blu-fifer.webp" },
-];
+// Ordered spin pool comes from src/config/avatarConfig.ts.
+import { SPIN_POOL } from "@/backend/supabase/controllers/avatarRewardsController";
+
+const WHEEL_REWARD_POOL: readonly PoolEntry[] = SPIN_POOL.map((entry, i) => ({
+  id: `wheel-avatar-${i + 1}`,
+  avatarId: entry.catalogId,
+  name: `Avatar ${entry.imageId}`,
+  imageSrc: entry.imageSrc,
+}));
 
 function getPool(): PoolEntry[] {
   return WHEEL_REWARD_POOL.map((entry) => ({ ...entry }));
