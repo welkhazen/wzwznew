@@ -17,11 +17,18 @@ export function EarlySignupClaim({ userId, onResolved }: EarlySignupClaimProps) 
   const [claiming, setClaiming] = useState(false);
   const [eligibilityChecked, setEligibilityChecked] = useState(false);
 
-  // Server-side eligibility check on mount. If ineligible, skip this step entirely.
+  // Server-side eligibility check on mount. If ineligible OR the RPC errors
+  // for any reason (network, race, RLS hiccup) the step auto-skips to
+  // "avatar" so onboarding can never get stuck on the reward page.
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const eligible = await isEarlySignupEligible(userId);
+      let eligible = false;
+      try {
+        eligible = await isEarlySignupEligible(userId);
+      } catch {
+        eligible = false;
+      }
       if (cancelled) return;
       setEligibilityChecked(true);
       if (!eligible) onResolved(null);
