@@ -108,6 +108,15 @@ const STEP_LABELS: Record<OnboardingStep, string> = {
   marketplace: "insights",
   ready: "ready",
 };
+const STEP_SHORT_LABELS: Record<OnboardingStep, string> = {
+  spin: "spin",
+  avatar: "avatar",
+  polls: "polls",
+  profile: "profile",
+  communities: "comm",
+  marketplace: "insights",
+  ready: "ready",
+};
 const FREE_ONBOARDING_AVATAR_COUNT = 8;
 const AVATAR_PAGE_SIZE = 8;
 const AGE_GATE_STORAGE_PREFIX = "raw.ageGateVerified";
@@ -269,12 +278,12 @@ function BackButton({ onClick }: { onClick: () => void }) {
   );
 }
 
-function StepPill({ label, active, complete, onClick }: { label: string; active: boolean; complete: boolean; onClick?: () => void }) {
+function StepPill({ label, shortLabel, active, complete, onClick }: { label: string; shortLabel?: string; active: boolean; complete: boolean; onClick?: () => void }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.18em] transition-all hover:border-raw-gold/60 hover:text-raw-gold ${
+      className={`shrink-0 rounded-full border px-2 py-1 text-[9px] tracking-[0.14em] uppercase transition-all hover:border-raw-gold/60 hover:text-raw-gold sm:px-3 sm:text-[10px] sm:tracking-[0.18em] ${
         active
           ? "border-raw-gold/60 bg-raw-gold/15 text-raw-gold"
           : complete
@@ -282,7 +291,8 @@ function StepPill({ label, active, complete, onClick }: { label: string; active:
             : "border-raw-border/40 bg-raw-surface/20 text-raw-silver/35"
       }`}
     >
-      {label}
+      <span className="sm:hidden">{shortLabel ?? label}</span>
+      <span className="hidden sm:inline">{label}</span>
     </button>
   );
 }
@@ -496,11 +506,12 @@ export function OnboardingJourney({
           </h1>
         </div>
 
-        <div className="mb-4 flex flex-wrap gap-1.5 sm:mb-6 sm:gap-2">
+        <div className="mb-4 flex flex-nowrap items-center justify-between gap-1 sm:mb-6 sm:flex-wrap sm:justify-start sm:gap-2">
           {STEP_ORDER.map((step, index) => (
             <StepPill
               key={step}
               label={STEP_LABELS[step]}
+              shortLabel={STEP_SHORT_LABELS[step]}
               active={step === onboardingStep}
               complete={index < currentStepIndex}
               onClick={() => onSetOnboardingStep(step)}
