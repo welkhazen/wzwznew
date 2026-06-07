@@ -1,17 +1,19 @@
 import { useEffect, useState } from "react";
 import {
-  Calendar,
   Eye,
   EyeOff,
-  Flame,
+  Heart,
   KeyRound,
-  MessageCircle,
+  MessageSquare,
+  Mic2,
+  Pin,
   Plus,
   Target,
   Trash2,
-  TrendingUp,
+  Users,
   X,
 } from "lucide-react";
+import { useProfileStats } from "@/hooks/useProfileStats";
 import { useToast } from "@/hooks/use-toast";
 import { changePassword, deleteAccount } from "@/backend/supabase/controllers/authController";
 import {
@@ -42,13 +44,14 @@ interface DashboardProfileProps {
   onLogout: () => void;
 }
 
-const stats = [
-  { icon: Target, label: "Polls Answered", value: "—", key: "polls" },
-  { icon: MessageCircle, label: "Messages Sent", value: "—", key: "messages" },
-  { icon: Flame, label: "Day Streak", value: "—", key: "streak" },
-  { icon: TrendingUp, label: "XP Earned", value: "—", key: "xp" },
-  { icon: Calendar, label: "Member Since", value: "—", key: "member" },
-];
+const STAT_ICONS = {
+  polls: Target,
+  comments: MessageSquare,
+  likes: Heart,
+  hosts: Mic2,
+  communities: Users,
+  pinned: Pin,
+} as const;
 
 export function DashboardProfile({
   userId,
@@ -64,6 +67,18 @@ export function DashboardProfile({
 }: DashboardProfileProps) {
   const { toast } = useToast();
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+
+  const { stats: profileStats, isLoading: isLoadingStats } = useProfileStats(userId);
+  // Prefer the live `pollsAnswered` prop while the RPC is hydrating —
+  // it lags the cache by at most one onboarding answer.
+  const statCards = [
+    { key: "polls",       icon: STAT_ICONS.polls,       label: "Polls",             value: isLoadingStats ? pollsAnswered : profileStats.polls },
+    { key: "comments",    icon: STAT_ICONS.comments,    label: "Comments on Polls", value: profileStats.commentsOnPolls },
+    { key: "likes",       icon: STAT_ICONS.likes,       label: "Likes Received",    value: profileStats.likesReceived },
+    { key: "hosts",       icon: STAT_ICONS.hosts,       label: "Hosts Made",        value: profileStats.hostsMade },
+    { key: "communities", icon: STAT_ICONS.communities, label: "Communities Joined",value: profileStats.communitiesJoined },
+    { key: "pinned",      icon: STAT_ICONS.pinned,      label: "Messages Pinned",   value: profileStats.messagesPinned },
+  ];
 
   const [pwOpen, setPwOpen] = useState(false);
   const [oldPw, setOldPw] = useState("");
@@ -232,9 +247,9 @@ export function DashboardProfile({
         </div>
       </div>
 
-      {/* Stats grid */}
-      <div className="grid grid-cols-3 gap-2 sm:grid-cols-3">
-        {stats.map((stat) => {
+      {/* Stats grid — 6 cards in a 3x2 layout */}
+      <div className="grid grid-cols-3 gap-2">
+        {statCards.map((stat) => {
           const Icon = stat.icon;
           return (
             <div
@@ -243,11 +258,7 @@ export function DashboardProfile({
             >
               <Icon className="mx-auto mb-1.5 h-3.5 w-3.5 text-raw-gold/40" />
               <p className="text-base font-bold text-raw-text sm:text-lg">
-                {stat.key === "polls"
-                  ? pollsAnswered
-                  : stat.key === "xp"
-                  ? xp.toLocaleString()
-                  : stat.value}
+                {Number(stat.value).toLocaleString()}
               </p>
               <p className="mt-0.5 text-[8px] uppercase leading-tight tracking-wider text-raw-silver/30 sm:text-[9px]">
                 {stat.label}
