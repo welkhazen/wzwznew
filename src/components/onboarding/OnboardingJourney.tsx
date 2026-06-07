@@ -149,21 +149,11 @@ function applyAvatarThemes(items: AvatarCatalogItem[]): void {
 }
 
 function getPreviewOnlyAvatarImageScale(avatarId: string): React.CSSProperties | undefined {
-  switch (avatarId) {
-    case "preview-neon-lynx":
-    case "preview-blue-signal":
-    case "preview-violet-mask":
-    case "preview-horned-iron":
-    case "preview-solar-flame":
-    case "preview-blu-fifer":
-      return { transform: "scale(1.45)" };
-    case "preview-pink-circuit":
-      return { transform: "scale(1.08)" };
-    case "preview-silver-void":
-      return { transform: "scale(1.18)" };
-    default:
-      return undefined;
+  // Uniform sizing for all preview-only avatars so none look smaller than others.
+  if (avatarId.startsWith("preview-")) {
+    return { transform: "scale(1.45)" };
   }
+  return undefined;
 }
 
 const FALLBACK_POLLS: OnboardingPoll[] = [
