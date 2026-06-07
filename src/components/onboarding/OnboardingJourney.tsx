@@ -18,6 +18,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { SwipeablePollCard } from "./SwipeablePollCard";
 import { EnterRawModal } from "./EnterRawModal";
+import { EarlySignupClaim } from "./EarlySignupClaim";
 import type { OnboardingStep, Poll, User } from "@/store/useRawStore";
 import { track } from "@/lib/analytics";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -50,17 +51,15 @@ interface OnboardingJourneyProps {
 
 type WheelPoolEntry = { id: string; avatarId: string; name: string; imageSrc: string };
 
-const SPIN_WHEEL_POOL: readonly WheelPoolEntry[] = [
-  { id: "wheel-avatar-1", avatarId: "silver-void", name: "Silver Void", imageSrc: "/avatars/1.webp" },
-  { id: "wheel-avatar-2", avatarId: "neon-lynx", name: "Neon Lynx", imageSrc: "/avatars/landing/neon-lynx.webp" },
-  { id: "wheel-avatar-3", avatarId: "blue-signal", name: "Blue Signal", imageSrc: "/avatars/landing/blue-signal.webp" },
-  { id: "wheel-avatar-4", avatarId: "violet-mask", name: "Violet Mask", imageSrc: "/avatars/landing/violet-mask.webp" },
-  { id: "wheel-avatar-5", avatarId: "horned-iron", name: "Viozen", imageSrc: "/avatars/landing/viozen.webp" },
-  { id: "wheel-avatar-6", avatarId: "crimson-muse", name: "Crimson Muse", imageSrc: "/avatars/6.webp" },
-  { id: "wheel-avatar-7", avatarId: "solar-flame", name: "Solar Flame", imageSrc: "/avatars/landing/solar-flame.webp" },
-  { id: "wheel-avatar-8", avatarId: "pink-circuit", name: "Pink Circuit", imageSrc: "/avatars/landing/pink-circuit.webp" },
-  { id: "wheel-avatar-10", avatarId: "blu-fifer", name: "Blu Fifer", imageSrc: "/avatars/landing/blu-fifer.webp" },
-];
+// Ordered spin pool sourced from the shared config.
+import { SPIN_POOL, EARLY_SIGNUP_POOL } from "@/backend/supabase/controllers/avatarRewardsController";
+
+const SPIN_WHEEL_POOL: readonly WheelPoolEntry[] = SPIN_POOL.map((entry, i) => ({
+  id: `wheel-avatar-${i + 1}`,
+  avatarId: entry.catalogId,
+  name: `Avatar ${entry.imageId}`,
+  imageSrc: entry.imageSrc,
+}));
 
 function buildSpinPrizes(): WheelPrize[] {
   return SPIN_WHEEL_POOL.map((entry, i) => ({
@@ -98,9 +97,10 @@ function findOwnedSpinResult(ownedAvatarLevels: Set<number>, avatarCatalog: Avat
   return null;
 }
 
-const STEP_ORDER: OnboardingStep[] = ["spin", "avatar", "polls", "profile", "communities"];
+const STEP_ORDER: OnboardingStep[] = ["spin", "early-signup-reward", "avatar", "polls", "profile", "communities"];
 const STEP_LABELS: Record<OnboardingStep, string> = {
   spin: "spin",
+  "early-signup-reward": "reward",
   avatar: "avatar",
   polls: "polls",
   profile: "profile",
@@ -121,16 +121,26 @@ const LANDING_ONBOARDING_AVATARS: readonly AvatarCatalogItem[] = [
   { id: "rose", level: 6, name: "Rose", price: "Free", imageSrc: "/avatars/avatar-4.svg", bg: "#1f0a14", figure: "#f43f5e", ring: "#f43f5e", glow: "#f43f5e80", isActive: true, rarity: "common" },
   { id: "black", level: 7, name: "Black", price: "Free", imageSrc: "/avatars/avatar-7.svg", bg: "#0a0a0a", figure: "#cfd3da", ring: "#cfd3da", glow: "#cfd3da80", isActive: true, rarity: "common" },
   { id: "blue", level: 8, name: "Blue", price: "Free", imageSrc: "/avatars/avatar-10.svg", bg: "#0a1424", figure: "#3b82f6", ring: "#3b82f6", glow: "#3b82f680", isActive: true, rarity: "common" },
-  // Preview-only tier mirrors the spin wheel: the same 9 avatars users can win.
-  { id: "preview-silver-void",  level: 9,  name: "Silver Void",  price: "50", imageSrc: "/avatars/1.webp",                       bg: "#111827", figure: "#cbd5e1", ring: "#cbd5e1", glow: "#cbd5e180", isActive: true, rarity: "common" },
-  { id: "preview-neon-lynx",    level: 10, name: "Neon Lynx",    price: "50", imageSrc: "/avatars/landing/neon-lynx.webp",       bg: "#170f2e", figure: "#a855f7", ring: "#c084fc", glow: "#a855f780", isActive: true, rarity: "common" },
-  { id: "preview-blue-signal",  level: 11, name: "Blue Signal",  price: "50", imageSrc: "/avatars/landing/blue-signal.webp",     bg: "#06131f", figure: "#22d3ee", ring: "#22d3ee", glow: "#22d3ee80", isActive: true, rarity: "common" },
-  { id: "preview-violet-mask",  level: 12, name: "Violet Mask",  price: "50", imageSrc: "/avatars/landing/violet-mask.webp",     bg: "#1a1028", figure: "#d946ef", ring: "#d946ef", glow: "#d946ef80", isActive: true, rarity: "common" },
-  { id: "preview-horned-iron",  level: 13, name: "Viozen",       price: "50", imageSrc: "/avatars/landing/viozen.webp",          bg: "#1f0a05", figure: "#fb923c", ring: "#fb923c", glow: "#fb923c80", isActive: true, rarity: "common" },
-  { id: "preview-crimson-muse", level: 14, name: "Crimson Muse", price: "50", imageSrc: "/avatars/6.webp",                       bg: "#2a0b0b", figure: "#f97316", ring: "#f97316", glow: "#f9731680", isActive: true, rarity: "common" },
-  { id: "preview-solar-flame",  level: 15, name: "Solar Flame",  price: "50", imageSrc: "/avatars/landing/solar-flame.webp",     bg: "#241005", figure: "#facc15", ring: "#facc15", glow: "#facc1590", isActive: true, rarity: "common" },
-  { id: "preview-pink-circuit", level: 16, name: "Pink Circuit", price: "50", imageSrc: "/avatars/landing/pink-circuit.webp",    bg: "#2a0b1c", figure: "#fb7185", ring: "#fb7185", glow: "#fb718580", isActive: true, rarity: "common" },
-  { id: "preview-blu-fifer",    level: 17, name: "Blu Fifer",    price: "50", imageSrc: "/avatars/landing/blu-fifer.webp",       bg: "#0a1a2e", figure: "#3b82f6", ring: "#60a5fa", glow: "#3b82f680", isActive: true, rarity: "common" },
+  // Preview-only tier: 8 free-spin avatars + 4 early-signup avatars,
+  // sourced from the shared config so order matches landing + wheel.
+  ...SPIN_POOL.map((entry, i): AvatarCatalogItem => ({
+    id: `preview-spin-${i + 1}`,
+    level: FREE_ONBOARDING_AVATAR_COUNT + 1 + i,
+    name: `Avatar ${entry.imageId}`,
+    price: "50",
+    imageSrc: entry.imageSrc,
+    bg: "#111827", figure: "#cbd5e1", ring: "#cbd5e1", glow: "#cbd5e180",
+    isActive: true, rarity: "common",
+  })),
+  ...EARLY_SIGNUP_POOL.map((entry, i): AvatarCatalogItem => ({
+    id: `preview-signup-${i + 1}`,
+    level: FREE_ONBOARDING_AVATAR_COUNT + 1 + SPIN_POOL.length + i,
+    name: `Avatar ${entry.imageId}`,
+    price: "50",
+    imageSrc: entry.imageSrc,
+    bg: "#111827", figure: "#cbd5e1", ring: "#cbd5e1", glow: "#cbd5e180",
+    isActive: true, rarity: "common",
+  })),
 ];
 
 function fallbackAvatarCatalog(): AvatarCatalogItem[] {
@@ -586,6 +596,16 @@ export function OnboardingJourney({
               </div>
             </section>
           )}
+
+          {onboardingStep === "early-signup-reward" && (
+            <EarlySignupClaim
+              userId={user.id}
+              onResolved={() => {
+                onSetOnboardingStep("avatar");
+              }}
+            />
+          )}
+
           {onboardingStep === "avatar" && (
             <section>
               <h2 className="font-display text-lg tracking-wide text-raw-text sm:text-xl">II. Choose your avatar</h2>

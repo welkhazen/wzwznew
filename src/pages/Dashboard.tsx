@@ -37,6 +37,9 @@ const DashboardChallenges = lazy(() =>
 const DashboardDailySpin = lazy(() =>
   import("@/components/dashboard/DashboardDailySpin").then((module) => ({ default: module.DashboardDailySpin }))
 );
+const DashboardSettings = lazy(() =>
+  import("@/components/dashboard/DashboardSettings").then((module) => ({ default: module.DashboardSettings }))
+);
 const DashboardProfile = lazy(() =>
   import("@/components/dashboard/DashboardProfile").then((module) => ({ default: module.DashboardProfile }))
 );
@@ -357,6 +360,12 @@ export default function Dashboard({
     navigate("/dashboard");
   };
 
+  const handleSettingsClick = () => {
+    setActiveTab("settings");
+    setIsHome(false);
+    navigate("/dashboard");
+  };
+
   const handleDailySpinAward = (amount: number) => {
     if (user.role === "admin") {
       return award(amount);
@@ -526,6 +535,18 @@ export default function Dashboard({
             </DashboardSectionShell>
           </Suspense>
         );
+      case "settings":
+        return (
+          <Suspense fallback={dashboardSectionFallback}>
+            <DashboardSectionShell>
+              <DashboardSettings
+                userId={user.id}
+                pinnedMessage={pinnedMessage}
+                onLogout={onLogout}
+              />
+            </DashboardSectionShell>
+          </Suspense>
+        );
       default:
         return (
           <DashboardSectionShell>
@@ -565,6 +586,7 @@ export default function Dashboard({
         avatarLevel={avatarLevel}
         onProfileClick={handleProfileClick}
         onBillingClick={handleBillingClick}
+        onSettingsClick={handleSettingsClick}
         onLogout={onLogout}
         communityTitle={activeCommunityTitle}
         onBack={handleBackToCommunities}
