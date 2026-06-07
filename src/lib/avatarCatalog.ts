@@ -635,6 +635,16 @@ export async function claimPendingLandingWheelAvatarForUser(userId: string): Pro
   const catalog = readAvatarCatalogLocal();
   const avatarId = readLandingWheelAvatarIdLocal(catalog);
   if (!avatarId) return null;
+
+  // Persist via the new server-side claim RPC so users.free_spin_avatar_*
+  // columns get set. Idempotent on the server, safe to retry.
+  try {
+    const { claimFreeSpinAvatar } = await import("@/backend/supabase/controllers/avatarRewardsController");
+    await claimFreeSpinAvatar(userId, avatarId);
+  } catch {
+    // Best-effort — fall back to the legacy local-first grant below.
+  }
+
   const result = await grantDailySpinAvatarOnceForUser(userId, avatarId);
   clearLandingWheelAvatarLocal();
   return result;
