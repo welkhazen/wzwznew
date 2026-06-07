@@ -1,10 +1,25 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Heart, MessageSquare, Mic2, Pin, Target, Users } from "lucide-react";
 import { useProfileStats } from "@/hooks/useProfileStats";
 import type { PinnedMessageRecord } from "@/backend/supabase/controllers/userExtrasController";
+import type { Poll } from "@/store/useRawStore";
 import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { LevelProgressBanner } from "@/components/dashboard/LevelProgressBanner";
 import { LEVEL_THEMES, getAvatar } from "@/lib/avataridentity";
+import { PersonalityInsightsInventory } from "@/components/dashboard/DashboardInventory";
+import { addOwnedInsightId, readOwnedInsightIds } from "@/lib/insightsOwnership";
+import { spendTokens } from "@/lib/api/tokens";
+import { toast } from "@/components/ui/use-toast";
+
+const TOKEN_BALANCE_STORAGE_PREFIX = "raw.polls.token-balance";
+const TOKEN_BALANCE_UPDATED_EVENT = "raw:token-balance-updated";
+
+function pushTokenBalance(userId: string, balance: number): void {
+  if (typeof window === "undefined") return;
+  const key = `${TOKEN_BALANCE_STORAGE_PREFIX}.${userId}`;
+  window.localStorage.setItem(key, String(balance));
+  window.dispatchEvent(new CustomEvent(TOKEN_BALANCE_UPDATED_EVENT, { detail: { storageKey: key, balance } }));
+}
 
 interface DashboardProfileProps {
   userId: string;
@@ -19,6 +34,10 @@ interface DashboardProfileProps {
   xpLevel?: number;
   pinnedMessage?: PinnedMessageRecord | null;
   onLogout: () => void;
+  /** Used by the Personality Insights section to compute totals. */
+  polls: Poll[];
+  /** Live token balance for insight purchases. */
+  tokenBalance: number;
 }
 
 const STAT_ICONS = {
@@ -39,8 +58,32 @@ export function DashboardProfile({
   pollsAnswered,
   xp = 0,
   xpLevel = 1,
+  polls,
+  tokenBalance,
 }: DashboardProfileProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [ownedInsightIds, setOwnedInsightIds] = useState<Set<string>>(() => readOwnedInsightIds(userId));
+
+  useEffect(() => {
+    setOwnedInsightIds(readOwnedInsightIds(userId));
+  }, [userId]);
+
+  const handlePurchaseInsight = async (insightId: string, tokenPrice: number) => {
+    if (tokenBalance < tokenPrice) {
+      toast({ title: "Not enough tokens", description: `You need ${tokenPrice} tokens.` });
+      return;
+    }
+    try {
+      const newBalance = await spendTokens(userId, tokenPrice);
+      pushTokenBalance(userId, newBalance);
+      const next = addOwnedInsightId(userId, insightId);
+      setOwnedInsightIds(new Set(next));
+      window.dispatchEvent(new CustomEvent("raw:insights-updated"));
+      toast({ title: "Report unlocked", description: `${tokenPrice} tokens spent.` });
+    } catch {
+      toast({ title: "Unlock failed", description: "Please try again." });
+    }
+  };
 
   const { stats: profileStats, isLoading: isLoadingStats } = useProfileStats(userId);
   // Prefer the live `pollsAnswered` prop while the RPC is hydrating —
@@ -134,6 +177,17 @@ export function DashboardProfile({
         })}
       </div>
 
+      {/* Personality Insights — moved here from the Store tab. Lives next to
+          the profile stats since insights are part of the user's identity. */}
+      <section>
+        <PersonalityInsightsInventory
+          pollsAnswered={profileStats.polls || pollsAnswered}
+          totalPolls={polls.length}
+          tokenBalance={tokenBalance}
+          ownedIds={ownedInsightIds}
+          onPurchase={handlePurchaseInsight}
+        />
+      </section>
     </div>
   );
 }

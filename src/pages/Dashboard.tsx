@@ -531,6 +531,8 @@ export default function Dashboard({
                 xpLevel={progress?.level ?? 1}
                 pinnedMessage={pinnedMessage}
                 onLogout={onLogout}
+                polls={polls}
+                tokenBalance={tokenBalance}
               />
             </DashboardSectionShell>
           </Suspense>
