@@ -20,6 +20,7 @@ import { SwipeablePollCard } from "./SwipeablePollCard";
 import { EnterRawModal } from "./EnterRawModal";
 import type { OnboardingStep, Poll, User } from "@/store/useRawStore";
 import { track } from "@/lib/analytics";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type OnboardingPoll = {
   id: string;
@@ -350,6 +351,8 @@ export function OnboardingJourney({
   const [isClaimingSpin, setIsClaimingSpin] = useState(false);
   const onboardingAvatars = useMemo(() => fallbackAvatarCatalog(), []);
   const [isLoadingPreviewAvatars] = useState(false);
+  const isMobile = useIsMobile();
+  const avatarTileSize: "sm" | "md" = isMobile ? "sm" : "md";
   const [previewAvatarIndex, setPreviewAvatarIndex] = useState(() => Math.min(Math.max(avatarIndex, 1), Math.max(1, onboardingAvatars.length)));
   const [avatarPage, setAvatarPage] = useState(() => Math.floor((Math.min(Math.max(avatarIndex, 1), Math.max(1, onboardingAvatars.length)) - 1) / AVATAR_PAGE_SIZE));
   const answeredCount = onboardingPolls.filter((poll) => onboardingAnsweredPollIds.has(poll.id)).length;
@@ -638,8 +641,7 @@ export function OnboardingJourney({
                                 ? "scale-100 opacity-100"
                                 : "opacity-80 group-hover:opacity-100 group-hover:scale-105"
                           }`}>
-                            <AvatarFigure avatarIndex={index} size="sm" selected={isActive || isPreviewed} className="sm:hidden" rarity={avatar.rarity} themeOverride={avatar} />
-                            <AvatarFigure avatarIndex={index} size="md" selected={isActive || isPreviewed} className="hidden sm:block" rarity={avatar.rarity} themeOverride={avatar} />
+                            <AvatarFigure avatarIndex={index} size={avatarTileSize} selected={isActive || isPreviewed} rarity={avatar.rarity} themeOverride={avatar} loading="eager" />
                           </div>
                           <span className={`max-w-full truncate text-center font-display text-[7px] leading-tight tracking-[0.08em] transition-colors sm:text-[8px] ${
                             isActive
@@ -747,19 +749,8 @@ export function OnboardingJourney({
                           }`}>
                             <AvatarFigure
                               avatarIndex={index}
-                              size="sm"
+                              size={avatarTileSize}
                               selected={isPreviewed}
-                              className="sm:hidden"
-                              rarity={avatar.rarity}
-                              style={getPreviewOnlyAvatarImageScale(avatar.id)}
-                              themeOverride={avatar}
-                              loading="lazy"
-                            />
-                            <AvatarFigure
-                              avatarIndex={index}
-                              size="md"
-                              selected={isPreviewed}
-                              className="hidden sm:block"
                               rarity={avatar.rarity}
                               style={getPreviewOnlyAvatarImageScale(avatar.id)}
                               themeOverride={avatar}
