@@ -4,7 +4,7 @@ import { useProfileStats } from "@/hooks/useProfileStats";
 import type { PinnedMessageRecord } from "@/backend/supabase/controllers/userExtrasController";
 import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { LevelProgressBanner } from "@/components/dashboard/LevelProgressBanner";
-import { LEVEL_THEMES, MAX_LEVEL, getAvatar } from "@/lib/avataridentity";
+import { LEVEL_THEMES, getAvatar } from "@/lib/avataridentity";
 
 interface DashboardProfileProps {
   userId: string;
@@ -83,13 +83,9 @@ export function DashboardProfile({
 
         <LevelProgressBanner xp={xp} level={xpLevel} className="mt-4 w-full" />
 
-        {/* Level selector */}
-        <div
-          className="mt-4 grid w-full justify-items-center gap-1"
-          style={{
-            gridTemplateColumns: `repeat(${Math.ceil(MAX_LEVEL / 2)}, minmax(0, 1fr))`,
-          }}
-        >
+        {/* Level selector — flex-wrap with fixed tile size so rows
+            never overlap and avatars stay aligned on every viewport. */}
+        <div className="mt-4 flex w-full flex-wrap justify-center gap-1.5">
           {ownedLevels.map(
             (lvl) => (
               <button
@@ -102,7 +98,7 @@ export function DashboardProfile({
                 onMouseLeave={() => setHoveredIndex(null)}
                 onFocus={() => setHoveredIndex(lvl)}
                 onBlur={() => setHoveredIndex(null)}
-                className="relative flex h-10 w-10 items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/40"
+                className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/40"
                 aria-label={`Preview level ${lvl}`}
                 aria-pressed={lvl === avatarLevel}
               >
