@@ -16,20 +16,31 @@ export function EarlySignupClaim({ userId, onResolved }: EarlySignupClaimProps) 
   const [selected, setSelected] = useState<string | null>(null);
   const [claiming, setClaiming] = useState(false);
   const [eligibilityChecked, setEligibilityChecked] = useState(false);
+  const [eligible, setEligible] = useState(false);
 
-  // Server-side eligibility check on mount. If ineligible, skip this step entirely.
+  // The reward grid renders for every user. The server-side RPC is the
+  // source of truth for who can actually claim — if the user is ineligible
+  // it'll return not_eligible and we surface that as a toast. We still
+  // check eligibility on mount so the UI can hint at it, but we NEVER
+  // auto-skip the step; everyone gets to see the exclusive avatars.
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const eligible = await isEarlySignupEligible(userId);
-      if (cancelled) return;
-      setEligibilityChecked(true);
-      if (!eligible) onResolved(null);
+      try {
+        const result = await isEarlySignupEligible(userId);
+        if (cancelled) return;
+        setEligible(result);
+      } catch {
+        if (cancelled) return;
+        setEligible(false);
+      } finally {
+        if (!cancelled) setEligibilityChecked(true);
+      }
     })();
     return () => {
       cancelled = true;
     };
-  }, [userId, onResolved]);
+  }, [userId]);
 
   async function handleClaim() {
     if (!selected) return;
@@ -60,6 +71,13 @@ export function EarlySignupClaim({ userId, onResolved }: EarlySignupClaimProps) 
       </h2>
       <p className="mt-1 text-xs text-raw-silver/55 sm:text-sm">Choose 1 exclusive avatar.</p>
 
+      {!eligible && (
+        <p className="mt-3 rounded-lg border border-raw-border/30 bg-raw-surface/30 px-3 py-2 text-[11px] leading-relaxed text-raw-silver/60">
+          These are the four exclusive Early Signup avatars. Reward claim is closed for your
+          account — preview only.
+        </p>
+      )}
+
       <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {EARLY_SIGNUP_POOL.map((entry) => {
           const active = selected === entry.catalogId;
@@ -88,14 +106,21 @@ export function EarlySignupClaim({ userId, onResolved }: EarlySignupClaimProps) 
         })}
       </div>
 
-      <div className="mt-6 flex justify-end">
+      <div className="mt-6 flex items-center justify-between gap-3">
+        <button
+          type="button"
+          onClick={() => onResolved(null)}
+          className="rounded-xl border border-raw-border/40 px-4 py-2 text-xs uppercase tracking-[0.18em] text-raw-silver/70 transition-colors hover:border-raw-gold/40 hover:text-raw-gold"
+        >
+          Skip →
+        </button>
         <button
           type="button"
           onClick={() => { void handleClaim(); }}
-          disabled={!selected || claiming}
+          disabled={!selected || claiming || !eligible}
           className="rounded-xl bg-raw-gold px-5 py-2.5 text-sm font-semibold text-raw-ink transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {claiming ? "Claiming…" : "Claim this avatar"}
+          {claiming ? "Claiming…" : eligible ? "Claim this avatar" : "Claim closed"}
         </button>
       </div>
     </section>
