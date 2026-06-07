@@ -72,7 +72,17 @@
       "mcp__5585acb7-0f6f-48b6-b782-9ad0e7207b5b__get_runtime_logs",
       "mcp__5585acb7-0f6f-48b6-b782-9ad0e7207b5b__list_deployments",
       "mcp__5585acb7-0f6f-48b6-b782-9ad0e7207b5b__list_projects",
-      "Bash(node -e ' *)"
+      "Bash(node -e ' *)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(git log *)",
+      "Bash(grep -v \"^previews$\")",
+      "Bash(awk '{print $5, $NF}')",
+      "Bash(node scripts/process-new-avatars.mjs)",
+      "Bash(git ls-tree *)",
+      "Bash(grep -v \"//\\\\|onSelectItem\\\\|onSelected\\\\|onSelectAvatar\\\\|onSelectPoll\\\\|selectedCommunity\\\\|onSetSelected\\\\|handleSelect\")",
+      "Bash(grep -v \"import\\\\|//\")",
+      "Bash(git restore *)",
+      "PowerShell(npx supabase --version)"
     ]
   }
 }
