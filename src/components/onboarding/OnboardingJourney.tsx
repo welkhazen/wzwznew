@@ -343,6 +343,7 @@ export function OnboardingJourney({
   const avatarTileSize: "sm" | "md" = isMobile ? "sm" : "md";
   const [previewAvatarIndex, setPreviewAvatarIndex] = useState(() => Math.min(Math.max(avatarIndex, 1), Math.max(1, onboardingAvatars.length)));
   const [avatarPage, setAvatarPage] = useState(() => Math.floor((Math.min(Math.max(avatarIndex, 1), Math.max(1, onboardingAvatars.length)) - 1) / AVATAR_PAGE_SIZE));
+  const [showPollsWhy, setShowPollsWhy] = useState(false);
   const answeredCount = onboardingPolls.filter((poll) => onboardingAnsweredPollIds.has(poll.id)).length;
   const phonePreviewRef = useRef<HTMLDivElement>(null);
   const startedFiredRef = useRef(false);
@@ -785,11 +786,32 @@ export function OnboardingJourney({
             <section>
               <div className="flex flex-wrap items-center justify-between gap-2 sm:items-end sm:gap-4">
                 <div className="min-w-0 flex-1">
-                  <h2 className="font-display text-base tracking-wide text-raw-text sm:text-xl">III. Answer 4 launch polls</h2>
-                  <p className="mt-2 max-w-2xl text-xs leading-relaxed text-raw-silver/55 sm:text-sm">
+                  <div className="flex items-center gap-2">
+                    <h2 className="font-display text-base tracking-wide text-raw-text sm:text-xl">III. Answer 4 launch polls</h2>
+                    <button
+                      type="button"
+                      onClick={() => setShowPollsWhy((v) => !v)}
+                      aria-expanded={showPollsWhy}
+                      aria-controls="polls-why-popover"
+                      className="sm:hidden inline-flex h-5 items-center justify-center rounded-full border border-raw-border/40 px-2 text-[10px] uppercase tracking-wider text-raw-silver/70 hover:text-raw-gold hover:border-raw-gold/60 transition"
+                    >
+                      why?
+                    </button>
+                  </div>
+                  <p className="mt-2 max-w-2xl text-xs leading-relaxed text-raw-silver/55 sm:text-sm hidden sm:block">
                     We collect a few answers to understand you better, then use that signal to work our matching magic
                     and connect you with the right people, communities, and interests.
                   </p>
+                  {showPollsWhy && (
+                    <div
+                      id="polls-why-popover"
+                      role="dialog"
+                      className="sm:hidden mt-2 rounded-lg border border-raw-border/40 bg-raw-surface/95 p-3 text-[11px] leading-relaxed text-raw-silver/80 shadow-lg"
+                    >
+                      We collect a few answers to understand you better, then use that signal to work our matching magic
+                      and connect you with the right people, communities, and interests.
+                    </div>
+                  )}
                 </div>
                 <p className="shrink-0 rounded-full border border-raw-border/40 px-2.5 py-1 text-[10px] text-raw-gold/75 sm:px-3 sm:text-xs">
                   {answeredCount}/{onboardingPolls.length} completed
