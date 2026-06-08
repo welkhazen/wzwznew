@@ -36,6 +36,10 @@ const Index = () => {
     onboardingStep,
     setOnboardingStep,
     onboardingAnsweredPollIds,
+    onboardingPublicUsername,
+    onboardingPrivateUsername,
+    setOnboardingPublicUsername,
+    setOnboardingPrivateUsername,
     markOnboardingPollAnswered,
     onboardingSelectedCommunityIds,
     setOnboardingSelectedCommunityIds,
@@ -149,6 +153,12 @@ const Index = () => {
           avatarCatalog={avatarCatalog}
           onboardingStep={onboardingStep}
           onboardingAnsweredPollIds={onboardingAnsweredPollIds}
+          publicUsername={onboardingPublicUsername}
+          privateUsername={onboardingPrivateUsername}
+          onSaveUsernames={(publicUsername, privateUsername) => {
+            setOnboardingPublicUsername(publicUsername);
+            setOnboardingPrivateUsername(privateUsername);
+          }}
           onSetOnboardingStep={setOnboardingStep}
           onMarkPollAnswered={markOnboardingPollAnswered}
           selectedCommunityIds={onboardingSelectedCommunityIds}
