@@ -25,22 +25,22 @@ export function WhyAnonymity() {
   return (
     <section ref={sectionRef as React.RefObject<HTMLElement>} className="landing-section relative py-14 px-4 sm:py-20 sm:px-6 md:py-28">
       <div
-        className="relative mx-auto w-full max-w-6xl overflow-hidden rounded-2xl border border-raw-border/40 bg-raw-surface/20 px-6 py-10 sm:px-10 sm:py-14"
+        className="relative mx-auto w-full max-w-6xl overflow-hidden rounded-2xl border border-raw-border/40 bg-raw-surface/20 px-3 py-5 sm:px-10 sm:py-14"
         style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 0 40px rgba(0,0,0,0.3)" }}
       >
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/30 to-transparent" />
 
-        <div className="grid gap-4 sm:gap-6 md:grid-cols-3">
+        <div className="grid grid-cols-3 gap-2 sm:gap-6">
           {cards.map((card, i) => (
             <GlareCard key={card.title}>
-              <div className="rounded-2xl border border-raw-border/40 bg-raw-surface/30 p-5 text-center sm:p-7">
+              <div className="h-full rounded-2xl border border-raw-border/40 bg-raw-surface/30 p-2 text-center sm:p-7">
                 <h3
-                  className="inline-block font-display text-sm tracking-wide text-raw-gold animate-heartbeat will-change-transform"
+                  className="inline-block font-display text-[11px] leading-tight tracking-wide text-raw-gold animate-heartbeat will-change-transform sm:text-sm"
                   style={{ animationDelay: `${i * 0.18}s` }}
                 >
                   {card.title}
                 </h3>
-                <p className="mt-3 text-sm leading-relaxed text-raw-silver/45">{card.description}</p>
+                <p className="mt-1.5 text-[10px] leading-snug text-raw-silver/45 sm:mt-3 sm:text-sm sm:leading-relaxed">{card.description}</p>
               </div>
             </GlareCard>
           ))}

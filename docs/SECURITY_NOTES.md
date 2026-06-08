@@ -48,7 +48,8 @@ on every RPC.
 
 ## Rate limiting
 
-Implemented in `api/_lib/rateLimit.ts` using Upstash sliding window.
+Implemented in `api/_lib/rateLimit.ts` with an in-memory sliding window.
+No external service required.
 
 | Endpoint | Key | Cap |
 |---|---|---|
@@ -59,12 +60,9 @@ Implemented in `api/_lib/rateLimit.ts` using Upstash sliding window.
 | `POST /api/users/[userId]/tokens` | user id | 20 / 1 min |
 
 Behaviour:
-- **Production with a supported Redis credential pair configured** → real sliding-window enforcement.
-- **Production without a complete supported Redis credential pair** → 503 `rate_limit_unavailable` (fail
-  closed; forgetting the env var must trip a hard failure rather than silently
-  open the endpoint).
-- **Local development** (`NODE_ENV !== "production"`) → in-memory per-instance
-  bucket so local testing still works.
+- Counters live per Vercel function instance. Cold starts wipe state and
+  concurrent instances do not share. Accepted tradeoff: slows a single
+  attacker burst within an instance without an external dependency.
 - **Limit reached** → 429 `rate_limited` with a `retry-after` header.
 
 ## Required production env vars
@@ -78,16 +76,14 @@ These must be set in Vercel project env (Production scope at minimum):
 | `SUPABASE_JWT_SECRET` | Mint + verify session JWTs | Sessions fail; `/api/auth/me` 500 |
 | `VITE_SUPABASE_URL` | Browser client | App can't load |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | Browser anon key | App can't load |
-| `KV_REST_API_URL` *(or `UPSTASH_REDIS_REST_URL`)* | Rate limiter | 503 on rate-limited endpoints |
-| `KV_REST_API_TOKEN` *(or `UPSTASH_REDIS_REST_TOKEN`)* | Rate limiter | 503 on rate-limited endpoints |
 | `APP_BASE_URL` *(optional)* | Trusted-origin check | Falls back to same-host detection |
 | `VITE_POSTHOG_KEY` *(optional)* | Analytics | Analytics no-ops gracefully |
 
 ## What's not covered yet (TODO)
 
-- **Multi-region rate-limit consistency** — Upstash sliding window is regional;
-  cross-region requests share the same counter via the REST API, which is
-  acceptable for the current traffic level but should be monitored.
+- **Distributed rate-limit consistency** — counters are per-instance only.
+  Concurrent Vercel instances do not share, and cold starts reset state. Fine
+  for current traffic; revisit if abuse becomes coordinated across IPs.
 - **Account lockout** — login rate-limit slows credential stuffing but doesn't
   lock accounts after N failures.
 - **CSP headers** — content-security-policy is not set; the app currently

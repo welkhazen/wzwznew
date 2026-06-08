@@ -92,10 +92,48 @@ export async function getPublicUserProfile(userId: string): Promise<PublicUserPr
 }
 
 export async function updateProfileVisibility(userId: string, profilePublic: boolean): Promise<void> {
-  void profilePublic;
   const { error } = await supabase
     .from('users')
-    .update({ profile_public: true })
+    .update({ profile_public: profilePublic })
     .eq('id', userId);
+  if (error) throw error;
+}
+
+export interface UserAliasRow {
+  id: string;
+  alias: string;
+  is_public: boolean;
+  created_at: string;
+}
+
+export async function listUserAliases(userId: string): Promise<UserAliasRow[]> {
+  const { data, error } = await supabase
+    .from('user_aliases')
+    .select('id, alias, is_public, created_at')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as UserAliasRow[];
+}
+
+export async function addPrivateAlias(userId: string, alias: string): Promise<UserAliasRow> {
+  const trimmed = alias.trim();
+  if (trimmed.length < 3 || trimmed.length > 32) {
+    throw new Error('Name must be 3–32 characters.');
+  }
+  const { data, error } = await supabase
+    .from('user_aliases')
+    .insert({ user_id: userId, alias: trimmed, is_public: false })
+    .select('id, alias, is_public, created_at')
+    .single();
+  if (error) {
+    if (error.code === '23505') throw new Error('You already have that name.');
+    throw error;
+  }
+  return data as UserAliasRow;
+}
+
+export async function deleteUserAlias(aliasId: string): Promise<void> {
+  const { error } = await supabase.from('user_aliases').delete().eq('id', aliasId);
   if (error) throw error;
 }

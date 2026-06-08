@@ -18,9 +18,10 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { SwipeablePollCard } from "./SwipeablePollCard";
 import { EnterRawModal } from "./EnterRawModal";
+import { EarlySignupClaim } from "./EarlySignupClaim";
 import type { OnboardingStep, Poll, User } from "@/store/useRawStore";
 import { track } from "@/lib/analytics";
-import { isValidUsername, sanitizeUsernameInput } from "@/lib/inputSecurity";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type OnboardingPoll = {
   id: string;
@@ -37,13 +38,12 @@ interface OnboardingJourneyProps {
   avatarCatalog: AvatarCatalogItem[];
   onboardingStep: OnboardingStep;
   onboardingAnsweredPollIds: Set<string>;
-  publicUsername: string;
-  privateUsername: string;
-  onSaveUsernames: (publicUsername: string, privateUsername: string) => void;
   onSetOnboardingStep: (step: OnboardingStep) => void;
   onMarkPollAnswered: (pollId: string) => void;
   selectedCommunityIds: string[];
   onToggleCommunity: (communityId: string) => void;
+  profilePublic: boolean | null;
+  onSetProfilePublic: (value: boolean) => void;
   onCompleteOnboarding: () => void | Promise<void>;
   onLogout: () => void;
   onClaimLandingWheelAvatar: () => Promise<void>;
@@ -51,16 +51,15 @@ interface OnboardingJourneyProps {
 
 type WheelPoolEntry = { id: string; avatarId: string; name: string; imageSrc: string };
 
-const SPIN_WHEEL_POOL: readonly WheelPoolEntry[] = [
-  { id: "wheel-avatar-1", avatarId: "silver-void", name: "Silver Void", imageSrc: "/avatars/1.webp" },
-  { id: "wheel-avatar-2", avatarId: "neon-lynx", name: "Neon Lynx", imageSrc: "/avatars/18.png" },
-  { id: "wheel-avatar-3", avatarId: "blue-signal", name: "Blue Signal", imageSrc: "/avatars/23.png" },
-  { id: "wheel-avatar-4", avatarId: "violet-mask", name: "Violet Mask", imageSrc: "/avatars/24.png" },
-  { id: "wheel-avatar-5", avatarId: "horned-iron", name: "Viozen", imageSrc: "/avatars/5.png" },
-  { id: "wheel-avatar-6", avatarId: "crimson-muse", name: "Crimson Muse", imageSrc: "/avatars/6.webp" },
-  { id: "wheel-avatar-7", avatarId: "solar-flame", name: "Solar Flame", imageSrc: "/avatars/07.webp" },
-  { id: "wheel-avatar-8", avatarId: "pink-circuit", name: "Pink Circuit", imageSrc: "/avatars/35.png" },
-];
+// Ordered spin pool sourced from the shared config.
+import { SPIN_POOL, EARLY_SIGNUP_POOL } from "@/backend/supabase/controllers/avatarRewardsController";
+
+const SPIN_WHEEL_POOL: readonly WheelPoolEntry[] = SPIN_POOL.map((entry, i) => ({
+  id: `wheel-avatar-${i + 1}`,
+  avatarId: entry.catalogId,
+  name: `Avatar ${entry.imageId}`,
+  imageSrc: entry.imageSrc,
+}));
 
 function buildSpinPrizes(): WheelPrize[] {
   return SPIN_WHEEL_POOL.map((entry, i) => ({
@@ -98,18 +97,19 @@ function findOwnedSpinResult(ownedAvatarLevels: Set<number>, avatarCatalog: Avat
   return null;
 }
 
-const STEP_ORDER: OnboardingStep[] = ["spin", "username", "avatar", "polls", "communities"];
+const STEP_ORDER: OnboardingStep[] = ["spin", "early-signup-reward", "avatar", "polls", "profile", "communities"];
 const STEP_LABELS: Record<OnboardingStep, string> = {
   spin: "spin",
-  username: "username",
+  "early-signup-reward": "reward",
   avatar: "avatar",
   polls: "polls",
+  profile: "profile",
   communities: "communities",
   marketplace: "insights",
   ready: "ready",
 };
 const FREE_ONBOARDING_AVATAR_COUNT = 8;
-const AVATAR_PAGE_SIZE = 16;
+const AVATAR_PAGE_SIZE = 8;
 const AGE_GATE_STORAGE_PREFIX = "raw.ageGateVerified";
 
 const LANDING_ONBOARDING_AVATARS: readonly AvatarCatalogItem[] = [
@@ -121,22 +121,26 @@ const LANDING_ONBOARDING_AVATARS: readonly AvatarCatalogItem[] = [
   { id: "rose", level: 6, name: "Rose", price: "Free", imageSrc: "/avatars/avatar-4.svg", bg: "#1f0a14", figure: "#f43f5e", ring: "#f43f5e", glow: "#f43f5e80", isActive: true, rarity: "common" },
   { id: "black", level: 7, name: "Black", price: "Free", imageSrc: "/avatars/avatar-7.svg", bg: "#0a0a0a", figure: "#cfd3da", ring: "#cfd3da", glow: "#cfd3da80", isActive: true, rarity: "common" },
   { id: "blue", level: 8, name: "Blue", price: "Free", imageSrc: "/avatars/avatar-10.svg", bg: "#0a1424", figure: "#3b82f6", ring: "#3b82f6", glow: "#3b82f680", isActive: true, rarity: "common" },
-  ...Array.from({ length: 24 }, (_, index): AvatarCatalogItem => {
-    const imageNumber = index + 12;
-    return {
-      id: `preview-avatar-${imageNumber}`,
-      level: index + FREE_ONBOARDING_AVATAR_COUNT + 1,
-      name: `Avatar ${imageNumber}`,
-      price: "50",
-      imageSrc: `/avatars/previews/${imageNumber}.png`,
-      bg: "#111827",
-      figure: "#cbd5e1",
-      ring: "#cbd5e1",
-      glow: "#cbd5e180",
-      isActive: true,
-      rarity: "common",
-    };
-  }),
+  // Preview-only tier: 8 free-spin avatars + 4 early-signup avatars,
+  // sourced from the shared config so order matches landing + wheel.
+  ...SPIN_POOL.map((entry, i): AvatarCatalogItem => ({
+    id: `preview-spin-${i + 1}`,
+    level: FREE_ONBOARDING_AVATAR_COUNT + 1 + i,
+    name: `Avatar ${entry.imageId}`,
+    price: "50",
+    imageSrc: entry.imageSrc,
+    bg: "#111827", figure: "#cbd5e1", ring: "#cbd5e1", glow: "#cbd5e180",
+    isActive: true, rarity: "common",
+  })),
+  ...EARLY_SIGNUP_POOL.map((entry, i): AvatarCatalogItem => ({
+    id: `preview-signup-${i + 1}`,
+    level: FREE_ONBOARDING_AVATAR_COUNT + 1 + SPIN_POOL.length + i,
+    name: `Avatar ${entry.imageId}`,
+    price: "50",
+    imageSrc: entry.imageSrc,
+    bg: "#111827", figure: "#cbd5e1", ring: "#cbd5e1", glow: "#cbd5e180",
+    isActive: true, rarity: "common",
+  })),
 ];
 
 function fallbackAvatarCatalog(): AvatarCatalogItem[] {
@@ -155,18 +159,11 @@ function applyAvatarThemes(items: AvatarCatalogItem[]): void {
 }
 
 function getPreviewOnlyAvatarImageScale(avatarId: string): React.CSSProperties | undefined {
-  switch (avatarId) {
-    case "preview-neon-lynx":
-    case "preview-blue-signal":
-    case "preview-violet-mask":
-    case "preview-horned-iron":
-    case "preview-solar-flame":
-      return { transform: "scale(1.45)" };
-    case "preview-pink-circuit":
-      return { transform: "scale(1.08)" };
-    default:
-      return undefined;
+  // Uniform sizing for all preview-only avatars so none look smaller than others.
+  if (avatarId.startsWith("preview-")) {
+    return { transform: "scale(1.45)" };
   }
+  return undefined;
 }
 
 const FALLBACK_POLLS: OnboardingPoll[] = [
@@ -309,13 +306,12 @@ export function OnboardingJourney({
   avatarCatalog,
   onboardingStep,
   onboardingAnsweredPollIds,
-  publicUsername,
-  privateUsername,
-  onSaveUsernames,
   onSetOnboardingStep,
   onMarkPollAnswered,
   selectedCommunityIds,
   onToggleCommunity,
+  profilePublic,
+  onSetProfilePublic,
   onCompleteOnboarding,
   onLogout,
   onClaimLandingWheelAvatar,
@@ -351,12 +347,13 @@ export function OnboardingJourney({
   const [spinResult, setSpinResult] = useState<WheelPoolEntry | null>(readStoredSpinResult);
   const [spinClaimError, setSpinClaimError] = useState<string | null>(null);
   const [isClaimingSpin, setIsClaimingSpin] = useState(false);
-  const [publicUsernameDraft, setPublicUsernameDraft] = useState(publicUsername || user.username);
-  const [privateUsernameDraft, setPrivateUsernameDraft] = useState(privateUsername);
   const onboardingAvatars = useMemo(() => fallbackAvatarCatalog(), []);
   const [isLoadingPreviewAvatars] = useState(false);
+  const isMobile = useIsMobile();
+  const avatarTileSize: "sm" | "md" = isMobile ? "sm" : "md";
   const [previewAvatarIndex, setPreviewAvatarIndex] = useState(() => Math.min(Math.max(avatarIndex, 1), Math.max(1, onboardingAvatars.length)));
   const [avatarPage, setAvatarPage] = useState(() => Math.floor((Math.min(Math.max(avatarIndex, 1), Math.max(1, onboardingAvatars.length)) - 1) / AVATAR_PAGE_SIZE));
+  const [showPollsWhy, setShowPollsWhy] = useState(false);
   const answeredCount = onboardingPolls.filter((poll) => onboardingAnsweredPollIds.has(poll.id)).length;
   const phonePreviewRef = useRef<HTMLDivElement>(null);
   const startedFiredRef = useRef(false);
@@ -379,14 +376,15 @@ export function OnboardingJourney({
 
   useEffect(() => {
     const stepIndex = STEP_ORDER.indexOf(onboardingStep);
-    track("onboarding_step_viewed", { step: onboardingStep as "spin" | "avatar" | "polls" | "communities" | "ready", step_index: stepIndex });
+    track("onboarding_step_viewed", { step: onboardingStep as "spin" | "avatar" | "polls" | "profile" | "communities" | "ready", step_index: stepIndex });
     stepStartTimeRef.current = Date.now();
   }, [onboardingStep]);
 
   const canContinueFromAvatar = avatarIndex >= 1 && (avatarIndex <= FREE_ONBOARDING_AVATAR_COUNT || ownedAvatarLevels.has(avatarIndex));
   const canContinueFromPolls = answeredCount >= onboardingPolls.length;
+  const canContinueFromProfile = profilePublic !== null;
   const canContinueFromCommunities = selectedCommunityIds.length >= 1;
-  const canCompleteOnboarding = canContinueFromAvatar && canContinueFromPolls && canContinueFromCommunities;
+  const canCompleteOnboarding = canContinueFromAvatar && canContinueFromPolls && canContinueFromProfile && canContinueFromCommunities;
   const previewAvatar = onboardingAvatars[previewAvatarIndex - 1] ?? onboardingAvatars[0];
   const canSelectPreviewAvatar = previewAvatarIndex <= FREE_ONBOARDING_AVATAR_COUNT || ownedAvatarLevels.has(previewAvatarIndex);
   const canContinueWithPreviewAvatar = canContinueFromAvatar && previewAvatarIndex === avatarIndex;
@@ -394,7 +392,6 @@ export function OnboardingJourney({
   const previewAvatarChoices = onboardingAvatars.slice(FREE_ONBOARDING_AVATAR_COUNT);
   const ownedPreviewAvatarChoices = previewAvatarChoices.filter((avatar) => ownedAvatarLevels.has(avatar.level));
   const claimedSpinResult = spinResult ?? findOwnedSpinResult(ownedAvatarLevels, onboardingAvatars);
-  const canContinueFromUsername = isValidUsername(publicUsernameDraft) && isValidUsername(privateUsernameDraft);
   const previewAvatarPageCount = Math.max(1, Math.ceil(previewAvatarChoices.length / AVATAR_PAGE_SIZE));
   const visiblePreviewAvatarChoices = previewAvatarChoices.slice(avatarPage * AVATAR_PAGE_SIZE, (avatarPage + 1) * AVATAR_PAGE_SIZE);
 
@@ -441,18 +438,13 @@ export function OnboardingJourney({
   }, [onboardingPolls]);
 
   const goToNextStep = async () => {
-    if (onboardingStep === "username") {
-      if (!canContinueFromUsername) return;
-      onSaveUsernames(publicUsernameDraft, privateUsernameDraft);
-    }
-
     if (onboardingStep === "avatar" && canSelectPreviewAvatar && previewAvatarIndex !== avatarIndex) {
       track("onboarding_avatar_selected", { avatar_level: previewAvatarIndex, attempts: 1 });
       onAvatarChange(previewAvatarIndex);
     }
 
     track("onboarding_step_completed", {
-      step: onboardingStep as "spin" | "avatar" | "polls" | "communities" | "ready",
+      step: onboardingStep as "spin" | "avatar" | "polls" | "profile" | "communities" | "ready",
       duration_ms: Date.now() - stepStartTimeRef.current,
     });
     onSetOnboardingStep(getNextStep(onboardingStep));
@@ -564,13 +556,6 @@ export function OnboardingJourney({
 
                 {claimedSpinResult ? (
                   <div className="w-full max-w-md rounded-2xl border border-raw-gold/30 bg-gradient-to-b from-raw-gold/[0.08] to-raw-gold/[0.02] p-4 text-center sm:p-5">
-                    <div className="mx-auto mb-3 grid h-24 w-24 place-items-center rounded-full border border-raw-gold/45 bg-raw-black/70 shadow-[0_0_30px_rgba(242,210,26,0.18)] sm:h-28 sm:w-28">
-                      <img
-                        src={claimedSpinResult.imageSrc}
-                        alt={`${claimedSpinResult.name} avatar preview`}
-                        className="h-[82%] w-[82%] object-contain drop-shadow-[0_0_12px_rgba(242,210,26,0.35)]"
-                      />
-                    </div>
                     <p className="font-display text-sm tracking-wide text-raw-gold">
                       You won {claimedSpinResult.name}
                     </p>
@@ -590,7 +575,7 @@ export function OnboardingJourney({
                 <div className="flex w-full max-w-md items-center justify-between gap-3">
                   <button
                     type="button"
-                    onClick={() => onSetOnboardingStep("username")}
+                    onClick={() => onSetOnboardingStep("avatar")}
                     className="rounded-full border border-raw-border/50 px-5 py-2 font-display text-[10px] uppercase tracking-[0.2em] text-raw-silver/70 transition hover:border-raw-gold/40 hover:text-raw-gold"
                   >
                     Skip
@@ -598,44 +583,32 @@ export function OnboardingJourney({
                   <button
                     type="button"
                     disabled={isClaimingSpin}
-                    onClick={() => onSetOnboardingStep("username")}
+                    onClick={() => onSetOnboardingStep("avatar")}
                     className={`rounded-full px-6 py-2 font-display text-xs uppercase tracking-[0.2em] transition ${
                       isClaimingSpin
                         ? "cursor-not-allowed border border-raw-border/40 bg-raw-surface/40 text-raw-silver/35"
                         : "border border-raw-gold/50 bg-raw-gold/15 text-raw-gold hover:bg-raw-gold/25"
                     }`}
                   >
-                    {isClaimingSpin ? "Saving…" : claimedSpinResult ? "Continue" : "Next: Username"}
+                    {isClaimingSpin ? "Saving…" : claimedSpinResult ? "Continue" : "Next: Avatar"}
                   </button>
                 </div>
               </div>
             </section>
           )}
-          {onboardingStep === "username" && (
-            <section>
-              <h2 className="font-display text-lg tracking-wide text-raw-text sm:text-xl">II. Choose your usernames</h2>
-              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-raw-silver/55">Your public username is how people know you across raW. Your private username is only for you.</p>
-              <div className="mx-auto mt-8 max-w-xl space-y-5">
-                <label className="block">
-                  <span className="text-[10px] uppercase tracking-[0.22em] text-raw-gold/75">Public username</span>
-                  <input value={publicUsernameDraft} onChange={(event) => setPublicUsernameDraft(sanitizeUsernameInput(event.target.value))} autoComplete="username" className="mt-2 w-full rounded-2xl border border-raw-gold/25 bg-raw-black/65 px-4 py-3 font-display text-base tracking-wide text-raw-text outline-none transition focus:border-raw-gold/65 focus:shadow-[0_0_24px_rgba(242,210,26,0.12)]" placeholder="Your public username" />
-                  <span className="mt-2 block text-xs text-raw-silver/45">Pre-filled from your login name. You can change it here.</span>
-                </label>
-                <label className="block">
-                  <span className="text-[10px] uppercase tracking-[0.22em] text-raw-silver/60">Private username</span>
-                  <input value={privateUsernameDraft} onChange={(event) => setPrivateUsernameDraft(sanitizeUsernameInput(event.target.value))} autoComplete="off" className="mt-2 w-full rounded-2xl border border-raw-border/50 bg-raw-black/65 px-4 py-3 font-display text-base tracking-wide text-raw-text outline-none transition focus:border-raw-gold/45" placeholder="Choose a private username" />
-                  <span className="mt-2 block text-xs text-raw-silver/45">Not displayed to other people. Use 3?24 letters, numbers, dots, dashes, or underscores.</span>
-                </label>
-                <div className="flex items-center justify-between gap-3 pt-3">
-                  <button type="button" onClick={goToPreviousStep} className="rounded-full border border-raw-border/50 px-5 py-2 font-display text-[10px] uppercase tracking-[0.2em] text-raw-silver/70 transition hover:border-raw-gold/40 hover:text-raw-gold">? Back</button>
-                  <button type="button" disabled={!canContinueFromUsername} onClick={() => void goToNextStep()} className={`rounded-full border px-6 py-2 font-display text-xs uppercase tracking-[0.2em] transition ${canContinueFromUsername ? "border-raw-gold/50 bg-raw-gold/15 text-raw-gold hover:bg-raw-gold/25" : "cursor-not-allowed border-raw-border/40 text-raw-silver/30"}`}>Continue to avatar</button>
-                </div>
-              </div>
-            </section>
+
+          {onboardingStep === "early-signup-reward" && (
+            <EarlySignupClaim
+              userId={user.id}
+              onResolved={() => {
+                onSetOnboardingStep("avatar");
+              }}
+            />
           )}
+
           {onboardingStep === "avatar" && (
             <section>
-              <h2 className="font-display text-lg tracking-wide text-raw-text sm:text-xl">III. Choose your avatar</h2>
+              <h2 className="font-display text-lg tracking-wide text-raw-text sm:text-xl">II. Choose your avatar</h2>
               <p className="mt-2 text-xs text-raw-silver/45 sm:text-sm">
                 Your avatar is your public signal. You can evolve it later, but choose your starting form now.
               </p>
@@ -677,8 +650,7 @@ export function OnboardingJourney({
                                 ? "scale-100 opacity-100"
                                 : "opacity-80 group-hover:opacity-100 group-hover:scale-105"
                           }`}>
-                            <AvatarFigure avatarIndex={index} size="sm" selected={isActive || isPreviewed} className="sm:hidden" rarity={avatar.rarity} themeOverride={avatar} />
-                            <AvatarFigure avatarIndex={index} size="md" selected={isActive || isPreviewed} className="hidden sm:block" rarity={avatar.rarity} themeOverride={avatar} />
+                            <AvatarFigure avatarIndex={index} size={avatarTileSize} selected={isActive || isPreviewed} rarity={avatar.rarity} themeOverride={avatar} loading="eager" />
                           </div>
                           <span className={`max-w-full truncate text-center font-display text-[7px] leading-tight tracking-[0.08em] transition-colors sm:text-[8px] ${
                             isActive
@@ -786,19 +758,8 @@ export function OnboardingJourney({
                           }`}>
                             <AvatarFigure
                               avatarIndex={index}
-                              size="sm"
+                              size={avatarTileSize}
                               selected={isPreviewed}
-                              className="sm:hidden"
-                              rarity={avatar.rarity}
-                              style={getPreviewOnlyAvatarImageScale(avatar.id)}
-                              themeOverride={avatar}
-                              loading="lazy"
-                            />
-                            <AvatarFigure
-                              avatarIndex={index}
-                              size="md"
-                              selected={isPreviewed}
-                              className="hidden sm:block"
                               rarity={avatar.rarity}
                               style={getPreviewOnlyAvatarImageScale(avatar.id)}
                               themeOverride={avatar}
@@ -845,11 +806,32 @@ export function OnboardingJourney({
             <section>
               <div className="flex flex-wrap items-center justify-between gap-2 sm:items-end sm:gap-4">
                 <div className="min-w-0 flex-1">
-                  <h2 className="font-display text-base tracking-wide text-raw-text sm:text-xl">IV. Answer 4 launch polls</h2>
-                  <p className="mt-2 max-w-2xl text-xs leading-relaxed text-raw-silver/55 sm:text-sm">
+                  <div className="flex items-center gap-2">
+                    <h2 className="font-display text-base tracking-wide text-raw-text sm:text-xl">III. Answer 4 launch polls</h2>
+                    <button
+                      type="button"
+                      onClick={() => setShowPollsWhy((v) => !v)}
+                      aria-expanded={showPollsWhy}
+                      aria-controls="polls-why-popover"
+                      className="sm:hidden inline-flex h-5 items-center justify-center rounded-full border border-raw-border/40 px-2 text-[10px] uppercase tracking-wider text-raw-silver/70 hover:text-raw-gold hover:border-raw-gold/60 transition"
+                    >
+                      why?
+                    </button>
+                  </div>
+                  <p className="mt-2 max-w-2xl text-xs leading-relaxed text-raw-silver/55 sm:text-sm hidden sm:block">
                     We collect a few answers to understand you better, then use that signal to work our matching magic
                     and connect you with the right people, communities, and interests.
                   </p>
+                  {showPollsWhy && (
+                    <div
+                      id="polls-why-popover"
+                      role="dialog"
+                      className="sm:hidden mt-2 rounded-lg border border-raw-border/40 bg-raw-surface/95 p-3 text-[11px] leading-relaxed text-raw-silver/80 shadow-lg"
+                    >
+                      We collect a few answers to understand you better, then use that signal to work our matching magic
+                      and connect you with the right people, communities, and interests.
+                    </div>
+                  )}
                 </div>
                 <p className="shrink-0 rounded-full border border-raw-border/40 px-2.5 py-1 text-[10px] text-raw-gold/75 sm:px-3 sm:text-xs">
                   {answeredCount}/{onboardingPolls.length} completed
@@ -960,6 +942,90 @@ export function OnboardingJourney({
                 <button
                   onClick={goToNextStep}
                   disabled={!canContinueFromPolls}
+                  className="rounded-xl border border-raw-gold/40 bg-raw-gold/15 px-5 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-raw-gold transition-all hover:bg-raw-gold/25 disabled:cursor-not-allowed disabled:opacity-40 sm:py-2.5"
+                >
+                  Continue to profile →
+                </button>
+              </div>
+            </section>
+          )}
+
+          {onboardingStep === "profile" && (
+            <section>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="font-display text-lg tracking-wide text-raw-text sm:text-xl">
+                    IV. Choose your profile visibility
+                  </h2>
+                  <p className="mt-2 text-xs leading-relaxed text-raw-silver/55 sm:text-sm">
+                    This sets whether other members can open your profile. You can change it later from your settings.
+                  </p>
+                </div>
+                <span className={`shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
+                  canContinueFromProfile
+                    ? "border-raw-gold/60 bg-raw-gold/10 text-raw-gold"
+                    : "border-raw-border/40 text-raw-gold/75"
+                }`}>
+                  {canContinueFromProfile ? "1/1" : "0/1"}
+                </span>
+              </div>
+
+              <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
+                {([
+                  {
+                    value: true,
+                    title: "Public profile",
+                    blurb: "Anyone in the community can tap your avatar to see your username, level, and join date.",
+                    detail: "Recommended if you want to be discoverable and join more conversations.",
+                  },
+                  {
+                    value: false,
+                    title: "Private profile",
+                    blurb: "Only you see your profile details. Other members see your avatar and messages but cannot open your profile card.",
+                    detail: "Each account can be private — pick this if you prefer to keep things low-key.",
+                  },
+                ] as const).map((option) => {
+                  const isSelected = profilePublic === option.value;
+                  return (
+                    <button
+                      key={String(option.value)}
+                      type="button"
+                      onClick={() => onSetProfilePublic(option.value)}
+                      className={`group relative overflow-hidden rounded-2xl border bg-transparent p-4 text-left transition-all duration-300 sm:p-5 ${
+                        isSelected
+                          ? "border-raw-gold/70 shadow-[0_0_0_1px_rgba(241,196,45,0.25),0_12px_28px_rgba(241,196,45,0.15)]"
+                          : "border-raw-border/35 hover:border-raw-gold/40 hover:shadow-[0_8px_20px_rgba(0,0,0,0.4)]"
+                      }`}
+                    >
+                      {isSelected && (
+                        <div className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-raw-gold shadow-lg">
+                          <span className="text-[11px] font-bold text-black">✓</span>
+                        </div>
+                      )}
+                      <p className="font-display text-base text-raw-text sm:text-lg">{option.title}</p>
+                      <p className="mt-2 text-xs leading-relaxed text-raw-silver/65 sm:text-sm">{option.blurb}</p>
+                      <p className="mt-3 text-[11px] leading-relaxed text-raw-silver/40">{option.detail}</p>
+                      <div className="mt-4">
+                        <span
+                          className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] transition-colors sm:px-3 ${
+                            isSelected
+                              ? "border-raw-gold/80 bg-raw-gold/15 text-raw-gold"
+                              : "border-raw-border/50 text-raw-gold/85 group-hover:border-raw-gold/45"
+                          }`}
+                        >
+                          {isSelected ? "✓ Selected" : "Choose"}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="mt-5 flex items-center justify-between gap-3 sm:mt-6">
+                <BackButton onClick={goToPreviousStep} />
+                <button
+                  onClick={goToNextStep}
+                  disabled={!canContinueFromProfile}
                   className="rounded-xl border border-raw-gold/40 bg-raw-gold/15 px-5 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-raw-gold transition-all hover:bg-raw-gold/25 disabled:cursor-not-allowed disabled:opacity-40 sm:py-2.5"
                 >
                   Continue to communities →

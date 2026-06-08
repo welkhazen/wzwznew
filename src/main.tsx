@@ -7,6 +7,7 @@ import { track } from "@/lib/analytics";
 import { setClient } from "@/lib/analytics/client";
 import { installGlobalCrashAlerts } from "@/lib/crashAlerts";
 import { initSentry } from "@/lib/sentry";
+import { ensureOneSignalInit, isOneSignalServiceWorker } from "@/lib/onesignal";
 import App from "./App.tsx";
 import "./index.css";
 import "./styles/raw-reveal-button.css";
@@ -76,9 +77,25 @@ if (typeof window !== "undefined" && import.meta.env.DEV) {
 
 if ("serviceWorker" in navigator && import.meta.env.PROD) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js").catch(() => {
-      // no-op: app works without offline caching if registration fails.
-    });
+    navigator.serviceWorker.getRegistrations()
+      .then((registrations) =>
+        Promise.all(
+          registrations
+            .filter((registration) => !isOneSignalServiceWorker(registration))
+            .map((registration) => registration.unregister()),
+        ),
+      )
+      .catch(() => {
+        // no-op: app works even if service worker cleanup is unavailable.
+      });
+  });
+}
+
+// Initialize OneSignal Web SDK once on app boot.
+// Subscribing the user happens later via useNotificationConsent.
+if (typeof window !== "undefined") {
+  void ensureOneSignalInit().catch(() => {
+    // SDK may be blocked or unavailable; consent hook will retry on demand.
   });
 }
 

@@ -26,6 +26,7 @@ interface ThemeCustomizerProps {
 const ACCENT_UNLOCK_PRICE = 10;
 const ACCENT_FREE_ID: AccentPresetId = "gold";
 const OWNED_ACCENTS_CACHE_PREFIX = "raw.theme.accent.owned.v2.";
+const ACCENT_PREVIEW_DURATION_MS = 60_000;
 
 function cacheKey(userId: string): string {
   return `${OWNED_ACCENTS_CACHE_PREFIX}${userId}`;
@@ -133,6 +134,17 @@ export function ThemeCustomizer({ placement = "floating", triggerStyle = "icon",
     root.style.setProperty("--sidebar-primary", current.hsl);
     root.style.setProperty("--sidebar-ring", current.hsl);
   }, [accent]);
+
+  useEffect(() => {
+    if (!previewingId) return;
+
+    const timeoutId = window.setTimeout(() => {
+      clearAccentPreview();
+      setPreviewingId(null);
+    }, ACCENT_PREVIEW_DURATION_MS);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [clearAccentPreview, previewingId]);
 
   const handleSelect = useCallback(
     (id: AccentPresetId) => {
@@ -347,8 +359,8 @@ export function ThemeCustomizer({ placement = "floating", triggerStyle = "icon",
                     </DialogTitle>
                     <DialogDescription className="text-xs text-raw-silver/60">
                       {previewingId === pendingPreset.id
-                        ? "Previewing live. Confirm to unlock or close to revert."
-                        : `Preview this theme, or unlock it for ${ACCENT_UNLOCK_PRICE} tokens.`}
+                        ? "Previewing live for one minute. Confirm to unlock or close to revert."
+                        : `Preview this theme for one minute, or unlock it for ${ACCENT_UNLOCK_PRICE} tokens.`}
                     </DialogDescription>
                   </div>
                 </div>

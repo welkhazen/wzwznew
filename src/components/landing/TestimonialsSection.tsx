@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { useTheme } from "@/providers/useTheme";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { TestimonialCard, type TestimonialCardPosition, type TestimonialCardItem } from "@/components/ui/testimonial-cards";
 import test1 from "@/assets/test1.png";
 import test2 from "@/assets/test2.png";
@@ -46,6 +47,7 @@ const positions: TestimonialCardPosition[] = ["front", "middle", "back", "far"];
 export function TestimonialsSection() {
   const { mode } = useTheme();
   const isLight = mode === "light";
+  const isMobile = useIsMobile();
   const [activeIndex, setActiveIndex] = useState(0);
   const [showStack, setShowStack] = useState(false);
 
@@ -114,7 +116,7 @@ export function TestimonialsSection() {
                 viewport={{ once: true, amount: 0.15 }}
                 transition={{ duration: 0.42, delay: (index % 6) * 0.045, ease: [0.22, 1, 0.36, 1] }}
                 whileHover={{ y: -4, scale: 1.015 }}
-                className={`relative flex h-[250px] min-w-0 items-center justify-center overflow-hidden rounded-[18px] border p-2 outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/60 sm:h-[270px] ${
+                className={`relative flex h-[170px] min-w-0 items-center justify-center overflow-hidden rounded-[18px] border p-2 outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/60 sm:h-[270px] ${
                   isLight
                     ? "border-slate-300/80 bg-white shadow-[0_16px_35px_rgba(15,23,42,0.12)]"
                     : "border-white/10 bg-black/80 shadow-[0_16px_45px_rgba(0,0,0,0.35)]"
@@ -132,14 +134,14 @@ export function TestimonialsSection() {
             </div>
           </div>
         ) : (
-        <div className={`relative mx-auto mt-8 h-[440px] w-full max-w-[760px] overflow-hidden rounded-[24px] border sm:h-[500px] ${
+        <div className={`relative mx-auto mt-8 h-[380px] w-full max-w-[760px] overflow-hidden rounded-[24px] border sm:h-[500px] ${
           isLight
             ? "border-slate-300/80 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.9),transparent_42%),rgba(241,245,249,0.92)] shadow-[inset_0_1px_0_white,0_30px_70px_rgba(15,23,42,0.14)]"
             : "border-raw-border/45 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.07),transparent_36%),rgba(8,8,8,0.82)] shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_30px_90px_rgba(0,0,0,0.36)]"
         }`}>
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(241,196,45,0.08),transparent_36%)]" />
           <div className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:radial-gradient(circle,rgba(255,255,255,0.8)_1px,transparent_1px)] [background-size:10px_10px]" />
-          <div className="absolute left-1/2 top-8 h-[360px] w-[260px] -translate-x-[58%] sm:top-8 sm:h-[420px] sm:w-[320px] sm:-translate-x-[62%]">
+          <div className="absolute left-1/2 top-6 h-[300px] w-[200px] -translate-x-1/2 sm:top-8 sm:h-[420px] sm:w-[320px] sm:-translate-x-[62%]">
             {visibleTestimonials.map((testimonial, index) => (
               <TestimonialCard
                 key={`${testimonial.id}-${activeIndex}`}
@@ -147,6 +149,7 @@ export function TestimonialsSection() {
                 position={positions[index]}
                 handleShuffle={handleShuffle}
                 isLight={isLight}
+                compact={isMobile}
               />
             ))}
           </div>

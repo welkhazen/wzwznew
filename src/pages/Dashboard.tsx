@@ -3,6 +3,7 @@ import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import type React from "react";
 import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
 import { fetchCommunities } from "@/backend/supabase/controllers/communityController";
+import { readCachedCommunities, writeCachedCommunities } from "@/lib/communityCache";
 import { getUserFavoriteCommunities, getUserPinnedMessage, type PinnedMessageRecord } from "@/backend/supabase/controllers/userExtrasController";
 import { Archive, Home as HomeIcon, MessageCircle, Target, User as UserIcon, LogOut, Trophy, Sparkles, Moon, CloudMoon, Sun } from "lucide-react";
 import LNTLogo from "@/assets/LNT.webp";
@@ -35,6 +36,9 @@ const DashboardChallenges = lazy(() =>
 );
 const DashboardDailySpin = lazy(() =>
   import("@/components/dashboard/DashboardDailySpin").then((module) => ({ default: module.DashboardDailySpin }))
+);
+const DashboardSettings = lazy(() =>
+  import("@/components/dashboard/DashboardSettings").then((module) => ({ default: module.DashboardSettings }))
 );
 const DashboardProfile = lazy(() =>
   import("@/components/dashboard/DashboardProfile").then((module) => ({ default: module.DashboardProfile }))
@@ -114,7 +118,11 @@ export default function Dashboard({
   const ModeIcon = mode === "dark" ? Moon : mode === "dusk" ? CloudMoon : Sun;
   const { progress, leveledUpTo, clearLevelUp, award, awardOnce } = useUserProgress(user.id);
   const [activeTab, setActiveTab] = useState<DashboardTab>("home");
-  const [dashboardCommunities, setDashboardCommunities] = useState<PersistedCommunityRecord[]>([]);
+  // Seed from the persistent cache so the user sees their communities
+  // instantly on remount instead of a cold spinner.
+  const [dashboardCommunities, setDashboardCommunities] = useState<PersistedCommunityRecord[]>(
+    () => readCachedCommunities()?.data ?? [],
+  );
   const [favoriteCommunityIds, setFavoriteCommunityIds] = useState<string[]>([]);
   const [pinnedMessage, setPinnedMessage] = useState<PinnedMessageRecord | null>(null);
   const [isHome, setIsHome] = useState(true);
@@ -144,15 +152,19 @@ export default function Dashboard({
 
   // Preload communities at the Dashboard level so the home "Trending"
   // section renders without waiting for the user to visit the Communities tab.
+  // Always revalidates in the background — the seeded cache stays visible
+  // until fresh data arrives, then we swap and persist.
   useEffect(() => {
-    if (dashboardCommunities.length > 0) return;
     let cancelled = false;
     void (async () => {
       try {
         const list = await fetchCommunities();
-        if (!cancelled) setDashboardCommunities(list);
+        if (!cancelled) {
+          setDashboardCommunities(list);
+          writeCachedCommunities(list);
+        }
       } catch {
-        // Tab-level fetch will retry; leave list empty.
+        // Tab-level fetch will retry; the cached list (if any) stays on screen.
       }
     })();
     return () => {
@@ -348,6 +360,12 @@ export default function Dashboard({
     navigate("/dashboard");
   };
 
+  const handleSettingsClick = () => {
+    setActiveTab("settings");
+    setIsHome(false);
+    navigate("/dashboard");
+  };
+
   const handleDailySpinAward = (amount: number) => {
     if (user.role === "admin") {
       return award(amount);
@@ -513,6 +531,20 @@ export default function Dashboard({
                 xpLevel={progress?.level ?? 1}
                 pinnedMessage={pinnedMessage}
                 onLogout={onLogout}
+                polls={polls}
+                tokenBalance={tokenBalance}
+              />
+            </DashboardSectionShell>
+          </Suspense>
+        );
+      case "settings":
+        return (
+          <Suspense fallback={dashboardSectionFallback}>
+            <DashboardSectionShell>
+              <DashboardSettings
+                userId={user.id}
+                pinnedMessage={pinnedMessage}
+                onLogout={onLogout}
               />
             </DashboardSectionShell>
           </Suspense>
@@ -556,6 +588,7 @@ export default function Dashboard({
         avatarLevel={avatarLevel}
         onProfileClick={handleProfileClick}
         onBillingClick={handleBillingClick}
+        onSettingsClick={handleSettingsClick}
         onLogout={onLogout}
         communityTitle={activeCommunityTitle}
         onBack={handleBackToCommunities}

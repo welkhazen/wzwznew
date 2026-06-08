@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import type { AvatarRarity } from "@/lib/avatarRarity";
+import { GENERATED_AVATAR_ENTRIES } from "@/lib/generatedAvatarEntries";
 
 export type AvatarCatalogItem = {
   id: string;
@@ -65,7 +66,7 @@ export const DEFAULT_AVATAR_CATALOG: readonly AvatarCatalogItem[] = [
   { id: "violet-mask", level: 12, name: "Violet Mask", price: "50", imageSrc: "/avatars/24.png", bg: "#1a1028", figure: "#d946ef", ring: "#d946ef", glow: "#d946ef80", isActive: true, showIn: "both", rarity: "common" },
   { id: "horned-iron", level: 13, name: "Viozen", price: "50", imageSrc: "/avatars/5.png", bg: "#1f0a05", figure: "#fb923c", ring: "#fb923c", glow: "#fb923c80", isActive: true, showIn: "both", rarity: "common" },
   { id: "crimson-muse", level: 14, name: "Crimson Muse", price: "50", imageSrc: "/avatars/6.webp", bg: "#2a0b0b", figure: "#f97316", ring: "#f97316", glow: "#f9731680", isActive: true, showIn: "both", rarity: "common" },
-  { id: "solar-flame", level: 15, name: "Solar Flame", price: "50", imageSrc: "/avatars/07.webp", bg: "#241005", figure: "#facc15", ring: "#facc15", glow: "#facc1590", isActive: true, showIn: "both", rarity: "common" },
+  { id: "solar-flame", level: 15, name: "Solar Flame", price: "50", imageSrc: "/avatars/7.png", bg: "#241005", figure: "#facc15", ring: "#facc15", glow: "#facc1590", isActive: true, showIn: "both", rarity: "common" },
   { id: "pink-circuit", level: 16, name: "Pink Circuit", price: "50", imageSrc: "/avatars/35.png", bg: "#2a0b1c", figure: "#fb7185", ring: "#fb7185", glow: "#fb718580", isActive: true, showIn: "both", rarity: "common" },
   ...Array.from({ length: 18 }, (_, index): AvatarCatalogItem => {
     const level = index + 17;
@@ -84,6 +85,7 @@ export const DEFAULT_AVATAR_CATALOG: readonly AvatarCatalogItem[] = [
       rarity: "common",
     };
   }),
+  ...GENERATED_AVATAR_ENTRIES,
 ];
 
 const WHEEL_AVATAR_IDS = new Set([
@@ -95,6 +97,7 @@ const WHEEL_AVATAR_IDS = new Set([
   "crimson-muse",
   "solar-flame",
   "pink-circuit",
+  "blu-fifer",
 ]);
 
 const LANDING_WHEEL_PRIZE_TO_AVATAR_ID: Record<string, string> = {
@@ -106,6 +109,7 @@ const LANDING_WHEEL_PRIZE_TO_AVATAR_ID: Record<string, string> = {
   "wheel-avatar-6": "crimson-muse",
   "wheel-avatar-7": "solar-flame",
   "wheel-avatar-8": "pink-circuit",
+  "wheel-avatar-10": "blu-fifer",
 };
 
 export type DailySpinAvatarGrantResult =
@@ -631,6 +635,16 @@ export async function claimPendingLandingWheelAvatarForUser(userId: string): Pro
   const catalog = readAvatarCatalogLocal();
   const avatarId = readLandingWheelAvatarIdLocal(catalog);
   if (!avatarId) return null;
+
+  // Persist via the new server-side claim RPC so users.free_spin_avatar_*
+  // columns get set. Idempotent on the server, safe to retry.
+  try {
+    const { claimFreeSpinAvatar } = await import("@/backend/supabase/controllers/avatarRewardsController");
+    await claimFreeSpinAvatar(userId, avatarId);
+  } catch {
+    // Best-effort — fall back to the legacy local-first grant below.
+  }
+
   const result = await grantDailySpinAvatarOnceForUser(userId, avatarId);
   clearLandingWheelAvatarLocal();
   return result;

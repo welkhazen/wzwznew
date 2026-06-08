@@ -49,13 +49,14 @@ import { toast } from "@/components/ui/use-toast";
 import { spendTokens } from "@/lib/api/tokens";
 import { supabase } from "@/lib/supabase";
 
-export type DashboardTab = "home" | "polls" | "challenges" | "daily-spin" | "communities" | "profile" | "wallet" | "inventory" | "store";
+export type DashboardTab = "home" | "polls" | "challenges" | "daily-spin" | "communities" | "profile" | "settings" | "wallet" | "inventory" | "store";
 
 interface DashboardNavProps {
   userId: string;
   username: string;
   avatarLevel: number;
   onProfileClick: () => void;
+  onSettingsClick: () => void;
   onBillingClick: () => void;
   onLogout: () => void;
   communityTitle?: string;
@@ -72,6 +73,7 @@ const SEEN_NOTIFICATIONS_PREFIX = "raw.seen-notifications";
 const TOKEN_BALANCE_UPDATED_EVENT = "raw:token-balance-updated";
 const TOKEN_BALANCE_STORAGE_KEY = "raw.polls.token-balance";
 const ACCENT_UNLOCK_COST = 10;
+const ACCENT_PREVIEW_DURATION_MS = 60_000;
 const ACCENT_FREE_ID: AccentPresetId = "gold";
 const FREE_ACCENT_IDS: AccentPresetId[] = ["gold", "indigo"];
 const OWNED_ACCENTS_CACHE_PREFIX = "raw.theme.accent.owned.v2.";
@@ -225,7 +227,7 @@ function readStoredTokenBalance(userId: string): number {
   }
 }
 
-export function DashboardNav({ userId, username, avatarLevel, onProfileClick, onBillingClick, onLogout, communityTitle, onBack, communities, xp = 0, level = 1 }: DashboardNavProps) {
+export function DashboardNav({ userId, username, avatarLevel, onProfileClick, onSettingsClick, onBillingClick, onLogout, communityTitle, onBack, communities, xp = 0, level = 1 }: DashboardNavProps) {
   const { mode, accent, accentPresets, setMode, setAccent } = useTheme();
   const [hoveredMode, setHoveredMode] = useState<ThemeMode | null>(null);
   const [hoveredAccent, setHoveredAccent] = useState<AccentPresetId | null>(null);
@@ -248,6 +250,13 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
   useEffect(() => {
     setTokenBalanceForUnlocks(readStoredTokenBalance(userId));
   }, [userId]);
+
+  useEffect(() => {
+    if (!hoveredAccent) return;
+
+    const timeoutId = window.setTimeout(() => setHoveredAccent(null), ACCENT_PREVIEW_DURATION_MS);
+    return () => window.clearTimeout(timeoutId);
+  }, [hoveredAccent]);
 
   useEffect(() => {
     const storageKey = `${TOKEN_BALANCE_STORAGE_KEY}.${userId}`;
@@ -758,6 +767,14 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
               />
 
               <DropdownMenuItem
+                onClick={onSettingsClick}
+                className={cn("cursor-pointer rounded-lg px-2 py-1.5 text-xs focus:text-raw-text sm:px-3 sm:py-2.5 sm:text-sm", isEffectiveLight ? "text-slate-700 focus:bg-slate-100" : "text-raw-silver/80 focus:bg-raw-surface/80")}
+              >
+                <Settings className="mr-3 h-4 w-4" />
+                Settings
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
                 onClick={onBillingClick}
                 className={cn("cursor-pointer rounded-lg px-2 py-1.5 text-xs focus:text-raw-text sm:px-3 sm:py-2.5 sm:text-sm", isEffectiveLight ? "text-slate-700 focus:bg-slate-100" : "text-raw-silver/80 focus:bg-raw-surface/80")}
               >
@@ -943,7 +960,7 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
                     </div>
                   </div>
                   <DialogDescription className="text-raw-silver/55">
-                    Preview this color across the interface, or unlock it permanently for {ACCENT_UNLOCK_COST} tokens.
+                    Preview this color across the interface for one minute, or unlock it permanently for {ACCENT_UNLOCK_COST} tokens.
                     No tokens are spent until you confirm the purchase.
                   </DialogDescription>
                 </DialogHeader>
@@ -958,7 +975,7 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
                     variant="ghost"
                     onClick={() => {
                       setAccentPurchaseId(null);
-                      toast({ title: "Preview active", description: `${accentPurchasePreset.label} is previewed. Choose an owned accent to exit preview.` });
+                      toast({ title: "Preview active", description: `${accentPurchasePreset.label} is previewed for one minute.` });
                     }}
                     className="rounded-xl border border-raw-border/40 text-raw-text hover:border-raw-gold/40 hover:bg-raw-gold/10"
                   >
