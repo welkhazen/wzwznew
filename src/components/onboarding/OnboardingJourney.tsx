@@ -22,6 +22,7 @@ import { EarlySignupClaim } from "./EarlySignupClaim";
 import type { OnboardingStep, Poll, User } from "@/store/useRawStore";
 import { track } from "@/lib/analytics";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { isValidUsername, sanitizeUsernameInput } from "@/lib/inputSecurity";
 
 type OnboardingPoll = {
   id: string;
@@ -38,6 +39,9 @@ interface OnboardingJourneyProps {
   avatarCatalog: AvatarCatalogItem[];
   onboardingStep: OnboardingStep;
   onboardingAnsweredPollIds: Set<string>;
+  publicUsername: string;
+  privateUsername: string;
+  onSaveUsernames: (publicUsername: string, privateUsername: string) => void;
   onSetOnboardingStep: (step: OnboardingStep) => void;
   onMarkPollAnswered: (pollId: string) => void;
   selectedCommunityIds: string[];
@@ -97,9 +101,10 @@ function findOwnedSpinResult(ownedAvatarLevels: Set<number>, avatarCatalog: Avat
   return null;
 }
 
-const STEP_ORDER: OnboardingStep[] = ["spin", "early-signup-reward", "avatar", "polls", "profile", "communities"];
+const STEP_ORDER: OnboardingStep[] = ["spin", "username", "early-signup-reward", "avatar", "polls", "profile", "communities"];
 const STEP_LABELS: Record<OnboardingStep, string> = {
   spin: "spin",
+  username: "username",
   "early-signup-reward": "reward",
   avatar: "avatar",
   polls: "polls",
@@ -306,6 +311,9 @@ export function OnboardingJourney({
   avatarCatalog,
   onboardingStep,
   onboardingAnsweredPollIds,
+  publicUsername,
+  privateUsername,
+  onSaveUsernames,
   onSetOnboardingStep,
   onMarkPollAnswered,
   selectedCommunityIds,
@@ -347,6 +355,8 @@ export function OnboardingJourney({
   const [spinResult, setSpinResult] = useState<WheelPoolEntry | null>(readStoredSpinResult);
   const [spinClaimError, setSpinClaimError] = useState<string | null>(null);
   const [isClaimingSpin, setIsClaimingSpin] = useState(false);
+  const [publicUsernameDraft, setPublicUsernameDraft] = useState(publicUsername || user.username);
+  const [privateUsernameDraft, setPrivateUsernameDraft] = useState(privateUsername);
   const onboardingAvatars = useMemo(() => fallbackAvatarCatalog(), []);
   const [isLoadingPreviewAvatars] = useState(false);
   const isMobile = useIsMobile();
@@ -386,6 +396,7 @@ export function OnboardingJourney({
   const canContinueFromCommunities = selectedCommunityIds.length >= 1;
   const canCompleteOnboarding = canContinueFromAvatar && canContinueFromPolls && canContinueFromProfile && canContinueFromCommunities;
   const previewAvatar = onboardingAvatars[previewAvatarIndex - 1] ?? onboardingAvatars[0];
+  const canContinueFromUsername = isValidUsername(publicUsernameDraft) && isValidUsername(privateUsernameDraft);
   const canSelectPreviewAvatar = previewAvatarIndex <= FREE_ONBOARDING_AVATAR_COUNT || ownedAvatarLevels.has(previewAvatarIndex);
   const canContinueWithPreviewAvatar = canContinueFromAvatar && previewAvatarIndex === avatarIndex;
   const freeAvatarChoices = onboardingAvatars.slice(0, FREE_ONBOARDING_AVATAR_COUNT);
@@ -438,6 +449,11 @@ export function OnboardingJourney({
   }, [onboardingPolls]);
 
   const goToNextStep = async () => {
+    if (onboardingStep === "username") {
+      if (!canContinueFromUsername) return;
+      onSaveUsernames(publicUsernameDraft, privateUsernameDraft);
+    }
+
     if (onboardingStep === "avatar" && canSelectPreviewAvatar && previewAvatarIndex !== avatarIndex) {
       track("onboarding_avatar_selected", { avatar_level: previewAvatarIndex, attempts: 1 });
       onAvatarChange(previewAvatarIndex);
@@ -575,7 +591,7 @@ export function OnboardingJourney({
                 <div className="flex w-full max-w-md items-center justify-between gap-3">
                   <button
                     type="button"
-                    onClick={() => onSetOnboardingStep("avatar")}
+                    onClick={() => onSetOnboardingStep("username")}
                     className="rounded-full border border-raw-border/50 px-5 py-2 font-display text-[10px] uppercase tracking-[0.2em] text-raw-silver/70 transition hover:border-raw-gold/40 hover:text-raw-gold"
                   >
                     Skip
@@ -583,15 +599,38 @@ export function OnboardingJourney({
                   <button
                     type="button"
                     disabled={isClaimingSpin}
-                    onClick={() => onSetOnboardingStep("avatar")}
+                    onClick={() => onSetOnboardingStep("username")}
                     className={`rounded-full px-6 py-2 font-display text-xs uppercase tracking-[0.2em] transition ${
                       isClaimingSpin
                         ? "cursor-not-allowed border border-raw-border/40 bg-raw-surface/40 text-raw-silver/35"
                         : "border border-raw-gold/50 bg-raw-gold/15 text-raw-gold hover:bg-raw-gold/25"
                     }`}
                   >
-                    {isClaimingSpin ? "Saving…" : claimedSpinResult ? "Continue" : "Next: Avatar"}
+                    {isClaimingSpin ? "Saving…" : claimedSpinResult ? "Continue" : "Next: Username"}
                   </button>
+                </div>
+              </div>
+            </section>
+          )}
+
+          {onboardingStep === "username" && (
+            <section>
+              <h2 className="font-display text-lg tracking-wide text-raw-text sm:text-xl">Choose your usernames</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-raw-silver/55">Your public username is how people know you across raW. Your private username is only for you.</p>
+              <div className="mx-auto mt-8 max-w-xl space-y-5">
+                <label className="block">
+                  <span className="text-[10px] uppercase tracking-[0.22em] text-raw-gold/75">Public username</span>
+                  <input value={publicUsernameDraft} onChange={(event) => setPublicUsernameDraft(sanitizeUsernameInput(event.target.value))} autoComplete="username" className="mt-2 w-full rounded-2xl border border-raw-gold/25 bg-raw-black/65 px-4 py-3 font-display text-base tracking-wide text-raw-text outline-none transition focus:border-raw-gold/65 focus:shadow-[0_0_24px_rgba(242,210,26,0.12)]" placeholder="Your public username" />
+                  <span className="mt-2 block text-xs text-raw-silver/45">Pre-filled from your login name. You can change it here.</span>
+                </label>
+                <label className="block">
+                  <span className="text-[10px] uppercase tracking-[0.22em] text-raw-silver/60">Private username</span>
+                  <input value={privateUsernameDraft} onChange={(event) => setPrivateUsernameDraft(sanitizeUsernameInput(event.target.value))} autoComplete="off" className="mt-2 w-full rounded-2xl border border-raw-border/50 bg-raw-black/65 px-4 py-3 font-display text-base tracking-wide text-raw-text outline-none transition focus:border-raw-gold/45" placeholder="Choose a private username" />
+                  <span className="mt-2 block text-xs text-raw-silver/45">Not displayed to other people. Use 3-24 letters, numbers, dots, dashes, or underscores.</span>
+                </label>
+                <div className="flex items-center justify-between gap-3 pt-3">
+                  <button type="button" onClick={goToPreviousStep} className="rounded-full border border-raw-border/50 px-5 py-2 font-display text-[10px] uppercase tracking-[0.2em] text-raw-silver/70 transition hover:border-raw-gold/40 hover:text-raw-gold">← Back</button>
+                  <button type="button" disabled={!canContinueFromUsername} onClick={() => void goToNextStep()} className={`rounded-full border px-6 py-2 font-display text-xs uppercase tracking-[0.2em] transition ${canContinueFromUsername ? "border-raw-gold/50 bg-raw-gold/15 text-raw-gold hover:bg-raw-gold/25" : "cursor-not-allowed border-raw-border/40 text-raw-silver/30"}`}>Continue</button>
                 </div>
               </div>
             </section>
