@@ -163,6 +163,8 @@ export function useRewards(user: User | null) {
     }
   }, [avatarCatalog, inventoryLoaded, ownedAvatarIds, user]);
 
+  const ownedAvatarIdSet = useMemo(() => new Set(ownedAvatarIds), [ownedAvatarIds]);
+
   return useMemo(() => ({
     avatarLevel,
     setAvatarLevel,
@@ -170,8 +172,9 @@ export function useRewards(user: User | null) {
     selectAvatarForOnboarding,
     avatarCatalog,
     ownedAvatarLevels,
+    ownedAvatarIds: ownedAvatarIdSet,
     unlockAvatarLevel,
     markAvatarOwned,
     avatarPricesByLevel,
-  }), [avatarCatalog, avatarLevel, avatarPricesByLevel, changeAvatarLevel, markAvatarOwned, ownedAvatarLevels, selectAvatarForOnboarding, setAvatarLevel, unlockAvatarLevel]);
+  }), [avatarCatalog, avatarLevel, avatarPricesByLevel, changeAvatarLevel, markAvatarOwned, ownedAvatarIdSet, ownedAvatarLevels, selectAvatarForOnboarding, setAvatarLevel, unlockAvatarLevel]);
 }

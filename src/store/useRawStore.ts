@@ -30,6 +30,7 @@ export function useRawStore() {
     selectAvatarForOnboarding: rewards.selectAvatarForOnboarding,
     avatarCatalog: rewards.avatarCatalog,
     ownedAvatarLevels: rewards.ownedAvatarLevels,
+    ownedAvatarIds: rewards.ownedAvatarIds,
     unlockAvatarLevel: rewards.unlockAvatarLevel,
     markAvatarOwned: rewards.markAvatarOwned,
     avatarPricesByLevel: rewards.avatarPricesByLevel,
