@@ -482,7 +482,10 @@ function clearLandingWheelAvatarLocal(): void {
 
 function defaultOwnedIds(catalog: AvatarCatalogItem[]): string[] {
   return catalog
-    .filter((item) => item.price === "Free" || item.price === "0" || Number(item.price) === 0)
+    .filter((item) => {
+      if (item.id.startsWith("spin-") || item.id.startsWith("signup-")) return false;
+      return item.price === "Free" || item.price === "0" || Number(item.price) === 0;
+    })
     .map((item) => item.id);
 }
 
