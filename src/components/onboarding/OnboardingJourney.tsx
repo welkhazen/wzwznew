@@ -24,7 +24,7 @@ import type { OnboardingStep, Poll, User } from "@/store/useRawStore";
 import { track } from "@/lib/analytics";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { isValidUsername, sanitizeUsernameInput } from "@/lib/inputSecurity";
-import { imageIdFromCatalogId, sortAvatarsByRank } from "@/lib/avatarRank";
+import { getAvatarRank, imageIdFromCatalogId } from "@/lib/avatarRank";
 
 type OnboardingPoll = {
   id: string;
@@ -421,9 +421,7 @@ export function OnboardingJourney({
   const canContinueFromUsername = isValidUsername(publicUsernameDraft) && isValidUsername(privateUsernameDraft);
   const canSelectPreviewAvatar = previewAvatarIndex <= FREE_ONBOARDING_AVATAR_COUNT || ownedAvatarLevels.has(previewAvatarIndex);
   const freeAvatarChoices = onboardingAvatars.slice(0, FREE_ONBOARDING_AVATAR_COUNT);
-  const previewAvatarChoices: AvatarCatalogItem[] = sortAvatarsByRank(
-    onboardingAvatars.slice(FREE_ONBOARDING_AVATAR_COUNT),
-  );
+  const previewAvatarChoices: AvatarCatalogItem[] = onboardingAvatars.slice(FREE_ONBOARDING_AVATAR_COUNT);
   // Reward catalog ids on the server are `spin-<imageId>` / `signup-<imageId>`.
   // Translate those to the set of owned image ids so the preview grid can mark
   // ownership without needing a matching level mapping in DEFAULT_AVATAR_CATALOG.
@@ -778,6 +776,9 @@ export function OnboardingJourney({
                           }`}>
                             {avatar.name.split(" ")[0]}
                           </span>
+                          <span className="text-[7px] uppercase tracking-[0.08em] text-raw-silver/55 sm:text-[8px]">
+                            Rank: R{getAvatarRank(avatar)}
+                          </span>
                         </button>
                       );
                     })}
@@ -887,6 +888,9 @@ export function OnboardingJourney({
                             isPreviewed ? "text-raw-gold/90" : "text-raw-silver/65 group-hover:text-raw-silver/90"
                           }`}>
                             {avatar.name.split(" ")[0]}
+                          </span>
+                          <span className="relative z-10 text-[8px] uppercase tracking-[0.08em] text-raw-silver/55 sm:text-[9px]">
+                            Rank: R{getAvatarRank(avatar)}
                           </span>
                           <span className={`relative z-10 rounded-full border px-1.5 py-0.5 text-[8px] uppercase tracking-[0.08em] ${
                             isOwned ? "border-raw-gold/45 text-raw-gold/70" : "border-raw-border/35 text-raw-silver/35"

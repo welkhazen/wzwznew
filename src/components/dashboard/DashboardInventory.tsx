@@ -9,7 +9,7 @@ import { avatarDisplayName, avatarIdFromImageSrc, canonicalAvatarImageId } from 
 import type { Poll } from "@/store/useRawStore";
 import TokenImage from "@/assets/tokens.webp";
 import { spendTokens } from "@/lib/api/tokens";
-import { sortAvatarsByRank } from "@/lib/avatarRank";
+import { getAvatarRank } from "@/lib/avatarRank";
 
 interface DashboardInventoryProps {
   polls: Poll[];
@@ -267,8 +267,7 @@ export function AvatarShop({
       return true;
     },
   );
-  const sortedPurchasable = sortAvatarsByRank(purchasable);
-  const visibleAvatars = showAll ? sortedPurchasable : sortedPurchasable.slice(0, 8);
+  const visibleAvatars = showAll ? purchasable : purchasable.slice(0, 8);
 
   if (purchasable.length === 0) {
     return (
@@ -302,11 +301,8 @@ export function AvatarShop({
 
             <div className="relative text-center">
               <p className="text-xs font-medium text-raw-text line-clamp-1">{avatarName(avatar)}</p>
-              <p
-                className="text-[10px] font-semibold uppercase tracking-wider"
-                style={{ color: rarityConfig.color }}
-              >
-                {rarityConfig.label}
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-raw-silver/60">
+                Rank: R{getAvatarRank(avatar)}
               </p>
             </div>
 
@@ -489,13 +485,13 @@ export function DashboardInventory({
   const pollsAnswered = votedPolls.size;
 
   const seenOwnedImageKeys = new Set<string>();
-  const ownedAvatars = sortAvatarsByRank(avatarCatalog.filter((avatar) => {
+  const ownedAvatars = avatarCatalog.filter((avatar) => {
     if (!ownedAvatarLevels.has(avatar.level)) return false;
     const imageKey = avatarImageKey(avatar);
     if (seenOwnedImageKeys.has(imageKey)) return false;
     seenOwnedImageKeys.add(imageKey);
     return true;
-  }));
+  });
   return (
     <div className="space-y-8">
       <header>
@@ -537,8 +533,8 @@ export function DashboardInventory({
                   <AvatarFigure avatarIndex={avatar.level} size="md" selected={avatar.level === avatarLevel} rarity={rarity} />
                   <div className="relative text-center">
                     <p className="text-xs font-medium text-raw-text line-clamp-1">{avatarName(avatar)}</p>
-                    <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: rarityConfig.color }}>
-                      {rarityConfig.label}
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-raw-silver/60">
+                      Rank: R{getAvatarRank(avatar)}
                     </p>
                     <p className="mt-1 text-[10px] text-raw-silver/45">
                       {avatar.level === avatarLevel ? "Selected" : "Tap to use"}
