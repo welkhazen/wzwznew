@@ -1,0 +1,26 @@
+name: Deployment Routing
+
+on:
+  push:
+    branches: [preview, main]
+
+concurrency:
+  group: deploy-route-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  route:
+    name: Route branch deployment
+    runs-on: ubuntu-latest
+    steps:
+      - name: Confirm deployment target
+        run: |
+          if [ "${GITHUB_REF_NAME}" = "main" ]; then
+            echo "Production deployment is allowed from main only."
+            echo "Vercel should map main to the Production environment."
+          elif [ "${GITHUB_REF_NAME}" = "preview" ]; then
+            echo "Staging deployment is allowed from preview."
+            echo "Vercel should create a Preview deployment for this branch."
+          else
+            echo "No persistent deployment target for ${GITHUB_REF_NAME}."
+          fi
