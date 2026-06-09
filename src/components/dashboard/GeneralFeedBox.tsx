@@ -11,6 +11,7 @@ interface GeneralFeedBoxProps {
   isLight?: boolean;
   compact?: boolean;
   showHeader?: boolean;
+  fillHeight?: boolean;
 }
 
 function formatFeedTime(value: string): string {
@@ -31,6 +32,7 @@ export function GeneralFeedBox({
   isLight = false,
   compact = false,
   showHeader = true,
+  fillHeight = false,
 }: GeneralFeedBoxProps) {
   const [feedPosts, setFeedPosts] = useState<GeneralFeedPostRecord[]>([]);
   const [feedText, setFeedText] = useState("");
@@ -78,7 +80,7 @@ export function GeneralFeedBox({
   }, [compact, feedSubmitting, feedText, feedTextLength, userId]);
 
   return (
-    <div className="space-y-5">
+    <div className={`${fillHeight ? "flex h-full min-h-0 flex-col" : "space-y-5"}`}>
       {showHeader && (
         <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
           <div className="space-y-0.5">
@@ -94,7 +96,7 @@ export function GeneralFeedBox({
         </div>
       )}
 
-      <div className={`rounded-[1.5rem] border p-4 ${compact ? "sm:p-4" : "sm:p-5"} ${isLight ? "border-slate-200 bg-white shadow-[0_12px_28px_rgba(15,23,42,0.08)]" : "border-white/10 bg-[#1a1a1a]"}`}>
+      <div className={`rounded-[1.5rem] border p-4 ${fillHeight ? "flex min-h-0 flex-1 flex-col" : ""} ${compact ? "sm:p-4" : "sm:p-5"} ${isLight ? "border-slate-200 bg-white shadow-[0_12px_28px_rgba(15,23,42,0.08)]" : "border-white/10 bg-[#1a1a1a]"}`}>
         {!showHeader && (
           <div className="mb-4 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
@@ -105,7 +107,7 @@ export function GeneralFeedBox({
           </div>
         )}
 
-        <div className={`${compact ? "max-h-[360px]" : "max-h-[600px]"} overflow-y-auto pr-1 divide-y ${isLight ? "divide-slate-100" : "divide-white/5"}`}>
+        <div className={`${fillHeight ? "min-h-0 flex-1" : compact ? "max-h-[360px]" : "max-h-[600px]"} overflow-y-auto pr-1 divide-y ${isLight ? "divide-slate-100" : "divide-white/5"}`}>
           {feedLoading ? (
             <p className={`py-6 text-center text-sm ${isLight ? "text-slate-500" : "text-white/40"}`}>Loading feed...</p>
           ) : feedPosts.length === 0 ? (
