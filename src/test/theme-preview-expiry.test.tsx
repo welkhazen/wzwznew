@@ -51,23 +51,14 @@ describe("theme accent previews", () => {
     vi.useRealTimers();
   });
 
-  it("reverts the landing theme preview after one minute", () => {
-    render(<ThemeCustomizer placement="inline" triggerStyle="compact" />);
+  it("applies landing theme accents directly without preview", () => {
+    render(<ThemeCustomizer placement="inline" triggerStyle="compact" accentAccess="free" />);
 
     fireEvent.click(screen.getAllByRole("button")[0]);
-    fireEvent.click(screen.getByRole("button", { name: "Preview or buy Coral accent" }));
-    fireEvent.click(screen.getByRole("button", { name: "View" }));
+    fireEvent.click(screen.getByRole("button", { name: "Use Coral accent" }));
 
-    expectRootAccent("255 125 92");
+    expect(setAccent).toHaveBeenCalledWith("coral");
     expect(screen.queryByRole("button", { name: "View" })).not.toBeInTheDocument();
-
-    act(() => vi.advanceTimersByTime(59_999));
-    expectRootAccent("255 125 92");
-    expect(screen.queryByRole("button", { name: "View" })).not.toBeInTheDocument();
-
-    act(() => vi.advanceTimersByTime(1));
-    expectRootAccent("241 196 45");
-    expect(screen.getByRole("button", { name: "View" })).toBeInTheDocument();
   });
 
   it("reverts the dashboard Appearance preview after one minute", () => {
