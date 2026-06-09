@@ -402,7 +402,7 @@ export function OnboardingJourney({
   const canContinueFromUsername = isValidUsername(publicUsernameDraft) && isValidUsername(privateUsernameDraft);
   const canSelectPreviewAvatar = previewAvatarIndex <= FREE_ONBOARDING_AVATAR_COUNT || ownedAvatarLevels.has(previewAvatarIndex);
   const freeAvatarChoices = onboardingAvatars.slice(0, FREE_ONBOARDING_AVATAR_COUNT);
-  const previewAvatarChoices: AvatarCatalogItem[] = [];
+  const previewAvatarChoices: AvatarCatalogItem[] = onboardingAvatars.slice(FREE_ONBOARDING_AVATAR_COUNT);
   const ownedPreviewAvatarChoices = previewAvatarChoices.filter((avatar) => ownedAvatarLevels.has(avatar.level));
   const claimedSpinResult = spinResult ?? findOwnedSpinResult(ownedAvatarLevels, onboardingAvatars);
   const previewAvatarPageCount = Math.max(1, Math.ceil(previewAvatarChoices.length / AVATAR_PAGE_SIZE));
