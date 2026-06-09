@@ -5,7 +5,6 @@ import {
   EyeOff,
   KeyRound,
   Lock,
-  Plus,
   ShieldOff,
   Trash2,
   UserCog,
@@ -14,9 +13,9 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { changePassword, deleteAccount } from "@/backend/supabase/controllers/authController";
 import {
-  addPrivateAlias,
   deleteUserAlias,
   listUserAliases,
+  savePrivateAlias,
   updateProfileVisibility,
   type UserAliasRow,
 } from "@/backend/supabase/controllers/userController";
@@ -67,7 +66,11 @@ export function DashboardSettings({ userId, pinnedMessage = null, onLogout }: Da
   useEffect(() => {
     let cancelled = false;
     listUserAliases(userId)
-      .then((rows) => { if (!cancelled) setAliases(rows); })
+      .then((rows) => {
+        if (cancelled) return;
+        setAliases(rows);
+        setAliasInput(rows.find((row) => !row.is_public)?.alias ?? "");
+      })
       .catch(() => {});
     return () => { cancelled = true; };
   }, [userId]);
@@ -84,29 +87,29 @@ export function DashboardSettings({ userId, pinnedMessage = null, onLogout }: Da
     }
   }
 
-  async function handleAddPrivateAlias() {
+  async function handleSavePrivateAlias() {
     const trimmed = aliasInput.trim();
-    if (trimmed.length < 3 || trimmed.length > 32) {
-      toast({ title: "Name must be 3–32 characters." });
+    if (!/^[A-Za-z0-9._-]{3,24}$/.test(trimmed)) {
+      toast({ title: "Name must be 3-24 letters, numbers, dots, dashes, or underscores." });
       return;
     }
     setAliasSaving(true);
     try {
-      const row = await addPrivateAlias(userId, trimmed);
-      setAliases((prev) => [row, ...prev]);
-      setAliasInput("");
-      toast({ title: "Private name added" });
+      const row = await savePrivateAlias(trimmed);
+      setAliases([row]);
+      setAliasInput(row.alias);
+      toast({ title: "Private name saved" });
     } catch (e) {
-      toast({ title: "Could not add name", description: e instanceof Error ? e.message : "Please try again." });
+      toast({ title: "Could not save name", description: e instanceof Error ? e.message : "Please try again." });
     } finally {
       setAliasSaving(false);
     }
   }
-
   async function handleDeleteAlias(id: string) {
     try {
       await deleteUserAlias(id);
       setAliases((prev) => prev.filter((a) => a.id !== id));
+      setAliasInput("");
     } catch {
       toast({ title: "Could not remove name" });
     }
@@ -201,7 +204,7 @@ export function DashboardSettings({ userId, pinnedMessage = null, onLogout }: Da
               <div className="border-b border-raw-border/30 px-4 py-3.5">
                 <p className="text-sm font-medium text-raw-text">Private names</p>
                 <p className="mt-1 text-xs text-raw-silver/40">
-                  Add a separate name only you can see. Use it as an alias when you don't want your username shown.
+                  Keep one separate private name. Use it when you don't want your public username shown.
                 </p>
               </div>
               <div className="px-4 py-3.5 space-y-3">
@@ -210,18 +213,18 @@ export function DashboardSettings({ userId, pinnedMessage = null, onLogout }: Da
                     type="text"
                     value={aliasInput}
                     onChange={(e) => setAliasInput(e.target.value)}
-                    placeholder="New private name"
-                    maxLength={32}
+                    placeholder={aliases.length > 0 ? "Edit private name" : "New private name"}
+                    maxLength={24}
                     className="flex-1 rounded-lg border border-raw-border/40 bg-raw-black/40 px-3 py-2 text-sm text-raw-text placeholder:text-raw-silver/30 focus:border-raw-gold/60 focus:outline-none"
                     disabled={aliasSaving}
                   />
                   <button
                     type="button"
-                    onClick={() => { void handleAddPrivateAlias(); }}
+                    onClick={() => { void handleSavePrivateAlias(); }}
                     disabled={aliasSaving || aliasInput.trim().length < 3}
                     className="rounded-lg bg-raw-gold px-3 py-2 text-sm font-semibold text-raw-ink transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
                   >
-                    {aliasSaving ? "Saving…" : <span className="flex items-center gap-1"><Plus className="h-3.5 w-3.5" />Add</span>}
+                    {aliasSaving ? "Saving..." : aliases.length > 0 ? "Save" : "Add"}
                   </button>
                 </div>
 

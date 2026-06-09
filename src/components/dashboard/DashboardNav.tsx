@@ -14,8 +14,10 @@ import {
   Palette,
   Receipt,
   Settings,
+  ShieldOff,
   Sun,
   Sunset,
+  UserRound,
 } from "lucide-react";
 import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { LevelProgressBanner } from "@/components/dashboard/LevelProgressBanner";
@@ -48,6 +50,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
 import { spendTokens } from "@/lib/api/tokens";
 import { supabase } from "@/lib/supabase";
+import { listUserAliases, type UserAliasRow } from "@/backend/supabase/controllers/userController";
 
 export type DashboardTab = "home" | "polls" | "challenges" | "daily-spin" | "communities" | "profile" | "settings" | "wallet" | "inventory" | "store";
 
@@ -77,6 +80,8 @@ const ACCENT_PREVIEW_DURATION_MS = 60_000;
 const ACCENT_FREE_ID: AccentPresetId = "gold";
 const FREE_ACCENT_IDS: AccentPresetId[] = ["gold", "indigo"];
 const OWNED_ACCENTS_CACHE_PREFIX = "raw.theme.accent.owned.v2.";
+const CHAT_IDENTITY_PREFIX = "raw.chat.identity.v1.";
+const CHAT_IDENTITY_CHANGED_EVENT = "raw:chat-identity-changed";
 
 function readOwnedAccentsCache(userId: string): AccentPresetId[] {
   if (typeof window === "undefined") return [ACCENT_FREE_ID];
@@ -245,7 +250,40 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
   const [accentPurchaseId, setAccentPurchaseId] = useState<AccentPresetId | null>(null);
   const [ownedAccentIds, setOwnedAccentIds] = useState<AccentPresetId[]>(() => readOwnedAccentsCache(userId));
   const [tokenBalanceForUnlocks, setTokenBalanceForUnlocks] = useState<number>(() => readStoredTokenBalance(userId));
+  const [privateAliases, setPrivateAliases] = useState<UserAliasRow[]>([]);
+  const [selectedChatAlias, setSelectedChatAlias] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    return window.localStorage.getItem(`${CHAT_IDENTITY_PREFIX}${userId}`);
+  });
   const notifRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    listUserAliases(userId)
+      .then((rows) => {
+        if (cancelled) return;
+        const privateRows = rows.filter((row) => !row.is_public).slice(0, 1);
+        setPrivateAliases(privateRows);
+        setSelectedChatAlias((current) => {
+          if (!current) return null;
+          return privateRows.some((row) => row.alias.toLowerCase() === current.toLowerCase()) ? current : null;
+        });
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [userId]);
+
+  const saveChatIdentity = (alias: string | null) => {
+    setSelectedChatAlias(alias);
+    if (typeof window === "undefined") return;
+    const storageKey = `${CHAT_IDENTITY_PREFIX}${userId}`;
+    if (alias) {
+      window.localStorage.setItem(storageKey, alias);
+    } else {
+      window.localStorage.removeItem(storageKey);
+    }
+    window.dispatchEvent(new CustomEvent(CHAT_IDENTITY_CHANGED_EVENT, { detail: { userId, alias } }));
+  };
 
   useEffect(() => {
     setTokenBalanceForUnlocks(readStoredTokenBalance(userId));
@@ -745,6 +783,54 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
                   <p className={cn("truncate text-xs", isEffectiveLight ? "text-slate-600" : "text-raw-silver/50")}>@{username}</p>
                 </div>
               </button>
+
+              <div className={cn("mx-1 mb-1 rounded-xl border p-1", isEffectiveLight ? "border-slate-200 bg-slate-50/80" : "border-raw-border/25 bg-raw-black/25")}>
+                <p className={cn("px-2 pb-1 pt-0.5 text-[10px] uppercase tracking-[0.18em]", isEffectiveLight ? "text-slate-500" : "text-raw-silver/45")}>
+                  Chat name
+                </p>
+                <button
+                  type="button"
+                  onClick={() => saveChatIdentity(null)}
+                  className={cn(
+                    "flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left text-xs transition-colors",
+                    selectedChatAlias === null
+                      ? "bg-raw-gold/15 text-raw-gold"
+                      : isEffectiveLight
+                        ? "text-slate-700 hover:bg-slate-100"
+                        : "text-raw-silver/80 hover:bg-raw-surface/70",
+                  )}
+                >
+                  <span className="flex min-w-0 items-center gap-2">
+                    <UserRound className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate">@{username}</span>
+                  </span>
+                  {selectedChatAlias === null && <Check className="h-3.5 w-3.5 shrink-0" />}
+                </button>
+                {privateAliases.map((alias) => {
+                  const isSelected = selectedChatAlias?.toLowerCase() === alias.alias.toLowerCase();
+                  return (
+                    <button
+                      key={alias.id}
+                      type="button"
+                      onClick={() => saveChatIdentity(alias.alias)}
+                      className={cn(
+                        "mt-1 flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left text-xs transition-colors",
+                        isSelected
+                          ? "bg-raw-gold/15 text-raw-gold"
+                          : isEffectiveLight
+                            ? "text-slate-700 hover:bg-slate-100"
+                            : "text-raw-silver/80 hover:bg-raw-surface/70",
+                      )}
+                    >
+                      <span className="flex min-w-0 items-center gap-2">
+                        <ShieldOff className="h-3.5 w-3.5 shrink-0" />
+                        <span className="truncate">@{alias.alias}</span>
+                      </span>
+                      {isSelected && <Check className="h-3.5 w-3.5 shrink-0" />}
+                    </button>
+                  );
+                })}
+              </div>
 
               <div className={cn("mx-1 mb-1 rounded-lg border px-2 py-1.5 sm:hidden", isEffectiveLight ? "border-slate-200 bg-slate-50" : "border-raw-border/25 bg-raw-black/30")}>
                 <div className="mb-1 flex items-center justify-between gap-2">

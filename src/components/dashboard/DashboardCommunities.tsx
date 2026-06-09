@@ -106,6 +106,8 @@ import { CommunityProfileDialog } from "@/components/dashboard/CommunityProfileD
 const WAITLIST_UNLOCK_THRESHOLD = 200;
 const MESSAGE_PAGE_SIZE = 10;
 const MAX_COMMUNITY_MESSAGE_LENGTH = 150;
+const CHAT_IDENTITY_PREFIX = "raw.chat.identity.v1.";
+const CHAT_IDENTITY_CHANGED_EVENT = "raw:chat-identity-changed";
 
 interface DashboardCommunitiesProps {
   user: User;
@@ -245,6 +247,10 @@ export function DashboardCommunities({
   const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [leavingCommunityId, setLeavingCommunityId] = useState<string | null>(null);
   const [messageDraft, setMessageDraft] = useState("");
+  const [selectedChatAlias, setSelectedChatAlias] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    return window.localStorage.getItem(`${CHAT_IDENTITY_PREFIX}${user.id}`);
+  });
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [mentionIndex, setMentionIndex] = useState(0);
   const [expandedDescs, setExpandedDescs] = useState<Set<string>>(new Set());
@@ -261,6 +267,18 @@ export function DashboardCommunities({
   const [senderAvatarLevels, setSenderAvatarLevels] = useState<Record<string, number>>({});
   const [hasOlderMessages, setHasOlderMessages] = useState(false);
   const [messagesLoading, setMessagesLoading] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setSelectedChatAlias(window.localStorage.getItem(`${CHAT_IDENTITY_PREFIX}${user.id}`));
+    const handleIdentityChange = (event: Event) => {
+      const detail = (event as CustomEvent<{ userId?: string; alias?: string | null }>).detail;
+      if (detail?.userId !== user.id) return;
+      setSelectedChatAlias(detail.alias ?? null);
+    };
+    window.addEventListener(CHAT_IDENTITY_CHANGED_EVENT, handleIdentityChange);
+    return () => window.removeEventListener(CHAT_IDENTITY_CHANGED_EVENT, handleIdentityChange);
+  }, [user.id]);
   const [messagesError, setMessagesError] = useState(false);
   const [isLoadingOlderMessages, setIsLoadingOlderMessages] = useState(false);
   const lastTouchedCommunityRef = useRef<string>("");
@@ -1018,7 +1036,7 @@ export function DashboardCommunities({
         id: `optimistic-${Date.now()}`,
         communityId: selectedCommunity.id,
         senderId: user.id,
-        senderName: user.username,
+        senderName: selectedChatAlias ?? user.username,
         text: trimmedMessage,
         createdAt: new Date().toISOString(),
         deliveryStatus: "pending" as const,
@@ -1042,6 +1060,7 @@ export function DashboardCommunities({
 
         const savedMessage = await sendMessageSupabase(selectedCommunity.id, {
           text: trimmedMessage,
+          identityAlias: selectedChatAlias,
         });
         updateCommunities((current) => replaceCommunityMessage(current, selectedCommunity.id, optimisticMessage.id, savedMessage));
         setMessageDraft("");
@@ -1056,7 +1075,7 @@ export function DashboardCommunities({
         updateCommunities((current) => markCommunityMessageFailed(current, selectedCommunity.id, optimisticMessage.id));
         toast({ title: "Failed to send message", description: "Please try again." });
       }
-    }, [isJoined, selectedCommunity, updateCommunities, user.id, user.username]);
+    }, [isJoined, selectedChatAlias, selectedCommunity, updateCommunities, user.id, user.username]);
 
     const handleSendMessage = async () => {
       if (!selectedCommunity) {
