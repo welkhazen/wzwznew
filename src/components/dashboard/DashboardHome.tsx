@@ -363,34 +363,7 @@ export function DashboardHome({
         </div>
 
         <div className={`rounded-[1.5rem] border p-4 sm:p-5 ${isLight ? "border-slate-200 bg-white shadow-[0_12px_28px_rgba(15,23,42,0.08)]" : "border-white/10 bg-[#1a1a1a]"}`}>
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <textarea
-              value={feedText}
-              onChange={(event) => setFeedText(event.target.value.slice(0, 500))}
-              placeholder={userId ? "Write something to everyone..." : "Log in to write to the feed"}
-              disabled={!userId || feedSubmitting}
-              rows={3}
-              className={`min-h-[92px] flex-1 resize-none rounded-2xl border px-4 py-3 text-sm outline-none transition-colors ${
-                isLight
-                  ? "border-slate-200 bg-slate-50 text-slate-950 placeholder:text-slate-400 focus:border-raw-gold/50"
-                  : "border-white/10 bg-black/25 text-white placeholder:text-white/30 focus:border-raw-gold/50"
-              }`}
-            />
-            <button
-              onClick={handleSubmitFeedPost}
-              disabled={!userId || feedSubmitting || feedTextLength === 0 || feedTextLength > 500}
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-raw-gold px-5 text-xs font-black uppercase tracking-[0.18em] text-black transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-45 sm:h-auto"
-            >
-              <Send className="size-4" />
-              {feedSubmitting ? "Posting" : "Post"}
-            </button>
-          </div>
-
-          {feedError ? (
-            <p className="mt-3 text-xs font-medium text-red-400">{feedError}</p>
-          ) : null}
-
-          <div className={`mt-5 divide-y ${isLight ? "divide-slate-100" : "divide-white/5"}`}>
+          <div className={`max-h-[600px] overflow-y-auto pr-1 divide-y ${isLight ? "divide-slate-100" : "divide-white/5"}`}>
             {feedLoading ? (
               <p className={`py-6 text-center text-sm ${isLight ? "text-slate-500" : "text-white/40"}`}>Loading feed...</p>
             ) : feedPosts.length === 0 ? (
@@ -417,6 +390,33 @@ export function DashboardHome({
               ))
             )}
           </div>
+
+          <div className={`mt-4 flex flex-col gap-3 border-t pt-4 sm:flex-row ${isLight ? "border-slate-100" : "border-white/5"}`}>
+            <textarea
+              value={feedText}
+              onChange={(event) => setFeedText(event.target.value.slice(0, 500))}
+              placeholder={userId ? "Write something to everyone..." : "Log in to write to the feed"}
+              disabled={!userId || feedSubmitting}
+              rows={1}
+              className={`min-h-12 flex-1 resize-none rounded-xl border px-4 py-3 text-sm outline-none transition-colors ${
+                isLight
+                  ? "border-slate-200 bg-slate-50 text-slate-950 placeholder:text-slate-400 focus:border-raw-gold/50"
+                  : "border-white/10 bg-black/25 text-white placeholder:text-white/30 focus:border-raw-gold/50"
+              }`}
+            />
+            <button
+              onClick={handleSubmitFeedPost}
+              disabled={!userId || feedSubmitting || feedTextLength === 0 || feedTextLength > 500}
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-raw-gold px-5 text-xs font-black uppercase tracking-[0.18em] text-black transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-45 sm:h-auto"
+            >
+              <Send className="size-4" />
+              {feedSubmitting ? "Posting" : "Post"}
+            </button>
+          </div>
+
+          {feedError ? (
+            <p className="mt-3 text-xs font-medium text-red-400">{feedError}</p>
+          ) : null}
         </div>
       </section>
 
