@@ -1,3 +1,4 @@
+import { memo } from "react";
 import type { Dispatch, RefObject, SetStateAction } from "react";
 import { BarChart3, Send } from "lucide-react";
 import type { CommunityChatMemberRecord } from "@/lib/communityChat.types";
@@ -18,7 +19,7 @@ interface CommunityMessageComposerProps {
   onSendMessage: () => void;
 }
 
-export function CommunityMessageComposer({
+export const CommunityMessageComposer = memo(function CommunityMessageComposer({
   inputRef,
   draft,
   maxLength,
@@ -133,4 +134,4 @@ export function CommunityMessageComposer({
       </div>
     </div>
   );
-}
+});

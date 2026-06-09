@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import LNTLogo from "@/assets/LNT.webp";
 import SYTLogo from "@/assets/logospeak.webp";
 import IIJMLogo from "@/assets/itisjustme.webp";
-import { AlertTriangle, ArrowLeft, BarChart3, Bell, BellOff, Lock, Plus, Search, Star, Trash2, Users, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, BarChart3, Bell, BellOff, ImagePlus, Lock, Plus, Search, Trash2, UserMinus, X } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import { useConfirmDialog } from "@/hooks/use-confirm-dialog";
@@ -95,14 +96,6 @@ import type { User } from "@/store/types";
 import { CommunityMessageTimeline } from "@/components/dashboard/CommunityMessageTimeline";
 import { CommunityMessageComposer } from "@/components/dashboard/CommunityMessageComposer";
 import { CommunityRoomList } from "@/components/dashboard/CommunityRoomList";
-import { GeneralFeedBox } from "@/components/dashboard/GeneralFeedBox";
-import { CommunitySettingsDialog } from "@/components/dashboard/CommunitySettingsDialog";
-import { CommunityMembersDialog } from "@/components/dashboard/CommunityMembersDialog";
-import { CommunityRequestDialog } from "@/components/dashboard/CommunityRequestDialog";
-import { CommunityReportDialog } from "@/components/dashboard/CommunityReportDialog";
-import { CommunityPollComposerDialog } from "@/components/dashboard/CommunityPollComposerDialog";
-import { CommunityProfileDialog } from "@/components/dashboard/CommunityProfileDialog";
-import { useTheme } from "@/providers/useTheme";
 
 const WAITLIST_UNLOCK_THRESHOLD = 200;
 const MESSAGE_PAGE_SIZE = 10;
@@ -1080,7 +1073,7 @@ export function DashboardCommunities({
       }
     }, [isJoined, selectedChatAlias, selectedCommunity, updateCommunities, user.id, user.username]);
 
-    const handleSendMessage = async () => {
+    const handleSendMessage = useCallback(async () => {
       if (!selectedCommunity) {
         return;
       }
@@ -1101,20 +1094,15 @@ export function DashboardCommunities({
         toast({ title: "Message too long", description: `Max ${MAX_COMMUNITY_MESSAGE_LENGTH} characters.` });
         return;
       }
-      const messageModeration = moderateUserText(trimmedMessage);
-      if (!messageModeration.allowed) {
-        toast({ title: "Message blocked", description: getUserTextModerationMessage(messageModeration) });
-        return;
-      }
-      await sendOptimisticMessage(messageModeration.text);
-    };
+      await sendOptimisticMessage(trimmedMessage);
+    }, [isUserBanned, messageDraft, selectedCommunity, sendOptimisticMessage]);
 
-    const handleRetryMessage = async (message: CommunityChatMessageRecord) => {
+    const handleRetryMessage = useCallback(async (message: CommunityChatMessageRecord) => {
       if (message.deliveryStatus !== "failed") return;
       await sendOptimisticMessage(message.text, message);
-    };
+    }, [sendOptimisticMessage]);
 
-    const handleLikeMessage = async (message: CommunityChatMessageRecord) => {
+    const handleLikeMessage = useCallback(async (message: CommunityChatMessageRecord) => {
       const likedBy = message.likedBy ?? [];
       const isAddingLike = !likedBy.includes(user.id);
       try {
@@ -1134,7 +1122,7 @@ export function DashboardCommunities({
       } catch {
         toast({ title: "Failed to update like", description: "Please try again." });
       }
-    };
+    }, [reloadChatData, selectedCommunity, user.id, user.username]);
 
     const handleCommunitySettingsSave = async () => {
       if (!selectedCommunity || !canEditSelectedCommunity) {
@@ -1229,18 +1217,18 @@ export function DashboardCommunities({
       }
     };
 
-    const handleOpenMessageReport = (message: CommunityChatMessageRecord) => {
+    const handleOpenMessageReport = useCallback((message: CommunityChatMessageRecord) => {
       if (!selectedCommunity) return;
       setReportTarget({
         communityId: selectedCommunity.id,
         communityTitle: selectedCommunity.title,
         message,
       });
-      setReportDraft(INITIAL_REPORT_DRAFT);
+      setReportDraft({ reason: "", details: "" });
       setReportDialogOpen(true);
-    };
+    }, [selectedCommunity]);
 
-    const handleBlockMessageSender = (message: CommunityChatMessageRecord) => {
+    const handleBlockMessageSender = useCallback((message: CommunityChatMessageRecord) => {
       if (message.senderId === user.id || message.senderName === user.username) {
         toast({
           title: "Can't block yourself",
@@ -1260,7 +1248,7 @@ export function DashboardCommunities({
         title: `${message.senderName} blocked`,
         description: "Their messages are hidden from your community chat view.",
       });
-    };
+    }, [user.id, user.username]);
 
     const updateRequestDraft = <K extends keyof CommunityRequestDraft>(field: K, value: CommunityRequestDraft[K]) => {
       setRequestDraft((previous) => ({
@@ -1396,7 +1384,9 @@ export function DashboardCommunities({
           waitlistUnlockThreshold={WAITLIST_UNLOCK_THRESHOLD}
           hasSubscriptionAccess={communityAccess.hasSubscription}
           unlockedCommunityIds={communityAccess.unlockedIds}
+          freeCommunitySlotsRemaining={freeCommunitySlotsRemaining}
           unlockingId={unlockingId}
+          unlockTokenCost={COMMUNITY_UNLOCK_TOKEN_COST}
           onToggleDescription={(communityId) => setExpandedDescs((previous) => {
             const next = new Set(previous);
             if (next.has(communityId)) next.delete(communityId);
@@ -1407,9 +1397,6 @@ export function DashboardCommunities({
           onJoinWaitlist={(community) => { void handleJoinWaitlist(community); }}
           onOpenCommunity={onOpenCommunity}
           onUnlockCommunity={(communityId) => { void handleUnlockCommunity(communityId); }}
-          favoriteCommunityIds={favoriteCommunityIds}
-          favoriteLimitReached={favoriteCommunityIds.length >= MAX_FAVORITE_COMMUNITIES}
-          onToggleFavorite={(communityId) => { void handleToggleFavorite(communityId); }}
         />
       </div>
     );
@@ -1706,25 +1693,16 @@ export function DashboardCommunities({
               polls={communityPolls}
               groupedMessages={groupedMessages}
               activeMessageCount={activeMessages.length}
-              messagesLoading={messagesLoading}
-              messagesError={messagesError}
               canManagePolls={canManagePolls}
               userId={user.id}
               username={user.username}
               senderAvatarLevels={senderAvatarLevels}
-              onDeletePoll={(pollId) => { void handleDeletePoll(pollId); }}
-              onVotePoll={(pollId, optionId) => { void handleVoteOnPoll(pollId, optionId); }}
-              onRetryMessage={(message) => { void handleRetryMessage(message); }}
-              onLikeMessage={(message) => { void handleLikeMessage(message); }}
-              onOpenSenderProfile={handleOpenSenderProfile}
+              onDeletePoll={handleDeletePoll}
+              onVotePoll={handleVoteOnPoll}
+              onRetryMessage={handleRetryMessage}
+              onLikeMessage={handleLikeMessage}
               onOpenMessageReport={handleOpenMessageReport}
               onBlockMessageSender={handleBlockMessageSender}
-              pinnedMessageId={ownPinnedMessage?.messageId ?? null}
-              onPinMessageToProfile={(message) => {
-                if (!selectedCommunity) return;
-                void handlePinMessageToProfile(message, selectedCommunity);
-              }}
-              onUnpinMessageFromProfile={() => { void handleClearPinnedMessage(); }}
             />
 
             <CommunityMessageComposer
@@ -1742,10 +1720,6 @@ export function DashboardCommunities({
               onOpenPollComposer={handleOpenPollComposer}
               onSendMessage={handleSendMessage}
             />
-          </div>
-          <aside className="hidden min-h-0 lg:block">
-            <GeneralFeedBox userId={user.id} compact showHeader={false} fillHeight isLight={isLight} />
-          </aside>
           </div>
           )}
         </motion.div>

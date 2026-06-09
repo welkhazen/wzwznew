@@ -56,11 +56,21 @@ const REVEAL_AVATARS: readonly AvatarCatalogItem[] = [
 ];
 const LANDING_AVATARS: readonly AvatarCatalogItem[] = [...CHOOSER_AVATARS, ...REVEAL_AVATARS];
 
-interface AvatarShowcaseSectionProps {
-  onSignupClick?: () => void;
-}
+type RevealAvatarImageFit = { scale: number; objectPosition?: string };
 
-export function AvatarShowcaseSection({ onSignupClick }: AvatarShowcaseSectionProps = {}) {
+const REVEAL_AVATAR_IMAGE_FIT: Record<string, RevealAvatarImageFit> = {
+  "reveal-1": { scale: 1.18 }, // Silver Void / platinum-style frame
+  "reveal-2": { scale: 1.5 },
+  "reveal-3": { scale: 1.5 },
+  "reveal-4": { scale: 1.62 }, // Violet Mask has the most transparent padding.
+  "reveal-5": { scale: 1.5 },
+  "reveal-6": { scale: 1.12 },
+  "reveal-7": { scale: 1.5 },
+  "reveal-8": { scale: 1.22 },
+  "reveal-9": { scale: 1.42 },
+};
+
+export function AvatarShowcaseSection() {
   const sectionRef = useTrackSectionView("avatar");
   const { mode } = useTheme();
   const isLight = mode === "light";
@@ -117,6 +127,18 @@ export function AvatarShowcaseSection({ onSignupClick }: AvatarShowcaseSectionPr
 
   function handleToggleExpandGrid() {
     setShowExpandGrid((open) => !open);
+  }
+
+  // Per-image scale to normalise inner-circle size — each source image has
+  // different transparent padding around the avatar circle.
+  function getRevealAvatarImageStyle(avatarId?: string): React.CSSProperties {
+    const fit = avatarId ? REVEAL_AVATAR_IMAGE_FIT[avatarId] : undefined;
+
+    return {
+      objectPosition: fit?.objectPosition ?? "center center",
+      transform: `scale(${fit?.scale ?? 1.12})`,
+      transformOrigin: "center center",
+    };
   }
 
   function prev() {

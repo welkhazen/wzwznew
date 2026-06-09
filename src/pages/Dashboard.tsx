@@ -1,6 +1,6 @@
 import { FloatingDock } from "@/components/ui/floating-dock";
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
-import type React from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { readCommunityChats } from "@/lib/communityChat";
 import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
 import { fetchCommunities } from "@/backend/supabase/controllers/communityController";
 import { readCachedCommunities, writeCachedCommunities } from "@/lib/communityCache";
@@ -37,9 +37,6 @@ const DashboardChallenges = lazy(() =>
 const DashboardDailySpin = lazy(() =>
   import("@/components/dashboard/DashboardDailySpin").then((module) => ({ default: module.DashboardDailySpin }))
 );
-const DashboardSettings = lazy(() =>
-  import("@/components/dashboard/DashboardSettings").then((module) => ({ default: module.DashboardSettings }))
-);
 const DashboardProfile = lazy(() =>
   import("@/components/dashboard/DashboardProfile").then((module) => ({ default: module.DashboardProfile }))
 );
@@ -48,17 +45,6 @@ const DashboardWallet = lazy(() =>
 );
 const DashboardInventory = lazy(() =>
   import("@/components/dashboard/DashboardInventory").then((module) => ({ default: module.DashboardInventory }))
-);
-
-const COMMUNITY_LOGOS: Record<string, string> = {
-  lnt: LNTLogo,
-  syt: SYTLogo,
-  iijm: IIJMLogo,
-};
-const LONG_PRESS_MS = 500;
-const MOVE_CANCEL_PX = 10;
-const DashboardStore = lazy(() =>
-  import("@/components/dashboard/DashboardStore").then((module) => ({ default: module.DashboardStore }))
 );
 
 const dashboardSectionFallback = (
@@ -476,30 +462,11 @@ export default function Dashboard({
                 polls={polls}
                 votedPolls={votedPolls}
                 avatarLevel={avatarLevel}
-                onAvatarChange={setAvatarLevel}
                 ownedAvatarLevels={ownedAvatarLevels}
                 onUnlockAvatar={unlockAvatarLevel}
                 onAvatarPurchased={markAvatarOwned}
                 avatarPricesByLevel={avatarPricesByLevel}
                 avatarCatalog={avatarCatalog}
-                tokenBalance={tokenBalance}
-                userId={user.id}
-              />
-            </DashboardSectionShell>
-          </Suspense>
-        );
-      case "store":
-        return (
-          <Suspense fallback={dashboardSectionFallback}>
-            <DashboardSectionShell>
-              <DashboardStore
-                polls={polls}
-                votedPolls={votedPolls}
-                avatarCatalog={avatarCatalog}
-                ownedAvatarLevels={ownedAvatarLevels}
-                onUnlockAvatar={unlockAvatarLevel}
-                onAvatarPurchased={markAvatarOwned}
-                avatarPricesByLevel={avatarPricesByLevel}
                 tokenBalance={tokenBalance}
                 userId={user.id}
               />
@@ -529,21 +496,6 @@ export default function Dashboard({
                 pollsAnswered={votedPolls.size}
                 xp={progress?.xp ?? 0}
                 xpLevel={progress?.level ?? 1}
-                pinnedMessage={pinnedMessage}
-                onLogout={onLogout}
-                polls={polls}
-                tokenBalance={tokenBalance}
-              />
-            </DashboardSectionShell>
-          </Suspense>
-        );
-      case "settings":
-        return (
-          <Suspense fallback={dashboardSectionFallback}>
-            <DashboardSectionShell>
-              <DashboardSettings
-                userId={user.id}
-                pinnedMessage={pinnedMessage}
                 onLogout={onLogout}
               />
             </DashboardSectionShell>
