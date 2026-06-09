@@ -32,12 +32,57 @@ import {
   SPIN_POOL,
   EARLY_SIGNUP_POOL,
 } from "@/backend/supabase/controllers/avatarRewardsController";
+import { avatarDisplayName, avatarIdFromImageSrc } from "@/config/avatarNames";
+
+const SPIN_AVATAR_META: Record<number, { name: string; ringClass: string; innerClass?: string }> = {
+  43: {
+    name: "Grey Sentinel",
+    ringClass: "border-2 border-slate-400 shadow-[0_0_10px_rgba(148,163,184,0.8)]",
+  },
+  42: {
+    name: "Blue Cipher",
+    ringClass: "border-2 border-blue-400 shadow-[0_0_10px_rgba(96,165,250,0.9)]",
+  },
+  52: {
+    name: "Purple Oracle",
+    ringClass: "border-2 border-purple-400 shadow-[0_0_10px_rgba(192,132,252,0.9)]",
+  },
+  41: {
+    name: "Orange Vortex",
+    ringClass: "border-2 border-orange-400 shadow-[0_0_10px_rgba(251,146,60,0.9)]",
+  },
+  13: {
+    name: "Red Phantom",
+    ringClass: "border-2 border-red-500 shadow-[0_0_10px_rgba(239,68,68,0.9)]",
+  },
+  47: {
+    name: "Pink Nova",
+    ringClass: "border-2 border-pink-400 shadow-[0_0_10px_rgba(244,114,182,0.9)]",
+  },
+  40: {
+    name: "Gold Warden",
+    ringClass: "border-2 border-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.9)]",
+  },
+  35: {
+    name: "Platinum Echo",
+    ringClass: "border-2 border-zinc-200 shadow-[0_0_12px_rgba(228,228,231,0.95)]",
+  },
+  20: {
+    name: "White Mirage",
+    ringClass: "border-2 border-white shadow-[0_0_12px_rgba(255,255,255,0.95)]",
+  },
+  26: {
+    name: "Rainbow Pulse",
+    ringClass: "bg-[conic-gradient(from_0deg,#ff004c,#ff8a00,#ffe600,#00ff85,#00cfff,#7a5cff,#ff00d4,#ff004c)] shadow-[0_0_14px_rgba(255,255,255,0.85)]",
+    innerClass: "bg-raw-black",
+  },
+};
 
 const REVEAL_AVATARS: readonly AvatarCatalogItem[] = [
   ...SPIN_POOL.map((entry, i): AvatarCatalogItem => ({
     id: `reveal-spin-${i + 1}`,
     level: 11 + i,
-    name: `Avatar ${entry.imageId}`,
+    name: avatarDisplayName(entry.imageId),
     price: "0",
     imageSrc: entry.imageSrc,
     bg: "#111827", figure: "#cbd5e1", ring: "#cbd5e1", glow: "#cbd5e180",
@@ -46,7 +91,7 @@ const REVEAL_AVATARS: readonly AvatarCatalogItem[] = [
   ...EARLY_SIGNUP_POOL.map((entry, i): AvatarCatalogItem => ({
     id: `reveal-signup-${i + 1}`,
     level: 11 + SPIN_POOL.length + i,
-    name: `Avatar ${entry.imageId}`,
+    name: avatarDisplayName(entry.imageId),
     price: "0",
     imageSrc: entry.imageSrc,
     bg: "#111827", figure: "#cbd5e1", ring: "#cbd5e1", glow: "#cbd5e180",
@@ -96,7 +141,7 @@ export function AvatarShowcaseSection({ onSignupClick }: AvatarShowcaseSectionPr
   const chooserAvatars = CHOOSER_AVATARS;
   const chooserTotal = chooserAvatars.length;
   const expandedAvatarSource = SPIN_POOL
-    .map((entry) => REVEAL_AVATARS.find((avatar) => avatar.name === `Avatar ${entry.imageId}`))
+    .map((entry) => REVEAL_AVATARS.find((avatar) => avatar.imageSrc === entry.imageSrc))
     .filter((avatar): avatar is AvatarCatalogItem => Boolean(avatar));
   const expandedAvatarTotal = expandedAvatarSource.length;
   const visibleExtendedAvatars = expandedAvatarSource
@@ -461,12 +506,19 @@ Just like in real life, every person is born with a name, an appearance, and an 
                           className="group flex w-12 flex-col items-center gap-1 outline-none sm:w-16 sm:gap-1.5 [content-visibility:auto] [contain-intrinsic-size:76px]"
                           aria-label={`Select ${avatar.name}`}
                         >
+                          {(() => {
+                            const imageId = avatarIdFromImageSrc(avatar.imageSrc);
+                            const meta = imageId === null ? undefined : SPIN_AVATAR_META[imageId];
+                            return (
                           <div
-                            className={`relative flex h-14 w-14 items-center justify-center overflow-visible rounded-full p-1 transition-all duration-300 sm:h-16 sm:w-16 ${
-                              avatarIndex === themeIndex ? "ring-1 ring-raw-gold/80" : "ring-1 ring-white/10"
+                            className={`relative flex h-14 w-14 items-center justify-center overflow-visible rounded-full p-[2px] transition-all duration-300 sm:h-16 sm:w-16 ${
+                              meta?.ringClass ?? "border-2 border-white/20 shadow-[0_0_10px_rgba(255,255,255,0.25)]"
+                            } ${
+                              avatarIndex === themeIndex ? "outline outline-1 outline-offset-2 outline-raw-gold/80" : ""
                             }`}
                             style={{ transition: "transform 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}
                           >
+                            <div className={`flex h-full w-full items-center justify-center rounded-full ${meta?.innerClass ?? "bg-transparent"}`}>
                             {avatar.imageSrc ? (
                               <img
                                 src={avatar.imageSrc}
@@ -479,7 +531,10 @@ Just like in real life, every person is born with a name, an appearance, and an 
                             ) : (
                               <AvatarFigure key={`${themeIndex}-${themeVersion}`} avatarIndex={themeIndex} size="sm" selected={avatarIndex === themeIndex} themeOverride={avatar} />
                             )}
+                            </div>
                           </div>
+                            );
+                          })()}
                           <span
                             className="min-h-[1.35rem] text-center font-display text-[6px] uppercase leading-[1.15] tracking-wide transition-colors duration-200 sm:min-h-[1.5rem] sm:text-[7px]"
                             style={{

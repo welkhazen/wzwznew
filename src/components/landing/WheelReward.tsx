@@ -7,6 +7,7 @@ import { useTheme } from "@/providers/useTheme";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 import { track } from "@/lib/analytics";
 import { LANDING_WHEEL_SPIN_KEY } from "@/lib/avatarCatalog";
+import { avatarDisplayName } from "@/config/avatarNames";
 
 const TRANSPARENT_REWARDS_IMAGE_SRC = "/images/avatar-rarity-chart.png";
 
@@ -18,7 +19,7 @@ import { SPIN_POOL } from "@/backend/supabase/controllers/avatarRewardsControlle
 const WHEEL_REWARD_POOL: readonly PoolEntry[] = SPIN_POOL.map((entry, i) => ({
   id: `wheel-avatar-${i + 1}`,
   avatarId: entry.catalogId,
-  name: `Avatar ${entry.imageId}`,
+  name: avatarDisplayName(entry.imageId),
   imageSrc: entry.imageSrc,
 }));
 
