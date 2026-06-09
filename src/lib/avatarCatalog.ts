@@ -555,10 +555,11 @@ export async function loadUserAvatarState(
 
     const allowed = new Set(catalog.map((item) => item.id));
     const serverOwned = (inventoryRows ?? []).map((row) => row.avatar_id).filter((id) => allowed.has(id));
-    const serverOwnedSet = new Set(serverOwned);
+    // Server is the source of truth — drop local extras that aren't on the
+    // server. defaultOwnedIds covers the 8 base free avatars that aren't
+    // persisted server-side.
     const ownedAvatarIds = Array.from(new Set([
       ...defaultOwnedIds(catalog),
-      ...localOwned.filter((id) => !WHEEL_AVATAR_IDS.has(id) || serverOwnedSet.has(id)),
       ...serverOwned,
     ]));
     const selectedCandidate = selectedRow?.avatar_id ?? localSelected;
