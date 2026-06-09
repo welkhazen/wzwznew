@@ -101,9 +101,11 @@ export function GeneralFeedBox({
           <div className="mb-4 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <MessageSquare className="size-4 text-raw-gold" />
-              <h2 className="text-sm font-bold tracking-tight text-white">General Feed</h2>
+              <h2 className={`text-sm font-bold tracking-tight ${isLight ? "text-slate-950" : "text-white"}`}>General Feed</h2>
             </div>
-            <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/30">{feedTextLength}/500</span>
+            <span className={`text-[10px] font-bold uppercase tracking-[0.16em] ${isLight ? "text-slate-400" : "text-white/30"}`}>
+              {feedTextLength}/500
+            </span>
           </div>
         )}
 

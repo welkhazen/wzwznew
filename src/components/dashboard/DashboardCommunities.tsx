@@ -102,6 +102,7 @@ import { CommunityRequestDialog } from "@/components/dashboard/CommunityRequestD
 import { CommunityReportDialog } from "@/components/dashboard/CommunityReportDialog";
 import { CommunityPollComposerDialog } from "@/components/dashboard/CommunityPollComposerDialog";
 import { CommunityProfileDialog } from "@/components/dashboard/CommunityProfileDialog";
+import { useTheme } from "@/providers/useTheme";
 
 const WAITLIST_UNLOCK_THRESHOLD = 200;
 const MESSAGE_PAGE_SIZE = 10;
@@ -178,10 +179,11 @@ export function DashboardCommunities({
   onBackToCommunities,
   onCommunitiesChange,
 }: DashboardCommunitiesProps) {
-      // Main search query state (fix ReferenceError)
-      const [searchQuery, setSearchQuery] = useState("");
-    // Main community state (fix ReferenceError)
-    const [communities, setCommunities] = useState<PersistedCommunityRecord[]>([]);
+  const { mode } = useTheme();
+  const isLight = mode === "light";
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [communities, setCommunities] = useState<PersistedCommunityRecord[]>([]);
   // --- Floating request button state/hooks ---
   const [showRequestButton, setShowRequestButton] = useState(false);
   const [requestBtnText, setRequestBtnText] = useState("Didn't find your community?");
@@ -1742,7 +1744,7 @@ export function DashboardCommunities({
             />
           </div>
           <aside className="hidden min-h-0 lg:block">
-            <GeneralFeedBox userId={user.id} compact showHeader={false} fillHeight />
+            <GeneralFeedBox userId={user.id} compact showHeader={false} fillHeight isLight={isLight} />
           </aside>
           </div>
           )}
