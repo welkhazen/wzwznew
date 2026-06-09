@@ -54,12 +54,7 @@ const REVEAL_AVATARS: readonly AvatarCatalogItem[] = [
   })),
 ];
 const LANDING_AVATARS: readonly AvatarCatalogItem[] = [...CHOOSER_AVATARS, ...REVEAL_AVATARS];
-
-type RevealAvatarImageFit = { scale: number; objectPosition?: string };
-
-// Numbered avatars in /public/avatars are already cropped consistently,
-// so a single uniform scale works across the whole reveal grid.
-const REVEAL_AVATAR_IMAGE_FIT: Record<string, RevealAvatarImageFit> = {};
+const REVEAL_AVATAR_ORDER = [43, 42, 52, 41, 13, 47, 40, 35, 20, 26] as const;
 
 interface AvatarShowcaseSectionProps {
   onSignupClick?: () => void;
@@ -101,7 +96,9 @@ export function AvatarShowcaseSection({ onSignupClick }: AvatarShowcaseSectionPr
 
   const chooserAvatars = CHOOSER_AVATARS;
   const chooserTotal = chooserAvatars.length;
-  const expandedAvatarSource = REVEAL_AVATARS;
+  const expandedAvatarSource = REVEAL_AVATAR_ORDER
+    .map((level) => REVEAL_AVATARS.find((avatar) => avatar.name === `Avatar ${level}`))
+    .filter((avatar): avatar is AvatarCatalogItem => Boolean(avatar));
   const expandedAvatarTotal = expandedAvatarSource.length;
   const visibleExtendedAvatars = expandedAvatarSource
     .slice(0, expandedVisibleCount)
@@ -120,18 +117,6 @@ export function AvatarShowcaseSection({ onSignupClick }: AvatarShowcaseSectionPr
 
   function handleToggleExpandGrid() {
     setShowExpandGrid((open) => !open);
-  }
-
-  // Per-image scale to normalise inner-circle size — each source image has
-  // different transparent padding around the avatar circle.
-  function getRevealAvatarImageStyle(avatarId?: string): React.CSSProperties {
-    const fit = avatarId ? REVEAL_AVATAR_IMAGE_FIT[avatarId] : undefined;
-
-    return {
-      objectPosition: fit?.objectPosition ?? "center center",
-      transform: `scale(${fit?.scale ?? 1.12})`,
-      transformOrigin: "center center",
-    };
   }
 
   function prev() {
@@ -461,7 +446,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
                 </p>
                 {visibleExtendedAvatars.length > 0 ? (
                   <>
-                    <div className="grid grid-cols-3 place-items-start justify-items-center gap-x-3 gap-y-4 sm:grid-cols-4 sm:gap-x-5 sm:gap-y-5">
+                    <div className="grid grid-cols-2 place-items-start justify-items-center gap-x-6 gap-y-5 sm:grid-cols-5 sm:gap-x-5 sm:gap-y-6">
                       {visibleExtendedAvatars.map(({ avatar, themeIndex }) => (
                         <button
                           key={avatar.id ?? themeIndex}
@@ -478,7 +463,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
                           aria-label={`Select ${avatar.name}`}
                         >
                           <div
-                            className={`relative h-11 w-11 overflow-hidden rounded-full transition-all duration-300 group-hover:scale-105 sm:h-14 sm:w-14 ${
+                            className={`relative flex h-14 w-14 items-center justify-center overflow-visible rounded-full p-1 transition-all duration-300 sm:h-16 sm:w-16 ${
                               avatarIndex === themeIndex ? "ring-1 ring-raw-gold/80" : "ring-1 ring-white/10"
                             }`}
                             style={{ transition: "transform 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}
@@ -490,8 +475,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
                                 loading="lazy"
                                 decoding="async"
                                 draggable={false}
-                                className="h-full w-full object-cover"
-                                style={getRevealAvatarImageStyle(avatar.id)}
+                                className="h-[88%] w-[88%] rounded-full object-contain"
                               />
                             ) : (
                               <AvatarFigure key={`${themeIndex}-${themeVersion}`} avatarIndex={themeIndex} size="sm" selected={avatarIndex === themeIndex} themeOverride={avatar} />
