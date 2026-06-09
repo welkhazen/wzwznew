@@ -42,12 +42,13 @@ export interface PersistedCommunityRecord {
   messages: CommunityChatMessageRecord[];
 }
 
+// The send_community_message RPC derives the sender from current_user_id()
+// server-side, so the only fields the client may supply are the message
+// payload itself, an optional reply target, and an optional owned private alias.
 export interface SendCommunityMessageInput {
-  senderId: string;
-  senderName: string;
-  senderAvatarLevel?: number;
   text: string;
   replyToMessage?: CommunityChatMessageRecord | null;
+  identityAlias?: string | null;
 }
 
 export interface JoinCommunityInput {

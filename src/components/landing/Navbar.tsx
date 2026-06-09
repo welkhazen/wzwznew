@@ -6,7 +6,7 @@ import { ThemeModeSwitcher } from "@/components/theme/ThemeModeSwitcher";
 import { track } from "@/lib/analytics";
 import { useTheme } from "@/providers/useTheme";
 
-const RAW_LOGO_SRC = "/android-chrome-192x192.png";
+const RAW_LOGO_SRC = "/raw-logo-96.png";
 
 interface NavbarProps {
   isLoggedIn: boolean;
@@ -109,7 +109,7 @@ export function Navbar({ isLoggedIn, username, onSignupClick }: NavbarProps) {
           ) : (
             <>
               <ThemeModeSwitcher />
-              <ThemeCustomizer placement="inline" triggerStyle="compact" className="flex shrink-0" />
+              <ThemeCustomizer placement="inline" triggerStyle="compact" accentAccess="free" className="flex shrink-0" />
               <button
                 onClick={handleSignupClick}
                 className="min-h-11 rounded-full bg-raw-gold px-3 py-2.5 text-xs font-semibold text-raw-black transition-all hover:bg-raw-gold/90 hover:shadow-lg hover:shadow-raw-gold/20 sm:px-5 sm:text-sm"

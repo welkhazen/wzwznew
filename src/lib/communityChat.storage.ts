@@ -2,9 +2,6 @@ import type { CommunityChatMemberRecord, CommunityChatMessageRecord, PersistedCo
 import { ensureString, ensureBoolean } from "./communityChat.utils";
 import { toUserId } from "@/lib/adminData";
 
-const COMMUNITY_CHATS_STORAGE_KEY = "raw.community-chats.v1";
-const RETIRED_COMMUNITY_IDS = new Set(["sg"]);
-
 export function normalizeMessage(rawMessage: unknown, communityId: string): CommunityChatMessageRecord | null {
   if (!rawMessage || typeof rawMessage !== "object") {
     return null;
@@ -74,36 +71,4 @@ export function normalizeCommunity(rawCommunity: unknown): PersistedCommunityRec
     members: Array.isArray(candidate.members) ? candidate.members.map(normalizeMember).filter((member): member is CommunityChatMemberRecord => member !== null) : [],
     messages: Array.isArray(candidate.messages) ? candidate.messages.map((message) => normalizeMessage(message, id)).filter((message): message is CommunityChatMessageRecord => message !== null) : [],
   };
-}
-
-export function readStoredCommunities(): PersistedCommunityRecord[] {
-  if (typeof window === "undefined") {
-    return [];
-  }
-
-  try {
-    const rawValue = window.localStorage.getItem(COMMUNITY_CHATS_STORAGE_KEY);
-    if (!rawValue) {
-      return [];
-    }
-
-    const parsed = JSON.parse(rawValue) as unknown;
-    if (!Array.isArray(parsed)) {
-      return [];
-    }
-
-    return parsed
-      .map(normalizeCommunity)
-      .filter((community): community is PersistedCommunityRecord => community !== null && !RETIRED_COMMUNITY_IDS.has(community.id));
-  } catch {
-    return [];
-  }
-}
-
-export function writeCommunityChats(communities: PersistedCommunityRecord[]): void {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  window.localStorage.setItem(COMMUNITY_CHATS_STORAGE_KEY, JSON.stringify(communities));
 }

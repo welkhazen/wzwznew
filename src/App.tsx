@@ -6,10 +6,10 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { AnalyticsProvider } from "@/components/analytics/AnalyticsProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { RouteSeo } from "@/components/seo/RouteSeo";
 
 const Index = lazy(() => import("./pages/Index"));
 const NotFound = lazy(() => import("./pages/NotFound"));
-const Admin = lazy(() => import("./pages/Admin"));
 const FAQ = lazy(() => import("./pages/FAQ"));
 const AskAI = lazy(() => import("./pages/AskAI"));
 const Security = lazy(() => import("./pages/Security"));
@@ -34,12 +34,12 @@ const App = () => (
         <Sonner />
         <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <AnalyticsProvider>
+            <RouteSeo />
             <Suspense fallback={routeFallback}>
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/dashboard" element={<Index />} />
                 <Route path="/dashboard/communities/:communityId" element={<Index />} />
-                <Route path="/admin" element={<Admin />} />
                 <Route path="/faq" element={<FAQ />} />
                 <Route path="/polls-explained" element={<PollsExplained />} />
                 <Route path="/communities-explained" element={<CommunitiesExplained />} />

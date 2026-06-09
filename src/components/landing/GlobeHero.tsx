@@ -1,16 +1,18 @@
 "use client";
 
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import { motion } from "motion/react";
 import { ArrowRight, ArrowDown } from "lucide-react";
 import { track } from "@/lib/analytics";
 
 import { TypewriterStack } from "@/components/ui/typewriter-stack";
-import { Canvas } from "@react-three/fiber";
-import { PerspectiveCamera } from "@react-three/drei";
-
-import { Globe } from "@/components/ui/globe-hero";
 import { useTheme } from "@/providers/useTheme";
+
+// Lazy-load the Three.js scene so the ~500KB three+fiber+drei bundle
+// doesn't block initial paint on mobile.
+const LazyGlobeScene = lazy(() =>
+  import("./GlobeHeroScene").then((m) => ({ default: m.GlobeHeroScene })),
+);
 
 interface GlobeHeroProps {
   onSignupClick: () => void;
@@ -42,10 +44,9 @@ export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
       {/* Globe behind text, centered and smaller */}
       <div className="absolute inset-0 flex items-center justify-center z-0 pointer-events-none">
         <div className="w-[340px] h-[340px] md:w-[420px] md:h-[420px] lg:w-[520px] lg:h-[520px]">
-          <Canvas>
-            <PerspectiveCamera makeDefault position={[0, 0, 3]} fov={75} />
-            <Globe rotationSpeed={0.004} radius={1.1} color={globeColor} />
-          </Canvas>
+          <Suspense fallback={null}>
+            <LazyGlobeScene globeColor={globeColor} />
+          </Suspense>
         </div>
       </div>
       <div className="relative z-10 mx-auto max-w-5xl space-y-9 px-4 py-10 pt-20 text-center sm:space-y-12 sm:px-6 sm:py-12 sm:pt-14">
@@ -120,7 +121,7 @@ export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
             <p
               className="font-display text-lg font-medium leading-relaxed text-foreground sm:text-xl md:text-2xl"
             >
-              Your new 24/7 living and ever-growing world
+              Anonymous online communities for honest conversation and real connection
             </p>
             <p
               className="text-base font-semibold leading-relaxed text-primary sm:text-lg"
@@ -129,7 +130,7 @@ export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
                   "0 0 12px hsl(var(--primary) / 0.6), 0 0 28px hsl(var(--primary) / 0.35)",
               }}
             >
-              Username And Password Only
+              Join interest-based group chats with only a username and password
             </p>
           </motion.div>
         </motion.div>

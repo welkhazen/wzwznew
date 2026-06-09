@@ -58,6 +58,17 @@ app.use(express.json({ limit: "16kb" }));
 app.use(cookieParser());
 app.use("/api", requireTrustedOrigin);
 
+if (isProduction && !process.env.SESSION_STORE_URL) {
+  // express-session's default MemoryStore is documented as not production-safe:
+  // it leaks memory, doesn't scale beyond one process, and loses sessions on restart.
+  // Configure a persistent store (Redis/Postgres) and expose its URL via SESSION_STORE_URL.
+  console.error(
+    "[startup] SESSION_STORE_URL must be configured in production. " +
+      "Refusing to start with the in-memory session store."
+  );
+  process.exit(1);
+}
+
 app.use(
   session({
     name: "raw.sid",

@@ -3,11 +3,14 @@ import { ContainerTextFlipLazy } from "@/components/ui/container-text-flip.lazy"
 import { ChevronRight, Dices, Zap, Flame, Users, BarChart3 } from "lucide-react";
 import type { Poll } from "@/store/useRawStore";
 import type { DashboardTab } from "./DashboardNav";
-import { readCommunityChats } from "@/lib/communityChat";
+import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
 import { COMMUNITY_COVER_IMAGES, COMMUNITY_COVER_VIDEOS } from "@/lib/communityConstants";
 import { getTodayKey } from "@/store/useRawStore.storage";
 import { useTheme } from "@/providers/useTheme";
 import { LevelProgressBanner } from "@/components/dashboard/LevelProgressBanner";
+import { WheelOfFortune } from "@/components/wheel/WheelOfFortune";
+import { buildSpinPrizes, DashboardDailySpin } from "@/components/dashboard/DashboardDailySpin";
+import { GeneralFeedBox } from "@/components/dashboard/GeneralFeedBox";
 
 interface DashboardHomeProps {
   username: string;
@@ -19,8 +22,12 @@ interface DashboardHomeProps {
   dailyPollLimit: number;
   xp: number;
   xpLevel: number;
+  communities: PersistedCommunityRecord[];
   onNavigate: (tab: DashboardTab) => void;
   onOpenCommunity: (communityId: string) => void;
+  isAdmin?: boolean;
+  onAwardXP?: (amount: number) => Promise<void>;
+  onAvatarWon?: (level: number) => void;
 }
 
 function CommunityCard({
@@ -29,7 +36,7 @@ function CommunityCard({
   isLight,
   onOpenCommunity,
 }: {
-  community: ReturnType<typeof readCommunityChats>[number];
+  community: PersistedCommunityRecord;
   rank?: number;
   isLight: boolean;
   onOpenCommunity: (id: string) => void;
@@ -175,13 +182,25 @@ export function DashboardHome({
   dailyPollLimit,
   xp,
   xpLevel,
+  communities,
   onNavigate,
   onOpenCommunity,
+  isAdmin,
+  onAwardXP,
+  onAvatarWon,
 }: DashboardHomeProps) {
-  const { mode } = useTheme();
+  const { mode, accent, accentPresets } = useTheme();
+  const accentRgb = useMemo(
+    () => accentPresets.find((preset) => preset.id === accent)?.rgb ?? "241 196 45",
+    [accent, accentPresets],
+  );
+  const spinPrizes = useMemo(
+    () => buildSpinPrizes(mode === "light" ? "light" : "dark", accentRgb),
+    [mode, accentRgb],
+  );
   const isLight = mode === "light";
   const dailyItemsLeft = Math.max(0, dailyPollLimit - dailyAnsweredCount);
-  const allCommunities = useMemo(() => readCommunityChats(), []);
+  const allCommunities = communities;
 
   const spinStorageKey = userId ? `raw.daily-spin.${userId}` : null;
   const hasSpunToday = useMemo(() => {
@@ -217,7 +236,8 @@ export function DashboardHome({
     [allCommunities],
   );
 
-  const pollProgress = Math.min(100, (dailyAnsweredCount / dailyPollLimit) * 100);
+  const hasReachedDailyPollLimit = dailyAnsweredCount >= dailyPollLimit;
+  const pollProgress = dailyPollLimit > 0 ? Math.min(100, (dailyAnsweredCount / dailyPollLimit) * 100) : 0;
 
   return (
     <div className="space-y-10 pb-6">
@@ -226,15 +246,7 @@ export function DashboardHome({
       <section className="relative">
         <div className="relative z-10">
           <h1 className={`font-display max-w-2xl text-2xl leading-[1.08] sm:text-3xl md:text-4xl md:leading-[1.15] ${isLight ? "text-slate-950" : "text-white"}`}>
-            Stay{" "}
-            <Suspense fallback={<span className="text-raw-gold italic">anonymous</span>}>
-              <ContainerTextFlipLazy
-                words={["anonymous", "connected", "growing", "raW"]}
-                interval={2800}
-                className="!text-2xl sm:!text-3xl md:!text-4xl"
-              />
-            </Suspense>
-            . Speak your truth without identity.
+            Welcome to <span className="text-raw-gold">raW</span>.
           </h1>
           <div className="mt-6 flex flex-wrap items-center gap-3">
             <div className={`flex items-center gap-2 px-4 py-2 rounded-full border ${isLight ? "border-slate-200 bg-white/85" : "border-white/10 bg-white/5"}`}>
@@ -274,6 +286,11 @@ export function DashboardHome({
         </div>
       </section>
 
+      {/* General Feed */}
+      <section className={`space-y-5 border-t pt-10 ${isLight ? "border-slate-200" : "border-white/5"}`}>
+        <GeneralFeedBox userId={userId} isLight={isLight} />
+      </section>
+
       {/* Recommended Rooms */}
       <section className={`space-y-5 border-t pt-10 ${isLight ? "border-slate-200" : "border-white/5"}`}>
         <div className="flex justify-between items-end">
@@ -288,47 +305,13 @@ export function DashboardHome({
         <UpcomingCommunitiesPreview isLight={isLight} />
       </section>
 
-      {/* ── Daily Poll Progress ── */}
-      <section className="space-y-4">
-        <div className="flex items-center gap-2">
-          <BarChart3 className="size-4 text-raw-gold" />
-          <h2 className={`text-xl font-bold ${isLight ? "text-slate-950" : "text-white"}`}>Daily Poll Progress</h2>
-        </div>
-        <div className={`rounded-2xl p-5 flex flex-wrap items-center gap-4 ${isLight ? "border border-slate-200 bg-white shadow-[0_12px_28px_rgba(15,23,42,0.08)]" : "border border-white/10 bg-[#1a1a1a]"}`}>
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="w-10 h-10 rounded-xl bg-raw-gold/5 flex items-center justify-center border border-raw-gold/20">
-              <BarChart3 className="size-5 text-raw-gold" />
-            </div>
-            <div>
-              <p className={`text-sm font-bold ${isLight ? "text-slate-950" : "text-white"}`}>Voice Your Opinion</p>
-              <p className={`text-[11px] ${isLight ? "text-slate-500" : "text-white/40"}`}>50 XP per poll · anonymous</p>
-            </div>
-          </div>
-          <div className="flex-1 min-w-[140px] space-y-1.5">
-            <div className={`flex justify-between text-[11px] ${isLight ? "text-slate-500" : "text-white/40"}`}>
-              <span>Progress</span>
-              <span className="text-raw-gold font-bold">{dailyAnsweredCount} / {dailyPollLimit}</span>
-            </div>
-            <div className={`h-1.5 w-full rounded-full overflow-hidden ${isLight ? "bg-slate-200" : "bg-white/5"}`}>
-              <div className="h-full bg-raw-gold rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(241,196,45,0.4)]" style={{ width: `${pollProgress}%` }} />
-            </div>
-          </div>
-          <button
-            onClick={() => onNavigate("polls")}
-            className="shrink-0 px-5 py-2.5 rounded-xl border border-raw-gold/30 text-raw-gold font-bold text-xs uppercase tracking-[0.18em] hover:bg-raw-gold/5 transition-all"
-          >
-            Answer Now
-          </button>
-        </div>
-      </section>
-
       {/* ── Challenges ── */}
       <section className="space-y-5">
         <div className="flex items-center gap-2">
           <Zap className="size-4 text-raw-gold" />
           <h2 className={`text-xl font-bold ${isLight ? "text-slate-950" : "text-white"}`}>Challenges</h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 md:items-stretch gap-6">
           {/* Daily Spin */}
           <div className={`p-6 rounded-[1.5rem] space-y-5 ${isLight ? "border border-slate-200 bg-white shadow-[0_12px_28px_rgba(15,23,42,0.08)]" : "border border-white/10 bg-[#1a1a1a]"}`}>
             <div className="flex items-start justify-between">
@@ -340,40 +323,65 @@ export function DashboardHome({
                 <Dices className="size-5 text-raw-gold" />
               </div>
             </div>
-            <p className={`text-sm leading-relaxed ${isLight ? "text-slate-600" : "text-white/50"}`}>Spin the wheel once a day for a chance to earn XP, badges, and avatar themes.</p>
-            {hasSpunToday && spinCountdown ? (
-              <div className={`rounded-xl border p-4 text-center ${isLight ? "border-slate-200 bg-slate-50" : "border-white/5 bg-white/[0.03]"}`}>
-                <p className={`text-[10px] uppercase tracking-[0.16em] ${isLight ? "text-slate-500" : "text-white/30"}`}>Next spin in</p>
-                <p className="mt-1.5 font-display text-2xl tracking-widest text-raw-gold/90">{spinCountdown}</p>
-              </div>
-            ) : (
-              <button
-                onClick={() => onNavigate("challenges")}
-                className="w-full py-3 rounded-xl border border-raw-gold/30 text-raw-gold font-bold text-xs uppercase tracking-[0.2em] hover:bg-raw-gold/5 transition-all"
-              >
-                Spin Now
-              </button>
-            )}
+            {userId ? (
+              <DashboardDailySpin
+                userId={userId}
+                isAdmin={isAdmin ?? false}
+                onAwardXP={onAwardXP}
+                onAvatarWon={onAvatarWon}
+              />
+            ) : null}
           </div>
 
-          {/* Level Up */}
-          <div className={`p-6 rounded-[1.5rem] space-y-6 ${isLight ? "border border-slate-200 bg-white shadow-[0_12px_28px_rgba(15,23,42,0.08)]" : "border border-white/10 bg-[#1a1a1a]"}`}>
-            <div className="flex items-start justify-between">
-              <div className="space-y-0.5">
-                <h3 className={`text-xl font-bold tracking-tight ${isLight ? "text-slate-950" : "text-white"}`}>Level Up</h3>
-                <p className={`text-xs ${isLight ? "text-slate-500" : "text-white/40"}`}>Complete interactions to earn XP</p>
+          {/* Right column: Daily Poll Progress on top, Level Up below */}
+          <div className="flex flex-col gap-6">
+            {/* Daily Poll Progress */}
+            <div className={`p-6 rounded-[1.5rem] flex flex-1 flex-col space-y-5 ${isLight ? "border border-slate-200 bg-white shadow-[0_12px_28px_rgba(15,23,42,0.08)]" : "border border-white/10 bg-[#1a1a1a]"}`}>
+              <div className="flex items-start justify-between">
+                <div className="space-y-0.5">
+                  <h3 className={`text-xl font-bold tracking-tight ${isLight ? "text-slate-950" : "text-white"}`}>Daily Poll Progress</h3>
+                  <p className={`text-xs ${isLight ? "text-slate-500" : "text-white/40"}`}>50 XP per poll · anonymous</p>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-raw-gold/5 flex items-center justify-center border border-raw-gold/10">
+                  <BarChart3 className="size-5 text-raw-gold" />
+                </div>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-raw-gold/5 flex items-center justify-center border border-raw-gold/10">
-                <Zap className="size-5 text-raw-gold" />
+              <div className="space-y-2">
+                <div className={`flex justify-between text-[11px] ${isLight ? "text-slate-500" : "text-white/40"}`}>
+                  <span>Progress</span>
+                  <span className="text-raw-gold font-bold">{dailyAnsweredCount} / {dailyPollLimit}</span>
+                </div>
+                <div className={`h-1.5 w-full rounded-full overflow-hidden ${isLight ? "bg-slate-200" : "bg-white/5"}`}>
+                  <div className="h-full bg-raw-gold rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(241,196,45,0.4)]" style={{ width: `${pollProgress}%` }} />
+                </div>
               </div>
+              <button
+                onClick={() => onNavigate("polls")}
+                className="mt-auto w-full py-4 rounded-xl border border-raw-gold/30 text-raw-gold font-bold text-xs uppercase tracking-[0.2em] hover:bg-raw-gold/5 transition-all"
+              >
+                {hasReachedDailyPollLimit ? "Buy More - 10 Tokens" : "Answer Now"}
+              </button>
             </div>
-            <LevelProgressBanner xp={xp} level={xpLevel} />
-            <button
-              onClick={() => onNavigate("challenges")}
-              className="w-full py-4 rounded-xl border border-raw-gold/30 text-raw-gold font-bold text-xs uppercase tracking-[0.2em] hover:bg-raw-gold/5 transition-all"
-            >
-              View Missions
-            </button>
+
+            {/* Level Up */}
+            <div className={`p-6 rounded-[1.5rem] flex flex-1 flex-col space-y-6 ${isLight ? "border border-slate-200 bg-white shadow-[0_12px_28px_rgba(15,23,42,0.08)]" : "border border-white/10 bg-[#1a1a1a]"}`}>
+              <div className="flex items-start justify-between">
+                <div className="space-y-0.5">
+                  <h3 className={`text-xl font-bold tracking-tight ${isLight ? "text-slate-950" : "text-white"}`}>Level Up</h3>
+                  <p className={`text-xs ${isLight ? "text-slate-500" : "text-white/40"}`}>Complete interactions to earn XP</p>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-raw-gold/5 flex items-center justify-center border border-raw-gold/10">
+                  <Zap className="size-5 text-raw-gold" />
+                </div>
+              </div>
+              <LevelProgressBanner xp={xp} level={xpLevel} />
+              <button
+                onClick={() => onNavigate("challenges")}
+                className="mt-auto w-full py-4 rounded-xl border border-raw-gold/30 text-raw-gold font-bold text-xs uppercase tracking-[0.2em] hover:bg-raw-gold/5 transition-all"
+              >
+                View Missions
+              </button>
+            </div>
           </div>
         </div>
       </section>

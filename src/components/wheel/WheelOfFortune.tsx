@@ -1,15 +1,17 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useTheme } from "@/providers/useTheme";
 
+// Keep in sync with WHEEL_REWARD_POOL in WheelReward.tsx.
 const IMAGE_SCALE_BY_SRC: Record<string, number> = {
-  "/avatars/1.webp": 1.0,
-  "/avatars/2.webp": 1.45,
-  "/avatars/3.webp": 1.45,
-  "/avatars/04.webp": 1.45,
-  "/avatars/5.webp": 1.45,
-  "/avatars/6.webp": 1.0,
-  "/avatars/07.webp": 1.45,
-  "/avatars/08.webp": 1.08,
+  "/avatars/1.webp": 1.18,                    // Silver Void
+  "/avatars/landing/neon-lynx.webp": 1.45,    // Neon Lynx
+  "/avatars/landing/blue-signal.webp": 1.45,  // Blue Signal
+  "/avatars/landing/violet-mask.webp": 1.55,  // Violet Mask
+  "/avatars/landing/viozen.webp": 1.45,       // Viozen
+  "/avatars/6.webp": 1.0,                     // Crimson Muse
+  "/avatars/landing/solar-flame.webp": 1.45,  // Solar Flame
+  "/avatars/landing/pink-circuit.webp": 1.22, // Pink Circuit
+  "/avatars/landing/blu-fifer.webp": 1.42,    // Blu Fifer
 };
 
 export interface WheelPrize {
@@ -29,6 +31,9 @@ interface WheelOfFortuneProps {
   prizeWeights?: Partial<Record<string, number>>;
   forcedPrizeId?: string | null;
   radius?: number;
+  previewOnly?: boolean;
+  /** Replaces the disabled button label after spinning (e.g. countdown text). */
+  disabledLabel?: React.ReactNode;
 }
 
 const SPIN_DURATION = 5000;
@@ -78,7 +83,7 @@ function getLabelLines(label: string): string[] {
   return [parts.slice(0, midpoint).join(" "), parts.slice(midpoint).join(" ")];
 }
 
-export function WheelOfFortune({ prizes, onSpinEnd, onSpinStart, disabled = false, prizeWeights, forcedPrizeId = null, radius: radiusProp = 200 }: WheelOfFortuneProps) {
+export function WheelOfFortune({ prizes, onSpinEnd, onSpinStart, disabled = false, prizeWeights, forcedPrizeId = null, radius: radiusProp = 200, previewOnly = false, disabledLabel }: WheelOfFortuneProps) {
   const { mode } = useTheme();
   const pointerId = useId().replace(/:/g, "");
   const baseId = useId().replace(/:/g, "");
@@ -247,7 +252,7 @@ export function WheelOfFortune({ prizes, onSpinEnd, onSpinStart, disabled = fals
                     x={textPosition.x}
                     y={textPosition.y}
                     fill={prize.textColor}
-                    fontSize={prize.shortLabel.length > 7 ? 12 : 14}
+                    fontSize={prize.shortLabel.length > 7 ? 9 : 11}
                     fontWeight="700"
                     textAnchor="middle"
                     dominantBaseline="middle"
@@ -276,17 +281,23 @@ export function WheelOfFortune({ prizes, onSpinEnd, onSpinStart, disabled = fals
         </svg>
       </div>
 
-      <button
-        onClick={handleSpin}
-        disabled={isSpinning || disabled}
-        className={`mt-6 sm:mt-8 relative overflow-hidden rounded-full px-10 py-3.5 font-display text-sm uppercase tracking-[0.2em] transition-all ${
-          isSpinning || disabled
-            ? "cursor-not-allowed border border-raw-border/30 bg-raw-surface text-raw-silver/30"
-            : "bg-raw-gold text-raw-black hover:scale-105 hover:shadow-[0_0_30px_rgb(var(--raw-accent)/0.3)] active:scale-95"
-        }`}
-      >
-        {isSpinning ? "Spinning..." : disabled ? "Spin Complete" : "Spin"}
-      </button>
+      {!previewOnly && (
+        <button
+          onClick={handleSpin}
+          disabled={isSpinning || disabled}
+          className={`mt-6 sm:mt-8 relative overflow-hidden rounded-full px-10 py-3.5 font-display text-sm uppercase tracking-[0.2em] transition-all ${
+            isSpinning || disabled
+              ? "cursor-not-allowed border border-raw-border/30 bg-raw-surface text-raw-silver/30"
+              : "bg-raw-gold text-raw-black hover:scale-105 hover:shadow-[0_0_30px_rgb(var(--raw-accent)/0.3)] active:scale-95"
+          }`}
+        >
+          {isSpinning
+            ? "Spinning..."
+            : disabled
+              ? (disabledLabel ?? "Spin Complete")
+              : "Spin"}
+        </button>
+      )}
     </div>
   );
 }

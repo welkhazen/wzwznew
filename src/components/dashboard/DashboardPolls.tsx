@@ -3,7 +3,15 @@ import type { Poll } from "@/store/useRawStore";
 import { useTheme } from "@/providers/useTheme";
 import { PremiumPollCard } from "@/components/polls/PremiumPollCard";
 import { ShareButton } from "@/components/ui/share-button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { addPollComment, fetchPollComments } from "@/lib/api/polls";
+import { getUserTextModerationMessage, moderateUserText } from "@/lib/inputSecurity";
 import { isNoPollOption, isYesPollOption } from "@/lib/polls/normalizePollOptionText";
 import {
   getPollShareCode,
@@ -17,7 +25,9 @@ import {
   ChevronRight,
   Coins,
   Copy,
+  Download,
   Facebook,
+  History,
   Link2,
   Instagram,
   SendHorizontal,
@@ -213,6 +223,13 @@ interface PollHistoryComment {
   createdAt: string;
 }
 
+interface PollHistoryItem {
+  poll: Poll;
+  selectedAnswer: string;
+  answeredAt: number;
+  community: string;
+}
+
 interface DashboardPollsProps {
   polls: Poll[];
   votedPolls: Set<string>;
@@ -251,6 +268,22 @@ function readStoredAnswerHistory(storageKey: string): Record<string, string> {
   }
 }
 
+function readStoredAnswerTimestamps(storageKey: string): Record<string, number> {
+  try {
+    const raw = window.localStorage.getItem(storageKey);
+    const parsed = raw ? (JSON.parse(raw) as Record<string, number>) : {};
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function startOfTodayMs(): number {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
 function buildPollShareText(poll: Poll): string {
   return `Vote anonymously on raW: ${poll.question}`;
 }
@@ -261,6 +294,20 @@ function buildPollShareUrl(pollId: string): string {
   url.search = "";
   url.searchParams.set(POLL_SHARE_PARAM, getPollShareCode(pollId));
   return url.toString();
+}
+
+function csvEscape(value: string): string {
+  return `"${value.replace(/"/g, '""')}"`;
+}
+
+function formatAnsweredAt(timestamp: number): string {
+  if (!Number.isFinite(timestamp) || timestamp <= 0) return "Unknown";
+  return new Date(timestamp).toLocaleString([], {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 export function DashboardPolls({
@@ -278,27 +325,45 @@ export function DashboardPolls({
   const { mode } = useTheme();
   const isLightMode = mode === "light";
   const answersStorageKey = `raw.poll-history.answers.${userId}`;
+  const answerTimestampsStorageKey = `raw.poll-history.answers-ts.${userId}`;
   const commentsStorageKey = `raw.poll-history.comments.${userId}`;
   const voteHintStorageKey = `raw.polls.vote-hint-seen.${userId}`;
   const [loadedAnswersStorageKey, setLoadedAnswersStorageKey] = useState(answersStorageKey);
   const [answerHistory, setAnswerHistory] = useState<Record<string, string>>(() => readStoredAnswerHistory(answersStorageKey));
+  const [answerTimestamps, setAnswerTimestamps] = useState<Record<string, number>>(() => readStoredAnswerTimestamps(answerTimestampsStorageKey));
   const [historyComments, setHistoryComments] = useState<Record<string, PollHistoryComment[]>>({});
   const [commentDraft, setCommentDraft] = useState("");
+  const [commentModerationError, setCommentModerationError] = useState<string | null>(null);
   const [currentPollIndex, setCurrentPollIndex] = useState(0);
   const [hasSeenVoteHint, setHasSeenVoteHint] = useState(false);
   const [lockedPollId, setLockedPollId] = useState<string | null>(null);
   const [sharedPollId, setSharedPollId] = useState<string | null>(null);
   const [shareCopied, setShareCopied] = useState(false);
   const [sharePickerOpen, setSharePickerOpen] = useState(false);
-  const [expandedSharePollId, setExpandedSharePollId] = useState<string | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   const commentsEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setLoadedAnswersStorageKey(answersStorageKey);
     setAnswerHistory(readStoredAnswerHistory(answersStorageKey));
+    setAnswerTimestamps(readStoredAnswerTimestamps(answerTimestampsStorageKey));
     setCurrentPollIndex(0);
-  }, [answersStorageKey]);
+  }, [answersStorageKey, answerTimestampsStorageKey]);
+
+  useEffect(() => {
+    if (loadedAnswersStorageKey !== answersStorageKey) return;
+    window.localStorage.setItem(answerTimestampsStorageKey, JSON.stringify(answerTimestamps));
+  }, [answerTimestamps, answerTimestampsStorageKey, answersStorageKey, loadedAnswersStorageKey]);
+
+  const todayStart = useMemo(() => startOfTodayMs(), []);
+  const answeredTodayIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const [pollId, ts] of Object.entries(answerTimestamps)) {
+      if (typeof ts === "number" && ts >= todayStart) ids.add(pollId);
+    }
+    return ids;
+  }, [answerTimestamps, todayStart]);
 
   useEffect(() => {
     try {
@@ -331,18 +396,31 @@ export function DashboardPolls({
   }, [hasSeenVoteHint, voteHintStorageKey]);
 
   const unseenPolls = useMemo(
-    () => polls.filter((p) => !answerHistory[p.id]),
-    [polls, answerHistory]
+    () => polls.filter((p) => !answeredTodayIds.has(p.id)),
+    [polls, answeredTodayIds]
   );
 
   const answeredPolls = useMemo(
-    () => polls.filter((p) => answerHistory[p.id]),
-    [polls, answerHistory]
+    () => polls.filter((p) => answeredTodayIds.has(p.id)),
+    [polls, answeredTodayIds]
   );
-  const answeredPollHistory = useMemo(
-    () => answeredPolls.slice().reverse(),
-    [answeredPolls]
-  );
+  const answeredPollHistory = useMemo<PollHistoryItem[]>(() => {
+    return polls
+      .map((poll) => {
+        const selectedOptionId = answerHistory[poll.id];
+        if (!selectedOptionId) return null;
+        const selectedAnswer = poll.options.find((option) => option.id === selectedOptionId)?.text ?? "Unknown";
+        return {
+          poll,
+          selectedAnswer,
+          answeredAt: answerTimestamps[poll.id] ?? 0,
+          community: "General",
+        };
+      })
+      .filter((item): item is PollHistoryItem => item !== null)
+      .sort((a, b) => b.answeredAt - a.answeredAt)
+      .slice(0, 50);
+  }, [answerHistory, answerTimestamps, polls]);
 
   // Once the daily limit is hit, show today's answered polls (capped at dailyPollLimit).
   // While still under the limit, show unseen polls capped at the daily limit so the gate
@@ -411,8 +489,8 @@ export function DashboardPolls({
           ...previous,
           [currentPoll.id]: comments.map((comment) => ({
             id: comment.id,
-            author: "Anonymous",
-            content: comment.body,
+            author: comment.author_name?.trim() || "Anonymous",
+            content: comment.text,
             createdAt: new Date(comment.created_at).toLocaleTimeString([], {
               hour: "2-digit",
               minute: "2-digit",
@@ -449,6 +527,10 @@ export function DashboardPolls({
       ...previous,
       [pollId]: optionId,
     }));
+    setAnswerTimestamps((previous) => ({
+      ...previous,
+      [pollId]: Date.now(),
+    }));
 
     if (!votedPolls.has(pollId)) {
       onVote(pollId, optionId);
@@ -460,11 +542,17 @@ export function DashboardPolls({
 
     const content = commentDraft.trim();
     if (!content) return;
+    const moderation = moderateUserText(content);
+    if (!moderation.allowed) {
+      setCommentModerationError(getUserTextModerationMessage(moderation));
+      return;
+    }
+    setCommentModerationError(null);
 
     const nextComment: PollHistoryComment = {
       id: `${currentPoll.id}-${Date.now()}`,
       author: username,
-      content,
+      content: moderation.text,
       createdAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
 
@@ -477,7 +565,7 @@ export function DashboardPolls({
     setTimeout(() => commentsEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
 
     try {
-      await addPollComment(currentPoll.id, content);
+      await addPollComment(currentPoll.id, moderation.text, { id: userId, name: username });
     } catch (error) {
       console.error("Failed to save dashboard comment to Supabase", error);
     }
@@ -546,6 +634,26 @@ export function DashboardPolls({
     }
   };
 
+  const downloadHistoryCsv = () => {
+    const rows = [
+      ["question", "selected_answer", "community", "answered_at"],
+      ...answeredPollHistory.map((item) => [
+        item.poll.question,
+        item.selectedAnswer,
+        item.community,
+        item.answeredAt > 0 ? new Date(item.answeredAt).toISOString() : "",
+      ]),
+    ];
+    const csv = rows.map((row) => row.map(csvEscape).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "raw-poll-history.csv";
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
 
   if (!currentPoll) {
     return (
@@ -557,12 +665,64 @@ export function DashboardPolls({
 
   return (
     <div className="flex flex-col gap-6 sm:gap-8">
-      <header>
-        <h1 className="font-display text-xl tracking-wide text-raw-text sm:text-2xl">Polls</h1>
-        <p className="mt-2 text-xs text-raw-silver/45 sm:text-sm">
-          Anonymous voting, live percentages, and reflections from the community.
-        </p>
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="font-display text-xl tracking-wide text-raw-text sm:text-2xl">Polls</h1>
+          <p className="mt-2 text-xs text-raw-silver/45 sm:text-sm">
+            Anonymous voting, live percentages, and reflections from the community.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setHistoryOpen(true)}
+          className="inline-flex w-fit items-center gap-2 border border-raw-gold/35 bg-raw-black/45 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-raw-gold transition hover:border-raw-gold/60 hover:bg-raw-gold/10"
+        >
+          <History className="size-3.5" />
+          History
+        </button>
       </header>
+
+      <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
+        <DialogContent className="max-h-[85dvh] overflow-hidden border border-raw-border/40 bg-raw-black p-0 text-raw-text sm:max-w-2xl">
+          <div className="border-b border-raw-border/25 bg-gradient-to-br from-raw-gold/[0.08] via-raw-black to-raw-black px-5 py-5">
+            <DialogHeader className="space-y-2 text-left">
+              <DialogTitle className="font-display text-xl tracking-wide text-raw-text">Answer History</DialogTitle>
+              <DialogDescription className="text-sm leading-relaxed text-raw-silver/45">
+                Your last {answeredPollHistory.length} answered polls.
+              </DialogDescription>
+            </DialogHeader>
+            <button
+              type="button"
+              onClick={downloadHistoryCsv}
+              disabled={answeredPollHistory.length === 0}
+              className="mt-4 inline-flex items-center gap-2 border border-raw-gold/40 bg-raw-gold/10 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-raw-gold transition hover:bg-raw-gold/15 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <Download className="size-3.5" />
+              Download CSV
+            </button>
+          </div>
+          <div className="max-h-[58dvh] overflow-y-auto px-5 py-4">
+            {answeredPollHistory.length === 0 ? (
+              <p className="text-sm text-raw-silver/45">You have not answered any polls yet.</p>
+            ) : (
+              <div className="grid gap-3">
+                {answeredPollHistory.map((item) => (
+                  <article key={item.poll.id} className="border border-raw-border/25 bg-raw-surface/20 p-3">
+                    <p className="text-sm font-medium leading-relaxed text-raw-text">{item.poll.question}</p>
+                    <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-raw-silver/50">
+                      <span className="border border-raw-gold/25 bg-raw-gold/10 px-2 py-1 text-raw-gold/85">
+                        {item.selectedAnswer}
+                      </span>
+                      <span>{item.community}</span>
+                      <span>{formatAnsweredAt(item.answeredAt)}</span>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {showMorePollsPaywall && (
         <section className="border border-raw-gold/35 bg-gradient-to-r from-raw-gold/12 via-raw-black/60 to-raw-black/60 p-4 sm:p-5">
@@ -739,7 +899,10 @@ export function DashboardPolls({
             >
               <input
                 value={commentDraft}
-                onChange={(event) => setCommentDraft(event.target.value)}
+                onChange={(event) => {
+                  setCommentDraft(event.target.value);
+                  setCommentModerationError(null);
+                }}
                 onKeyDown={handleCommentKeyDown}
                 placeholder="Add a comment..."
                 className={`flex-1 bg-transparent text-sm focus:outline-none ${
@@ -759,110 +922,9 @@ export function DashboardPolls({
                 <SendHorizontal className="size-3.5" />
               </button>
             </form>
-          </div>
-        )}
-      </section>
-
-      <section className="border border-raw-border/30 bg-raw-black/35 p-4 sm:p-5">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-[10px] uppercase tracking-[0.18em] text-raw-gold/65">Answer history</p>
-            <h2 className="mt-1 font-display text-base tracking-wide text-raw-text">Polls you answered</h2>
-          </div>
-          <span className="shrink-0 border border-raw-gold/35 bg-raw-gold/10 px-3 py-1 text-[11px] text-raw-gold/80">
-            {answeredPollHistory.length}
-          </span>
-        </div>
-
-        {answeredPollHistory.length === 0 ? (
-          <p className="mt-4 text-sm text-raw-silver/45">
-            Answer a poll and it will appear here.
-          </p>
-        ) : (
-          <div className="mt-4 grid gap-3">
-            {answeredPollHistory.map((poll) => {
-              const selectedId = answerHistory[poll.id];
-              const selectedOption = poll.options.find((option) => option.id === selectedId);
-              const totalVotes = poll.options.reduce((sum, option) => sum + option.votes, 0);
-              const percent = selectedOption ? optionPercent(selectedOption.votes, totalVotes) : 0;
-
-              return (
-                <article
-                  key={poll.id}
-                  className="border border-raw-border/25 bg-raw-surface/20 p-3 sm:p-4"
-                >
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium leading-relaxed text-raw-text">
-                        {poll.question}
-                      </p>
-                      <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-raw-silver/45">
-                        <span className="border border-raw-gold/25 bg-raw-gold/10 px-2 py-1 text-raw-gold/80">
-                          You answered: {selectedOption?.text ?? "Unknown"}
-                        </span>
-                        <span>{percent}% picked this</span>
-                        <span>{totalVotes.toLocaleString()} votes</span>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setLockedPollId(poll.id)}
-                      className="shrink-0 border border-raw-border/35 px-3 py-2 text-[11px] uppercase tracking-[0.12em] text-raw-silver/65 transition hover:border-raw-gold/45 hover:text-raw-gold"
-                    >
-                      Review
-                    </button>
-                    <div className="shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => setExpandedSharePollId((current) => (current === poll.id ? null : poll.id))}
-                        className="inline-flex items-center justify-center gap-2 border border-raw-border/35 px-3 py-2 text-[11px] uppercase tracking-[0.12em] text-raw-silver/65 transition hover:border-raw-gold/45 hover:text-raw-gold"
-                        aria-expanded={expandedSharePollId === poll.id}
-                      >
-                        <Copy className="size-3" />
-                        Share
-                      </button>
-                    </div>
-                  </div>
-                  <div
-                    className={`overflow-hidden transition-all duration-300 ${
-                      expandedSharePollId === poll.id ? "mt-3 max-h-16 opacity-100" : "max-h-0 opacity-0"
-                    }`}
-                  >
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleWhatsAppShare(poll)}
-                        className="border border-raw-border/35 px-2.5 py-1.5 text-[10px] uppercase tracking-[0.12em] text-raw-silver/70 transition hover:border-raw-gold/45 hover:text-raw-gold"
-                      >
-                        WhatsApp
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleInstagramShare(poll)}
-                        className="border border-raw-border/35 px-2.5 py-1.5 text-[10px] uppercase tracking-[0.12em] text-raw-silver/70 transition hover:border-raw-gold/45 hover:text-raw-gold"
-                      >
-                        Instagram
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleFacebookShare(poll)}
-                        className="border border-raw-border/35 px-2.5 py-1.5 text-[10px] uppercase tracking-[0.12em] text-raw-silver/70 transition hover:border-raw-gold/45 hover:text-raw-gold"
-                      >
-                        Facebook
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => copyShareLink(poll)}
-                        className="inline-flex items-center gap-1.5 border border-raw-border/35 px-2.5 py-1.5 text-[10px] uppercase tracking-[0.12em] text-raw-silver/70 transition hover:border-raw-gold/45 hover:text-raw-gold"
-                      >
-                        <Copy className="size-3" />
-                        Copy link
-                      </button>
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
+            {commentModerationError && (
+              <p className="text-xs text-red-300">{commentModerationError}</p>
+            )}
           </div>
         )}
       </section>

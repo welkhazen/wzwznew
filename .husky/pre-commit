@@ -1,0 +1,13 @@
+#!/usr/bin/env sh
+# Auto-process newly dropped avatars before they get committed.
+# Renames non-numbered images in public/avatars/ to the next sequential
+# number, resizes + compresses, dedupes by content hash, and appends a
+# catalog entry. See scripts/process-new-avatars.mjs.
+
+# Only run if there's actually something to do.
+if ls public/avatars/*.png public/avatars/*.jpg public/avatars/*.jpeg public/avatars/*.webp 2>/dev/null | grep -Ev '/[0-9]+\.(png|webp|jpg|jpeg)$' | grep -v '/avatar-.*\.svg$' | grep -q .; then
+  echo "→ Processing new avatars in public/avatars/…"
+  node scripts/process-new-avatars.mjs || exit 1
+  # Re-stage anything the script touched.
+  git add public/avatars/ src/lib/generatedAvatarEntries.ts
+fi

@@ -1,5 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import type { AvatarRarity } from "@/lib/avatarRarity";
+import { GENERATED_AVATAR_ENTRIES } from "@/lib/generatedAvatarEntries";
+import { avatarDisplayName, avatarIdFromImageSrc } from "@/config/avatarNames";
 
 export type AvatarCatalogItem = {
   id: string;
@@ -16,6 +18,10 @@ export type AvatarCatalogItem = {
   showIn?: "landing" | "app" | "both";
   rarity?: AvatarRarity;
   dropWeight?: number;
+  /** Optional explicit frame color tier, e.g. "grey" / "platinum" / "rainbow". */
+  frame_color?: string;
+  /** Optional explicit rank tier (1..10). Overrides frame_color when set. */
+  rank_tier?: number;
 };
 
 const CATALOG_STORAGE_KEY = "raw.avatar.catalog.v2";
@@ -26,6 +32,12 @@ const DAILY_SPIN_AVATAR_CLAIM_PREFIX = "raw.daily-spin.avatar-claim.v1.";
 export const LANDING_WHEEL_SPIN_KEY = "raw.landing-wheel.spin.v1";
 let avatarBackendMissingTables = false;
 let avatarCatalogLocalWriteFailed = false;
+
+function withNumberedAvatarName(item: AvatarCatalogItem): AvatarCatalogItem {
+  const imageId = avatarIdFromImageSrc(item.imageSrc);
+  if (imageId === null) return item;
+  return { ...item, name: avatarDisplayName(imageId) };
+}
 
 export function consumeAvatarCatalogLocalWriteFailure(): boolean {
   const failed = avatarCatalogLocalWriteFailed;
@@ -51,22 +63,43 @@ function markBackendMissingIfNeeded(error: unknown): void {
 }
 
 export const DEFAULT_AVATAR_CATALOG: readonly AvatarCatalogItem[] = [
-  { id: "ember", level: 1, name: "Ember", price: "Free", imageSrc: "/avatars/avatar-2.svg", bg: "#0c1a24", figure: "#5ed6ff", ring: "#5ed6ff", glow: "#5ed6ff80", isActive: true, showIn: "both", rarity: "common" },
-  { id: "verdant", level: 2, name: "Verdant", price: "Free", imageSrc: "/avatars/avatar-3.svg", bg: "#0a1124", figure: "#3f8bff", ring: "#3f8bff", glow: "#3f8bff80", isActive: true, showIn: "both", rarity: "common" },
-  { id: "horned", level: 3, name: "Horned", price: "Free", imageSrc: "/avatars/avatar-5.svg", bg: "#0b1a0e", figure: "#16a34a", ring: "#16a34a", glow: "#16a34a80", isActive: true, showIn: "both", rarity: "common" },
-  { id: "pharaoh", level: 4, name: "Pharaoh", price: "Free", imageSrc: "/avatars/avatar-6.svg", bg: "#1f0d18", figure: "#ec4899", ring: "#ec4899", glow: "#ec489980", isActive: true, showIn: "both", rarity: "common" },
-  { id: "violet", level: 5, name: "Violet", price: "Free", imageSrc: "/avatars/avatar-7.svg", bg: "#150a22", figure: "#8b5cf6", ring: "#8b5cf6", glow: "#8b5cf680", isActive: true, showIn: "both", rarity: "common" },
-  { id: "rose", level: 6, name: "Rose", price: "Free", imageSrc: "/avatars/avatar-8.svg", bg: "#1f1208", figure: "#f97316", ring: "#f97316", glow: "#f9731680", isActive: true, showIn: "both", rarity: "common" },
-  { id: "black", level: 7, name: "Black", price: "Free", imageSrc: "/avatars/avatar-9.svg", bg: "#1f0a0a", figure: "#dc2626", ring: "#dc2626", glow: "#dc262680", isActive: true, showIn: "both", rarity: "common" },
-  { id: "blue", level: 8, name: "Blue", price: "Free", imageSrc: "/avatars/avatar-10.svg", bg: "#1f1705", figure: "#facc15", ring: "#facc15", glow: "#facc1590", isActive: true, showIn: "both", rarity: "common" },
-  { id: "silver-void", level: 9, name: "Silver Void", price: "50", imageSrc: "/avatars/1.webp", bg: "#111827", figure: "#cbd5e1", ring: "#cbd5e1", glow: "#cbd5e180", isActive: true, showIn: "both", rarity: "common" },
-  { id: "neon-lynx", level: 10, name: "Neon Lynx", price: "50", imageSrc: "/avatars/2.webp", bg: "#170f2e", figure: "#a855f7", ring: "#c084fc", glow: "#a855f780", isActive: true, showIn: "both", rarity: "common" },
-  { id: "blue-signal", level: 11, name: "Blue Signal", price: "50", imageSrc: "/avatars/3.webp", bg: "#06131f", figure: "#22d3ee", ring: "#22d3ee", glow: "#22d3ee80", isActive: true, showIn: "both", rarity: "common" },
-  { id: "violet-mask", level: 12, name: "Violet Mask", price: "50", imageSrc: "/avatars/04.webp", bg: "#1a1028", figure: "#d946ef", ring: "#d946ef", glow: "#d946ef80", isActive: true, showIn: "both", rarity: "common" },
-  { id: "horned-iron", level: 13, name: "Horned Iron", price: "50", imageSrc: "/avatars/5.webp", bg: "#1f0a05", figure: "#fb923c", ring: "#fb923c", glow: "#fb923c80", isActive: true, showIn: "both", rarity: "common" },
-  { id: "crimson-muse", level: 14, name: "Crimson Muse", price: "50", imageSrc: "/avatars/6.webp", bg: "#2a0b0b", figure: "#f97316", ring: "#f97316", glow: "#f9731680", isActive: true, showIn: "both", rarity: "common" },
-  { id: "solar-flame", level: 15, name: "Solar Flame", price: "50", imageSrc: "/avatars/07.webp", bg: "#241005", figure: "#facc15", ring: "#facc15", glow: "#facc1590", isActive: true, showIn: "both", rarity: "common" },
-  { id: "pink-circuit", level: 16, name: "Pink Circuit", price: "50", imageSrc: "/avatars/08.webp", bg: "#2a0b1c", figure: "#fb7185", ring: "#fb7185", glow: "#fb718580", isActive: true, showIn: "both", rarity: "common" },
+  { id: "ember", level: 1, name: "Ember", price: "50", imageSrc: "/avatars/avatar-3.svg", bg: "#1f0a05", figure: "#ff8a1f", ring: "#ff8a1f", glow: "#ff8a1f80", isActive: true, showIn: "both", rarity: "common" },
+  { id: "verdant", level: 2, name: "Verdant", price: "50", imageSrc: "/avatars/avatar-1.svg", bg: "#08160b", figure: "#22c55e", ring: "#22c55e", glow: "#22c55e80", isActive: true, showIn: "both", rarity: "common" },
+  { id: "horned", level: 3, name: "Horned", price: "50", imageSrc: "/avatars/avatar-5.svg", bg: "#1f0808", figure: "#ff2d3d", ring: "#ff2d3d", glow: "#ff2d3d80", isActive: true, showIn: "both", rarity: "common" },
+  { id: "pharaoh", level: 4, name: "Pharaoh", price: "50", imageSrc: "/avatars/avatar-6.svg", bg: "#1f1605", figure: "#f2d21a", ring: "#f2d21a", glow: "#f2d21a80", isActive: true, showIn: "both", rarity: "common" },
+  { id: "violet", level: 5, name: "Violet", price: "50", imageSrc: "/avatars/avatar-2.svg", bg: "#150a22", figure: "#b84dff", ring: "#b84dff", glow: "#b84dff80", isActive: true, showIn: "both", rarity: "common" },
+  { id: "rose", level: 6, name: "Rose", price: "50", imageSrc: "/avatars/avatar-4.svg", bg: "#1f0a14", figure: "#f43f5e", ring: "#f43f5e", glow: "#f43f5e80", isActive: true, showIn: "both", rarity: "common" },
+  { id: "black", level: 7, name: "Black", price: "50", imageSrc: "/avatars/avatar-7.svg", bg: "#0a0a0a", figure: "#cfd3da", ring: "#cfd3da", glow: "#cfd3da80", isActive: true, showIn: "both", rarity: "common" },
+  { id: "blue", level: 8, name: "Blue", price: "50", imageSrc: "/avatars/avatar-10.svg", bg: "#0a1424", figure: "#3b82f6", ring: "#3b82f6", glow: "#3b82f680", isActive: true, showIn: "both", rarity: "common" },
+  { id: "silver-void", level: 9, name: avatarDisplayName(1), price: "50", imageSrc: "/avatars/1.webp", bg: "#111827", figure: "#cbd5e1", ring: "#cbd5e1", glow: "#cbd5e180", isActive: true, showIn: "both", rarity: "common" },
+  { id: "neon-lynx", level: 10, name: avatarDisplayName(18), price: "50", imageSrc: "/avatars/18.png", bg: "#170f2e", figure: "#a855f7", ring: "#c084fc", glow: "#a855f780", isActive: true, showIn: "both", rarity: "common" },
+  { id: "blue-signal", level: 11, name: avatarDisplayName(23), price: "50", imageSrc: "/avatars/23.png", bg: "#06131f", figure: "#22d3ee", ring: "#22d3ee", glow: "#22d3ee80", isActive: true, showIn: "both", rarity: "common" },
+  { id: "violet-mask", level: 12, name: avatarDisplayName(24), price: "50", imageSrc: "/avatars/24.png", bg: "#1a1028", figure: "#d946ef", ring: "#d946ef", glow: "#d946ef80", isActive: true, showIn: "both", rarity: "common" },
+  { id: "horned-iron", level: 13, name: avatarDisplayName(5), price: "50", imageSrc: "/avatars/5.png", bg: "#1f0a05", figure: "#fb923c", ring: "#fb923c", glow: "#fb923c80", isActive: true, showIn: "both", rarity: "common" },
+  { id: "crimson-muse", level: 14, name: avatarDisplayName(6), price: "50", imageSrc: "/avatars/6.webp", bg: "#2a0b0b", figure: "#f97316", ring: "#f97316", glow: "#f9731680", isActive: true, showIn: "both", rarity: "common" },
+  { id: "solar-flame", level: 15, name: avatarDisplayName(7), price: "50", imageSrc: "/avatars/7.png", bg: "#241005", figure: "#facc15", ring: "#facc15", glow: "#facc1590", isActive: true, showIn: "both", rarity: "common" },
+  { id: "pink-circuit", level: 16, name: avatarDisplayName(35), price: "50", imageSrc: "/avatars/35.png", bg: "#2a0b1c", figure: "#fb7185", ring: "#fb7185", glow: "#fb718580", isActive: true, showIn: "both", rarity: "common" },
+  ...Array.from({ length: 18 }, (_, index): AvatarCatalogItem | null => {
+    const level = index + 17;
+    // Skip image ids already represented by a semantic alias above
+    // (avoids duplicate "Neon Lynx" / "Blue Signal" / "Violet Mask" entries).
+    if (level === 18 || level === 23 || level === 24) return null;
+    return {
+      id: `avatar-${level}`,
+      level,
+      name: avatarDisplayName(level),
+      price: "50",
+      imageSrc: `/avatars/${level}.png`,
+      bg: "#111827",
+      figure: "#cbd5e1",
+      ring: "#cbd5e1",
+      glow: "#cbd5e180",
+      isActive: true,
+      showIn: "both",
+      rarity: "common",
+    };
+  }).filter((item): item is AvatarCatalogItem => item !== null),
+  ...GENERATED_AVATAR_ENTRIES.map(withNumberedAvatarName),
 ];
 
 const WHEEL_AVATAR_IDS = new Set([
@@ -78,6 +111,7 @@ const WHEEL_AVATAR_IDS = new Set([
   "crimson-muse",
   "solar-flame",
   "pink-circuit",
+  "blu-fifer",
 ]);
 
 const LANDING_WHEEL_PRIZE_TO_AVATAR_ID: Record<string, string> = {
@@ -89,6 +123,7 @@ const LANDING_WHEEL_PRIZE_TO_AVATAR_ID: Record<string, string> = {
   "wheel-avatar-6": "crimson-muse",
   "wheel-avatar-7": "solar-flame",
   "wheel-avatar-8": "pink-circuit",
+  "wheel-avatar-10": "blu-fifer",
 };
 
 export type DailySpinAvatarGrantResult =
@@ -98,6 +133,14 @@ export type DailySpinAvatarGrantResult =
 
 function cloneCatalog(items: readonly AvatarCatalogItem[]): AvatarCatalogItem[] {
   return items.map((item) => ({ ...item }));
+}
+
+function includeMissingDefaultAvatars(items: AvatarCatalogItem[]): AvatarCatalogItem[] {
+  const ids = new Set(items.map((item) => item.id));
+  return [
+    ...items,
+    ...DEFAULT_AVATAR_CATALOG.filter((item) => !ids.has(item.id)).map((item) => ({ ...item })),
+  ].sort((a, b) => a.level - b.level);
 }
 
 function sanitizeCatalog(items: AvatarCatalogItem[]): AvatarCatalogItem[] {
@@ -119,6 +162,10 @@ function sanitizeCatalog(items: AvatarCatalogItem[]): AvatarCatalogItem[] {
       glow: item.glow || DEFAULT_AVATAR_CATALOG[Math.min(idx, DEFAULT_AVATAR_CATALOG.length - 1)].glow,
       isActive: item.isActive !== false,
       isNew: item.isNew ?? false,
+      rarity: item.rarity,
+      dropWeight: item.dropWeight,
+      frame_color: item.frame_color,
+      rank_tier: item.rank_tier,
     });
   });
 
@@ -147,7 +194,7 @@ export function readAvatarCatalogLocal(): AvatarCatalogItem[] {
     if (!raw) return cloneCatalog(DEFAULT_AVATAR_CATALOG);
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return cloneCatalog(DEFAULT_AVATAR_CATALOG);
-    return sanitizeCatalog(parsed as AvatarCatalogItem[]);
+    return includeMissingDefaultAvatars(sanitizeCatalog(parsed as AvatarCatalogItem[]));
   } catch {
     return cloneCatalog(DEFAULT_AVATAR_CATALOG);
   }
@@ -212,7 +259,7 @@ export function loadAvatarCatalog(): Promise<AvatarCatalogItem[]> {
   return Promise.resolve(readAvatarCatalogLocal());
 }
 
-const FULL_COLS = "id, level, name, price, image_src, bg, figure, ring, glow, is_active, is_new, rarity, drop_weight";
+const FULL_COLS = "id, level, name, price, image_src, bg, figure, ring, glow, is_active, is_new, rarity, drop_weight, frame_color, rank_tier";
 const BASE_COLS = "id, level, name, price, bg, figure, ring, glow, is_active";
 
 export async function loadAvatarCatalogSupabaseOnly(): Promise<AvatarCatalogItem[]> {
@@ -243,6 +290,8 @@ export async function loadAvatarCatalogSupabaseOnly(): Promise<AvatarCatalogItem
       isNew: false,
       rarity: (row.rarity as AvatarRarity | undefined) ?? "common",
       dropWeight: (row.drop_weight as number | undefined) ?? 100,
+      frame_color: (row.frame_color as string | undefined) ?? undefined,
+      rank_tier: (row.rank_tier as number | undefined) ?? undefined,
     }))
   );
 
@@ -445,10 +494,12 @@ function clearLandingWheelAvatarLocal(): void {
 }
 
 function defaultOwnedIds(catalog: AvatarCatalogItem[]): string[] {
-  const freeIds = catalog
-    .filter((item) => item.price === "Free" || item.price === "0" || Number(item.price) === 0)
+  return catalog
+    .filter((item) => {
+      if (item.id.startsWith("spin-") || item.id.startsWith("signup-")) return false;
+      return item.price === "Free" || item.price === "0" || Number(item.price) === 0;
+    })
     .map((item) => item.id);
-  return freeIds.length > 0 ? freeIds : catalog.length > 0 ? [catalog[0].id] : [];
 }
 
 export function readOwnedAvatarIdsLocal(userId: string, catalog: AvatarCatalogItem[]): string[] {
@@ -514,10 +565,11 @@ export async function loadUserAvatarState(
 
     const allowed = new Set(catalog.map((item) => item.id));
     const serverOwned = (inventoryRows ?? []).map((row) => row.avatar_id).filter((id) => allowed.has(id));
-    const serverOwnedSet = new Set(serverOwned);
+    // Server is the source of truth — drop local extras that aren't on the
+    // server. defaultOwnedIds covers the 8 base free avatars that aren't
+    // persisted server-side.
     const ownedAvatarIds = Array.from(new Set([
       ...defaultOwnedIds(catalog),
-      ...localOwned.filter((id) => !WHEEL_AVATAR_IDS.has(id) || serverOwnedSet.has(id)),
       ...serverOwned,
     ]));
     const selectedCandidate = selectedRow?.avatar_id ?? localSelected;
@@ -576,7 +628,6 @@ export async function grantDailySpinAvatarOnceForUser(userId: string, avatarId: 
 
   try {
     const { data, error } = await supabase.rpc("award_xp_once", {
-      p_user_id: userId,
       p_source: "daily-spin-avatar",
       p_claim_key: "free-avatar",
       p_amount: 0,
@@ -608,6 +659,16 @@ export async function claimPendingLandingWheelAvatarForUser(userId: string): Pro
   const catalog = readAvatarCatalogLocal();
   const avatarId = readLandingWheelAvatarIdLocal(catalog);
   if (!avatarId) return null;
+
+  // Persist via the new server-side claim RPC so users.free_spin_avatar_*
+  // columns get set. Idempotent on the server, safe to retry.
+  try {
+    const { claimFreeSpinAvatar } = await import("@/backend/supabase/controllers/avatarRewardsController");
+    await claimFreeSpinAvatar(userId, avatarId);
+  } catch {
+    // Best-effort — fall back to the legacy local-first grant below.
+  }
+
   const result = await grantDailySpinAvatarOnceForUser(userId, avatarId);
   clearLandingWheelAvatarLocal();
   return result;

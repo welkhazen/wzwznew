@@ -1,4 +1,4 @@
-import { supabaseServerClient } from "../_lib/supabaseServerClient";
+import { supabaseServerClient } from "../_lib/supabaseServerClient.js";
 
 export const config = { runtime: "edge" };
 

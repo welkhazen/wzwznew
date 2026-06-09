@@ -2,19 +2,19 @@ import { FormEvent, useState } from "react";
 
 const FAQ_ITEMS = [
   {
-    question: "Is raW really anonymous?",
+    question: "What are anonymous online communities?",
     answer:
-      "Yes. Your identity is represented by your chosen avatar name and username, while personal details stay private.",
+      "Anonymous online communities are group chats where you participate with a username and avatar instead of your real name or photo. raW is designed for honest conversation without real-world social pressure.",
   },
   {
-    question: "Can I change my avatar later?",
+    question: "How do I find the right online group chat?",
     answer:
-      "You can change your avatar at any time from your profile settings.",
+      "Answer live polls and explore interest-based communities. raW uses your answers and interests to help you discover group chats where people share similar experiences and perspectives.",
   },
   {
-    question: "How do comments unlock on polls?",
+    question: "Can I join community chats without using my real identity?",
     answer:
-      "Comments unlock after you vote, so every conversation starts with real participation.",
+      "Yes. You can join with a username and password, choose an avatar, and participate without displaying your real name or personal photo.",
   },
 ];
 

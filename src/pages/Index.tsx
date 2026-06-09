@@ -8,6 +8,9 @@ import { POLL_SHARE_PARAM } from "@/lib/pollShare";
 import { useRawStore } from "@/store/useRawStore";
 import { awardXP, XP_REWARDS } from "@/lib/userProgress";
 import { claimPendingLandingWheelAvatarForUser } from "@/lib/avatarCatalog";
+import { unlockCommunity } from "@/lib/communityAccess";
+import { joinCommunity } from "@/backend/supabase/controllers/communityController";
+import { saveOnboardingIdentities } from "@/backend/supabase/controllers/userController";
 
 const LandingShellLazy = lazy(() => import("@/components/landing/LandingShell"));
 
@@ -16,6 +19,7 @@ const Index = () => {
   const {
     user,
     isLoggedIn,
+    sessionLoaded,
     polls,
     votedPolls,
     freeVotesUsed,
@@ -25,6 +29,7 @@ const Index = () => {
     setAvatarLevel,
     selectAvatarForOnboarding,
     ownedAvatarLevels,
+    ownedAvatarIds,
     unlockAvatarLevel,
     markAvatarOwned,
     avatarPricesByLevel,
@@ -32,6 +37,10 @@ const Index = () => {
     onboardingStep,
     setOnboardingStep,
     onboardingAnsweredPollIds,
+    onboardingPublicUsername,
+    onboardingPrivateUsername,
+    setOnboardingPublicUsername,
+    setOnboardingPrivateUsername,
     markOnboardingPollAnswered,
     onboardingSelectedCommunityIds,
     setOnboardingSelectedCommunityIds,
@@ -55,6 +64,18 @@ const Index = () => {
     ? new URLSearchParams(window.location.search).get(POLL_SHARE_PARAM)
     : null;
 
+  const joinOnboardingCommunities = async () => {
+    if (!user) return;
+
+    for (const communityId of onboardingSelectedCommunityIds) {
+      const result = await unlockCommunity(user.id, communityId);
+      if (!result.ok && !result.already) {
+        throw new Error("Could not save your selected community. Please try again.");
+      }
+      await joinCommunity(communityId, user.id, user.username);
+    }
+  };
+
   useEffect(() => {
     if (!isLoggedIn || !user || !isTheRawMe || typeof window === "undefined") {
       return;
@@ -65,6 +86,16 @@ const Index = () => {
       window.location.replace(targetUrl);
     }
   }, [hostname, isLoggedIn, isTheRawMe, user]);
+
+  // Don't flash the landing page (and its poll popup) while auth is still
+  // resolving on refresh. Wait for the session to load first.
+  if (!sessionLoaded && !sharedPollRef) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-raw-black">
+        <div className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-raw-border border-t-raw-gold" />
+      </div>
+    );
+  }
 
   if (isLoggedIn && user && isTheRawMe) {
     return (
@@ -120,9 +151,17 @@ const Index = () => {
           avatarIndex={avatarLevel}
           onAvatarChange={selectAvatarForOnboarding}
           ownedAvatarLevels={ownedAvatarLevels}
+          ownedAvatarIds={ownedAvatarIds}
           avatarCatalog={avatarCatalog}
           onboardingStep={onboardingStep}
           onboardingAnsweredPollIds={onboardingAnsweredPollIds}
+          publicUsername={onboardingPublicUsername}
+          privateUsername={onboardingPrivateUsername}
+          onSaveUsernames={async (publicUsername, privateUsername) => {
+            await saveOnboardingIdentities(publicUsername, privateUsername);
+            setOnboardingPublicUsername(publicUsername);
+            setOnboardingPrivateUsername(privateUsername);
+          }}
           onSetOnboardingStep={setOnboardingStep}
           onMarkPollAnswered={markOnboardingPollAnswered}
           selectedCommunityIds={onboardingSelectedCommunityIds}
@@ -139,7 +178,8 @@ const Index = () => {
               return [...previous, communityId];
             });
           }}
-          onCompleteOnboarding={() => {
+          onCompleteOnboarding={async () => {
+            await joinOnboardingCommunities();
             completeOnboarding();
             void awardXP(user.id, XP_REWARDS.ONBOARDING_COMPLETE);
           }}
@@ -150,6 +190,7 @@ const Index = () => {
               markAvatarOwned(result.level);
             }
           }}
+          markAvatarOwned={markAvatarOwned}
         />
       );
     }

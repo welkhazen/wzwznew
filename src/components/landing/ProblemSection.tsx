@@ -13,12 +13,12 @@ export function ProblemSection() {
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/30 to-transparent" />
 
         <h2 className="text-center landing-heading">
-          The Problems ra<span className="raw-word-w">W</span> Solves
+          Find online communities where you can be honest.
         </h2>
         <div className="mx-auto mt-3 h-px w-40 bg-gradient-to-r from-transparent via-[#F1C42D]/90 to-transparent sm:w-56" aria-hidden />
-        <h3 className="mt-3 text-center font-display text-lg tracking-wide text-raw-text/80 sm:text-xl md:text-2xl">
-        
-        </h3>
+        <p className="mx-auto mt-4 max-w-2xl text-center text-sm leading-relaxed text-raw-silver/55 sm:text-base">
+          raW helps people who feel lonely, unheard, bored, or tired of performing find anonymous group chats built for meaningful conversation and belonging.
+        </p>
 
         <div className="mt-10 sm:mt-14">
           <RadialOrbitalTimelineDemo />

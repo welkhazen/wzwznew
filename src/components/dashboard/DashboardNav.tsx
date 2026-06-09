@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { track } from "@/lib/analytics";
-import { readCommunityChats } from "@/lib/communityChat";
 import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
 import {
   ArrowLeft,
   Bell,
   Ban,
   Camera,
+  ChevronDown,
   Check,
   Flag,
   LogOut,
@@ -14,9 +14,10 @@ import {
   Palette,
   Receipt,
   Settings,
-  Shield,
+  ShieldOff,
   Sun,
   Sunset,
+  UserRound,
 } from "lucide-react";
 import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { LevelProgressBanner } from "@/components/dashboard/LevelProgressBanner";
@@ -47,26 +48,23 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
-import { ChevronDown } from "lucide-react";
 import { spendTokens } from "@/lib/api/tokens";
-import { fetchUserAliases } from "@/backend/supabase/controllers/userAliasController";
-import type { UserAliasRow } from "@/backend/supabase/models/user-alias";
-import { IDENTITY_SELECTION_EVENT, readSelectedIdentityAlias, writeSelectedIdentityAlias } from "@/lib/identitySelection";
+import { supabase } from "@/lib/supabase";
+import { listUserAliases, type UserAliasRow } from "@/backend/supabase/controllers/userController";
 
-export type DashboardTab = "home" | "polls" | "challenges" | "daily-spin" | "communities" | "profile" | "wallet" | "inventory";
+export type DashboardTab = "home" | "polls" | "challenges" | "daily-spin" | "communities" | "profile" | "settings" | "wallet" | "inventory" | "store";
 
 interface DashboardNavProps {
   userId: string;
   username: string;
   avatarLevel: number;
-  showAdminLink?: boolean;
-  onAddTestXP?: () => void;
   onProfileClick: () => void;
+  onSettingsClick: () => void;
   onBillingClick: () => void;
   onLogout: () => void;
   communityTitle?: string;
   onBack?: () => void;
-  communities?: PersistedCommunityRecord[];
+  communities: PersistedCommunityRecord[];
   xp?: number;
   level?: number;
 }
@@ -78,7 +76,111 @@ const SEEN_NOTIFICATIONS_PREFIX = "raw.seen-notifications";
 const TOKEN_BALANCE_UPDATED_EVENT = "raw:token-balance-updated";
 const TOKEN_BALANCE_STORAGE_KEY = "raw.polls.token-balance";
 const ACCENT_UNLOCK_COST = 10;
-const LOCKED_ACCENT_IDS: AccentPresetId[] = ["cyan", "emerald", "lime"];
+const ACCENT_PREVIEW_DURATION_MS = 60_000;
+const ACCENT_FREE_ID: AccentPresetId = "gold";
+const FREE_ACCENT_IDS: AccentPresetId[] = ["gold", "indigo"];
+const OWNED_ACCENTS_CACHE_PREFIX = "raw.theme.accent.owned.v2.";
+const CHAT_IDENTITY_PREFIX = "raw.chat.identity.v1.";
+const CHAT_IDENTITY_CHANGED_EVENT = "raw:chat-identity-changed";
+
+function readOwnedAccentsCache(userId: string): AccentPresetId[] {
+  if (typeof window === "undefined") return [ACCENT_FREE_ID];
+  try {
+    const raw = window.localStorage.getItem(`${OWNED_ACCENTS_CACHE_PREFIX}${userId}`);
+    if (!raw) return [ACCENT_FREE_ID];
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [ACCENT_FREE_ID];
+    return Array.from(new Set([
+      ACCENT_FREE_ID,
+      ...parsed.filter((id): id is AccentPresetId => typeof id === "string"),
+    ]));
+  } catch {
+    return [ACCENT_FREE_ID];
+  }
+}
+
+function writeOwnedAccentsCache(userId: string, ids: AccentPresetId[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(
+      `${OWNED_ACCENTS_CACHE_PREFIX}${userId}`,
+      JSON.stringify(Array.from(new Set(ids))),
+    );
+  } catch {
+    // Cache is best-effort; server remains the source of truth.
+  }
+}
+
+const DEADLINE_TARGET = new Date(2026, 5, 19, 13, 0, 0).getTime();
+
+type DeadlineCountdown = {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+  isComplete: boolean;
+};
+
+function getDeadlineCountdown(now = Date.now()): DeadlineCountdown {
+  const remaining = Math.max(DEADLINE_TARGET - now, 0);
+  const totalSeconds = Math.floor(remaining / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  return {
+    days,
+    hours,
+    minutes,
+    seconds,
+    isComplete: remaining === 0,
+  };
+}
+
+function DeadlineCountdownBadge({ isLight }: { isLight: boolean }) {
+  const [countdown, setCountdown] = useState(() => getDeadlineCountdown());
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setCountdown(getDeadlineCountdown());
+    }, 1000);
+
+    return () => window.clearInterval(intervalId);
+  }, []);
+
+  if (countdown.isComplete) {
+    return (
+      <div
+        className={cn(
+          "hidden rounded-full border px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] sm:block",
+          isLight ? "border-amber-300 bg-amber-50 text-amber-800" : "border-raw-gold/35 bg-raw-gold/10 text-raw-gold",
+        )}
+        aria-label="Deadline countdown complete"
+      >
+        Deadline reached
+      </div>
+    );
+  }
+
+  const timeLabel = `${countdown.days}d ${countdown.hours}h ${countdown.minutes}m ${countdown.seconds}s`;
+
+  return (
+    <div
+      className={cn(
+        "rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] shadow-sm sm:px-3 sm:py-1.5 sm:text-[11px]",
+        isLight
+          ? "border-amber-300 bg-amber-50 text-amber-800 shadow-amber-100"
+          : "border-raw-gold/35 bg-raw-gold/10 text-raw-gold shadow-raw-gold/10",
+      )}
+      aria-label={`Deadline countdown: ${timeLabel}`}
+      title="Deadline: June 19, 2026 at 1:00 PM"
+    >
+      <span className="hidden sm:inline">Deadline </span>
+      {timeLabel}
+    </div>
+  );
+}
 
 type DashboardNotification = {
   id: string;
@@ -90,8 +192,6 @@ type DashboardNotification = {
   createdAt: string;
   likeCount?: number;
 };
-
-type NavIdentity = Pick<UserAliasRow, "alias" | "avatar_level" | "is_public">;
 
 function deliveredNotificationsKey(userId: string) {
   return `${DELIVERED_NOTIFICATIONS_PREFIX}.${userId}`;
@@ -132,7 +232,7 @@ function readStoredTokenBalance(userId: string): number {
   }
 }
 
-export function DashboardNav({ userId, username, avatarLevel, showAdminLink = false, onAddTestXP, onProfileClick, onBillingClick, onLogout, communityTitle, onBack, communities: propCommunities, xp = 0, level = 1 }: DashboardNavProps) {
+export function DashboardNav({ userId, username, avatarLevel, onProfileClick, onSettingsClick, onBillingClick, onLogout, communityTitle, onBack, communities, xp = 0, level = 1 }: DashboardNavProps) {
   const { mode, accent, accentPresets, setMode, setAccent } = useTheme();
   const [hoveredMode, setHoveredMode] = useState<ThemeMode | null>(null);
   const [hoveredAccent, setHoveredAccent] = useState<AccentPresetId | null>(null);
@@ -142,76 +242,59 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
   const [reportOpen, setReportOpen] = useState(false);
   const [blockedUsersOpen, setBlockedUsersOpen] = useState(false);
   const [blockedSenderKeys, setBlockedSenderKeys] = useState<string[]>(() => readBlockedCommunitySenders(userId));
-  const [identityPickerOpen, setIdentityPickerOpen] = useState(false);
   const [issueType, setIssueType] = useState(ISSUE_TYPE_OPTIONS[0]);
   const [issueDetails, setIssueDetails] = useState("");
   const [screenshotName, setScreenshotName] = useState("");
   const [screenshotDataUrl, setScreenshotDataUrl] = useState("");
   const [unlockingAccentId, setUnlockingAccentId] = useState<AccentPresetId | null>(null);
+  const [accentPurchaseId, setAccentPurchaseId] = useState<AccentPresetId | null>(null);
+  const [ownedAccentIds, setOwnedAccentIds] = useState<AccentPresetId[]>(() => readOwnedAccentsCache(userId));
   const [tokenBalanceForUnlocks, setTokenBalanceForUnlocks] = useState<number>(() => readStoredTokenBalance(userId));
-  const [identities, setIdentities] = useState<NavIdentity[]>([
-    { alias: username, avatar_level: avatarLevel, is_public: true },
-  ]);
-  const [selectedIdentityAlias, setSelectedIdentityAlias] = useState(() => readSelectedIdentityAlias(userId) ?? username);
+  const [privateAliases, setPrivateAliases] = useState<UserAliasRow[]>([]);
+  const [selectedChatAlias, setSelectedChatAlias] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    return window.localStorage.getItem(`${CHAT_IDENTITY_PREFIX}${userId}`);
+  });
   const notifRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let cancelled = false;
-
-    async function loadIdentities() {
-      try {
-        const aliases = await fetchUserAliases(userId);
+    listUserAliases(userId)
+      .then((rows) => {
         if (cancelled) return;
-        const privateAliases = aliases.filter((alias) => alias.alias.trim().toLowerCase() !== username.trim().toLowerCase());
-        const nextIdentities = [
-          { alias: username, avatar_level: avatarLevel, is_public: true },
-          ...privateAliases.map((alias) => ({
-            alias: alias.alias,
-            avatar_level: alias.avatar_level || avatarLevel,
-            is_public: false,
-          })),
-        ];
-        setIdentities(nextIdentities);
-        const savedAlias = readSelectedIdentityAlias(userId);
-        setSelectedIdentityAlias(
-          savedAlias && nextIdentities.some((identity) => identity.alias === savedAlias) ? savedAlias : username
-        );
-      } catch {
-        if (!cancelled) {
-          setIdentities([{ alias: username, avatar_level: avatarLevel, is_public: true }]);
-          setSelectedIdentityAlias(username);
-        }
-      }
+        const privateRows = rows.filter((row) => !row.is_public).slice(0, 1);
+        setPrivateAliases(privateRows);
+        setSelectedChatAlias((current) => {
+          if (!current) return null;
+          return privateRows.some((row) => row.alias.toLowerCase() === current.toLowerCase()) ? current : null;
+        });
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [userId]);
+
+  const saveChatIdentity = (alias: string | null) => {
+    setSelectedChatAlias(alias);
+    if (typeof window === "undefined") return;
+    const storageKey = `${CHAT_IDENTITY_PREFIX}${userId}`;
+    if (alias) {
+      window.localStorage.setItem(storageKey, alias);
+    } else {
+      window.localStorage.removeItem(storageKey);
     }
-
-    void loadIdentities();
-    const reloadAliases = (event: Event) => {
-      const updatedUserId = (event as CustomEvent<{ userId?: string }>).detail?.userId;
-      if (!updatedUserId || updatedUserId === userId) void loadIdentities();
-    };
-    const syncSelectedIdentity = (event: Event) => {
-      const detail = (event as CustomEvent<{ userId?: string; alias?: string }>).detail;
-      if (detail?.userId === userId && detail.alias) setSelectedIdentityAlias(detail.alias);
-    };
-
-    window.addEventListener("raw:user-aliases-updated", reloadAliases);
-    window.addEventListener(IDENTITY_SELECTION_EVENT, syncSelectedIdentity);
-    return () => {
-      cancelled = true;
-      window.removeEventListener("raw:user-aliases-updated", reloadAliases);
-      window.removeEventListener(IDENTITY_SELECTION_EVENT, syncSelectedIdentity);
-    };
-  }, [avatarLevel, userId, username]);
-
-  const selectedIdentity = identities.find((identity) => identity.alias === selectedIdentityAlias) ?? identities[0] ?? {
-    alias: username,
-    avatar_level: avatarLevel,
-    is_public: true,
+    window.dispatchEvent(new CustomEvent(CHAT_IDENTITY_CHANGED_EVENT, { detail: { userId, alias } }));
   };
 
   useEffect(() => {
     setTokenBalanceForUnlocks(readStoredTokenBalance(userId));
   }, [userId]);
+
+  useEffect(() => {
+    if (!hoveredAccent) return;
+
+    const timeoutId = window.setTimeout(() => setHoveredAccent(null), ACCENT_PREVIEW_DURATION_MS);
+    return () => window.clearTimeout(timeoutId);
+  }, [hoveredAccent]);
 
   useEffect(() => {
     const storageKey = `${TOKEN_BALANCE_STORAGE_KEY}.${userId}`;
@@ -227,7 +310,6 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
   }, [userId]);
 
   const notifications = useMemo<DashboardNotification[]>(() => {
-    const communities = propCommunities ?? readCommunityChats();
     const tag = `@${username}`.toLowerCase();
     const results: DashboardNotification[] = [];
     for (const community of communities) {
@@ -270,7 +352,7 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
       }
     }
     return results.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  }, [userId, username, propCommunities]);
+  }, [userId, username, communities]);
   const unseenNotificationCount = useMemo(() => {
     const seen = new Set(seenNotificationIds);
     return notifications.filter((notification) => !seen.has(notification.id)).length;
@@ -282,7 +364,6 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
   }, [userId]);
 
   const blockedSenderLabels = useMemo(() => {
-    const communities = propCommunities ?? readCommunityChats();
     const labels = new Map<string, string>();
     for (const community of communities) {
       for (const message of community.messages) {
@@ -295,7 +376,7 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
       }
     }
     return blockedSenderKeys.map((key) => ({ key, label: labels.get(key) ?? key }));
-  }, [blockedSenderKeys, propCommunities]);
+  }, [blockedSenderKeys, communities]);
 
   const handleUnblockSender = (senderKey: string) => {
     const next = blockedSenderKeys.filter((key) => key !== senderKey);
@@ -304,12 +385,40 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
     window.dispatchEvent(new StorageEvent("storage", { key: "raw.community.blocked-senders.v1" }));
   };
 
-  const handleAccentClick = async (presetId: AccentPresetId) => {
-    if (!LOCKED_ACCENT_IDS.includes(presetId)) {
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    setOwnedAccentIds(readOwnedAccentsCache(userId));
+    void (async () => {
+      const { data, error } = await supabase
+        .from("user_accent_unlocks")
+        .select("accent_id")
+        .eq("user_id", userId);
+      if (cancelled || error || !data) return;
+      const serverIds = data.map((row) => row.accent_id as AccentPresetId);
+      const merged = Array.from(new Set([ACCENT_FREE_ID, ...serverIds])) as AccentPresetId[];
+      setOwnedAccentIds(merged);
+      writeOwnedAccentsCache(userId, merged);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
+
+  const isAccentOwned = (presetId: AccentPresetId): boolean =>
+    FREE_ACCENT_IDS.includes(presetId) || presetId === accent || ownedAccentIds.includes(presetId);
+
+  const handleAccentClick = (presetId: AccentPresetId) => {
+    if (isAccentOwned(presetId)) {
       setAccent(presetId);
       setHoveredAccent(null);
       return;
     }
+    setHoveredAccent(presetId);
+    setAccentPurchaseId(presetId);
+  };
+
+  const handleAccentPurchase = async (presetId: AccentPresetId) => {
     if (unlockingAccentId) return;
     if (tokenBalanceForUnlocks < ACCENT_UNLOCK_COST) {
       toast({ title: "Not enough tokens", description: `You need ${ACCENT_UNLOCK_COST} tokens to unlock this theme.` });
@@ -318,11 +427,22 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
     setUnlockingAccentId(presetId);
     try {
       const balance = await spendTokens(userId, ACCENT_UNLOCK_COST);
+      const { error: persistError } = await supabase
+        .from("user_accent_unlocks")
+        .upsert({ user_id: userId, accent_id: presetId }, { onConflict: "user_id,accent_id" });
+      if (persistError) {
+        toast({ title: "Unlock failed", description: "Tokens refunded. Please try again." });
+        return;
+      }
       const storageKey = `${TOKEN_BALANCE_STORAGE_KEY}.${userId}`;
       window.localStorage.setItem(storageKey, String(balance));
       window.dispatchEvent(new CustomEvent(TOKEN_BALANCE_UPDATED_EVENT, { detail: { storageKey, balance } }));
+      const nextOwned = Array.from(new Set([...ownedAccentIds, presetId])) as AccentPresetId[];
+      setOwnedAccentIds(nextOwned);
+      writeOwnedAccentsCache(userId, nextOwned);
       setAccent(presetId);
       setHoveredAccent(null);
+      setAccentPurchaseId(null);
       toast({ title: "Theme unlocked", description: `${ACCENT_UNLOCK_COST} tokens spent.` });
     } catch {
       toast({ title: "Unlock failed", description: "Please try again." });
@@ -456,6 +576,9 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
 
   const effectiveMode = hoveredMode ?? mode;
   const effectiveAccent = hoveredAccent ?? accent;
+  const accentPurchasePreset = accentPurchaseId
+    ? accentPresets.find((preset) => preset.id === accentPurchaseId) ?? null
+    : null;
   const isEffectiveLight = effectiveMode === "light";
   const modeOptions: { mode: ThemeMode; label: string; icon: typeof Moon }[] = [
     { mode: "dark", label: "Dark", icon: Moon },
@@ -497,10 +620,13 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
       )}
     >
       <div className="flex h-14 items-center justify-between px-3 sm:px-6">
-        {/* Logo — hidden on mobile when inside a community */}
-        <a href="/" className={cn("font-display text-base tracking-[0.3em] shrink-0 sm:text-lg", isEffectiveLight ? "text-slate-950" : "text-raw-text", communityTitle ? "hidden sm:block" : "")}>
-          ra<span className="text-raw-gold">W</span>
-        </a>
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+          {/* Logo — hidden on mobile when inside a community */}
+          <a href="/" className={cn("font-display text-base tracking-[0.3em] shrink-0 sm:text-lg", isEffectiveLight ? "text-slate-950" : "text-raw-text", communityTitle ? "hidden sm:block" : "")}>
+            ra<span className="text-raw-gold">W</span>
+          </a>
+          <DeadlineCountdownBadge isLight={isEffectiveLight} />
+        </div>
 
         {/* Community name — mobile only, shown instead of logo when in a community */}
         {communityTitle && (
@@ -627,7 +753,7 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
                 className="flex items-center transition-opacity hover:opacity-80"
                 aria-label="Open profile menu"
               >
-                <AvatarFigure avatarIndex={selectedIdentity.avatar_level} size="sm" selected />
+                <AvatarFigure avatarIndex={avatarLevel} size="sm" selected />
               </button>
             </DropdownMenuTrigger>
 
@@ -651,62 +777,59 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
                     : "border-raw-gold/20 bg-raw-gold/[0.08] hover:bg-raw-gold/[0.12]",
                 )}
               >
-                <AvatarFigure avatarIndex={selectedIdentity.avatar_level} size="sm" selected />
+                <AvatarFigure avatarIndex={avatarLevel} size="sm" selected />
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-raw-text">View Profile</p>
-                  <p className={cn("truncate text-xs", isEffectiveLight ? "text-slate-600" : "text-raw-silver/50")}>@{selectedIdentity.alias}</p>
+                  <p className={cn("truncate text-xs", isEffectiveLight ? "text-slate-600" : "text-raw-silver/50")}>@{username}</p>
                 </div>
               </button>
 
-              <div className={cn("mx-1 mb-1 rounded-xl border p-2", isEffectiveLight ? "border-slate-200 bg-slate-50" : "border-raw-border/25 bg-raw-black/25")}>
+              <div className={cn("mx-1 mb-1 rounded-xl border p-1", isEffectiveLight ? "border-slate-200 bg-slate-50/80" : "border-raw-border/25 bg-raw-black/25")}>
+                <p className={cn("px-2 pb-1 pt-0.5 text-[10px] uppercase tracking-[0.18em]", isEffectiveLight ? "text-slate-500" : "text-raw-silver/45")}>
+                  Chat name
+                </p>
                 <button
                   type="button"
-                  onClick={() => setIdentityPickerOpen((open) => !open)}
-                  className="flex w-full items-center gap-2 rounded-lg border border-raw-gold/35 bg-raw-gold/10 px-2 py-1.5 text-left text-raw-gold transition-colors hover:bg-raw-gold/15"
-                  aria-expanded={identityPickerOpen}
+                  onClick={() => saveChatIdentity(null)}
+                  className={cn(
+                    "flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left text-xs transition-colors",
+                    selectedChatAlias === null
+                      ? "bg-raw-gold/15 text-raw-gold"
+                      : isEffectiveLight
+                        ? "text-slate-700 hover:bg-slate-100"
+                        : "text-raw-silver/80 hover:bg-raw-surface/70",
+                  )}
                 >
-                  <AvatarFigure avatarIndex={selectedIdentity.avatar_level} size="sm" selected className="scale-75" />
-                  <span className="min-w-0 flex-1">
-                    <span className={cn("block text-[10px] uppercase tracking-[0.16em]", isEffectiveLight ? "text-slate-500" : "text-raw-silver/45")}>
-                      Talk as
-                    </span>
-                    <span className="block truncate text-xs font-semibold">@{selectedIdentity.alias}</span>
+                  <span className="flex min-w-0 items-center gap-2">
+                    <UserRound className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate">@{username}</span>
                   </span>
-                  <span className="text-[9px] uppercase tracking-[0.14em] opacity-70">
-                    {selectedIdentity.is_public ? "Public" : "Private"}
-                  </span>
-                  <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", identityPickerOpen ? "rotate-180" : "")} />
+                  {selectedChatAlias === null && <Check className="h-3.5 w-3.5 shrink-0" />}
                 </button>
-
-                {identityPickerOpen && (
-                  <div className="mt-1.5 space-y-1.5">
-                    {identities
-                      .filter((identity) => identity.alias !== selectedIdentity.alias)
-                      .map((identity) => (
-                        <button
-                          key={`${identity.alias}-${identity.avatar_level}`}
-                          type="button"
-                          onClick={() => {
-                            setSelectedIdentityAlias(identity.alias);
-                            writeSelectedIdentityAlias(userId, identity.alias);
-                            setIdentityPickerOpen(false);
-                          }}
-                          className={cn(
-                            "flex w-full items-center gap-2 rounded-lg border px-2 py-1.5 text-left transition-colors",
-                            isEffectiveLight
-                              ? "border-slate-200 bg-white/70 text-slate-600 hover:border-raw-gold/30 hover:text-raw-gold"
-                              : "border-raw-border/20 bg-raw-black/20 text-raw-silver/60 hover:border-raw-gold/30 hover:text-raw-gold"
-                          )}
-                        >
-                          <AvatarFigure avatarIndex={identity.avatar_level} size="sm" selected={false} className="scale-75" />
-                          <span className="min-w-0 flex-1 truncate text-xs font-semibold">@{identity.alias}</span>
-                          <span className="text-[9px] uppercase tracking-[0.14em] opacity-70">
-                            {identity.is_public ? "Public" : "Private"}
-                          </span>
-                        </button>
-                      ))}
-                  </div>
-                )}
+                {privateAliases.map((alias) => {
+                  const isSelected = selectedChatAlias?.toLowerCase() === alias.alias.toLowerCase();
+                  return (
+                    <button
+                      key={alias.id}
+                      type="button"
+                      onClick={() => saveChatIdentity(alias.alias)}
+                      className={cn(
+                        "mt-1 flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left text-xs transition-colors",
+                        isSelected
+                          ? "bg-raw-gold/15 text-raw-gold"
+                          : isEffectiveLight
+                            ? "text-slate-700 hover:bg-slate-100"
+                            : "text-raw-silver/80 hover:bg-raw-surface/70",
+                      )}
+                    >
+                      <span className="flex min-w-0 items-center gap-2">
+                        <ShieldOff className="h-3.5 w-3.5 shrink-0" />
+                        <span className="truncate">@{alias.alias}</span>
+                      </span>
+                      {isSelected && <Check className="h-3.5 w-3.5 shrink-0" />}
+                    </button>
+                  );
+                })}
               </div>
 
               <div className={cn("mx-1 mb-1 rounded-lg border px-2 py-1.5 sm:hidden", isEffectiveLight ? "border-slate-200 bg-slate-50" : "border-raw-border/25 bg-raw-black/30")}>
@@ -729,15 +852,13 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
                 className={cn("mx-1 mb-1 hidden sm:block", isEffectiveLight ? "border-slate-200 bg-slate-50" : "border-raw-border/25 bg-raw-black/30")}
               />
 
-              {showAdminLink && onAddTestXP ? (
-                <button
-                  type="button"
-                  onClick={onAddTestXP}
-                  className="mx-1 mb-1 flex w-[calc(100%-0.5rem)] items-center justify-center rounded-xl border border-raw-gold/35 bg-raw-gold/10 px-3 py-2 text-sm font-semibold text-raw-gold transition hover:bg-raw-gold/20"
-                >
-                  +100 XP
-                </button>
-              ) : null}
+              <DropdownMenuItem
+                onClick={onSettingsClick}
+                className={cn("cursor-pointer rounded-lg px-2 py-1.5 text-xs focus:text-raw-text sm:px-3 sm:py-2.5 sm:text-sm", isEffectiveLight ? "text-slate-700 focus:bg-slate-100" : "text-raw-silver/80 focus:bg-raw-surface/80")}
+              >
+                <Settings className="mr-3 h-4 w-4" />
+                Settings
+              </DropdownMenuItem>
 
               <DropdownMenuItem
                 onClick={onBillingClick}
@@ -760,15 +881,6 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
               </DropdownMenuItem>
 
               <DropdownMenuSeparator className={cn("my-1 sm:my-2", isEffectiveLight ? "bg-slate-200" : "bg-raw-border/30")} />
-
-              {showAdminLink ? (
-                <DropdownMenuItem asChild className={cn("rounded-lg px-3 py-2.5 text-sm focus:text-raw-text", isEffectiveLight ? "text-slate-700 focus:bg-slate-100" : "text-raw-silver/80 focus:bg-raw-surface/80")}>
-                  <a href="/admin">
-                    <Shield className="mr-3 h-4 w-4" />
-                    Admin
-                  </a>
-                </DropdownMenuItem>
-              ) : null}
 
               <DropdownMenuItem
                 onSelect={(event) => {
@@ -856,25 +968,25 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
                     <div className="grid grid-cols-5 gap-1 sm:gap-2">
                       {accentPresets.map((preset) => {
                         const selected = preset.id === effectiveAccent;
-                        const locked = LOCKED_ACCENT_IDS.includes(preset.id);
+                        const locked = !isAccentOwned(preset.id);
                         const unlocking = unlockingAccentId === preset.id;
                         return (
                           <button
                             key={preset.id}
-                            onClick={() => { void handleAccentClick(preset.id); }}
+                            onClick={() => handleAccentClick(preset.id)}
                             className={cn(
                               "relative h-5 overflow-hidden rounded-md border transition-all sm:h-10 sm:rounded-lg",
                               selected ? "border-raw-text shadow-[0_0_0_1px_rgb(var(--raw-text)/0.3)]" : "border-raw-border/35 hover:border-raw-silver/35",
                             )}
                             style={{ backgroundColor: `rgb(${preset.rgb})` }}
-                            aria-label={locked ? `Unlock ${preset.label} for ${ACCENT_UNLOCK_COST} tokens` : `Use ${preset.label} accent`}
-                            title={locked ? `${preset.label} • ${ACCENT_UNLOCK_COST} tokens` : preset.label}
+                            aria-label={locked ? `Preview or buy ${preset.label} accent` : `Use ${preset.label} accent`}
+                            title={locked ? `${preset.label} - Locked` : preset.label}
                           >
                             {locked && (
                               <>
                                 <span className="absolute inset-0 bg-black/30 backdrop-blur-[2px]" />
                                 <span className="absolute inset-x-0 bottom-0 z-10 border-t border-white/20 bg-black/55 px-1 py-[1px] text-[8px] uppercase tracking-[0.14em] text-white/90 sm:text-[9px]">
-                                  {unlocking ? "Unlocking..." : `Unlock • ${ACCENT_UNLOCK_COST}`}
+                                  {unlocking ? "Unlocking..." : "Locked"}
                                 </span>
                               </>
                             )}
@@ -903,6 +1015,76 @@ export function DashboardNav({ userId, username, avatarLevel, showAdminLink = fa
           </DropdownMenu>
         </div>
       </div>
+
+      <Dialog
+        open={accentPurchaseId !== null}
+        onOpenChange={(open) => {
+          if (open) return;
+          setAccentPurchaseId(null);
+          setHoveredAccent(null);
+        }}
+      >
+        <DialogContent className="overflow-hidden border-raw-border/40 bg-raw-black p-0 text-raw-text sm:max-w-md">
+          {accentPurchasePreset && (
+            <>
+              <div
+                className="h-24 border-b border-white/10"
+                style={{
+                  background: `radial-gradient(circle at 50% 30%, rgb(${accentPurchasePreset.rgb}) 0%, rgb(${accentPurchasePreset.rgb} / 0.35) 42%, rgba(0,0,0,0.92) 100%)`,
+                }}
+              />
+              <div className="p-6">
+                <DialogHeader>
+                  <div className="mb-3 flex items-center gap-3">
+                    <span
+                      className="h-10 w-10 rounded-xl border border-white/30 shadow-[0_0_22px_rgba(255,255,255,0.12)]"
+                      style={{ backgroundColor: `rgb(${accentPurchasePreset.rgb})` }}
+                    />
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-raw-gold/70">Locked accent</p>
+                      <DialogTitle className="font-display text-xl tracking-wide">{accentPurchasePreset.label}</DialogTitle>
+                    </div>
+                  </div>
+                  <DialogDescription className="text-raw-silver/55">
+                    Preview this color across the interface for one minute, or unlock it permanently for {ACCENT_UNLOCK_COST} tokens.
+                    No tokens are spent until you confirm the purchase.
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="mt-5 rounded-xl border border-raw-border/35 bg-raw-surface/25 px-4 py-3 text-xs text-raw-silver/60">
+                  Your balance: <span className="font-semibold text-raw-gold">{tokenBalanceForUnlocks} tokens</span>
+                </div>
+
+                <DialogFooter className="mt-6 gap-2 sm:justify-between">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => {
+                      setAccentPurchaseId(null);
+                      toast({ title: "Preview active", description: `${accentPurchasePreset.label} is previewed for one minute.` });
+                    }}
+                    className="rounded-xl border border-raw-border/40 text-raw-text hover:border-raw-gold/40 hover:bg-raw-gold/10"
+                  >
+                    Preview color
+                  </Button>
+                  <Button
+                    type="button"
+                    disabled={unlockingAccentId !== null || tokenBalanceForUnlocks < ACCENT_UNLOCK_COST}
+                    onClick={() => { void handleAccentPurchase(accentPurchasePreset.id); }}
+                    className="rounded-xl bg-raw-gold text-raw-ink hover:bg-raw-gold/90 disabled:opacity-45"
+                  >
+                    {unlockingAccentId === accentPurchasePreset.id
+                      ? "Buying..."
+                      : tokenBalanceForUnlocks < ACCENT_UNLOCK_COST
+                        ? `Need ${ACCENT_UNLOCK_COST} tokens`
+                        : `Buy for ${ACCENT_UNLOCK_COST} tokens`}
+                  </Button>
+                </DialogFooter>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={reportOpen} onOpenChange={setReportOpen}>
         <DialogContent className="border-raw-border/40 bg-raw-black text-raw-text sm:max-w-lg">

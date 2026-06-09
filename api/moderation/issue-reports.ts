@@ -1,8 +1,10 @@
-import { supabaseServerClient } from "../_lib/supabaseServerClient";
+import { supabaseServerClient } from "../_lib/supabaseServerClient.js";
+import { hasBearerSecret, isTrustedOrigin } from "../_lib/requestSecurity.js";
 
 export const config = { runtime: "edge" };
 
 const supabase = supabaseServerClient;
+const moderationSecret = process.env.MODERATION_API_SECRET ?? process.env.ADMIN_API_SECRET;
 
 const statuses = new Set(["open", "dismissed", "reviewed"]);
 const MAX_SCREENSHOT_LENGTH = 3_000_000;
@@ -53,6 +55,10 @@ export default async function handler(request: Request): Promise<Response> {
   }
 
   if (request.method === "GET") {
+    if (!hasBearerSecret(request, moderationSecret)) {
+      return json({ error: "unauthorized" }, 401);
+    }
+
     const { data, error } = await supabase
       .from("issue_reports")
       .select("*")
@@ -67,6 +73,10 @@ export default async function handler(request: Request): Promise<Response> {
   }
 
   if (request.method === "POST") {
+    if (!isTrustedOrigin(request)) {
+      return json({ error: "untrusted_origin" }, 403);
+    }
+
     let body: IssueReportPayload;
     try {
       body = (await request.json()) as IssueReportPayload;
@@ -107,6 +117,10 @@ export default async function handler(request: Request): Promise<Response> {
   }
 
   if (request.method === "PATCH") {
+    if (!hasBearerSecret(request, moderationSecret)) {
+      return json({ error: "unauthorized" }, 401);
+    }
+
     let body: { id?: unknown; status?: unknown; resolvedBy?: unknown };
     try {
       body = (await request.json()) as typeof body;

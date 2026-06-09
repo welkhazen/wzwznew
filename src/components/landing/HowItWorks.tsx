@@ -49,8 +49,8 @@ export function HowItWorks() {
           How it works
         </h2>
         <p className="mx-auto mb-10 max-w-2xl px-1 text-center text-sm leading-relaxed text-raw-silver/60 sm:mb-14 sm:text-base">
-          raW learns through honest participation. This shell now walks people in the same order
-          the real product will.
+          Create an anonymous identity, answer live polls, and get matched with online communities
+          and group chats shaped around your interests, personality, and honest answers.
         </p>
 
         <div className="overflow-x-auto rounded-[2rem] border border-raw-border/40 bg-gradient-to-b from-raw-surface/60 to-raw-black/90 p-3 shadow-[0_30px_120px_rgba(0,0,0,0.35)] sm:p-6">
@@ -63,8 +63,7 @@ export function HowItWorks() {
             delayBetweenCommands={950}
             initialDelay={200}
             enableSound={false}
-            largeLastCommand
-            commandClassName="text-sm"
+            commandClassName="py-1 text-[0.95rem] font-extrabold leading-snug tracking-[-0.02em] sm:text-lg"
           />
         </div>
       </div>

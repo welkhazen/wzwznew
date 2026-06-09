@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useTheme } from "@/providers/useTheme";
-import centerLogo from "@/assets/icon.png";
+import centerLogo from "@/assets/favicon2.png";
 
 interface TimelineItem {
   id: number;
@@ -20,9 +20,10 @@ interface TimelineItem {
 
 interface RadialOrbitalTimelineProps {
   timelineData: readonly TimelineItem[];
+  showTitleButtons?: boolean;
 }
 
-export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTimelineProps) {
+export default function RadialOrbitalTimeline({ timelineData, showTitleButtons = false }: RadialOrbitalTimelineProps) {
   const { mode } = useTheme();
   const isLight = mode === "light";
   const [expandedItems, setExpandedItems] = useState<Record<number, boolean>>({});
@@ -290,6 +291,46 @@ export default function RadialOrbitalTimeline({ timelineData }: RadialOrbitalTim
       </div>
 
       {/* ── Card ── */}
+      {showTitleButtons && (
+        <div
+          className="relative z-20 mx-auto grid max-w-4xl gap-3 px-1 pb-2 sm:grid-cols-2 sm:gap-4"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {timelineData.map((item, index) => {
+            const isActive = activeNodeId === item.id;
+
+            return (
+              <button
+                key={item.id}
+                type="button"
+                aria-expanded={isActive}
+                onClick={() => toggleItem(item.id)}
+                className={`group relative overflow-hidden rounded-xl border px-4 py-4 text-left transition duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/70 sm:px-5 sm:py-5 ${
+                  index === timelineData.length - 1 && timelineData.length % 2 === 1 ? "sm:col-span-2" : ""
+                } ${
+                  isActive
+                    ? "border-raw-gold/65 bg-raw-gold/12 shadow-[0_0_28px_rgba(241,196,45,0.13)]"
+                    : "border-raw-border/45 bg-raw-black/35 hover:-translate-y-0.5 hover:border-raw-gold/45 hover:bg-raw-gold/[0.06]"
+                }`}
+              >
+                <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/55 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+                <span className="mb-2 block font-mono text-[10px] font-bold uppercase tracking-[0.24em] text-raw-gold/65">
+                  Problem {String(index + 1).padStart(2, "0")}
+                </span>
+                <span className={`block font-display text-lg font-black uppercase leading-tight tracking-[0.03em] sm:text-xl ${
+                  isActive ? "text-raw-gold" : "text-raw-text"
+                }`}>
+                  {item.title}
+                </span>
+                <span className="mt-3 block text-[10px] font-bold uppercase tracking-[0.18em] text-raw-silver/40 transition-colors group-hover:text-raw-gold/70">
+                  Click to explore
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {activeItem && (() => {
         const cardInner = (
           <div
