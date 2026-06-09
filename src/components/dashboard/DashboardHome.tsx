@@ -1,6 +1,6 @@
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ContainerTextFlipLazy } from "@/components/ui/container-text-flip.lazy";
-import { ChevronRight, Dices, Zap, Flame, Users, BarChart3 } from "lucide-react";
+import { ChevronRight, Dices, Zap, Flame, Users, BarChart3, MessageSquare, Send } from "lucide-react";
 import type { Poll } from "@/store/useRawStore";
 import type { DashboardTab } from "./DashboardNav";
 import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
@@ -10,6 +10,11 @@ import { useTheme } from "@/providers/useTheme";
 import { LevelProgressBanner } from "@/components/dashboard/LevelProgressBanner";
 import { WheelOfFortune } from "@/components/wheel/WheelOfFortune";
 import { buildSpinPrizes, DashboardDailySpin } from "@/components/dashboard/DashboardDailySpin";
+import {
+  fetchGeneralFeedPosts,
+  sendGeneralFeedPost,
+  type GeneralFeedPostRecord,
+} from "@/backend/supabase/controllers/generalFeedController";
 
 interface DashboardHomeProps {
   username: string;
@@ -175,6 +180,19 @@ function UpcomingCommunitiesPreview({
   );
 }
 
+function formatFeedTime(value: string): string {
+  const timestamp = new Date(value).getTime();
+  const diffMinutes = Math.max(0, Math.floor((Date.now() - timestamp) / 60_000));
+
+  if (diffMinutes < 1) return "now";
+  if (diffMinutes < 60) return `${diffMinutes}m`;
+
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) return `${diffHours}h`;
+
+  return `${Math.floor(diffHours / 24)}d`;
+}
+
 export function DashboardHome({
   userId,
   dailyAnsweredCount,
@@ -212,6 +230,11 @@ export function DashboardHome({
   }, [spinStorageKey]);
 
   const [spinCountdown, setSpinCountdown] = useState("");
+  const [feedPosts, setFeedPosts] = useState<GeneralFeedPostRecord[]>([]);
+  const [feedText, setFeedText] = useState("");
+  const [feedLoading, setFeedLoading] = useState(true);
+  const [feedSubmitting, setFeedSubmitting] = useState(false);
+  const [feedError, setFeedError] = useState("");
   const spinTimerRef = useRef<number | null>(null);
   const updateSpinCountdown = useCallback(() => {
     const now = new Date();
@@ -237,6 +260,45 @@ export function DashboardHome({
 
   const hasReachedDailyPollLimit = dailyAnsweredCount >= dailyPollLimit;
   const pollProgress = dailyPollLimit > 0 ? Math.min(100, (dailyAnsweredCount / dailyPollLimit) * 100) : 0;
+  const feedTextLength = feedText.trim().length;
+
+  useEffect(() => {
+    let cancelled = false;
+    setFeedLoading(true);
+    fetchGeneralFeedPosts()
+      .then((posts) => {
+        if (!cancelled) {
+          setFeedPosts(posts);
+          setFeedError("");
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setFeedError("Feed could not load right now.");
+      })
+      .finally(() => {
+        if (!cancelled) setFeedLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleSubmitFeedPost = useCallback(async () => {
+    if (!userId || feedSubmitting || feedTextLength === 0 || feedTextLength > 500) return;
+
+    setFeedSubmitting(true);
+    setFeedError("");
+    try {
+      const post = await sendGeneralFeedPost(feedText);
+      setFeedPosts((current) => [post, ...current.filter((item) => item.id !== post.id)].slice(0, 8));
+      setFeedText("");
+    } catch {
+      setFeedError("Post could not be saved right now.");
+    } finally {
+      setFeedSubmitting(false);
+    }
+  }, [feedSubmitting, feedText, feedTextLength, userId]);
 
   return (
     <div className="space-y-10 pb-6">
@@ -282,6 +344,79 @@ export function DashboardHome({
           {trending.map((community, i) => (
             <CommunityCard key={community.id} community={community} rank={i} isLight={isLight} onOpenCommunity={onOpenCommunity} />
           ))}
+        </div>
+      </section>
+
+      {/* General Feed */}
+      <section className={`space-y-5 border-t pt-10 ${isLight ? "border-slate-200" : "border-white/5"}`}>
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-2">
+              <MessageSquare className="size-4 text-raw-gold" />
+              <h2 className={`text-xl font-bold tracking-tight ${isLight ? "text-slate-950" : "text-white"}`}>General Feed</h2>
+            </div>
+            <p className={`text-[13px] ${isLight ? "text-slate-500" : "text-white/40"}`}>A shared space for quick thoughts from everyone.</p>
+          </div>
+          <span className={`text-[11px] font-bold uppercase tracking-[0.18em] ${isLight ? "text-slate-400" : "text-white/30"}`}>
+            {feedTextLength}/500
+          </span>
+        </div>
+
+        <div className={`rounded-[1.5rem] border p-4 sm:p-5 ${isLight ? "border-slate-200 bg-white shadow-[0_12px_28px_rgba(15,23,42,0.08)]" : "border-white/10 bg-[#1a1a1a]"}`}>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <textarea
+              value={feedText}
+              onChange={(event) => setFeedText(event.target.value.slice(0, 500))}
+              placeholder={userId ? "Write something to everyone..." : "Log in to write to the feed"}
+              disabled={!userId || feedSubmitting}
+              rows={3}
+              className={`min-h-[92px] flex-1 resize-none rounded-2xl border px-4 py-3 text-sm outline-none transition-colors ${
+                isLight
+                  ? "border-slate-200 bg-slate-50 text-slate-950 placeholder:text-slate-400 focus:border-raw-gold/50"
+                  : "border-white/10 bg-black/25 text-white placeholder:text-white/30 focus:border-raw-gold/50"
+              }`}
+            />
+            <button
+              onClick={handleSubmitFeedPost}
+              disabled={!userId || feedSubmitting || feedTextLength === 0 || feedTextLength > 500}
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-raw-gold px-5 text-xs font-black uppercase tracking-[0.18em] text-black transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-45 sm:h-auto"
+            >
+              <Send className="size-4" />
+              {feedSubmitting ? "Posting" : "Post"}
+            </button>
+          </div>
+
+          {feedError ? (
+            <p className="mt-3 text-xs font-medium text-red-400">{feedError}</p>
+          ) : null}
+
+          <div className={`mt-5 divide-y ${isLight ? "divide-slate-100" : "divide-white/5"}`}>
+            {feedLoading ? (
+              <p className={`py-6 text-center text-sm ${isLight ? "text-slate-500" : "text-white/40"}`}>Loading feed...</p>
+            ) : feedPosts.length === 0 ? (
+              <p className={`py-6 text-center text-sm ${isLight ? "text-slate-500" : "text-white/40"}`}>No posts yet.</p>
+            ) : (
+              feedPosts.map((post) => (
+                <article key={post.id} className="py-4 first:pt-0 last:pb-0">
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <div className="flex size-8 shrink-0 items-center justify-center rounded-xl border border-raw-gold/20 bg-raw-gold/10 text-xs font-black text-raw-gold">
+                        {post.senderName.slice(0, 2).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <p className={`truncate text-sm font-bold ${isLight ? "text-slate-950" : "text-white"}`}>{post.senderName}</p>
+                        <p className={`text-[11px] ${isLight ? "text-slate-400" : "text-white/30"}`}>Level {post.senderAvatarLevel ?? 1}</p>
+                      </div>
+                    </div>
+                    <time className={`shrink-0 text-[11px] font-semibold ${isLight ? "text-slate-400" : "text-white/30"}`} dateTime={post.createdAt}>
+                      {formatFeedTime(post.createdAt)}
+                    </time>
+                  </div>
+                  <p className={`whitespace-pre-wrap break-words text-sm leading-6 ${isLight ? "text-slate-700" : "text-white/70"}`}>{post.text}</p>
+                </article>
+              ))
+            )}
+          </div>
         </div>
       </section>
 

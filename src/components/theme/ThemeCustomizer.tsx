@@ -20,6 +20,7 @@ import { ACCENT_PRESETS, type AccentPreset, type AccentPresetId } from "@/provid
 interface ThemeCustomizerProps {
   placement?: "floating" | "inline";
   triggerStyle?: "icon" | "compact";
+  accentAccess?: "unlockable" | "free";
   className?: string;
 }
 
@@ -57,10 +58,16 @@ function writeOwnedAccentsCache(userId: string | undefined, ids: AccentPresetId[
   }
 }
 
-export function ThemeCustomizer({ placement = "floating", triggerStyle = "icon", className }: ThemeCustomizerProps) {
+export function ThemeCustomizer({
+  placement = "floating",
+  triggerStyle = "icon",
+  accentAccess = "unlockable",
+  className,
+}: ThemeCustomizerProps) {
   const { accent, accentPresets, setAccent } = useTheme();
   const { user, tokenBalance, addTokens } = useRawStore();
   const isFloating = placement === "floating";
+  const accentsAreFree = accentAccess === "free";
   const selectedAccent = accentPresets.find((preset) => preset.id === accent);
 
   const [ownedAccents, setOwnedAccents] = useState<AccentPresetId[]>(() =>
@@ -101,7 +108,10 @@ export function ThemeCustomizer({ placement = "floating", triggerStyle = "icon",
     writeOwnedAccentsCache(user?.id, ownedAccents);
   }, [ownedAccents, user?.id]);
 
-  const ownedSet = useMemo(() => new Set(ownedAccents), [ownedAccents]);
+  const ownedSet = useMemo(
+    () => new Set(accentsAreFree ? accentPresets.map((preset) => preset.id) : ownedAccents),
+    [accentPresets, accentsAreFree, ownedAccents],
+  );
 
   const pendingPreset = useMemo<AccentPreset | null>(
     () => (pendingUnlock ? ACCENT_PRESETS.find((p) => p.id === pendingUnlock) ?? null : null),
@@ -276,7 +286,9 @@ export function ThemeCustomizer({ placement = "floating", triggerStyle = "icon",
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-xs uppercase tracking-[0.18em] text-raw-silver/45">Accent</p>
-                  <p className="mt-1 text-sm text-raw-silver/65">Preview new colors for one minute, then choose whether to buy</p>
+                  <p className="mt-1 text-sm text-raw-silver/65">
+                    {accentsAreFree ? "Choose any accent color" : "Preview new colors for one minute, then choose whether to buy"}
+                  </p>
                 </div>
                 <div className="rounded-full border border-raw-border/30 bg-raw-black/25 px-3 py-1 text-[10px] uppercase tracking-[0.16em] text-raw-gold/80">
                   {selectedAccent?.label}
