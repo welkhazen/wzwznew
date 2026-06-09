@@ -1,0 +1,4 @@
+interface:
+  display_name: "Windows Automation Guardrails"
+  short_description: "Windows shell fallbacks for reliable Codex automations"
+  default_prompt: "Use $windows-automation-guardrails to stabilize this Windows automation run before deeper debugging."
