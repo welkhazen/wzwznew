@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { changePassword, deleteAccount } from "@/backend/supabase/controllers/authController";
 import {
   deleteUserAlias,
+  getProfileVisibility,
   listUserAliases,
   savePrivateAlias,
   updateProfileVisibility,
@@ -42,6 +43,7 @@ export function DashboardSettings({ userId, pinnedMessage = null, onLogout }: Da
   const [section, setSection] = useState<SettingsSection>("account");
 
   // Visibility
+  const [profilePublic, setProfilePublic] = useState(true);
   const [profileVisibilitySaving, setProfileVisibilitySaving] = useState(false);
 
   // Aliases
@@ -65,21 +67,32 @@ export function DashboardSettings({ userId, pinnedMessage = null, onLogout }: Da
 
   useEffect(() => {
     let cancelled = false;
-    listUserAliases(userId)
-      .then((rows) => {
+
+    Promise.all([
+      listUserAliases(userId),
+      getProfileVisibility(userId),
+    ])
+      .then(([rows, isPublic]) => {
         if (cancelled) return;
         setAliases(rows);
         setAliasInput(rows.find((row) => !row.is_public)?.alias ?? "");
+        setProfilePublic(isPublic);
       })
       .catch(() => {});
+
     return () => { cancelled = true; };
   }, [userId]);
 
   async function handleProfileVisibilityChange() {
+    const nextProfilePublic = !profilePublic;
     setProfileVisibilitySaving(true);
     try {
-      await updateProfileVisibility(userId, true);
-      toast({ title: "Profile is visible", description: "People can see your chat profile." });
+      await updateProfileVisibility(userId, nextProfilePublic);
+      setProfilePublic(nextProfilePublic);
+      toast({
+        title: nextProfilePublic ? "Profile is visible" : "Profile is hidden",
+        description: nextProfilePublic ? "People can see your chat profile." : "Your chat profile is now private.",
+      });
     } catch {
       toast({ title: "Could not update profile privacy", description: "Please try again." });
     } finally {
@@ -189,11 +202,13 @@ export function DashboardSettings({ userId, pinnedMessage = null, onLogout }: Da
                   type="button"
                   onClick={() => { void handleProfileVisibilityChange(); }}
                   disabled={profileVisibilitySaving}
-                  className="relative h-7 w-12 shrink-0 rounded-full border border-raw-gold/60 bg-raw-gold/30 transition-colors disabled:opacity-60"
-                  aria-pressed
-                  aria-label="Public chat profile is always on"
+                  className={`relative h-7 w-12 shrink-0 rounded-full border transition-colors disabled:opacity-60 ${
+                    profilePublic ? "border-raw-gold/60 bg-raw-gold/30" : "border-raw-border/40 bg-raw-surface/60"
+                  }`}
+                  aria-pressed={profilePublic}
+                  aria-label={profilePublic ? "Disable public chat profile" : "Enable public chat profile"}
                 >
-                  <span className="absolute top-1 h-5 w-5 translate-x-5 rounded-full bg-raw-text transition-transform" />
+                  <span className={`absolute top-1 h-5 w-5 rounded-full bg-raw-text transition-transform ${profilePublic ? "translate-x-5" : "translate-x-0"}`} />
                 </button>
               </div>
             </div>
