@@ -61,11 +61,20 @@ export const NUMBERED_AVATAR_NAMES: Record<number, string> = {
 };
 
 export function avatarDisplayName(imageId: number): string {
-  return NUMBERED_AVATAR_NAMES[imageId] ?? `Avatar ${imageId}`;
+  const canonicalId = canonicalAvatarImageId(imageId);
+  return NUMBERED_AVATAR_NAMES[canonicalId] ?? `Avatar ${canonicalId}`;
 }
 
 export function avatarIdFromImageSrc(imageSrc: string | undefined): number | null {
   const match = imageSrc?.match(/\/avatars\/(\d+)\.(?:png|webp|svg)$/);
   if (!match) return null;
   return Number(match[1]);
+}
+
+const DUPLICATE_AVATAR_IMAGE_IDS: Record<number, number> = {
+  33: 29,
+};
+
+export function canonicalAvatarImageId(imageId: number): number {
+  return DUPLICATE_AVATAR_IMAGE_IDS[imageId] ?? imageId;
 }

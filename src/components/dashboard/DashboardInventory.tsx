@@ -5,7 +5,7 @@ import { WheelOfFortune, type WheelPrize } from "@/components/wheel/WheelOfFortu
 import { RARITY_CONFIG, RANK_TIERS } from "@/lib/avatarRarity";
 import type { AvatarRarity } from "@/lib/avatarRarity";
 import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
-import { avatarDisplayName, avatarIdFromImageSrc } from "@/config/avatarNames";
+import { avatarDisplayName, avatarIdFromImageSrc, canonicalAvatarImageId } from "@/config/avatarNames";
 import type { Poll } from "@/store/useRawStore";
 import TokenImage from "@/assets/tokens.webp";
 import { spendTokens } from "@/lib/api/tokens";
@@ -29,7 +29,8 @@ const TOKEN_BALANCE_STORAGE_PREFIX = "raw.polls.token-balance";
 const TOKEN_BALANCE_UPDATED_EVENT = "raw:token-balance-updated";
 
 function avatarImageKey(avatar: AvatarCatalogItem): string {
-  return String(avatarIdFromImageSrc(avatar.imageSrc) ?? avatar.imageSrc ?? avatar.id);
+  const imageId = avatarIdFromImageSrc(avatar.imageSrc);
+  return imageId === null ? String(avatar.imageSrc ?? avatar.id) : String(canonicalAvatarImageId(imageId));
 }
 
 function avatarName(avatar: AvatarCatalogItem): string {
