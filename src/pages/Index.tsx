@@ -188,6 +188,7 @@ const Index = () => {
               markAvatarOwned(result.level);
             }
           }}
+          markAvatarOwned={markAvatarOwned}
         />
       );
     }

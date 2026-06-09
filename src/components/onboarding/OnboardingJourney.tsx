@@ -52,6 +52,7 @@ interface OnboardingJourneyProps {
   onCompleteOnboarding: () => void | Promise<void>;
   onLogout: () => void;
   onClaimLandingWheelAvatar: () => Promise<void>;
+  markAvatarOwned: (level: number) => void;
 }
 
 type WheelPoolEntry = { id: string; avatarId: string; name: string; imageSrc: string };
@@ -324,6 +325,7 @@ export function OnboardingJourney({
   onCompleteOnboarding,
   onLogout,
   onClaimLandingWheelAvatar,
+  markAvatarOwned,
 }: OnboardingJourneyProps) {
   const { data: supabasePolls } = useQuery({
     queryKey: ["onboarding-landing-polls"],
@@ -572,6 +574,10 @@ export function OnboardingJourney({
                       setSpinClaimError("Could not save your reward. We'll retry when you continue.");
                     } finally {
                       setIsClaimingSpin(false);
+                    }
+                    const spinIdx = SPIN_POOL.findIndex((p) => p.catalogId === entry.avatarId);
+                    if (spinIdx >= 0) {
+                      markAvatarOwned(FREE_ONBOARDING_AVATAR_COUNT + 1 + spinIdx);
                     }
                     track("onboarding_step_completed", {
                       step: "spin" as never,
