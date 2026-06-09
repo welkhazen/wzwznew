@@ -3,6 +3,13 @@ import type { Poll } from "@/store/useRawStore";
 import { useTheme } from "@/providers/useTheme";
 import { PremiumPollCard } from "@/components/polls/PremiumPollCard";
 import { ShareButton } from "@/components/ui/share-button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { addPollComment, fetchPollComments } from "@/lib/api/polls";
 import { getUserTextModerationMessage, moderateUserText } from "@/lib/inputSecurity";
 import { isNoPollOption, isYesPollOption } from "@/lib/polls/normalizePollOptionText";
@@ -18,7 +25,9 @@ import {
   ChevronRight,
   Coins,
   Copy,
+  Download,
   Facebook,
+  History,
   Link2,
   Instagram,
   SendHorizontal,
@@ -214,6 +223,13 @@ interface PollHistoryComment {
   createdAt: string;
 }
 
+interface PollHistoryItem {
+  poll: Poll;
+  selectedAnswer: string;
+  answeredAt: number;
+  community: string;
+}
+
 interface DashboardPollsProps {
   polls: Poll[];
   votedPolls: Set<string>;
@@ -280,6 +296,20 @@ function buildPollShareUrl(pollId: string): string {
   return url.toString();
 }
 
+function csvEscape(value: string): string {
+  return `"${value.replace(/"/g, '""')}"`;
+}
+
+function formatAnsweredAt(timestamp: number): string {
+  if (!Number.isFinite(timestamp) || timestamp <= 0) return "Unknown";
+  return new Date(timestamp).toLocaleString([], {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export function DashboardPolls({
   polls,
   votedPolls,
@@ -310,6 +340,7 @@ export function DashboardPolls({
   const [sharedPollId, setSharedPollId] = useState<string | null>(null);
   const [shareCopied, setShareCopied] = useState(false);
   const [sharePickerOpen, setSharePickerOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   const commentsEndRef = useRef<HTMLDivElement>(null);
 
@@ -373,10 +404,23 @@ export function DashboardPolls({
     () => polls.filter((p) => answeredTodayIds.has(p.id)),
     [polls, answeredTodayIds]
   );
-  const answeredPollHistory = useMemo(
-    () => answeredPolls.slice().reverse(),
-    [answeredPolls]
-  );
+  const answeredPollHistory = useMemo<PollHistoryItem[]>(() => {
+    return polls
+      .map((poll) => {
+        const selectedOptionId = answerHistory[poll.id];
+        if (!selectedOptionId) return null;
+        const selectedAnswer = poll.options.find((option) => option.id === selectedOptionId)?.text ?? "Unknown";
+        return {
+          poll,
+          selectedAnswer,
+          answeredAt: answerTimestamps[poll.id] ?? 0,
+          community: "General",
+        };
+      })
+      .filter((item): item is PollHistoryItem => item !== null)
+      .sort((a, b) => b.answeredAt - a.answeredAt)
+      .slice(0, 50);
+  }, [answerHistory, answerTimestamps, polls]);
 
   // Once the daily limit is hit, show today's answered polls (capped at dailyPollLimit).
   // While still under the limit, show unseen polls capped at the daily limit so the gate
@@ -590,6 +634,26 @@ export function DashboardPolls({
     }
   };
 
+  const downloadHistoryCsv = () => {
+    const rows = [
+      ["question", "selected_answer", "community", "answered_at"],
+      ...answeredPollHistory.map((item) => [
+        item.poll.question,
+        item.selectedAnswer,
+        item.community,
+        item.answeredAt > 0 ? new Date(item.answeredAt).toISOString() : "",
+      ]),
+    ];
+    const csv = rows.map((row) => row.map(csvEscape).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "raw-poll-history.csv";
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
 
   if (!currentPoll) {
     return (
@@ -601,12 +665,64 @@ export function DashboardPolls({
 
   return (
     <div className="flex flex-col gap-6 sm:gap-8">
-      <header>
-        <h1 className="font-display text-xl tracking-wide text-raw-text sm:text-2xl">Polls</h1>
-        <p className="mt-2 text-xs text-raw-silver/45 sm:text-sm">
-          Anonymous voting, live percentages, and reflections from the community.
-        </p>
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="font-display text-xl tracking-wide text-raw-text sm:text-2xl">Polls</h1>
+          <p className="mt-2 text-xs text-raw-silver/45 sm:text-sm">
+            Anonymous voting, live percentages, and reflections from the community.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setHistoryOpen(true)}
+          className="inline-flex w-fit items-center gap-2 border border-raw-gold/35 bg-raw-black/45 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-raw-gold transition hover:border-raw-gold/60 hover:bg-raw-gold/10"
+        >
+          <History className="size-3.5" />
+          History
+        </button>
       </header>
+
+      <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
+        <DialogContent className="max-h-[85dvh] overflow-hidden border border-raw-border/40 bg-raw-black p-0 text-raw-text sm:max-w-2xl">
+          <div className="border-b border-raw-border/25 bg-gradient-to-br from-raw-gold/[0.08] via-raw-black to-raw-black px-5 py-5">
+            <DialogHeader className="space-y-2 text-left">
+              <DialogTitle className="font-display text-xl tracking-wide text-raw-text">Answer History</DialogTitle>
+              <DialogDescription className="text-sm leading-relaxed text-raw-silver/45">
+                Your last {answeredPollHistory.length} answered polls.
+              </DialogDescription>
+            </DialogHeader>
+            <button
+              type="button"
+              onClick={downloadHistoryCsv}
+              disabled={answeredPollHistory.length === 0}
+              className="mt-4 inline-flex items-center gap-2 border border-raw-gold/40 bg-raw-gold/10 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-raw-gold transition hover:bg-raw-gold/15 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <Download className="size-3.5" />
+              Download CSV
+            </button>
+          </div>
+          <div className="max-h-[58dvh] overflow-y-auto px-5 py-4">
+            {answeredPollHistory.length === 0 ? (
+              <p className="text-sm text-raw-silver/45">You have not answered any polls yet.</p>
+            ) : (
+              <div className="grid gap-3">
+                {answeredPollHistory.map((item) => (
+                  <article key={item.poll.id} className="border border-raw-border/25 bg-raw-surface/20 p-3">
+                    <p className="text-sm font-medium leading-relaxed text-raw-text">{item.poll.question}</p>
+                    <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-raw-silver/50">
+                      <span className="border border-raw-gold/25 bg-raw-gold/10 px-2 py-1 text-raw-gold/85">
+                        {item.selectedAnswer}
+                      </span>
+                      <span>{item.community}</span>
+                      <span>{formatAnsweredAt(item.answeredAt)}</span>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {showMorePollsPaywall && (
         <section className="border border-raw-gold/35 bg-gradient-to-r from-raw-gold/12 via-raw-black/60 to-raw-black/60 p-4 sm:p-5">
@@ -809,76 +925,6 @@ export function DashboardPolls({
             {commentModerationError && (
               <p className="text-xs text-red-300">{commentModerationError}</p>
             )}
-          </div>
-        )}
-      </section>
-
-      <section className="border border-raw-border/30 bg-raw-black/35 p-4 sm:p-5">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-[10px] uppercase tracking-[0.18em] text-raw-gold/65">Answer history</p>
-            <h2 className="mt-1 font-display text-base tracking-wide text-raw-text">Polls you answered</h2>
-          </div>
-          <span className="shrink-0 border border-raw-gold/35 bg-raw-gold/10 px-3 py-1 text-[11px] text-raw-gold/80">
-            {answeredPollHistory.length}
-          </span>
-        </div>
-
-        {answeredPollHistory.length === 0 ? (
-          <p className="mt-4 text-sm text-raw-silver/45">
-            Answer a poll and it will appear here.
-          </p>
-        ) : (
-          <div className="mt-4 grid gap-3">
-            {answeredPollHistory.map((poll) => {
-              const selectedId = answerHistory[poll.id];
-              const selectedOption = poll.options.find((option) => option.id === selectedId);
-              const totalVotes = poll.options.reduce((sum, option) => sum + option.votes, 0);
-              const percent = selectedOption ? optionPercent(selectedOption.votes, totalVotes) : 0;
-
-              return (
-                <article
-                  key={poll.id}
-                  className="border border-raw-border/25 bg-raw-surface/20 p-3 sm:p-4"
-                >
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium leading-relaxed text-raw-text">
-                        {poll.question}
-                      </p>
-                      <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-raw-silver/45">
-                        <span className="border border-raw-gold/25 bg-raw-gold/10 px-2 py-1 text-raw-gold/80">
-                          You answered: {selectedOption?.text ?? "Unknown"}
-                        </span>
-                        <span>{percent}% picked this</span>
-                        <span>{totalVotes.toLocaleString()} votes</span>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setLockedPollId(poll.id)}
-                      className="shrink-0 border border-raw-border/35 px-3 py-2 text-[11px] uppercase tracking-[0.12em] text-raw-silver/65 transition hover:border-raw-gold/45 hover:text-raw-gold"
-                    >
-                      Review
-                    </button>
-                    <div className="w-full shrink-0 sm:w-44">
-                      <ShareButton
-                        links={[
-                          { icon: Smartphone, onClick: () => handleWhatsAppShare(poll), label: "Share on WhatsApp" },
-                          { icon: Instagram, onClick: () => handleInstagramShare(poll), label: "Share on Instagram" },
-                          { icon: Facebook, onClick: () => handleFacebookShare(poll), label: "Share on Facebook" },
-                          { icon: Link2, onClick: () => copyShareLink(poll), label: "Copy link" },
-                        ]}
-                        className="min-w-0 w-full border-raw-border/35 bg-raw-surface/20 px-3 py-2 text-[11px] uppercase tracking-[0.12em] text-raw-silver/65 hover:border-raw-gold/45 hover:bg-raw-gold/10 hover:text-raw-gold dark:border-raw-border/35 dark:bg-raw-surface/20 dark:text-raw-silver/65 dark:hover:bg-raw-gold/10 dark:hover:text-raw-gold"
-                      >
-                        <Copy className="size-3" />
-                        Share
-                      </ShareButton>
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
           </div>
         )}
       </section>
