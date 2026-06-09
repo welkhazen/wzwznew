@@ -109,6 +109,9 @@ export function useAuth() {
     setUser(null);
     queryClient.clear();
     reset();
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem("raw.landing-wheel.spin.v1");
+    }
     window.location.href = "/";
   }, [queryClient]);
 
