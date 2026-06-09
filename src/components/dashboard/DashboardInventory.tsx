@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Archive, BookOpen, Brain, CircleGauge, Fingerprint, Lock, Map, Sparkles, WandSparkles } from "lucide-react";
 import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { WheelOfFortune, type WheelPrize } from "@/components/wheel/WheelOfFortune";
@@ -9,7 +9,6 @@ import { avatarDisplayName, avatarIdFromImageSrc } from "@/config/avatarNames";
 import type { Poll } from "@/store/useRawStore";
 import TokenImage from "@/assets/tokens.webp";
 import { spendTokens } from "@/lib/api/tokens";
-import { readOwnedInsightIds } from "@/lib/insightsOwnership";
 
 interface DashboardInventoryProps {
   polls: Poll[];
@@ -494,18 +493,6 @@ export function DashboardInventory({
     seenOwnedImageKeys.add(imageKey);
     return true;
   });
-  const [ownedInsightIds, setOwnedInsightIds] = useState<Set<string>>(() => readOwnedInsightIds(userId));
-  useEffect(() => {
-    const refresh = () => setOwnedInsightIds(readOwnedInsightIds(userId));
-    window.addEventListener("storage", refresh);
-    window.addEventListener("raw:insights-updated", refresh);
-    return () => {
-      window.removeEventListener("storage", refresh);
-      window.removeEventListener("raw:insights-updated", refresh);
-    };
-  }, [userId]);
-  const ownedInsights = PERSONALITY_INSIGHTS_CATALOG.filter((i) => ownedInsightIds.has(i.id));
-
   return (
     <div className="space-y-8">
       <header>
