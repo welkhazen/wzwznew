@@ -84,9 +84,15 @@ function readStoredSpinResult(): WheelPoolEntry | null {
   try {
     const raw = window.localStorage.getItem(LANDING_WHEEL_SPIN_KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as { prizeId?: unknown };
-    if (typeof parsed.prizeId !== "string") return null;
-    return SPIN_WHEEL_POOL.find((entry) => entry.id === parsed.prizeId) ?? null;
+    const parsed = JSON.parse(raw) as { prizeId?: unknown; avatarId?: unknown };
+    if (typeof parsed.prizeId === "string") {
+      const byPrize = SPIN_WHEEL_POOL.find((entry) => entry.id === parsed.prizeId);
+      if (byPrize) return byPrize;
+    }
+    if (typeof parsed.avatarId === "string") {
+      return SPIN_WHEEL_POOL.find((entry) => entry.avatarId === parsed.avatarId) ?? null;
+    }
+    return null;
   } catch {
     return null;
   }
@@ -598,13 +604,15 @@ export function OnboardingJourney({
                 {claimedSpinResult ? (
                   <div className="w-full max-w-md rounded-2xl border border-raw-gold/30 bg-gradient-to-b from-raw-gold/[0.08] to-raw-gold/[0.02] p-4 text-center sm:p-5">
                     {claimedSpinResult.imageSrc ? (
-                      <img
-                        src={claimedSpinResult.imageSrc}
-                        alt={claimedSpinResult.name}
-                        className="mx-auto mb-3 h-16 w-16 rounded-full border border-raw-gold/40 object-cover sm:h-20 sm:w-20"
-                        loading="eager"
-                        decoding="async"
-                      />
+                      <span className="mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-full border border-raw-gold/45 bg-raw-black/45 shadow-[0_0_18px_rgba(241,196,45,0.18)] sm:h-24 sm:w-24">
+                        <img
+                          src={claimedSpinResult.imageSrc}
+                          alt={claimedSpinResult.name}
+                          className="h-[92%] w-[92%] rounded-full object-contain"
+                          loading="eager"
+                          decoding="async"
+                        />
+                      </span>
                     ) : null}
                     <p className="font-display text-sm tracking-wide text-raw-gold">
                       You won {claimedSpinResult.name}
