@@ -99,6 +99,20 @@ export async function updateProfileVisibility(userId: string, profilePublic: boo
   if (error) throw error;
 }
 
+export async function saveOnboardingIdentities(publicUsername: string, privateUsername: string): Promise<void> {
+  const { data, error } = await supabase.rpc('save_onboarding_identities', {
+    p_public_username: publicUsername,
+    p_private_alias: privateUsername,
+  });
+  if (error) throw error;
+  const result = data as { ok?: boolean; error?: string } | null;
+  if (!result?.ok) {
+    if (result?.error === 'public_username_taken') throw new Error('Public username is already taken.');
+    if (result?.error === 'private_username_taken') throw new Error('Private username is already taken.');
+    throw new Error('Choose usernames with 3-24 letters, numbers, dots, dashes, or underscores.');
+  }
+}
+
 export interface UserAliasRow {
   id: string;
   alias: string;
