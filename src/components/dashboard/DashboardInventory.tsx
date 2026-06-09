@@ -9,7 +9,7 @@ import { avatarDisplayName, avatarIdFromImageSrc, canonicalAvatarImageId } from 
 import type { Poll } from "@/store/useRawStore";
 import TokenImage from "@/assets/tokens.webp";
 import { spendTokens } from "@/lib/api/tokens";
-import { getAvatarRank } from "@/lib/avatarRank";
+import { getAvatarRank, hasAvatarRank } from "@/lib/avatarRank";
 
 interface DashboardInventoryProps {
   polls: Poll[];
@@ -301,9 +301,11 @@ export function AvatarShop({
 
             <div className="relative text-center">
               <p className="text-xs font-medium text-raw-text line-clamp-1">{avatarName(avatar)}</p>
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-raw-silver/60">
-                Rank: R{getAvatarRank(avatar)}
-              </p>
+              {hasAvatarRank(avatar) ? (
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-raw-silver/60">
+                  Rank: R{getAvatarRank(avatar)}
+                </p>
+              ) : null}
             </div>
 
             {owned ? (
@@ -533,9 +535,11 @@ export function DashboardInventory({
                   <AvatarFigure avatarIndex={avatar.level} size="md" selected={avatar.level === avatarLevel} rarity={rarity} />
                   <div className="relative text-center">
                     <p className="text-xs font-medium text-raw-text line-clamp-1">{avatarName(avatar)}</p>
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-raw-silver/60">
-                      Rank: R{getAvatarRank(avatar)}
-                    </p>
+                    {hasAvatarRank(avatar) ? (
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-raw-silver/60">
+                        Rank: R{getAvatarRank(avatar)}
+                      </p>
+                    ) : null}
                     <p className="mt-1 text-[10px] text-raw-silver/45">
                       {avatar.level === avatarLevel ? "Selected" : "Tap to use"}
                     </p>
