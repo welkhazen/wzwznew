@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Archive, BookOpen, Brain, CircleGauge, Fingerprint, Lock, Map, Sparkles, WandSparkles } from "lucide-react";
 import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { WheelOfFortune, type WheelPrize } from "@/components/wheel/WheelOfFortune";
@@ -9,6 +9,7 @@ import { avatarDisplayName, avatarIdFromImageSrc } from "@/config/avatarNames";
 import type { Poll } from "@/store/useRawStore";
 import TokenImage from "@/assets/tokens.webp";
 import { spendTokens } from "@/lib/api/tokens";
+import { readOwnedInsightIds } from "@/lib/insightsOwnership";
 
 interface DashboardInventoryProps {
   polls: Poll[];
