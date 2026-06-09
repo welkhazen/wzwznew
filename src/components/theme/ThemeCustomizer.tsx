@@ -161,17 +161,18 @@ export function ThemeCustomizer({
   const handleSelect = useCallback(
     (id: AccentPresetId) => {
       setErrorId(null);
-      if (ownedSet.has(id)) {
+      if (accentsAreFree || ownedSet.has(id)) {
         clearAccentPreview();
         setPreviewingId(null);
         setPreviewPromptHidden(false);
+        setPendingUnlock(null);
         setAccent(id);
         return;
       }
       setPreviewPromptHidden(false);
       setPendingUnlock(id);
     },
-    [clearAccentPreview, ownedSet, setAccent],
+    [accentsAreFree, clearAccentPreview, ownedSet, setAccent],
   );
 
   const confirmUnlock = useCallback(async () => {
@@ -339,7 +340,7 @@ export function ThemeCustomizer({
         </PopoverContent>
       </Popover>
 
-      <Dialog open={pendingUnlock !== null && !previewPromptHidden} onOpenChange={handleDialogChange}>
+      <Dialog open={!accentsAreFree && pendingUnlock !== null && !previewPromptHidden} onOpenChange={handleDialogChange}>
         <DialogContent className="max-w-sm rounded-3xl border border-raw-border/40 bg-raw-surface/95 text-raw-text shadow-2xl backdrop-blur-xl">
           {pendingPreset && (
             <>
