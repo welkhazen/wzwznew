@@ -834,8 +834,9 @@ export function DashboardCommunities({
       setProfileTarget({ message, profile: null, loading: true });
       getPublicUserProfile(message.senderId)
         .then((profile) => {
+          const isPublicSender = profile?.username?.toLowerCase() === message.senderName.toLowerCase();
           setProfileTarget((current) => (
-            current?.message.id === message.id ? { message, profile, loading: false } : current
+            current?.message.id === message.id ? { message, profile: isPublicSender ? profile : null, loading: false } : current
           ));
         })
         .catch(() => {

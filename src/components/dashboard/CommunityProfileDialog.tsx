@@ -120,8 +120,8 @@ export function CommunityProfileDialog({
                 selected
               />
               <div className="min-w-0">
-                <p className="font-display text-lg tracking-wide text-raw-text">Private user</p>
-                <p className="mt-1 text-sm text-raw-silver/45">This user keeps their profile private.</p>
+                <p className="truncate font-display text-lg tracking-wide text-raw-text">@{target?.message.senderName ?? "Private user"}</p>
+                <p className="mt-1 text-sm text-raw-silver/45">Private names do not have public profiles.</p>
               </div>
             </div>
           )}
