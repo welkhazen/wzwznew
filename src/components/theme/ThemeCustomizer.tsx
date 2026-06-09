@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Check, Eye, Lock, MonitorCog } from "lucide-react";
+import { Check, Eye, MonitorCog } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Dialog,
@@ -70,6 +70,7 @@ export function ThemeCustomizer({ placement = "floating", triggerStyle = "icon",
   const [errorId, setErrorId] = useState<AccentPresetId | null>(null);
   const [pendingUnlock, setPendingUnlock] = useState<AccentPresetId | null>(null);
   const [previewingId, setPreviewingId] = useState<AccentPresetId | null>(null);
+  const [previewPromptHidden, setPreviewPromptHidden] = useState(false);
 
   // Hydrate from Supabase whenever the signed-in user changes so unlocks
   // follow the account across devices and survive logout/login.
@@ -141,6 +142,7 @@ export function ThemeCustomizer({ placement = "floating", triggerStyle = "icon",
     const timeoutId = window.setTimeout(() => {
       clearAccentPreview();
       setPreviewingId(null);
+      setPreviewPromptHidden(false);
     }, ACCENT_PREVIEW_DURATION_MS);
 
     return () => window.clearTimeout(timeoutId);
@@ -150,12 +152,16 @@ export function ThemeCustomizer({ placement = "floating", triggerStyle = "icon",
     (id: AccentPresetId) => {
       setErrorId(null);
       if (ownedSet.has(id)) {
+        clearAccentPreview();
+        setPreviewingId(null);
+        setPreviewPromptHidden(false);
         setAccent(id);
         return;
       }
+      setPreviewPromptHidden(false);
       setPendingUnlock(id);
     },
-    [ownedSet, setAccent],
+    [clearAccentPreview, ownedSet, setAccent],
   );
 
   const confirmUnlock = useCallback(async () => {
@@ -164,6 +170,7 @@ export function ThemeCustomizer({ placement = "floating", triggerStyle = "icon",
     if (!user?.id) {
       setErrorId(id);
       setPendingUnlock(null);
+      setPreviewPromptHidden(false);
       clearAccentPreview();
       setPreviewingId(null);
       return;
@@ -171,6 +178,7 @@ export function ThemeCustomizer({ placement = "floating", triggerStyle = "icon",
     if (tokenBalance < ACCENT_UNLOCK_PRICE) {
       setErrorId(id);
       setPendingUnlock(null);
+      setPreviewPromptHidden(false);
       clearAccentPreview();
       setPreviewingId(null);
       return;
@@ -191,6 +199,7 @@ export function ThemeCustomizer({ placement = "floating", triggerStyle = "icon",
       setAccent(id);
       setPendingUnlock(null);
       setPreviewingId(null);
+      setPreviewPromptHidden(false);
     } catch {
       setErrorId(id);
     } finally {
@@ -204,6 +213,7 @@ export function ThemeCustomizer({ placement = "floating", triggerStyle = "icon",
         clearAccentPreview();
         setPreviewingId(null);
         setPendingUnlock(null);
+        setPreviewPromptHidden(false);
       }
     },
     [clearAccentPreview],
@@ -213,6 +223,7 @@ export function ThemeCustomizer({ placement = "floating", triggerStyle = "icon",
     if (!pendingPreset) return;
     applyAccentPreview(pendingPreset);
     setPreviewingId(pendingPreset.id);
+    setPreviewPromptHidden(true);
   }, [applyAccentPreview, pendingPreset]);
 
   return (
@@ -265,7 +276,7 @@ export function ThemeCustomizer({ placement = "floating", triggerStyle = "icon",
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-xs uppercase tracking-[0.18em] text-raw-silver/45">Accent</p>
-                  <p className="mt-1 text-sm text-raw-silver/65">Unlock new colors for {ACCENT_UNLOCK_PRICE} tokens each</p>
+                  <p className="mt-1 text-sm text-raw-silver/65">Preview new colors for one minute, then choose whether to buy</p>
                 </div>
                 <div className="rounded-full border border-raw-border/30 bg-raw-black/25 px-3 py-1 text-[10px] uppercase tracking-[0.16em] text-raw-gold/80">
                   {selectedAccent?.label}
@@ -278,8 +289,6 @@ export function ThemeCustomizer({ placement = "floating", triggerStyle = "icon",
                   const owned = ownedSet.has(preset.id);
                   const isUnlocking = unlocking === preset.id;
                   const hasError = errorId === preset.id;
-                  const canAfford = tokenBalance >= ACCENT_UNLOCK_PRICE;
-
                   return (
                     <button
                       key={preset.id}
@@ -297,34 +306,10 @@ export function ThemeCustomizer({ placement = "floating", triggerStyle = "icon",
                         isUnlocking && "cursor-wait opacity-80",
                       )}
                       style={{ backgroundColor: `rgb(${preset.rgb})` }}
-                      aria-label={
-                        owned
-                          ? `Use ${preset.label} accent`
-                          : `Unlock ${preset.label} accent for ${ACCENT_UNLOCK_PRICE} tokens`
-                      }
-                      title={
-                        owned
-                          ? preset.label
-                          : canAfford
-                            ? `Unlock ${preset.label} · ${ACCENT_UNLOCK_PRICE} tokens`
-                            : `Need ${ACCENT_UNLOCK_PRICE} tokens to unlock ${preset.label}`
-                      }
+                      aria-label={owned ? `Use ${preset.label} accent` : `Preview or buy ${preset.label} accent`}
+                      title={owned ? preset.label : `Preview ${preset.label} for one minute`}
                     >
                       {selected && owned && <Check className="h-4 w-4 text-raw-ink" />}
-
-                      {!owned && (
-                        <span
-                          className={cn(
-                            "absolute inset-0 flex items-center justify-center bg-black/55 backdrop-blur-[2px] transition",
-                            isUnlocking ? "opacity-100" : "group-hover:bg-black/45",
-                          )}
-                        >
-                          <span className="flex items-center gap-1 rounded-full bg-black/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-raw-gold shadow-[0_0_0_1px_rgb(var(--raw-accent)/0.4)]">
-                            <Lock className="h-2.5 w-2.5" strokeWidth={2.5} />
-                            <span className="tabular-nums">{ACCENT_UNLOCK_PRICE}</span>
-                          </span>
-                        </span>
-                      )}
                     </button>
                   );
                 })}
@@ -342,7 +327,7 @@ export function ThemeCustomizer({ placement = "floating", triggerStyle = "icon",
         </PopoverContent>
       </Popover>
 
-      <Dialog open={pendingUnlock !== null} onOpenChange={handleDialogChange}>
+      <Dialog open={pendingUnlock !== null && !previewPromptHidden} onOpenChange={handleDialogChange}>
         <DialogContent className="max-w-sm rounded-3xl border border-raw-border/40 bg-raw-surface/95 text-raw-text shadow-2xl backdrop-blur-xl">
           {pendingPreset && (
             <>

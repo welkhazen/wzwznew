@@ -55,16 +55,19 @@ describe("theme accent previews", () => {
     render(<ThemeCustomizer placement="inline" triggerStyle="compact" />);
 
     fireEvent.click(screen.getAllByRole("button")[0]);
-    fireEvent.click(screen.getByRole("button", { name: "Unlock Coral accent for 10 tokens" }));
+    fireEvent.click(screen.getByRole("button", { name: "Preview or buy Coral accent" }));
     fireEvent.click(screen.getByRole("button", { name: "View" }));
 
     expectRootAccent("255 125 92");
+    expect(screen.queryByRole("button", { name: "View" })).not.toBeInTheDocument();
 
     act(() => vi.advanceTimersByTime(59_999));
     expectRootAccent("255 125 92");
+    expect(screen.queryByRole("button", { name: "View" })).not.toBeInTheDocument();
 
     act(() => vi.advanceTimersByTime(1));
     expectRootAccent("241 196 45");
+    expect(screen.getByRole("button", { name: "View" })).toBeInTheDocument();
   });
 
   it("reverts the dashboard Appearance preview after one minute", () => {
