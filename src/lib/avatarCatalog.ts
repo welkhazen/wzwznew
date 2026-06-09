@@ -75,8 +75,11 @@ export const DEFAULT_AVATAR_CATALOG: readonly AvatarCatalogItem[] = [
   { id: "crimson-muse", level: 14, name: avatarDisplayName(6), price: "50", imageSrc: "/avatars/6.webp", bg: "#2a0b0b", figure: "#f97316", ring: "#f97316", glow: "#f9731680", isActive: true, showIn: "both", rarity: "common" },
   { id: "solar-flame", level: 15, name: avatarDisplayName(7), price: "50", imageSrc: "/avatars/7.png", bg: "#241005", figure: "#facc15", ring: "#facc15", glow: "#facc1590", isActive: true, showIn: "both", rarity: "common" },
   { id: "pink-circuit", level: 16, name: avatarDisplayName(35), price: "50", imageSrc: "/avatars/35.png", bg: "#2a0b1c", figure: "#fb7185", ring: "#fb7185", glow: "#fb718580", isActive: true, showIn: "both", rarity: "common" },
-  ...Array.from({ length: 18 }, (_, index): AvatarCatalogItem => {
+  ...Array.from({ length: 18 }, (_, index): AvatarCatalogItem | null => {
     const level = index + 17;
+    // Skip image ids already represented by a semantic alias above
+    // (avoids duplicate "Neon Lynx" / "Blue Signal" / "Violet Mask" entries).
+    if (level === 18 || level === 23 || level === 24) return null;
     return {
       id: `avatar-${level}`,
       level,
@@ -91,7 +94,7 @@ export const DEFAULT_AVATAR_CATALOG: readonly AvatarCatalogItem[] = [
       showIn: "both",
       rarity: "common",
     };
-  }),
+  }).filter((item): item is AvatarCatalogItem => item !== null),
   ...GENERATED_AVATAR_ENTRIES.map(withNumberedAvatarName),
 ];
 
