@@ -1,3 +1,15 @@
+with ranked_private_aliases as (
+  select
+    id,
+    row_number() over (partition by user_id order by created_at asc, id asc) as private_rank
+  from public.user_aliases
+  where is_public = false
+)
+delete from public.user_aliases alias
+using ranked_private_aliases ranked
+where alias.id = ranked.id
+  and ranked.private_rank > 1;
+
 create unique index if not exists user_aliases_one_private_per_user
   on public.user_aliases (user_id)
   where is_public = false;

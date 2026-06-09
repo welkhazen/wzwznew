@@ -40,8 +40,8 @@ export function mapCommunityMessage(row: DbCommunityMessage): CommunityChatMessa
 
 /**
  * Send a community message. The SECURITY DEFINER RPC derives the sender from
- * current_user_id() and enforces not-banned + community membership; the only
- * client-supplied fields are the message text and an optional reply target.
+ * current_user_id() and enforces not-banned + community membership; optional
+ * private aliases are verified server-side before being used as sender_name.
  */
 export async function sendMessage(
   communityId: string,
@@ -52,6 +52,7 @@ export async function sendMessage(
     p_community_id: communityId,
     p_text: text,
     p_reply_to_message_id: input.replyToMessage?.id ?? null,
+    p_identity_alias: input.identityAlias ?? null,
   });
 
   if (error) throw error;

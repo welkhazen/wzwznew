@@ -130,21 +130,27 @@ export async function listUserAliases(userId: string): Promise<UserAliasRow[]> {
   return (data ?? []) as UserAliasRow[];
 }
 
-export async function addPrivateAlias(userId: string, alias: string): Promise<UserAliasRow> {
+export async function savePrivateAlias(alias: string): Promise<UserAliasRow> {
   const trimmed = alias.trim();
-  if (trimmed.length < 3 || trimmed.length > 32) {
-    throw new Error('Name must be 3–32 characters.');
+  if (!/^[A-Za-z0-9._-]{3,24}$/.test(trimmed)) {
+    throw new Error('Name must be 3-24 letters, numbers, dots, dashes, or underscores.');
   }
-  const { data, error } = await supabase
-    .from('user_aliases')
-    .insert({ user_id: userId, alias: trimmed, is_public: false })
-    .select('id, alias, is_public, created_at')
-    .single();
+  const { data, error } = await supabase.rpc('save_private_alias', { p_alias: trimmed });
   if (error) {
-    if (error.code === '23505') throw new Error('You already have that name.');
+    if (error.code === '23505' || error.message.includes('private_username_taken')) {
+      throw new Error('That name is already taken.');
+    }
+    if (error.message.includes('invalid_private_username')) {
+      throw new Error('Name must be 3-24 letters, numbers, dots, dashes, or underscores.');
+    }
     throw error;
   }
   return data as UserAliasRow;
+}
+
+export async function addPrivateAlias(_userId: string, alias: string): Promise<UserAliasRow> {
+  void _userId;
+  return savePrivateAlias(alias);
 }
 
 export async function deleteUserAlias(aliasId: string): Promise<void> {
