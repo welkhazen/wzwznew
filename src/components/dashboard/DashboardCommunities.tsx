@@ -1587,7 +1587,7 @@ export function DashboardCommunities({
           })()}
 
           {(!selectedCommunity.locked || isJoined) && (
-          <div className="flex flex-1 min-h-0 flex-col gap-4 overflow-hidden lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start sm:flex-none sm:h-[calc(100dvh_-_260px)] sm:min-h-[360px]">
+          <div className="flex flex-1 min-h-0 flex-col gap-4 overflow-hidden lg:grid lg:grid-cols-[minmax(0,1fr)_380px] lg:items-stretch sm:flex-none sm:h-[calc(100dvh_-_260px)] sm:min-h-[360px]">
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden sm:h-full sm:rounded-2xl sm:border sm:border-raw-border/20 sm:bg-raw-black/35">
             {visibleCommunityPolls.length > 0 && (
               <div className="border-b border-raw-border/15 px-4 py-3">
@@ -1721,8 +1721,8 @@ export function DashboardCommunities({
               onSendMessage={handleSendMessage}
             />
           </div>
-          <aside className="hidden lg:block">
-            <GeneralFeedBox userId={user.id} compact showHeader={false} />
+          <aside className="hidden min-h-0 lg:block">
+            <GeneralFeedBox userId={user.id} compact showHeader={false} fillHeight />
           </aside>
           </div>
           )}
