@@ -28,11 +28,33 @@ export const AVATAR_RANK_MAP: Record<string, number> = {
 export const NUMBERED_AVATAR_RANKS: Record<number, number> = {
   1: 1,  2: 4,  3: 1,  4: 6,  5: 3,  6: 5,  7: 7,  8: 1,  9: 2,  10: 2,
   11: 1, 12: 2, 13: 5, 14: 4, 15: 1, 16: 6, 17: 1, 18: 2, 19: 10, 20: 9,
-  21: 6, 22: 10, 23: 2, 24: 3, 25: 2, 26: 10, 27: 1, 28: 4, 29: 4, 30: 1,
-  31: 9, 32: 9, 33: 2, 34: 5, 35: 8, 36: 1, 37: 3, 38: 4, 39: 5, 40: 7,
+  21: 6, 22: 10, 23: 2, 24: 3, 25: 2, 26: 10, 27: 1, 28: 4, 29: 4, 30: 9,
+  31: 9, 32: 9, 33: 2, 34: 5, 35: 8, 36: 2, 37: 3, 38: 4, 39: 5, 40: 7,
   41: 4, 42: 2, 43: 1, 44: 2, 45: 5, 46: 3, 47: 6, 48: 2, 49: 3, 50: 3,
   51: 5, 52: 3, 53: 1, 54: 9, 55: 6, 56: 2, 57: 6, 58: 3, 59: 6,
 };
+
+/**
+ * Ids of the eight unranked base free avatars rendered as colored silhouettes.
+ * These show no RANK label in any picker / inventory card.
+ */
+const UNRANKED_BASE_AVATAR_IDS = new Set([
+  "ember",
+  "verdant",
+  "horned",
+  "pharaoh",
+  "violet",
+  "rose",
+  "black",
+  "blue",
+]);
+
+/** Returns false for the eight base free avatars so the UI can hide the rank label. */
+export function hasAvatarRank(avatar: Pick<AvatarCatalogItem, "id" | "imageSrc">): boolean {
+  if (avatar.id && UNRANKED_BASE_AVATAR_IDS.has(avatar.id.toLowerCase())) return false;
+  if (avatar.imageSrc && /\/avatars\/avatar-\d+\.svg$/.test(avatar.imageSrc)) return false;
+  return true;
+}
 
 /** Slug-based image-source overrides for catalog rows that don't use /avatars/<n>.png. */
 const SLUG_AVATAR_RANKS: Record<string, number> = {
