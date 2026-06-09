@@ -52,6 +52,7 @@ interface OnboardingJourneyProps {
   onCompleteOnboarding: () => void | Promise<void>;
   onLogout: () => void;
   onClaimLandingWheelAvatar: () => Promise<void>;
+  markAvatarOwned: (level: number) => void;
 }
 
 type WheelPoolEntry = { id: string; avatarId: string; name: string; imageSrc: string };
@@ -324,6 +325,7 @@ export function OnboardingJourney({
   onCompleteOnboarding,
   onLogout,
   onClaimLandingWheelAvatar,
+  markAvatarOwned,
 }: OnboardingJourneyProps) {
   const { data: supabasePolls } = useQuery({
     queryKey: ["onboarding-landing-polls"],
@@ -388,6 +390,14 @@ export function OnboardingJourney({
   }, [user.id]);
 
   useEffect(() => {
+    if (!spinResult) return;
+    const idx = SPIN_POOL.findIndex((p) => p.catalogId === spinResult.avatarId);
+    if (idx >= 0) {
+      markAvatarOwned(FREE_ONBOARDING_AVATAR_COUNT + 1 + idx);
+    }
+  }, [spinResult, markAvatarOwned]);
+
+  useEffect(() => {
     const stepIndex = STEP_ORDER.indexOf(onboardingStep);
     track("onboarding_step_viewed", { step: onboardingStep as "spin" | "avatar" | "polls" | "communities" | "ready", step_index: stepIndex });
     stepStartTimeRef.current = Date.now();
@@ -402,7 +412,7 @@ export function OnboardingJourney({
   const canContinueFromUsername = isValidUsername(publicUsernameDraft) && isValidUsername(privateUsernameDraft);
   const canSelectPreviewAvatar = previewAvatarIndex <= FREE_ONBOARDING_AVATAR_COUNT || ownedAvatarLevels.has(previewAvatarIndex);
   const freeAvatarChoices = onboardingAvatars.slice(0, FREE_ONBOARDING_AVATAR_COUNT);
-  const previewAvatarChoices: AvatarCatalogItem[] = [];
+  const previewAvatarChoices: AvatarCatalogItem[] = onboardingAvatars.slice(FREE_ONBOARDING_AVATAR_COUNT);
   const ownedPreviewAvatarChoices = previewAvatarChoices.filter((avatar) => ownedAvatarLevels.has(avatar.level));
   const claimedSpinResult = spinResult ?? findOwnedSpinResult(ownedAvatarLevels, onboardingAvatars);
   const previewAvatarPageCount = Math.max(1, Math.ceil(previewAvatarChoices.length / AVATAR_PAGE_SIZE));
@@ -573,6 +583,10 @@ export function OnboardingJourney({
                     } finally {
                       setIsClaimingSpin(false);
                     }
+                    const spinIdx = SPIN_POOL.findIndex((p) => p.catalogId === entry.avatarId);
+                    if (spinIdx >= 0) {
+                      markAvatarOwned(FREE_ONBOARDING_AVATAR_COUNT + 1 + spinIdx);
+                    }
                     track("onboarding_step_completed", {
                       step: "spin" as never,
                       step_index: STEP_ORDER.indexOf("spin"),
@@ -583,6 +597,15 @@ export function OnboardingJourney({
 
                 {claimedSpinResult ? (
                   <div className="w-full max-w-md rounded-2xl border border-raw-gold/30 bg-gradient-to-b from-raw-gold/[0.08] to-raw-gold/[0.02] p-4 text-center sm:p-5">
+                    {claimedSpinResult.imageSrc ? (
+                      <img
+                        src={claimedSpinResult.imageSrc}
+                        alt={claimedSpinResult.name}
+                        className="mx-auto mb-3 h-16 w-16 rounded-full border border-raw-gold/40 object-cover sm:h-20 sm:w-20"
+                        loading="eager"
+                        decoding="async"
+                      />
+                    ) : null}
                     <p className="font-display text-sm tracking-wide text-raw-gold">
                       You won {claimedSpinResult.name}
                     </p>
@@ -653,7 +676,13 @@ export function OnboardingJourney({
           {onboardingStep === "early-signup-reward" && (
             <EarlySignupClaim
               userId={user.id}
-              onResolved={() => {
+              onResolved={(claimedAvatarCatalogId) => {
+                if (claimedAvatarCatalogId) {
+                  const signupIdx = EARLY_SIGNUP_POOL.findIndex((p) => p.catalogId === claimedAvatarCatalogId);
+                  if (signupIdx >= 0) {
+                    markAvatarOwned(FREE_ONBOARDING_AVATAR_COUNT + 1 + SPIN_POOL.length + signupIdx);
+                  }
+                }
                 onSetOnboardingStep("avatar");
               }}
             />

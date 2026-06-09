@@ -27,8 +27,8 @@ const NAV: { icon: typeof Home; label: string; tab: DashboardTab | "home" }[] = 
   { icon: MessageCircle, label: "Communities", tab: "communities" },
   { icon: Target,        label: "Polls",       tab: "polls"       },
   { icon: Trophy,        label: "Challenges",  tab: "challenges"  },
-  { icon: Store,         label: "Store",       tab: "store"       },
   { icon: Archive,       label: "Inventory",   tab: "inventory"   },
+  { icon: Store,         label: "Store",       tab: "store"       },
 ];
 
 const COMMUNITY_LOGOS: Record<string, string> = {

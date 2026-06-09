@@ -65,6 +65,18 @@ export class ErrorBoundary extends Component<
     this.setState({ error: null });
   };
 
+  componentDidMount(): void {
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("raw.chunk_error_reload");
+    }
+  }
+
+  componentDidUpdate(_prev: ErrorBoundaryProps, prevState: ErrorBoundaryState): void {
+    if (prevState.error && !this.state.error && typeof window !== "undefined") {
+      sessionStorage.removeItem("raw.chunk_error_reload");
+    }
+  }
+
   render(): ReactNode {
     if (this.state.error) {
       if (this.props.fallback) {
