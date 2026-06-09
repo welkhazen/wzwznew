@@ -42,13 +42,13 @@ interface OnboardingJourneyProps {
   onboardingAnsweredPollIds: Set<string>;
   publicUsername: string;
   privateUsername: string;
-  onSaveUsernames: (publicUsername: string, privateUsername: string) => void;
+  onSaveUsernames: (publicUsername: string, privateUsername: string) => void | Promise<void>;
   onSetOnboardingStep: (step: OnboardingStep) => void;
   onMarkPollAnswered: (pollId: string) => void;
   selectedCommunityIds: string[];
   onToggleCommunity: (communityId: string) => void;
-  profilePublic: boolean | null;
-  onSetProfilePublic: (value: boolean) => void;
+  profilePublic?: boolean | null;
+  onSetProfilePublic?: (value: boolean) => void;
   onCompleteOnboarding: () => void | Promise<void>;
   onLogout: () => void;
   onClaimLandingWheelAvatar: () => Promise<void>;
@@ -102,7 +102,7 @@ function findOwnedSpinResult(ownedAvatarLevels: Set<number>, avatarCatalog: Avat
   return null;
 }
 
-const STEP_ORDER: OnboardingStep[] = ["spin", "username", "early-signup-reward", "avatar", "polls", "profile", "communities"];
+const STEP_ORDER: OnboardingStep[] = ["spin", "username", "early-signup-reward", "avatar", "polls", "communities"];
 const STEP_LABELS: Record<OnboardingStep, string> = {
   spin: "spin",
   username: "username",
@@ -319,8 +319,8 @@ export function OnboardingJourney({
   onMarkPollAnswered,
   selectedCommunityIds,
   onToggleCommunity,
-  profilePublic,
-  onSetProfilePublic,
+  profilePublic = null,
+  onSetProfilePublic = () => undefined,
   onCompleteOnboarding,
   onLogout,
   onClaimLandingWheelAvatar,
@@ -358,6 +358,8 @@ export function OnboardingJourney({
   const [isClaimingSpin, setIsClaimingSpin] = useState(false);
   const [publicUsernameDraft, setPublicUsernameDraft] = useState(publicUsername || user.username);
   const [privateUsernameDraft, setPrivateUsernameDraft] = useState(privateUsername);
+  const [usernameSaveError, setUsernameSaveError] = useState("");
+  const [isSavingUsernames, setIsSavingUsernames] = useState(false);
   const onboardingAvatars = useMemo(() => fallbackAvatarCatalog(), []);
   const [isLoadingPreviewAvatars] = useState(false);
   const isMobile = useIsMobile();
@@ -387,7 +389,7 @@ export function OnboardingJourney({
 
   useEffect(() => {
     const stepIndex = STEP_ORDER.indexOf(onboardingStep);
-    track("onboarding_step_viewed", { step: onboardingStep as "spin" | "avatar" | "polls" | "profile" | "communities" | "ready", step_index: stepIndex });
+    track("onboarding_step_viewed", { step: onboardingStep as "spin" | "avatar" | "polls" | "communities" | "ready", step_index: stepIndex });
     stepStartTimeRef.current = Date.now();
   }, [onboardingStep]);
 
@@ -395,13 +397,12 @@ export function OnboardingJourney({
   const canContinueFromPolls = answeredCount >= onboardingPolls.length;
   const canContinueFromProfile = profilePublic !== null;
   const canContinueFromCommunities = selectedCommunityIds.length >= 1;
-  const canCompleteOnboarding = canContinueFromAvatar && canContinueFromPolls && canContinueFromProfile && canContinueFromCommunities;
+  const canCompleteOnboarding = canContinueFromAvatar && canContinueFromPolls && canContinueFromCommunities;
   const previewAvatar = onboardingAvatars[previewAvatarIndex - 1] ?? onboardingAvatars[0];
   const canContinueFromUsername = isValidUsername(publicUsernameDraft) && isValidUsername(privateUsernameDraft);
   const canSelectPreviewAvatar = previewAvatarIndex <= FREE_ONBOARDING_AVATAR_COUNT || ownedAvatarLevels.has(previewAvatarIndex);
-  const canContinueWithPreviewAvatar = canContinueFromAvatar && previewAvatarIndex === avatarIndex;
   const freeAvatarChoices = onboardingAvatars.slice(0, FREE_ONBOARDING_AVATAR_COUNT);
-  const previewAvatarChoices = onboardingAvatars.slice(FREE_ONBOARDING_AVATAR_COUNT);
+  const previewAvatarChoices: AvatarCatalogItem[] = [];
   const ownedPreviewAvatarChoices = previewAvatarChoices.filter((avatar) => ownedAvatarLevels.has(avatar.level));
   const claimedSpinResult = spinResult ?? findOwnedSpinResult(ownedAvatarLevels, onboardingAvatars);
   const previewAvatarPageCount = Math.max(1, Math.ceil(previewAvatarChoices.length / AVATAR_PAGE_SIZE));
@@ -452,7 +453,16 @@ export function OnboardingJourney({
   const goToNextStep = async () => {
     if (onboardingStep === "username") {
       if (!canContinueFromUsername) return;
-      onSaveUsernames(publicUsernameDraft, privateUsernameDraft);
+      setIsSavingUsernames(true);
+      setUsernameSaveError("");
+      try {
+        await onSaveUsernames(publicUsernameDraft, privateUsernameDraft);
+      } catch (error) {
+        setUsernameSaveError(error instanceof Error ? error.message : "Could not save usernames.");
+        setIsSavingUsernames(false);
+        return;
+      }
+      setIsSavingUsernames(false);
     }
 
     if (onboardingStep === "avatar" && canSelectPreviewAvatar && previewAvatarIndex !== avatarIndex) {
@@ -461,7 +471,7 @@ export function OnboardingJourney({
     }
 
     track("onboarding_step_completed", {
-      step: onboardingStep as "spin" | "avatar" | "polls" | "profile" | "communities" | "ready",
+      step: onboardingStep as "spin" | "avatar" | "polls" | "communities" | "ready",
       duration_ms: Date.now() - stepStartTimeRef.current,
     });
     onSetOnboardingStep(getNextStep(onboardingStep));
@@ -629,9 +639,12 @@ export function OnboardingJourney({
                   <input value={privateUsernameDraft} onChange={(event) => setPrivateUsernameDraft(sanitizeUsernameInput(event.target.value))} autoComplete="off" className="mt-2 w-full rounded-2xl border border-raw-border/50 bg-raw-black/65 px-4 py-3 font-display text-base tracking-wide text-raw-text outline-none transition focus:border-raw-gold/45" placeholder="Choose a private username" />
                   <span className="mt-2 block text-xs text-raw-silver/45">Not displayed to other people. Use 3-24 letters, numbers, dots, dashes, or underscores.</span>
                 </label>
+                {usernameSaveError ? (
+                  <p className="rounded-xl border border-red-400/25 bg-red-500/10 px-3 py-2 text-xs text-red-200">{usernameSaveError}</p>
+                ) : null}
                 <div className="flex items-center justify-between gap-3 pt-3">
                   <button type="button" onClick={goToPreviousStep} className="rounded-full border border-raw-border/50 px-5 py-2 font-display text-[10px] uppercase tracking-[0.2em] text-raw-silver/70 transition hover:border-raw-gold/40 hover:text-raw-gold">← Back</button>
-                  <button type="button" disabled={!canContinueFromUsername} onClick={() => void goToNextStep()} className={`rounded-full border px-6 py-2 font-display text-xs uppercase tracking-[0.2em] transition ${canContinueFromUsername ? "border-raw-gold/50 bg-raw-gold/15 text-raw-gold hover:bg-raw-gold/25" : "cursor-not-allowed border-raw-border/40 text-raw-silver/30"}`}>Continue</button>
+                  <button type="button" disabled={!canContinueFromUsername || isSavingUsernames} onClick={() => void goToNextStep()} className={`rounded-full border px-6 py-2 font-display text-xs uppercase tracking-[0.2em] transition ${canContinueFromUsername && !isSavingUsernames ? "border-raw-gold/50 bg-raw-gold/15 text-raw-gold hover:bg-raw-gold/25" : "cursor-not-allowed border-raw-border/40 text-raw-silver/30"}`}>{isSavingUsernames ? "Saving..." : "Continue"}</button>
                 </div>
               </div>
             </section>
@@ -984,13 +997,13 @@ export function OnboardingJourney({
                   disabled={!canContinueFromPolls}
                   className="rounded-xl border border-raw-gold/40 bg-raw-gold/15 px-5 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-raw-gold transition-all hover:bg-raw-gold/25 disabled:cursor-not-allowed disabled:opacity-40 sm:py-2.5"
                 >
-                  Continue to profile →
+                  Continue to communities →
                 </button>
               </div>
             </section>
           )}
 
-          {onboardingStep === "profile" && (
+          {onboardingStep === "profile" && STEP_ORDER.includes("profile") && (
             <section>
               <div className="flex items-start justify-between gap-3">
                 <div>
