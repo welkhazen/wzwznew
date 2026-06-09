@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import type { AvatarRarity } from "@/lib/avatarRarity";
 import { GENERATED_AVATAR_ENTRIES } from "@/lib/generatedAvatarEntries";
+import { avatarDisplayName, avatarIdFromImageSrc } from "@/config/avatarNames";
 
 export type AvatarCatalogItem = {
   id: string;
@@ -27,6 +28,12 @@ const DAILY_SPIN_AVATAR_CLAIM_PREFIX = "raw.daily-spin.avatar-claim.v1.";
 export const LANDING_WHEEL_SPIN_KEY = "raw.landing-wheel.spin.v1";
 let avatarBackendMissingTables = false;
 let avatarCatalogLocalWriteFailed = false;
+
+function withNumberedAvatarName(item: AvatarCatalogItem): AvatarCatalogItem {
+  const imageId = avatarIdFromImageSrc(item.imageSrc);
+  if (imageId === null) return item;
+  return { ...item, name: avatarDisplayName(imageId) };
+}
 
 export function consumeAvatarCatalogLocalWriteFailure(): boolean {
   const failed = avatarCatalogLocalWriteFailed;
@@ -60,20 +67,20 @@ export const DEFAULT_AVATAR_CATALOG: readonly AvatarCatalogItem[] = [
   { id: "rose", level: 6, name: "Rose", price: "50", imageSrc: "/avatars/avatar-4.svg", bg: "#1f0a14", figure: "#f43f5e", ring: "#f43f5e", glow: "#f43f5e80", isActive: true, showIn: "both", rarity: "common" },
   { id: "black", level: 7, name: "Black", price: "50", imageSrc: "/avatars/avatar-7.svg", bg: "#0a0a0a", figure: "#cfd3da", ring: "#cfd3da", glow: "#cfd3da80", isActive: true, showIn: "both", rarity: "common" },
   { id: "blue", level: 8, name: "Blue", price: "50", imageSrc: "/avatars/avatar-10.svg", bg: "#0a1424", figure: "#3b82f6", ring: "#3b82f6", glow: "#3b82f680", isActive: true, showIn: "both", rarity: "common" },
-  { id: "silver-void", level: 9, name: "Silver Void", price: "50", imageSrc: "/avatars/1.webp", bg: "#111827", figure: "#cbd5e1", ring: "#cbd5e1", glow: "#cbd5e180", isActive: true, showIn: "both", rarity: "common" },
-  { id: "neon-lynx", level: 10, name: "Neon Lynx", price: "50", imageSrc: "/avatars/18.png", bg: "#170f2e", figure: "#a855f7", ring: "#c084fc", glow: "#a855f780", isActive: true, showIn: "both", rarity: "common" },
-  { id: "blue-signal", level: 11, name: "Blue Signal", price: "50", imageSrc: "/avatars/23.png", bg: "#06131f", figure: "#22d3ee", ring: "#22d3ee", glow: "#22d3ee80", isActive: true, showIn: "both", rarity: "common" },
-  { id: "violet-mask", level: 12, name: "Violet Mask", price: "50", imageSrc: "/avatars/24.png", bg: "#1a1028", figure: "#d946ef", ring: "#d946ef", glow: "#d946ef80", isActive: true, showIn: "both", rarity: "common" },
-  { id: "horned-iron", level: 13, name: "Viozen", price: "50", imageSrc: "/avatars/5.png", bg: "#1f0a05", figure: "#fb923c", ring: "#fb923c", glow: "#fb923c80", isActive: true, showIn: "both", rarity: "common" },
-  { id: "crimson-muse", level: 14, name: "Crimson Muse", price: "50", imageSrc: "/avatars/6.webp", bg: "#2a0b0b", figure: "#f97316", ring: "#f97316", glow: "#f9731680", isActive: true, showIn: "both", rarity: "common" },
-  { id: "solar-flame", level: 15, name: "Solar Flame", price: "50", imageSrc: "/avatars/7.png", bg: "#241005", figure: "#facc15", ring: "#facc15", glow: "#facc1590", isActive: true, showIn: "both", rarity: "common" },
-  { id: "pink-circuit", level: 16, name: "Pink Circuit", price: "50", imageSrc: "/avatars/35.png", bg: "#2a0b1c", figure: "#fb7185", ring: "#fb7185", glow: "#fb718580", isActive: true, showIn: "both", rarity: "common" },
+  { id: "silver-void", level: 9, name: avatarDisplayName(1), price: "50", imageSrc: "/avatars/1.webp", bg: "#111827", figure: "#cbd5e1", ring: "#cbd5e1", glow: "#cbd5e180", isActive: true, showIn: "both", rarity: "common" },
+  { id: "neon-lynx", level: 10, name: avatarDisplayName(18), price: "50", imageSrc: "/avatars/18.png", bg: "#170f2e", figure: "#a855f7", ring: "#c084fc", glow: "#a855f780", isActive: true, showIn: "both", rarity: "common" },
+  { id: "blue-signal", level: 11, name: avatarDisplayName(23), price: "50", imageSrc: "/avatars/23.png", bg: "#06131f", figure: "#22d3ee", ring: "#22d3ee", glow: "#22d3ee80", isActive: true, showIn: "both", rarity: "common" },
+  { id: "violet-mask", level: 12, name: avatarDisplayName(24), price: "50", imageSrc: "/avatars/24.png", bg: "#1a1028", figure: "#d946ef", ring: "#d946ef", glow: "#d946ef80", isActive: true, showIn: "both", rarity: "common" },
+  { id: "horned-iron", level: 13, name: avatarDisplayName(5), price: "50", imageSrc: "/avatars/5.png", bg: "#1f0a05", figure: "#fb923c", ring: "#fb923c", glow: "#fb923c80", isActive: true, showIn: "both", rarity: "common" },
+  { id: "crimson-muse", level: 14, name: avatarDisplayName(6), price: "50", imageSrc: "/avatars/6.webp", bg: "#2a0b0b", figure: "#f97316", ring: "#f97316", glow: "#f9731680", isActive: true, showIn: "both", rarity: "common" },
+  { id: "solar-flame", level: 15, name: avatarDisplayName(7), price: "50", imageSrc: "/avatars/7.png", bg: "#241005", figure: "#facc15", ring: "#facc15", glow: "#facc1590", isActive: true, showIn: "both", rarity: "common" },
+  { id: "pink-circuit", level: 16, name: avatarDisplayName(35), price: "50", imageSrc: "/avatars/35.png", bg: "#2a0b1c", figure: "#fb7185", ring: "#fb7185", glow: "#fb718580", isActive: true, showIn: "both", rarity: "common" },
   ...Array.from({ length: 18 }, (_, index): AvatarCatalogItem => {
     const level = index + 17;
     return {
       id: `avatar-${level}`,
       level,
-      name: `Avatar ${level}`,
+      name: avatarDisplayName(level),
       price: "50",
       imageSrc: `/avatars/${level}.png`,
       bg: "#111827",
@@ -85,7 +92,7 @@ export const DEFAULT_AVATAR_CATALOG: readonly AvatarCatalogItem[] = [
       rarity: "common",
     };
   }),
-  ...GENERATED_AVATAR_ENTRIES,
+  ...GENERATED_AVATAR_ENTRIES.map(withNumberedAvatarName),
 ];
 
 const WHEEL_AVATAR_IDS = new Set([

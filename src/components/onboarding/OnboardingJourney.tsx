@@ -11,6 +11,7 @@ import { PhoneMockup } from "@/components/ui/phone-mockup";
 import { fetchPolls } from "@/lib/api/polls";
 import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
 import { LANDING_WHEEL_SPIN_KEY } from "@/lib/avatarCatalog";
+import { avatarDisplayName } from "@/config/avatarNames";
 import { WheelOfFortune, type WheelPrize } from "@/components/wheel/WheelOfFortune";
 import { SpinWheelClaimBanner } from "@/components/wheel/SpinWheelClaimBanner";
 
@@ -61,7 +62,7 @@ import { SPIN_POOL, EARLY_SIGNUP_POOL } from "@/backend/supabase/controllers/ava
 const SPIN_WHEEL_POOL: readonly WheelPoolEntry[] = SPIN_POOL.map((entry, i) => ({
   id: `wheel-avatar-${i + 1}`,
   avatarId: entry.catalogId,
-  name: `Avatar ${entry.imageId}`,
+  name: avatarDisplayName(entry.imageId),
   imageSrc: entry.imageSrc,
 }));
 
@@ -131,7 +132,7 @@ const LANDING_ONBOARDING_AVATARS: readonly AvatarCatalogItem[] = [
   ...SPIN_POOL.map((entry, i): AvatarCatalogItem => ({
     id: `preview-spin-${i + 1}`,
     level: FREE_ONBOARDING_AVATAR_COUNT + 1 + i,
-    name: `Avatar ${entry.imageId}`,
+    name: avatarDisplayName(entry.imageId),
     price: "50",
     imageSrc: entry.imageSrc,
     bg: "#111827", figure: "#cbd5e1", ring: "#cbd5e1", glow: "#cbd5e180",
@@ -140,7 +141,7 @@ const LANDING_ONBOARDING_AVATARS: readonly AvatarCatalogItem[] = [
   ...EARLY_SIGNUP_POOL.map((entry, i): AvatarCatalogItem => ({
     id: `preview-signup-${i + 1}`,
     level: FREE_ONBOARDING_AVATAR_COUNT + 1 + SPIN_POOL.length + i,
-    name: `Avatar ${entry.imageId}`,
+    name: avatarDisplayName(entry.imageId),
     price: "50",
     imageSrc: entry.imageSrc,
     bg: "#111827", figure: "#cbd5e1", ring: "#cbd5e1", glow: "#cbd5e180",
