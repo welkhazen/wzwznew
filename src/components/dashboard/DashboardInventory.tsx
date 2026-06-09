@@ -493,18 +493,6 @@ export function DashboardInventory({
     seenOwnedImageKeys.add(imageKey);
     return true;
   });
-  const [ownedInsightIds, setOwnedInsightIds] = useState<Set<string>>(() => readOwnedInsightIds(userId));
-  useEffect(() => {
-    const refresh = () => setOwnedInsightIds(readOwnedInsightIds(userId));
-    window.addEventListener("storage", refresh);
-    window.addEventListener("raw:insights-updated", refresh);
-    return () => {
-      window.removeEventListener("storage", refresh);
-      window.removeEventListener("raw:insights-updated", refresh);
-    };
-  }, [userId]);
-  const ownedInsights = PERSONALITY_INSIGHTS_CATALOG.filter((i) => ownedInsightIds.has(i.id));
-
   return (
     <div className="space-y-8">
       <header>
