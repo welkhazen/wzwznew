@@ -9,6 +9,7 @@ import { avatarDisplayName, avatarIdFromImageSrc, canonicalAvatarImageId } from 
 import type { Poll } from "@/store/useRawStore";
 import TokenImage from "@/assets/tokens.webp";
 import { spendTokens } from "@/lib/api/tokens";
+import { sortAvatarsByRank } from "@/lib/avatarRank";
 
 interface DashboardInventoryProps {
   polls: Poll[];
@@ -266,7 +267,8 @@ export function AvatarShop({
       return true;
     },
   );
-  const visibleAvatars = showAll ? purchasable : purchasable.slice(0, 8);
+  const sortedPurchasable = sortAvatarsByRank(purchasable);
+  const visibleAvatars = showAll ? sortedPurchasable : sortedPurchasable.slice(0, 8);
 
   if (purchasable.length === 0) {
     return (
@@ -487,13 +489,13 @@ export function DashboardInventory({
   const pollsAnswered = votedPolls.size;
 
   const seenOwnedImageKeys = new Set<string>();
-  const ownedAvatars = avatarCatalog.filter((avatar) => {
+  const ownedAvatars = sortAvatarsByRank(avatarCatalog.filter((avatar) => {
     if (!ownedAvatarLevels.has(avatar.level)) return false;
     const imageKey = avatarImageKey(avatar);
     if (seenOwnedImageKeys.has(imageKey)) return false;
     seenOwnedImageKeys.add(imageKey);
     return true;
-  });
+  }));
   return (
     <div className="space-y-8">
       <header>

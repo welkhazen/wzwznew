@@ -24,6 +24,7 @@ import type { OnboardingStep, Poll, User } from "@/store/useRawStore";
 import { track } from "@/lib/analytics";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { isValidUsername, sanitizeUsernameInput } from "@/lib/inputSecurity";
+import { imageIdFromCatalogId, sortAvatarsByRank } from "@/lib/avatarRank";
 
 type OnboardingPoll = {
   id: string;
@@ -37,6 +38,7 @@ interface OnboardingJourneyProps {
   avatarIndex: number;
   onAvatarChange: (index: number) => void;
   ownedAvatarLevels: Set<number>;
+  ownedAvatarIds: Set<string>;
   avatarCatalog: AvatarCatalogItem[];
   onboardingStep: OnboardingStep;
   onboardingAnsweredPollIds: Set<string>;
@@ -316,6 +318,7 @@ export function OnboardingJourney({
   avatarIndex,
   onAvatarChange,
   ownedAvatarLevels,
+  ownedAvatarIds,
   avatarCatalog,
   onboardingStep,
   onboardingAnsweredPollIds,
@@ -418,7 +421,31 @@ export function OnboardingJourney({
   const canContinueFromUsername = isValidUsername(publicUsernameDraft) && isValidUsername(privateUsernameDraft);
   const canSelectPreviewAvatar = previewAvatarIndex <= FREE_ONBOARDING_AVATAR_COUNT || ownedAvatarLevels.has(previewAvatarIndex);
   const freeAvatarChoices = onboardingAvatars.slice(0, FREE_ONBOARDING_AVATAR_COUNT);
-  const previewAvatarChoices: AvatarCatalogItem[] = onboardingAvatars.slice(FREE_ONBOARDING_AVATAR_COUNT);
+  const previewAvatarChoices: AvatarCatalogItem[] = sortAvatarsByRank(
+    onboardingAvatars.slice(FREE_ONBOARDING_AVATAR_COUNT),
+  );
+  // Reward catalog ids on the server are `spin-<imageId>` / `signup-<imageId>`.
+  // Translate those to the set of owned image ids so the preview grid can mark
+  // ownership without needing a matching level mapping in DEFAULT_AVATAR_CATALOG.
+  const ownedRewardImageIds = useMemo(() => {
+    const ids = new Set<number>();
+    ownedAvatarIds.forEach((id) => {
+      const imageId = imageIdFromCatalogId(id);
+      if (imageId !== null) ids.add(imageId);
+    });
+    return ids;
+  }, [ownedAvatarIds]);
+  const isPreviewAvatarOwned = (avatar: AvatarCatalogItem): boolean => {
+    if (ownedAvatarLevels.has(avatar.level)) return true;
+    if (avatar.imageSrc) {
+      const match = /(\d+)\.(?:png|webp|jpg|jpeg|svg)$/.exec(avatar.imageSrc);
+      if (match) {
+        const imageId = Number(match[1]);
+        if (ownedRewardImageIds.has(imageId)) return true;
+      }
+    }
+    return false;
+  };
   const ownedPreviewAvatarChoices = previewAvatarChoices.filter((avatar) => ownedAvatarLevels.has(avatar.level));
   const claimedSpinResult = spinResult ?? findOwnedSpinResult(ownedAvatarLevels, onboardingAvatars);
   const previewAvatarPageCount = Math.max(1, Math.ceil(previewAvatarChoices.length / AVATAR_PAGE_SIZE));
@@ -825,7 +852,7 @@ export function OnboardingJourney({
                     {visiblePreviewAvatarChoices.map((avatar) => {
                       const index = avatar.level;
                       const isPreviewed = index === previewAvatarIndex;
-                      const isOwned = ownedAvatarLevels.has(index);
+                      const isOwned = isPreviewAvatarOwned(avatar);
                       return (
                         <button
                           key={avatar.id}
@@ -838,7 +865,7 @@ export function OnboardingJourney({
                               onAvatarChange(index);
                             }
                           }}
-                          className={`group relative flex min-w-0 flex-col items-center gap-1 rounded-xl p-1.5 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/50 ${
+                          className={`group relative flex min-w-0 flex-col items-center gap-2 rounded-xl p-2 pb-3 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/50 ${
                             isOwned ? "" : "cursor-help"
                           }`}
                           aria-label={isOwned ? `Select claimed reward ${avatar.name}` : `Preview ${avatar.name}, locked until later`}
@@ -856,12 +883,12 @@ export function OnboardingJourney({
                               loading="lazy"
                             />
                           </div>
-                          <span className={`max-w-full truncate text-center font-display text-[7px] leading-tight tracking-[0.08em] transition-colors sm:text-[8px] ${
-                            isPreviewed ? "text-raw-gold/80" : "text-raw-silver/45 group-hover:text-raw-silver/80"
+                          <span className={`relative z-10 mt-0.5 max-w-full truncate text-center font-display text-[9px] leading-tight tracking-[0.08em] transition-colors sm:text-[10px] ${
+                            isPreviewed ? "text-raw-gold/90" : "text-raw-silver/65 group-hover:text-raw-silver/90"
                           }`}>
                             {avatar.name.split(" ")[0]}
                           </span>
-                          <span className={`rounded-full border px-1.5 py-0.5 text-[7px] uppercase tracking-[0.08em] ${
+                          <span className={`relative z-10 rounded-full border px-1.5 py-0.5 text-[8px] uppercase tracking-[0.08em] ${
                             isOwned ? "border-raw-gold/45 text-raw-gold/70" : "border-raw-border/35 text-raw-silver/35"
                           }`}>
                             {isOwned ? "owned" : "locked"}

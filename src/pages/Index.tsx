@@ -29,6 +29,7 @@ const Index = () => {
     setAvatarLevel,
     selectAvatarForOnboarding,
     ownedAvatarLevels,
+    ownedAvatarIds,
     unlockAvatarLevel,
     markAvatarOwned,
     avatarPricesByLevel,
@@ -150,6 +151,7 @@ const Index = () => {
           avatarIndex={avatarLevel}
           onAvatarChange={selectAvatarForOnboarding}
           ownedAvatarLevels={ownedAvatarLevels}
+          ownedAvatarIds={ownedAvatarIds}
           avatarCatalog={avatarCatalog}
           onboardingStep={onboardingStep}
           onboardingAnsweredPollIds={onboardingAnsweredPollIds}
