@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import LNTLogo from "@/assets/LNT.webp";
 import SYTLogo from "@/assets/logospeak.webp";
 import IIJMLogo from "@/assets/itisjustme.webp";
-import { AlertTriangle, ArrowLeft, BarChart3, Bell, BellOff, ImagePlus, Lock, Plus, Search, Star, Trash2, UserMinus, Users, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, BarChart3, Bell, BellOff, ImagePlus, Lock, PanelRight, Plus, Search, Star, Trash2, UserMinus, Users, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
@@ -105,6 +105,7 @@ import { CommunityProfileDialog } from "@/components/dashboard/CommunityProfileD
 import { CommunityRequestDialog } from "@/components/dashboard/CommunityRequestDialog";
 import { CommunityReportDialog } from "@/components/dashboard/CommunityReportDialog";
 import { CommunityPollComposerDialog } from "@/components/dashboard/CommunityPollComposerDialog";
+import { GeneralFeedBox } from "@/components/dashboard/GeneralFeedBox";
 
 const WAITLIST_UNLOCK_THRESHOLD = 200;
 const MESSAGE_PAGE_SIZE = 10;
@@ -261,6 +262,7 @@ export function DashboardCommunities({
   const [communityPolls, setCommunityPolls] = useState<CommunityPollRecord[]>([]);
   const [communityPollsAvailable, setCommunityPollsAvailable] = useState(true);
   const [communityPollsExpanded, setCommunityPollsExpanded] = useState(false);
+  const [feedOpen, setFeedOpen] = useState(false);
   const [hiddenAnsweredPollIds, setHiddenAnsweredPollIds] = useState<Set<string>>(new Set());
   const [membersDialogOpen, setMembersDialogOpen] = useState(false);
   const [pollComposerOpen, setPollComposerOpen] = useState(false);
@@ -1567,6 +1569,19 @@ export function DashboardCommunities({
                 {currentMember?.notificationsEnabled ? <Bell className="h-3.5 w-3.5" /> : <BellOff className="h-3.5 w-3.5" />}
                 <span>{currentMember?.notificationsEnabled ? "Notifications On" : "Notifications Off"}</span>
               </button>
+              {/* Feed toggle — desktop only */}
+              <button
+                onClick={() => setFeedOpen((o) => !o)}
+                className={`hidden sm:flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] transition-colors ${
+                  feedOpen
+                    ? "border-raw-gold/40 bg-raw-gold/10 text-raw-gold"
+                    : "border-raw-border/30 text-raw-silver/55 hover:border-raw-gold/20 hover:text-raw-gold"
+                }`}
+                title={feedOpen ? "Close feed" : "Open general feed"}
+              >
+                <PanelRight className="h-3.5 w-3.5" />
+                <span>Feed</span>
+              </button>
             </div>
           </div>
 
@@ -1611,7 +1626,7 @@ export function DashboardCommunities({
           })()}
 
           {(!selectedCommunity.locked || isJoined) && (
-          <div className="flex flex-1 min-h-0 flex-col gap-4 overflow-hidden lg:grid lg:grid-cols-[minmax(0,1fr)_380px] lg:items-stretch sm:flex-none sm:h-[calc(100dvh_-_260px)] sm:min-h-[360px]">
+          <div className={`flex flex-1 min-h-0 flex-col gap-4 overflow-hidden sm:flex-none sm:h-[calc(100dvh_-_260px)] sm:min-h-[360px] ${feedOpen ? "sm:grid sm:grid-cols-[1fr_360px] sm:items-stretch" : ""}`}>
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden sm:h-full sm:rounded-2xl sm:border sm:border-raw-border/20 sm:bg-raw-black/35">
             {visibleCommunityPolls.length > 0 && (
               <div className="border-b border-raw-border/15 px-4 py-3">
@@ -1736,6 +1751,19 @@ export function DashboardCommunities({
               onSendMessage={handleSendMessage}
             />
           </div>
+
+          {/* Feed panel — visible only on sm+ when feedOpen */}
+          {feedOpen && (
+            <div className="hidden sm:flex sm:flex-col sm:h-full sm:overflow-hidden sm:rounded-2xl sm:border sm:border-raw-border/20 sm:bg-raw-black/35">
+              <GeneralFeedBox
+                userId={user.id}
+                isLight={false}
+                compact
+                showHeader={false}
+                fillHeight
+              />
+            </div>
+          )}
           </div>
           )}
         </motion.div>
