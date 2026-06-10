@@ -10,7 +10,7 @@ vi.mock("@/backend/supabase/client", () => ({
 
 vi.mock("@/backend/supabase/controllers/userExtrasController", () => ({
   getUserFavoriteCommunities: vi.fn().mockResolvedValue([]),
-  getUserPinnedMessage: vi.fn().mockResolvedValue(null),
+  getUserPinnedMessages: vi.fn().mockResolvedValue([]),
 }));
 
 import { getPublicUserProfile } from "@/backend/supabase/controllers/userController";

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Check, Heart, MessageSquare, Mic2, Pin, ShieldOff, Target, Users, X } from "lucide-react";
+import { Check, Heart, MessageSquare, Mic2, Pin, ShieldOff, Target, Trash2, Users, X } from "lucide-react";
 import { useProfileStats } from "@/hooks/useProfileStats";
 import type { PinnedMessageRecord } from "@/backend/supabase/controllers/userExtrasController";
 import type { Poll } from "@/store/useRawStore";
@@ -39,7 +39,8 @@ interface DashboardProfileProps {
   pollsAnswered: number;
   xp?: number;
   xpLevel?: number;
-  pinnedMessage?: PinnedMessageRecord | null;
+  pinnedMessages?: PinnedMessageRecord[];
+  onRemovePinnedMessage?: (messageId: string) => void;
   onLogout: () => void;
   /** Used by the Personality Insights section to compute totals. */
   polls: Poll[];
@@ -65,7 +66,8 @@ export function DashboardProfile({
   pollsAnswered,
   xp = 0,
   xpLevel = 1,
-  pinnedMessage,
+  pinnedMessages = [],
+  onRemovePinnedMessage,
   polls,
   tokenBalance,
 }: DashboardProfileProps) {
@@ -191,13 +193,30 @@ export function DashboardProfile({
         <p className="text-xs text-raw-gold/60">Level {displayIndex}</p>
         <p className="text-[10px] text-raw-silver/30">{theme.name}</p>
 
-        {/* Pinned message */}
-        {pinnedMessage && (
-          <div className="mt-4 w-full rounded-xl border border-raw-gold/20 bg-raw-gold/5 px-4 py-3 text-left">
+        {/* Pinned messages */}
+        {pinnedMessages.length > 0 && (
+          <div className="mt-4 w-full space-y-2 text-left">
             <p className="flex items-center gap-1 text-[9px] uppercase tracking-[0.16em] text-raw-gold/50">
-              <Pin className="h-3 w-3" /> Pinned message
+              <Pin className="h-3 w-3" /> Pinned messages ({pinnedMessages.length}/7)
             </p>
-            <p className="mt-1 text-xs leading-relaxed text-raw-text/70">{pinnedMessage.messageText}</p>
+            {pinnedMessages.map((pinnedMessage) => (
+              <div
+                key={pinnedMessage.messageId}
+                className="flex items-start gap-2 rounded-xl border border-raw-gold/20 bg-raw-gold/5 px-4 py-3"
+              >
+                <p className="flex-1 text-xs leading-relaxed text-raw-text/70">{pinnedMessage.messageText}</p>
+                {onRemovePinnedMessage && (
+                  <button
+                    type="button"
+                    onClick={() => onRemovePinnedMessage(pinnedMessage.messageId)}
+                    className="shrink-0 rounded-lg p-1 text-raw-silver/40 hover:text-red-400"
+                    aria-label="Remove pinned message"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+            ))}
           </div>
         )}
 

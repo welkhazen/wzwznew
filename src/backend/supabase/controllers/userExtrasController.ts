@@ -44,14 +44,16 @@ export async function setUserFavoriteCommunities(userId: string, communityIds: s
   if (insertError) throw insertError;
 }
 
-export async function getUserPinnedMessage(userId: string): Promise<PinnedMessageRecord | null> {
-  const { data, error } = await supabase
-    .from('user_pinned_message')
-    .select('message_id, community_id, community_title, sender_name, message_text, message_created_at, pinned_at')
-    .eq('user_id', userId)
-    .maybeSingle();
-  if (error) throw error;
-  if (!data) return null;
+export const MAX_PINNED_MESSAGES = 7;
+
+export class PinnedMessageLimitError extends Error {
+  constructor() {
+    super(`You can only pin up to ${MAX_PINNED_MESSAGES} messages.`);
+    this.name = 'PinnedMessageLimitError';
+  }
+}
+
+function mapPinnedMessageRow(data: Record<string, unknown>): PinnedMessageRecord {
   return {
     messageId: data.message_id as string,
     communityId: data.community_id as string,
@@ -63,7 +65,25 @@ export async function getUserPinnedMessage(userId: string): Promise<PinnedMessag
   };
 }
 
-export async function setUserPinnedMessage(userId: string, payload: PinnedMessagePayload): Promise<void> {
+export async function getUserPinnedMessages(userId: string): Promise<PinnedMessageRecord[]> {
+  const { data, error } = await supabase
+    .from('user_pinned_message')
+    .select('message_id, community_id, community_title, sender_name, message_text, message_created_at, pinned_at')
+    .eq('user_id', userId)
+    .order('pinned_at', { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map(mapPinnedMessageRow);
+}
+
+export async function addUserPinnedMessage(userId: string, payload: PinnedMessagePayload): Promise<PinnedMessageRecord> {
+  const { count, error: countError } = await supabase
+    .from('user_pinned_message')
+    .select('message_id', { count: 'exact', head: true })
+    .eq('user_id', userId);
+  if (countError) throw countError;
+  if ((count ?? 0) >= MAX_PINNED_MESSAGES) throw new PinnedMessageLimitError();
+
+  const pinnedAt = new Date().toISOString();
   const { error } = await supabase
     .from('user_pinned_message')
     .upsert({
@@ -74,15 +94,17 @@ export async function setUserPinnedMessage(userId: string, payload: PinnedMessag
       sender_name: payload.senderName ?? null,
       message_text: payload.messageText,
       message_created_at: payload.messageCreatedAt ?? null,
-      pinned_at: new Date().toISOString(),
-    }, { onConflict: 'user_id' });
+      pinned_at: pinnedAt,
+    }, { onConflict: 'user_id,message_id' });
   if (error) throw error;
+  return { ...payload, pinnedAt };
 }
 
-export async function clearUserPinnedMessage(userId: string): Promise<void> {
+export async function removeUserPinnedMessage(userId: string, messageId: string): Promise<void> {
   const { error } = await supabase
     .from('user_pinned_message')
     .delete()
-    .eq('user_id', userId);
+    .eq('user_id', userId)
+    .eq('message_id', messageId);
   if (error) throw error;
 }
