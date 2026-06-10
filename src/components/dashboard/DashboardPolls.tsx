@@ -409,7 +409,9 @@ export function DashboardPolls({
       .map((poll) => {
         const selectedOptionId = answerHistory[poll.id];
         if (!selectedOptionId) return null;
-        const selectedAnswer = poll.options.find((option) => option.id === selectedOptionId)?.text ?? "Unknown";
+        const selectedAnswer = selectedOptionId === "__skipped__"
+          ? "Skipped"
+          : (poll.options.find((option) => option.id === selectedOptionId)?.text ?? "Unknown");
         return {
           poll,
           selectedAnswer,
@@ -513,11 +515,11 @@ export function DashboardPolls({
   const currentComments = currentPoll ? historyComments[currentPoll.id] ?? [] : [];
   const currentOptions = currentPoll ? resolveYesNoOptions(currentPoll) : null;
   const showVoteHint = currentPollIndex === 0 && !hasVotedCurrent && !hasSeenVoteHint;
-  const progressIndex = isDailyPollLimitReached
+  const localAnsweredCount = answeredTodayIds.size;
+  const showMorePollsPaywall = (isDailyPollLimitReached || localAnsweredCount >= dailyPollLimit) && dailyPollLimit > 0;
+  const progressIndex = showMorePollsPaywall
     ? Math.min(currentPollIndex, dailyPollLimit - 1)
-    : Math.min(dailyAnsweredCount + currentPollIndex, dailyPollLimit - 1);
-
-  const showMorePollsPaywall = isDailyPollLimitReached && dailyPollLimit > 0;
+    : Math.min(localAnsweredCount + currentPollIndex, dailyPollLimit - 1);
 
   const handleVote = (pollId: string, optionId: string) => {
     setHasSeenVoteHint(true);
@@ -535,6 +537,12 @@ export function DashboardPolls({
     if (!votedPolls.has(pollId)) {
       onVote(pollId, optionId);
     }
+  };
+
+  const handleSkip = () => {
+    if (!currentPoll) return;
+    setAnswerHistory((previous) => ({ ...previous, [currentPoll.id]: "__skipped__" }));
+    setAnswerTimestamps((previous) => ({ ...previous, [currentPoll.id]: Date.now() }));
   };
 
   const handleCommentAdd = async () => {
@@ -756,29 +764,23 @@ export function DashboardPolls({
       )}
 
       <section className="mx-auto flex w-full max-w-[460px] flex-col items-center gap-3 px-1 sm:gap-5">
-        <div className="flex w-full items-center justify-between gap-3 border border-raw-gold/25 bg-black/30 px-3 py-2 sm:hidden">
-          <p className="font-display text-[11px] uppercase tracking-[0.16em] text-raw-silver/75">Answer polls</p>
-          <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
-            <div className="h-1 w-full max-w-24 overflow-hidden bg-raw-border/50">
-              <div
-                className="h-full bg-[#F1C42D] shadow-[0_0_10px_rgba(241,196,45,0.45)]"
-                style={{ width: `${Math.min(100, Math.max(0, (dailyAnsweredCount / Math.max(1, dailyPollLimit)) * 100))}%` }}
-              />
-            </div>
-            <span className="shrink-0 text-[11px] font-semibold text-[#F1C42D]">{dailyAnsweredCount}/{dailyPollLimit}</span>
+        <div className="flex w-full flex-col gap-1 border border-raw-gold/25 bg-black/30 px-3 py-2 sm:hidden">
+          <div className="flex items-center justify-between">
+            <p className="font-display text-[11px] uppercase tracking-[0.16em] text-raw-silver/75">Answer polls</p>
           </div>
+          <PollProgress currentIndex={progressIndex} total={dailyPollLimit} answeredCount={localAnsweredCount} dailyLimit={dailyPollLimit} onSelect={setCurrentPollIndex} />
         </div>
 
         <div className="hidden w-full border border-raw-gold/20 bg-black/35 px-4 py-3 shadow-[inset_0_0_0_1px_rgba(241,196,45,0.08)] sm:block">
           <div className="flex items-center justify-between gap-3">
             <h3 className="min-w-0 font-display text-sm uppercase tracking-[0.18em] text-[#EBEBEB] sm:text-base">
-              2. Answer 7 polls
+              Answer polls
             </h3>
             <span className="shrink-0 border border-[#F1C42D]/60 bg-[#F1C42D]/10 px-3 py-1 text-[11px] uppercase tracking-[0.12em] text-[#F1C42D]">
-              {dailyAnsweredCount}/{dailyPollLimit}
+              {localAnsweredCount}/{dailyPollLimit}
             </span>
           </div>
-          <PollProgress currentIndex={progressIndex} total={dailyPollLimit} answeredCount={dailyAnsweredCount} dailyLimit={dailyPollLimit} onSelect={setCurrentPollIndex} />
+          <PollProgress currentIndex={progressIndex} total={dailyPollLimit} answeredCount={localAnsweredCount} dailyLimit={dailyPollLimit} onSelect={setCurrentPollIndex} />
         </div>
 
         <div className="relative w-full max-w-[24rem]">
@@ -812,6 +814,7 @@ export function DashboardPolls({
               showHint={showVoteHint}
               onHintSeen={() => setHasSeenVoteHint(true)}
               onVote={(optionId) => handleVote(currentPoll.id, optionId)}
+              onSkip={showMorePollsPaywall ? undefined : handleSkip}
             />
           )}
 

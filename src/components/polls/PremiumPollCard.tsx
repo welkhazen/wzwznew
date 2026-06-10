@@ -25,6 +25,7 @@ interface PremiumPollCardProps {
   hideButtonGlow?: boolean;
   onVote: (optionId: string) => void;
   onHintSeen?: () => void;
+  onSkip?: () => void;
 }
 
 const CARD_CLIP =
@@ -49,6 +50,7 @@ export function PremiumPollCard({
   hideButtonGlow = false,
   onVote,
   onHintSeen,
+  onSkip,
 }: PremiumPollCardProps) {
   const { mode } = useTheme();
   const isLight = mode === "light";
@@ -146,6 +148,16 @@ export function PremiumPollCard({
               <span className="h-1 w-1" style={{ background: "rgb(var(--raw-accent))", boxShadow: "0 0 10px rgb(var(--raw-accent) / 0.9)" }} />
               <span className="h-px flex-1" style={{ background: "linear-gradient(to left, transparent, rgb(var(--raw-accent) / 0.55), rgb(var(--raw-accent) / 0.20))" }} />
             </div>
+
+            {onSkip && !isAnswered && (
+              <button
+                type="button"
+                onClick={onSkip}
+                className="absolute left-4 top-9 z-10 text-[9px] font-medium uppercase tracking-[0.25em] text-raw-silver/40 transition-colors hover:text-raw-silver/70 sm:left-6 sm:top-11"
+              >
+                Skip
+              </button>
+            )}
 
             <div className="relative mt-4 h-14 w-14 overflow-hidden sm:mt-5 sm:h-20 sm:w-20">
               <img
