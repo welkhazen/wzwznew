@@ -1755,6 +1755,7 @@ export function DashboardCommunities({
               onPinMessage={handlePinMessage}
               onOpenMessageReport={handleOpenMessageReport}
               onBlockMessageSender={handleBlockMessageSender}
+              onOpenSenderProfile={handleOpenSenderProfile}
             />
 
             <CommunityMessageComposer
