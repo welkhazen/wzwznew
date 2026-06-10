@@ -1,6 +1,6 @@
-import { supabase } from '../client';
 import type { CommunityChatMessageRecord, SendCommunityMessageInput } from '@/lib/communityChat.types';
 import { assertUserTextAllowed } from '@/lib/inputSecurity';
+import { supabase } from '../client';
 
 export type DbCommunityMessage = {
   id: string;
@@ -48,18 +48,24 @@ export async function sendMessage(
   input: SendCommunityMessageInput
 ): Promise<CommunityChatMessageRecord> {
   const text = assertUserTextAllowed(input.text);
-  const { data, error } = await supabase.rpc('send_community_message', {
-    p_community_id: communityId,
-    p_text: text,
-    p_reply_to_message_id: input.replyToMessage?.id ?? null,
-    p_identity_alias: input.identityAlias ?? null,
-    p_avatar_level: input.avatarLevel ?? null,
+  const res = await fetch('/api/chat/send', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      communityId,
+      text,
+      identityAlias: input.identityAlias ?? null,
+      avatarLevel: input.avatarLevel ?? null,
+      replyToMessageId: input.replyToMessage?.id ?? null,
+    }),
   });
-
-  if (error) throw error;
-  if (!data) throw new Error('send_community_message_returned_empty');
-
-  return mapCommunityMessage(data as DbCommunityMessage);
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error((body as { error?: string }).error ?? `send_message_failed:${res.status}`);
+  }
+  const body = await res.json() as { message: CommunityChatMessageRecord };
+  return body.message;
 }
 
 /**
