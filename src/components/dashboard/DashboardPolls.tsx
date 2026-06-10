@@ -424,10 +424,12 @@ export function DashboardPolls({
       .slice(0, 50);
   }, [answerHistory, answerTimestamps, polls]);
 
-  // Once the daily limit is hit, show today's answered polls (capped at dailyPollLimit).
-  // While still under the limit, show unseen polls capped at the daily limit so the gate
-  // triggers after the batch — not after all 100+ polls.
-  const displayPolls = isDailyPollLimitReached && answeredPolls.length > 0
+  const localAnsweredCount = answeredTodayIds.size;
+  const showMorePollsPaywall = (isDailyPollLimitReached || localAnsweredCount >= dailyPollLimit) && dailyPollLimit > 0;
+
+  // Once the daily limit is hit (server or local skips), show today's answered polls.
+  // While still under the limit, show unseen polls capped at the daily limit.
+  const displayPolls = showMorePollsPaywall && answeredPolls.length > 0
     ? answeredPolls.slice(0, dailyPollLimit)
     : unseenPolls.length > 0
       ? unseenPolls.slice(0, dailyPollLimit)
@@ -515,8 +517,6 @@ export function DashboardPolls({
   const currentComments = currentPoll ? historyComments[currentPoll.id] ?? [] : [];
   const currentOptions = currentPoll ? resolveYesNoOptions(currentPoll) : null;
   const showVoteHint = currentPollIndex === 0 && !hasVotedCurrent && !hasSeenVoteHint;
-  const localAnsweredCount = answeredTodayIds.size;
-  const showMorePollsPaywall = (isDailyPollLimitReached || localAnsweredCount >= dailyPollLimit) && dailyPollLimit > 0;
   const progressIndex = showMorePollsPaywall
     ? Math.min(currentPollIndex, dailyPollLimit - 1)
     : Math.min(localAnsweredCount + currentPollIndex, dailyPollLimit - 1);
@@ -811,6 +811,7 @@ export function DashboardPolls({
                 votes: currentOptions.noOption.votes,
               }}
               selectedOptionId={selectedOptionId}
+              disabled={showMorePollsPaywall}
               showHint={showVoteHint}
               onHintSeen={() => setHasSeenVoteHint(true)}
               onVote={(optionId) => handleVote(currentPoll.id, optionId)}
