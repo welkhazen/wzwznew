@@ -123,7 +123,14 @@ export function GeneralFeedBox({
                       {post.senderName.slice(0, 2).toUpperCase()}
                     </div>
                     <div className="min-w-0">
-                      <p className={`truncate text-sm font-bold ${isLight ? "text-slate-950" : "text-white"}`}>{post.senderName}</p>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <p className={`truncate text-sm font-bold ${isLight ? "text-slate-950" : "text-white"}`}>{post.senderName}</p>
+                        {post.communityName && (
+                          <span className={`shrink-0 rounded-md px-1.5 py-0.5 text-[9px] font-black uppercase tracking-[0.12em] ${isLight ? "bg-raw-gold/10 text-raw-gold/80" : "bg-raw-gold/10 text-raw-gold/70"}`}>
+                            {post.communityName}
+                          </span>
+                        )}
+                      </div>
                       <p className={`text-[11px] ${isLight ? "text-slate-400" : "text-white/30"}`}>Level {post.senderAvatarLevel ?? 1}</p>
                     </div>
                   </div>
