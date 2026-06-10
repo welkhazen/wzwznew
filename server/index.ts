@@ -8,7 +8,9 @@ import session from "express-session";
 import { env } from "./config/env";
 import { assistantRouter } from "./routes/assistant";
 import { authRouter } from "./routes/auth";
+import { chatRouter } from "./routes/chat";
 import { cronRouter } from "./routes/cron";
+import { moderationRouter } from "./routes/moderation";
 import { notificationsRouter } from "./routes/notifications";
 import { pollsRouter } from "./routes/polls";
 import { usersRouter } from "./routes/users";
@@ -104,6 +106,8 @@ app.use("/api/users", usersRouter);
 app.use("/api/assistant", assistantRouter);
 app.use("/api/notifications", notificationsRouter);
 app.use("/api/cron", cronRouter);
+app.use("/api/chat", chatRouter);
+app.use("/api/moderation", moderationRouter);
 app.use("/api", pollsRouter);
 
 app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
