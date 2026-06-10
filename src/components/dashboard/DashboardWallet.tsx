@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { CheckCircle2, Zap, X, Lock } from "lucide-react";
 import TokenImage from "@/assets/tokens.webp";
 import { useRawStore } from "@/store/useRawStore";
@@ -34,9 +35,9 @@ export function PaymentModal({
     return () => { document.body.style.overflow = ""; };
   }, []);
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center sm:items-center p-0 sm:p-4"
+      className="fixed inset-0 z-[9999] flex items-end justify-center sm:items-center p-0 sm:p-4"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       {/* backdrop */}
@@ -170,7 +171,8 @@ export function PaymentModal({
           </p>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
