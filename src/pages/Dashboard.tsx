@@ -5,7 +5,7 @@ import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
 import { fetchCommunities } from "@/backend/supabase/controllers/communityController";
 import { readCachedCommunities, writeCachedCommunities } from "@/lib/communityCache";
 import { getUserFavoriteCommunities, getUserPinnedMessage, type PinnedMessageRecord } from "@/backend/supabase/controllers/userExtrasController";
-import { Archive, Home as HomeIcon, MessageCircle, Target, User as UserIcon, LogOut, Trophy, Sparkles, Moon, CloudMoon, Sun } from "lucide-react";
+import { Home as HomeIcon, MessageCircle, Target, User as UserIcon, LogOut, Trophy, Sparkles, Moon, CloudMoon, Sun } from "lucide-react";
 import LNTLogo from "@/assets/LNT.webp";
 import SYTLogo from "@/assets/logospeak.webp";
 import IIJMLogo from "@/assets/itisjustme.webp";
@@ -42,9 +42,6 @@ const DashboardProfile = lazy(() =>
 );
 const DashboardWallet = lazy(() =>
   import("@/components/dashboard/DashboardWallet").then((module) => ({ default: module.DashboardWallet }))
-);
-const DashboardInventory = lazy(() =>
-  import("@/components/dashboard/DashboardInventory").then((module) => ({ default: module.DashboardInventory }))
 );
 
 const dashboardSectionFallback = (
@@ -454,25 +451,6 @@ export default function Dashboard({
             </DashboardSectionShell>
           </Suspense>
         );
-      case "inventory":
-        return (
-          <Suspense fallback={dashboardSectionFallback}>
-            <DashboardSectionShell>
-              <DashboardInventory
-                polls={polls}
-                votedPolls={votedPolls}
-                avatarLevel={avatarLevel}
-                ownedAvatarLevels={ownedAvatarLevels}
-                onUnlockAvatar={unlockAvatarLevel}
-                onAvatarPurchased={markAvatarOwned}
-                avatarPricesByLevel={avatarPricesByLevel}
-                avatarCatalog={avatarCatalog}
-                tokenBalance={tokenBalance}
-                userId={user.id}
-              />
-            </DashboardSectionShell>
-          </Suspense>
-        );
       case "wallet":
         return (
           <Suspense fallback={dashboardSectionFallback}>
@@ -629,13 +607,6 @@ export default function Dashboard({
             href: "#",
             onClick: () => handleTabChange("challenges"),
             active: !isHome && activeTab === "challenges",
-          },
-          {
-            title: "Inventory",
-            icon: <Archive className="h-5 w-5" />,
-            href: "#",
-            onClick: () => handleTabChange("inventory"),
-            active: !isHome && activeTab === "inventory",
           },
         ]}
       />
