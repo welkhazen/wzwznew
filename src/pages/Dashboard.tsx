@@ -46,6 +46,9 @@ const DashboardWallet = lazy(() =>
 const DashboardSettings = lazy(() =>
   import("@/components/dashboard/DashboardSettings").then((module) => ({ default: module.DashboardSettings }))
 );
+const DashboardStore = lazy(() =>
+  import("@/components/dashboard/DashboardStore").then((module) => ({ default: module.DashboardStore }))
+);
 
 const COMMUNITY_LOGOS: Record<string, string> = {
   lnt: LNTLogo,
@@ -513,6 +516,24 @@ export default function Dashboard({
               <DashboardSettings
                 userId={user.id}
                 onLogout={onLogout}
+              />
+            </DashboardSectionShell>
+          </Suspense>
+        );
+      case "store":
+        return (
+          <Suspense fallback={dashboardSectionFallback}>
+            <DashboardSectionShell>
+              <DashboardStore
+                polls={polls}
+                votedPolls={votedPolls}
+                avatarCatalog={avatarCatalog}
+                ownedAvatarLevels={ownedAvatarLevels}
+                onUnlockAvatar={unlockAvatarLevel}
+                onAvatarPurchased={markAvatarOwned}
+                avatarPricesByLevel={avatarPricesByLevel}
+                tokenBalance={tokenBalance}
+                userId={user.id}
               />
             </DashboardSectionShell>
           </Suspense>
