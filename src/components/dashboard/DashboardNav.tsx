@@ -806,7 +806,7 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
                 <AvatarFigure avatarIndex={effectiveAvatarLevel} size="sm" selected />
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-raw-text">View Profile</p>
-                  <p className={cn("truncate text-xs", isEffectiveLight ? "text-slate-600" : "text-raw-silver/50")}>@{username}</p>
+                  <p className={cn("truncate text-xs", isEffectiveLight ? "text-slate-600" : "text-raw-silver/50")}>@{selectedChatAlias ?? username}</p>
                 </div>
               </button>
 
