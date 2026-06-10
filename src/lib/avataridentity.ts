@@ -52,3 +52,13 @@ export function getAvatar(index: number): AvatarTheme {
 }
 
 export const getAvatarTheme = getAvatar;
+
+/** localStorage key for a user's chosen private-identity avatar level. */
+export const privateAvatarKey = (uid: string): string => `raw.profile.private-avatar.${uid}`;
+
+/** Read a user's chosen private-identity avatar level (defaults to 1). */
+export function getPrivateAvatarLevel(uid: string): number {
+  if (typeof window === "undefined") return 1;
+  const stored = window.localStorage.getItem(privateAvatarKey(uid));
+  return stored ? Number(stored) : 1;
+}

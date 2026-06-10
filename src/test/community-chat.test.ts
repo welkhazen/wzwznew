@@ -75,12 +75,14 @@ describe("community chat Supabase persistence", () => {
       text: "hello everyone",
     });
 
-    // Identity fields are not even part of the input type now — the SECURITY
-    // DEFINER RPC derives sender from current_user_id().
+    // The SECURITY DEFINER RPC derives the sender from current_user_id();
+    // identity alias and avatar level are optional overrides.
     expect(rpcMock).toHaveBeenCalledWith("send_community_message", {
       p_community_id: "community-1",
       p_text: "hello everyone",
       p_reply_to_message_id: null,
+      p_identity_alias: null,
+      p_avatar_level: null,
     });
     expect(message.text).toBe("hello everyone");
     expect(message.senderAvatarLevel).toBe(3);

@@ -53,6 +53,7 @@ export async function sendMessage(
     p_text: text,
     p_reply_to_message_id: input.replyToMessage?.id ?? null,
     p_identity_alias: input.identityAlias ?? null,
+    p_avatar_level: input.avatarLevel ?? null,
   });
 
   if (error) throw error;
