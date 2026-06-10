@@ -159,6 +159,7 @@ chatRouter.post("/send", requireAuth, async (req, res) => {
       deletedByUserId: row.deleted_by_user_id ?? undefined,
       likedBy: (row.liked_by as string[]) ?? [],
       senderAvatarLevel: row.sender_avatar_level ?? undefined,
+      moderationStatus: row.moderation_status ?? undefined,
     },
   });
 });
