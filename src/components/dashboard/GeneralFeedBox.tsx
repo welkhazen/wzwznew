@@ -131,7 +131,6 @@ export function GeneralFeedBox({
                           </span>
                         )}
                       </div>
-                      <p className={`text-[11px] ${isLight ? "text-slate-400" : "text-white/30"}`}>Level {post.senderAvatarLevel ?? 1}</p>
                     </div>
                   </div>
                   <time className={`shrink-0 text-[11px] font-semibold ${isLight ? "text-slate-400" : "text-white/30"}`} dateTime={post.createdAt}>
