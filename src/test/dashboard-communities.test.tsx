@@ -119,6 +119,8 @@ vi.mock("@/backend/supabase/controllers/userExtrasController", () => ({
   setUserFavoriteCommunities: vi.fn(),
   addUserPinnedMessage: vi.fn(),
   removeUserPinnedMessage: vi.fn(),
+  notifyMessagePinned: vi.fn(),
+  getPinNotifications: vi.fn(async () => []),
 }));
 
 vi.mock("@/lib/communityAccess", () => ({

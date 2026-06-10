@@ -89,6 +89,7 @@ import {
   setUserFavoriteCommunities,
   addUserPinnedMessage,
   removeUserPinnedMessage,
+  notifyMessagePinned,
   type PinnedMessageRecord,
 } from "@/backend/supabase/controllers/userExtrasController";
 import {
@@ -832,6 +833,15 @@ export function DashboardCommunities({
         setOwnPinnedMessages(next);
         broadcastPinnedMessageUpdated(next);
         toast({ title: "Pinned to your profile", description: "Others will see this message on your chat profile." });
+        if (message.senderId && message.senderId !== user.id) {
+          notifyMessagePinned({
+            recipientUserId: message.senderId,
+            messageId: message.id,
+            communityId: community.id,
+            communityTitle: community.title,
+            messageText: message.text,
+          }).catch(() => {});
+        }
       } catch (error) {
         if (error instanceof PinnedMessageLimitError) {
           toast({ title: "Pin limit reached", description: error.message });

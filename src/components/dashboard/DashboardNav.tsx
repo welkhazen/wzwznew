@@ -51,6 +51,7 @@ import { toast } from "@/components/ui/use-toast";
 import { spendTokens } from "@/lib/api/tokens";
 import { supabase } from "@/lib/supabase";
 import { listUserAliases, type UserAliasRow } from "@/backend/supabase/controllers/userController";
+import { getPinNotifications, type PinNotificationRecord } from "@/backend/supabase/controllers/userExtrasController";
 import { getPrivateAvatarLevel } from "@/lib/avataridentity";
 
 export type DashboardTab = "home" | "polls" | "challenges" | "daily-spin" | "communities" | "profile" | "settings" | "wallet" | "store";
@@ -185,7 +186,7 @@ function DeadlineCountdownBadge({ isLight }: { isLight: boolean }) {
 
 type DashboardNotification = {
   id: string;
-  type: "mention" | "like" | "community";
+  type: "mention" | "like" | "community" | "pinned";
   title: string;
   communityTitle: string;
   senderName?: string;
@@ -252,6 +253,7 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
   const [ownedAccentIds, setOwnedAccentIds] = useState<AccentPresetId[]>(() => readOwnedAccentsCache(userId));
   const [tokenBalanceForUnlocks, setTokenBalanceForUnlocks] = useState<number>(() => readStoredTokenBalance(userId));
   const [privateAliases, setPrivateAliases] = useState<UserAliasRow[]>([]);
+  const [pinNotifications, setPinNotifications] = useState<PinNotificationRecord[]>([]);
   const [selectedChatAlias, setSelectedChatAlias] = useState<string | null>(() => {
     if (typeof window === "undefined") return null;
     return window.localStorage.getItem(`${CHAT_IDENTITY_PREFIX}${userId}`);
@@ -289,6 +291,16 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
 
   useEffect(() => {
     setTokenBalanceForUnlocks(readStoredTokenBalance(userId));
+  }, [userId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    getPinNotifications(userId)
+      .then((rows) => {
+        if (!cancelled) setPinNotifications(rows);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
   }, [userId]);
 
   useEffect(() => {
@@ -353,8 +365,19 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
         }
       }
     }
+    for (const pin of pinNotifications) {
+      results.push({
+        id: `pinned:${pin.id}`,
+        type: "pinned",
+        title: `${pin.actorName} pinned your message to their profile`,
+        communityTitle: pin.communityTitle ?? "",
+        senderName: pin.actorName,
+        text: pin.messageText ?? "",
+        createdAt: pin.createdAt,
+      });
+    }
     return results.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  }, [userId, username, communities]);
+  }, [userId, username, communities, pinNotifications]);
   const unseenNotificationCount = useMemo(() => {
     const seen = new Set(seenNotificationIds);
     return notifications.filter((notification) => !seen.has(notification.id)).length;
@@ -686,11 +709,12 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
                     <div key={i} className={cn("border-b px-4 py-3 last:border-0", isEffectiveLight ? "border-slate-100" : "border-raw-border/15")}>
                       <div className="flex items-center gap-2">
                         <span className={`text-[9px] uppercase tracking-wider font-semibold rounded-full px-2 py-0.5 ${n.type === "like" ? "bg-raw-gold/15 text-raw-gold" : "bg-raw-silver/10 text-raw-silver/60"}`}>
-                          {n.type === "like" ? `♥ ${n.likeCount} like${(n.likeCount ?? 0) > 1 ? "s" : ""}` : n.type === "community" ? "New community" : "@ mention"}
+                          {n.type === "like" ? `♥ ${n.likeCount} like${(n.likeCount ?? 0) > 1 ? "s" : ""}` : n.type === "community" ? "New community" : n.type === "pinned" ? "📌 Pinned" : "@ mention"}
                         </span>
                         <p className={cn("text-[10px]", isEffectiveLight ? "text-slate-500" : "text-raw-silver/40")}>{n.communityTitle}</p>
                       </div>
                       {n.type === "mention" && <p className={cn("mt-1 text-xs", isEffectiveLight ? "text-slate-500" : "text-raw-silver/60")}>from @{n.senderName}</p>}
+                      {n.type === "pinned" && <p className={cn("mt-1 text-xs", isEffectiveLight ? "text-slate-500" : "text-raw-silver/60")}>{n.title}</p>}
                       <p className={cn("mt-1 text-sm leading-relaxed line-clamp-2", isEffectiveLight ? "text-slate-800" : "text-raw-text/80")}>{n.text}</p>
                     </div>
                   ))}
