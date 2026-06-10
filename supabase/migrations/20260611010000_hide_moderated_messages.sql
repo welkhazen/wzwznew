@@ -11,7 +11,7 @@ AS RESTRICTIVE
 FOR SELECT
 TO anon, authenticated
 USING (
-  (moderation_status IN ('ok', 'warn') AND is_deleted = false)
+  (COALESCE(moderation_status, 'ok') IN ('ok', 'warn') AND COALESCE(is_deleted, false) = false)
   OR sender_id = public.current_user_id()::text
   OR public.is_admin()
 );

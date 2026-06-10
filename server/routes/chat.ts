@@ -136,6 +136,7 @@ chatRouter.post("/send", requireAuth, async (req, res) => {
       matched_word: modResult.matchedWord ?? null,
       reason: modResult.reason ?? modResult.verdict,
       verdict: modResult.verdict.toLowerCase(),
+      ai_score: modResult.aiScore ?? null,
     });
     audit("chat.send.flagged", { userId, communityId, verdict: modResult.verdict, reason: modResult.reason }, "warn");
   }

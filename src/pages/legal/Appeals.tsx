@@ -43,15 +43,16 @@ export default function Appeals() {
 
           {submitted ? (
             <div className="mt-8 rounded-xl border border-raw-gold/20 bg-raw-gold/5 p-6 text-center">
-              <p className="text-raw-gold font-medium">Appeal submitted</p>
-              <p className="mt-2 text-sm text-raw-silver/60">Thank you. Our moderation team will review it and respond by email.</p>
-              <button onClick={() => setSubmitted(false)} className="mt-4 text-xs text-raw-silver/50 hover:text-raw-gold transition">Submit another</button>
+              <p className="text-raw-gold font-medium">Draft prepared</p>
+              <p className="mt-2 text-sm text-raw-silver/60">Your email app opened with a prefilled draft. Please send it to complete your appeal.</p>
+              <button onClick={() => setSubmitted(false)} className="mt-4 text-xs text-raw-silver/50 hover:text-raw-gold transition">Open another draft</button>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="mt-8 space-y-4">
               <div>
-                <label className="text-xs uppercase tracking-wide text-raw-silver/60">Username</label>
+                <label htmlFor="appeal-username" className="text-xs uppercase tracking-wide text-raw-silver/60">Username</label>
                 <input
+                  id="appeal-username"
                   type="text"
                   required
                   value={username}
@@ -61,8 +62,9 @@ export default function Appeals() {
                 />
               </div>
               <div>
-                <label className="text-xs uppercase tracking-wide text-raw-silver/60">Why should this decision be reconsidered?</label>
+                <label htmlFor="appeal-details" className="text-xs uppercase tracking-wide text-raw-silver/60">Why should this decision be reconsidered?</label>
                 <textarea
+                  id="appeal-details"
                   required
                   value={details}
                   onChange={(e) => setDetails(e.target.value)}
