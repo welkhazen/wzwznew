@@ -19,7 +19,6 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { SwipeablePollCard } from "./SwipeablePollCard";
 import { EnterRawModal } from "./EnterRawModal";
-import { EarlySignupClaim } from "./EarlySignupClaim";
 import type { OnboardingStep, Poll, User } from "@/store/useRawStore";
 import { track } from "@/lib/analytics";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -111,11 +110,10 @@ function findOwnedSpinResult(ownedAvatarLevels: Set<number>, avatarCatalog: Avat
   return null;
 }
 
-const STEP_ORDER: OnboardingStep[] = ["spin", "username", "early-signup-reward", "avatar", "polls", "communities"];
+const STEP_ORDER: OnboardingStep[] = ["spin", "username", "avatar", "polls", "communities"];
 const STEP_LABELS: Record<OnboardingStep, string> = {
   spin: "spin",
   username: "username",
-  "early-signup-reward": "reward",
   avatar: "avatar",
   polls: "polls",
   profile: "profile",
@@ -704,21 +702,6 @@ export function OnboardingJourney({
                 </div>
               </div>
             </section>
-          )}
-
-          {onboardingStep === "early-signup-reward" && (
-            <EarlySignupClaim
-              userId={user.id}
-              onResolved={(claimedAvatarCatalogId) => {
-                if (claimedAvatarCatalogId) {
-                  const signupIdx = EARLY_SIGNUP_POOL.findIndex((p) => p.catalogId === claimedAvatarCatalogId);
-                  if (signupIdx >= 0) {
-                    markAvatarOwned(FREE_ONBOARDING_AVATAR_COUNT + 1 + SPIN_POOL.length + signupIdx);
-                  }
-                }
-                onSetOnboardingStep("avatar");
-              }}
-            />
           )}
 
           {onboardingStep === "avatar" && (
