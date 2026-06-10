@@ -11,6 +11,7 @@ interface ErrorBoundaryProps {
 interface ErrorBoundaryState {
   error: Error | null;
   isChunkError: boolean;
+  willReload: boolean;
 }
 
 function detectChunkError(error: Error): boolean {
@@ -26,10 +27,13 @@ export class ErrorBoundary extends Component<
   ErrorBoundaryProps,
   ErrorBoundaryState
 > {
-  state: ErrorBoundaryState = { error: null, isChunkError: false };
+  state: ErrorBoundaryState = { error: null, isChunkError: false, willReload: false };
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    return { error, isChunkError: detectChunkError(error) };
+    const isChunkError = detectChunkError(error);
+    const alreadyReloaded =
+      typeof window !== "undefined" && sessionStorage.getItem("raw.chunk_error_reload") === "1";
+    return { error, isChunkError, willReload: isChunkError && !alreadyReloaded };
   }
 
   componentDidCatch(error: Error, info: ErrorInfo): void {
@@ -93,7 +97,7 @@ export class ErrorBoundary extends Component<
   }
 
   reset = (): void => {
-    this.setState({ error: null, isChunkError: false });
+    this.setState({ error: null, isChunkError: false, willReload: false });
   };
 
   componentDidMount(): void {
@@ -110,14 +114,11 @@ export class ErrorBoundary extends Component<
 
   render(): ReactNode {
     if (this.state.error) {
-      // Stale-chunk path: the reload is already in flight from componentDidCatch.
-      // Show a neutral loading screen rather than the scary error fallback so
-      // users don't see "Something broke" flash during a deploy-cycle refresh.
-      if (
-        this.state.isChunkError &&
-        typeof window !== "undefined" &&
-        sessionStorage.getItem("raw.chunk_error_reload") === "1"
-      ) {
+      // Stale-chunk path: a reload is in flight (or about to be triggered by
+      // componentDidCatch). Show a neutral loading screen rather than the
+      // scary error fallback so users don't see "Something broke" flash
+      // during a deploy-cycle refresh.
+      if (this.state.willReload) {
         return (
           <div className="flex min-h-screen items-center justify-center bg-raw-black">
             <div className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-raw-border border-t-raw-gold" />
