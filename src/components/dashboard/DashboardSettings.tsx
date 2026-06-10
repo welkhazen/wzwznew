@@ -1,55 +1,39 @@
 import { useEffect, useState } from "react";
 import {
-  Bell,
   Eye,
   EyeOff,
   KeyRound,
   Lock,
-  ShieldOff,
   Trash2,
   UserCog,
-  X,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { changePassword, deleteAccount } from "@/backend/supabase/controllers/authController";
 import {
-  deleteUserAlias,
   getProfileVisibility,
-  listUserAliases,
-  savePrivateAlias,
   updateProfileVisibility,
-  type UserAliasRow,
 } from "@/backend/supabase/controllers/userController";
-import type { PinnedMessageRecord } from "@/backend/supabase/controllers/userExtrasController";
 
 interface DashboardSettingsProps {
   userId: string;
-  pinnedMessage?: PinnedMessageRecord | null;
   onLogout: () => void;
 }
 
-type SettingsSection = "account" | "aliases" | "pinned" | "security" | "danger";
+type SettingsSection = "account" | "security" | "danger";
 
 const SECTIONS: Array<{ key: SettingsSection; label: string; icon: typeof UserCog }> = [
-  { key: "account",  label: "Account",         icon: UserCog },
-  { key: "aliases",  label: "Private names",   icon: ShieldOff },
-  { key: "pinned",   label: "Pinned message",  icon: Bell },
-  { key: "security", label: "Security",        icon: KeyRound },
-  { key: "danger",   label: "Danger zone",     icon: Trash2 },
+  { key: "account",  label: "Account",      icon: UserCog },
+  { key: "security", label: "Security",     icon: KeyRound },
+  { key: "danger",   label: "Danger zone",  icon: Trash2 },
 ];
 
-export function DashboardSettings({ userId, pinnedMessage = null, onLogout }: DashboardSettingsProps) {
+export function DashboardSettings({ userId, onLogout }: DashboardSettingsProps) {
   const { toast } = useToast();
   const [section, setSection] = useState<SettingsSection>("account");
 
   // Visibility
   const [profilePublic, setProfilePublic] = useState(true);
   const [profileVisibilitySaving, setProfileVisibilitySaving] = useState(false);
-
-  // Aliases
-  const [aliases, setAliases] = useState<UserAliasRow[]>([]);
-  const [aliasInput, setAliasInput] = useState("");
-  const [aliasSaving, setAliasSaving] = useState(false);
 
   // Change password
   const [oldPw, setOldPw] = useState("");
@@ -67,19 +51,9 @@ export function DashboardSettings({ userId, pinnedMessage = null, onLogout }: Da
 
   useEffect(() => {
     let cancelled = false;
-
-    Promise.all([
-      listUserAliases(userId),
-      getProfileVisibility(userId),
-    ])
-      .then(([rows, isPublic]) => {
-        if (cancelled) return;
-        setAliases(rows);
-        setAliasInput(rows.find((row) => !row.is_public)?.alias ?? "");
-        setProfilePublic(isPublic);
-      })
+    getProfileVisibility(userId)
+      .then((isPublic) => { if (!cancelled) setProfilePublic(isPublic); })
       .catch(() => {});
-
     return () => { cancelled = true; };
   }, [userId]);
 
@@ -97,34 +71,6 @@ export function DashboardSettings({ userId, pinnedMessage = null, onLogout }: Da
       toast({ title: "Could not update profile privacy", description: "Please try again." });
     } finally {
       setProfileVisibilitySaving(false);
-    }
-  }
-
-  async function handleSavePrivateAlias() {
-    const trimmed = aliasInput.trim();
-    if (!/^[A-Za-z0-9._-]{3,24}$/.test(trimmed)) {
-      toast({ title: "Name must be 3-24 letters, numbers, dots, dashes, or underscores." });
-      return;
-    }
-    setAliasSaving(true);
-    try {
-      const row = await savePrivateAlias(trimmed);
-      setAliases([row]);
-      setAliasInput(row.alias);
-      toast({ title: "Private name saved" });
-    } catch (e) {
-      toast({ title: "Could not save name", description: e instanceof Error ? e.message : "Please try again." });
-    } finally {
-      setAliasSaving(false);
-    }
-  }
-  async function handleDeleteAlias(id: string) {
-    try {
-      await deleteUserAlias(id);
-      setAliases((prev) => prev.filter((a) => a.id !== id));
-      setAliasInput("");
-    } catch {
-      toast({ title: "Could not remove name" });
     }
   }
 
@@ -211,69 +157,6 @@ export function DashboardSettings({ userId, pinnedMessage = null, onLogout }: Da
                   <span className={`absolute top-1 left-1 h-5 w-5 rounded-full bg-raw-text transition-transform ${profilePublic ? "translate-x-5" : "translate-x-0"}`} />
                 </button>
               </div>
-            </div>
-          )}
-
-          {section === "aliases" && (
-            <div className="overflow-hidden rounded-2xl border border-raw-border/30 bg-raw-surface/30">
-              <div className="border-b border-raw-border/30 px-4 py-3.5">
-                <p className="text-sm font-medium text-raw-text">Private names</p>
-                <p className="mt-1 text-xs text-raw-silver/40">
-                  Keep one separate private name. Use it when you don't want your public username shown.
-                </p>
-              </div>
-              <div className="px-4 py-3.5 space-y-3">
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={aliasInput}
-                    onChange={(e) => setAliasInput(e.target.value)}
-                    placeholder={aliases.length > 0 ? "Edit private name" : "New private name"}
-                    maxLength={24}
-                    className="flex-1 rounded-lg border border-raw-border/40 bg-raw-black/40 px-3 py-2 text-sm text-raw-text placeholder:text-raw-silver/30 focus:border-raw-gold/60 focus:outline-none"
-                    disabled={aliasSaving}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => { void handleSavePrivateAlias(); }}
-                    disabled={aliasSaving || aliasInput.trim().length < 3}
-                    className="rounded-lg bg-raw-gold px-3 py-2 text-sm font-semibold text-raw-ink transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    {aliasSaving ? "Saving..." : aliases.length > 0 ? "Save" : "Add"}
-                  </button>
-                </div>
-
-                {aliases.length > 0 ? (
-                  <ul className="space-y-1.5">
-                    {aliases.map((a) => (
-                      <li key={a.id} className="flex items-center justify-between rounded-lg border border-raw-border/30 bg-raw-black/30 px-3 py-2">
-                        <span className="text-sm text-raw-text">{a.alias}</span>
-                        <button
-                          type="button"
-                          onClick={() => { void handleDeleteAlias(a.id); }}
-                          className="text-xs text-raw-silver/50 hover:text-raw-gold"
-                          aria-label={`Remove ${a.alias}`}
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-xs text-raw-silver/30">No private names yet.</p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {section === "pinned" && (
-            <div className="rounded-2xl border border-raw-gold/25 bg-raw-gold/[0.06] px-4 py-3.5">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-raw-gold/70">Pinned message</p>
-              {pinnedMessage ? (
-                <p className="mt-1.5 text-sm leading-relaxed text-raw-text/85">{pinnedMessage.messageText}</p>
-              ) : (
-                <p className="mt-1.5 text-xs text-raw-silver/40">No pinned message yet.</p>
-              )}
             </div>
           )}
 
