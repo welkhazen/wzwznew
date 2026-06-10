@@ -108,3 +108,47 @@ export async function removeUserPinnedMessage(userId: string, messageId: string)
     .eq('message_id', messageId);
   if (error) throw error;
 }
+
+export interface PinNotificationRecord {
+  id: string;
+  actorName: string;
+  messageText: string | null;
+  communityTitle: string | null;
+  createdAt: string;
+}
+
+export interface NotifyMessagePinnedPayload {
+  recipientUserId: string;
+  messageId: string;
+  communityId?: string | null;
+  communityTitle?: string | null;
+  messageText: string;
+}
+
+export async function notifyMessagePinned(payload: NotifyMessagePinnedPayload): Promise<void> {
+  const { error } = await supabase.rpc('notify_message_pinned', {
+    p_recipient_user_id: payload.recipientUserId,
+    p_message_id: payload.messageId,
+    p_community_id: payload.communityId ?? null,
+    p_community_title: payload.communityTitle ?? null,
+    p_message_text: payload.messageText,
+  });
+  if (error) throw error;
+}
+
+export async function getPinNotifications(userId: string): Promise<PinNotificationRecord[]> {
+  const { data, error } = await supabase
+    .from('message_pin_notifications')
+    .select('id, actor_name, message_text, community_title, created_at')
+    .eq('recipient_user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(20);
+  if (error) throw error;
+  return (data ?? []).map((row) => ({
+    id: row.id as string,
+    actorName: row.actor_name as string,
+    messageText: (row.message_text as string | null) ?? null,
+    communityTitle: (row.community_title as string | null) ?? null,
+    createdAt: row.created_at as string,
+  }));
+}
