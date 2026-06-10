@@ -73,6 +73,8 @@ import {
 import { useCommunityMessagesRealtime } from "@/hooks/useCommunityMessagesRealtime";
 import {
   loadCommunityAccess,
+  FREE_COMMUNITY_SLOTS,
+  COMMUNITY_UNLOCK_TOKEN_COST,
   type CommunityAccess,
 } from "@/lib/communityAccess";
 import { readAvatarCatalogLocal } from "@/lib/avatarCatalog";
@@ -537,6 +539,12 @@ export function DashboardCommunities({
     const directoryCommunities = useMemo(() => {
       return communities;
     }, [communities]);
+    const joinedCommunityCount = useMemo(
+      () => directoryCommunities.filter((community) => community.members.some((member) => member.userId === user.id)).length,
+      [directoryCommunities, user.id]
+    );
+    const effectiveUnlockCount = Math.max(communityAccess.unlockedIds.size, joinedCommunityCount);
+    const freeCommunitySlotsRemaining = Math.max(0, FREE_COMMUNITY_SLOTS - effectiveUnlockCount);
     useEffect(() => {
       setSearchQuery("");
       setCommunityPollsExpanded(false);
