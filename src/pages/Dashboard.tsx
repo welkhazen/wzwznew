@@ -43,6 +43,9 @@ const DashboardProfile = lazy(() =>
 const DashboardWallet = lazy(() =>
   import("@/components/dashboard/DashboardWallet").then((module) => ({ default: module.DashboardWallet }))
 );
+const DashboardSettings = lazy(() =>
+  import("@/components/dashboard/DashboardSettings").then((module) => ({ default: module.DashboardSettings }))
+);
 
 const COMMUNITY_LOGOS: Record<string, string> = {
   lnt: LNTLogo,
@@ -483,6 +486,18 @@ export default function Dashboard({
                 onLogout={onLogout}
                 polls={polls}
                 tokenBalance={tokenBalance}
+              />
+            </DashboardSectionShell>
+          </Suspense>
+        );
+      case "settings":
+        return (
+          <Suspense fallback={dashboardSectionFallback}>
+            <DashboardSectionShell>
+              <DashboardSettings
+                userId={user.id}
+                pinnedMessage={pinnedMessage}
+                onLogout={onLogout}
               />
             </DashboardSectionShell>
           </Suspense>
