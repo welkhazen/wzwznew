@@ -70,7 +70,7 @@ const REVEAL_AVATAR_IMAGE_FIT: Record<string, RevealAvatarImageFit> = {
   "reveal-9": { scale: 1.42 },
 };
 
-export function AvatarShowcaseSection() {
+export function AvatarShowcaseSection({ onSignupClick }: { onSignupClick?: () => void }) {
   const sectionRef = useTrackSectionView("avatar");
   const { mode } = useTheme();
   const isLight = mode === "light";
