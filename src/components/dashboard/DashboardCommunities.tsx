@@ -1569,19 +1569,6 @@ export function DashboardCommunities({
                 {currentMember?.notificationsEnabled ? <Bell className="h-3.5 w-3.5" /> : <BellOff className="h-3.5 w-3.5" />}
                 <span>{currentMember?.notificationsEnabled ? "Notifications On" : "Notifications Off"}</span>
               </button>
-              {/* Feed toggle — desktop only */}
-              <button
-                onClick={() => setFeedOpen((o) => !o)}
-                className={`hidden sm:flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] transition-colors ${
-                  feedOpen
-                    ? "border-raw-gold/40 bg-raw-gold/10 text-raw-gold"
-                    : "border-raw-border/30 text-raw-silver/55 hover:border-raw-gold/20 hover:text-raw-gold"
-                }`}
-                title={feedOpen ? "Close feed" : "Open general feed"}
-              >
-                <PanelRight className="h-3.5 w-3.5" />
-                <span>Feed</span>
-              </button>
             </div>
           </div>
 
@@ -1716,6 +1703,19 @@ export function DashboardCommunities({
                   <X className="h-3.5 w-3.5" />
                 </button>
               )}
+              {/* Feed toggle — sits in the search bar, desktop only */}
+              <button
+                onClick={() => setFeedOpen((o) => !o)}
+                title={feedOpen ? "Close feed" : "Open general feed"}
+                className={`hidden sm:flex shrink-0 items-center gap-1.5 rounded-lg border px-2 py-1 text-[11px] transition-colors ${
+                  feedOpen
+                    ? "border-raw-gold/40 bg-raw-gold/10 text-raw-gold"
+                    : "border-raw-border/30 text-raw-silver/45 hover:border-raw-gold/20 hover:text-raw-gold"
+                }`}
+              >
+                <PanelRight className="h-3.5 w-3.5" />
+                <span>Feed</span>
+              </button>
             </div>
 
             <CommunityMessageTimeline
