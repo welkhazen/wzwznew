@@ -51,6 +51,7 @@ import { toast } from "@/components/ui/use-toast";
 import { spendTokens } from "@/lib/api/tokens";
 import { supabase } from "@/lib/supabase";
 import { listUserAliases, type UserAliasRow } from "@/backend/supabase/controllers/userController";
+import { getPrivateAvatarLevel } from "@/lib/avataridentity";
 
 export type DashboardTab = "home" | "polls" | "challenges" | "daily-spin" | "communities" | "profile" | "settings" | "wallet" | "store";
 
@@ -256,6 +257,7 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
     return window.localStorage.getItem(`${CHAT_IDENTITY_PREFIX}${userId}`);
   });
   const notifRef = useRef<HTMLDivElement>(null);
+  const effectiveAvatarLevel = selectedChatAlias ? getPrivateAvatarLevel(userId) : avatarLevel;
 
   useEffect(() => {
     let cancelled = false;
@@ -753,7 +755,7 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
                 className="flex items-center transition-opacity hover:opacity-80"
                 aria-label="Open profile menu"
               >
-                <AvatarFigure avatarIndex={avatarLevel} size="sm" selected />
+                <AvatarFigure avatarIndex={effectiveAvatarLevel} size="sm" selected />
               </button>
             </DropdownMenuTrigger>
 
@@ -777,7 +779,7 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
                     : "border-raw-gold/20 bg-raw-gold/[0.08] hover:bg-raw-gold/[0.12]",
                 )}
               >
-                <AvatarFigure avatarIndex={avatarLevel} size="sm" selected />
+                <AvatarFigure avatarIndex={effectiveAvatarLevel} size="sm" selected />
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-raw-text">View Profile</p>
                   <p className={cn("truncate text-xs", isEffectiveLight ? "text-slate-600" : "text-raw-silver/50")}>@{username}</p>
