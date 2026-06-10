@@ -830,6 +830,11 @@ export function DashboardCommunities({
       }
     }, [broadcastPinnedMessageUpdated, user.id]);
 
+    const handlePinMessage = useCallback((message: CommunityChatMessageRecord) => {
+      if (!selectedCommunity) return;
+      void handlePinMessageToProfile(message, selectedCommunity);
+    }, [handlePinMessageToProfile, selectedCommunity]);
+
     const handleClearPinnedMessage = useCallback(async () => {
       try {
         await clearUserPinnedMessage(user.id);
@@ -1731,6 +1736,7 @@ export function DashboardCommunities({
               onVotePoll={handleVoteOnPoll}
               onRetryMessage={handleRetryMessage}
               onLikeMessage={handleLikeMessage}
+              onPinMessage={handlePinMessage}
               onOpenMessageReport={handleOpenMessageReport}
               onBlockMessageSender={handleBlockMessageSender}
             />
