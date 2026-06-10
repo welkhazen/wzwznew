@@ -8,6 +8,8 @@ export interface GeneralFeedPostRecord {
   senderAvatarLevel?: number;
   text: string;
   createdAt: string;
+  communityId?: string;
+  communityName?: string;
 }
 
 type DbGeneralFeedPost = {
@@ -17,6 +19,8 @@ type DbGeneralFeedPost = {
   sender_avatar_level: number | null;
   text: string;
   created_at: string;
+  community_id: string | null;
+  community_name: string | null;
 };
 
 function mapGeneralFeedPost(row: DbGeneralFeedPost): GeneralFeedPostRecord {
@@ -27,6 +31,8 @@ function mapGeneralFeedPost(row: DbGeneralFeedPost): GeneralFeedPostRecord {
     senderAvatarLevel: row.sender_avatar_level ?? undefined,
     text: row.text,
     createdAt: row.created_at,
+    communityId: row.community_id ?? undefined,
+    communityName: row.community_name ?? undefined,
   };
 }
 
