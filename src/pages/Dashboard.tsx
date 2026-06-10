@@ -497,7 +497,6 @@ export default function Dashboard({
             <DashboardSectionShell>
               <DashboardSettings
                 userId={user.id}
-                pinnedMessage={pinnedMessage}
                 onLogout={onLogout}
               />
             </DashboardSectionShell>
