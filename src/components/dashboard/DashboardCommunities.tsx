@@ -92,6 +92,7 @@ import {
   writeBlockedCommunitySenders,
 } from "@/lib/blockedCommunitySenders";
 import { getUserTextModerationMessage, moderateUserText } from "@/lib/inputSecurity";
+import { useTheme } from "@/providers/useTheme";
 import type { User } from "@/store/types";
 import { CommunityMessageTimeline } from "@/components/dashboard/CommunityMessageTimeline";
 import { CommunityMessageComposer } from "@/components/dashboard/CommunityMessageComposer";
