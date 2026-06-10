@@ -6,7 +6,7 @@ import type { Poll } from "@/store/useRawStore";
 import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { LevelProgressBanner } from "@/components/dashboard/LevelProgressBanner";
 import { LEVEL_THEMES, getAvatar } from "@/lib/avataridentity";
-import { PersonalityInsightsInventory } from "@/components/dashboard/DashboardInventory";
+import { PersonalityInsightsInventory } from "@/components/dashboard/PersonalityInsightsInventory";
 import { addOwnedInsightId, readOwnedInsightIds } from "@/lib/insightsOwnership";
 import { spendTokens } from "@/lib/api/tokens";
 import { toast } from "@/components/ui/use-toast";
