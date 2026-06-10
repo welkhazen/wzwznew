@@ -203,12 +203,12 @@ export function DashboardSettings({ userId, pinnedMessage = null, onLogout }: Da
                   onClick={() => { void handleProfileVisibilityChange(); }}
                   disabled={profileVisibilitySaving}
                   className={`relative h-7 w-12 shrink-0 rounded-full border transition-colors disabled:opacity-60 ${
-                    profilePublic ? "border-raw-gold/60 bg-raw-gold/30" : "border-raw-border/40 bg-raw-surface/60"
+                    profilePublic ? "border-raw-gold/60 bg-raw-gold/30" : "border-raw-border/40 bg-white/15"
                   }`}
                   aria-pressed={profilePublic}
                   aria-label={profilePublic ? "Disable public chat profile" : "Enable public chat profile"}
                 >
-                  <span className={`absolute top-1 h-5 w-5 rounded-full bg-raw-text transition-transform ${profilePublic ? "translate-x-5" : "translate-x-0"}`} />
+                  <span className={`absolute top-1 left-1 h-5 w-5 rounded-full bg-raw-text transition-transform ${profilePublic ? "translate-x-5" : "translate-x-0"}`} />
                 </button>
               </div>
             </div>
