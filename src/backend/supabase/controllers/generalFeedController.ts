@@ -39,7 +39,7 @@ function mapGeneralFeedPost(row: DbGeneralFeedPost): GeneralFeedPostRecord {
 export async function fetchGeneralFeedPosts(limit = 8): Promise<GeneralFeedPostRecord[]> {
   const { data, error } = await supabase
     .from("general_feed_posts")
-    .select("*")
+    .select("id, sender_id, sender_name, sender_avatar_level, text, created_at, community_id, community_name")
     .order("created_at", { ascending: false })
     .limit(limit);
 
