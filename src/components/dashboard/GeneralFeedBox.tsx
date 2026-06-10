@@ -12,6 +12,7 @@ interface GeneralFeedBoxProps {
   compact?: boolean;
   showHeader?: boolean;
   fillHeight?: boolean;
+  communityId?: string;
 }
 
 function formatFeedTime(value: string): string {
@@ -33,6 +34,7 @@ export function GeneralFeedBox({
   compact = false,
   showHeader = true,
   fillHeight = false,
+  communityId,
 }: GeneralFeedBoxProps) {
   const [feedPosts, setFeedPosts] = useState<GeneralFeedPostRecord[]>([]);
   const [feedText, setFeedText] = useState("");
@@ -69,7 +71,7 @@ export function GeneralFeedBox({
     setFeedSubmitting(true);
     setFeedError("");
     try {
-      const post = await sendGeneralFeedPost(feedText);
+      const post = await sendGeneralFeedPost(feedText, communityId);
       setFeedPosts((current) => [post, ...current.filter((item) => item.id !== post.id)].slice(0, compact ? 5 : 8));
       setFeedText("");
     } catch {
@@ -77,7 +79,7 @@ export function GeneralFeedBox({
     } finally {
       setFeedSubmitting(false);
     }
-  }, [compact, feedSubmitting, feedText, feedTextLength, userId]);
+  }, [communityId, compact, feedSubmitting, feedText, feedTextLength, userId]);
 
   return (
     <div className={`${fillHeight ? "flex h-full min-h-0 flex-col" : "space-y-5"}`}>

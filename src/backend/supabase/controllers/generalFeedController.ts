@@ -47,10 +47,11 @@ export async function fetchGeneralFeedPosts(limit = 8): Promise<GeneralFeedPostR
   return ((data ?? []) as DbGeneralFeedPost[]).map(mapGeneralFeedPost);
 }
 
-export async function sendGeneralFeedPost(text: string): Promise<GeneralFeedPostRecord> {
+export async function sendGeneralFeedPost(text: string, communityId?: string | null): Promise<GeneralFeedPostRecord> {
   const cleanText = assertUserTextAllowed(text);
   const { data, error } = await supabase.rpc("send_general_feed_post", {
     p_text: cleanText,
+    p_community_id: communityId ?? null,
   });
 
   if (error) throw error;
