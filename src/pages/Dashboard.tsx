@@ -44,6 +44,12 @@ const DashboardWallet = lazy(() =>
   import("@/components/dashboard/DashboardWallet").then((module) => ({ default: module.DashboardWallet }))
 );
 
+const COMMUNITY_LOGOS: Record<string, string> = {
+  lnt: LNTLogo,
+  syt: SYTLogo,
+  iijm: IIJMLogo,
+};
+
 const dashboardSectionFallback = (
   <DashboardSectionShell>
     <div className="flex min-h-[240px] items-center justify-center text-sm text-raw-silver/60">
