@@ -5,7 +5,7 @@ import type { PinnedMessageRecord } from "@/backend/supabase/controllers/userExt
 import type { Poll } from "@/store/useRawStore";
 import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { LevelProgressBanner } from "@/components/dashboard/LevelProgressBanner";
-import { LEVEL_THEMES, getAvatar } from "@/lib/avataridentity";
+import { LEVEL_THEMES, getAvatar, getPrivateAvatarLevel, privateAvatarKey } from "@/lib/avataridentity";
 import { PersonalityInsightsInventory } from "@/components/dashboard/PersonalityInsightsInventory";
 import { addOwnedInsightId, readOwnedInsightIds } from "@/lib/insightsOwnership";
 import { spendTokens } from "@/lib/api/tokens";
@@ -19,7 +19,6 @@ import {
 
 const TOKEN_BALANCE_STORAGE_PREFIX = "raw.polls.token-balance";
 const TOKEN_BALANCE_UPDATED_EVENT = "raw:token-balance-updated";
-const privateAvatarKey = (uid: string) => `raw.profile.private-avatar.${uid}`;
 
 function pushTokenBalance(userId: string, balance: number): void {
   if (typeof window === "undefined") return;
@@ -79,10 +78,7 @@ export function DashboardProfile({
   const [aliasInput, setAliasInput] = useState("");
   const [aliasSaving, setAliasSaving] = useState(false);
   const [editingAlias, setEditingAlias] = useState(false);
-  const [privateAvatarLevel, setPrivateAvatarLevel] = useState<number>(() => {
-    const stored = typeof window !== "undefined" ? window.localStorage.getItem(privateAvatarKey(userId)) : null;
-    return stored ? Number(stored) : 1;
-  });
+  const [privateAvatarLevel, setPrivateAvatarLevel] = useState<number>(() => getPrivateAvatarLevel(userId));
   const [hoveredPrivateIndex, setHoveredPrivateIndex] = useState<number | null>(null);
 
   useEffect(() => {

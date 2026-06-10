@@ -78,6 +78,7 @@ import {
   type CommunityAccess,
 } from "@/lib/communityAccess";
 import { readAvatarCatalogLocal } from "@/lib/avatarCatalog";
+import { getPrivateAvatarLevel } from "@/lib/avataridentity";
 import { getPublicUserProfile, type PublicUserProfile } from "@/backend/supabase/controllers/userController";
 import {
   MAX_FAVORITE_COMMUNITIES,
@@ -1061,11 +1062,14 @@ export function DashboardCommunities({
         return;
       }
 
+      const sendAvatarLevel = selectedChatAlias ? getPrivateAvatarLevel(user.id) : avatarLevel;
+
       const optimisticMessage = retryingMessage ?? {
         id: `optimistic-${Date.now()}`,
         communityId: selectedCommunity.id,
         senderId: user.id,
         senderName: selectedChatAlias ?? user.username,
+        senderAvatarLevel: sendAvatarLevel,
         text: trimmedMessage,
         createdAt: new Date().toISOString(),
         deliveryStatus: "pending" as const,
@@ -1090,6 +1094,7 @@ export function DashboardCommunities({
         const savedMessage = await sendMessageSupabase(selectedCommunity.id, {
           text: trimmedMessage,
           identityAlias: selectedChatAlias,
+          avatarLevel: sendAvatarLevel,
         });
         updateCommunities((current) => replaceCommunityMessage(current, selectedCommunity.id, optimisticMessage.id, savedMessage));
         setMessageDraft("");
