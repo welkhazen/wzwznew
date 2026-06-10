@@ -2,7 +2,7 @@ import { supabase } from '../client';
 import type { UserRow, UserRole } from '../models/user';
 import {
   getUserFavoriteCommunities,
-  getUserPinnedMessage,
+  getUserPinnedMessages,
   type PinnedMessageRecord,
 } from './userExtrasController';
 
@@ -51,7 +51,7 @@ export interface PublicUserProfile {
   createdAt: string | null;
   profilePublic: boolean;
   favoriteCommunityIds: string[];
-  pinnedMessage: PinnedMessageRecord | null;
+  pinnedMessages: PinnedMessageRecord[];
 }
 
 export async function getPublicUserProfile(userId: string): Promise<PublicUserProfile | null> {
@@ -67,12 +67,12 @@ export async function getPublicUserProfile(userId: string): Promise<PublicUserPr
   const isPublic = row.profile_public ?? true;
 
   let favoriteCommunityIds: string[] = [];
-  let pinnedMessage: PinnedMessageRecord | null = null;
+  let pinnedMessages: PinnedMessageRecord[] = [];
   if (isPublic) {
     try {
-      [favoriteCommunityIds, pinnedMessage] = await Promise.all([
+      [favoriteCommunityIds, pinnedMessages] = await Promise.all([
         getUserFavoriteCommunities(userId),
-        getUserPinnedMessage(userId),
+        getUserPinnedMessages(userId),
       ]);
     } catch {
       // Profile extras are best-effort; fall back to empty/null on error.
@@ -87,7 +87,7 @@ export async function getPublicUserProfile(userId: string): Promise<PublicUserPr
     createdAt: isPublic ? row.created_at ?? null : null,
     profilePublic: isPublic,
     favoriteCommunityIds,
-    pinnedMessage,
+    pinnedMessages,
   };
 }
 

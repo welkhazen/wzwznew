@@ -81,11 +81,13 @@ import { readAvatarCatalogLocal } from "@/lib/avatarCatalog";
 import { getPublicUserProfile, type PublicUserProfile } from "@/backend/supabase/controllers/userController";
 import {
   MAX_FAVORITE_COMMUNITIES,
+  MAX_PINNED_MESSAGES,
+  PinnedMessageLimitError,
   getUserFavoriteCommunities,
-  getUserPinnedMessage,
+  getUserPinnedMessages,
   setUserFavoriteCommunities,
-  setUserPinnedMessage,
-  clearUserPinnedMessage,
+  addUserPinnedMessage,
+  removeUserPinnedMessage,
   type PinnedMessageRecord,
 } from "@/backend/supabase/controllers/userExtrasController";
 import {
@@ -248,7 +250,7 @@ export function DashboardCommunities({
   const [communityAccess, setCommunityAccess] = useState<CommunityAccess>({ hasSubscription: false, unlockedIds: new Set<string>() });
   const [unlockingId, setUnlockingId] = useState<string | null>(null);
   const [favoriteCommunityIds, setFavoriteCommunityIds] = useState<string[]>([]);
-  const [ownPinnedMessage, setOwnPinnedMessage] = useState<PinnedMessageRecord | null>(null);
+  const [ownPinnedMessages, setOwnPinnedMessages] = useState<PinnedMessageRecord[]>([]);
   const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [leavingCommunityId, setLeavingCommunityId] = useState<string | null>(null);
   const [messageDraft, setMessageDraft] = useState("");
@@ -763,8 +765,8 @@ export function DashboardCommunities({
       let cancelled = false;
       void (async () => {
         try {
-          const message = await getUserPinnedMessage(user.id);
-          if (!cancelled) setOwnPinnedMessage(message);
+          const messages = await getUserPinnedMessages(user.id);
+          if (!cancelled) setOwnPinnedMessages(messages);
         } catch {
           // Best-effort.
         }
@@ -780,9 +782,9 @@ export function DashboardCommunities({
       }));
     }, [user.id]);
 
-    const broadcastPinnedMessageUpdated = useCallback((message: PinnedMessageRecord | null) => {
+    const broadcastPinnedMessageUpdated = useCallback((messages: PinnedMessageRecord[]) => {
       window.dispatchEvent(new CustomEvent("raw:pinned-message-updated", {
-        detail: { userId: user.id, message },
+        detail: { userId: user.id, messages },
       }));
     }, [user.id]);
 
@@ -811,6 +813,10 @@ export function DashboardCommunities({
     }, [broadcastFavoritesUpdated, favoriteCommunityIds, user.id]);
 
     const handlePinMessageToProfile = useCallback(async (message: CommunityChatMessageRecord, community: PersistedCommunityRecord) => {
+      if (ownPinnedMessages.length >= MAX_PINNED_MESSAGES) {
+        toast({ title: "Pin limit reached", description: `You can only pin up to ${MAX_PINNED_MESSAGES} messages. Remove one first.` });
+        return;
+      }
       try {
         const payload = {
           messageId: message.id,
@@ -820,31 +826,36 @@ export function DashboardCommunities({
           messageText: message.text,
           messageCreatedAt: message.createdAt,
         };
-        await setUserPinnedMessage(user.id, payload);
-        const nextPinnedMessage = { ...payload, pinnedAt: new Date().toISOString() };
-        setOwnPinnedMessage(nextPinnedMessage);
-        broadcastPinnedMessageUpdated(nextPinnedMessage);
+        const nextPinnedMessage = await addUserPinnedMessage(user.id, payload);
+        const next = [...ownPinnedMessages, nextPinnedMessage];
+        setOwnPinnedMessages(next);
+        broadcastPinnedMessageUpdated(next);
         toast({ title: "Pinned to your profile", description: "Others will see this message on your chat profile." });
-      } catch {
-        toast({ title: "Could not pin message", description: "Please try again." });
+      } catch (error) {
+        if (error instanceof PinnedMessageLimitError) {
+          toast({ title: "Pin limit reached", description: error.message });
+        } else {
+          toast({ title: "Could not pin message", description: "Please try again." });
+        }
       }
-    }, [broadcastPinnedMessageUpdated, user.id]);
+    }, [broadcastPinnedMessageUpdated, ownPinnedMessages, user.id]);
 
     const handlePinMessage = useCallback((message: CommunityChatMessageRecord) => {
       if (!selectedCommunity) return;
       void handlePinMessageToProfile(message, selectedCommunity);
     }, [handlePinMessageToProfile, selectedCommunity]);
 
-    const handleClearPinnedMessage = useCallback(async () => {
+    const handleRemovePinnedMessage = useCallback(async (messageId: string) => {
       try {
-        await clearUserPinnedMessage(user.id);
-        setOwnPinnedMessage(null);
-        broadcastPinnedMessageUpdated(null);
+        await removeUserPinnedMessage(user.id, messageId);
+        const next = ownPinnedMessages.filter((m) => m.messageId !== messageId);
+        setOwnPinnedMessages(next);
+        broadcastPinnedMessageUpdated(next);
         toast({ title: "Pinned message removed" });
       } catch {
         toast({ title: "Could not remove pinned message", description: "Please try again." });
       }
-    }, [broadcastPinnedMessageUpdated, user.id]);
+    }, [broadcastPinnedMessageUpdated, ownPinnedMessages, user.id]);
 
     const handleOpenSenderProfile = useCallback((message: CommunityChatMessageRecord) => {
       setProfileDialogOpen(true);

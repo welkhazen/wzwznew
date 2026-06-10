@@ -4,7 +4,7 @@ import { readCommunityChats } from "@/lib/communityChat";
 import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
 import { fetchCommunities } from "@/backend/supabase/controllers/communityController";
 import { readCachedCommunities, writeCachedCommunities } from "@/lib/communityCache";
-import { getUserFavoriteCommunities, getUserPinnedMessage, type PinnedMessageRecord } from "@/backend/supabase/controllers/userExtrasController";
+import { getUserFavoriteCommunities, getUserPinnedMessages, removeUserPinnedMessage, type PinnedMessageRecord } from "@/backend/supabase/controllers/userExtrasController";
 import { Home as HomeIcon, MessageCircle, Target, User as UserIcon, LogOut, Trophy, Sparkles, Moon, CloudMoon, Sun } from "lucide-react";
 import LNTLogo from "@/assets/LNT.webp";
 import SYTLogo from "@/assets/logospeak.webp";
@@ -116,7 +116,7 @@ export default function Dashboard({
     () => readCachedCommunities()?.data ?? [],
   );
   const [favoriteCommunityIds, setFavoriteCommunityIds] = useState<string[]>([]);
-  const [pinnedMessage, setPinnedMessage] = useState<PinnedMessageRecord | null>(null);
+  const [pinnedMessages, setPinnedMessages] = useState<PinnedMessageRecord[]>([]);
   const [isHome, setIsHome] = useState(true);
   const [mobileCommunityPickerOpen, setMobileCommunityPickerOpen] = useState(false);
   const [mobileCommunityAnchorRect, setMobileCommunityAnchorRect] = useState<DOMRect | null>(null);
@@ -196,16 +196,16 @@ export default function Dashboard({
     let cancelled = false;
     void (async () => {
       try {
-        const message = await getUserPinnedMessage(user.id);
-        if (!cancelled) setPinnedMessage(message);
+        const messages = await getUserPinnedMessages(user.id);
+        if (!cancelled) setPinnedMessages(messages);
       } catch {
-        // Pinned profile message is best-effort; the profile still renders.
+        // Pinned profile messages are best-effort; the profile still renders.
       }
     })();
     const onChange = (event: Event) => {
-      const detail = (event as CustomEvent<{ userId?: string; message?: PinnedMessageRecord | null }>).detail;
+      const detail = (event as CustomEvent<{ userId?: string; messages?: PinnedMessageRecord[] }>).detail;
       if (!detail || detail.userId !== user.id) return;
-      setPinnedMessage(detail.message ?? null);
+      setPinnedMessages(detail.messages ?? []);
     };
     window.addEventListener("raw:pinned-message-updated", onChange);
     return () => {
@@ -213,6 +213,20 @@ export default function Dashboard({
       window.removeEventListener("raw:pinned-message-updated", onChange);
     };
   }, [user.id]);
+
+  const handleRemovePinnedMessage = async (messageId: string) => {
+    const previous = pinnedMessages;
+    const next = previous.filter((message) => message.messageId !== messageId);
+    setPinnedMessages(next);
+    try {
+      await removeUserPinnedMessage(user.id, messageId);
+      window.dispatchEvent(new CustomEvent("raw:pinned-message-updated", {
+        detail: { userId: user.id, messages: next },
+      }));
+    } catch {
+      setPinnedMessages(previous);
+    }
+  };
 
   const handleTabChange = (tab: DashboardTab) => {
     setActiveTab(tab);
@@ -484,7 +498,8 @@ export default function Dashboard({
                 xp={progress?.xp ?? 0}
                 xpLevel={progress?.level ?? 1}
                 onLogout={onLogout}
-                pinnedMessage={pinnedMessage}
+                pinnedMessages={pinnedMessages}
+                onRemovePinnedMessage={handleRemovePinnedMessage}
                 polls={polls}
                 tokenBalance={tokenBalance}
               />
