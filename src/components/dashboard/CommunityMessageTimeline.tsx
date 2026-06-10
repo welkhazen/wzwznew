@@ -1,6 +1,6 @@
 import { memo } from "react";
 import type { RefObject } from "react";
-import { AlertTriangle, Ban, BarChart3, Heart, MoreHorizontal, Trash2 } from "lucide-react";
+import { AlertTriangle, Ban, BarChart3, Heart, MoreHorizontal, Pin, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,6 +30,7 @@ interface CommunityMessageTimelineProps {
   onVotePoll: (pollId: string, optionId: string) => void;
   onRetryMessage: (message: CommunityChatMessageRecord) => void;
   onLikeMessage: (message: CommunityChatMessageRecord) => void;
+  onPinMessage: (message: CommunityChatMessageRecord) => void;
   onOpenMessageReport: (message: CommunityChatMessageRecord) => void;
   onBlockMessageSender: (message: CommunityChatMessageRecord) => void;
 }
@@ -47,6 +48,7 @@ export const CommunityMessageTimeline = memo(function CommunityMessageTimeline({
   onVotePoll,
   onRetryMessage,
   onLikeMessage,
+  onPinMessage,
   onOpenMessageReport,
   onBlockMessageSender,
 }: CommunityMessageTimelineProps) {
@@ -206,6 +208,13 @@ export const CommunityMessageTimeline = memo(function CommunityMessageTimeline({
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="min-w-32 border-raw-border/30 bg-raw-black/95 text-raw-silver shadow-xl shadow-black/40">
+                          <DropdownMenuItem
+                            className="cursor-pointer gap-2 text-xs focus:bg-raw-surface/80 focus:text-raw-text"
+                            onClick={() => onPinMessage(message)}
+                          >
+                            <Pin className="h-3.5 w-3.5 text-raw-gold/80" />
+                            Pin to profile
+                          </DropdownMenuItem>
                           <DropdownMenuItem
                             className="cursor-pointer gap-2 text-xs focus:bg-raw-surface/80 focus:text-raw-text"
                             onClick={() => onOpenMessageReport(message)}
