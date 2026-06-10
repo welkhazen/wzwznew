@@ -304,7 +304,7 @@ export function DashboardProfile({
         </div>
 
         {/* Private avatar selector */}
-        <div className="mt-4 flex flex-wrap gap-1.5">
+        <div className="mt-4 flex w-full flex-wrap justify-center gap-1.5">
           {ownedLevels.map((lvl) => (
             <button
               key={lvl}
