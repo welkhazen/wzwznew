@@ -185,6 +185,9 @@ export const CommunityMessageTimeline = memo(function CommunityMessageTimeline({
                   </span>
                   <span className="ml-2 text-[9px] text-raw-silver/25">{formatChatTimestamp(message.createdAt)}</span>
                   {message.pinned && <span className="ml-1 text-[9px] text-raw-gold/60">· Pinned</span>}
+                  {isOwnMessage && message.moderationStatus === "hold" && (
+                    <span className="ml-1 text-[9px] text-yellow-400/80">· Pending review</span>
+                  )}
                   {message.deliveryStatus === "sending" && <span className="ml-1 text-[9px] text-raw-silver/35">· Sending</span>}
                   {message.deliveryStatus === "failed" && <span className="ml-1 text-[9px] text-red-300/80">· Failed</span>}
                 </p>
