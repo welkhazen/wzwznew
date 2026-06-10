@@ -1783,6 +1783,7 @@ export function DashboardCommunities({
                 compact
                 showHeader={false}
                 fillHeight
+                communityId={selectedCommunity?.id}
               />
             </div>
           )}
