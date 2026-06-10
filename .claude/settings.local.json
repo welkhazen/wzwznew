@@ -93,7 +93,9 @@
       "PowerShell($g = @\\(Get-ChildItem 'C:\\\\Users\\\\user\\\\.claude\\\\skills' -Directory -ErrorAction SilentlyContinue\\); $r = @\\(Get-ChildItem 'C:\\\\Users\\\\user\\\\OneDrive\\\\Desktop\\\\wzwz\\\\.claude\\\\skills' -Directory -ErrorAction SilentlyContinue\\); Write-Host \"global skills: $\\($g.Count\\)\"; Write-Host \"repo skills:   $\\($r.Count\\)\"; $missing = Compare-Object $r.Name $g.Name | Where-Object { $_.SideIndicator -eq '<=' }; Write-Host \"in repo but NOT in global: $\\($missing.Count\\)\"; $missing | ForEach-Object { $_.InputObject })",
       "Bash(curl -s -o - -w \"\\\\nHTTP %{http_code}\\\\n\" -X POST \"https://iktusezbedndctnzhtwh.supabase.co/rest/v1/rpc/save_onboarding_identities\" -H \"apikey: sb_publishable_Q9Blujk00EQefY2CKQJkZQ_fjMoYO-r\" -H \"Authorization: Bearer sb_publishable_Q9Blujk00EQefY2CKQJkZQ_fjMoYO-r\" -H \"Content-Type: application/json\" -d \"{\\\\\"p_public_username\\\\\":\\\\\"test\\\\\",\\\\\"p_private_alias\\\\\":\\\\\"test\\\\\"}\")",
       "Bash(curl -s -o - -w \"\\\\nHTTP %{http_code}\\\\n\" -X POST \"https://iktusezbedndctnzhtwh.supabase.co/rest/v1/rpc/save_onboarding_identities\" -H \"apikey: sb_publishable_Q9Blujk00EQefY2CKQJkZQ_fjMoYO-r\" -H \"Content-Type: application/json\" -d \"{\\\\\"p_public_username\\\\\":\\\\\"x\\\\\",\\\\\"p_private_alias\\\\\":\\\\\"y\\\\\"}\")",
-      "Bash(grep -rn \"{a.price} tokens\\\\|tokens\\\\`\\\\|tokens<\\\\|AvatarShop\\\\|AvatarStore\" src/components/dashboard/DashboardInventory.tsx)"
+      "Bash(grep -rn \"{a.price} tokens\\\\|tokens\\\\`\\\\|tokens<\\\\|AvatarShop\\\\|AvatarStore\" src/components/dashboard/DashboardInventory.tsx)",
+      "Bash(Remove-Item \"C:\\\\Users\\\\user\\\\OneDrive\\\\Desktop\\\\wzwz\\\\src\\\\components\\\\dashboard\\\\DashboardInventory.tsx\")",
+      "Bash(git rm *)"
     ]
   }
 }
