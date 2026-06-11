@@ -305,7 +305,17 @@ export function DashboardCommunities({
     const reloadChatData = useCallback(async () => {
       try {
         if (activeCommunityId) {
-          setMessagesLoading(true);
+          const cached = readCachedMessages(activeCommunityId);
+          if (cached) {
+            // Show cached messages immediately so there's no visible spinner
+            // while the background revalidation runs.
+            updateCommunities((current) =>
+              setCommunityMessages(current, activeCommunityId, cached.data),
+            );
+            setHasOlderMessages(cached.data.length === MESSAGE_PAGE_SIZE);
+          } else {
+            setMessagesLoading(true);
+          }
           setMessagesError(false);
         }
 
@@ -324,6 +334,7 @@ export function DashboardCommunities({
         if (activeCommunityId && activeCommunityMessages) {
           loadedMessagesCommunityRef.current = activeCommunityId;
           setHasOlderMessages(activeCommunityMessages.length === MESSAGE_PAGE_SIZE);
+          writeCachedMessages(activeCommunityId, activeCommunityMessages);
         }
         setCommunities((previous) => {
           const next = communitiesData.map((community) => ({
