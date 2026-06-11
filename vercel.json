@@ -22,7 +22,7 @@
       "source": "/:path*",
       "has": [{ "type": "host", "value": "myraw.app" }],
       "destination": "https://www.myraw.app/:path*",
-      "permanent": true
+      "statusCode": 308
     }
   ],
   "rewrites": [
