@@ -863,15 +863,6 @@ export function DashboardCommunities({
       void handlePinMessageToProfile(message, selectedCommunity);
     }, [handlePinMessageToProfile, selectedCommunity]);
 
-    const handleUnpinMessage = useCallback((message: CommunityChatMessageRecord) => {
-      void handleRemovePinnedMessage(message.id);
-    }, [handleRemovePinnedMessage]);
-
-    const ownPinnedMessageIds = useMemo(
-      () => new Set(ownPinnedMessages.map((m) => m.messageId)),
-      [ownPinnedMessages],
-    );
-
     const handleRemovePinnedMessage = useCallback(async (messageId: string) => {
       try {
         await removeUserPinnedMessage(user.id, messageId);
@@ -883,6 +874,15 @@ export function DashboardCommunities({
         toast({ title: "Could not remove pinned message", description: "Please try again." });
       }
     }, [broadcastPinnedMessageUpdated, ownPinnedMessages, user.id]);
+
+    const handleUnpinMessage = useCallback((message: CommunityChatMessageRecord) => {
+      void handleRemovePinnedMessage(message.id);
+    }, [handleRemovePinnedMessage]);
+
+    const ownPinnedMessageIds = useMemo(
+      () => new Set(ownPinnedMessages.map((m) => m.messageId)),
+      [ownPinnedMessages],
+    );
 
     const handleOpenSenderProfile = useCallback((message: CommunityChatMessageRecord) => {
       setProfileDialogOpen(true);
