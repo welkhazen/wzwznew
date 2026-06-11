@@ -236,7 +236,7 @@ export const CommunityMessageTimeline = memo(function CommunityMessageTimeline({
                             <PinOff className="h-3.5 w-3.5 text-raw-gold/80" />
                             Unpin from profile
                           </DropdownMenuItem>
-                        ) : (
+                        ) : message.moderationStatus !== "hold" ? (
                           <DropdownMenuItem
                             className="cursor-pointer gap-2 text-xs focus:bg-raw-surface/80 focus:text-raw-text"
                             onClick={() => onPinMessageToProfile(message)}
@@ -244,7 +244,7 @@ export const CommunityMessageTimeline = memo(function CommunityMessageTimeline({
                             <Pin className="h-3.5 w-3.5 text-raw-gold/80" />
                             Pin to my profile
                           </DropdownMenuItem>
-                        )}
+                        ) : null}
                         {!isOwnMessage && (
                           <>
                             <DropdownMenuItem

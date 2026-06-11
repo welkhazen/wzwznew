@@ -137,6 +137,15 @@ describe("CommunityMessageTimeline", () => {
     expect(props.onBlockMessageSender).toHaveBeenCalledWith(otherMessage);
   });
 
+  it("does not offer pinning for messages held in moderation review", async () => {
+    renderTimeline({
+      groupedMessages: [{ label: "Today", messages: [{ ...ownMessage, moderationStatus: "hold" }] }],
+    });
+
+    fireEvent.pointerDown(screen.getByRole("button", { name: "Message actions" }));
+    expect(screen.queryByRole("menuitem", { name: /Pin to my profile/i })).not.toBeInTheDocument();
+  });
+
   it("can unpin the pinned profile message", async () => {
     const props = renderTimeline({
       groupedMessages: [{ label: "Today", messages: [ownMessage] }],

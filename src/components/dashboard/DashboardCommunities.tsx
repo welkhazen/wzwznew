@@ -820,6 +820,10 @@ export function DashboardCommunities({
     }, [broadcastFavoritesUpdated, favoriteCommunityIds, user.id]);
 
     const handlePinMessageToProfile = useCallback(async (message: CommunityChatMessageRecord, community: PersistedCommunityRecord) => {
+      if (message.moderationStatus === "hold") {
+        toast({ title: "Message pending review", description: "This message can be pinned once it passes moderation review." });
+        return;
+      }
       if (ownPinnedMessages.length >= MAX_PINNED_MESSAGES) {
         toast({ title: "Pin limit reached", description: `You can only pin up to ${MAX_PINNED_MESSAGES} messages. Remove one first.` });
         return;
