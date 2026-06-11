@@ -11,6 +11,7 @@ import { claimPendingLandingWheelAvatarForUser } from "@/lib/avatarCatalog";
 import { unlockCommunity } from "@/lib/communityAccess";
 import { joinCommunity } from "@/backend/supabase/controllers/communityController";
 import { saveOnboardingIdentities } from "@/backend/supabase/controllers/userController";
+import { APP_CANONICAL_HOST, buildCanonicalAppUrl } from "@/lib/canonicalHost";
 
 const LandingShellLazy = lazy(() => import("@/components/landing/LandingShell"));
 
@@ -81,8 +82,8 @@ const Index = () => {
       return;
     }
 
-    const targetUrl = `${window.location.protocol}//myraw.app${window.location.pathname}${window.location.search}${window.location.hash}`;
-    if (window.location.hostname !== "myraw.app") {
+    const targetUrl = buildCanonicalAppUrl(window.location);
+    if (window.location.hostname !== APP_CANONICAL_HOST) {
       window.location.replace(targetUrl);
     }
   }, [hostname, isLoggedIn, isTheRawMe, user]);
@@ -102,7 +103,7 @@ const Index = () => {
       <div className="flex min-h-screen items-center justify-center bg-raw-black px-6 text-center text-raw-silver/60">
         <div>
           <p className="font-display text-sm uppercase tracking-[0.25em] text-raw-gold/70">Redirecting</p>
-          <p className="mt-3 text-sm">Taking you to myraw.app...</p>
+          <p className="mt-3 text-sm">Taking you to www.myraw.app...</p>
         </div>
       </div>
     );

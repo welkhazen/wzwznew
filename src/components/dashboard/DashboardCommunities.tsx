@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import LNTLogo from "@/assets/LNT.webp";
 import SYTLogo from "@/assets/logospeak.webp";
 import IIJMLogo from "@/assets/itisjustme.webp";
-import { AlertTriangle, ArrowLeft, BarChart3, Bell, BellOff, ImagePlus, Lock, PanelRight, Plus, Search, Star, Trash2, UserMinus, Users, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, BarChart3, Bell, BellOff, ImagePlus, Lock, PanelRight, Plus, Search, Star, Trash2, UserMinus, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
@@ -61,6 +61,7 @@ import {
 import { buildDefaultCommunities } from "@/lib/communityChat.seed";
 import { readCachedMessages, writeCachedMessages } from "@/lib/communityCache";
 import { sendCommunityPushNotification } from "@/lib/communityPushNotifications";
+import { IDENTITY_SELECTION_EVENT, readSelectedIdentityAlias } from "@/lib/identitySelection";
 import type { CommunityChatMessageRecord, PersistedCommunityRecord } from "@/lib/communityChat.types";
 import {
   appendOptimisticMessage,
@@ -116,6 +117,121 @@ const MESSAGE_PAGE_SIZE = 10;
 const MAX_COMMUNITY_MESSAGE_LENGTH = 150;
 const CHAT_IDENTITY_PREFIX = "raw.chat.identity.v1.";
 const CHAT_IDENTITY_CHANGED_EVENT = "raw:chat-identity-changed";
+
+function getMessageSenderBlockKey(message: Pick<CommunityChatMessageRecord, "senderId" | "senderName">): string {
+  return getCommunitySenderBlockKey(message.senderId, message.senderName);
+}
+
+function readCachedCommunities(): PersistedCommunityRecord[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.sessionStorage.getItem(COMMUNITIES_CACHE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeCachedCommunities(communities: PersistedCommunityRecord[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.setItem(COMMUNITIES_CACHE_KEY, JSON.stringify(communities));
+  } catch {
+    // ignore storage write errors
+  }
+}
+
+function mergeCommunityMessages(
+  messages: CommunityChatMessageRecord[],
+  incoming: CommunityChatMessageRecord,
+): CommunityChatMessageRecord[] {
+  const withoutSameId = messages.filter((message) => message.id !== incoming.id);
+  const pendingIndex = withoutSameId.findIndex((message) =>
+    message.deliveryStatus === "sending" &&
+    message.senderId === incoming.senderId &&
+    message.text === incoming.text
+  );
+
+  const nextMessages = [...withoutSameId];
+  if (pendingIndex >= 0) {
+    nextMessages[pendingIndex] = incoming;
+  } else {
+    nextMessages.push(incoming);
+  }
+
+  return nextMessages.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+}
+
+function upsertCommunityMessage(
+  communities: PersistedCommunityRecord[],
+  communityId: string,
+  message: CommunityChatMessageRecord,
+): PersistedCommunityRecord[] {
+  return communities.map((community) =>
+    community.id === communityId
+      ? { ...community, messages: mergeCommunityMessages(community.messages, message) }
+      : community
+  );
+}
+
+function replaceCommunityMessage(
+  communities: PersistedCommunityRecord[],
+  communityId: string,
+  previousId: string,
+  message: CommunityChatMessageRecord,
+  fallbackCommunity?: PersistedCommunityRecord,
+): PersistedCommunityRecord[] {
+  const hasCommunity = communities.some((community) => community.id === communityId);
+  const sourceCommunities = hasCommunity || !fallbackCommunity ? communities : [...communities, fallbackCommunity];
+
+  return sourceCommunities.map((community) => {
+    if (community.id !== communityId) return community;
+    const withoutPrevious = community.messages.filter((entry) => entry.id !== previousId);
+    return { ...community, messages: mergeCommunityMessages(withoutPrevious, message) };
+  });
+}
+
+function markCommunityMessageFailed(
+  communities: PersistedCommunityRecord[],
+  communityId: string,
+  messageId: string,
+): PersistedCommunityRecord[] {
+  return communities.map((community) =>
+    community.id === communityId
+      ? {
+          ...community,
+          messages: community.messages.map((message) =>
+            message.id === messageId ? { ...message, deliveryStatus: "failed" } : message
+          ),
+        }
+      : community
+  );
+}
+
+function appendOptimisticMessage(
+  communities: PersistedCommunityRecord[],
+  communityId: string,
+  message: CommunityChatMessageRecord,
+  fallbackCommunity?: PersistedCommunityRecord,
+): PersistedCommunityRecord[] {
+  const hasCommunity = communities.some((community) => community.id === communityId);
+  const sourceCommunities = hasCommunity || !fallbackCommunity ? communities : [...communities, fallbackCommunity];
+
+  return sourceCommunities.map((community) => {
+    if (community.id !== communityId) return community;
+    const withoutExisting = community.messages.filter((entry) => entry.id !== message.id);
+    return {
+      ...community,
+      messages: [...withoutExisting, { ...message, deliveryStatus: "sending" }]
+        .sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
+    };
+  });
+}
+
+type ChatIdentity = Pick<UserAliasRow, "alias" | "avatar_level" | "is_public">;
+
 
 interface DashboardCommunitiesProps {
   user: User;
@@ -1095,7 +1211,7 @@ export function DashboardCommunities({
         likedBy: [],
       };
 
-      updateCommunities((current) => appendOptimisticMessage(current, selectedCommunity.id, optimisticMessage));
+      updateCommunities((current) => appendOptimisticMessage(current, selectedCommunity.id, optimisticMessage, selectedCommunity));
       try {
         const mentionRecipientIds = selectedCommunity.members
           .filter((member) =>
@@ -1115,7 +1231,7 @@ export function DashboardCommunities({
           identityAlias: selectedChatAlias,
           avatarLevel: sendAvatarLevel,
         });
-        updateCommunities((current) => replaceCommunityMessage(current, selectedCommunity.id, optimisticMessage.id, savedMessage));
+        updateCommunities((current) => replaceCommunityMessage(current, selectedCommunity.id, optimisticMessage.id, savedMessage, selectedCommunity));
         setMessageDraft("");
         setMentionQuery(null);
         void sendCommunityPushNotification({
@@ -1763,8 +1879,6 @@ export function DashboardCommunities({
               polls={communityPolls}
               groupedMessages={groupedMessages}
               activeMessageCount={activeMessages.length}
-              messagesLoading={messagesLoading}
-              messagesError={messagesError}
               canManagePolls={canManagePolls}
               userId={user.id}
               username={user.username}
@@ -1773,12 +1887,8 @@ export function DashboardCommunities({
               onVotePoll={handleVoteOnPoll}
               onRetryMessage={handleRetryMessage}
               onLikeMessage={handleLikeMessage}
-              pinnedMessageIds={pinnedMessageIds}
-              onPinMessageToProfile={handlePinMessage}
-              onUnpinMessageFromProfile={(message) => { void handleRemovePinnedMessage(message.id); }}
               onOpenMessageReport={handleOpenMessageReport}
               onBlockMessageSender={handleBlockMessageSender}
-              onOpenSenderProfile={handleOpenSenderProfile}
             />
 
             <CommunityMessageComposer

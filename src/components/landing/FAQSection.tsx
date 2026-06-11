@@ -17,6 +17,21 @@ const FAQ_ITEMS = [
     answer:
       "No. You can join with a username, choose an avatar, and participate without displaying your real name, personal photo, or offline social profile.",
   },
+  {
+    question: "Is raW free?",
+    answer:
+      "Yes. Joining raW, answering polls, and chatting in communities is free. Optional extras like premium avatars and additional unlocks use tokens.",
+  },
+  {
+    question: "Is raW moderated and safe?",
+    answer:
+      "Yes. Anonymity is not a free pass — communities have content rules and automated filtering, backed by human review. You can report messages, block users, and appeal moderation decisions.",
+  },
+  {
+    question: "What happens to my data?",
+    answer:
+      "Your answers and activity stay tied to your anonymous username, never your real-world identity. We collect only what's needed to run raW — see our Privacy page for the full details.",
+  },
 ];
 
 export function FAQSection() {
@@ -89,7 +104,7 @@ export function FAQSection() {
               type="text"
               value={name}
               onChange={(event) => setName(event.target.value)}
-              placeholder="Your name (optional)"
+              placeholder="Username (optional)"
               className={`w-full rounded-xl border px-3 py-2.5 text-sm focus:outline-none ${
                 isLight
                   ? "border-amber-200 bg-white/80 text-[#1a1400] placeholder:text-stone-400 focus:border-amber-400"

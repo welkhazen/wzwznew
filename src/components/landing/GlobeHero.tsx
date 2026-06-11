@@ -64,7 +64,7 @@ export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
           >
             <div className="absolute inset-0 rounded-full bg-gradient-to-r from-primary/10 via-transparent to-primary/10 animate-pulse" />
             <div className="w-2 h-2 bg-primary rounded-full animate-ping" />
-            <span className="relative z-10 w-full text-center text-[0.69rem] font-bold uppercase tracking-[0.2em] text-primary sm:text-sm sm:tracking-wider">ANONYMOUS  FIRST • IDENTITY  BASED • COMMUNITY  DRIVEN</span>
+            <span className="relative z-10 w-full text-center text-[0.69rem] font-bold uppercase tracking-[0.2em] text-primary sm:text-sm sm:tracking-wider">ANONYMOUS BY DESIGN • IDENTITY YOU BUILD • COMMUNITY DRIVEN</span>
             <div
               className="w-2 h-2 bg-primary rounded-full animate-ping"
               style={{ animationDelay: "0.5s" }}
@@ -130,7 +130,7 @@ export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
                   "0 0 12px hsl(var(--primary) / 0.6), 0 0 28px hsl(var(--primary) / 0.35)",
               }}
             >
-              Join interest-based group chats with only a username and password
+              Join interest-based group chats with just a username and password — no email, no phone, no real name
             </p>
           </motion.div>
         </motion.div>
