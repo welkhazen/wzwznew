@@ -311,35 +311,37 @@ export function DashboardHome({
           <Zap className="size-4 text-raw-gold" />
           <h2 className={`text-xl font-bold ${isLight ? "text-slate-950" : "text-white"}`}>Challenges</h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 md:items-stretch gap-6">
+        <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-2 md:items-stretch md:gap-6 md:overflow-visible md:px-0 md:pb-0">
           {/* Daily Spin */}
-          <div className={`p-6 rounded-[1.5rem] space-y-5 ${isLight ? "border border-slate-200 bg-white shadow-[0_12px_28px_rgba(15,23,42,0.08)]" : "border border-white/10 bg-[#1a1a1a]"}`}>
+          <div className={`flex aspect-square w-[78vw] max-w-[18rem] shrink-0 flex-col overflow-hidden p-4 rounded-[1.5rem] md:aspect-auto md:w-auto md:max-w-none md:p-6 ${isLight ? "border border-slate-200 bg-white shadow-[0_12px_28px_rgba(15,23,42,0.08)]" : "border border-white/10 bg-[#1a1a1a]"}`}>
             <div className="flex items-start justify-between">
               <div className="space-y-0.5">
-                <h3 className={`text-xl font-bold tracking-tight ${isLight ? "text-slate-950" : "text-white"}`}>Daily Spin</h3>
+                <h3 className={`text-lg font-bold tracking-tight md:text-xl ${isLight ? "text-slate-950" : "text-white"}`}>Daily Spin</h3>
                 <p className={`text-xs ${isLight ? "text-slate-500" : "text-white/40"}`}>Luck of the anonymous</p>
               </div>
               <div className="w-10 h-10 rounded-xl bg-raw-gold/5 flex items-center justify-center border border-raw-gold/10">
                 <Dices className="size-5 text-raw-gold" />
               </div>
             </div>
-            {userId ? (
-              <DashboardDailySpin
-                userId={userId}
-                isAdmin={isAdmin ?? false}
-                onAwardXP={onAwardXP}
-                onAvatarWon={onAvatarWon}
-              />
-            ) : null}
+            <div className="mt-3 min-h-0 flex-1 overflow-hidden md:mt-5 md:overflow-visible">
+              {userId ? (
+                <DashboardDailySpin
+                  userId={userId}
+                  isAdmin={isAdmin ?? false}
+                  onAwardXP={onAwardXP}
+                  onAvatarWon={onAvatarWon}
+                />
+              ) : null}
+            </div>
           </div>
 
           {/* Right column: Daily Poll Progress on top, Level Up below */}
-          <div className="flex flex-col gap-6">
+          <div className="contents md:flex md:flex-col md:gap-6">
             {/* Daily Poll Progress */}
-            <div className={`p-6 rounded-[1.5rem] flex flex-1 flex-col space-y-5 ${isLight ? "border border-slate-200 bg-white shadow-[0_12px_28px_rgba(15,23,42,0.08)]" : "border border-white/10 bg-[#1a1a1a]"}`}>
+            <div className={`flex aspect-square w-[78vw] max-w-[18rem] shrink-0 flex-col space-y-4 p-4 rounded-[1.5rem] md:aspect-auto md:w-auto md:max-w-none md:flex-1 md:space-y-5 md:p-6 ${isLight ? "border border-slate-200 bg-white shadow-[0_12px_28px_rgba(15,23,42,0.08)]" : "border border-white/10 bg-[#1a1a1a]"}`}>
               <div className="flex items-start justify-between">
                 <div className="space-y-0.5">
-                  <h3 className={`text-xl font-bold tracking-tight ${isLight ? "text-slate-950" : "text-white"}`}>Daily Poll Progress</h3>
+                  <h3 className={`text-lg font-bold tracking-tight md:text-xl ${isLight ? "text-slate-950" : "text-white"}`}>Daily Poll Progress</h3>
                   <p className={`text-xs ${isLight ? "text-slate-500" : "text-white/40"}`}>50 XP per poll · anonymous</p>
                 </div>
                 <div className="w-10 h-10 rounded-xl bg-raw-gold/5 flex items-center justify-center border border-raw-gold/10">
@@ -364,10 +366,10 @@ export function DashboardHome({
             </div>
 
             {/* Level Up */}
-            <div className={`p-6 rounded-[1.5rem] flex flex-1 flex-col space-y-6 ${isLight ? "border border-slate-200 bg-white shadow-[0_12px_28px_rgba(15,23,42,0.08)]" : "border border-white/10 bg-[#1a1a1a]"}`}>
+            <div className={`flex aspect-square w-[78vw] max-w-[18rem] shrink-0 flex-col space-y-4 p-4 rounded-[1.5rem] md:aspect-auto md:w-auto md:max-w-none md:flex-1 md:space-y-6 md:p-6 ${isLight ? "border border-slate-200 bg-white shadow-[0_12px_28px_rgba(15,23,42,0.08)]" : "border border-white/10 bg-[#1a1a1a]"}`}>
               <div className="flex items-start justify-between">
                 <div className="space-y-0.5">
-                  <h3 className={`text-xl font-bold tracking-tight ${isLight ? "text-slate-950" : "text-white"}`}>Level Up</h3>
+                  <h3 className={`text-lg font-bold tracking-tight md:text-xl ${isLight ? "text-slate-950" : "text-white"}`}>Level Up</h3>
                   <p className={`text-xs ${isLight ? "text-slate-500" : "text-white/40"}`}>Complete interactions to earn XP</p>
                 </div>
                 <div className="w-10 h-10 rounded-xl bg-raw-gold/5 flex items-center justify-center border border-raw-gold/10">
