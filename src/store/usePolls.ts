@@ -70,7 +70,7 @@ export function usePolls(isLoggedIn: boolean, userId?: string) {
   const queryClient = useQueryClient();
   const [freeVotesUsed, setFreeVotesUsed] = useState(0);
   const [guestVotedPolls, setGuestVotedPolls] = useState<Set<string>>(new Set());
-  const todayKey = getTodayKey();
+  const [todayKey, setTodayKey] = useState(() => getTodayKey());
   const pollStorageScope = isLoggedIn && userId ? `user.${userId}` : "guest";
   const STORAGE_KEY = `raw.polls.daily-answered.${pollStorageScope}.${todayKey}`;
   const EXTRA_BATCHES_KEY = `raw.polls.extra-batches.${pollStorageScope}.${todayKey}`;
@@ -91,6 +91,13 @@ export function usePolls(isLoggedIn: boolean, userId?: string) {
   });
   const [loadedExtraBatchesKey, setLoadedExtraBatchesKey] = useState(EXTRA_BATCHES_KEY);
   const [extraBatchesUnlocked, setExtraBatchesUnlocked] = useState<number>(() => readStoredExtraBatches(EXTRA_BATCHES_KEY, STORAGE_KEY));
+
+  useEffect(() => {
+    const refreshTodayKey = () => setTodayKey(getTodayKey());
+    refreshTodayKey();
+    const intervalId = window.setInterval(refreshTodayKey, 60_000);
+    return () => window.clearInterval(intervalId);
+  }, []);
 
   useEffect(() => {
     setDailyPollDate(todayKey);
