@@ -1964,6 +1964,7 @@ export function DashboardCommunities({
               onSendMessage={handleSendMessage}
             />
           </div>
+          </div>
           )}
         </motion.div>
       );
