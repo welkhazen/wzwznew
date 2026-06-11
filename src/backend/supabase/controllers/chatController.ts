@@ -17,7 +17,6 @@ export type DbCommunityMessage = {
   deleted_by_user_id: string | null;
   liked_by: string[] | null;
   sender_avatar_level?: number | null;
-  moderation_status?: string | null;
 };
 
 export function mapCommunityMessage(row: DbCommunityMessage): CommunityChatMessageRecord {
@@ -36,7 +35,6 @@ export function mapCommunityMessage(row: DbCommunityMessage): CommunityChatMessa
     deletedByUserId: row.deleted_by_user_id ?? undefined,
     likedBy: row.liked_by ?? [],
     senderAvatarLevel: row.sender_avatar_level ?? undefined,
-    moderationStatus: row.moderation_status ?? undefined,
   };
 }
 
