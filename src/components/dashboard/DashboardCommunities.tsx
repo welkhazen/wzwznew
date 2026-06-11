@@ -863,6 +863,15 @@ export function DashboardCommunities({
       void handlePinMessageToProfile(message, selectedCommunity);
     }, [handlePinMessageToProfile, selectedCommunity]);
 
+    const handleUnpinMessage = useCallback((message: CommunityChatMessageRecord) => {
+      void handleRemovePinnedMessage(message.id);
+    }, [handleRemovePinnedMessage]);
+
+    const ownPinnedMessageIds = useMemo(
+      () => new Set(ownPinnedMessages.map((m) => m.messageId)),
+      [ownPinnedMessages],
+    );
+
     const handleRemovePinnedMessage = useCallback(async (messageId: string) => {
       try {
         await removeUserPinnedMessage(user.id, messageId);
@@ -1769,7 +1778,9 @@ export function DashboardCommunities({
               onVotePoll={handleVoteOnPoll}
               onRetryMessage={handleRetryMessage}
               onLikeMessage={handleLikeMessage}
+              pinnedMessageIds={ownPinnedMessageIds}
               onPinMessage={handlePinMessage}
+              onUnpinMessage={handleUnpinMessage}
               onOpenMessageReport={handleOpenMessageReport}
               onBlockMessageSender={handleBlockMessageSender}
               onOpenSenderProfile={handleOpenSenderProfile}

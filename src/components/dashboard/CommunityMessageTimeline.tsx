@@ -30,7 +30,9 @@ interface CommunityMessageTimelineProps {
   onVotePoll: (pollId: string, optionId: string) => void;
   onRetryMessage: (message: CommunityChatMessageRecord) => void;
   onLikeMessage: (message: CommunityChatMessageRecord) => void;
+  pinnedMessageIds: Set<string>;
   onPinMessage: (message: CommunityChatMessageRecord) => void;
+  onUnpinMessage: (message: CommunityChatMessageRecord) => void;
   onOpenMessageReport: (message: CommunityChatMessageRecord) => void;
   onBlockMessageSender: (message: CommunityChatMessageRecord) => void;
   onOpenSenderProfile: (message: CommunityChatMessageRecord) => void;
@@ -49,7 +51,9 @@ export const CommunityMessageTimeline = memo(function CommunityMessageTimeline({
   onVotePoll,
   onRetryMessage,
   onLikeMessage,
+  pinnedMessageIds,
   onPinMessage,
+  onUnpinMessage,
   onOpenMessageReport,
   onBlockMessageSender,
   onOpenSenderProfile,
@@ -219,10 +223,10 @@ export const CommunityMessageTimeline = memo(function CommunityMessageTimeline({
                         <DropdownMenuContent align="end" className="min-w-32 border-raw-border/30 bg-raw-black/95 text-raw-silver shadow-xl shadow-black/40">
                           <DropdownMenuItem
                             className="cursor-pointer gap-2 text-xs focus:bg-raw-surface/80 focus:text-raw-text"
-                            onClick={() => onPinMessage(message)}
+                            onClick={() => pinnedMessageIds.has(message.id) ? onUnpinMessage(message) : onPinMessage(message)}
                           >
                             <Pin className="h-3.5 w-3.5 text-raw-gold/80" />
-                            Pin to profile
+                            {pinnedMessageIds.has(message.id) ? "Unpin from profile" : "Pin to profile"}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="cursor-pointer gap-2 text-xs focus:bg-raw-surface/80 focus:text-raw-text"

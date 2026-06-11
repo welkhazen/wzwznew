@@ -72,8 +72,8 @@ function renderTimeline(overrides: Partial<React.ComponentProps<typeof Community
     onOpenMessageReport: vi.fn(),
     onBlockMessageSender: vi.fn(),
     pinnedMessageIds: new Set<string>(),
-    onPinMessageToProfile: vi.fn(),
-    onUnpinMessageFromProfile: vi.fn(),
+    onPinMessage: vi.fn(),
+    onUnpinMessage: vi.fn(),
     ...overrides,
   };
 
