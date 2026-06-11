@@ -334,17 +334,15 @@ export function AvatarShowcaseSection() {
       title={
         <span className="inline-flex flex-col items-center leading-[1.05]">
           <span className="text-[1em]">Your Avatar.</span>
-          <span className="text-[0.8em]">Your Signal.</span>
-          <span className="text-[0.6em]">Your World.</span>
+          <span className="text-[0.8em]">Your Identity.</span>
+          <span className="text-[0.6em]">Your Story.</span>
         </span>
       }
       description={
         <span className="block whitespace-pre-line">
-          {`Your username gives you a private identity.
+          {`Your username is your constant identity. Your avatar is your evolving one.
 
-Your avatar gives that identity a face.
-
-Your answers, choices, and conversations reveal the personality behind it — so people connect with who you are, not what you look like offline.`}
+In real life you are born with a name, a face, and a personality underneath. On raW, your username is your name, your avatar is your face — and your answers reveal the personality behind them.`}
         </span>
       }
     >

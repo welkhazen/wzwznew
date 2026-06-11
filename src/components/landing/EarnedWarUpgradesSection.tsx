@@ -18,12 +18,14 @@ export function EarnedWarUpgradesSection() {
         </h2>
 
         <p className="mt-5 text-sm leading-relaxed text-raw-silver/60 sm:text-base">
-          Honest participation should feel rewarding. Earn {" "}
-          <span className="font-medium text-raw-gold/80">War Points</span>, unlock avatar upgrades,
-          and build status by answering, voting, and staying active.
+          Showing up{" "}
+          <span className="font-medium text-raw-gold/80">ra<span className="raw-word-w">W</span></span>{" "}
+          pays off. Stay active, earn{" "}
+          <span className="font-medium text-raw-gold/80">War Points</span>, and{" "}
+          <span className="font-medium text-raw-gold/80">War-Up</span> through the ranks.
         </p>
         <p className="mt-3 text-sm leading-relaxed text-raw-silver/40">
-          The more you contribute, the more your identity evolves — with higher levels, better privileges, and surprise unlocks.
+          The higher your level, the bigger the privileges — and the better the surprises.
         </p>
 
         <div className="mt-10 sm:mt-12">

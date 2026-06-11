@@ -3,19 +3,19 @@ import { Terminal } from "@/components/ui/terminal";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 
 const howItWorksSteps = [
-  "01 Join with a username — no real name required",
-  "02 Choose an avatar that becomes your social identity",
-  "03 Answer raw polls and see where you stand",
-  "04 Unlock insights from your answers, choices, and patterns",
-  "05 Get guided toward the communities where you actually fit",
+  "01 Sign up anonymously and step into raW",
+  "02 Build your identity — choose your avatar and change it if earned",
+  "03 Answer honest questions — AI reads your patterns in real time",
+  "04 Your character takes shape from every answer you give",
+  "05 Find your Place. Find your People. Find your Purpose.",
 ];
 
 const howItWorksOutputs = {
-  0: ["Create a private profile and enter raW without putting your real-world identity on display."],
-  1: ["Your avatar is how people recognize you. As you participate, it can evolve with your progress."],
+  0: ["Create a username — no email, no phone, no real-world identity."],
+  1: ["Build your identity through the avatar you choose and the upgrades you earn."],
   2: [
-    "Answer questions people usually avoid in public.",
-    "See anonymous results instantly, then compare your perspective with the crowd.",
+    "Every poll you answer feeds the AI with a data point about who you are.",
+    "The more honest you are, the better your matches get.",
   ],
   3: [
     "Every answer becomes a signal: what you value, what you avoid, and where you feel understood.",
