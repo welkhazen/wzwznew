@@ -305,7 +305,17 @@ export function DashboardCommunities({
     const reloadChatData = useCallback(async () => {
       try {
         if (activeCommunityId) {
-          setMessagesLoading(true);
+          const cached = readCachedMessages(activeCommunityId);
+          if (cached) {
+            // Show cached messages immediately so there's no visible spinner
+            // while the background revalidation runs.
+            updateCommunities((current) =>
+              setCommunityMessages(current, activeCommunityId, cached.data),
+            );
+            setHasOlderMessages(cached.data.length === MESSAGE_PAGE_SIZE);
+          } else {
+            setMessagesLoading(true);
+          }
           setMessagesError(false);
         }
 
@@ -324,6 +334,7 @@ export function DashboardCommunities({
         if (activeCommunityId && activeCommunityMessages) {
           loadedMessagesCommunityRef.current = activeCommunityId;
           setHasOlderMessages(activeCommunityMessages.length === MESSAGE_PAGE_SIZE);
+          writeCachedMessages(activeCommunityId, activeCommunityMessages);
         }
         setCommunities((previous) => {
           const next = communitiesData.map((community) => ({
@@ -863,6 +874,15 @@ export function DashboardCommunities({
         toast({ title: "Could not remove pinned message", description: "Please try again." });
       }
     }, [broadcastPinnedMessageUpdated, ownPinnedMessages, user.id]);
+
+    const handleUnpinMessage = useCallback((message: CommunityChatMessageRecord) => {
+      void handleRemovePinnedMessage(message.id);
+    }, [handleRemovePinnedMessage]);
+
+    const ownPinnedMessageIds = useMemo(
+      () => new Set(ownPinnedMessages.map((m) => m.messageId)),
+      [ownPinnedMessages],
+    );
 
     const handleOpenSenderProfile = useCallback((message: CommunityChatMessageRecord) => {
       setProfileDialogOpen(true);
@@ -1758,7 +1778,9 @@ export function DashboardCommunities({
               onVotePoll={handleVoteOnPoll}
               onRetryMessage={handleRetryMessage}
               onLikeMessage={handleLikeMessage}
+              pinnedMessageIds={ownPinnedMessageIds}
               onPinMessage={handlePinMessage}
+              onUnpinMessage={handleUnpinMessage}
               onOpenMessageReport={handleOpenMessageReport}
               onBlockMessageSender={handleBlockMessageSender}
               onOpenSenderProfile={handleOpenSenderProfile}
