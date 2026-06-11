@@ -41,7 +41,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
     root.classList.toggle("theme-light", mode === "light");
     root.classList.toggle("theme-dusk", mode === "dusk");
-    root.classList.toggle("dark", mode !== "light");
     root.dataset.themeMode = mode;
     root.dataset.themeAccent = accent;
     root.style.setProperty("--raw-accent", selectedAccent.rgb);
