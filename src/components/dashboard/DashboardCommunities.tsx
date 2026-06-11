@@ -79,6 +79,7 @@ import {
 } from "@/lib/communityAccess";
 import { readAvatarCatalogLocal } from "@/lib/avatarCatalog";
 import { getPrivateAvatarLevel } from "@/lib/avataridentity";
+import { CHAT_IDENTITY_CHANGED_EVENT, readSelectedChatAlias } from "@/lib/identitySelection";
 import { getPublicUserProfile, type PublicUserProfile } from "@/backend/supabase/controllers/userController";
 import {
   MAX_FAVORITE_COMMUNITIES,
@@ -114,8 +115,6 @@ import { GeneralFeedBox } from "@/components/dashboard/GeneralFeedBox";
 const WAITLIST_UNLOCK_THRESHOLD = 200;
 const MESSAGE_PAGE_SIZE = 10;
 const MAX_COMMUNITY_MESSAGE_LENGTH = 150;
-const CHAT_IDENTITY_PREFIX = "raw.chat.identity.v1.";
-const CHAT_IDENTITY_CHANGED_EVENT = "raw:chat-identity-changed";
 
 interface DashboardCommunitiesProps {
   user: User;
@@ -256,10 +255,7 @@ export function DashboardCommunities({
   const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [leavingCommunityId, setLeavingCommunityId] = useState<string | null>(null);
   const [messageDraft, setMessageDraft] = useState("");
-  const [selectedChatAlias, setSelectedChatAlias] = useState<string | null>(() => {
-    if (typeof window === "undefined") return null;
-    return window.localStorage.getItem(`${CHAT_IDENTITY_PREFIX}${user.id}`);
-  });
+  const [selectedChatAlias, setSelectedChatAlias] = useState<string | null>(() => readSelectedChatAlias(user.id));
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [mentionIndex, setMentionIndex] = useState(0);
   const [expandedDescs, setExpandedDescs] = useState<Set<string>>(new Set());
@@ -280,7 +276,7 @@ export function DashboardCommunities({
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    setSelectedChatAlias(window.localStorage.getItem(`${CHAT_IDENTITY_PREFIX}${user.id}`));
+    setSelectedChatAlias(readSelectedChatAlias(user.id));
     const handleIdentityChange = (event: Event) => {
       const detail = (event as CustomEvent<{ userId?: string; alias?: string | null }>).detail;
       if (detail?.userId !== user.id) return;
