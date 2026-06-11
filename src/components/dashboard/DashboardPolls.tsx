@@ -828,7 +828,7 @@ export function DashboardPolls({
                 { icon: SendHorizontal, onClick: () => handleShare(currentPoll), label: "More apps" },
                 { icon: Link2, onClick: () => copyShareLink(currentPoll), label: "Copy link" },
               ]}
-              className="w-full border-raw-gold/45 bg-raw-gold/10 text-[11px] font-semibold uppercase tracking-[0.16em] text-raw-gold hover:bg-raw-gold/15 dark:border-raw-gold/45 dark:bg-raw-gold/10 dark:text-raw-gold dark:hover:bg-raw-gold/15"
+              className="w-full border-raw-gold/45 bg-raw-gold/10 text-[11px] font-semibold uppercase tracking-[0.16em] text-raw-gold hover:bg-raw-gold/15"
             >
               <Share2 className="size-3.5" />
               Share

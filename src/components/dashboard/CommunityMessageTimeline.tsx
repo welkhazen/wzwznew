@@ -1,6 +1,6 @@
 import { memo } from "react";
 import type { RefObject } from "react";
-import { AlertTriangle, Ban, BarChart3, Heart, MoreHorizontal, Trash2 } from "lucide-react";
+import { AlertTriangle, Ban, BarChart3, Heart, MoreHorizontal, Pin, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,8 +30,10 @@ interface CommunityMessageTimelineProps {
   onVotePoll: (pollId: string, optionId: string) => void;
   onRetryMessage: (message: CommunityChatMessageRecord) => void;
   onLikeMessage: (message: CommunityChatMessageRecord) => void;
+  onPinMessage: (message: CommunityChatMessageRecord) => void;
   onOpenMessageReport: (message: CommunityChatMessageRecord) => void;
   onBlockMessageSender: (message: CommunityChatMessageRecord) => void;
+  onOpenSenderProfile: (message: CommunityChatMessageRecord) => void;
 }
 
 export const CommunityMessageTimeline = memo(function CommunityMessageTimeline({
@@ -47,8 +49,10 @@ export const CommunityMessageTimeline = memo(function CommunityMessageTimeline({
   onVotePoll,
   onRetryMessage,
   onLikeMessage,
+  onPinMessage,
   onOpenMessageReport,
   onBlockMessageSender,
+  onOpenSenderProfile,
 }: CommunityMessageTimelineProps) {
   return (
     <div ref={containerRef} className="flex-1 space-y-3 overflow-y-auto p-4">
@@ -143,7 +147,12 @@ export const CommunityMessageTimeline = memo(function CommunityMessageTimeline({
                   border: "1px solid rgba(255,255,255,0.07)",
                 }}
               >
-                <div className="absolute left-2.5 top-2.5">
+                <button
+                  type="button"
+                  onClick={() => onOpenSenderProfile(message)}
+                  className="absolute left-2.5 top-2.5 rounded-full transition-opacity hover:opacity-75"
+                  aria-label={`View ${message.senderName}'s profile`}
+                >
                   <AvatarFigure
                     avatarIndex={senderAvatarLevel}
                     size="sm"
@@ -151,7 +160,7 @@ export const CommunityMessageTimeline = memo(function CommunityMessageTimeline({
                     className="opacity-90"
                     style={{ width: 28, height: 28 }}
                   />
-                </div>
+                </button>
                 {message.replyToText && (
                   <div className="mb-1.5 ml-9 rounded-lg border border-raw-border/20 bg-raw-black/20 px-2.5 py-1.5 text-xs text-raw-silver/55">
                     <p className="font-medium text-raw-gold/75">↩ {message.replyToSenderName}</p>
@@ -159,12 +168,14 @@ export const CommunityMessageTimeline = memo(function CommunityMessageTimeline({
                   </div>
                 )}
                 <p className={`ml-9 break-words pr-16 [overflow-wrap:anywhere] text-sm leading-snug ${message.deletedAt ? "italic text-raw-silver/45" : ""}`}>
-                  <span
-                    className="mr-0.5 font-semibold uppercase tracking-wide text-[11px]"
+                  <button
+                    type="button"
+                    onClick={() => onOpenSenderProfile(message)}
+                    className="mr-0.5 font-semibold uppercase tracking-wide text-[11px] hover:underline"
                     style={{ color: isOwnMessage ? "rgb(var(--raw-accent))" : "rgb(var(--raw-accent) / 0.65)" }}
                   >
                     {message.senderName}:
-                  </span>{" "}
+                  </button>{" "}
                   <span className={isOwnMessage ? "text-raw-text" : "text-raw-silver/75"}>
                     {message.text.split(/(@\w+)/g).map((part, i) =>
                       /^@\w+$/.test(part)
@@ -206,6 +217,13 @@ export const CommunityMessageTimeline = memo(function CommunityMessageTimeline({
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="min-w-32 border-raw-border/30 bg-raw-black/95 text-raw-silver shadow-xl shadow-black/40">
+                          <DropdownMenuItem
+                            className="cursor-pointer gap-2 text-xs focus:bg-raw-surface/80 focus:text-raw-text"
+                            onClick={() => onPinMessage(message)}
+                          >
+                            <Pin className="h-3.5 w-3.5 text-raw-gold/80" />
+                            Pin to profile
+                          </DropdownMenuItem>
                           <DropdownMenuItem
                             className="cursor-pointer gap-2 text-xs focus:bg-raw-surface/80 focus:text-raw-text"
                             onClick={() => onOpenMessageReport(message)}

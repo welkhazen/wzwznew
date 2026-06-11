@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import LNTLogo from "@/assets/LNT.webp";
 import SYTLogo from "@/assets/logospeak.webp";
 import IIJMLogo from "@/assets/itisjustme.webp";
-import { AlertTriangle, ArrowLeft, BarChart3, Bell, BellOff, ImagePlus, Lock, Plus, Search, Trash2, UserMinus, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, BarChart3, Bell, BellOff, ImagePlus, Lock, PanelRight, Plus, Search, Star, Trash2, UserMinus, Users, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
@@ -61,8 +61,6 @@ import {
 import { buildDefaultCommunities } from "@/lib/communityChat.seed";
 import { readCachedMessages, writeCachedMessages } from "@/lib/communityCache";
 import { sendCommunityPushNotification } from "@/lib/communityPushNotifications";
-import { sendDashboardCommunityMessage } from "@/lib/communityChatSend";
-import { IDENTITY_SELECTION_EVENT, readSelectedIdentityAlias } from "@/lib/identitySelection";
 import type { CommunityChatMessageRecord, PersistedCommunityRecord } from "@/lib/communityChat.types";
 import {
   appendOptimisticMessage,
@@ -105,126 +103,19 @@ import type { User } from "@/store/types";
 import { CommunityMessageTimeline } from "@/components/dashboard/CommunityMessageTimeline";
 import { CommunityMessageComposer } from "@/components/dashboard/CommunityMessageComposer";
 import { CommunityRoomList } from "@/components/dashboard/CommunityRoomList";
+import { CommunitySettingsDialog } from "@/components/dashboard/CommunitySettingsDialog";
+import { CommunityMembersDialog } from "@/components/dashboard/CommunityMembersDialog";
+import { CommunityProfileDialog } from "@/components/dashboard/CommunityProfileDialog";
+import { CommunityRequestDialog } from "@/components/dashboard/CommunityRequestDialog";
+import { CommunityReportDialog } from "@/components/dashboard/CommunityReportDialog";
+import { CommunityPollComposerDialog } from "@/components/dashboard/CommunityPollComposerDialog";
 import { GeneralFeedBox } from "@/components/dashboard/GeneralFeedBox";
 
 const WAITLIST_UNLOCK_THRESHOLD = 200;
 const MESSAGE_PAGE_SIZE = 10;
 const MAX_COMMUNITY_MESSAGE_LENGTH = 150;
-
-function getMessageSenderBlockKey(message: Pick<CommunityChatMessageRecord, "senderId" | "senderName">): string {
-  return getCommunitySenderBlockKey(message.senderId, message.senderName);
-}
-
-function readCachedCommunities(): PersistedCommunityRecord[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.sessionStorage.getItem(COMMUNITIES_CACHE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function writeCachedCommunities(communities: PersistedCommunityRecord[]): void {
-  if (typeof window === "undefined") return;
-  try {
-    window.sessionStorage.setItem(COMMUNITIES_CACHE_KEY, JSON.stringify(communities));
-  } catch {
-    // ignore storage write errors
-  }
-}
-
-function mergeCommunityMessages(
-  messages: CommunityChatMessageRecord[],
-  incoming: CommunityChatMessageRecord,
-): CommunityChatMessageRecord[] {
-  const withoutSameId = messages.filter((message) => message.id !== incoming.id);
-  const pendingIndex = withoutSameId.findIndex((message) =>
-    message.deliveryStatus === "sending" &&
-    message.senderId === incoming.senderId &&
-    message.text === incoming.text
-  );
-
-  const nextMessages = [...withoutSameId];
-  if (pendingIndex >= 0) {
-    nextMessages[pendingIndex] = incoming;
-  } else {
-    nextMessages.push(incoming);
-  }
-
-  return nextMessages.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
-}
-
-function upsertCommunityMessage(
-  communities: PersistedCommunityRecord[],
-  communityId: string,
-  message: CommunityChatMessageRecord,
-): PersistedCommunityRecord[] {
-  return communities.map((community) =>
-    community.id === communityId
-      ? { ...community, messages: mergeCommunityMessages(community.messages, message) }
-      : community
-  );
-}
-
-function replaceCommunityMessage(
-  communities: PersistedCommunityRecord[],
-  communityId: string,
-  previousId: string,
-  message: CommunityChatMessageRecord,
-  fallbackCommunity?: PersistedCommunityRecord,
-): PersistedCommunityRecord[] {
-  const hasCommunity = communities.some((community) => community.id === communityId);
-  const sourceCommunities = hasCommunity || !fallbackCommunity ? communities : [...communities, fallbackCommunity];
-
-  return sourceCommunities.map((community) => {
-    if (community.id !== communityId) return community;
-    const withoutPrevious = community.messages.filter((entry) => entry.id !== previousId);
-    return { ...community, messages: mergeCommunityMessages(withoutPrevious, message) };
-  });
-}
-
-function markCommunityMessageFailed(
-  communities: PersistedCommunityRecord[],
-  communityId: string,
-  messageId: string,
-): PersistedCommunityRecord[] {
-  return communities.map((community) =>
-    community.id === communityId
-      ? {
-          ...community,
-          messages: community.messages.map((message) =>
-            message.id === messageId ? { ...message, deliveryStatus: "failed" } : message
-          ),
-        }
-      : community
-  );
-}
-
-function appendOptimisticMessage(
-  communities: PersistedCommunityRecord[],
-  communityId: string,
-  message: CommunityChatMessageRecord,
-  fallbackCommunity?: PersistedCommunityRecord,
-): PersistedCommunityRecord[] {
-  const hasCommunity = communities.some((community) => community.id === communityId);
-  const sourceCommunities = hasCommunity || !fallbackCommunity ? communities : [...communities, fallbackCommunity];
-
-  return sourceCommunities.map((community) => {
-    if (community.id !== communityId) return community;
-    const withoutExisting = community.messages.filter((entry) => entry.id !== message.id);
-    return {
-      ...community,
-      messages: [...withoutExisting, { ...message, deliveryStatus: "sending" }]
-        .sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
-    };
-  });
-}
-
-type ChatIdentity = Pick<UserAliasRow, "alias" | "avatar_level" | "is_public">;
-
+const CHAT_IDENTITY_PREFIX = "raw.chat.identity.v1.";
+const CHAT_IDENTITY_CHANGED_EVENT = "raw:chat-identity-changed";
 
 interface DashboardCommunitiesProps {
   user: User;
@@ -887,11 +778,6 @@ export function DashboardCommunities({
       };
     }, [user.id]);
 
-    const pinnedMessageIds = useMemo(
-      () => new Set(ownPinnedMessages.map((m) => m.messageId)),
-      [ownPinnedMessages],
-    );
-
     const broadcastFavoritesUpdated = useCallback((ids: string[]) => {
       window.dispatchEvent(new CustomEvent("raw:favorite-communities-updated", {
         detail: { userId: user.id, ids },
@@ -929,10 +815,6 @@ export function DashboardCommunities({
     }, [broadcastFavoritesUpdated, favoriteCommunityIds, user.id]);
 
     const handlePinMessageToProfile = useCallback(async (message: CommunityChatMessageRecord, community: PersistedCommunityRecord) => {
-      if (message.moderationStatus === "hold") {
-        toast({ title: "Message pending review", description: "This message can be pinned once it passes moderation review." });
-        return;
-      }
       if (ownPinnedMessages.length >= MAX_PINNED_MESSAGES) {
         toast({ title: "Pin limit reached", description: `You can only pin up to ${MAX_PINNED_MESSAGES} messages. Remove one first.` });
         return;
@@ -1204,7 +1086,7 @@ export function DashboardCommunities({
         likedBy: [],
       };
 
-      updateCommunities((current) => appendOptimisticMessage(current, selectedCommunity.id, optimisticMessage, selectedCommunity));
+      updateCommunities((current) => appendOptimisticMessage(current, selectedCommunity.id, optimisticMessage));
       try {
         const mentionRecipientIds = selectedCommunity.members
           .filter((member) =>
@@ -1214,28 +1096,17 @@ export function DashboardCommunities({
           )
           .map((member) => member.userId);
 
-        const { message: savedMessage, usedLocalFallback } = await sendDashboardCommunityMessage({
-          communityId: selectedCommunity.id,
-          senderId: user.id,
-          username: user.username,
-          senderName: selectedChatIdentity.alias,
-          senderAvatarLevel: selectedChatIdentity.avatar_level,
-          text: trimmedMessage,
-          isJoined,
-        }, {
-          joinCommunity: joinCommunitySupabase,
-          sendMessage: sendMessageSupabase,
-        });
-        if (!isJoined && !usedLocalFallback) {
+        if (!isJoined) {
+          await joinCommunitySupabase(selectedCommunity.id, user.id, user.username);
           lastTouchedCommunityRef.current = `${selectedCommunity.id}:${user.id}`;
         }
-        updateCommunities((current) => replaceCommunityMessage(current, selectedCommunity.id, optimisticMessage.id, savedMessage, selectedCommunity));
-        if (usedLocalFallback) {
-          toast({
-            title: "Message saved locally",
-            description: "Server sync is unavailable, but your message was added on this device.",
-          });
-        }
+
+        const savedMessage = await sendMessageSupabase(selectedCommunity.id, {
+          text: trimmedMessage,
+          identityAlias: selectedChatAlias,
+          avatarLevel: sendAvatarLevel,
+        });
+        updateCommunities((current) => replaceCommunityMessage(current, selectedCommunity.id, optimisticMessage.id, savedMessage));
         setMessageDraft("");
         setMentionQuery(null);
         void sendCommunityPushNotification({
@@ -1248,7 +1119,7 @@ export function DashboardCommunities({
         updateCommunities((current) => markCommunityMessageFailed(current, selectedCommunity.id, optimisticMessage.id));
         toast({ title: "Failed to send message", description: "Please try again." });
       }
-    }, [avatarLevel, isJoined, selectedChatAlias, selectedCommunity, updateCommunities, user.id, user.username]);
+    }, [isJoined, selectedChatAlias, selectedCommunity, updateCommunities, user.id, user.username]);
 
     const handleSendMessage = useCallback(async () => {
       if (!selectedCommunity) {
@@ -1891,8 +1762,10 @@ export function DashboardCommunities({
               onVotePoll={handleVoteOnPoll}
               onRetryMessage={handleRetryMessage}
               onLikeMessage={handleLikeMessage}
+              onPinMessage={handlePinMessage}
               onOpenMessageReport={handleOpenMessageReport}
               onBlockMessageSender={handleBlockMessageSender}
+              onOpenSenderProfile={handleOpenSenderProfile}
             />
 
             <CommunityMessageComposer
