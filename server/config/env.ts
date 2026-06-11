@@ -49,8 +49,6 @@ const envSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.preprocess(emptyToUndefined, z.string().min(20).optional()),
   ONESIGNAL_APP_ID: z.preprocess(emptyToUndefined, z.string().min(8).optional()),
   ONESIGNAL_REST_API_KEY: z.preprocess(emptyToUndefined, z.string().min(20).optional()),
-  MODERATION_AI_ENABLED: z.preprocess(emptyToUndefined, z.enum(["true", "false"]).optional()),
-  MODERATION_AI_API_KEY: z.preprocess(emptyToUndefined, z.string().min(20).optional()),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

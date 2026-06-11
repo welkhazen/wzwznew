@@ -1,6 +1,6 @@
+import { supabase } from '../client';
 import type { CommunityChatMessageRecord, SendCommunityMessageInput } from '@/lib/communityChat.types';
 import { assertUserTextAllowed } from '@/lib/inputSecurity';
-import { supabase } from '../client';
 
 export type DbCommunityMessage = {
   id: string;
