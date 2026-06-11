@@ -225,60 +225,6 @@ function appendOptimisticMessage(
 
 type ChatIdentity = Pick<UserAliasRow, "alias" | "avatar_level" | "is_public">;
 
-export function DashboardCommunities(props) {
-      // Main search query state (fix ReferenceError)
-      const [searchQuery, setSearchQuery] = useState("");
-    // Main community state (fix ReferenceError)
-    const [communities, setCommunities] = useState<PersistedCommunityRecord[]>(() => readCachedCommunities());
-  // Destructure props for clarity and to avoid ReferenceError
-  const {
-    user,
-    avatarLevel = 1,
-    tokenBalance = 0,
-    activeCommunityId = null,
-    onOpenCommunity,
-    onBackToCommunities,
-    onCommunitiesChange,
-  } = props;
-  // --- Floating request button state/hooks ---
-  const [showRequestButton, setShowRequestButton] = useState(false);
-  const [requestBtnText, setRequestBtnText] = useState("Didn't find your community?");
-  const [mobileRequestExpanded, setMobileRequestExpanded] = useState(false);
-  const [isInitialCommunitiesLoading, setIsInitialCommunitiesLoading] = useState(() => readCachedCommunities().length === 0);
-
-  // Show button after scrolling 400px
-  useEffect(() => {
-    const onScroll = () => {
-      if (window.scrollY > 400) {
-        setShowRequestButton(true);
-      } else {
-        setShowRequestButton(false);
-      }
-    };
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  // Collapse mobile request button when tapping outside
-  useEffect(() => {
-    if (!mobileRequestExpanded) return;
-    const handler = () => setMobileRequestExpanded(false);
-    const timeout = setTimeout(() => document.addEventListener("click", handler), 0);
-    return () => { clearTimeout(timeout); document.removeEventListener("click", handler); };
-  }, [mobileRequestExpanded]);
-
-  // Animate text change after 2s
-  useEffect(() => {
-    if (!showRequestButton) {
-      setRequestBtnText("Didn't find your community?");
-      return;
-    }
-    const timeout = setTimeout(() => {
-      setRequestBtnText("Request to create yours now");
-    }, 2000);
-    return () => clearTimeout(timeout);
-  }, [showRequestButton]);
-// ...existing code...
 
 interface DashboardCommunitiesProps {
   user: User;
