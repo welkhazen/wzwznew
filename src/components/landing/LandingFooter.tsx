@@ -89,7 +89,7 @@ export function LandingFooter() {
         {/* Bottom bar */}
         <div className="border-t border-raw-border/20 pt-6 text-center">
           <p className="text-[11px] text-raw-silver/35">© 2026 ra<span className="raw-word-w">W</span> · All rights reserved</p>
-          <p className="mt-1 text-[10px] text-raw-silver/25">Where Discovery Becomes Transformation.</p>
+          <p className="mt-1 text-[10px] text-raw-silver/25">No real names. Real conversation.</p>
         </div>
       </div>
     </footer>

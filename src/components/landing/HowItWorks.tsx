@@ -3,19 +3,19 @@ import { Terminal } from "@/components/ui/terminal";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 
 const howItWorksSteps = [
-  "01 Sign up anonymously and enter your raW app",
+  "01 Sign up anonymously and step into raW",
   "02 Build your identity — choose your avatar and change it if earned",
   "03 Answer honest questions — AI reads your patterns in real time",
   "04 Your character takes shape from every answer you give",
-  "05 Find your People. Find your Place. Find your Purpose.",
+  "05 Find your Place. Find your People. Find your Purpose.",
 ];
 
 const howItWorksOutputs = {
-  0: ["Create a username and step into raW without using your real-world identity."],
+  0: ["Create a username — no email, no phone, no real-world identity."],
   1: ["Build your identity through the avatar you choose and the upgrades you earn."],
   2: [
     "Every poll you answer feeds the AI with a data point about who you are.",
-    "Honest answers only — the algorithm knows the difference.",
+    "The more honest you are, the better your matches get.",
   ],
   3: [
     "The AI maps your answers into a personality profile unique to you.",

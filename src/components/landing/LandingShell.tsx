@@ -88,6 +88,7 @@ export default function LandingShell({
             <AvatarShowcaseSection onSignupClick={() => setShowSignup(true)} />
             <LandingPollsSection onSignupClick={() => setShowSignup(true)} />
             <Communities onSignupClick={() => setShowSignup(true)} />
+            <WhyAnonymity />
             <Suspense fallback={<div className="h-16" />}>
               <TestimonialsSection />
             </Suspense>
@@ -110,11 +111,33 @@ export default function LandingShell({
 
                 <PersonalityInsightsSection />
                 <EarnedWarUpgradesSection />
-                <WhyAnonymity />
               </div>
             </section>
 
             <FAQSection />
+
+            <section className="landing-section px-4 pb-14 pt-4 sm:px-6 sm:pb-20">
+              <div
+                className="relative mx-auto w-full max-w-3xl overflow-hidden rounded-2xl border border-raw-gold/35 bg-gradient-to-b from-raw-gold/[0.06] to-transparent px-6 py-10 text-center sm:px-10 sm:py-14"
+                style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 0 60px rgba(241,196,45,0.06)" }}
+              >
+                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/70 to-transparent" />
+                <h2 className="landing-heading">
+                  Ready to be ra<span className="raw-word-w">W</span>?
+                </h2>
+                <p className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-raw-silver/55 sm:text-base">
+                  Join with just a username. No email, no phone, no real name — your people are already talking.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowSignup(true)}
+                  className="mt-7 inline-flex min-h-11 items-center justify-center rounded-xl border border-raw-gold/45 bg-raw-gold px-8 py-3.5 text-base font-semibold text-raw-ink transition hover:bg-raw-gold/90 sm:text-lg"
+                >
+                  Join Now — Free
+                </button>
+              </div>
+            </section>
+
             <LandingFooter />
           </div>
         </motion.div>
