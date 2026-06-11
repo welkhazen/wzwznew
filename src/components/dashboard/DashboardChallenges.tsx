@@ -265,7 +265,7 @@ export function DashboardChallenges({
         </div>
       </section>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-1">
+      <div className="grid grid-cols-1 gap-3">
         {challengeDefinitions.map((challenge) => {
           const current = testProgress[challenge.id] ?? progressSourceMap[challenge.progressKey] ?? 0;
           const done = current >= challenge.target;
