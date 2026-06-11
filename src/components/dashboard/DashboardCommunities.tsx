@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import LNTLogo from "@/assets/LNT.webp";
 import SYTLogo from "@/assets/logospeak.webp";
 import IIJMLogo from "@/assets/itisjustme.webp";
-import { AlertTriangle, ArrowLeft, BarChart3, Bell, BellOff, ImagePlus, Lock, Plus, Search, Trash2, UserMinus, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, BarChart3, Bell, BellOff, ImagePlus, Lock, PanelRight, Plus, Search, Star, Trash2, UserMinus, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
@@ -61,7 +61,6 @@ import {
 import { buildDefaultCommunities } from "@/lib/communityChat.seed";
 import { readCachedMessages, writeCachedMessages } from "@/lib/communityCache";
 import { sendCommunityPushNotification } from "@/lib/communityPushNotifications";
-import { sendDashboardCommunityMessage } from "@/lib/communityChatSend";
 import { IDENTITY_SELECTION_EVENT, readSelectedIdentityAlias } from "@/lib/identitySelection";
 import type { CommunityChatMessageRecord, PersistedCommunityRecord } from "@/lib/communityChat.types";
 import {
@@ -105,11 +104,19 @@ import type { User } from "@/store/types";
 import { CommunityMessageTimeline } from "@/components/dashboard/CommunityMessageTimeline";
 import { CommunityMessageComposer } from "@/components/dashboard/CommunityMessageComposer";
 import { CommunityRoomList } from "@/components/dashboard/CommunityRoomList";
+import { CommunitySettingsDialog } from "@/components/dashboard/CommunitySettingsDialog";
+import { CommunityMembersDialog } from "@/components/dashboard/CommunityMembersDialog";
+import { CommunityProfileDialog } from "@/components/dashboard/CommunityProfileDialog";
+import { CommunityRequestDialog } from "@/components/dashboard/CommunityRequestDialog";
+import { CommunityReportDialog } from "@/components/dashboard/CommunityReportDialog";
+import { CommunityPollComposerDialog } from "@/components/dashboard/CommunityPollComposerDialog";
 import { GeneralFeedBox } from "@/components/dashboard/GeneralFeedBox";
 
 const WAITLIST_UNLOCK_THRESHOLD = 200;
 const MESSAGE_PAGE_SIZE = 10;
 const MAX_COMMUNITY_MESSAGE_LENGTH = 150;
+const CHAT_IDENTITY_PREFIX = "raw.chat.identity.v1.";
+const CHAT_IDENTITY_CHANGED_EVENT = "raw:chat-identity-changed";
 
 function getMessageSenderBlockKey(message: Pick<CommunityChatMessageRecord, "senderId" | "senderName">): string {
   return getCommunitySenderBlockKey(message.senderId, message.senderName);
@@ -1214,28 +1221,17 @@ export function DashboardCommunities({
           )
           .map((member) => member.userId);
 
-        const { message: savedMessage, usedLocalFallback } = await sendDashboardCommunityMessage({
-          communityId: selectedCommunity.id,
-          senderId: user.id,
-          username: user.username,
-          senderName: selectedChatIdentity.alias,
-          senderAvatarLevel: selectedChatIdentity.avatar_level,
-          text: trimmedMessage,
-          isJoined,
-        }, {
-          joinCommunity: joinCommunitySupabase,
-          sendMessage: sendMessageSupabase,
-        });
-        if (!isJoined && !usedLocalFallback) {
+        if (!isJoined) {
+          await joinCommunitySupabase(selectedCommunity.id, user.id, user.username);
           lastTouchedCommunityRef.current = `${selectedCommunity.id}:${user.id}`;
         }
+
+        const savedMessage = await sendMessageSupabase(selectedCommunity.id, {
+          text: trimmedMessage,
+          identityAlias: selectedChatAlias,
+          avatarLevel: sendAvatarLevel,
+        });
         updateCommunities((current) => replaceCommunityMessage(current, selectedCommunity.id, optimisticMessage.id, savedMessage, selectedCommunity));
-        if (usedLocalFallback) {
-          toast({
-            title: "Message saved locally",
-            description: "Server sync is unavailable, but your message was added on this device.",
-          });
-        }
         setMessageDraft("");
         setMentionQuery(null);
         void sendCommunityPushNotification({
