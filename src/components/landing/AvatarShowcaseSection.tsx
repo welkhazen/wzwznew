@@ -271,17 +271,17 @@ export function AvatarShowcaseSection({ onSignupClick }: { onSignupClick?: () =>
       title={
         <span className="inline-flex flex-col items-center leading-[1.05]">
           <span className="text-[1em]">Your Avatar.</span>
-          <span className="text-[0.8em]">Your Identity.</span>
-          <span className="text-[0.6em]">Your App.</span>
+          <span className="text-[0.8em]">Your Signal.</span>
+          <span className="text-[0.6em]">Your World.</span>
         </span>
       }
       description={
         <span className="block whitespace-pre-line">
-          {`On raW, your username is your constant identity.
+          {`Your username gives you a private identity.
 
-Your avatar is your evolving identity.
+Your avatar gives that identity a face.
 
-Just like in real life, every person is born with a name, an appearance, and an inner personality. On raW, your username is your name, your avatar is your appearance, and your answers, choices, and interactions reveal the deeper personality behind it.`}
+Your answers, choices, and conversations reveal the personality behind it — so people connect with who you are, not what you look like offline.`}
         </span>
       }
     >
