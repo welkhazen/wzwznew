@@ -1,4 +1,4 @@
-const CACHE = 'raw-v5';
+const CACHE = 'raw-v6';
 const STATIC = [
   '/raw-logo-96.png',
   '/raw-logo-192.png',
