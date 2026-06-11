@@ -22,7 +22,6 @@ import {
 import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { LevelProgressBanner } from "@/components/dashboard/LevelProgressBanner";
 import { TokenBalanceButton } from "@/components/ui/TokenBalanceButton";
-import { apiFetch } from "@/lib/http";
 import { cn } from "@/lib/utils";
 import { readIssueReports, writeIssueReports, type IssueReportRecord } from "@/lib/adminData";
 import { readBlockedCommunitySenders, writeBlockedCommunitySenders } from "@/lib/blockedCommunitySenders";
@@ -578,18 +577,7 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
       status: "open",
     };
 
-    try {
-      const response = await apiFetch("/api/moderation/issue-reports", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(report),
-      });
-      if (!response.ok) {
-        throw new Error("Issue report API failed");
-      }
-    } catch {
-      writeIssueReports([report, ...readIssueReports()]);
-    }
+    writeIssueReports([report, ...readIssueReports()]);
 
     setIssueDetails("");
     setScreenshotName("");
