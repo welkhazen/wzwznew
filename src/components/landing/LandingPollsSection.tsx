@@ -121,8 +121,8 @@ export function LandingPollsSection({ onSignupClick }: LandingPollsSectionProps)
     <LandingSectionShell
       id="landing-polls"
       sectionRef={sectionRef as React.Ref<HTMLElement>}
-      title="What does the community think?"
-      description="Answer live polls — see how your views compare with others, anonymously."
+      title="Answer the questions everyone is thinking about."
+      description="Vote anonymously, watch the results shift in real time, and discover the people who see the world like you do."
     >
       <div className="mx-auto w-full max-w-md">
         <div className="mb-4 flex flex-col items-center">
@@ -195,17 +195,17 @@ export function LandingPollsSection({ onSignupClick }: LandingPollsSectionProps)
                     }}
                   >
                     <p className="text-[10px] font-bold uppercase tracking-[0.32em] text-raw-gold/70">
-                      Want to answer more?
+                      Want the full experience?
                     </p>
                     <p className={`mx-auto mt-2 max-w-[220px] text-[12px] leading-relaxed ${isLight ? "text-stone-600" : "text-white/55"}`}>
-                      Sign up to answer more questions and keep revealing how your views compare.
+                      Create your private identity to answer more polls, unlock deeper comparisons, and find your community.
                     </p>
                     <button
                       type="button"
                       onClick={onSignupClick}
                       className="mt-4 rounded-full border border-raw-gold/35 bg-raw-gold/10 px-5 py-2 font-display text-[10px] uppercase tracking-[0.2em] text-raw-gold/85 transition hover:bg-raw-gold/15"
                     >
-                      Sign up to answer more
+                      Join raW
                     </button>
                   </div>
                 </div>
