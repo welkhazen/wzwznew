@@ -96,7 +96,8 @@
       "Bash(grep -rn \"{a.price} tokens\\\\|tokens\\\\`\\\\|tokens<\\\\|AvatarShop\\\\|AvatarStore\" src/components/dashboard/DashboardInventory.tsx)",
       "Bash(Remove-Item \"C:\\\\Users\\\\user\\\\OneDrive\\\\Desktop\\\\wzwz\\\\src\\\\components\\\\dashboard\\\\DashboardInventory.tsx\")",
       "Bash(git rm *)",
-      "mcp__5585acb7-0f6f-48b6-b782-9ad0e7207b5b__web_fetch_vercel_url"
+      "mcp__5585acb7-0f6f-48b6-b782-9ad0e7207b5b__web_fetch_vercel_url",
+      "mcp__5585acb7-0f6f-48b6-b782-9ad0e7207b5b__get_access_to_vercel_url"
     ]
   }
 }
