@@ -5,7 +5,7 @@ import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
 import { fetchCommunities } from "@/backend/supabase/controllers/communityController";
 import { readCachedCommunities, writeCachedCommunities } from "@/lib/communityCache";
 import { getUserFavoriteCommunities, getUserPinnedMessages, removeUserPinnedMessage, type PinnedMessageRecord } from "@/backend/supabase/controllers/userExtrasController";
-import { Home as HomeIcon, MessageCircle, Target, User as UserIcon, LogOut, Trophy, Sparkles, Moon, CloudMoon, Sun } from "lucide-react";
+import { Home as HomeIcon, MessageCircle, Target, User as UserIcon, LogOut, Trophy, Sparkles, Moon, CloudMoon, Sun, Store } from "lucide-react";
 import LNTLogo from "@/assets/LNT.webp";
 import SYTLogo from "@/assets/logospeak.webp";
 import IIJMLogo from "@/assets/itisjustme.webp";
@@ -648,6 +648,13 @@ export default function Dashboard({
             href: "#",
             onClick: () => handleTabChange("challenges"),
             active: !isHome && activeTab === "challenges",
+          },
+          {
+            title: "Store",
+            icon: <Store className="h-5 w-5" />,
+            href: "#",
+            onClick: () => handleTabChange("store"),
+            active: !isHome && activeTab === "store",
           },
         ]}
       />
