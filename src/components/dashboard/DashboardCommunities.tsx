@@ -105,6 +105,7 @@ import type { User } from "@/store/types";
 import { CommunityMessageTimeline } from "@/components/dashboard/CommunityMessageTimeline";
 import { CommunityMessageComposer } from "@/components/dashboard/CommunityMessageComposer";
 import { CommunityRoomList } from "@/components/dashboard/CommunityRoomList";
+import { GeneralFeedBox } from "@/components/dashboard/GeneralFeedBox";
 
 const WAITLIST_UNLOCK_THRESHOLD = 200;
 const MESSAGE_PAGE_SIZE = 10;
@@ -1964,6 +1965,20 @@ export function DashboardCommunities({
               onSendMessage={handleSendMessage}
             />
           </div>
+
+          {/* Feed panel — visible only on sm+ when feedOpen */}
+          {feedOpen && (
+            <div className="hidden sm:flex sm:flex-col sm:h-full sm:overflow-hidden sm:rounded-2xl sm:border sm:border-raw-border/20 sm:bg-raw-black/35">
+              <GeneralFeedBox
+                userId={user.id}
+                isLight={false}
+                compact
+                showHeader={false}
+                fillHeight
+                communityId={selectedCommunity?.id}
+              />
+            </div>
+          )}
           </div>
           )}
         </motion.div>
