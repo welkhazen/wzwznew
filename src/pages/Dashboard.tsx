@@ -44,6 +44,9 @@ const DashboardProfile = lazy(() =>
 const DashboardWallet = lazy(() =>
   import("@/components/dashboard/DashboardWallet").then((module) => ({ default: module.DashboardWallet }))
 );
+const DashboardSettings = lazy(() =>
+  import("@/components/dashboard/DashboardSettings").then((module) => ({ default: module.DashboardSettings }))
+);
 const DashboardInventory = lazy(() =>
   import("@/components/dashboard/DashboardInventory").then((module) => ({ default: module.DashboardInventory }))
 );
@@ -524,6 +527,14 @@ export default function Dashboard({
                 xpLevel={progress?.level ?? 1}
                 onLogout={onLogout}
               />
+            </DashboardSectionShell>
+          </Suspense>
+        );
+      case "settings":
+        return (
+          <Suspense fallback={dashboardSectionFallback}>
+            <DashboardSectionShell>
+              <DashboardSettings userId={user.id} onLogout={onLogout} />
             </DashboardSectionShell>
           </Suspense>
         );
