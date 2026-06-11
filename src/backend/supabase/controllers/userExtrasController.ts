@@ -76,12 +76,23 @@ export async function getUserPinnedMessages(userId: string): Promise<PinnedMessa
 }
 
 export async function addUserPinnedMessage(userId: string, payload: PinnedMessagePayload): Promise<PinnedMessageRecord> {
-  const { count, error: countError } = await supabase
+  // Check if this exact message is already pinned — upsert is fine, skip limit check.
+  const { data: existing, error: existingError } = await supabase
     .from('user_pinned_message')
-    .select('message_id', { count: 'exact', head: true })
-    .eq('user_id', userId);
-  if (countError) throw countError;
-  if ((count ?? 0) >= MAX_PINNED_MESSAGES) throw new PinnedMessageLimitError();
+    .select('message_id')
+    .eq('user_id', userId)
+    .eq('message_id', payload.messageId)
+    .maybeSingle();
+  if (existingError) throw existingError;
+
+  if (!existing) {
+    const { count, error: countError } = await supabase
+      .from('user_pinned_message')
+      .select('message_id', { count: 'exact', head: true })
+      .eq('user_id', userId);
+    if (countError) throw countError;
+    if ((count ?? 0) >= MAX_PINNED_MESSAGES) throw new PinnedMessageLimitError();
+  }
 
   const pinnedAt = new Date().toISOString();
   const { error } = await supabase
