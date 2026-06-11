@@ -59,7 +59,7 @@ import {
   COMMUNITY_COVER_VIDEOS,
 } from "@/lib/communityConstants";
 import { buildDefaultCommunities } from "@/lib/communityChat.seed";
-import { readCachedMessages, writeCachedMessages } from "@/lib/communityCache";
+import { readCachedCommunities, readCachedMessages, writeCachedCommunities, writeCachedMessages } from "@/lib/communityCache";
 import { sendCommunityPushNotification } from "@/lib/communityPushNotifications";
 import type { CommunityChatMessageRecord, PersistedCommunityRecord } from "@/lib/communityChat.types";
 import {
@@ -189,12 +189,13 @@ export function DashboardCommunities({
   const isLight = mode === "light";
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [communities, setCommunities] = useState<PersistedCommunityRecord[]>([]);
+  const cachedCommunities = readCachedCommunities();
+  const [communities, setCommunities] = useState<PersistedCommunityRecord[]>(cachedCommunities?.data ?? []);
   // --- Floating request button state/hooks ---
   const [showRequestButton, setShowRequestButton] = useState(false);
   const [requestBtnText, setRequestBtnText] = useState("Didn't find your community?");
   const [mobileRequestExpanded, setMobileRequestExpanded] = useState(false);
-  const [isInitialCommunitiesLoading, setIsInitialCommunitiesLoading] = useState(true);
+  const [isInitialCommunitiesLoading, setIsInitialCommunitiesLoading] = useState(!cachedCommunities);
 
   // Show button after scrolling 400px
   useEffect(() => {
@@ -343,6 +344,7 @@ export function DashboardCommunities({
               ? activeCommunityMessages
               : previous.find((item) => item.id === community.id)?.messages ?? community.messages,
           }));
+          writeCachedCommunities(communitiesData);
           onCommunitiesChange?.(next);
           return next;
         });
