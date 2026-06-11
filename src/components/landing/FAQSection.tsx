@@ -3,19 +3,19 @@ import { useTheme } from "@/providers/useTheme";
 
 const FAQ_ITEMS = [
   {
-    question: "What are anonymous online communities?",
+    question: "What is raW?",
     answer:
-      "Anonymous online communities are group chats where you participate with a username and avatar instead of your real name or photo. raW is designed for honest conversation without real-world social pressure.",
+      "raW is an anonymous social app for live polls, avatar-based identities, and online communities where people can speak honestly without using a real name or personal photo.",
   },
   {
-    question: "How do I find the right online group chat?",
+    question: "How does raW help me find my people?",
     answer:
-      "Answer live polls and explore interest-based communities. raW uses your answers and interests to help you discover group chats where people share similar experiences and perspectives.",
+      "You answer anonymous polls, compare your views, and explore interest-based communities. Over time, your answers help reveal which group chats match your personality, interests, and experiences.",
   },
   {
-    question: "Can I join community chats without using my real identity?",
+    question: "Do I need to show my real identity?",
     answer:
-      "Yes. You can join with a username and password, choose an avatar, and participate without displaying your real name or personal photo.",
+      "No. You can join with a username, choose an avatar, and participate without displaying your real name, personal photo, or offline social profile.",
   },
 ];
 
@@ -52,10 +52,10 @@ export function FAQSection() {
         <div className="mb-8 flex flex-col gap-2">
           <p className="text-[11px] uppercase tracking-[0.2em] text-raw-gold/75">FAQ</p>
           <h2 className={`font-display text-2xl tracking-wide sm:text-3xl md:text-4xl ${isLight ? "text-[#1a1400]" : "text-raw-text"}`}>
-            Frequently Asked Questions
+            Questions before you enter raW?
           </h2>
           <p className={`text-sm ${isLight ? "text-stone-500" : "text-raw-silver/55"}`}>
-            Quick answers, plus a place to ask your own question.
+            Start here if you are wondering how anonymous polls, avatars, and community chats work.
           </p>
         </div>
 
@@ -83,7 +83,7 @@ export function FAQSection() {
             borderColor: isLight ? "rgba(180,140,0,0.18)" : "rgba(var(--raw-border-rgb,120,120,120)/0.35)",
           }}
         >
-          <p className="text-xs uppercase tracking-[0.16em] text-raw-gold/75">Ask a Question</p>
+          <p className="text-xs uppercase tracking-[0.16em] text-raw-gold/75">Ask your own question</p>
           <form onSubmit={handleSubmit} className="mt-3 space-y-3">
             <input
               type="text"

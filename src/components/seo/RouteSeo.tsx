@@ -4,8 +4,8 @@ import { useLocation } from "react-router-dom";
 const SITE_URL = "https://theartofraw.me";
 const routeSeo: Record<string, { title: string; description: string }> = {
   "/": {
-    title: "Anonymous Online Communities & Group Chats | raW",
-    description: "Join anonymous online communities and 24/7 group chats built around honest conversation, shared interests, live polls, and real connection.",
+    title: "raW | Anonymous Polls, Avatars & Online Communities",
+    description: "Join raW to answer anonymous live polls, build an avatar identity, compare honest opinions, and find online communities where you actually belong.",
   },
   "/communities-explained": {
     title: "Anonymous Online Communities & Interest-Based Group Chats | raW",
