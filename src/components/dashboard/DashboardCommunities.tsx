@@ -778,6 +778,11 @@ export function DashboardCommunities({
       };
     }, [user.id]);
 
+    const pinnedMessageIds = useMemo(
+      () => new Set(ownPinnedMessages.map((m) => m.messageId)),
+      [ownPinnedMessages],
+    );
+
     const broadcastFavoritesUpdated = useCallback((ids: string[]) => {
       window.dispatchEvent(new CustomEvent("raw:favorite-communities-updated", {
         detail: { userId: user.id, ids },
@@ -815,6 +820,10 @@ export function DashboardCommunities({
     }, [broadcastFavoritesUpdated, favoriteCommunityIds, user.id]);
 
     const handlePinMessageToProfile = useCallback(async (message: CommunityChatMessageRecord, community: PersistedCommunityRecord) => {
+      if (message.moderationStatus === "hold") {
+        toast({ title: "Message pending review", description: "This message can be pinned once it passes moderation review." });
+        return;
+      }
       if (ownPinnedMessages.length >= MAX_PINNED_MESSAGES) {
         toast({ title: "Pin limit reached", description: `You can only pin up to ${MAX_PINNED_MESSAGES} messages. Remove one first.` });
         return;
@@ -1754,6 +1763,8 @@ export function DashboardCommunities({
               polls={communityPolls}
               groupedMessages={groupedMessages}
               activeMessageCount={activeMessages.length}
+              messagesLoading={messagesLoading}
+              messagesError={messagesError}
               canManagePolls={canManagePolls}
               userId={user.id}
               username={user.username}
@@ -1762,7 +1773,9 @@ export function DashboardCommunities({
               onVotePoll={handleVoteOnPoll}
               onRetryMessage={handleRetryMessage}
               onLikeMessage={handleLikeMessage}
-              onPinMessage={handlePinMessage}
+              pinnedMessageIds={pinnedMessageIds}
+              onPinMessageToProfile={handlePinMessage}
+              onUnpinMessageFromProfile={(message) => { void handleRemovePinnedMessage(message.id); }}
               onOpenMessageReport={handleOpenMessageReport}
               onBlockMessageSender={handleBlockMessageSender}
               onOpenSenderProfile={handleOpenSenderProfile}

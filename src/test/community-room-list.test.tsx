@@ -46,15 +46,14 @@ function renderRoomList(overrides: Partial<React.ComponentProps<typeof Community
     waitlistUnlockThreshold: 10,
     hasSubscriptionAccess: false,
     unlockedCommunityIds: new Set(),
+    freeCommunitySlotsRemaining: 0,
     unlockingId: null,
+    unlockTokenCost: 50,
     onToggleDescription: vi.fn(),
     onPaidJoinCommunity: vi.fn(),
     onJoinWaitlist: vi.fn(),
     onOpenCommunity: vi.fn(),
     onUnlockCommunity: vi.fn(),
-    favoriteCommunityIds: [],
-    onToggleFavorite: vi.fn(),
-    favoriteLimitReached: false,
     ...overrides,
   };
 
@@ -88,14 +87,15 @@ describe("CommunityRoomList", () => {
     expect(screen.getByText("/10")).toBeInTheDocument();
   });
 
-  it("favorite button calls onToggleFavorite", () => {
+  it("unjoined unlocked cards with a free slot call onUnlockCommunity via the free button", () => {
     const props = renderRoomList({
-      communities: [community({ id: "joined", title: "Joined Room", members: [member] })],
+      communities: [community({ id: "public", title: "Public Room", locked: false })],
+      freeCommunitySlotsRemaining: 1,
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Add to favorites" }));
+    fireEvent.click(screen.getByRole("button", { name: "Open Chat — Free" }));
 
-    expect(props.onToggleFavorite).toHaveBeenCalledWith("joined");
+    expect(props.onUnlockCommunity).toHaveBeenCalledWith("public");
   });
 
   it("clicking Open Chat calls onOpenCommunity for joined communities", () => {
@@ -132,17 +132,17 @@ describe("CommunityRoomList", () => {
       joinRequests: [approvedRequest],
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Join Group" }));
+    fireEvent.click(screen.getByRole("button", { name: /Join Group/ }));
 
     expect(props.onPaidJoinCommunity).toHaveBeenCalledWith("locked", true);
   });
 
-  it("unjoined unlocked cards call onUnlockCommunity", () => {
+  it("unjoined unlocked cards call onUnlockCommunity via the unlock button", () => {
     const props = renderRoomList({
       communities: [community({ id: "public", title: "Public Room", locked: false })],
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Open Chat" }));
+    fireEvent.click(screen.getByRole("button", { name: /Unlock — \d+ tokens/ }));
 
     expect(props.onUnlockCommunity).toHaveBeenCalledWith("public");
   });
