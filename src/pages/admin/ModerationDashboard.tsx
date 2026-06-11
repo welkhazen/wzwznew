@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTheme } from "@/providers/useTheme";
 import { useToast } from "@/hooks/use-toast";
@@ -56,7 +56,7 @@ export default function ModerationDashboard() {
   const cardBg = isLight ? "#faf6e8" : "rgba(255,255,255,0.04)";
   const border = isLight ? "rgba(180,140,0,0.2)" : "rgba(255,255,255,0.08)";
 
-  async function fetchTab(t: Tab) {
+  const fetchTab = useCallback(async (t: Tab) => {
     setLoading(true);
     try {
       if (t === "reports") {
@@ -74,9 +74,9 @@ export default function ModerationDashboard() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [toast]);
 
-  useEffect(() => { void fetchTab(tab); }, [tab]);
+  useEffect(() => { void fetchTab(tab); }, [tab, fetchTab]);
 
   async function resolveReport(id: string, status: string, deleteMessage = false) {
     const res = await fetch(`/api/moderation/reports/${id}/resolve`, {

@@ -11,7 +11,7 @@ export const chatRouter = Router();
 
 const sendMessageSchema = z.object({
   communityId: z.string().min(1).max(100),
-  text: z.string().min(1).max(2000).transform((s) => s.trim()),
+  text: z.string().min(1).max(2000).refine((s) => s.trim().length > 0, { message: "Text cannot be empty" }).transform((s) => s.trim()),
   identityAlias: z.string().max(50).nullable().optional(),
   avatarLevel: z.number().int().min(1).max(100).nullable().optional(),
   replyToMessageId: z.string().uuid().nullable().optional(),

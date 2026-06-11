@@ -49,7 +49,6 @@ export class ErrorBoundary extends Component<
       const hasSession = supabaseAuthKey
         ? Boolean(window.localStorage.getItem(supabaseAuthKey))
         : false;
-      // eslint-disable-next-line no-console
       console.error("[ErrorBoundary] caught error", {
         message: error.message,
         name: error.name,
