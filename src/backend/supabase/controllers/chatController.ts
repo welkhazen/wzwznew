@@ -41,34 +41,24 @@ export function mapCommunityMessage(row: DbCommunityMessage): CommunityChatMessa
 }
 
 /**
- * Send a community message via the /api/chat/send endpoint. The server
- * derives the sender from the session and enforces not-banned + community
- * membership; optional private aliases are verified server-side before being
- * used as sender_name.
+ * Send a community message via the send_community_message SECURITY DEFINER
+ * RPC. The function derives the sender from current_user_id() and enforces
+ * auth, ban status, community membership, and alias validity server-side.
  */
 export async function sendMessage(
   communityId: string,
   input: SendCommunityMessageInput
 ): Promise<CommunityChatMessageRecord> {
   const text = assertUserTextAllowed(input.text);
-  const res = await fetch('/api/chat/send', {
-    method: 'POST',
-    credentials: 'same-origin',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      communityId,
-      text,
-      identityAlias: input.identityAlias ?? null,
-      avatarLevel: input.avatarLevel ?? null,
-      replyToMessageId: input.replyToMessage?.id ?? null,
-    }),
+  const { data, error } = await supabase.rpc('send_community_message', {
+    p_community_id: communityId,
+    p_text: text,
+    p_reply_to_message_id: input.replyToMessage?.id ?? null,
+    p_identity_alias: input.identityAlias ?? null,
+    p_avatar_level: input.avatarLevel ?? null,
   });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error((body as { error?: string }).error ?? `send_message_failed:${res.status}`);
-  }
-  const body = await res.json() as { message: CommunityChatMessageRecord };
-  return body.message;
+  if (error) throw new Error(error.message ?? 'send_message_failed');
+  return mapCommunityMessage(data as DbCommunityMessage);
 }
 
 /**
