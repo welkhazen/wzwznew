@@ -1,5 +1,5 @@
 import { FloatingDock } from "@/components/ui/floating-dock";
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { readCommunityChats } from "@/lib/communityChat";
 import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
 import { fetchCommunities } from "@/backend/supabase/controllers/communityController";
@@ -43,18 +43,9 @@ const DashboardProfile = lazy(() =>
 const DashboardWallet = lazy(() =>
   import("@/components/dashboard/DashboardWallet").then((module) => ({ default: module.DashboardWallet }))
 );
-const DashboardSettings = lazy(() =>
-  import("@/components/dashboard/DashboardSettings").then((module) => ({ default: module.DashboardSettings }))
+const DashboardInventory = lazy(() =>
+  import("@/components/dashboard/DashboardInventory").then((module) => ({ default: module.DashboardInventory }))
 );
-const DashboardStore = lazy(() =>
-  import("@/components/dashboard/DashboardStore").then((module) => ({ default: module.DashboardStore }))
-);
-
-const COMMUNITY_LOGOS: Record<string, string> = {
-  lnt: LNTLogo,
-  syt: SYTLogo,
-  iijm: IIJMLogo,
-};
 
 const dashboardSectionFallback = (
   <DashboardSectionShell>
@@ -476,6 +467,25 @@ export default function Dashboard({
             </DashboardSectionShell>
           </Suspense>
         );
+      case "inventory":
+        return (
+          <Suspense fallback={dashboardSectionFallback}>
+            <DashboardSectionShell>
+              <DashboardInventory
+                polls={polls}
+                votedPolls={votedPolls}
+                avatarLevel={avatarLevel}
+                ownedAvatarLevels={ownedAvatarLevels}
+                onUnlockAvatar={unlockAvatarLevel}
+                onAvatarPurchased={markAvatarOwned}
+                avatarPricesByLevel={avatarPricesByLevel}
+                avatarCatalog={avatarCatalog}
+                tokenBalance={tokenBalance}
+                userId={user.id}
+              />
+            </DashboardSectionShell>
+          </Suspense>
+        );
       case "wallet":
         return (
           <Suspense fallback={dashboardSectionFallback}>
@@ -500,39 +510,6 @@ export default function Dashboard({
                 xp={progress?.xp ?? 0}
                 xpLevel={progress?.level ?? 1}
                 onLogout={onLogout}
-                pinnedMessages={pinnedMessages}
-                onRemovePinnedMessage={handleRemovePinnedMessage}
-                polls={polls}
-                tokenBalance={tokenBalance}
-              />
-            </DashboardSectionShell>
-          </Suspense>
-        );
-      case "settings":
-        return (
-          <Suspense fallback={dashboardSectionFallback}>
-            <DashboardSectionShell>
-              <DashboardSettings
-                userId={user.id}
-                onLogout={onLogout}
-              />
-            </DashboardSectionShell>
-          </Suspense>
-        );
-      case "store":
-        return (
-          <Suspense fallback={dashboardSectionFallback}>
-            <DashboardSectionShell>
-              <DashboardStore
-                polls={polls}
-                votedPolls={votedPolls}
-                avatarCatalog={avatarCatalog}
-                ownedAvatarLevels={ownedAvatarLevels}
-                onUnlockAvatar={unlockAvatarLevel}
-                onAvatarPurchased={markAvatarOwned}
-                avatarPricesByLevel={avatarPricesByLevel}
-                tokenBalance={tokenBalance}
-                userId={user.id}
               />
             </DashboardSectionShell>
           </Suspense>
