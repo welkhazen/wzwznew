@@ -525,6 +525,8 @@ export default function Dashboard({
                 pollsAnswered={votedPolls.size}
                 xp={progress?.xp ?? 0}
                 xpLevel={progress?.level ?? 1}
+                pinnedMessages={pinnedMessages}
+                onRemovePinnedMessage={handleRemovePinnedMessage}
                 onLogout={onLogout}
               />
             </DashboardSectionShell>
