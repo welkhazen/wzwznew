@@ -884,6 +884,15 @@ export function DashboardCommunities({
       }
     }, [broadcastPinnedMessageUpdated, ownPinnedMessages, user.id]);
 
+    const handleUnpinMessage = useCallback((message: CommunityChatMessageRecord) => {
+      void handleRemovePinnedMessage(message.id);
+    }, [handleRemovePinnedMessage]);
+
+    const ownPinnedMessageIds = useMemo(
+      () => new Set(ownPinnedMessages.map((m) => m.messageId)),
+      [ownPinnedMessages],
+    );
+
     const handleOpenSenderProfile = useCallback((message: CommunityChatMessageRecord) => {
       setProfileDialogOpen(true);
       setProfileTarget({ message, profile: null, loading: true });
