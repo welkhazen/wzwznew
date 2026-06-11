@@ -2,6 +2,7 @@ import type { OnboardingStep } from "./types";
 
 const DAILY_POLL_PROGRESS_STORAGE_KEY = "raw.poll-daily-progress.v1";
 const ONBOARDING_STATE_STORAGE_KEY = "raw.onboarding.v1";
+const DAILY_RESET_HOUR = 22;
 
 interface PersistedDailyPollProgressEntry {
   date: string;
@@ -24,10 +25,23 @@ type PersistedOnboardingMap = Record<string, PersistedOnboardingEntry>;
 
 export function getTodayKey(): string {
   const now = new Date();
+  if (now.getHours() < DAILY_RESET_HOUR) {
+    now.setDate(now.getDate() - 1);
+  }
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, "0");
   const day = String(now.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+export function getDailyResetStartMs(): number {
+  const now = new Date();
+  const reset = new Date(now);
+  reset.setHours(DAILY_RESET_HOUR, 0, 0, 0);
+  if (now.getTime() < reset.getTime()) {
+    reset.setDate(reset.getDate() - 1);
+  }
+  return reset.getTime();
 }
 
 export function readDailyPollProgressMap(): PersistedDailyPollProgressMap {

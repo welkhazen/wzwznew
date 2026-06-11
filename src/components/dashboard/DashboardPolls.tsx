@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Poll } from "@/store/useRawStore";
+import { getDailyResetStartMs, getTodayKey } from "@/store/useRawStore.storage";
 import { useTheme } from "@/providers/useTheme";
 import { PremiumPollCard } from "@/components/polls/PremiumPollCard";
 import { ShareButton } from "@/components/ui/share-button";
@@ -179,10 +180,12 @@ async function generatePollImage(question: string, opt1: string, opt2: string, u
 
 function getNextUnlockTime(): string {
   const now = new Date();
-  const tomorrow = new Date(now);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  tomorrow.setHours(22, 0, 0, 0);
-  return tomorrow.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" }) + " at 10:00 PM";
+  const nextReset = new Date(now);
+  nextReset.setHours(22, 0, 0, 0);
+  if (now.getTime() >= nextReset.getTime()) {
+    nextReset.setDate(nextReset.getDate() + 1);
+  }
+  return nextReset.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" }) + " at 10:00 PM";
 }
 
 interface PollProgressProps {
@@ -278,10 +281,19 @@ function readStoredAnswerTimestamps(storageKey: string): Record<string, number> 
   }
 }
 
-function startOfTodayMs(): number {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return d.getTime();
+function hashString(value: string): number {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash * 31 + value.charCodeAt(i)) >>> 0;
+  }
+  return hash;
+}
+
+function rotatePollsForDay(polls: Poll[], dayKey: string, limit: number): Poll[] {
+  if (polls.length === 0) return [];
+  const safeLimit = Math.min(Math.max(limit, 0), polls.length);
+  const offset = hashString(dayKey) % polls.length;
+  return [...polls.slice(offset), ...polls.slice(0, offset)].slice(0, safeLimit);
 }
 
 function buildPollShareText(poll: Poll): string {
@@ -341,6 +353,7 @@ export function DashboardPolls({
   const [shareCopied, setShareCopied] = useState(false);
   const [sharePickerOpen, setSharePickerOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const dailyPollDayKey = getTodayKey();
 
   const commentsEndRef = useRef<HTMLDivElement>(null);
 
@@ -356,7 +369,7 @@ export function DashboardPolls({
     window.localStorage.setItem(answerTimestampsStorageKey, JSON.stringify(answerTimestamps));
   }, [answerTimestamps, answerTimestampsStorageKey, answersStorageKey, loadedAnswersStorageKey]);
 
-  const todayStart = useMemo(() => startOfTodayMs(), []);
+  const todayStart = useMemo(() => getDailyResetStartMs(), [dailyPollDayKey]);
   const answeredTodayIds = useMemo(() => {
     const ids = new Set<string>();
     for (const [pollId, ts] of Object.entries(answerTimestamps)) {
@@ -395,14 +408,19 @@ export function DashboardPolls({
     }
   }, [hasSeenVoteHint, voteHintStorageKey]);
 
+  const dailyPolls = useMemo(
+    () => rotatePollsForDay(polls, dailyPollDayKey, dailyPollLimit),
+    [dailyPollDayKey, dailyPollLimit, polls]
+  );
+
   const unseenPolls = useMemo(
-    () => polls.filter((p) => !answeredTodayIds.has(p.id)),
-    [polls, answeredTodayIds]
+    () => dailyPolls.filter((p) => !answeredTodayIds.has(p.id)),
+    [dailyPolls, answeredTodayIds]
   );
 
   const answeredPolls = useMemo(
-    () => polls.filter((p) => answeredTodayIds.has(p.id)),
-    [polls, answeredTodayIds]
+    () => dailyPolls.filter((p) => answeredTodayIds.has(p.id)),
+    [dailyPolls, answeredTodayIds]
   );
   const answeredPollHistory = useMemo<PollHistoryItem[]>(() => {
     return polls
@@ -429,13 +447,13 @@ export function DashboardPolls({
 
   // Once the daily limit is hit (server or local skips), show today's answered polls.
   // While still under the limit, show unseen polls capped at the daily limit.
-  const displayPolls = showMorePollsPaywall && answeredPolls.length > 0
-    ? answeredPolls.slice(0, dailyPollLimit)
+  const displayPolls = showMorePollsPaywall
+    ? answeredPolls
     : unseenPolls.length > 0
-      ? unseenPolls.slice(0, dailyPollLimit)
+      ? unseenPolls
       : answeredPolls.length > 0
         ? answeredPolls
-        : polls;
+        : dailyPolls;
 
   useEffect(() => {
     if (currentPollIndex >= displayPolls.length && displayPolls.length > 0) {
@@ -511,7 +529,7 @@ export function DashboardPolls({
     };
   }, [currentPoll?.id, username]);
 
-  const selectedOptionId = currentPoll ? answerHistory[currentPoll.id] : undefined;
+  const selectedOptionId = currentPoll && answeredTodayIds.has(currentPoll.id) ? answerHistory[currentPoll.id] : undefined;
   const hasVotedCurrent = Boolean(selectedOptionId);
   const showSharedPollAnswerPrompt = Boolean(sharedPollId && currentPoll?.id === sharedPollId && hasVotedCurrent);
   const currentComments = currentPoll ? historyComments[currentPoll.id] ?? [] : [];
