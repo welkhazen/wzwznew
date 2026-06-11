@@ -11,10 +11,10 @@ export function EarnedWarUpgradesSection() {
         {/* top shimmer line */}
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/30 to-transparent" />
 
-        <p className="text-[11px] uppercase tracking-[0.25em] text-raw-gold/70">War Rewards</p>
+        <p className="text-[11px] uppercase tracking-[0.25em] text-raw-gold/70">Progress Rewards</p>
 
         <h2 className="mt-3 landing-heading">
-          Earned War Upgrades
+          Level up by showing up
         </h2>
 
         <p className="mt-5 text-sm leading-relaxed text-raw-silver/60 sm:text-base">
@@ -37,7 +37,7 @@ export function EarnedWarUpgradesSection() {
         </div>
 
         <p className="mt-8 text-[11px] uppercase tracking-[0.2em] text-raw-silver/25">
-          Avatars unlock as you level up
+          New avatar rewards unlock as you level up
         </p>
       </div>
     </section>

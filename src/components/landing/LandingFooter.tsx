@@ -16,7 +16,7 @@ export function LandingFooter() {
           <a href="/" className="inline-block font-display text-3xl tracking-[0.25em] text-raw-text/90 sm:text-4xl">
             ra<span className="text-raw-gold">W</span>
           </a>
-          <p className="mt-2 text-xs uppercase tracking-[0.22em] text-raw-silver/35">Speak Your Truth.</p>
+          <p className="mt-2 text-xs uppercase tracking-[0.22em] text-raw-silver/35">Anonymous polls. Real communities.</p>
         </div>
 
         {/* Links — 3 cols on mobile, inline on desktop */}

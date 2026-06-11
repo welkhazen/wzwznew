@@ -5,16 +5,16 @@ const pillars = ["No real names", "Better honesty", "Better matching"];
 
 const cards = [
   {
-    title: "Less pressure",
-    description: "People answer more honestly when they are not performing.",
+    title: "No performance",
+    description: "No real-name pressure means more honest answers, cleaner signals, and better conversations.",
   },
   {
-    title: "Better communities",
-    description: "Real connection starts when people stop managing appearances.",
+    title: "Better matches",
+    description: "When people stop curating themselves, raW can guide them toward rooms that actually fit.",
   },
   {
-    title: "Stronger signals",
-    description: "Honest participation creates better recommendations over time.",
+    title: "Safer expression",
+    description: "A username and avatar create space to speak freely while keeping your offline identity separate.",
   },
 ];
 

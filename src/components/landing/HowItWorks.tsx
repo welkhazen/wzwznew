@@ -18,15 +18,12 @@ const howItWorksOutputs = {
     "The more honest you are, the better your matches get.",
   ],
   3: [
-    "The AI maps your answers into a personality profile unique to you.",
-    "It finds the people who think like you — same patterns, same mind.",
-    "Then it tells you exactly which community you belong in.",
+    "Every answer becomes a signal: what you value, what you avoid, and where you feel understood.",
+    "Those signals power personality insights and better community recommendations.",
   ],
   4: [
-    "Join your recommended community and speak freely.",
-    "Express yourself, say what you think, be heard,",
-    "and feel like you belong — because you actually do.",
-    "Join now. Your people are already waiting.",
+    "Join spaces shaped around shared experiences, not surface-level profiles.",
+    "Talk freely, find your people, and turn honest answers into real connection.",
   ],
 } satisfies Record<number, string[]>;
 
@@ -49,8 +46,8 @@ export function HowItWorks() {
           How it works
         </h2>
         <p className="mx-auto mb-10 max-w-2xl px-1 text-center text-sm leading-relaxed text-raw-silver/60 sm:mb-14 sm:text-base">
-          Create an anonymous identity, answer live polls, and get matched with online communities
-          and group chats shaped around your interests, personality, and honest answers.
+          Build an anonymous identity, answer honest polls, and discover online communities
+          shaped around your personality, interests, and lived experiences.
         </p>
 
         <div className="overflow-x-auto rounded-[2rem] border border-raw-border/40 bg-gradient-to-b from-raw-surface/60 to-raw-black/90 p-3 shadow-[0_30px_120px_rgba(0,0,0,0.35)] sm:p-6">

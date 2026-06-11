@@ -13,7 +13,7 @@ export function ProblemSection() {
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/30 to-transparent" />
 
         <h2 className="text-center landing-heading">
-          Find online communities where you can be honest.
+          Stop performing. Start belonging.
         </h2>
         <div className="mx-auto mt-3 h-px w-40 bg-gradient-to-r from-transparent via-[#F1C42D]/90 to-transparent sm:w-56" aria-hidden />
         <p className="mx-auto mt-4 max-w-2xl text-center text-sm leading-relaxed text-raw-silver/55 sm:text-base">
