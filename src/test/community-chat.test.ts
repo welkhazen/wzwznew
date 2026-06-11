@@ -49,46 +49,35 @@ describe("community chat Supabase persistence", () => {
     vi.clearAllMocks();
   });
 
-  it("sends community messages through the /api/chat/send endpoint", async () => {
-    const fetchMock = vi.spyOn(global, "fetch").mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        ok: true,
-        message: {
-          id: "message-1",
-          communityId: "community-1",
-          senderId: "user-alice",
-          senderName: "alice",
-          text: "hello everyone",
-          createdAt: "2026-06-02T09:00:00.000Z",
-          pinned: false,
-          likedBy: [],
-          senderAvatarLevel: 3,
-        },
-      }),
-    } as Response);
+  it("sends community messages through the send_community_message RPC", async () => {
+    rpcMock.mockResolvedValueOnce({
+      data: {
+        id: "message-1",
+        community_id: "community-1",
+        sender_id: "user-alice",
+        sender_name: "alice",
+        text: "hello everyone",
+        created_at: "2026-06-02T09:00:00.000Z",
+        pinned: false,
+        liked_by: [],
+        sender_avatar_level: 3,
+      },
+      error: null,
+    });
 
     const message = await sendMessage("community-1", {
       text: "hello everyone",
     });
 
-    // The /api/chat/send endpoint derives the sender from the session;
-    // identity alias and avatar level are optional overrides.
-    expect(fetchMock).toHaveBeenCalledWith("/api/chat/send", expect.objectContaining({
-      method: "POST",
-      credentials: "same-origin",
-      body: JSON.stringify({
-        communityId: "community-1",
-        text: "hello everyone",
-        identityAlias: null,
-        avatarLevel: null,
-        replyToMessageId: null,
-      }),
-    }));
+    expect(rpcMock).toHaveBeenCalledWith("send_community_message", {
+      p_community_id: "community-1",
+      p_text: "hello everyone",
+      p_identity_alias: null,
+      p_avatar_level: null,
+      p_reply_to_message_id: null,
+    });
     expect(message.text).toBe("hello everyone");
     expect(message.senderAvatarLevel).toBe(3);
-
-    fetchMock.mockRestore();
   });
 
   it("deletes messages through delete_community_message and likes through toggle_message_like", async () => {
