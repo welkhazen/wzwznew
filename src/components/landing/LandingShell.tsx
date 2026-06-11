@@ -126,7 +126,7 @@ export default function LandingShell({
                   Ready to be ra<span className="raw-word-w">W</span>?
                 </h2>
                 <p className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-raw-silver/55 sm:text-base">
-                  Join with just a username. No email, no phone, no real name — your people are already talking.
+                  Join with just a username and password. No email, no phone, no real name — your people are already talking.
                 </p>
                 <button
                   type="button"

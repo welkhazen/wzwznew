@@ -20,17 +20,17 @@ const FAQ_ITEMS = [
   {
     question: "Is raW free?",
     answer:
-      "Yes. Joining raW, answering polls, and chatting in communities is free. Optional extras like premium avatars and additional unlocks use tokens you can earn by staying active.",
+      "Yes. Joining raW, answering polls, and chatting in communities is free. Optional extras like premium avatars and additional unlocks use tokens.",
   },
   {
     question: "Is raW moderated and safe?",
     answer:
-      "Yes. Anonymity is not a free pass — communities have content rules, AI-assisted moderation, and human review. You can report messages, block users, and appeal moderation decisions.",
+      "Yes. Anonymity is not a free pass — communities have content rules and automated filtering, backed by human review. You can report messages, block users, and appeal moderation decisions.",
   },
   {
     question: "What happens to my data?",
     answer:
-      "Your answers stay tied to your anonymous username, never your real-world identity. raW only knows what you choose to share. See our Privacy page for the full details.",
+      "Your answers and activity stay tied to your anonymous username, never your real-world identity. We collect only what's needed to run raW — see our Privacy page for the full details.",
   },
 ];
 
