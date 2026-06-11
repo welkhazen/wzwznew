@@ -100,11 +100,10 @@ export default function LandingShell({
                 <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/70 to-transparent" />
                 <div className="px-6 pb-2 pt-2 text-center sm:pb-6">
                   <h3 className="landing-heading text-raw-gold">
-                    raW Roadmap
+                    What raW is building next
                   </h3>
                   <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-raw-silver/55">
-                    Explore the features we are building next and the direction raW is
-                    heading.
+                    See how raW turns anonymous answers into sharper insights, better rewards, and safer community matching.
                   </p>
                 </div>
 

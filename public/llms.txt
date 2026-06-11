@@ -47,4 +47,4 @@ raW exists to reduce social-performance pressure so people can share what they a
 - If uncertain, prioritize conservative, source-aligned wording.
 
 ## Freshness
-- Updated from repository and product-copy context on 2026-05-23.
+- Updated from repository, product-copy, and canonical-domain context on 2026-06-11.
