@@ -52,6 +52,7 @@ import { supabase } from "@/lib/supabase";
 import { listUserAliases, type UserAliasRow } from "@/backend/supabase/controllers/userController";
 import { getPinNotifications, type PinNotificationRecord } from "@/backend/supabase/controllers/userExtrasController";
 import { getPrivateAvatarLevel } from "@/lib/avataridentity";
+import { CHAT_IDENTITY_CHANGED_EVENT, readSelectedChatAlias, writeSelectedChatAlias } from "@/lib/identitySelection";
 
 export type DashboardTab = "home" | "polls" | "challenges" | "daily-spin" | "communities" | "profile" | "settings" | "wallet" | "store";
 
@@ -81,8 +82,6 @@ const ACCENT_PREVIEW_DURATION_MS = 60_000;
 const ACCENT_FREE_ID: AccentPresetId = "gold";
 const FREE_ACCENT_IDS: AccentPresetId[] = ["gold", "indigo"];
 const OWNED_ACCENTS_CACHE_PREFIX = "raw.theme.accent.owned.v2.";
-const CHAT_IDENTITY_PREFIX = "raw.chat.identity.v1.";
-const CHAT_IDENTITY_CHANGED_EVENT = "raw:chat-identity-changed";
 
 function readOwnedAccentsCache(userId: string): AccentPresetId[] {
   if (typeof window === "undefined") return [ACCENT_FREE_ID];
@@ -253,10 +252,7 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
   const [tokenBalanceForUnlocks, setTokenBalanceForUnlocks] = useState<number>(() => readStoredTokenBalance(userId));
   const [privateAliases, setPrivateAliases] = useState<UserAliasRow[]>([]);
   const [pinNotifications, setPinNotifications] = useState<PinNotificationRecord[]>([]);
-  const [selectedChatAlias, setSelectedChatAlias] = useState<string | null>(() => {
-    if (typeof window === "undefined") return null;
-    return window.localStorage.getItem(`${CHAT_IDENTITY_PREFIX}${userId}`);
-  });
+  const [selectedChatAlias, setSelectedChatAlias] = useState<string | null>(() => readSelectedChatAlias(userId));
   const notifRef = useRef<HTMLDivElement>(null);
   const effectiveAvatarLevel = selectedChatAlias ? getPrivateAvatarLevel(userId) : avatarLevel;
 
@@ -278,15 +274,20 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
 
   const saveChatIdentity = (alias: string | null) => {
     setSelectedChatAlias(alias);
-    if (typeof window === "undefined") return;
-    const storageKey = `${CHAT_IDENTITY_PREFIX}${userId}`;
-    if (alias) {
-      window.localStorage.setItem(storageKey, alias);
-    } else {
-      window.localStorage.removeItem(storageKey);
-    }
-    window.dispatchEvent(new CustomEvent(CHAT_IDENTITY_CHANGED_EVENT, { detail: { userId, alias } }));
+    writeSelectedChatAlias(userId, alias);
   };
+
+  useEffect(() => {
+    setSelectedChatAlias(readSelectedChatAlias(userId));
+    if (typeof window === "undefined") return;
+    const handleIdentityChange = (event: Event) => {
+      const detail = (event as CustomEvent<{ userId?: string; alias?: string | null }>).detail;
+      if (detail?.userId !== userId) return;
+      setSelectedChatAlias(detail.alias ?? null);
+    };
+    window.addEventListener(CHAT_IDENTITY_CHANGED_EVENT, handleIdentityChange);
+    return () => window.removeEventListener(CHAT_IDENTITY_CHANGED_EVENT, handleIdentityChange);
+  }, [userId]);
 
   useEffect(() => {
     setTokenBalanceForUnlocks(readStoredTokenBalance(userId));

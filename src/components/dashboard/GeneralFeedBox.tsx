@@ -5,6 +5,7 @@ import {
   sendGeneralFeedPost,
   type GeneralFeedPostRecord,
 } from "@/backend/supabase/controllers/generalFeedController";
+import { AvatarFigure } from "@/components/ui/avatar-figure";
 
 interface GeneralFeedBoxProps {
   userId?: string;
@@ -121,9 +122,7 @@ export function GeneralFeedBox({
               <article key={post.id} className={`${compact ? "py-3" : "py-4"} first:pt-0 last:pb-0`}>
                 <div className="mb-2 flex items-center justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-2">
-                    <div className="flex size-8 shrink-0 items-center justify-center rounded-xl border border-raw-gold/20 bg-raw-gold/10 text-xs font-black text-raw-gold">
-                      {post.senderName.slice(0, 2).toUpperCase()}
-                    </div>
+                    <AvatarFigure avatarIndex={post.senderAvatarLevel ?? 1} size="sm" selected />
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-1.5">
                         <p className={`truncate text-sm font-bold ${isLight ? "text-slate-950" : "text-white"}`}>{post.senderName}</p>

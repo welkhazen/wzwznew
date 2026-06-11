@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Check, Heart, MessageSquare, Mic2, Pin, ShieldOff, Target, Trash2, Users, X } from "lucide-react";
+import { Check, Heart, MessageSquare, Mic2, Pin, ShieldOff, Target, Trash2, User, Users, X } from "lucide-react";
 import { useProfileStats } from "@/hooks/useProfileStats";
 import type { PinnedMessageRecord } from "@/backend/supabase/controllers/userExtrasController";
 import type { Poll } from "@/store/useRawStore";
@@ -9,6 +9,7 @@ import { LEVEL_THEMES, getAvatar, getPrivateAvatarLevel, privateAvatarKey } from
 import { PersonalityInsightsInventory } from "@/components/dashboard/PersonalityInsightsInventory";
 import { addOwnedInsightId, readOwnedInsightIds } from "@/lib/insightsOwnership";
 import { spendTokens } from "@/lib/api/tokens";
+import { CHAT_IDENTITY_CHANGED_EVENT, readSelectedChatAlias, writeSelectedChatAlias } from "@/lib/identitySelection";
 import { toast } from "@/components/ui/use-toast";
 import {
   listUserAliases,
@@ -78,6 +79,7 @@ export function DashboardProfile({
   const [aliasInput, setAliasInput] = useState("");
   const [aliasSaving, setAliasSaving] = useState(false);
   const [editingAlias, setEditingAlias] = useState(false);
+  const [selectedChatAlias, setSelectedChatAlias] = useState<string | null>(() => readSelectedChatAlias(userId));
   const [privateAvatarLevel, setPrivateAvatarLevel] = useState<number>(() => getPrivateAvatarLevel(userId));
   const [hoveredPrivateIndex, setHoveredPrivateIndex] = useState<number | null>(null);
 
@@ -91,13 +93,37 @@ export function DashboardProfile({
         const priv = rows.find((r) => !r.is_public) ?? null;
         setPrivateAlias(priv);
         setAliasInput(priv?.alias ?? "");
+        setSelectedChatAlias((current) => {
+          if (!current) return null;
+          return priv && priv.alias.toLowerCase() === current.toLowerCase() ? current : null;
+        });
       })
       .catch(() => {});
+  }, [userId]);
+
+  useEffect(() => {
+    setSelectedChatAlias(readSelectedChatAlias(userId));
+    if (typeof window === "undefined") return;
+    const handleIdentityChange = (event: Event) => {
+      const detail = (event as CustomEvent<{ userId?: string; alias?: string | null }>).detail;
+      if (detail?.userId !== userId) return;
+      setSelectedChatAlias(detail.alias ?? null);
+    };
+    window.addEventListener(CHAT_IDENTITY_CHANGED_EVENT, handleIdentityChange);
+    return () => window.removeEventListener(CHAT_IDENTITY_CHANGED_EVENT, handleIdentityChange);
   }, [userId]);
 
   function handlePrivateAvatarChange(lvl: number) {
     setPrivateAvatarLevel(lvl);
     window.localStorage.setItem(privateAvatarKey(userId), String(lvl));
+    if (selectedChatAlias) {
+      writeSelectedChatAlias(userId, selectedChatAlias);
+    }
+  }
+
+  function handleSelectChatAlias(alias: string | null) {
+    setSelectedChatAlias(alias);
+    writeSelectedChatAlias(userId, alias);
   }
 
   async function handleSaveAlias() {
@@ -112,6 +138,7 @@ export function DashboardProfile({
       setPrivateAlias(row);
       setAliasInput(row.alias);
       setEditingAlias(false);
+      handleSelectChatAlias(row.alias);
       toast({ title: "Private name saved" });
     } catch (e) {
       toast({ title: "Could not save name", description: e instanceof Error ? e.message : "Try again." });
@@ -127,6 +154,9 @@ export function DashboardProfile({
       setPrivateAlias(null);
       setAliasInput("");
       setEditingAlias(false);
+      if (selectedChatAlias?.toLowerCase() === privateAlias.alias.toLowerCase()) {
+        handleSelectChatAlias(null);
+      }
       toast({ title: "Private name removed" });
     } catch {
       toast({ title: "Could not remove name" });
@@ -164,8 +194,10 @@ export function DashboardProfile({
 
   const displayIndex = hoveredIndex ?? avatarLevel;
   const theme = getAvatar(displayIndex);
-  const ownedLevels = Array.from({ length: LEVEL_THEMES.length }, (_, i) => i + 1)
-    .filter((lvl) => ownedAvatarLevels.has(lvl));
+  const avatarThemeCount = Array.isArray(LEVEL_THEMES) && LEVEL_THEMES.length > 0 ? LEVEL_THEMES.length : Math.max(avatarLevel, 1);
+  const ownedLevelSet = ownedAvatarLevels instanceof Set ? ownedAvatarLevels : new Set<number>([avatarLevel]);
+  const ownedLevels = Array.from({ length: avatarThemeCount }, (_, i) => i + 1)
+    .filter((lvl) => ownedLevelSet.has(lvl));
 
   return (
     <div className="space-y-5">
@@ -226,6 +258,40 @@ export function DashboardProfile({
         <div className="mb-4 flex items-center gap-2">
           <ShieldOff className="h-4 w-4 text-raw-gold/50" />
           <p className="text-sm font-semibold text-raw-text">Private identity</p>
+        </div>
+
+        <div className="mt-4 rounded-xl border border-raw-border/30 bg-raw-black/25 p-2">
+          <p className="mb-2 text-[10px] uppercase tracking-[0.16em] text-raw-silver/35">Chat name</p>
+          <button
+            type="button"
+            onClick={() => handleSelectChatAlias(null)}
+            className={`mb-1 flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs transition-colors ${
+              !selectedChatAlias ? "bg-raw-gold/15 text-raw-gold" : "text-raw-silver/60 hover:bg-white/5 hover:text-raw-text"
+            }`}
+          >
+            <span className="flex min-w-0 items-center gap-2">
+              <User className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">@{username}</span>
+            </span>
+            {!selectedChatAlias && <Check className="h-3.5 w-3.5 shrink-0" />}
+          </button>
+          {privateAlias && (
+            <button
+              type="button"
+              onClick={() => handleSelectChatAlias(privateAlias.alias)}
+              className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs transition-colors ${
+                selectedChatAlias?.toLowerCase() === privateAlias.alias.toLowerCase()
+                  ? "bg-raw-gold/15 text-raw-gold"
+                  : "text-raw-silver/60 hover:bg-white/5 hover:text-raw-text"
+              }`}
+            >
+              <span className="flex min-w-0 items-center gap-2">
+                <ShieldOff className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">@{privateAlias.alias}</span>
+              </span>
+              {selectedChatAlias?.toLowerCase() === privateAlias.alias.toLowerCase() && <Check className="h-3.5 w-3.5 shrink-0" />}
+            </button>
+          )}
         </div>
 
         <div className="flex items-center gap-3">
@@ -363,7 +429,7 @@ export function DashboardProfile({
       <section>
         <PersonalityInsightsInventory
           pollsAnswered={profileStats.polls || pollsAnswered}
-          totalPolls={polls.length}
+          totalPolls={(polls ?? []).length}
           tokenBalance={tokenBalance}
           ownedIds={ownedInsightIds}
           onPurchase={handlePurchaseInsight}
