@@ -15,6 +15,7 @@ import {
   listUserAliases,
   savePrivateAlias,
   deleteUserAlias,
+  setChatIdentity,
   type UserAliasRow,
 } from "@/backend/supabase/controllers/userController";
 
@@ -108,6 +109,7 @@ export function DashboardProfile({
       const detail = (event as CustomEvent<{ userId?: string; alias?: string | null }>).detail;
       if (detail?.userId !== userId) return;
       setSelectedChatAlias(detail.alias ?? null);
+      setPrivateAvatarLevel(getPrivateAvatarLevel(userId));
     };
     window.addEventListener(CHAT_IDENTITY_CHANGED_EVENT, handleIdentityChange);
     return () => window.removeEventListener(CHAT_IDENTITY_CHANGED_EVENT, handleIdentityChange);
@@ -119,11 +121,13 @@ export function DashboardProfile({
     if (selectedChatAlias) {
       writeSelectedChatAlias(userId, selectedChatAlias);
     }
+    void setChatIdentity(selectedChatAlias, lvl).catch(() => {});
   }
 
   function handleSelectChatAlias(alias: string | null) {
     setSelectedChatAlias(alias);
     writeSelectedChatAlias(userId, alias);
+    void setChatIdentity(alias, privateAvatarLevel).catch(() => {});
   }
 
   async function handleSaveAlias() {

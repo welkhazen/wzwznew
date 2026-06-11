@@ -49,7 +49,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
 import { spendTokens } from "@/lib/api/tokens";
 import { supabase } from "@/lib/supabase";
-import { listUserAliases, type UserAliasRow } from "@/backend/supabase/controllers/userController";
+import { listUserAliases, setChatIdentity, type UserAliasRow } from "@/backend/supabase/controllers/userController";
 import { getPinNotifications, type PinNotificationRecord } from "@/backend/supabase/controllers/userExtrasController";
 import { getPrivateAvatarLevel } from "@/lib/avataridentity";
 import { CHAT_IDENTITY_CHANGED_EVENT, readSelectedChatAlias, writeSelectedChatAlias } from "@/lib/identitySelection";
@@ -275,6 +275,7 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
   const saveChatIdentity = (alias: string | null) => {
     setSelectedChatAlias(alias);
     writeSelectedChatAlias(userId, alias);
+    void setChatIdentity(alias, getPrivateAvatarLevel(userId)).catch(() => {});
   };
 
   useEffect(() => {

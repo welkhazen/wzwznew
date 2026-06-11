@@ -1,6 +1,7 @@
 import { FloatingDock } from "@/components/ui/floating-dock";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { readCommunityChats } from "@/lib/communityChat";
+import { hydrateChatIdentityFromServer } from "@/lib/identitySelection";
 import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
 import { fetchCommunities } from "@/backend/supabase/controllers/communityController";
 import { readCachedCommunities, writeCachedCommunities } from "@/lib/communityCache";
@@ -168,6 +169,12 @@ export default function Dashboard({
   useEffect(() => {
     void awardOnce("daily-login", getTodayKey(), XP_REWARDS.DAILY_LOGIN);
   }, [awardOnce]);
+
+  // Pull the chat-identity selection + private avatar from Supabase so they
+  // follow the account across devices (both are otherwise localStorage-only).
+  useEffect(() => {
+    void hydrateChatIdentityFromServer(user.id);
+  }, [user.id]);
 
   useEffect(() => {
     let cancelled = false;
