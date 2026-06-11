@@ -58,6 +58,7 @@ export async function sendMessage(
     p_avatar_level: input.avatarLevel ?? null,
   });
   if (error) throw new Error(error.message ?? 'send_message_failed');
+  if (!data) throw new Error('send_message_failed');
   return mapCommunityMessage(data as DbCommunityMessage);
 }
 
