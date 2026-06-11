@@ -3,21 +3,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import LNTLogo from "@/assets/LNT.webp";
 import SYTLogo from "@/assets/logospeak.webp";
 import IIJMLogo from "@/assets/itisjustme.webp";
-import { AlertTriangle, ArrowLeft, Ban, BarChart3, Bell, BellOff, Heart, ImagePlus, Lock, MoreHorizontal, Plus, Search, Send, Trash2, UserMinus, Users, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, BarChart3, Bell, BellOff, ImagePlus, Lock, Plus, Search, Trash2, UserMinus, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
 import { CommunityBadge } from "@/components/dashboard/CommunityBadge";
-import { AvatarFigure } from "@/components/ui/avatar-figure";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-
 import {
   ensureUserRecord,
   formatAdminTimestamp,
@@ -72,6 +64,7 @@ import {
 } from "@/lib/communityConstants";
 import { buildDefaultCommunities } from "@/lib/communityChat.seed";
 import { sendCommunityPushNotification } from "@/lib/communityPushNotifications";
+import { sendDashboardCommunityMessage } from "@/lib/communityChatSend";
 import { IDENTITY_SELECTION_EVENT, readSelectedIdentityAlias } from "@/lib/identitySelection";
 import type { CommunityChatMessageRecord, PersistedCommunityRecord } from "@/lib/communityChat.types";
 import {
@@ -88,6 +81,9 @@ import {
   writeBlockedCommunitySenders,
 } from "@/lib/blockedCommunitySenders";
 import type { User } from "@/store/types";
+import { CommunityMessageTimeline } from "@/components/dashboard/CommunityMessageTimeline";
+import { CommunityMessageComposer } from "@/components/dashboard/CommunityMessageComposer";
+import { CommunityRoomList } from "@/components/dashboard/CommunityRoomList";
 
 const WAITLIST_UNLOCK_THRESHOLD = 200;
 const TOKEN_BALANCE_STORAGE_PREFIX = "raw.polls.token-balance";
@@ -165,8 +161,12 @@ function replaceCommunityMessage(
   communityId: string,
   previousId: string,
   message: CommunityChatMessageRecord,
+  fallbackCommunity?: PersistedCommunityRecord,
 ): PersistedCommunityRecord[] {
-  return communities.map((community) => {
+  const hasCommunity = communities.some((community) => community.id === communityId);
+  const sourceCommunities = hasCommunity || !fallbackCommunity ? communities : [...communities, fallbackCommunity];
+
+  return sourceCommunities.map((community) => {
     if (community.id !== communityId) return community;
     const withoutPrevious = community.messages.filter((entry) => entry.id !== previousId);
     return { ...community, messages: mergeCommunityMessages(withoutPrevious, message) };
@@ -194,8 +194,12 @@ function appendOptimisticMessage(
   communities: PersistedCommunityRecord[],
   communityId: string,
   message: CommunityChatMessageRecord,
+  fallbackCommunity?: PersistedCommunityRecord,
 ): PersistedCommunityRecord[] {
-  return communities.map((community) => {
+  const hasCommunity = communities.some((community) => community.id === communityId);
+  const sourceCommunities = hasCommunity || !fallbackCommunity ? communities : [...communities, fallbackCommunity];
+
+  return sourceCommunities.map((community) => {
     if (community.id !== communityId) return community;
     const withoutExisting = community.messages.filter((entry) => entry.id !== message.id);
     return {
@@ -1036,7 +1040,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         likedBy: [],
       };
 
-      updateCommunities((current) => appendOptimisticMessage(current, selectedCommunity.id, optimisticMessage));
+      updateCommunities((current) => appendOptimisticMessage(current, selectedCommunity.id, optimisticMessage, selectedCommunity));
       try {
         const mentionRecipientIds = selectedCommunity.members
           .filter((member) =>
@@ -1046,18 +1050,28 @@ const COMMUNITY_LOGOS: Record<string, string> = {
           )
           .map((member) => member.userId);
 
-        if (!isJoined) {
-          await joinCommunitySupabase(selectedCommunity.id, user.id, user.username);
-          lastTouchedCommunityRef.current = `${selectedCommunity.id}:${user.id}`;
-        }
-
-        const savedMessage = await sendMessageSupabase(selectedCommunity.id, {
+        const { message: savedMessage, usedLocalFallback } = await sendDashboardCommunityMessage({
+          communityId: selectedCommunity.id,
           senderId: user.id,
+          username: user.username,
           senderName: selectedChatIdentity.alias,
           senderAvatarLevel: selectedChatIdentity.avatar_level,
           text: trimmedMessage,
+          isJoined,
+        }, {
+          joinCommunity: joinCommunitySupabase,
+          sendMessage: sendMessageSupabase,
         });
-        updateCommunities((current) => replaceCommunityMessage(current, selectedCommunity.id, optimisticMessage.id, savedMessage));
+        if (!isJoined && !usedLocalFallback) {
+          lastTouchedCommunityRef.current = `${selectedCommunity.id}:${user.id}`;
+        }
+        updateCommunities((current) => replaceCommunityMessage(current, selectedCommunity.id, optimisticMessage.id, savedMessage, selectedCommunity));
+        if (usedLocalFallback) {
+          toast({
+            title: "Message saved locally",
+            description: "Server sync is unavailable, but your message was added on this device.",
+          });
+        }
         setMessageDraft("");
         setMentionQuery(null);
         void sendCommunityPushNotification({
@@ -1072,7 +1086,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       }
     }, [isJoined, selectedChatIdentity.alias, selectedChatIdentity.avatar_level, selectedCommunity, updateCommunities, user.id, user.username]);
 
-    const handleSendMessage = async () => {
+    const handleSendMessage = useCallback(async () => {
       if (!selectedCommunity) {
         return;
       }
@@ -1094,14 +1108,14 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         return;
       }
       await sendOptimisticMessage(trimmedMessage);
-    };
+    }, [isUserBanned, messageDraft, selectedCommunity, sendOptimisticMessage]);
 
-    const handleRetryMessage = async (message: CommunityChatMessageRecord) => {
+    const handleRetryMessage = useCallback(async (message: CommunityChatMessageRecord) => {
       if (message.deliveryStatus !== "failed") return;
       await sendOptimisticMessage(message.text, message);
-    };
+    }, [sendOptimisticMessage]);
 
-    const handleLikeMessage = async (message: CommunityChatMessageRecord) => {
+    const handleLikeMessage = useCallback(async (message: CommunityChatMessageRecord) => {
       const likedBy = message.likedBy ?? [];
       const isAddingLike = !likedBy.includes(user.id);
       try {
@@ -1121,7 +1135,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       } catch {
         toast({ title: "Failed to update like", description: "Please try again." });
       }
-    };
+    }, [reloadChatData, selectedCommunity, user.id, user.username]);
 
     const handleCommunitySettingsSave = () => {
       if (!selectedCommunity || !canEditSelectedCommunity) {
@@ -1210,18 +1224,18 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       });
     };
 
-    const handleOpenMessageReport = (message: CommunityChatMessageRecord) => {
+    const handleOpenMessageReport = useCallback((message: CommunityChatMessageRecord) => {
       if (!selectedCommunity) return;
       setReportTarget({
         communityId: selectedCommunity.id,
         communityTitle: selectedCommunity.title,
         message,
       });
-      setReportDraft(INITIAL_REPORT_DRAFT);
+      setReportDraft({ reason: "", details: "" });
       setReportDialogOpen(true);
-    };
+    }, [selectedCommunity]);
 
-    const handleBlockMessageSender = (message: CommunityChatMessageRecord) => {
+    const handleBlockMessageSender = useCallback((message: CommunityChatMessageRecord) => {
       if (message.senderId === user.id || message.senderName === user.username) {
         toast({
           title: "Can't block yourself",
@@ -1241,7 +1255,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         title: `${message.senderName} blocked`,
         description: "Their messages are hidden from your community chat view.",
       });
-    };
+    }, [user.id, user.username]);
 
     const updateRequestDraft = <K extends keyof CommunityRequestDraft>(field: K, value: CommunityRequestDraft[K]) => {
       setRequestDraft((previous) => ({
@@ -1346,165 +1360,34 @@ const COMMUNITY_LOGOS: Record<string, string> = {
           </div>
         )}
 
-        <div className="grid grid-cols-2 items-stretch gap-4 sm:gap-5 lg:grid-cols-2 xl:grid-cols-3">
-          {directoryCommunities.map((community) => {
-            const joined = community.members.some((member) => member.userId === user.id);
-            const communityUnreadCount = joined ? countUnreadMessages(community, user.id) : 0;
-            const coverImage = COMMUNITY_COVER_IMAGES[community.id] ?? community.logoUrl;
-            const coverVideo = COMMUNITY_COVER_VIDEOS[community.id];
-            const isExpanded = expandedDescs.has(community.id);
-            const descLong = community.description.length > 120;
-
-            return (
-              <div key={community.id} className="flex flex-col overflow-hidden rounded-2xl border border-raw-border/30 bg-raw-surface/35 shadow-[0_8px_24px_rgba(0,0,0,0.22)]">
-                {/* Cover image */}
-                <div className="relative h-28 sm:h-44 shrink-0 overflow-hidden border-b border-raw-border/25">
-                  {coverVideo ? (
-                    <video src={coverVideo} className="h-full w-full object-cover" autoPlay loop muted playsInline preload="auto" />
-                  ) : coverImage ? (
-                    <img src={coverImage} alt={`${community.title} cover`} className="h-full w-full object-cover" loading="lazy" />
-                  ) : (
-                    <div className="h-full w-full bg-gradient-to-br from-raw-gold/12 via-raw-surface/30 to-raw-black/70" />
-                  )}
-                  {!coverVideo && <div className="absolute inset-0 bg-gradient-to-t from-raw-black/85 via-raw-black/30 to-transparent" />}
-                  <div className="absolute bottom-2 right-2 rounded-full border border-raw-border/40 bg-raw-black/60 px-2 py-0.5 text-[9px] text-raw-silver/70 backdrop-blur-sm">
-                    {joined ? "Joined" : community.locked ? "Locked" : "Not joined"}
-                  </div>
-                </div>
-
-                <div className="flex flex-1 flex-col p-3 sm:p-5">
-                  {/* Title row */}
-                  <div className="flex items-center gap-2">
-                    <CommunityBadge abbr={community.abbr} title={community.title} logoUrl={COMMUNITY_LOGOS[community.id] ?? community.logoUrl} />
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <p className="font-display text-xs sm:text-base tracking-wide text-raw-text leading-tight">{community.title}</p>
-                        {communityUnreadCount > 0 && (
-                          <span className="rounded-full bg-raw-gold px-1.5 py-0.5 text-[9px] font-semibold text-raw-ink">
-                            {communityUnreadCount}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-[9px] uppercase tracking-[0.14em] text-raw-gold/65">{community.status}</p>
-                    </div>
-                  </div>
-
-                  {/* Description */}
-                  <div className="mt-2">
-                    <p className={`text-[11px] sm:text-sm leading-relaxed text-raw-silver/50 line-clamp-2 sm:${!isExpanded && descLong ? "line-clamp-3" : ""}`}>
-                      {community.description}
-                    </p>
-                    {descLong && (
-                      <button
-                        onClick={() => setExpandedDescs((prev) => {
-                          const next = new Set(prev);
-                          if (isExpanded) next.delete(community.id);
-                          else next.add(community.id);
-                          return next;
-                        })}
-                        className="mt-0.5 hidden sm:block text-xs text-raw-gold/60 hover:text-raw-gold"
-                      >
-                        {isExpanded ? "Show less" : "Show more"}
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Members row */}
-                  <div className="mt-2 sm:mt-4 flex items-center gap-2 text-[10px] text-raw-silver/35">
-                    <span className="flex items-center gap-1">
-                      <Users className="h-3 w-3" /> {community.members.length}
-                    </span>
-                    {!community.locked && (
-                      <span className="flex items-center gap-1">
-                        <div className="h-1.5 w-1.5 rounded-full bg-emerald-400/70" /> {countOnlineMembers(community)}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Action button */}
-                  <div className="mt-auto pt-3">
-                    {community.locked && !joined ? (() => {
-                      const joinReq = communityJoinRequests.find(
-                        (r) => r.communityId === community.id && r.requesterId === user.id,
-                      );
-                      if (joinReq?.status === "approved") {
-                        return (
-                          <Button
-                            onClick={() => handlePaidJoinCommunity(community.id, true)}
-                            className="w-full rounded-xl bg-raw-gold px-2 py-2 text-xs text-raw-ink hover:bg-raw-gold/90"
-                          >
-                            Join Group - {COMMUNITY_UNLOCK_TOKEN_COST} tokens
-                          </Button>
-                        );
-                      }
-                      const onWaitlist = waitlistJoinedIds.has(community.id);
-                      const waitlistCount = waitlistCounts[community.id] ?? 0;
-                      const isJoining = waitlistJoiningId === community.id;
-                      return (
-                        <div className="space-y-1.5">
-                          <Button
-                            onClick={() => handleJoinWaitlist(community)}
-                            disabled={onWaitlist || isJoining}
-                            className="w-full rounded-xl border border-raw-gold/30 bg-transparent px-2 py-2 text-xs text-raw-gold hover:bg-raw-gold/10 disabled:opacity-70"
-                          >
-                            <Lock className="h-3 w-3" /> {onWaitlist ? "On Waitlist" : "Join Waitlist"}
-                          </Button>
-                          <p className="text-center text-[10px] text-raw-silver/45">
-                            <span className="text-raw-gold/80">{waitlistCount}</span>
-                            <span className="text-raw-silver/35">/{WAITLIST_UNLOCK_THRESHOLD}</span>
-                            <span className="ml-1">to unlock</span>
-                          </p>
-                        </div>
-                      );
-                    })() : (() => {
-                      const isUnlocked = joined || communityAccess.hasSubscription || communityAccess.unlockedIds.has(community.id);
-                      const canGetFree = freeCommunitySlotsRemaining > 0;
-                      const isUnlocking = unlockingId === community.id;
-                      if (isUnlocked) {
-                        return (
-                          <Button
-                            onClick={() => onOpenCommunity(community.id)}
-                            className="w-full rounded-xl bg-raw-gold px-2 py-2 text-xs text-raw-ink hover:bg-raw-gold/90"
-                          >
-                            Open Chat
-                          </Button>
-                        );
-                      }
-                      if (canGetFree) {
-                        return (
-                          <div className="space-y-1.5">
-                            <Button
-                              onClick={() => handleUnlockCommunity(community.id)}
-                              disabled={isUnlocking}
-                              className="w-full rounded-xl bg-raw-gold px-2 py-2 text-xs text-raw-ink hover:bg-raw-gold/90 disabled:opacity-70"
-                            >
-                              {isUnlocking ? "Opening…" : "Open Chat — Free"}
-                            </Button>
-                            <p className="text-center text-[10px] text-raw-silver/40">
-                              {freeCommunitySlotsRemaining} free slot{freeCommunitySlotsRemaining === 1 ? "" : "s"} remaining
-                            </p>
-                          </div>
-                        );
-                      }
-                      return (
-                        <div className="space-y-1.5">
-                          <Button
-                            onClick={() => handleUnlockCommunity(community.id)}
-                            disabled={isUnlocking}
-                            className="w-full rounded-xl border border-raw-gold/40 bg-transparent px-2 py-2 text-xs text-raw-gold hover:bg-raw-gold/10 disabled:opacity-70"
-                          >
-                            <Lock className="h-3 w-3" /> {isUnlocking ? "Unlocking…" : `Unlock — ${COMMUNITY_UNLOCK_TOKEN_COST} tokens`}
-                          </Button>
-                          <p className="text-center text-[10px] text-raw-silver/40">or subscribe for all access</p>
-                        </div>
-                      );
-                    })()}
-                  </div>
-                </div>
-              </div>
-            );
+        <CommunityRoomList
+          communities={directoryCommunities}
+          userId={user.id}
+          logoUrlsByCommunityId={COMMUNITY_LOGOS}
+          coverImagesByCommunityId={COMMUNITY_COVER_IMAGES}
+          coverVideosByCommunityId={COMMUNITY_COVER_VIDEOS}
+          expandedDescriptionIds={expandedDescs}
+          joinRequests={communityJoinRequests}
+          waitlistJoinedIds={waitlistJoinedIds}
+          waitlistCounts={waitlistCounts}
+          waitlistJoiningId={waitlistJoiningId}
+          waitlistUnlockThreshold={WAITLIST_UNLOCK_THRESHOLD}
+          hasSubscriptionAccess={communityAccess.hasSubscription}
+          unlockedCommunityIds={communityAccess.unlockedIds}
+          freeCommunitySlotsRemaining={freeCommunitySlotsRemaining}
+          unlockingId={unlockingId}
+          unlockTokenCost={COMMUNITY_UNLOCK_TOKEN_COST}
+          onToggleDescription={(communityId) => setExpandedDescs((previous) => {
+            const next = new Set(previous);
+            if (next.has(communityId)) next.delete(communityId);
+            else next.add(communityId);
+            return next;
           })}
-        </div>
+          onPaidJoinCommunity={(communityId, shouldOpenPage) => { void handlePaidJoinCommunity(communityId, shouldOpenPage); }}
+          onJoinWaitlist={(community) => { void handleJoinWaitlist(community); }}
+          onOpenCommunity={onOpenCommunity}
+          onUnlockCommunity={(communityId) => { void handleUnlockCommunity(communityId); }}
+        />
       </div>
     );
 
@@ -1765,286 +1648,38 @@ const COMMUNITY_LOGOS: Record<string, string> = {
               )}
             </div>
 
-            {/* Messages */}
-            <div ref={messagesContainerRef} className="flex-1 space-y-3 overflow-y-auto p-4">
-              {communityPolls.map((poll) => {
-                const totalVotes = poll.totalVotes;
-                return (
-                  <div
-                    key={`poll-${poll.id}`}
-                    className="rounded-2xl border border-raw-gold/30 bg-raw-gold/5 p-4 backdrop-blur-sm"
-                  >
-                    <div className="mb-2 flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-[10px] uppercase tracking-[0.18em] text-raw-gold/70">
-                          <BarChart3 className="mr-1 inline h-3 w-3" />
-                          Poll · Pinned
-                        </p>
-                        <p className="mt-1 text-sm font-semibold text-raw-text">{poll.question}</p>
-                        <p className="mt-0.5 text-[10px] text-raw-silver/45">
-                          by {poll.createdByUsername} · {formatChatTimestamp(poll.createdAt)}
-                        </p>
-                      </div>
-                      {canManagePolls && (
-                        <button
-                          onClick={() => { void handleDeletePoll(poll.id); }}
-                          className="rounded-full border border-raw-border/30 p-1.5 text-raw-silver/45 hover:border-red-400/40 hover:text-red-300"
-                          aria-label="Delete poll"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      {poll.options.map((option) => {
-                        const isSelected = poll.userVoteOptionId === option.id;
-                        const pct = totalVotes === 0 ? 0 : Math.round((option.votes / totalVotes) * 100);
-                        return (
-                          <button
-                            key={option.id}
-                            onClick={() => { void handleVoteOnPoll(poll.id, option.id); }}
-                            className={`relative w-full overflow-hidden rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
-                              isSelected
-                                ? "border-raw-gold/60 bg-raw-gold/15 text-raw-text"
-                                : "border-raw-border/25 bg-raw-black/30 text-raw-silver/80 hover:border-raw-gold/40"
-                            }`}
-                          >
-                            <div
-                              className="absolute inset-y-0 left-0 bg-raw-gold/15"
-                              style={{ width: `${pct}%` }}
-                              aria-hidden
-                            />
-                            <div className="relative flex items-center justify-between gap-2">
-                              <span className="font-medium">{option.text}</span>
-                              <span className="text-[11px] text-raw-silver/55">
-                                {option.votes} · {pct}%
-                              </span>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <p className="mt-2 text-[10px] text-raw-silver/40">
-                      {totalVotes} {totalVotes === 1 ? "vote" : "votes"}
-                      {poll.userVoteOptionId ? " · You voted" : " · Tap an option to vote"}
-                    </p>
-                  </div>
-                );
-              })}
-              {groupedMessages.map((group) => (
-                <div key={group.label} className="space-y-3">
-                  <div className="sticky top-0 z-10 flex justify-center py-1">
-                    <span className="rounded-full border border-raw-border/20 bg-raw-black/85 px-3 py-1 text-[10px] uppercase tracking-[0.16em] text-raw-silver/40 backdrop-blur">
-                      {group.label}
-                    </span>
-                  </div>
-                  {group.messages.map((message) => {
-                    const isOwnMessage = message.senderId === user.id || message.senderName === user.username;
-                    const senderAvatarLevel = message.senderAvatarLevel ?? senderAvatarLevels[message.senderId] ?? 1;
-                    const likedBy = message.likedBy ?? [];
-                    const alreadyLiked = likedBy.includes(user.id);
-                    const likeCount = likedBy.length;
+            <CommunityMessageTimeline
+              containerRef={messagesContainerRef}
+              polls={communityPolls}
+              groupedMessages={groupedMessages}
+              activeMessageCount={activeMessages.length}
+              canManagePolls={canManagePolls}
+              userId={user.id}
+              username={user.username}
+              senderAvatarLevels={senderAvatarLevels}
+              onDeletePoll={handleDeletePoll}
+              onVotePoll={handleVoteOnPoll}
+              onRetryMessage={handleRetryMessage}
+              onLikeMessage={handleLikeMessage}
+              onOpenMessageReport={handleOpenMessageReport}
+              onBlockMessageSender={handleBlockMessageSender}
+            />
 
-                    return (
-                      <div key={message.id} className="group/msg relative w-full rounded-xl px-3.5 py-2.5 backdrop-blur-sm"
-                        style={isOwnMessage ? {
-                          background: "rgb(var(--raw-accent) / 0.10)",
-                          border: "1px solid rgb(var(--raw-accent) / 0.25)",
-                        } : {
-                          background: "rgba(255,255,255,0.03)",
-                          border: "1px solid rgba(255,255,255,0.07)",
-                        }}
-                      >
-                        <div className="absolute left-2.5 top-2.5">
-                          <AvatarFigure
-                            avatarIndex={senderAvatarLevel}
-                            size="sm"
-                            selected={isOwnMessage}
-                            className="opacity-90"
-                            style={{ width: 28, height: 28 }}
-                          />
-                        </div>
-                        {message.replyToText && (
-                          <div className="mb-1.5 ml-9 rounded-lg border border-raw-border/20 bg-raw-black/20 px-2.5 py-1.5 text-xs text-raw-silver/55">
-                            <p className="font-medium text-raw-gold/75">↩ {message.replyToSenderName}</p>
-                            <p className="mt-0.5 truncate">{message.replyToText}</p>
-                          </div>
-                        )}
-                        <p className={`ml-9 break-words pr-16 [overflow-wrap:anywhere] text-sm leading-snug ${message.deletedAt ? "italic text-raw-silver/45" : ""}`}>
-                          <span
-                            className="mr-0.5 font-semibold uppercase tracking-wide text-[11px]"
-                            style={{ color: isOwnMessage ? "rgb(var(--raw-accent))" : "rgb(var(--raw-accent) / 0.65)" }}
-                          >
-                            {message.senderName}:
-                          </span>
-                          {" "}
-                          <span className={isOwnMessage ? "text-raw-text" : "text-raw-silver/75"}>
-                            {message.text.split(/(@\w+)/g).map((part, i) =>
-                              /^@\w+$/.test(part)
-                                ? <span key={i} className="font-semibold text-raw-gold">{part}</span>
-                                : part
-                            )}
-                          </span>
-                          <span className="ml-2 text-[9px] text-raw-silver/25">{formatChatTimestamp(message.createdAt)}</span>
-                          {message.pinned && <span className="ml-1 text-[9px] text-raw-gold/60">· Pinned</span>}
-                          {message.deliveryStatus === "sending" && <span className="ml-1 text-[9px] text-raw-silver/35">· Sending</span>}
-                          {message.deliveryStatus === "failed" && <span className="ml-1 text-[9px] text-red-300/80">· Failed</span>}
-                        </p>
-                        {message.deliveryStatus === "failed" && (
-                          <button
-                            onClick={() => { void handleRetryMessage(message); }}
-                            className="mt-1 text-[10px] font-semibold text-red-200/90 underline-offset-2 hover:underline"
-                          >
-                            Retry
-                          </button>
-                        )}
-                        {!message.deletedAt && !message.deliveryStatus && (
-                          <div className="absolute right-2.5 top-1/2 flex -translate-y-1/2 items-center gap-1">
-                            <button
-                              onClick={() => { void handleLikeMessage(message); }}
-                              className={`inline-flex min-h-6 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] transition-all ${alreadyLiked ? "border-raw-gold/45 bg-raw-gold/10 text-raw-gold opacity-100" : "border-raw-border/20 text-raw-silver/40 opacity-0 group-hover/msg:opacity-100"}`}
-                              aria-label={alreadyLiked ? "Unlike message" : "Like message"}
-                            >
-                              <Heart className={`h-2.5 w-2.5 ${alreadyLiked ? "fill-current" : ""}`} />
-                              {likeCount > 0 && <span>{likeCount}</span>}
-                            </button>
-                            {!isOwnMessage && (
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <button
-                                    className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-raw-border/20 text-raw-silver/45 opacity-0 transition-all hover:border-raw-gold/35 hover:bg-raw-gold/10 hover:text-raw-gold group-hover/msg:opacity-100 data-[state=open]:opacity-100"
-                                    aria-label="Message actions"
-                                  >
-                                    <MoreHorizontal className="h-3.5 w-3.5" />
-                                  </button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="min-w-32 border-raw-border/30 bg-raw-black/95 text-raw-silver shadow-xl shadow-black/40">
-                                  <DropdownMenuItem
-                                    className="cursor-pointer gap-2 text-xs focus:bg-raw-surface/80 focus:text-raw-text"
-                                    onClick={() => handleOpenMessageReport(message)}
-                                  >
-                                    <AlertTriangle className="h-3.5 w-3.5 text-raw-gold/80" />
-                                    Report
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    className="cursor-pointer gap-2 text-xs text-red-200/90 focus:bg-red-500/10 focus:text-red-100"
-                                    onClick={() => handleBlockMessageSender(message)}
-                                  >
-                                    <Ban className="h-3.5 w-3.5" />
-                                    Block
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              ))}
-
-              {!groupedMessages.length && !activeMessages.length && (
-                <div className="flex h-full items-center justify-center text-sm text-raw-silver/35">
-                  This group is quiet right now. Join and start the first real conversation.
-                </div>
-              )}
-              {!groupedMessages.length && activeMessages.length > 0 && (
-                <div className="flex h-full items-center justify-center text-sm text-raw-silver/35">
-                  No messages match your search.
-                </div>
-              )}
-            </div>
-
-            {/* Input */}
-            <div className="border-t border-raw-border/15 px-3 py-3">
-              {isUserBanned && (
-                <div className="mb-2 rounded-xl border border-red-400/20 bg-red-500/10 px-3 py-2 text-xs text-red-100">
-                  Chat posting is disabled for this account.
-                </div>
-              )}
-              {mentionQuery !== null && (() => {
-                const members = selectedCommunity?.members ?? [];
-                const filtered = members.filter((m) => m.username.toLowerCase().startsWith(mentionQuery.toLowerCase())).slice(0, 6);
-                if (!filtered.length) return null;
-                return (
-                  <div className="mb-2 rounded-xl border border-raw-border/30 bg-raw-black/90 overflow-hidden">
-                    {filtered.map((m, i) => (
-                      <button
-                        key={m.userId}
-                        type="button"
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          const atIdx = messageDraft.lastIndexOf("@");
-                          const newVal = messageDraft.slice(0, atIdx) + `@${m.username} `;
-                          setMessageDraft(newVal);
-                          setMentionQuery(null);
-                          setTimeout(() => messageInputRef.current?.focus(), 0);
-                        }}
-                        className={`w-full px-4 py-2 text-left text-sm text-raw-text hover:bg-raw-surface/40 ${i === mentionIndex ? "bg-raw-surface/30" : ""}`}
-                      >
-                        @{m.username}
-                      </button>
-                    ))}
-                  </div>
-                );
-              })()}
-              <div className="flex gap-2">
-                {canManagePolls && (
-                  <button
-                    onClick={handleOpenPollComposer}
-                    disabled={isUserBanned}
-                    title="Post a poll"
-                    aria-label="Post a poll"
-                    className="flex items-center justify-center rounded-xl border border-raw-border/30 bg-raw-surface/30 px-3 py-2.5 text-raw-silver/70 hover:border-raw-gold/40 hover:text-raw-gold disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    <BarChart3 className="h-4 w-4" />
-                  </button>
-                )}
-                <input
-                  ref={messageInputRef}
-                  value={messageDraft}
-                  maxLength={MAX_COMMUNITY_MESSAGE_LENGTH}
-                  onChange={(event) => {
-                    const val = event.target.value;
-                    setMessageDraft(val);
-                    const atIdx = val.lastIndexOf("@");
-                    if (atIdx !== -1 && (atIdx === 0 || val[atIdx - 1] === " ")) {
-                      setMentionQuery(val.slice(atIdx + 1));
-                      setMentionIndex(0);
-                    } else {
-                      setMentionQuery(null);
-                    }
-                  }}
-                  onKeyDown={(event) => {
-                    if (mentionQuery !== null) {
-                      const members = (selectedCommunity?.members ?? []).filter((m) => m.username.toLowerCase().startsWith(mentionQuery.toLowerCase())).slice(0, 6);
-                      if (event.key === "ArrowDown") { event.preventDefault(); setMentionIndex((i) => Math.min(i + 1, members.length - 1)); return; }
-                      if (event.key === "ArrowUp") { event.preventDefault(); setMentionIndex((i) => Math.max(i - 1, 0)); return; }
-                      if ((event.key === "Enter" || event.key === "Tab") && members[mentionIndex]) {
-                        event.preventDefault();
-                        const atIdx = messageDraft.lastIndexOf("@");
-                        setMessageDraft(messageDraft.slice(0, atIdx) + `@${members[mentionIndex].username} `);
-                        setMentionQuery(null);
-                        return;
-                      }
-                      if (event.key === "Escape") { setMentionQuery(null); return; }
-                    }
-                    if (event.key === "Enter") handleSendMessage();
-                  }}
-                  placeholder="Type a message..."
-                  disabled={isUserBanned}
-                  className="flex-1 rounded-xl border border-raw-border/30 bg-raw-surface/30 px-4 py-2.5 text-sm text-raw-text placeholder:text-raw-silver/25 focus:border-raw-gold/25 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
-                />
-                <button
-                  onClick={handleSendMessage}
-                  disabled={isUserBanned}
-                  className="flex items-center gap-1.5 rounded-xl bg-raw-gold px-4 py-2.5 text-sm font-semibold text-raw-ink disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <Send className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
+            <CommunityMessageComposer
+              inputRef={messageInputRef}
+              draft={messageDraft}
+              maxLength={MAX_COMMUNITY_MESSAGE_LENGTH}
+              members={selectedCommunity?.members ?? []}
+              mentionQuery={mentionQuery}
+              mentionIndex={mentionIndex}
+              canManagePolls={canManagePolls}
+              disabled={isUserBanned}
+              onDraftChange={setMessageDraft}
+              onMentionQueryChange={setMentionQuery}
+              onMentionIndexChange={setMentionIndex}
+              onOpenPollComposer={handleOpenPollComposer}
+              onSendMessage={handleSendMessage}
+            />
           </div>
           )}
         </div>
