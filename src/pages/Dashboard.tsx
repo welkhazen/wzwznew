@@ -47,6 +47,12 @@ const DashboardInventory = lazy(() =>
   import("@/components/dashboard/DashboardInventory").then((module) => ({ default: module.DashboardInventory }))
 );
 
+const COMMUNITY_LOGOS: Record<string, string> = {
+  lnt: LNTLogo,
+  syt: SYTLogo,
+  iijm: IIJMLogo,
+};
+
 const dashboardSectionFallback = (
   <DashboardSectionShell>
     <div className="flex min-h-[240px] items-center justify-center text-sm text-raw-silver/60">
