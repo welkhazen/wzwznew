@@ -19,7 +19,6 @@ type Flag = {
   verdict: string;
   reason: string;
   matched_word: string | null;
-  ai_score: number | null;
   created_at: string;
   community_messages: {
     id: string;
@@ -209,7 +208,6 @@ export default function ModerationDashboard() {
                 <div className="mb-2">
                   <span className={`text-xs uppercase font-semibold ${f.verdict === "hold" ? "text-yellow-400" : "text-red-400"}`}>{f.verdict}</span>
                   {f.matched_word && <span className="text-xs text-raw-silver/50 ml-2">matched: "{f.matched_word}"</span>}
-                  {f.ai_score != null && <span className="text-xs text-raw-silver/50 ml-2">AI score: {f.ai_score.toFixed(2)}</span>}
                   <p className="text-sm text-raw-text mt-1">{f.community_messages?.text ?? "(deleted)"}</p>
                   <p className="text-xs text-raw-silver/50 mt-0.5">by {f.community_messages?.sender_name ?? "unknown"}</p>
                 </div>
