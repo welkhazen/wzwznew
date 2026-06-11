@@ -41,9 +41,10 @@ export function mapCommunityMessage(row: DbCommunityMessage): CommunityChatMessa
 }
 
 /**
- * Send a community message. The SECURITY DEFINER RPC derives the sender from
- * current_user_id() and enforces not-banned + community membership; optional
- * private aliases are verified server-side before being used as sender_name.
+ * Send a community message via the /api/chat/send endpoint. The server
+ * derives the sender from the session and enforces not-banned + community
+ * membership; optional private aliases are verified server-side before being
+ * used as sender_name.
  */
 export async function sendMessage(
   communityId: string,

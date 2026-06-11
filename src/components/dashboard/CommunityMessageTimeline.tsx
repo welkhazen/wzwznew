@@ -1,6 +1,6 @@
 import { memo } from "react";
 import type { RefObject } from "react";
-import { AlertTriangle, Ban, BarChart3, Heart, MoreHorizontal, Pin, Trash2 } from "lucide-react";
+import { AlertTriangle, Ban, BarChart3, Heart, MoreHorizontal, Pin, PinOff, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,6 +22,8 @@ interface CommunityMessageTimelineProps {
   polls: CommunityPollRecord[];
   groupedMessages: MessageGroup[];
   activeMessageCount: number;
+  messagesLoading: boolean;
+  messagesError: boolean;
   canManagePolls: boolean;
   userId: string;
   username: string;
@@ -30,7 +32,9 @@ interface CommunityMessageTimelineProps {
   onVotePoll: (pollId: string, optionId: string) => void;
   onRetryMessage: (message: CommunityChatMessageRecord) => void;
   onLikeMessage: (message: CommunityChatMessageRecord) => void;
-  onPinMessage: (message: CommunityChatMessageRecord) => void;
+  pinnedMessageIds: Set<string>;
+  onPinMessageToProfile: (message: CommunityChatMessageRecord) => void;
+  onUnpinMessageFromProfile: (message: CommunityChatMessageRecord) => void;
   onOpenMessageReport: (message: CommunityChatMessageRecord) => void;
   onBlockMessageSender: (message: CommunityChatMessageRecord) => void;
   onOpenSenderProfile: (message: CommunityChatMessageRecord) => void;
@@ -41,6 +45,8 @@ export const CommunityMessageTimeline = memo(function CommunityMessageTimeline({
   polls,
   groupedMessages,
   activeMessageCount,
+  messagesLoading,
+  messagesError,
   canManagePolls,
   userId,
   username,
@@ -49,7 +55,9 @@ export const CommunityMessageTimeline = memo(function CommunityMessageTimeline({
   onVotePoll,
   onRetryMessage,
   onLikeMessage,
-  onPinMessage,
+  pinnedMessageIds,
+  onPinMessageToProfile,
+  onUnpinMessageFromProfile,
   onOpenMessageReport,
   onBlockMessageSender,
   onOpenSenderProfile,
@@ -134,6 +142,7 @@ export const CommunityMessageTimeline = memo(function CommunityMessageTimeline({
             const likedBy = message.likedBy ?? [];
             const alreadyLiked = likedBy.includes(userId);
             const likeCount = likedBy.length;
+            const isPinnedToProfile = pinnedMessageIds.has(message.id);
 
             return (
               <div
@@ -209,41 +218,53 @@ export const CommunityMessageTimeline = memo(function CommunityMessageTimeline({
                       <Heart className={`h-2.5 w-2.5 ${alreadyLiked ? "fill-current" : ""}`} />
                       {likeCount > 0 && <span>{likeCount}</span>}
                     </button>
-                    {!isOwnMessage && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button
-                            className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-raw-border/20 text-raw-silver/45 opacity-0 transition-all hover:border-raw-gold/35 hover:bg-raw-gold/10 hover:text-raw-gold group-hover/msg:opacity-100 data-[state=open]:opacity-100"
-                            aria-label="Message actions"
-                          >
-                            <MoreHorizontal className="h-3.5 w-3.5" />
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="min-w-32 border-raw-border/30 bg-raw-black/95 text-raw-silver shadow-xl shadow-black/40">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-raw-border/20 text-raw-silver/45 opacity-0 transition-all hover:border-raw-gold/35 hover:bg-raw-gold/10 hover:text-raw-gold group-hover/msg:opacity-100 data-[state=open]:opacity-100"
+                          aria-label="Message actions"
+                        >
+                          <MoreHorizontal className="h-3.5 w-3.5" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="min-w-32 border-raw-border/30 bg-raw-black/95 text-raw-silver shadow-xl shadow-black/40">
+                        {isPinnedToProfile ? (
                           <DropdownMenuItem
                             className="cursor-pointer gap-2 text-xs focus:bg-raw-surface/80 focus:text-raw-text"
-                            onClick={() => onPinMessage(message)}
+                            onClick={() => onUnpinMessageFromProfile(message)}
+                          >
+                            <PinOff className="h-3.5 w-3.5 text-raw-gold/80" />
+                            Unpin from profile
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem
+                            className="cursor-pointer gap-2 text-xs focus:bg-raw-surface/80 focus:text-raw-text"
+                            onClick={() => onPinMessageToProfile(message)}
                           >
                             <Pin className="h-3.5 w-3.5 text-raw-gold/80" />
-                            Pin to profile
+                            Pin to my profile
                           </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="cursor-pointer gap-2 text-xs focus:bg-raw-surface/80 focus:text-raw-text"
-                            onClick={() => onOpenMessageReport(message)}
-                          >
-                            <AlertTriangle className="h-3.5 w-3.5 text-raw-gold/80" />
-                            Report
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="cursor-pointer gap-2 text-xs text-red-200/90 focus:bg-red-500/10 focus:text-red-100"
-                            onClick={() => onBlockMessageSender(message)}
-                          >
-                            <Ban className="h-3.5 w-3.5" />
-                            Block
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
+                        )}
+                        {!isOwnMessage && (
+                          <>
+                            <DropdownMenuItem
+                              className="cursor-pointer gap-2 text-xs focus:bg-raw-surface/80 focus:text-raw-text"
+                              onClick={() => onOpenMessageReport(message)}
+                            >
+                              <AlertTriangle className="h-3.5 w-3.5 text-raw-gold/80" />
+                              Report
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="cursor-pointer gap-2 text-xs text-red-200/90 focus:bg-red-500/10 focus:text-red-100"
+                              onClick={() => onBlockMessageSender(message)}
+                            >
+                              <Ban className="h-3.5 w-3.5" />
+                              Block
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 )}
               </div>
@@ -252,12 +273,22 @@ export const CommunityMessageTimeline = memo(function CommunityMessageTimeline({
         </div>
       ))}
 
-      {!groupedMessages.length && activeMessageCount === 0 && (
+      {!groupedMessages.length && messagesLoading && (
+        <div className="flex h-full items-center justify-center text-sm text-raw-silver/35">
+          Loading messages...
+        </div>
+      )}
+      {!groupedMessages.length && !messagesLoading && messagesError && (
+        <div className="flex h-full items-center justify-center text-sm text-raw-silver/35">
+          Couldn't load messages. Please try again.
+        </div>
+      )}
+      {!groupedMessages.length && !messagesLoading && !messagesError && activeMessageCount === 0 && (
         <div className="flex h-full items-center justify-center text-sm text-raw-silver/35">
           This group is quiet right now. Join and start the first real conversation.
         </div>
       )}
-      {!groupedMessages.length && activeMessageCount > 0 && (
+      {!groupedMessages.length && !messagesLoading && !messagesError && activeMessageCount > 0 && (
         <div className="flex h-full items-center justify-center text-sm text-raw-silver/35">
           No messages match your search.
         </div>

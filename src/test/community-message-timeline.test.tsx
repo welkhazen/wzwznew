@@ -71,7 +71,7 @@ function renderTimeline(overrides: Partial<React.ComponentProps<typeof Community
     onOpenSenderProfile: vi.fn(),
     onOpenMessageReport: vi.fn(),
     onBlockMessageSender: vi.fn(),
-    pinnedMessageId: null,
+    pinnedMessageIds: new Set<string>(),
     onPinMessageToProfile: vi.fn(),
     onUnpinMessageFromProfile: vi.fn(),
     ...overrides,
@@ -140,7 +140,7 @@ describe("CommunityMessageTimeline", () => {
   it("can unpin the pinned profile message", async () => {
     const props = renderTimeline({
       groupedMessages: [{ label: "Today", messages: [ownMessage] }],
-      pinnedMessageId: ownMessage.id,
+      pinnedMessageIds: new Set([ownMessage.id]),
     });
 
     fireEvent.pointerDown(screen.getByRole("button", { name: "Message actions" }));
