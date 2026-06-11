@@ -1,84 +1,183 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card, CardContent } from "@/components/ui/card";
-import { Marquee } from "@/components/ui/3d-testimonails";
+import { useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
-import { useRef } from "react";
+import { useTheme } from "@/providers/useTheme";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { TestimonialCard, type TestimonialCardPosition, type TestimonialCardItem } from "@/components/ui/testimonial-cards";
+import test1 from "@/assets/test1.png";
+import test2 from "@/assets/test2.png";
+import test3 from "@/assets/test3.png";
+import test4 from "@/assets/test4.png";
+import test5 from "@/assets/test5.png";
+import test6 from "@/assets/test6.png";
+import test7 from "@/assets/test7.png";
+import test8 from "@/assets/test8.png";
+import test9 from "@/assets/test9.png";
+import test10 from "@/assets/test10.png";
+import test11 from "@/assets/test11.png";
+import test12 from "@/assets/test12.png";
+import test13 from "@/assets/test13.png";
+import test14 from "@/assets/test14.png";
+import test15 from "@/assets/test15.png";
+import test16 from "@/assets/test16.png";
+import test17 from "@/assets/test17.png";
 
-type Testimonial = {
-  name: string;
-  username: string;
-  body: string;
-  img: string;
-  country: string;
-};
-
-const testimonials: Testimonial[] = [
-  { name: "Ava Green", username: "@ava", body: "Cascade AI made my workflow 10x faster!", img: "https://images.unsplash.com/photo-1494790108377-be9c29b29330", country: "🇦🇺 Australia" },
-  { name: "Ana Miller", username: "@ana", body: "Vertical marquee is a game changer!", img: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80", country: "🇩🇪 Germany" },
-  { name: "Mateo Rossi", username: "@mat", body: "Animations are buttery smooth!", img: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e", country: "🇮🇹 Italy" },
-  { name: "Maya Patel", username: "@maya", body: "Setup was a breeze!", img: "https://images.unsplash.com/photo-1544005313-94ddf0286df2", country: "🇮🇳 India" },
-  { name: "Noah Smith", username: "@noah", body: "Best marquee component!", img: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d", country: "🇺🇸 USA" },
-  { name: "Lucas Stone", username: "@luc", body: "Very customizable and smooth.", img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d", country: "🇫🇷 France" },
-  { name: "Haruto Sato", username: "@haru", body: "Impressive performance on mobile!", img: "https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f", country: "🇯🇵 Japan" },
-  { name: "Emma Lee", username: "@emma", body: "Love the pause on hover feature!", img: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f", country: "🇨🇦 Canada" },
-  { name: "Carlos Ray", username: "@carl", body: "Great for testimonials and logos.", img: "https://images.unsplash.com/photo-1504257432389-52343af06ae3", country: "🇪🇸 Spain" },
+const testimonials: TestimonialCardItem[] = [
+  { id: 8, src: test8, alt: "raW community testimonial screenshot" },
+  { id: 1, src: test1, alt: "raW community testimonial screenshot" },
+  { id: 2, src: test2, alt: "raW community testimonial screenshot" },
+  { id: 3, src: test3, alt: "raW community testimonial screenshot" },
+  { id: 4, src: test4, alt: "raW community testimonial screenshot" },
+  { id: 5, src: test5, alt: "raW community testimonial screenshot" },
+  { id: 6, src: test6, alt: "raW community testimonial screenshot" },
+  { id: 7, src: test7, alt: "raW community testimonial screenshot" },
+  { id: 9, src: test9, alt: "raW community testimonial screenshot" },
+  { id: 10, src: test10, alt: "raW community testimonial screenshot" },
+  { id: 11, src: test11, alt: "raW community testimonial screenshot" },
+  { id: 12, src: test12, alt: "raW community testimonial screenshot" },
+  { id: 13, src: test13, alt: "raW community testimonial screenshot" },
+  { id: 14, src: test14, alt: "raW community testimonial screenshot" },
+  { id: 15, src: test15, alt: "raW community testimonial screenshot" },
+  { id: 16, src: test16, alt: "raW community testimonial screenshot" },
+  { id: 17, src: test17, alt: "raW community testimonial screenshot" },
 ];
 
-function TestimonialCard({ img, name, username, body, country }: Testimonial) {
-  return (
-    <Card className="w-52">
-      <CardContent>
-        <div className="flex items-center gap-2.5">
-          <Avatar className="size-9">
-            <AvatarImage src={img} alt={name} />
-            <AvatarFallback>{name[0]}</AvatarFallback>
-          </Avatar>
-          <div className="flex flex-col">
-            <figcaption className="flex items-center gap-1 text-sm font-medium text-foreground">
-              {name} <span className="text-xs">{country}</span>
-            </figcaption>
-            <p className="text-xs font-medium text-muted-foreground">{username}</p>
-          </div>
-        </div>
-        <blockquote className="mt-3 text-sm text-secondary-foreground">{body}</blockquote>
-      </CardContent>
-    </Card>
-  );
-}
+const positions: TestimonialCardPosition[] = ["front", "middle", "back", "far"];
 
 export function TestimonialsSection() {
-  const dragConstraintsRef = useRef<HTMLDivElement | null>(null);
+  const { mode } = useTheme();
+  const isLight = mode === "light";
+  const isMobile = useIsMobile();
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [showStack, setShowStack] = useState(false);
+
+  const visibleTestimonials = [
+    testimonials[activeIndex],
+    testimonials[(activeIndex + 1) % testimonials.length],
+    testimonials[(activeIndex + 2) % testimonials.length],
+    testimonials[(activeIndex + 3) % testimonials.length],
+  ];
+
+  const handleShuffle = (direction: "next" | "previous") => {
+    setActiveIndex((current) => (
+      direction === "next"
+        ? (current + 1) % testimonials.length
+        : (current - 1 + testimonials.length) % testimonials.length
+    ));
+  };
 
   return (
     <section className="landing-section relative z-0 px-4 py-14 sm:px-6 sm:py-20">
-      <div className="relative w-full overflow-hidden rounded-2xl border border-raw-border/40 bg-raw-surface/20 px-6 py-10 sm:px-10 sm:py-14">
-        <p className="mb-10 text-center font-display text-[10px] uppercase tracking-[0.3em] text-raw-silver/40 sm:mb-12">
+      <div className={`relative mx-auto w-full max-w-5xl overflow-hidden rounded-[30px] border px-4 py-9 sm:px-10 sm:py-12 ${
+        isLight
+          ? "border-slate-300/70 bg-[radial-gradient(circle_at_50%_0%,rgba(241,196,45,0.12),transparent_34%),rgba(255,255,255,0.82)] shadow-[0_32px_90px_rgba(15,23,42,0.12)]"
+          : "border-raw-border/35 bg-[radial-gradient(circle_at_50%_0%,rgba(241,196,45,0.1),transparent_34%),rgba(15,15,13,0.78)] shadow-[0_32px_130px_rgba(0,0,0,0.34)]"
+      }`}>
+        <div className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:radial-gradient(circle,rgba(255,255,255,0.75)_1px,transparent_1px)] [background-size:12px_12px]" />
+        <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/50 to-transparent" />
+
+        <p className="relative text-center font-display text-[10px] uppercase tracking-[0.32em] text-raw-gold/70">
           From the community
         </p>
+        <h2 className={`relative mx-auto mt-3 max-w-3xl text-center font-display text-3xl font-black uppercase tracking-[0.04em] sm:text-4xl md:text-5xl ${
+          isLight ? "text-slate-950" : "text-raw-text"
+        }`}>
+          What the People Think
+        </h2>
+        <div className="relative mx-auto mt-4 h-px w-28 bg-gradient-to-r from-transparent via-raw-gold/80 to-transparent sm:w-40" />
 
-        <div
-          ref={dragConstraintsRef}
-          className="relative mx-auto h-[350px] w-[600px] max-w-full overflow-hidden rounded-[1.25rem] border border-raw-border/45 bg-raw-black/45"
-        >
-          <motion.div
-            drag
-            dragMomentum={false}
-            dragElastic={0.06}
-            dragConstraints={dragConstraintsRef}
-            className="absolute inset-0 flex cursor-grab items-center justify-center gap-4 p-4 touch-none active:cursor-grabbing"
-          >
-            <Marquee vertical pauseOnHover repeat={3} className="[--duration:40s]">
-              {testimonials.map((review) => (
-                <TestimonialCard key={`a-${review.username}`} {...review} />
-              ))}
-            </Marquee>
-            <Marquee vertical pauseOnHover reverse repeat={3} className="[--duration:40s]">
-              {testimonials.map((review) => (
-                <TestimonialCard key={`b-${review.username}`} {...review} />
-              ))}
-            </Marquee>
-          </motion.div>
+        <div className="relative mt-4 flex items-center justify-center gap-3">
+          {showStack ? (
+            <button
+              type="button"
+              onClick={() => setShowStack(false)}
+              className="rounded-full border border-raw-gold/30 bg-raw-gold/10 px-4 py-1.5 text-[10px] uppercase tracking-[0.16em] text-raw-gold transition hover:bg-raw-gold/20"
+            >
+              Back to all testimonials
+            </button>
+          ) : null}
         </div>
+
+        {!showStack ? (
+          <div className={`relative mt-8 max-h-[680px] overflow-y-auto rounded-[24px] border p-4 [scrollbar-color:rgba(129,140,248,0.75)_transparent] ${
+            isLight ? "border-slate-300/70 bg-slate-100/75" : "border-raw-border/45 bg-raw-black/65"
+          }`}>
+            <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {testimonials.map((testimonial, index) => (
+              <motion.button
+                key={testimonial.id}
+                type="button"
+                onClick={() => {
+                  setActiveIndex(index);
+                  setShowStack(true);
+                }}
+                initial={{ opacity: 0, y: 24, scale: 0.96 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                viewport={{ once: true, amount: 0.15 }}
+                transition={{ duration: 0.42, delay: (index % 6) * 0.045, ease: [0.22, 1, 0.36, 1] }}
+                whileHover={{ y: -4, scale: 1.015 }}
+                className={`relative flex h-[170px] min-w-0 items-center justify-center overflow-hidden rounded-[18px] border p-2 outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/60 sm:h-[270px] ${
+                  isLight
+                    ? "border-slate-300/80 bg-white shadow-[0_16px_35px_rgba(15,23,42,0.12)]"
+                    : "border-white/10 bg-black/80 shadow-[0_16px_45px_rgba(0,0,0,0.35)]"
+                }`}
+                aria-label={`Open testimonial ${index + 1} in stack`}
+              >
+                <img
+                  src={testimonial.src}
+                  alt={testimonial.alt}
+                  loading="lazy"
+                  className="max-h-full max-w-full rounded-[13px] object-contain"
+                />
+              </motion.button>
+            ))}
+            </div>
+          </div>
+        ) : (
+        <div className={`relative mx-auto mt-8 h-[380px] w-full max-w-[760px] overflow-hidden rounded-[24px] border sm:h-[500px] ${
+          isLight
+            ? "border-slate-300/80 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.9),transparent_42%),rgba(241,245,249,0.92)] shadow-[inset_0_1px_0_white,0_30px_70px_rgba(15,23,42,0.14)]"
+            : "border-raw-border/45 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.07),transparent_36%),rgba(8,8,8,0.82)] shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_30px_90px_rgba(0,0,0,0.36)]"
+        }`}>
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(241,196,45,0.08),transparent_36%)]" />
+          <div className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:radial-gradient(circle,rgba(255,255,255,0.8)_1px,transparent_1px)] [background-size:10px_10px]" />
+          <div className="absolute left-1/2 top-6 h-[300px] w-[200px] -translate-x-1/2 sm:top-8 sm:h-[420px] sm:w-[320px] sm:-translate-x-[62%]">
+            {visibleTestimonials.map((testimonial, index) => (
+              <TestimonialCard
+                key={`${testimonial.id}-${activeIndex}`}
+                {...testimonial}
+                position={positions[index]}
+                handleShuffle={handleShuffle}
+                isLight={isLight}
+                compact={isMobile}
+              />
+            ))}
+          </div>
+
+          {!isLight ? <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-raw-black/80 to-transparent" /> : null}
+          {!isLight ? <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-raw-black/85 to-transparent" /> : null}
+          <button
+            type="button"
+            onClick={() => handleShuffle("previous")}
+            className={`absolute left-3 top-1/2 z-10 -translate-y-1/2 rounded-full border p-3 transition hover:border-raw-gold/35 hover:text-raw-gold sm:left-5 ${
+              isLight ? "border-slate-300 bg-white/90 text-slate-600 shadow-md" : "border-white/10 bg-black/65 text-raw-silver/60"
+            }`}
+            aria-label="Previous testimonial"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => handleShuffle("next")}
+            className={`absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-full border p-3 transition hover:border-raw-gold/35 hover:text-raw-gold sm:right-5 ${
+              isLight ? "border-slate-300 bg-white/90 text-slate-600 shadow-md" : "border-white/10 bg-black/65 text-raw-silver/60"
+            }`}
+            aria-label="Next testimonial"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+        </div>
+        )}
       </div>
     </section>
   );

@@ -175,11 +175,11 @@ function LockedPreview({ insight, isLight }: { insight: InsightPreview; isLight:
   const trackClass = isLight ? "bg-slate-300/80" : "bg-white/10";
 
   return (
-    <div className={`mt-5 rounded-xl border p-3 blur-[1px] ${previewPanelClass}`}>
+    <div className={`mt-3 rounded-xl border p-2 blur-[1px] sm:mt-5 sm:p-3 ${previewPanelClass}`}>
       {insight.previewVariant === "radar" && (
         <div className="space-y-2">
           <div
-            className={`h-24 rounded-lg border ${
+            className={`h-14 rounded-lg border sm:h-24 ${
               isLight ? "border-slate-300/70 bg-[radial-gradient(circle_at_center,rgba(148,163,184,0.22),transparent_70%)]" : "border-white/10 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.1),transparent_70%)]"
             }`}
           />
@@ -203,7 +203,7 @@ function LockedPreview({ insight, isLight }: { insight: InsightPreview; isLight:
       {insight.previewVariant === "pie" && (
         <div className="flex items-center gap-3">
           <div
-            className={`h-20 w-20 rounded-full border ${isLight ? "border-slate-300/80" : "border-white/20"}`}
+            className={`h-12 w-12 rounded-full border sm:h-20 sm:w-20 ${isLight ? "border-slate-300/80" : "border-white/20"}`}
             style={{
               background: isLight
                 ? `conic-gradient(${insight.accentColor} 0 38%, rgba(148,163,184,0.35) 38% 66%, rgba(226,232,240,0.9) 66% 100%)`
@@ -360,30 +360,30 @@ export function PersonalityInsightsSection() {
   const [openInsight, setOpenInsight] = useState<InsightPreview | null>(null);
 
   return (
-    <section ref={sectionRef as React.RefObject<HTMLElement>} className="landing-section relative px-4 py-14 sm:px-6 sm:py-20 md:py-28">
+    <section ref={sectionRef as React.RefObject<HTMLElement>} className="landing-section relative px-4 py-8 sm:px-6 sm:py-20 md:py-28">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(139,92,246,0.06),transparent_65%)]" />
       <div
-        className="relative mx-auto w-full max-w-6xl overflow-hidden rounded-2xl border border-raw-border/40 bg-raw-surface/20 px-6 py-10 sm:px-10 sm:py-14"
+        className="relative mx-auto w-full max-w-6xl overflow-hidden rounded-2xl border border-raw-border/40 bg-raw-surface/20 px-3 py-5 sm:px-10 sm:py-14"
         style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 0 40px rgba(0,0,0,0.3)" }}
       >
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/30 to-transparent" />
 
-        <div className="mb-8 text-center sm:mb-14">
+        <div className="mb-4 text-center sm:mb-14">
           <span className="inline-flex items-center rounded-full border border-raw-gold/40 bg-raw-gold/10 px-4 py-1 text-[10px] font-semibold uppercase tracking-[0.25em] text-raw-gold/80">
             Coming Soon
           </span>
-          <h2 className="mt-3 landing-heading">Personality Insights</h2>
+          <h2 className="mt-3 landing-heading">Insights that make your answers useful</h2>
           <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-raw-silver/50 sm:text-base">
-            The full reports are locked for now. Click any card to preview a sample infographic result.
+            Your poll answers can become visual reports about personality, relationships, emotional patterns, and decision-making. Preview what is coming next.
           </p>
         </div>
 
-        <div className="grid gap-4 sm:gap-6 md:grid-cols-3">
+        <div className="grid gap-3 sm:gap-6 md:grid-cols-3">
           {insights.map((insight) => {
             const Icon = insight.icon;
             return (
               <button key={insight.id} type="button" onClick={() => setOpenInsight(insight)} className="w-full text-left">
-                <GlareCard className={`relative border ${insight.accentBorder} bg-raw-surface/30 p-6 transition-transform duration-200 hover:scale-[1.02] sm:p-7`}>
+                <GlareCard className={`relative border ${insight.accentBorder} bg-raw-surface/30 p-3 transition-transform duration-200 hover:scale-[1.02] sm:p-7`}>
                   {!isLight && <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${insight.glowFrom} via-transparent to-transparent`} />}
                   <div className="relative z-10">
                     <div className={`mb-4 inline-flex items-center gap-1.5 rounded-full border ${insight.accentBorder} ${insight.softSurface} px-3 py-1`}>
@@ -394,7 +394,7 @@ export function PersonalityInsightsSection() {
                     <p className="mt-3 text-xs leading-relaxed text-raw-silver/50">{insight.description}</p>
                     <LockedPreview insight={insight} isLight={isLight} />
                   </div>
-                  <div className="pointer-events-none absolute right-4 top-4 z-20 rounded-full border border-white/20 bg-black/60 px-3 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-white/85 backdrop-blur-sm">Locked · Sample</div>
+                  <div className="pointer-events-none absolute right-4 top-4 z-20 rounded-full border border-white/20 bg-black/60 px-3 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-white/85 backdrop-blur-sm">Preview · Coming Soon</div>
                 </GlareCard>
               </button>
             );

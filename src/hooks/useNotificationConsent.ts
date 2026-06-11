@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { track } from "@/lib/analytics";
 import { supabase } from "@/lib/supabase";
+import { ensureOneSignalInit, withOneSignal } from "@/lib/onesignal";
 
 type NotificationPlatform = "apple-ios" | "samsung-android" | "web";
 type ConsentStatus = "granted" | "denied" | "dismissed" | "unsupported";
@@ -9,22 +10,8 @@ type NativeNotificationBridge = {
   postMessage: (message: Record<string, unknown>) => void;
 };
 
-type OneSignalSdk = {
-  init: (options: Record<string, unknown>) => Promise<void>;
-  login?: (externalId: string) => Promise<void>;
-  showSlidedownPrompt?: () => void;
-  Notifications?: {
-    requestPermission?: () => Promise<boolean>;
-  };
-  User?: {
-    addTags?: (tags: Record<string, string>) => Promise<void>;
-  };
-};
-
 declare global {
   interface Window {
-    OneSignal?: OneSignalSdk;
-    OneSignalDeferred?: Array<(OneSignal: OneSignalSdk) => void | Promise<void>>;
     webkit?: {
       messageHandlers?: {
         rawNotifications?: NativeNotificationBridge;
@@ -34,7 +21,6 @@ declare global {
 }
 
 const CONSENT_STORAGE_PREFIX = "raw.notification-consent";
-let oneSignalInitPromise: Promise<void> | null = null;
 
 function detectPlatform(): NotificationPlatform {
   const ua = navigator.userAgent;
@@ -52,47 +38,8 @@ function storageKey(userId: string, platform: NotificationPlatform): string {
   return `${CONSENT_STORAGE_PREFIX}.${userId}.${platform}`;
 }
 
-async function withOneSignal(callback: (OneSignal: OneSignalSdk) => void | Promise<void>): Promise<void> {
-  if (window.OneSignal) {
-    await callback(window.OneSignal);
-    return;
-  }
-
-  window.OneSignalDeferred = window.OneSignalDeferred ?? [];
-  await new Promise<void>((resolve, reject) => {
-    const timeout = window.setTimeout(() => reject(new Error("OneSignal SDK did not load.")), 8000);
-    window.OneSignalDeferred?.push(async (OneSignal) => {
-      window.clearTimeout(timeout);
-      try {
-        await callback(OneSignal);
-        resolve();
-      } catch (error) {
-        reject(error);
-      }
-    });
-  });
-}
-
-function initOneSignal(appId: string): Promise<void> {
-  if (!oneSignalInitPromise) {
-    oneSignalInitPromise = withOneSignal((OneSignal) =>
-      OneSignal.init({
-        appId,
-        allowLocalhostAsSecureOrigin: true,
-        serviceWorkerPath: "push/onesignal/OneSignalSDKWorker.js",
-        serviceWorkerParam: { scope: "/push/onesignal/" },
-      })
-    );
-  }
-
-  return oneSignalInitPromise;
-}
-
 async function identifyOneSignalUser(userId: string, platform: NotificationPlatform): Promise<void> {
-  const oneSignalAppId = import.meta.env.VITE_ONESIGNAL_APP_ID as string | undefined;
-  if (!oneSignalAppId) return;
-
-  await initOneSignal(oneSignalAppId);
+  await ensureOneSignalInit();
   await withOneSignal(async (OneSignal) => {
     await OneSignal.login?.(userId);
     await OneSignal.User?.addTags?.({
@@ -188,24 +135,24 @@ export function useNotificationConsent(userId?: string) {
       return;
     }
 
-    const oneSignalAppId = import.meta.env.VITE_ONESIGNAL_APP_ID as string | undefined;
-    if (oneSignalAppId) {
-      try {
-        await identifyOneSignalUser(userId, platform);
-        await withOneSignal(async (OneSignal) => {
-          if (OneSignal.Notifications?.requestPermission) {
-            await OneSignal.Notifications.requestPermission();
-            return;
-          }
-
-          OneSignal.showSlidedownPrompt?.();
-        });
-        track("push_prompt_shown", { provider: "onesignal" });
-        await persist("granted", "onesignal");
-        return;
-      } catch {
-        // Fall back to the browser permission API if OneSignal is blocked or unavailable.
-      }
+    try {
+      await identifyOneSignalUser(userId, platform);
+      await withOneSignal(async (OneSignal) => {
+        if (OneSignal.Notifications?.requestPermission) {
+          await OneSignal.Notifications.requestPermission();
+          return;
+        }
+        if (OneSignal.Slidedown?.promptPush) {
+          await OneSignal.Slidedown.promptPush({ force: true });
+          return;
+        }
+        OneSignal.showSlidedownPrompt?.();
+      });
+      track("push_prompt_shown", { provider: "onesignal" });
+      await persist("granted", "onesignal");
+      return;
+    } catch {
+      // Fall back to the browser permission API if OneSignal is blocked or unavailable.
     }
 
     if (!("Notification" in window)) {

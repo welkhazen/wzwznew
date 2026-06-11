@@ -2,16 +2,20 @@ import { useState } from "react";
 import { Archive, BookOpen, Brain, CircleGauge, Fingerprint, Lock, Map, Sparkles, WandSparkles } from "lucide-react";
 import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { WheelOfFortune, type WheelPrize } from "@/components/wheel/WheelOfFortune";
-import { RARITY_CONFIG, RARITY_ORDER } from "@/lib/avatarRarity";
+import { RARITY_CONFIG, RANK_TIERS } from "@/lib/avatarRarity";
+import type { AvatarRarity } from "@/lib/avatarRarity";
 import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
+import { avatarDisplayName, avatarIdFromImageSrc, canonicalAvatarImageId } from "@/config/avatarNames";
 import type { Poll } from "@/store/useRawStore";
 import TokenImage from "@/assets/tokens.webp";
 import { spendTokens } from "@/lib/api/tokens";
+import { getAvatarRank, hasAvatarRank } from "@/lib/avatarRank";
 
 interface DashboardInventoryProps {
   polls: Poll[];
   votedPolls: Set<string>;
   avatarLevel: number;
+  onAvatarChange: (level: number) => void;
   ownedAvatarLevels: Set<number>;
   onUnlockAvatar: (level: number) => Promise<boolean>;
   onAvatarPurchased: (level: number) => void;
@@ -24,6 +28,24 @@ interface DashboardInventoryProps {
 const AVATAR_SHOP_PRICE = 50;
 const TOKEN_BALANCE_STORAGE_PREFIX = "raw.polls.token-balance";
 const TOKEN_BALANCE_UPDATED_EVENT = "raw:token-balance-updated";
+
+function avatarImageKey(avatar: AvatarCatalogItem): string {
+  const imageId = avatarIdFromImageSrc(avatar.imageSrc);
+  return imageId === null ? String(avatar.imageSrc ?? avatar.id) : String(canonicalAvatarImageId(imageId));
+}
+
+function avatarName(avatar: AvatarCatalogItem): string {
+  const imageId = avatarIdFromImageSrc(avatar.imageSrc);
+  return imageId === null ? avatar.name : avatarDisplayName(imageId);
+}
+
+function ownedAvatarImageKeys(avatarCatalog: AvatarCatalogItem[], ownedAvatarLevels: Set<number>): Set<string> {
+  return new Set(
+    avatarCatalog
+      .filter((avatar) => ownedAvatarLevels.has(avatar.level))
+      .map(avatarImageKey),
+  );
+}
 
 function updateTokenBalanceCache(userId: string, balance: number): void {
   if (typeof window === "undefined") return;
@@ -101,14 +123,20 @@ const PERSONALITY_INSIGHTS = [
   },
 ];
 
-function PersonalityInsightsInventory({
+export const PERSONALITY_INSIGHTS_CATALOG = PERSONALITY_INSIGHTS;
+
+export function PersonalityInsightsInventory({
   pollsAnswered,
   totalPolls,
   tokenBalance,
+  ownedIds = new Set<string>(),
+  onPurchase,
 }: {
   pollsAnswered: number;
   totalPolls: number;
   tokenBalance: number;
+  ownedIds?: Set<string>;
+  onPurchase?: (insightId: string, tokenPrice: number) => Promise<void> | void;
 }) {
   const readyCount = PERSONALITY_INSIGHTS.filter(
     (insight) => pollsAnswered >= insight.requiredPolls && tokenBalance >= insight.tokenPrice
@@ -138,7 +166,7 @@ function PersonalityInsightsInventory({
       </div>
 
       <div className="grid gap-3 p-3 sm:grid-cols-2 sm:p-4">
-        {PERSONALITY_INSIGHTS.map((insight) => {
+        {PERSONALITY_INSIGHTS.filter((i) => !ownedIds.has(i.id)).map((insight) => {
           const Icon = insight.icon;
           const hasPolls = pollsAnswered >= insight.requiredPolls;
           const hasTokens = tokenBalance >= insight.tokenPrice;
@@ -184,6 +212,20 @@ function PersonalityInsightsInventory({
                       {insight.tokenPrice} tokens
                     </span>
                   </div>
+                  {onPurchase && (
+                    <button
+                      type="button"
+                      disabled={!ready}
+                      onClick={() => void onPurchase(insight.id, insight.tokenPrice)}
+                      className={`mt-3 w-full rounded-full border px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] transition ${
+                        ready
+                          ? "border-raw-gold/55 bg-raw-gold/15 text-raw-gold hover:bg-raw-gold/25"
+                          : "border-raw-border/30 bg-raw-surface/20 text-raw-silver/40"
+                      }`}
+                    >
+                      {ready ? `Unlock · ${insight.tokenPrice} tokens` : "Locked"}
+                    </button>
+                  )}
                 </div>
               </div>
             </article>
@@ -200,7 +242,7 @@ function PersonalityInsightsInventory({
 
 // ─── Avatar Shop ────────────────────────────────────────────────────────────
 
-function AvatarShop({
+export function AvatarShop({
   avatarCatalog,
   ownedAvatarLevels,
   onUnlockAvatar,
@@ -210,10 +252,22 @@ function AvatarShop({
   onAvatarPurchased,
 }: Pick<DashboardInventoryProps, "avatarCatalog" | "ownedAvatarLevels" | "onUnlockAvatar" | "avatarPricesByLevel" | "tokenBalance" | "userId" | "onAvatarPurchased">) {
   const [unlocking, setUnlocking] = useState<number | null>(null);
+  const [showAll, setShowAll] = useState(false);
+  const ownedImageKeys = ownedAvatarImageKeys(avatarCatalog, ownedAvatarLevels);
+  const seenShopImageKeys = new Set<string>();
 
   const purchasable = avatarCatalog.filter(
-    (a) => a.price !== "Free" && a.price !== "0" && Number(a.price) > 0
+    (avatar) => {
+      const imageKey = avatarImageKey(avatar);
+      const isPaid = avatar.price !== "Free" && avatar.price !== "0" && Number(avatar.price) > 0;
+      if (!isPaid || ownedAvatarLevels.has(avatar.level) || ownedImageKeys.has(imageKey) || seenShopImageKeys.has(imageKey)) {
+        return false;
+      }
+      seenShopImageKeys.add(imageKey);
+      return true;
+    },
   );
+  const visibleAvatars = showAll ? purchasable : purchasable.slice(0, 8);
 
   if (purchasable.length === 0) {
     return (
@@ -224,8 +278,9 @@ function AvatarShop({
   }
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-      {purchasable.map((avatar) => {
+    <div>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+      {visibleAvatars.map((avatar) => {
         const owned = ownedAvatarLevels.has(avatar.level);
         const price = Number(avatarPricesByLevel[avatar.level] ?? avatar.price) || AVATAR_SHOP_PRICE;
         const canBuy = tokenBalance >= price;
@@ -241,17 +296,16 @@ function AvatarShop({
             <div className="pointer-events-none absolute inset-0 opacity-30 [background-image:radial-gradient(rgba(255,255,255,0.12)_0.6px,transparent_0.6px)] [background-size:8px_8px]" />
 
             <div className="relative">
-              <AvatarFigure avatarIndex={avatar.level} size="md" selected={owned} rarity={rarity} />
+              <AvatarFigure avatarIndex={avatar.level} size="md" selected={owned} rarity={rarity} themeOverride={avatar} />
             </div>
 
             <div className="relative text-center">
-              <p className="text-xs font-medium text-raw-text line-clamp-1">{avatar.name}</p>
-              <p
-                className="text-[10px] font-semibold uppercase tracking-wider"
-                style={{ color: rarityConfig.color }}
-              >
-                {rarityConfig.label}
-              </p>
+              <p className="text-xs font-medium text-raw-text line-clamp-1">{avatarName(avatar)}</p>
+              {hasAvatarRank(avatar) ? (
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-raw-silver/60">
+                  Rank: R{getAvatarRank(avatar)}
+                </p>
+              ) : null}
             </div>
 
             {owned ? (
@@ -284,6 +338,16 @@ function AvatarShop({
           </div>
         );
       })}
+      </div>
+      {purchasable.length > 8 ? (
+        <button
+          type="button"
+          onClick={() => setShowAll((current) => !current)}
+          className="mx-auto mt-5 block rounded-full border border-raw-gold/35 bg-raw-gold/10 px-5 py-2 text-xs font-medium text-raw-gold transition hover:bg-raw-gold/20"
+        >
+          {showAll ? "Show Less" : "Show More"}
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -291,40 +355,69 @@ function AvatarShop({
 // ─── Loot Spin ───────────────────────────────────────────────────────────────
 
 const SPIN_COST = 50;
-const SPIN_PRIZES = RARITY_ORDER.map((r) => ({
-  id: r,
-  rarity: r,
-  label: RARITY_CONFIG[r].label,
-  color: RARITY_CONFIG[r].color,
-  glow: RARITY_CONFIG[r].glow,
-  weight: RARITY_CONFIG[r].defaultWeight,
-}));
 
-function LootSpin({ tokenBalance }: { tokenBalance: number }) {
-  const [result, setResult] = useState<(typeof SPIN_PRIZES)[number] | null>(null);
+type SpinResult = (typeof RANK_TIERS)[number] & { wonAvatar?: AvatarCatalogItem };
+
+interface LootSpinProps {
+  tokenBalance: number;
+  avatarCatalog: AvatarCatalogItem[];
+  ownedAvatarLevels: Set<number>;
+  userId: string;
+  onAvatarPurchased: (level: number) => void;
+}
+
+export function LootSpin({ tokenBalance, avatarCatalog, ownedAvatarLevels, userId, onAvatarPurchased }: LootSpinProps) {
+  const [result, setResult] = useState<SpinResult | null>(null);
+  const [isClaiming, setIsClaiming] = useState(false);
+  const ownedImageKeys = ownedAvatarImageKeys(avatarCatalog, ownedAvatarLevels);
 
   const canSpin = tokenBalance >= SPIN_COST;
-  const wheelPrizes: WheelPrize[] = SPIN_PRIZES.map((prize) => ({
-    id: prize.id,
-    label: `${prize.label} Drop`,
-    shortLabel: prize.label.toUpperCase(),
-    color: `${prize.color}26`,
-    textColor: prize.color,
+
+  const wheelPrizes: WheelPrize[] = RANK_TIERS.map((tier) => ({
+    id: String(tier.rank),
+    label: tier.label,
+    shortLabel: tier.rank === 10 ? "R10" : `R${tier.rank}`,
+    color: `${tier.color}22`,
+    textColor: tier.color,
   }));
-  const prizeWeights = SPIN_PRIZES.reduce<Partial<Record<string, number>>>((acc, prize) => {
-    acc[prize.id] = prize.weight;
+
+  const prizeWeights = RANK_TIERS.reduce<Partial<Record<string, number>>>((acc, tier) => {
+    acc[String(tier.rank)] = tier.weight;
     return acc;
   }, {});
 
   const handleSpinEnd = (prize: WheelPrize) => {
-    setResult(SPIN_PRIZES.find((entry) => entry.id === prize.id) ?? SPIN_PRIZES[0]);
+    const tier = RANK_TIERS.find((t) => String(t.rank) === prize.id) ?? RANK_TIERS[0];
+    const seenPrizeImageKeys = new Set<string>();
+    const eligible = avatarCatalog.filter(
+      (avatar) => {
+        const imageKey = avatarImageKey(avatar);
+        if ((avatar.rarity as AvatarRarity) !== tier.rarity || ownedAvatarLevels.has(avatar.level) || ownedImageKeys.has(imageKey) || seenPrizeImageKeys.has(imageKey)) {
+          return false;
+        }
+        seenPrizeImageKeys.add(imageKey);
+        return true;
+      },
+    );
+    const won = eligible.length > 0 ? eligible[Math.floor(Math.random() * eligible.length)] : undefined;
+    setResult({ ...tier, wonAvatar: won });
+  };
+
+  const handleClaim = async () => {
+    if (!result?.wonAvatar || isClaiming) return;
+    setIsClaiming(true);
+    try {
+      onAvatarPurchased(result.wonAvatar.level);
+    } finally {
+      setIsClaiming(false);
+    }
   };
 
   return (
     <div className="rounded-2xl border border-raw-border/35 bg-raw-black/45 p-5">
       <div className="mb-4 flex items-center gap-2">
         <Sparkles className="h-4 w-4 text-raw-gold/60" />
-        <h3 className="font-display text-sm tracking-wide text-raw-text">Rarity Spin</h3>
+        <h3 className="font-display text-sm tracking-wide text-raw-text">Rank Spin</h3>
         <span className="ml-auto flex items-center gap-1 rounded-full border border-raw-border/35 bg-raw-black/50 px-2.5 py-1 text-[10px] text-raw-silver/50">
           <img src={TokenImage} alt="" className="h-3 w-3 object-contain" />
           {SPIN_COST} per spin
@@ -336,20 +429,40 @@ function LootSpin({ tokenBalance }: { tokenBalance: number }) {
           prizes={wheelPrizes}
           prizeWeights={prizeWeights}
           onSpinEnd={handleSpinEnd}
-          disabled={!canSpin}
+          disabled={!canSpin || !!result}
           radius={145}
         />
       </div>
 
       {result && (
         <div
-          className="mt-4 rounded-xl border px-4 py-3 text-center text-sm font-semibold"
-          style={{ borderColor: `${result.color}50`, color: result.color, background: `${result.glow}18` }}
+          className="mt-4 rounded-xl border px-4 py-3 text-center"
+          style={{ borderColor: `${result.color}50`, background: `${result.glow}18` }}
         >
-          {result.label} Rarity Drop!
+          <p className="text-sm font-bold" style={{ color: result.color }}>
+            {result.label}!
+          </p>
+          {result.wonAvatar ? (
+            <>
+              <p className="mt-1 text-xs text-raw-silver/60">
+                You won <span className="font-semibold text-raw-text">{avatarName(result.wonAvatar)}</span>
+              </p>
+              <button
+                onClick={handleClaim}
+                disabled={isClaiming}
+                className="mt-3 rounded-full border border-raw-gold/50 bg-raw-gold/15 px-4 py-1.5 text-xs font-semibold text-raw-gold transition hover:bg-raw-gold/25 disabled:opacity-50"
+              >
+                {isClaiming ? "Claiming…" : "Claim Avatar"}
+              </button>
+            </>
+          ) : (
+            <p className="mt-1 text-xs text-raw-silver/45">
+              No unclaimed avatars at this rank yet — check back later!
+            </p>
+          )}
         </div>
       )}
-      {!canSpin && (
+      {!canSpin && !result && (
         <div className="mt-4 flex items-center justify-center gap-1.5 rounded-xl border border-raw-border/30 bg-raw-surface/20 py-2.5 text-sm font-semibold text-raw-silver/45">
           <Lock className="h-3.5 w-3.5" />
           Need {SPIN_COST} tokens
@@ -364,16 +477,23 @@ function LootSpin({ tokenBalance }: { tokenBalance: number }) {
 export function DashboardInventory({
   polls,
   votedPolls,
+  avatarLevel,
+  onAvatarChange,
   ownedAvatarLevels,
-  onUnlockAvatar,
-  onAvatarPurchased,
-  avatarPricesByLevel,
   avatarCatalog,
   tokenBalance,
   userId,
 }: DashboardInventoryProps) {
   const pollsAnswered = votedPolls.size;
 
+  const seenOwnedImageKeys = new Set<string>();
+  const ownedAvatars = avatarCatalog.filter((avatar) => {
+    if (!ownedAvatarLevels.has(avatar.level)) return false;
+    const imageKey = avatarImageKey(avatar);
+    if (seenOwnedImageKeys.has(imageKey)) return false;
+    seenOwnedImageKeys.add(imageKey);
+    return true;
+  });
   return (
     <div className="space-y-8">
       <header>
@@ -382,38 +502,57 @@ export function DashboardInventory({
           Inventory
         </h1>
         <p className="mt-1 text-xs text-raw-silver/40">
-          Your insights, collectible avatars, and loot rolls.
+          Everything you've collected — avatars, insights, and rewards.
         </p>
       </header>
 
-      {/* Avatar Shop */}
+      {/* Owned Avatars */}
       <section>
-        <h2 className="mb-3 font-display text-sm tracking-wide text-raw-text">Avatar Shop</h2>
-        <AvatarShop
-          avatarCatalog={avatarCatalog}
-          ownedAvatarLevels={ownedAvatarLevels}
-          onUnlockAvatar={onUnlockAvatar}
-          onAvatarPurchased={onAvatarPurchased}
-          avatarPricesByLevel={avatarPricesByLevel}
-          tokenBalance={tokenBalance}
-          userId={userId}
-        />
+        <h2 className="mb-3 font-display text-sm tracking-wide text-raw-text">Your Avatars</h2>
+        {ownedAvatars.length === 0 ? (
+          <div className="rounded-2xl border border-raw-border/30 bg-raw-surface/20 p-6 text-center text-xs text-raw-silver/40">
+            You don't own any avatars yet. Visit the Store to unlock some.
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            {ownedAvatars.map((avatar) => {
+              const rarity = avatar.rarity ?? "common";
+              const rarityConfig = RARITY_CONFIG[rarity];
+              return (
+                <button
+                  type="button"
+                  key={avatar.id}
+                  onClick={() => onAvatarChange(avatar.level)}
+                  className="relative flex flex-col items-center gap-2 overflow-hidden rounded-2xl border bg-raw-black/45 p-3 text-center transition hover:-translate-y-0.5 hover:bg-raw-black/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/50"
+                  style={{
+                    borderColor: avatar.level === avatarLevel ? rarityConfig.color : `${rarityConfig.color}40`,
+                    boxShadow: avatar.level === avatarLevel ? `0 0 0 1px ${rarityConfig.color}55` : undefined,
+                  }}
+                  aria-pressed={avatar.level === avatarLevel}
+                  aria-label={`Use ${avatarName(avatar)} avatar`}
+                >
+                  <div className="pointer-events-none absolute inset-0 opacity-30 [background-image:radial-gradient(rgba(255,255,255,0.12)_0.6px,transparent_0.6px)] [background-size:8px_8px]" />
+                  <AvatarFigure avatarIndex={avatar.level} size="md" selected={avatar.level === avatarLevel} rarity={rarity} />
+                  <div className="relative text-center">
+                    <p className="text-xs font-medium text-raw-text line-clamp-1">{avatarName(avatar)}</p>
+                    {hasAvatarRank(avatar) ? (
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-raw-silver/60">
+                        Rank: R{getAvatarRank(avatar)}
+                      </p>
+                    ) : null}
+                    <p className="mt-1 text-[10px] text-raw-silver/45">
+                      {avatar.level === avatarLevel ? "Selected" : "Tap to use"}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </section>
 
-      {/* Loot Spin */}
-      <section>
-        <h2 className="mb-3 font-display text-sm tracking-wide text-raw-text">Loot Spin</h2>
-        <LootSpin tokenBalance={tokenBalance} />
-      </section>
-
-      {/* Personality Insights */}
-      <section>
-        <PersonalityInsightsInventory
-          pollsAnswered={pollsAnswered}
-          totalPolls={polls.length}
-          tokenBalance={tokenBalance}
-        />
-      </section>
+      {/* Placeholder for unused props to avoid TS warnings without dropping the interface */}
+      <span className="hidden" data-polls={polls.length} data-polls-answered={pollsAnswered} data-balance={tokenBalance} />
     </div>
   );
 }

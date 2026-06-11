@@ -1,0 +1,65 @@
+{
+  "expo": {
+    "name": "raW",
+    "slug": "raw-mobile",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "raw",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": false,
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0d0d0d"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "app.raw.mobile",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "app.raw.mobile",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0d0d0d"
+      },
+      "permissions": [
+        "android.permission.POST_NOTIFICATIONS"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "onesignal-expo-plugin",
+        {
+          "mode": "production"
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#F1C42D"
+        }
+      ]
+    ],
+    "extra": {
+      "router": { "origin": false },
+      "eas": {
+        "projectId": "REPLACE_AFTER_EAS_INIT"
+      },
+      "supabaseUrl": "REPLACE_WITH_VITE_SUPABASE_URL",
+      "supabasePublishableKey": "REPLACE_WITH_VITE_SUPABASE_PUBLISHABLE_KEY",
+      "oneSignalAppId": "debf83a7-182a-4f37-8bd1-614de363322f"
+    }
+  }
+}

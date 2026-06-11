@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ChevronDown, SendIcon } from "lucide-react";
+import { getUserTextModerationMessage, moderateUserText } from "@/lib/inputSecurity";
 
 export interface Comment {
   id: string;
@@ -35,12 +36,19 @@ function CommentThread({
 }) {
   const [isReplying, setIsReplying] = useState(false);
   const [replyContent, setReplyContent] = useState("");
+  const [replyError, setReplyError] = useState("");
   const [showReplies, setShowReplies] = useState(level === 0);
 
   const handleSubmitReply = () => {
-    if (replyContent.trim()) {
-      onAddReply(replyContent, comment.id);
+    const moderation = moderateUserText(replyContent);
+    if (moderation.text) {
+      if (!moderation.allowed) {
+        setReplyError(getUserTextModerationMessage(moderation));
+        return;
+      }
+      onAddReply(moderation.text, comment.id);
       setReplyContent("");
+      setReplyError("");
       setIsReplying(false);
     }
   };
@@ -101,7 +109,10 @@ function CommentThread({
               type="text"
               placeholder="Add a reply..."
               value={replyContent}
-              onChange={(e) => setReplyContent(e.target.value)}
+              onChange={(e) => {
+                setReplyContent(e.target.value);
+                setReplyError("");
+              }}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
@@ -119,6 +130,7 @@ function CommentThread({
             </button>
           </div>
         )}
+        {replyError && <p className="mt-2 text-[10px] text-red-300">{replyError}</p>}
       </div>
 
       {/* Nested Replies */}
@@ -159,12 +171,19 @@ export function PollComments({
   onLikeComment,
 }: PollCommentsProps) {
   const [newComment, setNewComment] = useState("");
+  const [commentError, setCommentError] = useState("");
   const [sortBy, setSortBy] = useState<"recent" | "popular">("recent");
 
   const handleSubmitComment = () => {
-    if (newComment.trim()) {
-      onAddComment(newComment);
+    const moderation = moderateUserText(newComment);
+    if (moderation.text) {
+      if (!moderation.allowed) {
+        setCommentError(getUserTextModerationMessage(moderation));
+        return;
+      }
+      onAddComment(moderation.text);
       setNewComment("");
+      setCommentError("");
     }
   };
 
@@ -190,7 +209,10 @@ export function PollComments({
             type="text"
             placeholder="Share your perspective..."
             value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
+            onChange={(e) => {
+              setNewComment(e.target.value);
+              setCommentError("");
+            }}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
@@ -207,6 +229,7 @@ export function PollComments({
             Post
           </button>
         </div>
+        {commentError && <p className="text-[10px] text-red-300">{commentError}</p>}
         <p className="text-[9px] text-raw-silver/35">💡 Keep comments constructive and respectful</p>
       </div>
 

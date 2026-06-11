@@ -12,11 +12,13 @@ import { Communities } from "@/components/landing/Communities";
 import { PersonalityInsightsSection } from "@/components/landing/PersonalityInsightsSection";
 import { AvatarShowcaseSection } from "@/components/landing/AvatarShowcaseSection";
 import { LandingPollsSection } from "@/components/landing/LandingPollsSection";
-import { WheelReward } from "@/components/landing/WheelReward";
 import { WhyAnonymity } from "@/components/landing/WhyAnonymity";
-import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
+const TestimonialsSection = lazy(() =>
+  import("@/components/landing/TestimonialsSection").then((m) => ({ default: m.TestimonialsSection }))
+);
 import { EarnedWarUpgradesSection } from "@/components/landing/EarnedWarUpgradesSection";
 import { LandingFooter } from "@/components/landing/LandingFooter";
+import { FAQSection } from "@/components/landing/FAQSection";
 import PerforatedBackground from "@/components/ui/perforated-background";
 import type { AuthResult, User } from "@/store/types";
 
@@ -47,7 +49,13 @@ export default function LandingShell({
 
   return (
     <div className="landing-page-shell min-h-screen overflow-x-hidden bg-raw-black">
-      <PollShowcase onResolved={() => setSiteReady(true)} />
+      <PollShowcase
+        initialOpen
+        onOpenChange={(open) => {
+          if (open) setSiteReady(false);
+        }}
+        onResolved={() => setSiteReady(true)}
+      />
 
       <Navbar
         isLoggedIn={isLoggedIn}
@@ -55,11 +63,17 @@ export default function LandingShell({
         onSignupClick={() => setShowSignup(true)}
       />
 
-      {siteReady && (
+      <div className="relative min-h-screen overflow-x-hidden">
+        {!siteReady && (
+          <div className="fixed inset-0 z-0 bg-raw-black">
+            <PerforatedBackground />
+          </div>
+        )}
+
         <motion.div
           className="relative overflow-x-hidden"
           initial={{ opacity: 0, filter: "blur(14px)" }}
-          animate={{ opacity: 1, filter: "blur(0px)" }}
+          animate={{ opacity: siteReady ? 1 : 0.18, filter: siteReady ? "blur(0px)" : "blur(14px)" }}
           transition={{ duration: 0.75, ease: "easeOut" }}
         >
           <PerforatedBackground />
@@ -71,18 +85,39 @@ export default function LandingShell({
             </Suspense>
             <ProblemSection />
             <HowItWorks />
-            <AvatarShowcaseSection />
+            <AvatarShowcaseSection onSignupClick={() => setShowSignup(true)} />
             <LandingPollsSection onSignupClick={() => setShowSignup(true)} />
             <Communities onSignupClick={() => setShowSignup(true)} />
-            <PersonalityInsightsSection />
-            <EarnedWarUpgradesSection />
-            <WheelReward onSignupClick={() => setShowSignup(true)} />
-            <WhyAnonymity />
-            <TestimonialsSection />
+            <Suspense fallback={<div className="h-16" />}>
+              <TestimonialsSection />
+            </Suspense>
+
+            <section className="landing-section px-4 py-8 sm:px-6 sm:py-12">
+              <div
+                className="relative mx-auto w-full max-w-6xl overflow-hidden rounded-3xl border-2 border-raw-gold/35 bg-gradient-to-b from-raw-gold/[0.04] to-transparent px-2 py-6 sm:px-4 sm:py-10"
+                style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 0 60px rgba(241,196,45,0.06)" }}
+              >
+                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/70 to-transparent" />
+                <div className="px-6 pb-2 pt-2 text-center sm:pb-6">
+                  <h3 className="landing-heading text-raw-gold">
+                    What raW is building next
+                  </h3>
+                  <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-raw-silver/55">
+                    See how raW turns anonymous answers into sharper insights, better rewards, and safer community matching.
+                  </p>
+                </div>
+
+                <PersonalityInsightsSection />
+                <EarnedWarUpgradesSection />
+                <WhyAnonymity />
+              </div>
+            </section>
+
+            <FAQSection />
             <LandingFooter />
           </div>
         </motion.div>
-      )}
+      </div>
 
       <Suspense fallback={null}>
         <SignupModalLazy

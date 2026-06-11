@@ -1,22 +1,31 @@
 import { useEffect, useState } from "react";
-import {
-  Calendar,
-  Flame,
-  KeyRound,
-  MessageCircle,
-  Plus,
-  Target,
-  Trash2,
-  TrendingUp,
-  UserRound,
-} from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { changePassword, deleteAccount } from "@/backend/supabase/controllers/authController";
-import { fetchUserAliases, saveUserAliases } from "@/backend/supabase/controllers/userAliasController";
-
+import { Check, Heart, MessageSquare, Mic2, Pin, ShieldOff, Target, Trash2, Users, X } from "lucide-react";
+import { useProfileStats } from "@/hooks/useProfileStats";
+import type { PinnedMessageRecord } from "@/backend/supabase/controllers/userExtrasController";
+import type { Poll } from "@/store/useRawStore";
 import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { LevelProgressBanner } from "@/components/dashboard/LevelProgressBanner";
-import { LEVEL_THEMES, MAX_LEVEL, getAvatar } from "@/lib/avataridentity";
+import { LEVEL_THEMES, getAvatar, getPrivateAvatarLevel, privateAvatarKey } from "@/lib/avataridentity";
+import { PersonalityInsightsInventory } from "@/components/dashboard/PersonalityInsightsInventory";
+import { addOwnedInsightId, readOwnedInsightIds } from "@/lib/insightsOwnership";
+import { spendTokens } from "@/lib/api/tokens";
+import { toast } from "@/components/ui/use-toast";
+import {
+  listUserAliases,
+  savePrivateAlias,
+  deleteUserAlias,
+  type UserAliasRow,
+} from "@/backend/supabase/controllers/userController";
+
+const TOKEN_BALANCE_STORAGE_PREFIX = "raw.polls.token-balance";
+const TOKEN_BALANCE_UPDATED_EVENT = "raw:token-balance-updated";
+
+function pushTokenBalance(userId: string, balance: number): void {
+  if (typeof window === "undefined") return;
+  const key = `${TOKEN_BALANCE_STORAGE_PREFIX}.${userId}`;
+  window.localStorage.setItem(key, String(balance));
+  window.dispatchEvent(new CustomEvent(TOKEN_BALANCE_UPDATED_EVENT, { detail: { storageKey: key, balance } }));
+}
 
 interface DashboardProfileProps {
   userId: string;
@@ -29,16 +38,23 @@ interface DashboardProfileProps {
   pollsAnswered: number;
   xp?: number;
   xpLevel?: number;
+  pinnedMessages?: PinnedMessageRecord[];
+  onRemovePinnedMessage?: (messageId: string) => void;
   onLogout: () => void;
+  /** Used by the Personality Insights section to compute totals. */
+  polls: Poll[];
+  /** Live token balance for insight purchases. */
+  tokenBalance: number;
 }
 
-const stats = [
-  { icon: Target, label: "Polls Answered", value: "—", key: "polls" },
-  { icon: MessageCircle, label: "Messages Sent", value: "—", key: "messages" },
-  { icon: Flame, label: "Day Streak", value: "—", key: "streak" },
-  { icon: TrendingUp, label: "XP Earned", value: "—", key: "xp" },
-  { icon: Calendar, label: "Member Since", value: "—", key: "member" },
-];
+const STAT_ICONS = {
+  polls: Target,
+  comments: MessageSquare,
+  likes: Heart,
+  hosts: Mic2,
+  communities: Users,
+  pinned: Pin,
+} as const;
 
 export function DashboardProfile({
   userId,
@@ -49,186 +65,102 @@ export function DashboardProfile({
   pollsAnswered,
   xp = 0,
   xpLevel = 1,
-  onLogout,
+  pinnedMessages = [],
+  onRemovePinnedMessage,
+  polls,
+  tokenBalance,
 }: DashboardProfileProps) {
-  const { toast } = useToast();
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [ownedInsightIds, setOwnedInsightIds] = useState<Set<string>>(() => readOwnedInsightIds(userId));
 
-  const [pwOpen, setPwOpen] = useState(false);
-  const [oldPw, setOldPw] = useState("");
-  const [newPw, setNewPw] = useState("");
-  const [confirmPw, setConfirmPw] = useState("");
-  const [pwLoading, setPwLoading] = useState(false);
-
-  const [delOpen, setDelOpen] = useState(false);
-  const [delPw, setDelPw] = useState("");
-  const [delLoading, setDelLoading] = useState(false);
-
-  const [identityOpen, setIdentityOpen] = useState(false);
-  const [aliasNames, setAliasNames] = useState<string[]>([]);
-  const [aliasAvatarLevels, setAliasAvatarLevels] = useState<number[]>([]);
-  const [aliasDraft, setAliasDraft] = useState("");
-  const [aliasLoading, setAliasLoading] = useState(false);
+  // Private identity
+  const [privateAlias, setPrivateAlias] = useState<UserAliasRow | null>(null);
+  const [aliasInput, setAliasInput] = useState("");
   const [aliasSaving, setAliasSaving] = useState(false);
+  const [editingAlias, setEditingAlias] = useState(false);
+  const [privateAvatarLevel, setPrivateAvatarLevel] = useState<number>(() => getPrivateAvatarLevel(userId));
+  const [hoveredPrivateIndex, setHoveredPrivateIndex] = useState<number | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
+    setOwnedInsightIds(readOwnedInsightIds(userId));
+  }, [userId]);
 
-    async function loadAliases() {
-      setAliasLoading(true);
-      try {
-        const rows = await fetchUserAliases(userId);
-        if (cancelled) return;
-        const privateRows = rows.filter((row) => row.alias.trim().toLowerCase() !== username.trim().toLowerCase());
-        setAliasNames(privateRows.map((row) => row.alias));
-        setAliasAvatarLevels(privateRows.map((row) => row.avatar_level || avatarLevel));
-      } catch (error) {
-        if (!cancelled) {
-          toast({
-            title: "Could not load names",
-            description: error instanceof Error ? error.message : "Please try again.",
-          });
-        }
-      } finally {
-        if (!cancelled) setAliasLoading(false);
-      }
-    }
+  useEffect(() => {
+    listUserAliases(userId)
+      .then((rows) => {
+        const priv = rows.find((r) => !r.is_public) ?? null;
+        setPrivateAlias(priv);
+        setAliasInput(priv?.alias ?? "");
+      })
+      .catch(() => {});
+  }, [userId]);
 
-    void loadAliases();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [avatarLevel, toast, userId, username]);
-
-  const cleanAliasNames = aliasNames.map((name) => name.trim()).filter(Boolean);
-  const normalizedAliasNames = cleanAliasNames.map((name) => name.toLowerCase());
-  const normalizedUsername = username.trim().toLowerCase();
-  const aliasNamesAreUnique = new Set(normalizedAliasNames).size === normalizedAliasNames.length;
-  const aliasNamesDoNotUsePublicName = normalizedAliasNames.every((name) => name !== normalizedUsername);
-  const aliasAvatarsAreUnique =
-    !aliasAvatarLevels.includes(avatarLevel) && new Set(aliasAvatarLevels).size === aliasAvatarLevels.length;
-  const aliasesAreValid =
-    cleanAliasNames.every((name) => name.length >= 3 && name.length <= 32) &&
-    aliasNamesAreUnique &&
-    aliasNamesDoNotUsePublicName &&
-    aliasAvatarsAreUnique;
-
-  function updateAlias(index: number, value: string) {
-    setAliasNames((names) => names.map((name, nameIndex) => (nameIndex === index ? value : name)));
+  function handlePrivateAvatarChange(lvl: number) {
+    setPrivateAvatarLevel(lvl);
+    window.localStorage.setItem(privateAvatarKey(userId), String(lvl));
   }
 
-  function updateAliasAvatar(index: number, level: number) {
-    setAliasAvatarLevels((levels) => levels.map((currentLevel, levelIndex) => (levelIndex === index ? level : currentLevel)));
-  }
-
-  function removeAlias(index: number) {
-    setAliasNames((names) => names.filter((_, nameIndex) => nameIndex !== index));
-    setAliasAvatarLevels((levels) => levels.filter((_, levelIndex) => levelIndex !== index));
-  }
-
-  function addPrivateAlias() {
-    const nextAlias = aliasDraft.trim();
-    if (nextAlias.length < 3 || nextAlias.length > 32) {
-      toast({ title: "Name needs 3-32 characters", description: "Try a short name people can recognize." });
+  async function handleSaveAlias() {
+    const trimmed = aliasInput.trim();
+    if (!/^[A-Za-z0-9._-]{3,24}$/.test(trimmed)) {
+      toast({ title: "3–24 letters, numbers, dots, dashes, or underscores only." });
       return;
     }
-    if (aliasNames.some((name) => name.trim().toLowerCase() === nextAlias.toLowerCase())) {
-      toast({ title: "Name already exists", description: "Use a different private name." });
-      return;
-    }
-    if (nextAlias.toLowerCase() === normalizedUsername) {
-      toast({ title: "That is your public account", description: "Private identities need a different name." });
-      return;
-    }
-
-    setAliasNames((names) => [...names, nextAlias]);
-    const usedLevels = new Set([avatarLevel, ...aliasAvatarLevels]);
-    const nextLevel = Array.from({ length: MAX_LEVEL }, (_, index) => index + 1).find((level) => !usedLevels.has(level)) ?? avatarLevel;
-    setAliasAvatarLevels((levels) => [...levels, nextLevel]);
-    setAliasDraft("");
-  }
-
-  async function handleSaveAliases() {
-    if (!aliasesAreValid) {
-      toast({ title: "Check your names", description: "Each saved name needs 3-32 characters." });
-      return;
-    }
-    if (!aliasNamesAreUnique) {
-      toast({ title: "Name already exists", description: "Every identity name must be different." });
-      return;
-    }
-    if (!aliasNamesDoNotUsePublicName) {
-      toast({ title: "Public name is fixed", description: "Private identities cannot use your main account name." });
-      return;
-    }
-    if (!aliasAvatarsAreUnique) {
-      toast({ title: "Choose different avatars", description: "Your public and private identities cannot share avatars." });
-      return;
-    }
-
-    const seen = new Set<string>();
-    const deduped = cleanAliasNames.filter((name) => {
-      const key = name.toLowerCase();
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
     setAliasSaving(true);
     try {
-      const rows = await saveUserAliases(
-        userId,
-        deduped.map((alias, index) => ({
-          alias,
-          avatarLevel: aliasAvatarLevels[index] ?? avatarLevel,
-          isPublic: false,
-        }))
-      );
-
-      setAliasNames(rows.map((row) => row.alias));
-      setAliasAvatarLevels(rows.map((row) => row.avatar_level || avatarLevel));
-      window.dispatchEvent(new CustomEvent("raw:user-aliases-updated", { detail: { userId } }));
-      toast({ title: "Names saved", description: "Your public and private names are updated." });
-    } catch (error) {
-      toast({
-        title: "Could not save names",
-        description: error instanceof Error ? error.message : "Please try again.",
-      });
+      const row = await savePrivateAlias(trimmed);
+      setPrivateAlias(row);
+      setAliasInput(row.alias);
+      setEditingAlias(false);
+      toast({ title: "Private name saved" });
+    } catch (e) {
+      toast({ title: "Could not save name", description: e instanceof Error ? e.message : "Try again." });
     } finally {
       setAliasSaving(false);
     }
   }
 
-  async function handleChangePassword() {
-    if (newPw.length < 6) {
-      toast({ title: "Password too short", description: "New password must be at least 6 characters." });
-      return;
+  async function handleDeleteAlias() {
+    if (!privateAlias) return;
+    try {
+      await deleteUserAlias(privateAlias.id);
+      setPrivateAlias(null);
+      setAliasInput("");
+      setEditingAlias(false);
+      toast({ title: "Private name removed" });
+    } catch {
+      toast({ title: "Could not remove name" });
     }
-    if (newPw !== confirmPw) {
-      toast({ title: "Passwords don't match", description: "New password and confirmation must match." });
-      return;
-    }
-    setPwLoading(true);
-    const result = await changePassword(userId, oldPw, newPw);
-    setPwLoading(false);
-    if (!result.ok) {
-      toast({ title: "Could not change password", description: result.error ?? "Please try again." });
-      return;
-    }
-    toast({ title: "Password changed", description: "Your password has been updated." });
-    setOldPw(""); setNewPw(""); setConfirmPw(""); setPwOpen(false);
   }
 
-  async function handleDeleteAccount() {
-    setDelLoading(true);
-    const result = await deleteAccount(userId, delPw);
-    setDelLoading(false);
-    if (!result.ok) {
-      toast({ title: "Could not delete account", description: result.error ?? "Please try again." });
+  const handlePurchaseInsight = async (insightId: string, tokenPrice: number) => {
+    if (tokenBalance < tokenPrice) {
+      toast({ title: "Not enough tokens", description: `You need ${tokenPrice} tokens.` });
       return;
     }
-    onLogout();
-  }
+    try {
+      const newBalance = await spendTokens(userId, tokenPrice);
+      pushTokenBalance(userId, newBalance);
+      const next = addOwnedInsightId(userId, insightId);
+      setOwnedInsightIds(new Set(next));
+      window.dispatchEvent(new CustomEvent("raw:insights-updated"));
+      toast({ title: "Report unlocked", description: `${tokenPrice} tokens spent.` });
+    } catch {
+      toast({ title: "Unlock failed", description: "Please try again." });
+    }
+  };
+
+  const { stats: profileStats, isLoading: isLoadingStats } = useProfileStats(userId);
+  // Prefer the live `pollsAnswered` prop while the RPC is hydrating —
+  // it lags the cache by at most one onboarding answer.
+  const statCards = [
+    { key: "polls",       icon: STAT_ICONS.polls,       label: "Polls",             value: isLoadingStats ? pollsAnswered : profileStats.polls },
+    { key: "comments",    icon: STAT_ICONS.comments,    label: "Comments on Polls", value: profileStats.commentsOnPolls },
+    { key: "likes",       icon: STAT_ICONS.likes,       label: "Likes Received",    value: profileStats.likesReceived },
+    { key: "hosts",       icon: STAT_ICONS.hosts,       label: "Hosts Made",        value: profileStats.hostsMade },
+    { key: "communities", icon: STAT_ICONS.communities, label: "Communities Joined",value: profileStats.communitiesJoined },
+    { key: "pinned",      icon: STAT_ICONS.pinned,      label: "Messages Pinned",   value: profileStats.messagesPinned },
+  ];
 
   const displayIndex = hoveredIndex ?? avatarLevel;
   const theme = getAvatar(displayIndex);
@@ -259,13 +191,9 @@ export function DashboardProfile({
 
         <LevelProgressBanner xp={xp} level={xpLevel} className="mt-4 w-full" />
 
-        {/* Level selector */}
-        <div
-          className="mt-4 grid w-full justify-items-center gap-1"
-          style={{
-            gridTemplateColumns: `repeat(${Math.ceil(MAX_LEVEL / 2)}, minmax(0, 1fr))`,
-          }}
-        >
+        {/* Level selector — flex-wrap with fixed tile size so rows
+            never overlap and avatars stay aligned on every viewport. */}
+        <div className="mt-4 flex w-full flex-wrap justify-center gap-1.5">
           {ownedLevels.map(
             (lvl) => (
               <button
@@ -278,7 +206,7 @@ export function DashboardProfile({
                 onMouseLeave={() => setHoveredIndex(null)}
                 onFocus={() => setHoveredIndex(lvl)}
                 onBlur={() => setHoveredIndex(null)}
-                className="relative flex h-10 w-10 items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/40"
+                className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/40"
                 aria-label={`Preview level ${lvl}`}
                 aria-pressed={lvl === avatarLevel}
               >
@@ -293,9 +221,125 @@ export function DashboardProfile({
         </div>
       </div>
 
-      {/* Stats grid */}
-      <div className="grid grid-cols-3 gap-2 sm:grid-cols-3">
-        {stats.map((stat) => {
+      {/* Private identity card */}
+      <div className="rounded-2xl border border-raw-border/40 bg-raw-surface/40 px-4 py-5 sm:px-6">
+        <div className="mb-4 flex items-center gap-2">
+          <ShieldOff className="h-4 w-4 text-raw-gold/50" />
+          <p className="text-sm font-semibold text-raw-text">Private identity</p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <AvatarFigure avatarIndex={hoveredPrivateIndex ?? privateAvatarLevel} size="lg" selected />
+          <div className="min-w-0 flex-1">
+            {editingAlias || !privateAlias ? (
+              <div className="flex items-center gap-2">
+                <input
+                  autoFocus
+                  type="text"
+                  value={aliasInput}
+                  onChange={(e) => setAliasInput(e.target.value.slice(0, 24))}
+                  placeholder="Private name (3–24 chars)"
+                  className="flex-1 rounded-lg border border-raw-border/40 bg-raw-black/40 px-3 py-2 text-sm text-raw-text placeholder:text-raw-silver/30 focus:border-raw-gold/60 focus:outline-none"
+                  disabled={aliasSaving}
+                  onKeyDown={(e) => { if (e.key === "Enter") void handleSaveAlias(); }}
+                />
+                <button
+                  type="button"
+                  onClick={() => void handleSaveAlias()}
+                  disabled={aliasSaving || aliasInput.trim().length < 3}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-raw-gold text-raw-ink transition-opacity disabled:opacity-40"
+                >
+                  <Check className="h-4 w-4" />
+                </button>
+                {privateAlias && (
+                  <button
+                    type="button"
+                    onClick={() => { setEditingAlias(false); setAliasInput(privateAlias.alias); }}
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-raw-border/40 text-raw-silver/50 hover:text-raw-text"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <p className="text-sm font-bold text-raw-text">@{privateAlias.alias}</p>
+                  <p className="text-[10px] uppercase tracking-[0.16em] text-raw-silver/30">Private name</p>
+                </div>
+                <div className="flex gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setEditingAlias(true)}
+                    className="rounded-lg border border-raw-border/30 px-2.5 py-1 text-[11px] text-raw-silver/60 hover:border-raw-gold/30 hover:text-raw-gold"
+                  >
+                    Change
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleDeleteAlias()}
+                    className="rounded-lg border border-raw-border/30 px-2.5 py-1 text-[11px] text-raw-silver/40 hover:border-red-500/30 hover:text-red-400"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            )}
+            <p className="mt-2 text-[11px] text-raw-silver/30">
+              One private alias per account. Pick an avatar below.
+            </p>
+          </div>
+        </div>
+
+        {/* Private avatar selector */}
+        <div className="mt-4 flex w-full flex-wrap justify-center gap-1.5">
+          {ownedLevels.map((lvl) => (
+            <button
+              key={lvl}
+              type="button"
+              onClick={() => handlePrivateAvatarChange(lvl)}
+              onMouseEnter={() => setHoveredPrivateIndex(lvl)}
+              onMouseLeave={() => setHoveredPrivateIndex(null)}
+              className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/40"
+              aria-label={`Use avatar ${lvl} for private identity`}
+              aria-pressed={lvl === privateAvatarLevel}
+            >
+              <AvatarFigure avatarIndex={lvl} size="sm" selected={lvl === privateAvatarLevel} />
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Pinned messages */}
+      {pinnedMessages.length > 0 && (
+        <div className="space-y-2">
+          <p className="flex items-center gap-1 text-[9px] uppercase tracking-[0.16em] text-raw-gold/50">
+            <Pin className="h-3 w-3" /> Pinned messages ({pinnedMessages.length}/7)
+          </p>
+          {pinnedMessages.map((pinnedMessage) => (
+            <div
+              key={pinnedMessage.messageId}
+              className="flex items-start gap-2 rounded-xl border border-raw-gold/20 bg-raw-gold/5 px-4 py-3"
+            >
+              <p className="flex-1 text-xs leading-relaxed text-raw-text/70">{pinnedMessage.messageText}</p>
+              {onRemovePinnedMessage && (
+                <button
+                  type="button"
+                  onClick={() => onRemovePinnedMessage(pinnedMessage.messageId)}
+                  className="shrink-0 rounded-lg p-1 text-raw-silver/40 hover:text-red-400"
+                  aria-label="Remove pinned message"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Stats grid — 6 cards in a 3x2 layout */}
+      <div className="grid grid-cols-3 gap-2">
+        {statCards.map((stat) => {
           const Icon = stat.icon;
           return (
             <div
@@ -304,11 +348,7 @@ export function DashboardProfile({
             >
               <Icon className="mx-auto mb-1.5 h-3.5 w-3.5 text-raw-gold/40" />
               <p className="text-base font-bold text-raw-text sm:text-lg">
-                {stat.key === "polls"
-                  ? pollsAnswered
-                  : stat.key === "xp"
-                  ? xp.toLocaleString()
-                  : stat.value}
+                {Number(stat.value).toLocaleString()}
               </p>
               <p className="mt-0.5 text-[8px] uppercase leading-tight tracking-wider text-raw-silver/30 sm:text-[9px]">
                 {stat.label}
@@ -318,215 +358,17 @@ export function DashboardProfile({
         })}
       </div>
 
-      {/* Account Settings */}
-      <div className="space-y-2">
-        <div className="overflow-hidden rounded-2xl border border-raw-border/30 bg-raw-surface/30">
-          <button
-            type="button"
-            onClick={() => setIdentityOpen((v) => !v)}
-            className="flex w-full items-center justify-between px-4 py-3.5 text-left"
-          >
-            <div className="flex items-center gap-2.5">
-              <UserRound className="h-4 w-4 text-raw-gold/50" />
-              <span className="text-sm font-medium text-raw-text">Names & Privacy</span>
-            </div>
-            <span className="text-xs text-raw-silver/30">{identityOpen ? "Close" : "Manage"}</span>
-          </button>
-
-          {identityOpen && (
-            <div className="space-y-3 border-t border-raw-border/20 px-4 pb-4 pt-3">
-              <p className="text-xs leading-relaxed text-raw-silver/45">
-                Your public account is fixed. Add private identities under it and pick which one to talk as in chat.
-              </p>
-
-              <div className="rounded-xl border border-raw-gold/20 bg-raw-gold/5 p-2.5">
-                <div className="flex items-center gap-2">
-                  <AvatarFigure avatarIndex={avatarLevel} size="sm" selected />
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-raw-text">@{username}</p>
-                    <p className="text-[10px] uppercase tracking-[0.18em] text-raw-gold/70">Public account</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                {aliasNames.map((name, index) => {
-                  return (
-                    <div key={`${index}-${name}`} className="rounded-xl border border-raw-border/25 bg-raw-black/25 p-2.5">
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="text"
-                          value={name}
-                          onChange={(event) => updateAlias(index, event.target.value)}
-                          placeholder="Private name"
-                          maxLength={32}
-                          className="min-w-0 flex-1 rounded-lg border border-raw-border/25 bg-raw-black/40 px-3 py-2 text-sm text-raw-text placeholder:text-raw-silver/25 focus:border-raw-gold/40 focus:outline-none"
-                        />
-                        <span className="rounded-lg border border-raw-border/25 px-2.5 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-raw-silver/45">
-                          Private
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => removeAlias(index)}
-                          className="flex h-9 w-9 items-center justify-center rounded-lg border border-red-500/20 text-red-400/70"
-                          aria-label="Remove private name"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                      <div className="mt-2 flex items-center gap-1.5 overflow-x-auto pb-1">
-                        {ownedLevels.map((level) => {
-                          const isUsedByPublic = level === avatarLevel;
-                          const isUsedByOther = isUsedByPublic || aliasAvatarLevels.some((usedLevel, usedIndex) => usedIndex !== index && usedLevel === level);
-                          const isSelected = aliasAvatarLevels[index] === level;
-                          return (
-                            <button
-                              key={level}
-                              type="button"
-                              onClick={() => updateAliasAvatar(index, level)}
-                              disabled={isUsedByOther}
-                              className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/40 disabled:opacity-25"
-                              aria-label={`Use avatar ${level} for ${name || "identity"}`}
-                              aria-pressed={isSelected}
-                              title={isUsedByPublic ? "Used by public account" : isUsedByOther ? "Used by another private identity" : `Use avatar ${level}`}
-                            >
-                              <AvatarFigure
-                                avatarIndex={level}
-                                size="sm"
-                                selected={isSelected}
-                                className="scale-75"
-                              />
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {!aliasNamesAreUnique && (
-                <p className="text-xs text-red-300/80">Each identity needs a different name.</p>
-              )}
-              {!aliasNamesDoNotUsePublicName && (
-                <p className="text-xs text-red-300/80">Private identities cannot use your public account name.</p>
-              )}
-              {!aliasAvatarsAreUnique && (
-                <p className="text-xs text-red-300/80">Public and private identities need different avatars.</p>
-              )}
-
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <input
-                  type="text"
-                  value={aliasDraft}
-                  onChange={(event) => setAliasDraft(event.target.value)}
-                  placeholder="Add a new private name"
-                  maxLength={32}
-                  className="min-w-0 flex-1 rounded-xl border border-raw-border/30 bg-raw-black/40 px-3 py-2.5 text-sm text-raw-text placeholder:text-raw-silver/25 focus:border-raw-gold/40 focus:outline-none"
-                />
-                <button
-                  type="button"
-                  onClick={addPrivateAlias}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-raw-gold/25 px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.18em] text-raw-gold"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  Add private
-                </button>
-              </div>
-
-              <button
-                type="button"
-                onClick={handleSaveAliases}
-                disabled={aliasLoading || aliasSaving || !aliasesAreValid}
-                className="w-full rounded-xl bg-raw-gold px-4 py-2.5 text-sm font-semibold text-raw-ink disabled:opacity-40"
-              >
-                {aliasSaving ? "Saving..." : aliasLoading ? "Loading..." : "Save Names"}
-              </button>
-            </div>
-          )}
-        </div>
-
-        <div className="rounded-2xl border border-raw-border/30 bg-raw-surface/30 overflow-hidden">
-          <button
-            type="button"
-            onClick={() => setPwOpen((v) => !v)}
-            className="flex w-full items-center justify-between px-4 py-3.5 text-left"
-          >
-            <div className="flex items-center gap-2.5">
-              <KeyRound className="h-4 w-4 text-raw-gold/50" />
-              <span className="text-sm font-medium text-raw-text">Change Password</span>
-            </div>
-            <span className="text-xs text-raw-silver/30">{pwOpen ? "Cancel" : "Edit"}</span>
-          </button>
-          {pwOpen && (
-            <div className="border-t border-raw-border/20 px-4 pb-4 pt-3 space-y-2.5">
-              <input
-                type="password"
-                placeholder="Current password"
-                value={oldPw}
-                onChange={(e) => setOldPw(e.target.value)}
-                className="w-full rounded-xl border border-raw-border/30 bg-raw-black/40 px-3 py-2.5 text-sm text-raw-text placeholder:text-raw-silver/25 focus:border-raw-gold/40 focus:outline-none"
-              />
-              <input
-                type="password"
-                placeholder="New password"
-                value={newPw}
-                onChange={(e) => setNewPw(e.target.value)}
-                className="w-full rounded-xl border border-raw-border/30 bg-raw-black/40 px-3 py-2.5 text-sm text-raw-text placeholder:text-raw-silver/25 focus:border-raw-gold/40 focus:outline-none"
-              />
-              <input
-                type="password"
-                placeholder="Confirm new password"
-                value={confirmPw}
-                onChange={(e) => setConfirmPw(e.target.value)}
-                className="w-full rounded-xl border border-raw-border/30 bg-raw-black/40 px-3 py-2.5 text-sm text-raw-text placeholder:text-raw-silver/25 focus:border-raw-gold/40 focus:outline-none"
-              />
-              <button
-                type="button"
-                onClick={handleChangePassword}
-                disabled={pwLoading || !oldPw || !newPw || !confirmPw}
-                className="w-full rounded-xl bg-raw-gold px-4 py-2.5 text-sm font-semibold text-raw-ink disabled:opacity-40"
-              >
-                {pwLoading ? "Saving…" : "Update Password"}
-              </button>
-            </div>
-          )}
-        </div>
-
-        <div className="rounded-2xl border border-red-500/20 bg-raw-surface/30 overflow-hidden">
-          <button
-            type="button"
-            onClick={() => setDelOpen((v) => !v)}
-            className="flex w-full items-center justify-between px-4 py-3.5 text-left"
-          >
-            <div className="flex items-center gap-2.5">
-              <Trash2 className="h-4 w-4 text-red-400/60" />
-              <span className="text-sm font-medium text-red-400/80">Delete Account</span>
-            </div>
-            <span className="text-xs text-raw-silver/30">{delOpen ? "Cancel" : "Danger"}</span>
-          </button>
-          {delOpen && (
-            <div className="border-t border-red-500/10 px-4 pb-4 pt-3 space-y-2.5">
-              <p className="text-xs text-raw-silver/40">This is permanent. All your data will be deleted and cannot be recovered.</p>
-              <input
-                type="password"
-                placeholder="Enter your password to confirm"
-                value={delPw}
-                onChange={(e) => setDelPw(e.target.value)}
-                className="w-full rounded-xl border border-red-500/20 bg-raw-black/40 px-3 py-2.5 text-sm text-raw-text placeholder:text-raw-silver/25 focus:border-red-400/40 focus:outline-none"
-              />
-              <button
-                type="button"
-                onClick={handleDeleteAccount}
-                disabled={delLoading || !delPw}
-                className="w-full rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-2.5 text-sm font-semibold text-red-400 disabled:opacity-40"
-              >
-                {delLoading ? "Deleting…" : "Permanently Delete My Account"}
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
+      {/* Personality Insights — moved here from the Store tab. Lives next to
+          the profile stats since insights are part of the user's identity. */}
+      <section>
+        <PersonalityInsightsInventory
+          pollsAnswered={profileStats.polls || pollsAnswered}
+          totalPolls={polls.length}
+          tokenBalance={tokenBalance}
+          ownedIds={ownedInsightIds}
+          onPurchase={handlePurchaseInsight}
+        />
+      </section>
     </div>
   );
 }

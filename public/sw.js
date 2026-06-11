@@ -1,4 +1,4 @@
-const CACHE = 'raw-v3';
+const CACHE = 'raw-v5';
 const STATIC = [
   '/raw-logo-96.png',
   '/raw-logo-192.png',
@@ -30,12 +30,17 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip non-GET and external APIs
+  // Skip non-GET and cross-origin requests. Let the browser handle third-party
+  // fonts/scripts directly so the worker does not trip document CSP connect-src.
   if (request.method !== 'GET') return;
-  if (url.hostname.includes('supabase.co')) return;
-  if (url.hostname.includes('googleapis.com')) return;
-  if (url.hostname.includes('clarity.ms')) return;
-  if (url.hostname.includes('googletagmanager.com')) return;
+  if (url.origin !== self.location.origin) return;
+
+  // Always fetch HTML from the network so old app shells do not point at
+  // hashed chunks that disappeared during a newer deployment.
+  if (request.mode === 'navigate' || request.headers.get('accept')?.includes('text/html')) {
+    event.respondWith(fetch(request).catch(() => offlineResponse(request)));
+    return;
+  }
 
   // Cache-first for hashed static assets
   if (url.pathname.startsWith('/assets/')) {
@@ -78,7 +83,10 @@ function fetchAndCache(request) {
 }
 
 function canCache(request, response) {
-  return response.ok && response.status !== 206 && !request.headers.has('range');
+  return response.ok &&
+    response.status !== 206 &&
+    !request.headers.has('range') &&
+    !response.headers.get('content-type')?.includes('text/html');
 }
 
 function offlineResponse(request) {

@@ -1,6 +1,7 @@
 import { FormEvent, useState } from "react";
 import { track } from "@/lib/analytics";
 import { apiFetch } from "@/lib/http";
+import { getUserTextModerationMessage, moderateUserText } from "@/lib/inputSecurity";
 
 export function AnonQuestionSection() {
   const [question, setQuestion] = useState("");
@@ -12,6 +13,11 @@ export function AnonQuestionSection() {
     e.preventDefault();
     const trimmed = question.trim();
     if (!trimmed) return;
+    const moderation = moderateUserText(trimmed);
+    if (!moderation.allowed) {
+      setError(getUserTextModerationMessage(moderation));
+      return;
+    }
 
     setLoading(true);
     setError("");
@@ -20,7 +26,7 @@ export function AnonQuestionSection() {
       const res = await apiFetch("/api/anon-questions", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ question: trimmed }),
+        body: JSON.stringify({ question: moderation.text }),
       });
 
       if (res.ok) {

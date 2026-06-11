@@ -32,7 +32,6 @@
     ]
   },
   "enabledPlugins": {
-    "ralph-loop@claude-plugins-official": true,
-    "understand-anything@understand-anything": true
+    "ralph-loop@claude-plugins-official": true
   }
 }

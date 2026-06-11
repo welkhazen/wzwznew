@@ -2,7 +2,13 @@ import { FloatingDock } from "@/components/ui/floating-dock";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { readCommunityChats } from "@/lib/communityChat";
 import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
-import { Archive, Home as HomeIcon, MessageCircle, Target, User as UserIcon, LogOut, Shield, Trophy, Sparkles, Moon, CloudMoon, Sun } from "lucide-react";
+import { fetchCommunities } from "@/backend/supabase/controllers/communityController";
+import { readCachedCommunities, writeCachedCommunities } from "@/lib/communityCache";
+import { getUserFavoriteCommunities, getUserPinnedMessages, removeUserPinnedMessage, type PinnedMessageRecord } from "@/backend/supabase/controllers/userExtrasController";
+import { Home as HomeIcon, MessageCircle, Target, User as UserIcon, LogOut, Trophy, Sparkles, Moon, CloudMoon, Sun } from "lucide-react";
+import LNTLogo from "@/assets/LNT.webp";
+import SYTLogo from "@/assets/logospeak.webp";
+import IIJMLogo from "@/assets/itisjustme.webp";
 import { useTheme } from "@/providers/useTheme";
 import type { ThemeMode } from "@/providers/theme-context";
 import { matchPath, useLocation, useNavigate } from "react-router-dom";
@@ -10,6 +16,7 @@ import { DashboardNav, type DashboardTab } from "@/components/dashboard/Dashboar
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { DashboardHome } from "@/components/dashboard/DashboardHome";
 import { DashboardSectionShell } from "@/components/dashboard/DashboardSectionShell";
+import { CommunityHoldSwitcher, getCommunityHoldSwitcherTargets } from "@/components/dashboard/CommunityHoldSwitcher";
 import { NotificationConsentPrompt } from "@/components/notifications/NotificationConsentPrompt";
 import { LevelUpCelebration } from "@/components/ui/LevelUpCelebration";
 import { useUserProgress } from "@/store/useUserProgress";
@@ -97,8 +104,23 @@ export default function Dashboard({
   const ModeIcon = mode === "dark" ? Moon : mode === "dusk" ? CloudMoon : Sun;
   const { progress, leveledUpTo, clearLevelUp, award, awardOnce } = useUserProgress(user.id);
   const [activeTab, setActiveTab] = useState<DashboardTab>("home");
-  const [dashboardCommunities, setDashboardCommunities] = useState<PersistedCommunityRecord[]>([]);
+  // Seed from the persistent cache so the user sees their communities
+  // instantly on remount instead of a cold spinner.
+  const [dashboardCommunities, setDashboardCommunities] = useState<PersistedCommunityRecord[]>(
+    () => readCachedCommunities()?.data ?? [],
+  );
+  const [favoriteCommunityIds, setFavoriteCommunityIds] = useState<string[]>([]);
+  const [pinnedMessages, setPinnedMessages] = useState<PinnedMessageRecord[]>([]);
   const [isHome, setIsHome] = useState(true);
+  const [mobileCommunityPickerOpen, setMobileCommunityPickerOpen] = useState(false);
+  const [mobileCommunityAnchorRect, setMobileCommunityAnchorRect] = useState<DOMRect | null>(null);
+  const [mobileCommunityCenterId, setMobileCommunityCenterId] = useState<string | null>(null);
+  const [hoveredHoldCommunityId, setHoveredHoldCommunityId] = useState<string | null>(null);
+  const mobileCommunityPressTimerRef = useRef<number | null>(null);
+  const mobileCommunityPressStartRef = useRef<{ x: number; y: number } | null>(null);
+  const mobileCommunityHoveredRef = useRef<string | null>(null);
+  const mobileCommunityLongPressRef = useRef(false);
+  const mobileCommunitySuppressClickRef = useRef(false);
   const communityRouteMatch = matchPath("/dashboard/communities/:communityId", location.pathname);
   const activeCommunityId = communityRouteMatch?.params.communityId ?? null;
 
@@ -114,9 +136,90 @@ export default function Dashboard({
     }
   }, [activeCommunityId, location.pathname]);
 
+  // Preload communities at the Dashboard level so the home "Trending"
+  // section renders without waiting for the user to visit the Communities tab.
+  // Always revalidates in the background — the seeded cache stays visible
+  // until fresh data arrives, then we swap and persist.
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const list = await fetchCommunities();
+        if (!cancelled) {
+          setDashboardCommunities(list);
+          writeCachedCommunities(list);
+        }
+      } catch {
+        // Tab-level fetch will retry; the cached list (if any) stays on screen.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // Run once on mount.
+  }, []);
+
   useEffect(() => {
     void awardOnce("daily-login", getTodayKey(), XP_REWARDS.DAILY_LOGIN);
   }, [awardOnce]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const ids = await getUserFavoriteCommunities(user.id);
+        if (!cancelled) setFavoriteCommunityIds(ids);
+      } catch {
+        // Favorites are best-effort; sidebar/radial fall back to recent joined.
+      }
+    })();
+    const onChange = (event: Event) => {
+      const detail = (event as CustomEvent<{ userId?: string; ids?: string[] }>).detail;
+      if (!detail || detail.userId !== user.id || !Array.isArray(detail.ids)) return;
+      setFavoriteCommunityIds(detail.ids);
+    };
+    window.addEventListener("raw:favorite-communities-updated", onChange);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("raw:favorite-communities-updated", onChange);
+    };
+  }, [user.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const messages = await getUserPinnedMessages(user.id);
+        if (!cancelled) setPinnedMessages(messages);
+      } catch {
+        // Pinned profile messages are best-effort; the profile still renders.
+      }
+    })();
+    const onChange = (event: Event) => {
+      const detail = (event as CustomEvent<{ userId?: string; messages?: PinnedMessageRecord[] }>).detail;
+      if (!detail || detail.userId !== user.id) return;
+      setPinnedMessages(detail.messages ?? []);
+    };
+    window.addEventListener("raw:pinned-message-updated", onChange);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("raw:pinned-message-updated", onChange);
+    };
+  }, [user.id]);
+
+  const handleRemovePinnedMessage = async (messageId: string) => {
+    const previous = pinnedMessages;
+    const next = previous.filter((message) => message.messageId !== messageId);
+    setPinnedMessages(next);
+    try {
+      await removeUserPinnedMessage(user.id, messageId);
+      window.dispatchEvent(new CustomEvent("raw:pinned-message-updated", {
+        detail: { userId: user.id, messages: next },
+      }));
+    } catch {
+      setPinnedMessages(previous);
+    }
+  };
 
   const handleTabChange = (tab: DashboardTab) => {
     setActiveTab(tab);
@@ -143,9 +246,106 @@ export default function Dashboard({
 
   const activeCommunityTitle = useMemo(() => {
     if (!activeCommunityId) return undefined;
-    return (dashboardCommunities.length > 0 ? dashboardCommunities : readCommunityChats())
-      .find((c) => c.id === activeCommunityId)?.title;
+    return dashboardCommunities.find((c) => c.id === activeCommunityId)?.title;
   }, [activeCommunityId, dashboardCommunities]);
+  const joinedMobileCommunities = useMemo(() => {
+    const joined = dashboardCommunities
+      .filter((community) => community.members.some((member) => member.userId === user.id))
+      .sort((a, b) => {
+        const aMember = a.members.find((member) => member.userId === user.id);
+        const bMember = b.members.find((member) => member.userId === user.id);
+        return (Date.parse(bMember?.lastSeenAt ?? bMember?.joinedAt ?? "") || 0)
+          - (Date.parse(aMember?.lastSeenAt ?? aMember?.joinedAt ?? "") || 0);
+      });
+    if (favoriteCommunityIds.length === 0) return joined.slice(0, 3);
+    const byId = new Map(joined.map((c) => [c.id, c] as const));
+    return favoriteCommunityIds
+      .map((id) => byId.get(id))
+      .filter((c): c is PersistedCommunityRecord => Boolean(c))
+      .slice(0, 3);
+  }, [dashboardCommunities, favoriteCommunityIds, user.id]);
+  const mobileWheelCenterCommunity = useMemo(() => {
+    if (joinedMobileCommunities.length === 0) return null;
+    return joinedMobileCommunities.find((community) => community.id === mobileCommunityCenterId)
+      ?? joinedMobileCommunities.find((community) => community.id === activeCommunityId)
+      ?? joinedMobileCommunities[0];
+  }, [activeCommunityId, joinedMobileCommunities, mobileCommunityCenterId]);
+  const clearMobileCommunityPressTimer = () => {
+    if (mobileCommunityPressTimerRef.current !== null) {
+      window.clearTimeout(mobileCommunityPressTimerRef.current);
+      mobileCommunityPressTimerRef.current = null;
+    }
+  };
+
+  const getMobileCommunityPressPoint = (event: React.TouchEvent<HTMLElement> | React.PointerEvent<HTMLElement>) => {
+    if ("touches" in event) {
+      const touch = event.touches[0] ?? event.changedTouches[0];
+      return touch ? { x: touch.clientX, y: touch.clientY } : null;
+    }
+    return { x: event.clientX, y: event.clientY };
+  };
+
+  const handleMobileCommunityPressStart = (event: React.TouchEvent<HTMLElement> | React.PointerEvent<HTMLElement>) => {
+    if ("pointerType" in event && event.pointerType === "mouse") return;
+    if (mobileCommunityPressTimerRef.current !== null) return;
+    const point = getMobileCommunityPressPoint(event);
+    if (!point) return;
+    mobileCommunityPressStartRef.current = point;
+    const rect = event.currentTarget.getBoundingClientRect();
+    mobileCommunityLongPressRef.current = false;
+    mobileCommunityPressTimerRef.current = window.setTimeout(() => {
+      mobileCommunityPressTimerRef.current = null;
+      if (joinedMobileCommunities.length === 0) return;
+      const currentCommunity = joinedMobileCommunities.find((c) => c.id === activeCommunityId) ?? joinedMobileCommunities[0];
+      setMobileCommunityCenterId(currentCommunity.id);
+      setMobileCommunityAnchorRect(rect);
+      mobileCommunityLongPressRef.current = true;
+      mobileCommunitySuppressClickRef.current = true;
+      setMobileCommunityPickerOpen(true);
+    }, LONG_PRESS_MS);
+  };
+
+  const closeMobileCommunitySwitcher = () => {
+    clearMobileCommunityPressTimer();
+    mobileCommunityPressStartRef.current = null;
+    mobileCommunityHoveredRef.current = null;
+    setHoveredHoldCommunityId(null);
+    setMobileCommunityPickerOpen(false);
+  };
+
+  const handleMobileCommunityPressEnd = () => {
+    clearMobileCommunityPressTimer();
+    mobileCommunityPressStartRef.current = null;
+  };
+
+  const handleMobileCommunityPressMove = (event: React.TouchEvent<HTMLElement> | React.PointerEvent<HTMLElement>) => {
+    if (mobileCommunityLongPressRef.current) return;
+    const start = mobileCommunityPressStartRef.current;
+    const point = getMobileCommunityPressPoint(event);
+    if (!start || !point) return;
+    if (Math.hypot(point.x - start.x, point.y - start.y) > MOVE_CANCEL_PX) {
+      clearMobileCommunityPressTimer();
+      mobileCommunityPressStartRef.current = null;
+    }
+  };
+
+  useEffect(() => {
+    if (!mobileCommunityPickerOpen) return;
+    const closeOnResize = () => closeMobileCommunitySwitcher();
+    const closeOnKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeMobileCommunitySwitcher();
+    };
+    window.addEventListener("resize", closeOnResize);
+    window.addEventListener("keydown", closeOnKey);
+    return () => {
+      window.removeEventListener("resize", closeOnResize);
+      window.removeEventListener("keydown", closeOnKey);
+    };
+    // closeMobileCommunitySwitcher intentionally omitted from deps — the
+    // listeners only need to fire once per open/close transition and the
+    // function is stable across the renders that matter here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mobileCommunityPickerOpen]);
 
   const handleProfileClick = () => {
     setActiveTab("profile");
@@ -155,6 +355,12 @@ export default function Dashboard({
 
   const handleBillingClick = () => {
     setActiveTab("wallet");
+    setIsHome(false);
+    navigate("/dashboard");
+  };
+
+  const handleSettingsClick = () => {
+    setActiveTab("settings");
     setIsHome(false);
     navigate("/dashboard");
   };
@@ -183,6 +389,10 @@ export default function Dashboard({
             xpLevel={progress?.level ?? 1}
             onNavigate={handleTabChange}
             onOpenCommunity={handleOpenCommunity}
+            communities={dashboardCommunities}
+            isAdmin={user.role === "admin"}
+            onAwardXP={handleDailySpinAward}
+            onAvatarWon={markAvatarOwned}
           />
         </DashboardSectionShell>
       );
@@ -319,6 +529,10 @@ export default function Dashboard({
               xpLevel={progress?.level ?? 1}
               onNavigate={handleTabChange}
               onOpenCommunity={handleOpenCommunity}
+              communities={dashboardCommunities}
+              isAdmin={user.role === "admin"}
+              onAwardXP={handleDailySpinAward}
+              onAvatarWon={markAvatarOwned}
             />
           </DashboardSectionShell>
         );
@@ -337,14 +551,13 @@ export default function Dashboard({
         userId={user.id}
         username={user.username}
         avatarLevel={avatarLevel}
-        showAdminLink={user.role === "admin"}
-        onAddTestXP={() => void award(100)}
         onProfileClick={handleProfileClick}
         onBillingClick={handleBillingClick}
+        onSettingsClick={handleSettingsClick}
         onLogout={onLogout}
         communityTitle={activeCommunityTitle}
         onBack={handleBackToCommunities}
-        communities={dashboardCommunities.length > 0 ? dashboardCommunities : undefined}
+        communities={dashboardCommunities}
         xp={progress?.xp ?? 0}
         level={progress?.level ?? 1}
       />
@@ -355,10 +568,12 @@ export default function Dashboard({
         userId={user.id}
         username={user.username}
         avatarLevel={avatarLevel}
-        showAdminLink={user.role === "admin"}
         onHomeClick={handleHomeClick}
         isHome={isHome}
         onLogout={onLogout}
+        communities={dashboardCommunities}
+        favoriteCommunityIds={favoriteCommunityIds}
+        onOpenCommunity={handleOpenCommunity}
       />
 
       {/* Mobile bottom nav replaced with FloatingDock */}
@@ -392,7 +607,26 @@ export default function Dashboard({
             title: "Communities",
             icon: <MessageCircle className="h-5 w-5" />,
             href: "#",
-            onClick: () => handleTabChange("communities"),
+            onClick: () => {
+              if (mobileCommunitySuppressClickRef.current) {
+                mobileCommunitySuppressClickRef.current = false;
+                return;
+              }
+              if (mobileCommunityPickerOpen) {
+                closeMobileCommunitySwitcher();
+                return;
+              }
+              handleTabChange("communities");
+            },
+            onPointerDown: handleMobileCommunityPressStart,
+            onPointerMove: handleMobileCommunityPressMove,
+            onPointerUp: handleMobileCommunityPressEnd,
+            onPointerLeave: handleMobileCommunityPressEnd,
+            onTouchStart: handleMobileCommunityPressStart,
+            onTouchEnd: handleMobileCommunityPressEnd,
+            onTouchCancel: handleMobileCommunityPressEnd,
+            onTouchMove: handleMobileCommunityPressMove,
+            onContextMenu: (event) => event.preventDefault(),
             active: !isHome && activeTab === "communities",
           },
           {
@@ -409,21 +643,21 @@ export default function Dashboard({
             onClick: () => handleTabChange("challenges"),
             active: !isHome && activeTab === "challenges",
           },
-          {
-            title: "Inventory",
-            icon: <Archive className="h-5 w-5" />,
-            href: "#",
-            onClick: () => handleTabChange("inventory"),
-            active: !isHome && activeTab === "inventory",
-          },
-          ...(user.role === "admin" ? [{
-            title: "Admin",
-            icon: <Shield className="h-5 w-5" />,
-            href: "/admin",
-            onClick: () => navigate("/admin"),
-            active: false,
-          }] : []),
         ]}
+      />
+
+      <CommunityHoldSwitcher
+        open={mobileCommunityPickerOpen}
+        anchorRect={mobileCommunityAnchorRect}
+        currentCommunity={mobileWheelCenterCommunity}
+        joinedCommunities={joinedMobileCommunities}
+        hoveredCommunityId={hoveredHoldCommunityId}
+        logoUrlsByCommunityId={COMMUNITY_LOGOS}
+        onSelectCommunity={(communityId) => {
+          closeMobileCommunitySwitcher();
+          handleOpenCommunity(communityId);
+        }}
+        onClose={closeMobileCommunitySwitcher}
       />
 
       {/* Main content */}

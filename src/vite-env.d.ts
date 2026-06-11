@@ -13,6 +13,7 @@ interface ImportMetaEnv {
 	readonly VITE_SUPPORT_WHATSAPP_NUMBER?: string;
 	readonly VITE_SUPPORT_EMAIL?: string;
 	readonly VITE_ENABLE_DIAGNOSTICS?: string;
+	readonly VITE_RAW_TEXT_DENYLIST?: string;
 }
 
 interface ImportMeta {

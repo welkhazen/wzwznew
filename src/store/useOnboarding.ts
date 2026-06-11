@@ -1,20 +1,24 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { OnboardingStep } from "@/store/types";
+import type { OnboardingStep, User } from "@/store/types";
 import { readOnboardingMap, writeOnboardingMap } from "@/store/useRawStore.storage";
 import { LANDING_WHEEL_SPIN_KEY } from "@/lib/avatarCatalog";
+import { completeUserOnboarding } from "@/backend/supabase/controllers/authController";
 
 function defaultInitialStep(): OnboardingStep {
   if (typeof window === "undefined") return "spin";
-  return window.localStorage.getItem(LANDING_WHEEL_SPIN_KEY) ? "avatar" : "spin";
+  return window.localStorage.getItem(LANDING_WHEEL_SPIN_KEY) ? "username" : "spin";
 }
 
-export function useOnboarding(isLoggedIn: boolean, username?: string) {
+export function useOnboarding(isLoggedIn: boolean, user?: User | null) {
+  const username = user?.username;
   const storageKey = username ? `raw.onboarding.completed.${username}` : null;
 
   const [onboardingStep, setOnboardingStep] = useState<OnboardingStep>(defaultInitialStep);
   const [onboardingAnsweredPollIds, setOnboardingAnsweredPollIds] = useState<Set<string>>(new Set());
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
   const [onboardingLoaded, setOnboardingLoaded] = useState(false);
+  const [onboardingPublicUsername, setOnboardingPublicUsername] = useState(username ?? "");
+  const [onboardingPrivateUsername, setOnboardingPrivateUsername] = useState("");
 
   useEffect(() => {
     if (!username || !storageKey) {
@@ -24,23 +28,31 @@ export function useOnboarding(isLoggedIn: boolean, username?: string) {
 
     const entry = readOnboardingMap()[username];
     if (entry) {
-      setOnboardingStep(entry.step);
+      const restoredStep = entry.step === "profile"
+        ? "communities"
+        : entry.step === "spin" && window.localStorage.getItem(LANDING_WHEEL_SPIN_KEY)
+          ? "username"
+          : entry.step;
+      setOnboardingStep(restoredStep);
       setOnboardingAnsweredPollIds(new Set(entry.answeredPollIds));
-      setOnboardingCompleted(entry.completed);
+      setOnboardingPublicUsername(entry.publicUsername ?? username);
+      setOnboardingPrivateUsername(entry.privateUsername ?? "");
+      setOnboardingCompleted(user?.onboardingCompleted ?? entry.completed);
       setOnboardingLoaded(true);
       return;
     }
 
-    setOnboardingCompleted(window.localStorage.getItem(storageKey) === "1");
+    setOnboardingCompleted(user?.onboardingCompleted ?? window.localStorage.getItem(storageKey) === "1");
+    setOnboardingPublicUsername(username);
     setOnboardingLoaded(true);
-  }, [storageKey, username]);
+  }, [storageKey, user?.onboardingCompleted, username]);
 
   const markOnboardingPollAnswered = useCallback((pollId: string) => {
     setOnboardingAnsweredPollIds((previous) => new Set(previous).add(pollId));
   }, []);
 
   useEffect(() => {
-    if (!username) {
+    if (!username || !onboardingLoaded) {
       return;
     }
 
@@ -50,9 +62,11 @@ export function useOnboarding(isLoggedIn: boolean, username?: string) {
       completed: onboardingCompleted,
       step: onboardingStep,
       answeredPollIds: Array.from(onboardingAnsweredPollIds),
+      publicUsername: onboardingPublicUsername,
+      privateUsername: onboardingPrivateUsername,
     };
     writeOnboardingMap(map);
-  }, [onboardingAnsweredPollIds, onboardingCompleted, onboardingStep, username]);
+  }, [onboardingAnsweredPollIds, onboardingCompleted, onboardingLoaded, onboardingPrivateUsername, onboardingPublicUsername, onboardingStep, username]);
 
   const resetOnboardingProgress = useCallback(() => {
     setOnboardingStep(defaultInitialStep());
@@ -65,7 +79,8 @@ export function useOnboarding(isLoggedIn: boolean, username?: string) {
     setOnboardingCompleted(true);
     setOnboardingStep("communities");
     if (storageKey) localStorage.setItem(storageKey, "1");
-  }, [storageKey]);
+    if (user?.id) void completeUserOnboarding(user.id);
+  }, [storageKey, user?.id]);
 
   const isOnboardingResolved = !isLoggedIn || onboardingLoaded;
 
@@ -73,6 +88,10 @@ export function useOnboarding(isLoggedIn: boolean, username?: string) {
     onboardingStep,
     setOnboardingStep,
     onboardingAnsweredPollIds,
+    onboardingPublicUsername,
+    onboardingPrivateUsername,
+    setOnboardingPublicUsername,
+    setOnboardingPrivateUsername,
     markOnboardingPollAnswered,
     onboardingCompleted,
     completeOnboarding,
@@ -83,6 +102,8 @@ export function useOnboarding(isLoggedIn: boolean, username?: string) {
     isOnboardingResolved,
     markOnboardingPollAnswered,
     onboardingAnsweredPollIds,
+    onboardingPrivateUsername,
+    onboardingPublicUsername,
     onboardingCompleted,
     onboardingStep,
     resetOnboardingProgress,

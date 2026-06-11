@@ -154,9 +154,16 @@ export function useRewards(user: User | null) {
   const selectAvatarForOnboarding = useCallback((toLevel: number) => {
     const maxLevel = avatarCatalog.length;
     const clamped = Math.min(Math.max(1, toLevel), Math.max(1, maxLevel));
-    if (!avatarCatalog[clamped - 1]) return;
+    const candidate = avatarCatalog[clamped - 1];
+    if (!candidate) return;
+    if (user && inventoryLoaded && !ownedAvatarIds.includes(candidate.id)) return;
     setAvatarLevelState(clamped);
-  }, [avatarCatalog]);
+    if (user && inventoryLoaded) {
+      void equipAvatarForUser(user.id, candidate.id);
+    }
+  }, [avatarCatalog, inventoryLoaded, ownedAvatarIds, user]);
+
+  const ownedAvatarIdSet = useMemo(() => new Set(ownedAvatarIds), [ownedAvatarIds]);
 
   return useMemo(() => ({
     avatarLevel,
@@ -165,8 +172,9 @@ export function useRewards(user: User | null) {
     selectAvatarForOnboarding,
     avatarCatalog,
     ownedAvatarLevels,
+    ownedAvatarIds: ownedAvatarIdSet,
     unlockAvatarLevel,
     markAvatarOwned,
     avatarPricesByLevel,
-  }), [avatarCatalog, avatarLevel, avatarPricesByLevel, changeAvatarLevel, markAvatarOwned, ownedAvatarLevels, selectAvatarForOnboarding, setAvatarLevel, unlockAvatarLevel]);
+  }), [avatarCatalog, avatarLevel, avatarPricesByLevel, changeAvatarLevel, markAvatarOwned, ownedAvatarIdSet, ownedAvatarLevels, selectAvatarForOnboarding, setAvatarLevel, unlockAvatarLevel]);
 }

@@ -1,4 +1,4 @@
-import type { OnboardingStep } from "./useRawStore.types";
+import type { OnboardingStep } from "./types";
 
 const DAILY_POLL_PROGRESS_STORAGE_KEY = "raw.poll-daily-progress.v1";
 const ONBOARDING_STATE_STORAGE_KEY = "raw.onboarding.v1";
@@ -16,6 +16,8 @@ interface PersistedOnboardingEntry {
   answeredPollIds: string[];
   selectedCommunityIds?: string[];
   selectedCommunityId?: string | null;
+  publicUsername?: string;
+  privateUsername?: string;
 }
 
 type PersistedOnboardingMap = Record<string, PersistedOnboardingEntry>;

@@ -22,6 +22,9 @@ export async function sendCrashAlert(input: CrashAlertInput): Promise<void> {
   }
   sentCrashKeys.add(crashKey);
 
+  // The server gates this endpoint with trusted-origin + per-IP rate limit for
+  // browser callers, and additionally requires Bearer CRASH_ALERT_SECRET for
+  // server-to-server callers. Do not ship the secret to the browser bundle.
   await apiFetch("/api/monitoring/crash-alert", {
     method: "POST",
     headers: { "content-type": "application/json" },

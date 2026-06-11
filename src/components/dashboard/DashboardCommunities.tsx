@@ -6,45 +6,41 @@ import IIJMLogo from "@/assets/itisjustme.webp";
 import { AlertTriangle, ArrowLeft, BarChart3, Bell, BellOff, ImagePlus, Lock, Plus, Search, Trash2, UserMinus, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
+import { useConfirmDialog } from "@/hooks/use-confirm-dialog";
 import { CommunityBadge } from "@/components/dashboard/CommunityBadge";
 import {
   ensureUserRecord,
   formatAdminTimestamp,
   getPersistedUserById,
-  readChatReports,
   readCommunityJoinRequests,
   type ChatReportRecord,
   type CommunityJoinRequestRecord,
-  writeChatReports,
   writeCommunityJoinRequests,
 } from "@/lib/adminData";
+import { submitChatReport } from "@/backend/supabase/controllers/chatReportsController";
 import {
   canManageCommunity,
   countUnreadMessages,
   countOnlineMembers,
   formatChatDayLabel,
-  formatChatTimestamp,
-  leaveCommunityChat,
-  updateCommunityPresentation,
 } from "@/lib/communityChat";
 import {
   fetchCommunities,
+  fetchCommunityMessages,
   joinCommunity as joinCommunitySupabase,
   leaveCommunity as leaveCommunitySupabase,
   touchMemberActivity,
   markCommunityRead as markCommunityReadSupabase,
   setCommunityNotifications as setCommunityNotificationsSupabase,
+  updateCommunityPresentation,
 } from "@/backend/supabase/controllers/communityController";
 import {
   sendMessage as sendMessageSupabase,
   likeMessage,
+  mapCommunityMessage,
+  type DbCommunityMessage,
 } from "@/backend/supabase/controllers/chatController";
-import { fetchUserAliases } from "@/backend/supabase/controllers/userAliasController";
-import type { UserAliasRow } from "@/backend/supabase/models/user-alias";
-import { mapCommunityMessage, type DbCommunityMessage } from "@/backend/supabase/mappers/communityMessageMapper";
 import { supabase } from "@/backend/supabase/client";
 import {
   fetchCommunityPolls,
@@ -63,39 +59,55 @@ import {
   COMMUNITY_COVER_VIDEOS,
 } from "@/lib/communityConstants";
 import { buildDefaultCommunities } from "@/lib/communityChat.seed";
+import { readCachedMessages, writeCachedMessages } from "@/lib/communityCache";
 import { sendCommunityPushNotification } from "@/lib/communityPushNotifications";
 import { sendDashboardCommunityMessage } from "@/lib/communityChatSend";
 import { IDENTITY_SELECTION_EVENT, readSelectedIdentityAlias } from "@/lib/identitySelection";
 import type { CommunityChatMessageRecord, PersistedCommunityRecord } from "@/lib/communityChat.types";
 import {
+  appendOptimisticMessage,
+  getMessageSenderBlockKey,
+  markCommunityMessageFailed,
+  mergeCommunityMessageList,
+  replaceCommunityMessage,
+  setCommunityMessages,
+} from "@/lib/communityChatState";
+import { useCommunityMessagesRealtime } from "@/hooks/useCommunityMessagesRealtime";
+import {
   loadCommunityAccess,
-  unlockCommunity,
   FREE_COMMUNITY_SLOTS,
   COMMUNITY_UNLOCK_TOKEN_COST,
   type CommunityAccess,
 } from "@/lib/communityAccess";
 import { readAvatarCatalogLocal } from "@/lib/avatarCatalog";
+import { getPrivateAvatarLevel } from "@/lib/avataridentity";
+import { getPublicUserProfile, type PublicUserProfile } from "@/backend/supabase/controllers/userController";
+import {
+  MAX_FAVORITE_COMMUNITIES,
+  MAX_PINNED_MESSAGES,
+  PinnedMessageLimitError,
+  getUserFavoriteCommunities,
+  getUserPinnedMessages,
+  setUserFavoriteCommunities,
+  addUserPinnedMessage,
+  removeUserPinnedMessage,
+  notifyMessagePinned,
+  type PinnedMessageRecord,
+} from "@/backend/supabase/controllers/userExtrasController";
 import {
   getCommunitySenderBlockKey,
   readBlockedCommunitySenders,
   writeBlockedCommunitySenders,
 } from "@/lib/blockedCommunitySenders";
+import { getUserTextModerationMessage, moderateUserText } from "@/lib/inputSecurity";
+import { useTheme } from "@/providers/useTheme";
 import type { User } from "@/store/types";
 import { CommunityMessageTimeline } from "@/components/dashboard/CommunityMessageTimeline";
 import { CommunityMessageComposer } from "@/components/dashboard/CommunityMessageComposer";
 import { CommunityRoomList } from "@/components/dashboard/CommunityRoomList";
 
 const WAITLIST_UNLOCK_THRESHOLD = 200;
-const TOKEN_BALANCE_STORAGE_PREFIX = "raw.polls.token-balance";
-const TOKEN_BALANCE_UPDATED_EVENT = "raw:token-balance-updated";
-
-function updateTokenBalanceCache(userId: string, balance: number): void {
-  if (typeof window === "undefined") return;
-  const key = `${TOKEN_BALANCE_STORAGE_PREFIX}.${userId}`;
-  window.localStorage.setItem(key, String(balance));
-  window.dispatchEvent(new CustomEvent(TOKEN_BALANCE_UPDATED_EVENT, { detail: { storageKey: key, balance } }));
-}
-const COMMUNITIES_CACHE_KEY = "raw.dashboard.communities.v1";
+const MESSAGE_PAGE_SIZE = 10;
 const MAX_COMMUNITY_MESSAGE_LENGTH = 150;
 
 function getMessageSenderBlockKey(message: Pick<CommunityChatMessageRecord, "senderId" | "senderName">): string {
@@ -269,7 +281,7 @@ export function DashboardCommunities(props) {
 
 interface DashboardCommunitiesProps {
   user: User;
-  tokenBalance?: number;
+  avatarLevel?: number;
   activeCommunityId?: string | null;
   onOpenCommunity: (communityId: string) => void;
   onBackToCommunities?: () => void;
@@ -328,7 +340,57 @@ const COMMUNITY_LOGOS: Record<string, string> = {
   iijm: IIJMLogo,
 };
 
-// ...existing code continues inside the function above...
+export function DashboardCommunities({
+  user,
+  avatarLevel = 1,
+  activeCommunityId = null,
+  onOpenCommunity,
+  onBackToCommunities,
+  onCommunitiesChange,
+}: DashboardCommunitiesProps) {
+  const { mode } = useTheme();
+  const isLight = mode === "light";
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [communities, setCommunities] = useState<PersistedCommunityRecord[]>([]);
+  // --- Floating request button state/hooks ---
+  const [showRequestButton, setShowRequestButton] = useState(false);
+  const [requestBtnText, setRequestBtnText] = useState("Didn't find your community?");
+  const [mobileRequestExpanded, setMobileRequestExpanded] = useState(false);
+  const [isInitialCommunitiesLoading, setIsInitialCommunitiesLoading] = useState(true);
+
+  // Show button after scrolling 400px
+  useEffect(() => {
+    const onScroll = () => {
+      if (window.scrollY > 400) {
+        setShowRequestButton(true);
+      } else {
+        setShowRequestButton(false);
+      }
+    };
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Collapse mobile request button when tapping outside
+  useEffect(() => {
+    if (!mobileRequestExpanded) return;
+    const handler = () => setMobileRequestExpanded(false);
+    const timeout = setTimeout(() => document.addEventListener("click", handler), 0);
+    return () => { clearTimeout(timeout); document.removeEventListener("click", handler); };
+  }, [mobileRequestExpanded]);
+
+  // Animate text change after 2s
+  useEffect(() => {
+    if (!showRequestButton) {
+      setRequestBtnText("Didn't find your community?");
+      return;
+    }
+    const timeout = setTimeout(() => {
+      setRequestBtnText("Request to create yours now");
+    }, 2000);
+    return () => clearTimeout(timeout);
+  }, [showRequestButton]);
   const [requestFormOpen, setRequestFormOpen] = useState(false);
   const [requestSubmitAttempted, setRequestSubmitAttempted] = useState(false);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
@@ -337,6 +399,12 @@ const COMMUNITY_LOGOS: Record<string, string> = {
   const [requestDraft, setRequestDraft] = useState<CommunityRequestDraft>(INITIAL_REQUEST_DRAFT);
   const [reportDraft, setReportDraft] = useState<ReportDraft>(INITIAL_REPORT_DRAFT);
   const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+  const [profileTarget, setProfileTarget] = useState<{
+    message: CommunityChatMessageRecord;
+    profile: PublicUserProfile | null;
+    loading: boolean;
+  } | null>(null);
   const [communityRequests, setCommunityRequests] = useState<CommunityRequestRecord[]>([]);
   const [chatReports, setChatReports] = useState<ChatReportRecord[]>([]);
   const [communityJoinRequests, setCommunityJoinRequests] = useState<CommunityJoinRequestRecord[]>([]);
@@ -345,18 +413,22 @@ const COMMUNITY_LOGOS: Record<string, string> = {
   const [waitlistJoiningId, setWaitlistJoiningId] = useState<string | null>(null);
   const [communityAccess, setCommunityAccess] = useState<CommunityAccess>({ hasSubscription: false, unlockedIds: new Set<string>() });
   const [unlockingId, setUnlockingId] = useState<string | null>(null);
+  const [favoriteCommunityIds, setFavoriteCommunityIds] = useState<string[]>([]);
+  const [ownPinnedMessages, setOwnPinnedMessages] = useState<PinnedMessageRecord[]>([]);
+  const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [leavingCommunityId, setLeavingCommunityId] = useState<string | null>(null);
   const [messageDraft, setMessageDraft] = useState("");
-  const [chatIdentities, setChatIdentities] = useState<ChatIdentity[]>([
-    { alias: user.username, avatar_level: avatarLevel, is_public: true },
-  ]);
-  const [selectedChatIdentityAlias, setSelectedChatIdentityAlias] = useState(() => readSelectedIdentityAlias(user.id) ?? user.username);
+  const [selectedChatAlias, setSelectedChatAlias] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    return window.localStorage.getItem(`${CHAT_IDENTITY_PREFIX}${user.id}`);
+  });
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [mentionIndex, setMentionIndex] = useState(0);
   const [expandedDescs, setExpandedDescs] = useState<Set<string>>(new Set());
   const [communityPolls, setCommunityPolls] = useState<CommunityPollRecord[]>([]);
   const [communityPollsAvailable, setCommunityPollsAvailable] = useState(true);
   const [communityPollsExpanded, setCommunityPollsExpanded] = useState(false);
+  const [feedOpen, setFeedOpen] = useState(false);
   const [hiddenAnsweredPollIds, setHiddenAnsweredPollIds] = useState<Set<string>>(new Set());
   const [membersDialogOpen, setMembersDialogOpen] = useState(false);
   const [pollComposerOpen, setPollComposerOpen] = useState(false);
@@ -365,14 +437,32 @@ const COMMUNITY_LOGOS: Record<string, string> = {
   const [pollSubmitting, setPollSubmitting] = useState(false);
   const [blockedSenderKeys, setBlockedSenderKeys] = useState<string[]>(() => readBlockedCommunitySenders(user.id));
   const [senderAvatarLevels, setSenderAvatarLevels] = useState<Record<string, number>>({});
+  const [hasOlderMessages, setHasOlderMessages] = useState(false);
+  const [messagesLoading, setMessagesLoading] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setSelectedChatAlias(window.localStorage.getItem(`${CHAT_IDENTITY_PREFIX}${user.id}`));
+    const handleIdentityChange = (event: Event) => {
+      const detail = (event as CustomEvent<{ userId?: string; alias?: string | null }>).detail;
+      if (detail?.userId !== user.id) return;
+      setSelectedChatAlias(detail.alias ?? null);
+    };
+    window.addEventListener(CHAT_IDENTITY_CHANGED_EVENT, handleIdentityChange);
+    return () => window.removeEventListener(CHAT_IDENTITY_CHANGED_EVENT, handleIdentityChange);
+  }, [user.id]);
+  const [messagesError, setMessagesError] = useState(false);
+  const [isLoadingOlderMessages, setIsLoadingOlderMessages] = useState(false);
   const lastTouchedCommunityRef = useRef<string>("");
+  const latestMessagesRequestRef = useRef(0);
+  const loadedMessagesCommunityRef = useRef<string | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const messageInputRef = useRef<HTMLInputElement | null>(null);
+  const preserveScrollAfterOlderLoadRef = useRef<{ previousHeight: number } | null>(null);
 
     const updateCommunities = useCallback((updater: (communities: PersistedCommunityRecord[]) => PersistedCommunityRecord[]) => {
       setCommunities((previous) => {
         const next = updater(previous);
-        writeCachedCommunities(next);
         onCommunitiesChange?.(next);
         return next;
       });
@@ -380,25 +470,47 @@ const COMMUNITY_LOGOS: Record<string, string> = {
 
     const reloadChatData = useCallback(async () => {
       try {
-        const [communitiesData, requestsData, waitlistData, accessData] = await Promise.all([
+        if (activeCommunityId) {
+          setMessagesLoading(true);
+          setMessagesError(false);
+        }
+
+        const [communitiesData, requestsData, waitlistData, accessData, activeCommunityMessages] = await Promise.all([
           fetchCommunities(),
           fetchCommunityRequests(user.id),
           fetchWaitlistSummary(user.id).catch(() => createEmptyWaitlistSummary()),
           loadCommunityAccess(user.id).catch(() => ({ hasSubscription: false, unlockedIds: new Set<string>() })),
+          activeCommunityId
+            ? fetchCommunityMessages(activeCommunityId, { limit: MESSAGE_PAGE_SIZE }).catch(() => null)
+            : Promise.resolve(null),
         ]);
-        setCommunities(communitiesData);
-        writeCachedCommunities(communitiesData);
-        onCommunitiesChange?.(communitiesData);
+        if (activeCommunityId && activeCommunityMessages === null) {
+          setMessagesError(true);
+        }
+        if (activeCommunityId && activeCommunityMessages) {
+          loadedMessagesCommunityRef.current = activeCommunityId;
+          setHasOlderMessages(activeCommunityMessages.length === MESSAGE_PAGE_SIZE);
+        }
+        setCommunities((previous) => {
+          const next = communitiesData.map((community) => ({
+            ...community,
+            messages: community.id === activeCommunityId && activeCommunityMessages
+              ? activeCommunityMessages
+              : previous.find((item) => item.id === community.id)?.messages ?? community.messages,
+          }));
+          onCommunitiesChange?.(next);
+          return next;
+        });
         setCommunityRequests(requestsData);
-        setChatReports(readChatReports());
         setCommunityJoinRequests(readCommunityJoinRequests());
         setWaitlistCounts(waitlistData.counts);
         setWaitlistJoinedIds(waitlistData.joinedCommunityIds);
         setCommunityAccess(accessData);
       } finally {
+        setMessagesLoading(false);
         setIsInitialCommunitiesLoading(false);
       }
-    }, [onCommunitiesChange, user.id]);
+    }, [activeCommunityId, onCommunitiesChange, user.id]);
 
     const fallbackCommunities = useMemo(() => buildDefaultCommunities(), []);
     const selectedCommunity = useMemo(() => {
@@ -435,6 +547,86 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       () => (selectedCommunity?.messages ?? []).filter((message) => !blockedSenderKeySet.has(getMessageSenderBlockKey(message))),
       [blockedSenderKeySet, selectedCommunity]
     );
+
+    const loadLatestMessages = useCallback(async () => {
+      if (!activeCommunityId) {
+        setHasOlderMessages(false);
+        setMessagesLoading(false);
+        setMessagesError(false);
+        return;
+      }
+      if (loadedMessagesCommunityRef.current === activeCommunityId) {
+        return;
+      }
+
+      const requestId = latestMessagesRequestRef.current + 1;
+      latestMessagesRequestRef.current = requestId;
+
+      // Hydrate from the persistent cache first so the room appears
+      // instantly. We only show the spinner if there's no cache at all —
+      // otherwise the network fetch revalidates in the background.
+      const cached = readCachedMessages(activeCommunityId);
+      if (cached) {
+        const communityId = activeCommunityId;
+        setHasOlderMessages(cached.data.length === MESSAGE_PAGE_SIZE);
+        updateCommunities((current) =>
+          setCommunityMessages(current, communityId, cached.data),
+        );
+        setMessagesLoading(false);
+        setMessagesError(false);
+      } else {
+        setMessagesLoading(true);
+        setMessagesError(false);
+      }
+
+      try {
+        const communityId = activeCommunityId;
+        const messages = await fetchCommunityMessages(communityId, { limit: MESSAGE_PAGE_SIZE });
+        if (latestMessagesRequestRef.current !== requestId) return;
+        loadedMessagesCommunityRef.current = communityId;
+        setHasOlderMessages(messages.length === MESSAGE_PAGE_SIZE);
+        updateCommunities((current) => setCommunityMessages(current, communityId, messages));
+        writeCachedMessages(communityId, messages);
+      } catch {
+        if (latestMessagesRequestRef.current === requestId && !cached) {
+          // Only surface the error UI when there was nothing cached to fall back on.
+          setMessagesError(true);
+        }
+      } finally {
+        if (latestMessagesRequestRef.current === requestId) {
+          setMessagesLoading(false);
+        }
+      }
+    }, [activeCommunityId, updateCommunities]);
+
+    const loadOlderMessages = useCallback(async () => {
+      if (!activeCommunityId || isLoadingOlderMessages || activeMessages.length === 0 || !hasOlderMessages) {
+        return;
+      }
+
+      setIsLoadingOlderMessages(true);
+      preserveScrollAfterOlderLoadRef.current = {
+        previousHeight: messagesContainerRef.current?.scrollHeight ?? 0,
+      };
+      try {
+        const olderMessages = await fetchCommunityMessages(activeCommunityId, {
+          before: activeMessages[0].createdAt,
+          limit: MESSAGE_PAGE_SIZE,
+        });
+        setHasOlderMessages(olderMessages.length === MESSAGE_PAGE_SIZE);
+        updateCommunities((current) => {
+          const existing = current.find((community) => community.id === activeCommunityId)?.messages ?? [];
+          return setCommunityMessages(current, activeCommunityId, mergeCommunityMessageList(existing, olderMessages));
+        });
+      } finally {
+        setIsLoadingOlderMessages(false);
+      }
+    }, [activeCommunityId, activeMessages, hasOlderMessages, isLoadingOlderMessages, updateCommunities]);
+
+    useEffect(() => {
+      void loadLatestMessages();
+    }, [loadLatestMessages, selectedCommunity?.id]);
+
     const messageSenderIds = useMemo(() => {
       const ids = new Set<string>();
       activeMessages.forEach((message) => {
@@ -480,61 +672,6 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       };
     }, [avatarLevel, messageSenderIds, user.id]);
 
-    useEffect(() => {
-      let cancelled = false;
-
-      async function loadChatIdentities() {
-        try {
-          const aliases = await fetchUserAliases(user.id);
-          if (cancelled) return;
-
-          const privateAliases = aliases.filter((alias) => alias.alias.trim().toLowerCase() !== user.username.trim().toLowerCase());
-          const nextIdentities = [
-            { alias: user.username, avatar_level: avatarLevel, is_public: true },
-            ...privateAliases.map((alias) => ({
-              alias: alias.alias,
-              avatar_level: alias.avatar_level || avatarLevel,
-              is_public: false,
-            })),
-          ];
-          setChatIdentities(nextIdentities);
-          const savedAlias = readSelectedIdentityAlias(user.id);
-          setSelectedChatIdentityAlias(
-            savedAlias && nextIdentities.some((identity) => identity.alias === savedAlias) ? savedAlias : user.username
-          );
-        } catch {
-          if (!cancelled) {
-            setChatIdentities([{ alias: user.username, avatar_level: avatarLevel, is_public: true }]);
-            setSelectedChatIdentityAlias(user.username);
-          }
-        }
-      }
-
-      void loadChatIdentities();
-      const reloadAliases = (event: Event) => {
-        const updatedUserId = (event as CustomEvent<{ userId?: string }>).detail?.userId;
-        if (!updatedUserId || updatedUserId === user.id) void loadChatIdentities();
-      };
-      const syncSelectedIdentity = (event: Event) => {
-        const detail = (event as CustomEvent<{ userId?: string; alias?: string }>).detail;
-        if (detail?.userId === user.id && detail.alias) setSelectedChatIdentityAlias(detail.alias);
-      };
-      window.addEventListener("raw:user-aliases-updated", reloadAliases);
-      window.addEventListener(IDENTITY_SELECTION_EVENT, syncSelectedIdentity);
-
-      return () => {
-        cancelled = true;
-        window.removeEventListener("raw:user-aliases-updated", reloadAliases);
-        window.removeEventListener(IDENTITY_SELECTION_EVENT, syncSelectedIdentity);
-      };
-    }, [avatarLevel, user.id, user.username]);
-
-    const selectedChatIdentity = chatIdentities.find((identity) => identity.alias === selectedChatIdentityAlias) ?? chatIdentities[0] ?? {
-      alias: user.username,
-      avatar_level: avatarLevel,
-      is_public: true,
-    };
-
     const filteredMessages = useMemo(() => {
       const query = searchQuery.trim().toLowerCase();
       if (!query) {
@@ -576,7 +713,6 @@ const COMMUNITY_LOGOS: Record<string, string> = {
     );
     const effectiveUnlockCount = Math.max(communityAccess.unlockedIds.size, joinedCommunityCount);
     const freeCommunitySlotsRemaining = Math.max(0, FREE_COMMUNITY_SLOTS - effectiveUnlockCount);
-
     useEffect(() => {
       setSearchQuery("");
       setCommunityPollsExpanded(false);
@@ -645,21 +781,35 @@ const COMMUNITY_LOGOS: Record<string, string> = {
     const handleSubmitPoll = useCallback(async () => {
       if (!selectedCommunity || !canManagePolls) return;
       const trimmedOptions = pollOptionDrafts.map((option) => option.trim()).filter(Boolean);
+      const questionModeration = moderateUserText(pollQuestion);
       if (!pollQuestion.trim()) {
         toast({ title: "Add a question", description: "Polls need a question to ask the room." });
+        return;
+      }
+      if (!questionModeration.allowed) {
+        toast({ title: "Poll question blocked", description: getUserTextModerationMessage(questionModeration) });
         return;
       }
       if (trimmedOptions.length < 2) {
         toast({ title: "Add at least two options", description: "Members need something to choose between." });
         return;
       }
+      const moderatedOptions: string[] = [];
+      for (const option of trimmedOptions) {
+        const optionModeration = moderateUserText(option);
+        if (!optionModeration.allowed) {
+          toast({ title: "Poll option blocked", description: getUserTextModerationMessage(optionModeration) });
+          return;
+        }
+        moderatedOptions.push(optionModeration.text);
+      }
 
       setPollSubmitting(true);
       try {
         await createCommunityPoll({
           communityId: selectedCommunity.id,
-          question: pollQuestion.trim(),
-          options: trimmedOptions,
+          question: questionModeration.text,
+          options: moderatedOptions,
           createdByUserId: user.id,
           createdByUsername: user.username,
         });
@@ -723,7 +873,12 @@ const COMMUNITY_LOGOS: Record<string, string> = {
 
     const handleKickMember = useCallback(async (memberId: string, memberName: string) => {
       if (!selectedCommunity || !canManagePolls || memberId === user.id) return;
-      const confirmed = window.confirm(`Remove ${memberName} from ${selectedCommunity.title}?`);
+      const confirmed = await confirm({
+        title: `Remove ${memberName}?`,
+        description: `They will lose access to ${selectedCommunity.title}.`,
+        confirmLabel: "Remove",
+        tone: "danger",
+      });
       if (!confirmed) return;
 
       try {
@@ -733,7 +888,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       } catch {
         toast({ title: "Could not remove member", description: "Please try again." });
       }
-    }, [canManagePolls, reloadChatData, selectedCommunity, user.id]);
+    }, [canManagePolls, confirm, reloadChatData, selectedCommunity, user.id]);
 
     useEffect(() => {
       reloadChatData();
@@ -753,38 +908,153 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       };
     }, [reloadChatData]);
 
+    useCommunityMessagesRealtime(updateCommunities);
+
     useEffect(() => {
-      if (!activeCommunityId) {
+      let cancelled = false;
+      void (async () => {
+        try {
+          const ids = await getUserFavoriteCommunities(user.id);
+          if (!cancelled) setFavoriteCommunityIds(ids);
+        } catch {
+          // Best-effort.
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }, [user.id]);
+
+    useEffect(() => {
+      let cancelled = false;
+      void (async () => {
+        try {
+          const messages = await getUserPinnedMessages(user.id);
+          if (!cancelled) setOwnPinnedMessages(messages);
+        } catch {
+          // Best-effort.
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }, [user.id]);
+
+    const pinnedMessageIds = useMemo(
+      () => new Set(ownPinnedMessages.map((m) => m.messageId)),
+      [ownPinnedMessages],
+    );
+
+    const broadcastFavoritesUpdated = useCallback((ids: string[]) => {
+      window.dispatchEvent(new CustomEvent("raw:favorite-communities-updated", {
+        detail: { userId: user.id, ids },
+      }));
+    }, [user.id]);
+
+    const broadcastPinnedMessageUpdated = useCallback((messages: PinnedMessageRecord[]) => {
+      window.dispatchEvent(new CustomEvent("raw:pinned-message-updated", {
+        detail: { userId: user.id, messages },
+      }));
+    }, [user.id]);
+
+    const handleToggleFavorite = useCallback(async (communityId: string) => {
+      const isFavorite = favoriteCommunityIds.includes(communityId);
+      let next: string[];
+      if (isFavorite) {
+        next = favoriteCommunityIds.filter((id) => id !== communityId);
+      } else {
+        if (favoriteCommunityIds.length >= MAX_FAVORITE_COMMUNITIES) {
+          toast({ title: "Favorites full", description: `You can pick up to ${MAX_FAVORITE_COMMUNITIES} favorite communities.` });
+          return;
+        }
+        next = [...favoriteCommunityIds, communityId];
+      }
+      const previous = favoriteCommunityIds;
+      setFavoriteCommunityIds(next);
+      broadcastFavoritesUpdated(next);
+      try {
+        await setUserFavoriteCommunities(user.id, next);
+      } catch {
+        setFavoriteCommunityIds(previous);
+        broadcastFavoritesUpdated(previous);
+        toast({ title: "Could not update favorites", description: "Please try again." });
+      }
+    }, [broadcastFavoritesUpdated, favoriteCommunityIds, user.id]);
+
+    const handlePinMessageToProfile = useCallback(async (message: CommunityChatMessageRecord, community: PersistedCommunityRecord) => {
+      if (message.moderationStatus === "hold") {
+        toast({ title: "Message pending review", description: "This message can be pinned once it passes moderation review." });
         return;
       }
+      if (ownPinnedMessages.length >= MAX_PINNED_MESSAGES) {
+        toast({ title: "Pin limit reached", description: `You can only pin up to ${MAX_PINNED_MESSAGES} messages. Remove one first.` });
+        return;
+      }
+      try {
+        const payload = {
+          messageId: message.id,
+          communityId: community.id,
+          communityTitle: community.title,
+          senderName: message.senderName,
+          messageText: message.text,
+          messageCreatedAt: message.createdAt,
+        };
+        const nextPinnedMessage = await addUserPinnedMessage(user.id, payload);
+        const next = [...ownPinnedMessages, nextPinnedMessage];
+        setOwnPinnedMessages(next);
+        broadcastPinnedMessageUpdated(next);
+        toast({ title: "Pinned to your profile", description: "Others will see this message on your chat profile." });
+        if (message.senderId && message.senderId !== user.id) {
+          notifyMessagePinned({
+            recipientUserId: message.senderId,
+            messageId: message.id,
+            communityId: community.id,
+            communityTitle: community.title,
+            messageText: message.text,
+          }).catch(() => {});
+        }
+      } catch (error) {
+        if (error instanceof PinnedMessageLimitError) {
+          toast({ title: "Pin limit reached", description: error.message });
+        } else {
+          toast({ title: "Could not pin message", description: "Please try again." });
+        }
+      }
+    }, [broadcastPinnedMessageUpdated, ownPinnedMessages, user.id]);
 
-      const channel = supabase
-        .channel(`room:${activeCommunityId}`)
-        .on(
-          "postgres_changes",
-          {
-            event: "*",
-            schema: "public",
-            table: "community_messages",
-            filter: `community_id=eq.${activeCommunityId}`,
-          },
-          (payload) => {
-            if (payload.eventType === "DELETE") {
-              return;
-            }
-            const nextMessage = mapCommunityMessage(payload.new as DbCommunityMessage);
-            if (nextMessage.communityId !== activeCommunityId) {
-              return;
-            }
-            updateCommunities((current) => upsertCommunityMessage(current, activeCommunityId, nextMessage));
-          },
-        )
-        .subscribe();
+    const handlePinMessage = useCallback((message: CommunityChatMessageRecord) => {
+      if (!selectedCommunity) return;
+      void handlePinMessageToProfile(message, selectedCommunity);
+    }, [handlePinMessageToProfile, selectedCommunity]);
 
-      return () => {
-        void supabase.removeChannel(channel);
-      };
-    }, [activeCommunityId, updateCommunities]);
+    const handleRemovePinnedMessage = useCallback(async (messageId: string) => {
+      try {
+        await removeUserPinnedMessage(user.id, messageId);
+        const next = ownPinnedMessages.filter((m) => m.messageId !== messageId);
+        setOwnPinnedMessages(next);
+        broadcastPinnedMessageUpdated(next);
+        toast({ title: "Pinned message removed" });
+      } catch {
+        toast({ title: "Could not remove pinned message", description: "Please try again." });
+      }
+    }, [broadcastPinnedMessageUpdated, ownPinnedMessages, user.id]);
+
+    const handleOpenSenderProfile = useCallback((message: CommunityChatMessageRecord) => {
+      setProfileDialogOpen(true);
+      setProfileTarget({ message, profile: null, loading: true });
+      getPublicUserProfile(message.senderId)
+        .then((profile) => {
+          const isPublicSender = profile?.username?.toLowerCase() === message.senderName.toLowerCase();
+          setProfileTarget((current) => (
+            current?.message.id === message.id ? { message, profile: isPublicSender ? profile : null, loading: false } : current
+          ));
+        })
+        .catch(() => {
+          setProfileTarget((current) => (
+            current?.message.id === message.id ? { message, profile: null, loading: false } : current
+          ));
+        });
+    }, []);
 
     useEffect(() => {
       if (!selectedCommunity || !isJoined) {
@@ -814,6 +1084,13 @@ const COMMUNITY_LOGOS: Record<string, string> = {
 
     useLayoutEffect(() => {
       if (!messagesContainerRef.current || searchQuery.trim()) {
+        return;
+      }
+
+      if (preserveScrollAfterOlderLoadRef.current) {
+        const { previousHeight } = preserveScrollAfterOlderLoadRef.current;
+        preserveScrollAfterOlderLoadRef.current = null;
+        messagesContainerRef.current.scrollTop += messagesContainerRef.current.scrollHeight - previousHeight;
         return;
       }
 
@@ -848,37 +1125,8 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         return;
       }
 
-      const canJoinFree = freeCommunitySlotsRemaining > 0;
-
-      if (!canJoinFree && tokenBalance < COMMUNITY_UNLOCK_TOKEN_COST) {
-        toast({
-          title: "Not enough tokens",
-          description: `Joining ${targetCommunity.title} costs ${COMMUNITY_UNLOCK_TOKEN_COST} tokens.`,
-        });
-        return;
-      }
-
-      if (!canJoinFree) {
-        const confirmed = window.confirm(`Join ${targetCommunity.title} for ${COMMUNITY_UNLOCK_TOKEN_COST} tokens?`);
-        if (!confirmed) {
-          return;
-        }
-      }
-
       setUnlockingId(communityId);
       try {
-        const result = await unlockCommunity(user.id, communityId);
-        if (!result.ok) {
-          toast({
-            title: result.error === "insufficient_tokens" ? "Not enough tokens" : "Could not unlock group",
-            description: result.error === "insufficient_tokens"
-              ? `You need ${COMMUNITY_UNLOCK_TOKEN_COST} tokens to join.`
-              : "Please try again.",
-          });
-          return;
-        }
-
-        updateTokenBalanceCache(user.id, result.balance);
         setCommunityAccess((prev) => ({
           ...prev,
           unlockedIds: new Set([...prev.unlockedIds, communityId]),
@@ -900,7 +1148,6 @@ const COMMUNITY_LOGOS: Record<string, string> = {
 
       try {
         await leaveCommunitySupabase(communityId, user.id);
-        leaveCommunityChat(communityId, user.id);
         lastTouchedCommunityRef.current = "";
         await reloadChatData();
         onBackToCommunities?.();
@@ -977,47 +1224,15 @@ const COMMUNITY_LOGOS: Record<string, string> = {
 
     const handleUnlockCommunity = async (communityId: string) => {
       if (unlockingId === communityId) return;
-      const targetCommunity = communities.find((community) => community.id === communityId);
-      const isAlreadyUnlocked = communityAccess.hasSubscription || communityAccess.unlockedIds.has(communityId);
-      if (!isAlreadyUnlocked) {
-        const canUnlockFree = freeCommunitySlotsRemaining > 0;
-        if (!canUnlockFree && tokenBalance < COMMUNITY_UNLOCK_TOKEN_COST) {
-          toast({
-            title: "Not enough tokens",
-            description: `You need ${COMMUNITY_UNLOCK_TOKEN_COST} tokens to unlock this group.`,
-          });
-          return;
-        }
-        if (!canUnlockFree) {
-          const confirmed = window.confirm(
-            `Unlock ${targetCommunity?.title ?? "this group"} for ${COMMUNITY_UNLOCK_TOKEN_COST} tokens?`,
-          );
-          if (!confirmed) return;
-        }
-      }
       setUnlockingId(communityId);
       try {
-        const result = await unlockCommunity(user.id, communityId);
-        if (!result.ok) {
-          if (result.error === "insufficient_tokens") {
-            toast({
-              title: "Not enough tokens",
-              description: `You need ${COMMUNITY_UNLOCK_TOKEN_COST} tokens. Buy more in Billing.`,
-            });
-            return;
-          }
-          // RPC missing or network error — open anyway, access check will re-run on next load
-          toast({ title: "Could not unlock group", description: "Please try again." });
-          return;
-        }
-        updateTokenBalanceCache(user.id, result.balance);
         setCommunityAccess((prev) => ({
           ...prev,
           unlockedIds: new Set([...prev.unlockedIds, communityId]),
         }));
-        onOpenCommunity(communityId);
+        await handleJoinCommunity(communityId, true);
       } catch {
-        toast({ title: "Could not unlock group", description: "Please try again." });
+        toast({ title: "Could not join group", description: "Please try again." });
       } finally {
         setUnlockingId(null);
       }
@@ -1028,15 +1243,17 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         return;
       }
 
+      const sendAvatarLevel = selectedChatAlias ? getPrivateAvatarLevel(user.id) : avatarLevel;
+
       const optimisticMessage = retryingMessage ?? {
         id: `optimistic-${Date.now()}`,
         communityId: selectedCommunity.id,
         senderId: user.id,
-        senderName: selectedChatIdentity.alias,
-        senderAvatarLevel: selectedChatIdentity.avatar_level,
+        senderName: selectedChatAlias ?? user.username,
+        senderAvatarLevel: sendAvatarLevel,
         text: trimmedMessage,
         createdAt: new Date().toISOString(),
-        deliveryStatus: "sending" as const,
+        deliveryStatus: "pending" as const,
         likedBy: [],
       };
 
@@ -1076,7 +1293,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         setMentionQuery(null);
         void sendCommunityPushNotification({
           recipientUserIds: mentionRecipientIds,
-          title: `@${selectedChatIdentity.alias} mentioned you`,
+          title: `@${user.username} mentioned you`,
           body: `${selectedCommunity.title}: ${trimmedMessage}`,
           url: `${window.location.origin}/dashboard/communities/${selectedCommunity.id}`,
         });
@@ -1084,7 +1301,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         updateCommunities((current) => markCommunityMessageFailed(current, selectedCommunity.id, optimisticMessage.id));
         toast({ title: "Failed to send message", description: "Please try again." });
       }
-    }, [isJoined, selectedChatIdentity.alias, selectedChatIdentity.avatar_level, selectedCommunity, updateCommunities, user.id, user.username]);
+    }, [avatarLevel, isJoined, selectedChatAlias, selectedCommunity, updateCommunities, user.id, user.username]);
 
     const handleSendMessage = useCallback(async () => {
       if (!selectedCommunity) {
@@ -1137,7 +1354,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       }
     }, [reloadChatData, selectedCommunity, user.id, user.username]);
 
-    const handleCommunitySettingsSave = () => {
+    const handleCommunitySettingsSave = async () => {
       if (!selectedCommunity || !canEditSelectedCommunity) {
         toast({
           title: "Creator access required",
@@ -1154,15 +1371,13 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         });
         return;
       }
+      const titleModeration = moderateUserText(trimmedTitle);
+      if (!titleModeration.allowed) {
+        toast({ title: "Community name blocked", description: getUserTextModerationMessage(titleModeration) });
+        return;
+      }
 
-      const updatedCommunity = updateCommunityPresentation(selectedCommunity.id, {
-        actorUserId: user.id,
-        actorUsername: user.username,
-        title: trimmedTitle,
-        logoUrl: communitySettingsDraft.logoUrl,
-      });
-
-      if (!updatedCommunity) {
+      if (!canManageCommunity(selectedCommunity, user.id, user.username)) {
         toast({
           title: "Creator access required",
           description: "Only the community creator can change the group name or logo.",
@@ -1170,15 +1385,23 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         return;
       }
 
-      reloadChatData();
-      setLogoDialogOpen(false);
-      toast({
-        title: "Community updated",
-        description: `${updatedCommunity.title} now shows the latest name and logo across the app.`,
-      });
+      try {
+        await updateCommunityPresentation(selectedCommunity.id, {
+          title: trimmedTitle,
+          logoUrl: communitySettingsDraft.logoUrl,
+        });
+        await reloadChatData();
+        setLogoDialogOpen(false);
+        toast({
+          title: "Community updated",
+          description: `${trimmedTitle} now shows the latest name and logo across the app.`,
+        });
+      } catch {
+        toast({ title: "Update failed", description: "Please try again." });
+      }
     };
 
-    const handleSubmitReport = () => {
+    const handleSubmitReport = async () => {
       if (!reportTarget) {
         return;
       }
@@ -1194,34 +1417,34 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       }
 
       const reportedUser = ensureUserRecord(reportTarget.message.senderName);
-      const nextReport: ChatReportRecord = {
-        id: `chat-report-${Date.now()}`,
-        communityId: reportTarget.communityId,
-        communityTitle: reportTarget.communityTitle,
-        messageId: reportTarget.message.id,
-        messageText: reportTarget.message.text,
-        reportedUserId: reportTarget.message.senderId || reportedUser.id,
-        reportedUsername: reportTarget.message.senderName,
-        reporterId: user.id,
-        reporterName: user.username,
-        reason,
-        details,
-        createdAt: new Date().toISOString(),
-        status: "open",
-      };
-
-      setChatReports((previous) => {
-        const nextReports = [nextReport, ...previous];
-        writeChatReports(nextReports);
-        return nextReports;
-      });
-      setReportDialogOpen(false);
-      setReportTarget(null);
-      setReportDraft(INITIAL_REPORT_DRAFT);
-      toast({
-        title: "Report sent for review",
-        description: `The message from ${nextReport.reportedUsername} is now in the admin review queue.`,
-      });
+      const reportedUsername = reportTarget.message.senderName;
+      try {
+        const saved = await submitChatReport({
+          communityId: reportTarget.communityId,
+          communityTitle: reportTarget.communityTitle,
+          messageId: reportTarget.message.id,
+          messageText: reportTarget.message.text,
+          reportedUserId: reportTarget.message.senderId || reportedUser.id,
+          reportedUsername,
+          reporterId: user.id,
+          reporterName: user.username,
+          reason,
+          details,
+        });
+        setChatReports((previous) => [saved, ...previous]);
+        setReportDialogOpen(false);
+        setReportTarget(null);
+        setReportDraft(INITIAL_REPORT_DRAFT);
+        toast({
+          title: "Report sent for review",
+          description: `The message from ${reportedUsername} is now in the admin review queue.`,
+        });
+      } catch (error) {
+        toast({
+          title: "Could not send report",
+          description: error instanceof Error ? error.message : "Please try again.",
+        });
+      }
     };
 
     const handleOpenMessageReport = useCallback((message: CommunityChatMessageRecord) => {
@@ -1291,16 +1514,33 @@ const COMMUNITY_LOGOS: Record<string, string> = {
         return;
       }
 
+      const moderatedDraft = { ...trimmedDraft };
+      for (const field of Object.keys(trimmedDraft) as Array<keyof CommunityRequestDraft>) {
+        if (!trimmedDraft[field]) {
+          continue;
+        }
+
+        const moderation = moderateUserText(trimmedDraft[field]);
+        if (!moderation.allowed) {
+          toast({
+            title: "Request wording blocked",
+            description: `${COMMUNITY_REQUEST_FIELD_LABELS[field]}: ${getUserTextModerationMessage(moderation)}`,
+          });
+          return;
+        }
+        moderatedDraft[field] = moderation.text;
+      }
+
       try {
         const newRequest = await submitCommunityRequest({
           requesterId: user.id,
           requesterName: user.username,
-          communityName: trimmedDraft.communityName,
-          genre: trimmedDraft.genre,
-          focusArea: trimmedDraft.focusArea,
-          audience: trimmedDraft.audience,
-          whyNow: trimmedDraft.whyNow,
-          samplePrompt: trimmedDraft.samplePrompt,
+          communityName: moderatedDraft.communityName,
+          genre: moderatedDraft.genre,
+          focusArea: moderatedDraft.focusArea,
+          audience: moderatedDraft.audience,
+          whyNow: moderatedDraft.whyNow,
+          samplePrompt: moderatedDraft.samplePrompt,
         });
         await reloadChatData();
         setRequestDraft(INITIAL_REQUEST_DRAFT);
@@ -1397,9 +1637,12 @@ const COMMUNITY_LOGOS: Record<string, string> = {
       }
 
       return (
-        <div
+        <motion.div
           className="fixed inset-x-0 top-14 z-30 flex flex-col overflow-hidden sm:static sm:inset-auto sm:z-auto sm:block sm:h-auto sm:overflow-visible sm:space-y-6"
           style={{ bottom: "max(72px, calc(56px + env(safe-area-inset-bottom)))" }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.16, ease: "easeOut" }}
         >
           {/* Desktop: full header card */}
           <div className="hidden sm:flex sm:flex-wrap sm:items-start sm:justify-between sm:gap-4 sm:rounded-3xl sm:border sm:border-raw-border/30 sm:bg-raw-surface/25 sm:p-5">
@@ -1430,7 +1673,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                   onClick={() => handlePaidJoinCommunity(selectedCommunity.id)}
                   className="flex items-center gap-2 rounded-full bg-raw-gold px-3 py-1.5 text-[11px] font-semibold text-raw-ink transition-colors hover:bg-raw-gold/90"
                 >
-                  Join Group - {COMMUNITY_UNLOCK_TOKEN_COST} tokens
+                  Join Group
                 </button>
               )}
               {!isJoined && selectedCommunity.locked && (() => {
@@ -1443,7 +1686,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                       onClick={() => handlePaidJoinCommunity(selectedCommunity.id)}
                       className="flex items-center gap-2 rounded-full bg-raw-gold px-3 py-1.5 text-[11px] font-semibold text-raw-ink transition-colors hover:bg-raw-gold/90"
                     >
-                      Join Group - {COMMUNITY_UNLOCK_TOKEN_COST} tokens
+                      Join Group
                     </button>
                   );
                 }
@@ -1491,6 +1734,32 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                 </button>
                 </>
               )}
+              {isJoined && (() => {
+                const isFavorite = favoriteCommunityIds.includes(selectedCommunity.id);
+                const favLimitHit = !isFavorite && favoriteCommunityIds.length >= MAX_FAVORITE_COMMUNITIES;
+                return (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (favLimitHit) return;
+                      void handleToggleFavorite(selectedCommunity.id);
+                    }}
+                    disabled={favLimitHit}
+                    aria-pressed={isFavorite}
+                    title={isFavorite ? "Remove from favorites" : favLimitHit ? "Favorites limit reached (3)" : "Add to favorites"}
+                    className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] transition-colors ${
+                      isFavorite
+                        ? "border-raw-gold/55 bg-raw-gold/15 text-raw-gold"
+                        : favLimitHit
+                          ? "border-raw-border/25 bg-raw-black/30 text-raw-silver/35"
+                          : "border-raw-border/30 text-raw-silver/55 hover:border-raw-gold/30 hover:text-raw-gold"
+                    }`}
+                  >
+                    <Star className={`h-3.5 w-3.5 ${isFavorite ? "fill-current" : ""}`} />
+                    <span>{isFavorite ? "Favorited" : "Favorite"}</span>
+                  </button>
+                );
+              })()}
               {isJoined && (
                 <button
                   onClick={handleLeaveCommunity}
@@ -1557,7 +1826,8 @@ const COMMUNITY_LOGOS: Record<string, string> = {
           })()}
 
           {(!selectedCommunity.locked || isJoined) && (
-          <div className="flex flex-1 min-h-0 flex-col overflow-hidden sm:rounded-2xl sm:border sm:border-raw-border/20 sm:bg-raw-black/35 sm:flex-none sm:h-[calc(100dvh_-_260px)] sm:min-h-[360px]">
+          <div className={`flex flex-1 min-h-0 flex-col gap-4 overflow-hidden sm:flex-none sm:h-[calc(100dvh_-_260px)] sm:min-h-[360px] ${feedOpen ? "sm:grid sm:grid-cols-[1fr_360px] sm:items-stretch" : ""}`}>
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden sm:h-full sm:rounded-2xl sm:border sm:border-raw-border/20 sm:bg-raw-black/35">
             {visibleCommunityPolls.length > 0 && (
               <div className="border-b border-raw-border/15 px-4 py-3">
                 <button
@@ -1646,6 +1916,19 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                   <X className="h-3.5 w-3.5" />
                 </button>
               )}
+              {/* Feed toggle — sits in the search bar, desktop only */}
+              <button
+                onClick={() => setFeedOpen((o) => !o)}
+                title={feedOpen ? "Close feed" : "Open general feed"}
+                className={`hidden sm:flex shrink-0 items-center gap-1.5 rounded-lg border px-2 py-1 text-[11px] transition-colors ${
+                  feedOpen
+                    ? "border-raw-gold/40 bg-raw-gold/10 text-raw-gold"
+                    : "border-raw-border/30 text-raw-silver/45 hover:border-raw-gold/20 hover:text-raw-gold"
+                }`}
+              >
+                <PanelRight className="h-3.5 w-3.5" />
+                <span>Feed</span>
+              </button>
             </div>
 
             <CommunityMessageTimeline
@@ -1682,15 +1965,21 @@ const COMMUNITY_LOGOS: Record<string, string> = {
             />
           </div>
           )}
-        </div>
+        </motion.div>
       );
     };
 
-    if (activeCommunityId && isInitialCommunitiesLoading) {
+    if (activeCommunityId && isInitialCommunitiesLoading && !selectedCommunity) {
       return (
-        <div className="rounded-3xl border border-raw-border/30 bg-raw-surface/20 p-8 text-center text-raw-silver/50">
-          <p className="font-display text-lg text-raw-text">Loading community…</p>
-        </div>
+        <motion.div
+          className="rounded-3xl border border-raw-border/30 bg-raw-surface/20 p-5"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.16, ease: "easeOut" }}
+        >
+          <div className="h-6 w-40 animate-pulse rounded-full bg-raw-surface/60" />
+          <div className="mt-4 h-56 animate-pulse rounded-2xl bg-raw-black/35" />
+        </motion.div>
       );
     }
 
@@ -1709,6 +1998,8 @@ const COMMUNITY_LOGOS: Record<string, string> = {
     }
 
     return (
+      <>
+      {confirmDialog}
       <div className="space-y-8">
         {activeCommunityId ? renderChatPage() : renderDirectoryView()}
 
@@ -1764,7 +2055,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
                   description: "Fill out the form to suggest a new community for review.",
                 });
               }}
-              className="fixed left-4 z-50 flex items-center gap-2 rounded-2xl bg-raw-gold px-5 py-3 text-sm font-semibold text-raw-ink shadow-xl hover:bg-raw-gold/90 focus:outline-none"
+              className="fixed right-4 z-50 hidden items-center gap-2 rounded-2xl bg-raw-gold px-5 py-3 text-sm font-semibold text-raw-ink shadow-xl hover:bg-raw-gold/90 focus:outline-none md:flex"
               style={{ bottom: "calc(5rem + env(safe-area-inset-bottom))", boxShadow: "0 8px 32px rgba(0,0,0,0.18)" }}
             >
               <motion.span
@@ -1780,329 +2071,64 @@ const COMMUNITY_LOGOS: Record<string, string> = {
           )}
         </AnimatePresence>
 
-        <Dialog open={logoDialogOpen} onOpenChange={setLogoDialogOpen}>
-          <DialogContent className="border border-raw-border/40 bg-raw-black p-0 text-raw-text sm:max-w-lg sm:rounded-3xl">
-            <div className="border-b border-raw-border/20 bg-gradient-to-br from-raw-gold/[0.08] via-raw-black to-raw-black px-6 py-6">
-              <DialogHeader className="space-y-2 text-left">
-                <DialogTitle className="font-display text-xl tracking-wide text-raw-text">Edit community details</DialogTitle>
-                <DialogDescription className="text-sm leading-relaxed text-raw-silver/45">
-                  Only the community creator can change the group name or logo.
-                </DialogDescription>
-              </DialogHeader>
-            </div>
-            <div className="space-y-4 px-6 py-6">
-              <div className="space-y-2">
-                <label className="text-[11px] uppercase tracking-[0.16em] text-raw-silver/40">Community name</label>
-                <Input
-                  value={communitySettingsDraft.title}
-                  onChange={(event) => setCommunitySettingsDraft((previous) => ({ ...previous, title: event.target.value }))}
-                  placeholder="Community name"
-                  className="h-11 rounded-xl border-raw-border/30 bg-raw-surface/30 text-raw-text placeholder:text-raw-silver/25"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[11px] uppercase tracking-[0.16em] text-raw-silver/40">Logo URL</label>
-                <Input
-                  value={communitySettingsDraft.logoUrl}
-                  onChange={(event) => setCommunitySettingsDraft((previous) => ({ ...previous, logoUrl: event.target.value }))}
-                  placeholder="https://example.com/community-logo.png"
-                  className="h-11 rounded-xl border-raw-border/30 bg-raw-surface/30 text-raw-text placeholder:text-raw-silver/25"
-                />
-              </div>
-            </div>
-            <DialogFooter className="border-t border-raw-border/20 px-6 py-5 sm:justify-between">
-              <p className="text-xs text-raw-silver/40">Leave empty to remove the current logo.</p>
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => setLogoDialogOpen(false)}
-                  className="rounded-xl border-raw-border/30 bg-transparent text-raw-silver/70 hover:bg-raw-surface/30 hover:text-raw-text"
-                >
-                  Cancel
-                </Button>
-                <Button onClick={handleCommunitySettingsSave} className="rounded-xl bg-raw-gold px-4 text-raw-ink hover:bg-raw-gold/90">
-                  Save Changes
-                </Button>
-              </div>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <CommunitySettingsDialog
+          open={logoDialogOpen}
+          draft={communitySettingsDraft}
+          onOpenChange={setLogoDialogOpen}
+          onDraftChange={setCommunitySettingsDraft}
+          onSave={handleCommunitySettingsSave}
+        />
 
-        <Dialog open={membersDialogOpen} onOpenChange={setMembersDialogOpen}>
-          <DialogContent className="border border-raw-border/40 bg-raw-black p-0 text-raw-text sm:max-w-lg sm:rounded-3xl">
-            <div className="border-b border-raw-border/20 bg-gradient-to-br from-raw-gold/[0.08] via-raw-black to-raw-black px-6 py-6">
-              <DialogHeader className="space-y-2 text-left">
-                <DialogTitle className="font-display text-xl tracking-wide text-raw-text">Group members</DialogTitle>
-                <DialogDescription className="text-sm leading-relaxed text-raw-silver/45">
-                  Admin and group owners can remove members. Poll answers stay anonymous.
-                </DialogDescription>
-              </DialogHeader>
-            </div>
-            <div className="max-h-[60vh] space-y-2 overflow-y-auto px-6 py-5">
-              {(selectedCommunity?.members ?? []).map((member) => (
-                <div key={member.userId} className="flex items-center justify-between gap-3 rounded-xl border border-raw-border/20 bg-raw-surface/20 px-3 py-2.5">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-raw-text">@{member.username}</p>
-                    <p className="text-[10px] text-raw-silver/40">Joined {formatChatTimestamp(member.joinedAt)}</p>
-                  </div>
-                  {canManagePolls && member.userId !== user.id && (
-                    <button
-                      type="button"
-                      onClick={() => { void handleKickMember(member.userId, member.username); }}
-                      className="flex shrink-0 items-center gap-1.5 rounded-full border border-red-400/25 px-2.5 py-1 text-[10px] font-semibold text-red-200/80 hover:bg-red-500/10"
-                    >
-                      <UserMinus className="h-3.5 w-3.5" /> Kick
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          </DialogContent>
-        </Dialog>
+        <CommunityMembersDialog
+          open={membersDialogOpen}
+          members={selectedCommunity?.members ?? []}
+          currentUserId={user.id}
+          canManagePolls={canManagePolls}
+          onOpenChange={setMembersDialogOpen}
+          onKickMember={(memberId, username) => { void handleKickMember(memberId, username); }}
+        />
 
-        <Dialog open={requestFormOpen} onOpenChange={(open) => { setRequestFormOpen(open); if (!open) setRequestSubmitAttempted(false); }}>
-          <DialogContent bottomSheet className="flex flex-col bg-raw-black p-0 text-raw-text border-raw-border/40">
-            {/* Header — fixed */}
-            <div className="shrink-0 border-b border-raw-border/20 bg-gradient-to-br from-raw-gold/[0.08] via-raw-black to-raw-black px-5 py-4">
-              <DialogHeader className="space-y-1 text-left">
-                <DialogTitle className="font-display text-lg tracking-wide text-raw-text">Request a new community</DialogTitle>
-                <DialogDescription className="text-xs leading-relaxed text-raw-silver/45">
-                  Goes to admin review. Approved requests become live in-app communities.
-                </DialogDescription>
-              </DialogHeader>
-            </div>
+        <CommunityProfileDialog
+          open={profileDialogOpen}
+          target={profileTarget}
+          communities={communities}
+          logoUrlsByCommunityId={COMMUNITY_LOGOS}
+          senderAvatarLevels={senderAvatarLevels}
+          onOpenChange={setProfileDialogOpen}
+          onOpenCommunity={onOpenCommunity}
+        />
 
-            {/* Scrollable body */}
-            <div className="flex-1 overflow-y-auto space-y-4 px-5 py-5">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <label className="text-[11px] uppercase tracking-[0.16em] text-raw-silver/40">
-                    Community name <span className="text-primary">*</span>
-                  </label>
-                  <Input
-                    value={requestDraft.communityName}
-                    onChange={(event) => updateRequestDraft("communityName", event.target.value)}
-                    placeholder="Creator Burnout Circle"
-                    className={`h-10 rounded-xl bg-raw-surface/30 text-raw-text placeholder:text-raw-silver/25 ${requestSubmitAttempted && !requestDraft.communityName.trim() ? "border-primary/60 focus-visible:ring-primary/30" : "border-raw-border/30"}`}
-                  />
-                  {requestSubmitAttempted && !requestDraft.communityName.trim() && (
-                    <p className="text-[11px] text-primary/80">Required</p>
-                  )}
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[11px] uppercase tracking-[0.16em] text-raw-silver/40">
-                    Genre <span className="text-primary">*</span>
-                  </label>
-                  <Input
-                    value={requestDraft.genre}
-                    onChange={(event) => updateRequestDraft("genre", event.target.value)}
-                    placeholder="e.g. Mental Health, Tech, Sports"
-                    className={`h-10 rounded-xl bg-raw-surface/30 text-raw-text placeholder:text-raw-silver/25 ${requestSubmitAttempted && !requestDraft.genre.trim() ? "border-primary/60 focus-visible:ring-primary/30" : "border-raw-border/30"}`}
-                  />
-                  {requestSubmitAttempted && !requestDraft.genre.trim() && (
-                    <p className="text-[11px] text-primary/80">Required</p>
-                  )}
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[11px] uppercase tracking-[0.16em] text-raw-silver/40">
-                    Focus area <span className="text-primary">*</span>
-                  </label>
-                  <Input
-                    value={requestDraft.focusArea}
-                    onChange={(event) => updateRequestDraft("focusArea", event.target.value)}
-                    placeholder="Theme this room centers on"
-                    className={`h-10 rounded-xl bg-raw-surface/30 text-raw-text placeholder:text-raw-silver/25 ${requestSubmitAttempted && !requestDraft.focusArea.trim() ? "border-primary/60 focus-visible:ring-primary/30" : "border-raw-border/30"}`}
-                  />
-                  {requestSubmitAttempted && !requestDraft.focusArea.trim() && (
-                    <p className="text-[11px] text-primary/80">Required</p>
-                  )}
-                </div>
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-[11px] uppercase tracking-[0.16em] text-raw-silver/40">
-                  Who is this for? <span className="text-primary">*</span>
-                </label>
-                <Input
-                  value={requestDraft.audience}
-                  onChange={(event) => updateRequestDraft("audience", event.target.value)}
-                  placeholder="Who would join and benefit?"
-                  className={`h-10 rounded-xl bg-raw-surface/30 text-raw-text placeholder:text-raw-silver/25 ${requestSubmitAttempted && !requestDraft.audience.trim() ? "border-primary/60 focus-visible:ring-primary/30" : "border-raw-border/30"}`}
-                />
-                {requestSubmitAttempted && !requestDraft.audience.trim() && (
-                  <p className="text-[11px] text-primary/80">Required</p>
-                )}
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-[11px] uppercase tracking-[0.16em] text-raw-silver/40">
-                  Why should admin approve it? <span className="text-primary">*</span>
-                </label>
-                <Textarea
-                  value={requestDraft.whyNow}
-                  onChange={(event) => updateRequestDraft("whyNow", event.target.value)}
-                  placeholder="Explain the need and what conversations it unlocks."
-                  className={`min-h-[90px] rounded-2xl bg-raw-surface/30 text-raw-text placeholder:text-raw-silver/25 ${requestSubmitAttempted && !requestDraft.whyNow.trim() ? "border-primary/60 focus-visible:ring-primary/30" : "border-raw-border/30"}`}
-                />
-                {requestSubmitAttempted && !requestDraft.whyNow.trim() && (
-                  <p className="text-[11px] text-primary/80">Required</p>
-                )}
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-[11px] uppercase tracking-[0.16em] text-raw-silver/40">Sample opening prompt</label>
-                <Textarea
-                  value={requestDraft.samplePrompt}
-                  onChange={(event) => updateRequestDraft("samplePrompt", event.target.value)}
-                  placeholder="Optional: opening topic that sets the tone."
-                  className="min-h-[72px] rounded-2xl border-raw-border/30 bg-raw-surface/30 text-raw-text placeholder:text-raw-silver/25"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-[11px] uppercase tracking-[0.16em] text-raw-silver/40">Community image / video</label>
-                <button
-                  type="button"
-                  disabled
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-raw-border/35 bg-raw-surface/20 px-4 py-4 text-sm text-raw-silver/35 cursor-not-allowed"
-                >
-                  <ImagePlus className="h-4 w-4 shrink-0" />
-                  <span>Upload <span className="text-[10px] uppercase tracking-wider text-raw-silver/25 ml-1">Coming soon</span></span>
-                </button>
-              </div>
-            </div>
+        <CommunityRequestDialog
+          open={requestFormOpen}
+          draft={requestDraft}
+          submitAttempted={requestSubmitAttempted}
+          username={user.username}
+          onOpenChange={setRequestFormOpen}
+          onSubmitAttemptedChange={setRequestSubmitAttempted}
+          onDraftFieldChange={updateRequestDraft}
+          onSubmit={handleSubmitCommunityRequest}
+        />
 
-            {/* Footer — sticky */}
-            <div className="shrink-0 border-t border-raw-border/20 px-5 py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-xs text-raw-silver/40">Requesting as @{user.username}.</p>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => { setRequestFormOpen(false); setRequestSubmitAttempted(false); }}
-                  className="flex-1 sm:flex-none rounded-xl border-raw-border/30 bg-transparent text-raw-silver/70 hover:bg-raw-surface/30 hover:text-raw-text"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleSubmitCommunityRequest}
-                  className="flex-1 sm:flex-none rounded-xl bg-raw-gold px-4 text-raw-ink hover:bg-raw-gold/90"
-                >
-                  Submit
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <CommunityReportDialog
+          open={reportDialogOpen}
+          target={reportTarget}
+          draft={reportDraft}
+          onOpenChange={setReportDialogOpen}
+          onDraftChange={setReportDraft}
+          onSubmit={handleSubmitReport}
+        />
 
-        <Dialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
-          <DialogContent className="border border-raw-border/40 bg-raw-black p-0 text-raw-text sm:max-w-xl sm:rounded-3xl">
-            <div className="border-b border-raw-border/20 bg-gradient-to-br from-red-500/[0.08] via-raw-black to-raw-black px-6 py-6">
-              <DialogHeader className="space-y-2 text-left">
-                <DialogTitle className="font-display text-xl tracking-wide text-raw-text">Report this message</DialogTitle>
-                <DialogDescription className="max-w-xl text-sm leading-relaxed text-raw-silver/45">
-                  Admin can review reports here, then warn or ban the user if the report is valid.
-                </DialogDescription>
-              </DialogHeader>
-            </div>
-            <div className="space-y-5 px-6 py-6">
-              {reportTarget && (
-                <div className="rounded-2xl border border-raw-border/20 bg-raw-surface/20 p-4">
-                  <p className="text-[11px] uppercase tracking-[0.16em] text-raw-silver/35">Message under review</p>
-                  <p className="mt-2 font-display text-sm text-raw-text">{reportTarget.message.senderName}</p>
-                  <p className="mt-2 text-sm leading-relaxed text-raw-silver/55">{reportTarget.message.text}</p>
-                </div>
-              )}
-              <div className="space-y-2">
-                <label className="text-[11px] uppercase tracking-[0.16em] text-raw-silver/40">Why should this be reviewed?</label>
-                <Input
-                  value={reportDraft.reason}
-                  onChange={(event) => setReportDraft((previous) => ({ ...previous, reason: event.target.value }))}
-                  placeholder="Spam, harassment, harmful content, impersonation..."
-                  className="h-11 rounded-xl border-raw-border/30 bg-raw-surface/30 text-raw-text placeholder:text-raw-silver/25"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[11px] uppercase tracking-[0.16em] text-raw-silver/40">Extra context</label>
-                <Textarea
-                  value={reportDraft.details}
-                  onChange={(event) => setReportDraft((previous) => ({ ...previous, details: event.target.value }))}
-                  placeholder="Optional: explain what happened so admin can review faster."
-                  className="min-h-[110px] rounded-2xl border-raw-border/30 bg-raw-surface/30 text-raw-text placeholder:text-raw-silver/25"
-                />
-              </div>
-            </div>
-            <DialogFooter className="border-t border-raw-border/20 px-6 py-5 sm:justify-between">
-              <p className="text-xs leading-relaxed text-raw-silver/40">Reports are stored for admin review in the hidden admin page.</p>
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => setReportDialogOpen(false)}
-                  className="rounded-xl border-raw-border/30 bg-transparent text-raw-silver/70 hover:bg-raw-surface/30 hover:text-raw-text"
-                >
-                  Cancel
-                </Button>
-                <Button onClick={handleSubmitReport} className="rounded-xl bg-red-400 px-4 text-raw-ink hover:bg-red-300">
-                  Submit report
-                </Button>
-              </div>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={pollComposerOpen} onOpenChange={setPollComposerOpen}>
-          <DialogContent className="border-raw-border/30 bg-raw-black/95 sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="text-raw-text">Post a poll to the room</DialogTitle>
-              <DialogDescription className="text-raw-silver/60">
-                Only the community owner and admins can post polls. Members get one vote each.
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-xs uppercase tracking-[0.16em] text-raw-silver/55">Question</label>
-                <Input
-                  value={pollQuestion}
-                  onChange={(event) => setPollQuestion(event.target.value)}
-                  placeholder="What do you want to ask the room?"
-                  maxLength={200}
-                  className="border-raw-border/30 bg-raw-surface/30 text-raw-text"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs uppercase tracking-[0.16em] text-raw-silver/55">Options</label>
-                <div className="space-y-2">
-                  {pollOptionDrafts.map((option, index) => (
-                    <Input
-                      key={index}
-                      value={option}
-                      onChange={(event) => handleUpdatePollOption(index, event.target.value)}
-                      placeholder={`Option ${index + 1}`}
-                      maxLength={80}
-                      className="border-raw-border/30 bg-raw-surface/30 text-raw-text"
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <DialogFooter>
-              <div className="flex w-full justify-end gap-2">
-                <Button
-                  variant="ghost"
-                  onClick={() => setPollComposerOpen(false)}
-                  className="rounded-xl text-raw-silver/70 hover:text-raw-text"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={() => { void handleSubmitPoll(); }}
-                  disabled={pollSubmitting}
-                  className="rounded-xl bg-raw-gold px-4 text-raw-ink hover:bg-raw-gold/90"
-                >
-                  {pollSubmitting ? "Posting…" : "Post poll"}
-                </Button>
-              </div>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <CommunityPollComposerDialog
+          open={pollComposerOpen}
+          question={pollQuestion}
+          optionDrafts={pollOptionDrafts}
+          submitting={pollSubmitting}
+          onOpenChange={setPollComposerOpen}
+          onQuestionChange={setPollQuestion}
+          onOptionChange={handleUpdatePollOption}
+          onSubmit={() => { void handleSubmitPoll(); }}
+        />
       </div>
+      </>
     );
   }

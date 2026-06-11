@@ -11,30 +11,49 @@ import type { LandingNewAvatar } from "@/lib/landingNewAvatars";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 import { useTheme } from "@/providers/useTheme";
 import { RawRevealButton } from "../../../components/raw-reveal-button";
+import { WheelRewardInline } from "@/components/landing/WheelReward";
 
 const VISIBLE_COUNT = 4;
 const DESKTOP_COUNT = 8;
+const FEATURED_UNLOCKABLE_COUNT = 8;
 const MOBILE_PHONE_SCALE = 0.5;
 const CHOOSER_AVATARS: readonly AvatarCatalogItem[] = [
-  { id: "ember", level: 2, name: "Ember", price: "0", imageSrc: "/avatars/avatar-2.svg", bg: "#0c1a24", figure: "#5ed6ff", ring: "#5ed6ff", glow: "#5ed6ff80", isActive: true, rarity: "common" },
-  { id: "verdant", level: 3, name: "Verdant", price: "0", imageSrc: "/avatars/avatar-3.svg", bg: "#0a1124", figure: "#3f8bff", ring: "#3f8bff", glow: "#3f8bff80", isActive: true, rarity: "common" },
-  { id: "horned", level: 5, name: "Horned", price: "0", imageSrc: "/avatars/avatar-5.svg", bg: "#0b1a0e", figure: "#16a34a", ring: "#16a34a", glow: "#16a34a80", isActive: true, rarity: "common" },
-  { id: "pharaoh", level: 6, name: "Pharaoh", price: "0", imageSrc: "/avatars/avatar-6.svg", bg: "#1f0d18", figure: "#ec4899", ring: "#ec4899", glow: "#ec489980", isActive: true, rarity: "common" },
-  { id: "violet", level: 7, name: "Violet", price: "0", imageSrc: "/avatars/avatar-7.svg", bg: "#150a22", figure: "#8b5cf6", ring: "#8b5cf6", glow: "#8b5cf680", isActive: true, rarity: "common" },
-  { id: "rose", level: 8, name: "Rose", price: "0", imageSrc: "/avatars/avatar-8.svg", bg: "#1f1208", figure: "#f97316", ring: "#f97316", glow: "#f9731680", isActive: true, rarity: "common" },
-  { id: "black", level: 9, name: "Black", price: "0", imageSrc: "/avatars/avatar-9.svg", bg: "#1f0a0a", figure: "#dc2626", ring: "#dc2626", glow: "#dc262680", isActive: true, rarity: "common" },
-  { id: "blue", level: 10, name: "Blue", price: "0", imageSrc: "/avatars/avatar-10.svg", bg: "#1f1705", figure: "#facc15", ring: "#facc15", glow: "#facc1590", isActive: true, rarity: "common" },
+  { id: "ember", level: 2, name: "Ember", price: "0", imageSrc: "/avatars/avatar-3.svg", bg: "#1f0a05", figure: "#ff8a1f", ring: "#ff8a1f", glow: "#ff8a1f80", isActive: true, rarity: "common" },
+  { id: "verdant", level: 3, name: "Verdant", price: "0", imageSrc: "/avatars/avatar-1.svg", bg: "#08160b", figure: "#22c55e", ring: "#22c55e", glow: "#22c55e80", isActive: true, rarity: "common" },
+  { id: "horned", level: 5, name: "Horned", price: "0", imageSrc: "/avatars/avatar-5.svg", bg: "#1f0808", figure: "#ff2d3d", ring: "#ff2d3d", glow: "#ff2d3d80", isActive: true, rarity: "common" },
+  { id: "pharaoh", level: 6, name: "Pharaoh", price: "0", imageSrc: "/avatars/avatar-6.svg", bg: "#1f1605", figure: "#f2d21a", ring: "#f2d21a", glow: "#f2d21a80", isActive: true, rarity: "common" },
+  { id: "violet", level: 7, name: "Violet", price: "0", imageSrc: "/avatars/avatar-2.svg", bg: "#150a22", figure: "#b84dff", ring: "#b84dff", glow: "#b84dff80", isActive: true, rarity: "common" },
+  { id: "rose", level: 8, name: "Rose", price: "0", imageSrc: "/avatars/avatar-4.svg", bg: "#1f0a14", figure: "#f43f5e", ring: "#f43f5e", glow: "#f43f5e80", isActive: true, rarity: "common" },
+  { id: "black", level: 9, name: "Black", price: "0", imageSrc: "/avatars/avatar-7.svg", bg: "#0a0a0a", figure: "#cfd3da", ring: "#cfd3da", glow: "#cfd3da80", isActive: true, rarity: "common" },
+  { id: "blue", level: 10, name: "Blue", price: "0", imageSrc: "/avatars/avatar-10.svg", bg: "#0a1424", figure: "#3b82f6", ring: "#3b82f6", glow: "#3b82f680", isActive: true, rarity: "common" },
 ];
+// "Spin pool" + "early-signup pool" sourced from the shared config so
+// landing, onboarding, and wheel stay in lockstep.
+import {
+  SPIN_POOL,
+  EARLY_SIGNUP_POOL,
+} from "@/backend/supabase/controllers/avatarRewardsController";
+import { avatarDisplayName } from "@/config/avatarNames";
+
 const REVEAL_AVATARS: readonly AvatarCatalogItem[] = [
-  { id: "reveal-1", level: 11, name: "Silver Void", price: "0", imageSrc: "/avatars/1.webp", bg: "#111827", figure: "#cbd5e1", ring: "#cbd5e1", glow: "#cbd5e180", isActive: true, rarity: "common" },
-  { id: "reveal-2", level: 12, name: "Neon Lynx", price: "0", imageSrc: "/avatars/2.webp", bg: "#170f2e", figure: "#a855f7", ring: "#c084fc", glow: "#a855f780", isActive: true, rarity: "common" },
-  { id: "reveal-3", level: 13, name: "Blue Signal", price: "0", imageSrc: "/avatars/3.webp", bg: "#06131f", figure: "#22d3ee", ring: "#22d3ee", glow: "#22d3ee80", isActive: true, rarity: "common" },
-  { id: "reveal-4", level: 14, name: "Violet Mask", price: "0", imageSrc: "/avatars/4.webp", bg: "#1a1028", figure: "#d946ef", ring: "#d946ef", glow: "#d946ef80", isActive: true, rarity: "common" },
-  { id: "reveal-5", level: 15, name: "Horned Iron", price: "0", imageSrc: "/avatars/5.webp", bg: "#1f0a05", figure: "#fb923c", ring: "#fb923c", glow: "#fb923c80", isActive: true, rarity: "common" },
-  { id: "reveal-6", level: 16, name: "Crimson Muse", price: "0", imageSrc: "/avatars/6.webp", bg: "#2a0b0b", figure: "#f97316", ring: "#f97316", glow: "#f9731680", isActive: true, rarity: "common" },
-  { id: "reveal-7", level: 17, name: "Solar Flame", price: "0", imageSrc: "/avatars/7.webp", bg: "#241005", figure: "#facc15", ring: "#facc15", glow: "#facc1590", isActive: true, rarity: "common" },
-  { id: "reveal-8", level: 18, name: "Pink Circuit", price: "0", imageSrc: "/avatars/8.webp", bg: "#2a0b1c", figure: "#fb7185", ring: "#fb7185", glow: "#fb718580", isActive: true, rarity: "common" },
-  { id: "reveal-9", level: 19, name: "Golden Muse", price: "0", imageSrc: "/avatars/9.png", bg: "#201604", figure: "#facc15", ring: "#facc15", glow: "#facc1590", isActive: true, rarity: "common" },
+  ...SPIN_POOL.map((entry, i): AvatarCatalogItem => ({
+    id: `reveal-spin-${i + 1}`,
+    level: 11 + i,
+    name: avatarDisplayName(entry.imageId),
+    price: "0",
+    imageSrc: entry.imageSrc,
+    bg: "#111827", figure: "#cbd5e1", ring: "#cbd5e1", glow: "#cbd5e180",
+    isActive: true, rarity: "common",
+  })),
+  ...EARLY_SIGNUP_POOL.map((entry, i): AvatarCatalogItem => ({
+    id: `reveal-signup-${i + 1}`,
+    level: 11 + SPIN_POOL.length + i,
+    name: avatarDisplayName(entry.imageId),
+    price: "0",
+    imageSrc: entry.imageSrc,
+    bg: "#111827", figure: "#cbd5e1", ring: "#cbd5e1", glow: "#cbd5e180",
+    isActive: true, rarity: "common",
+  })),
 ];
 const LANDING_AVATARS: readonly AvatarCatalogItem[] = [...CHOOSER_AVATARS, ...REVEAL_AVATARS];
 
@@ -62,6 +81,7 @@ export function AvatarShowcaseSection() {
   const [desktopStart, setDesktopStart] = useState(0);
   const [showAll, setShowAll] = useState(false);
   const [showExpandGrid, setShowExpandGrid] = useState(false);
+  const [showUnlockableAvatars, setShowUnlockableAvatars] = useState(false);
   const [expandedVisibleCount, setExpandedVisibleCount] = useState(CHOOSER_AVATARS.length);
   const [showMore, setShowMore] = useState(false);
   const [themeVersion, setThemeVersion] = useState(0);
@@ -88,7 +108,15 @@ export function AvatarShowcaseSection() {
 
   const chooserAvatars = CHOOSER_AVATARS;
   const chooserTotal = chooserAvatars.length;
-  const expandedAvatarSource = REVEAL_AVATARS;
+  const unlockableAvatars = REVEAL_AVATARS;
+  const visibleUnlockableAvatars = (showUnlockableAvatars
+    ? unlockableAvatars
+    : unlockableAvatars.slice(0, FEATURED_UNLOCKABLE_COUNT)
+  ).map((avatar) => ({ avatar, themeIndex: avatar.level }));
+  const hasMoreUnlockableAvatars = unlockableAvatars.length > FEATURED_UNLOCKABLE_COUNT;
+  const expandedAvatarSource = SPIN_POOL
+    .map((entry) => REVEAL_AVATARS.find((avatar) => avatar.imageSrc === entry.imageSrc))
+    .filter((avatar): avatar is AvatarCatalogItem => Boolean(avatar));
   const expandedAvatarTotal = expandedAvatarSource.length;
   const visibleExtendedAvatars = expandedAvatarSource
     .slice(0, expandedVisibleCount)
@@ -186,13 +214,68 @@ export function AvatarShowcaseSection() {
           className={`relative rounded-full transition-all duration-300 ${scaleClass}`}
           style={{ transition: "transform 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}
         >
-          <AvatarFigure key={`${avatar.level}-${themeVersion}`} avatarIndex={avatar.level} size="md" selected={isSelected || isActive} />
+          <AvatarFigure key={`${avatar.level}-${themeVersion}`} avatarIndex={avatar.level} size="md" selected={isSelected || isActive} themeOverride={avatar} />
         </div>
 
         {/* Name */}
         <span
           className={`font-display text-[9px] tracking-[0.18em] uppercase transition-all duration-300 ${
             isActive ? "text-raw-gold" : "text-raw-silver/45 group-hover:text-raw-silver/80"
+          }`}
+        >
+          {avatar.name}
+        </span>
+      </button>
+    );
+  }
+
+
+  function UnlockableAvatarButton({
+    avatar,
+    themeIndex,
+  }: {
+    avatar: AvatarCatalogItem;
+    themeIndex: number;
+  }) {
+    const isActive = themeIndex === previewIndex;
+    const isSelected = themeIndex === avatarIndex;
+
+    return (
+      <button
+        type="button"
+        onClick={() => { setExtraPreviewAvatar(null); setAvatarIndex(themeIndex); setPreviewIndex(themeIndex); }}
+        onMouseEnter={() => { setExtraPreviewAvatar(null); setPreviewIndex(themeIndex); }}
+        onMouseLeave={() => setPreviewIndex(avatarIndex)}
+        onFocus={() => { setExtraPreviewAvatar(null); setPreviewIndex(themeIndex); }}
+        onBlur={() => setPreviewIndex(avatarIndex)}
+        className="group flex min-w-0 flex-col items-center gap-1.5 outline-none"
+        aria-label={`Select unlockable avatar ${avatar.name}`}
+        aria-pressed={isSelected}
+      >
+        <div
+          className={`relative flex h-12 w-12 items-center justify-center rounded-full transition-all duration-300 sm:h-14 sm:w-14 ${
+            isActive ? "scale-110" : "scale-100 group-hover:scale-105"
+          }`}
+          style={{ transition: "transform 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}
+        >
+          {avatar.imageSrc ? (
+            <img
+              src={avatar.imageSrc}
+              alt={avatar.name}
+              loading="lazy"
+              decoding="async"
+              draggable={false}
+              className={`h-full w-full rounded-full object-contain transition-all duration-300 ${
+                isSelected || isActive ? "drop-shadow-[0_0_12px_rgba(241,196,45,0.45)]" : "opacity-80 group-hover:opacity-100"
+              }`}
+            />
+          ) : (
+            <AvatarFigure key={`${themeIndex}-${themeVersion}`} avatarIndex={themeIndex} size="sm" selected={isSelected || isActive} themeOverride={avatar} />
+          )}
+        </div>
+        <span
+          className={`min-h-[1.4rem] max-w-16 text-center font-display text-[6px] uppercase leading-[1.15] tracking-[0.12em] transition-colors duration-200 sm:text-[7px] ${
+            isActive ? "text-raw-gold" : "text-raw-silver/40 group-hover:text-raw-silver/75"
           }`}
         >
           {avatar.name}
@@ -251,17 +334,17 @@ export function AvatarShowcaseSection() {
       title={
         <span className="inline-flex flex-col items-center leading-[1.05]">
           <span className="text-[1em]">Your Avatar.</span>
-          <span className="text-[0.8em]">Your Identity.</span>
-          <span className="text-[0.6em]">Your App.</span>
+          <span className="text-[0.8em]">Your Signal.</span>
+          <span className="text-[0.6em]">Your World.</span>
         </span>
       }
       description={
         <span className="block whitespace-pre-line">
-          {`On raW, your username is your constant identity.
+          {`Your username gives you a private identity.
 
-Your avatar is your evolving identity.
+Your avatar gives that identity a face.
 
-Just like in real life, every person is born with a name, an appearance, and an inner personality. On raW, your username is your name, your avatar is your appearance, and your answers, choices, and interactions reveal the deeper personality behind it.`}
+Your answers, choices, and conversations reveal the personality behind it — so people connect with who you are, not what you look like offline.`}
         </span>
       }
     >
@@ -317,7 +400,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
                   <div
                     className={`rounded-full transition-all duration-200 ${scaleClass}`}
                   >
-                    <AvatarFigure key={`${avatar.level}-${themeVersion}`} avatarIndex={avatar.level} size="sm" selected={avatarIndex === index} />
+                    <AvatarFigure key={`${avatar.level}-${themeVersion}`} avatarIndex={avatar.level} size="sm" selected={avatarIndex === index} themeOverride={avatar} />
                   </div>
                   <span
                     className="max-w-[46px] text-center font-display uppercase leading-tight transition-colors duration-200"
@@ -408,7 +491,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -24 }}
                 transition={{ duration: 0.22 }}
-           className="grid grid-cols-4 grid-rows-2 place-items-start justify-items-center content-start gap-x-4 gap-y-0"
+                className="grid grid-cols-4 grid-rows-2 place-items-start justify-items-center content-start gap-x-4 gap-y-0"
               >
                 {desktopAvatars.map(({ avatar, index }) => (
                   <AvatarButton key={`${desktopStart}-${index}`} index={index} avatar={avatar} />
@@ -416,6 +499,36 @@ Just like in real life, every person is born with a name, an appearance, and an 
               </motion.div>
             </AnimatePresence>
           </div>
+
+          {unlockableAvatars.length > 0 && (
+            <div className="mt-8 border-t border-raw-border/25 pt-5">
+              <p className="mb-4 text-center font-display text-[10px] uppercase tracking-[0.25em] text-raw-gold/65">
+                Unlockable Avatars
+              </p>
+              <div className="grid grid-cols-4 place-items-start justify-items-center gap-x-4 gap-y-3">
+                {visibleUnlockableAvatars.map(({ avatar, themeIndex }) => (
+                  <UnlockableAvatarButton key={avatar.id} avatar={avatar} themeIndex={themeIndex} />
+                ))}
+              </div>
+              {hasMoreUnlockableAvatars && (
+                <div className="mt-4 flex justify-center">
+                  <button
+                    type="button"
+                    onClick={() => setShowUnlockableAvatars((open) => !open)}
+                    className="group relative flex items-center gap-2 rounded-full border border-raw-border/40 bg-raw-black/60 px-4 py-2 text-[9px] uppercase tracking-[0.18em] text-raw-silver/50 transition-all duration-300 hover:border-raw-gold/50 hover:text-raw-gold"
+                    aria-expanded={showUnlockableAvatars}
+                  >
+                    <div
+                      className="absolute inset-0 rounded-full opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                      style={{ boxShadow: "0 0 14px rgba(241,196,45,0.2), inset 0 0 10px rgba(241,196,45,0.05)" }}
+                    />
+                    <span className="relative">{showUnlockableAvatars ? "Show Less" : "Show More"}</span>
+                    <span className="relative transition-transform duration-300" style={{ transform: showUnlockableAvatars ? "rotate(180deg)" : "rotate(0deg)" }}>▾</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -448,7 +561,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
                 </p>
                 {visibleExtendedAvatars.length > 0 ? (
                   <>
-                    <div className="grid grid-cols-3 place-items-start justify-items-center gap-x-3 gap-y-4 sm:grid-cols-4 sm:gap-x-5 sm:gap-y-5">
+                    <div className="grid grid-cols-2 place-items-start justify-items-center gap-x-6 gap-y-5 sm:grid-cols-5 sm:gap-x-5 sm:gap-y-6">
                       {visibleExtendedAvatars.map(({ avatar, themeIndex }) => (
                         <button
                           key={avatar.id ?? themeIndex}
@@ -465,9 +578,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
                           aria-label={`Select ${avatar.name}`}
                         >
                           <div
-                            className={`relative h-11 w-11 overflow-hidden rounded-full transition-all duration-300 group-hover:scale-105 sm:h-14 sm:w-14 ${
-                              avatarIndex === themeIndex ? "ring-1 ring-raw-gold/80" : "ring-1 ring-white/10"
-                            }`}
+                            className="relative flex h-14 w-14 items-center justify-center overflow-visible rounded-full transition-all duration-300 sm:h-16 sm:w-16"
                             style={{ transition: "transform 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}
                           >
                             {avatar.imageSrc ? (
@@ -477,11 +588,10 @@ Just like in real life, every person is born with a name, an appearance, and an 
                                 loading="lazy"
                                 decoding="async"
                                 draggable={false}
-                                className="h-full w-full object-cover"
-                                style={getRevealAvatarImageStyle(avatar.id)}
+                                className="h-[96%] w-[96%] rounded-full object-contain"
                               />
                             ) : (
-                              <AvatarFigure key={`${themeIndex}-${themeVersion}`} avatarIndex={themeIndex} size="sm" selected={avatarIndex === themeIndex} />
+                              <AvatarFigure key={`${themeIndex}-${themeVersion}`} avatarIndex={themeIndex} size="sm" selected={avatarIndex === themeIndex} themeOverride={avatar} />
                             )}
                           </div>
                           <span
@@ -599,6 +709,10 @@ Just like in real life, every person is born with a name, an appearance, and an 
             </motion.div>
           )}
         </AnimatePresence>
+
+        <div className="mt-10 border-t border-raw-border/20 pt-10 sm:mt-14 sm:pt-14">
+          <WheelRewardInline onSignupClick={onSignupClick ?? (() => undefined)} />
+        </div>
       </div>
     </LandingSectionShell>
   );

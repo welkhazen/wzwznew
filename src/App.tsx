@@ -6,15 +6,20 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { AnalyticsProvider } from "@/components/analytics/AnalyticsProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { RouteSeo } from "@/components/seo/RouteSeo";
 
 const Index = lazy(() => import("./pages/Index"));
 const NotFound = lazy(() => import("./pages/NotFound"));
-const Admin = lazy(() => import("./pages/Admin"));
 const FAQ = lazy(() => import("./pages/FAQ"));
 const AskAI = lazy(() => import("./pages/AskAI"));
 const Security = lazy(() => import("./pages/Security"));
 const Terms = lazy(() => import("./pages/Terms"));
 const Privacy = lazy(() => import("./pages/Privacy"));
+const CommunityGuidelines = lazy(() => import("./pages/legal/CommunityGuidelines"));
+const Safety = lazy(() => import("./pages/legal/Safety"));
+const ReportContent = lazy(() => import("./pages/legal/ReportContent"));
+const Appeals = lazy(() => import("./pages/legal/Appeals"));
+const CookiePolicy = lazy(() => import("./pages/legal/CookiePolicy"));
 const PollsExplained = lazy(() => import("./pages/PollsExplained"));
 const CommunitiesExplained = lazy(() => import("./pages/CommunitiesExplained"));
 const PitchSelector = lazy(() => import("./pages/PitchSelector"));
@@ -34,12 +39,12 @@ const App = () => (
         <Sonner />
         <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <AnalyticsProvider>
+            <RouteSeo />
             <Suspense fallback={routeFallback}>
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/dashboard" element={<Index />} />
                 <Route path="/dashboard/communities/:communityId" element={<Index />} />
-                <Route path="/admin" element={<Admin />} />
                 <Route path="/faq" element={<FAQ />} />
                 <Route path="/polls-explained" element={<PollsExplained />} />
                 <Route path="/communities-explained" element={<CommunitiesExplained />} />
@@ -47,6 +52,11 @@ const App = () => (
                 <Route path="/security" element={<Security />} />
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/privacy" element={<Privacy />} />
+                <Route path="/community-guidelines" element={<CommunityGuidelines />} />
+                <Route path="/safety" element={<Safety />} />
+                <Route path="/report-content" element={<ReportContent />} />
+                <Route path="/appeals" element={<Appeals />} />
+                <Route path="/cookie-policy" element={<CookiePolicy />} />
                 <Route path="/pitch" element={<PitchSelector />} />
                 <Route path="/pitch-v1" element={<PitchV1 />} />
                 <Route path="/pitch-v2" element={<PitchV2 />} />
