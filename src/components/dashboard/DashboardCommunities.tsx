@@ -718,19 +718,21 @@ export function DashboardCommunities({
                 </div>
               )}
 
-              <div className="flex items-center gap-3 border-b border-raw-border/15 px-4 py-2.5">
-                <Search className="h-4 w-4 shrink-0 text-raw-silver/35" />
-                <input
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search this group chat"
-                  className="w-full bg-transparent text-sm text-raw-text placeholder:text-raw-silver/25 focus:outline-none"
-                />
-                {searchQuery && (
-                  <button onClick={() => setSearchQuery("")} className="rounded-full p-1 text-raw-silver/40 hover:text-raw-text">
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                )}
+              <div className="flex items-center gap-2 border-b border-raw-border/15 px-3 py-2">
+                <div className="flex flex-1 items-center gap-2 rounded-xl border border-raw-border/25 bg-raw-surface/40 px-3 py-1.5">
+                  <Search className="h-3.5 w-3.5 shrink-0 text-raw-silver/40" />
+                  <input
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search this group chat"
+                    className="w-full bg-transparent text-sm text-raw-text placeholder:text-raw-silver/30 focus:outline-none"
+                  />
+                  {searchQuery && (
+                    <button onClick={() => setSearchQuery("")} className="rounded-full p-0.5 text-raw-silver/40 hover:text-raw-text">
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
                 <button
                   onClick={() => setFeedOpen((o) => !o)}
                   title={feedOpen ? "Close feed" : "Open general feed"}
