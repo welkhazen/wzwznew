@@ -163,15 +163,7 @@ export const CommunityMessageTimeline = memo(function CommunityMessageTimeline({
                     : "border-raw-border/35 bg-raw-black/50"
                 }`}
               >
-                <div className="flex items-center justify-between gap-2 mb-1">
-                  <button
-                    type="button"
-                    onClick={() => onOpenSenderProfile(message)}
-                    className="text-[11px] font-semibold uppercase tracking-wide hover:underline"
-                    style={{ color: isOwnMessage ? "rgb(var(--raw-accent))" : "rgb(var(--raw-accent) / 0.65)" }}
-                  >
-                    @{message.senderName}
-                  </button>
+                <div className="flex items-center justify-end gap-2 mb-0.5">
                   <div className="flex items-center gap-2">
                     {likeCount > 0 && (
                       <span className="text-[10px] text-raw-gold/70 flex items-center gap-0.5">
@@ -202,6 +194,14 @@ export const CommunityMessageTimeline = memo(function CommunityMessageTimeline({
                 <p className={`break-words [overflow-wrap:anywhere] text-sm leading-snug ${
                   message.deletedAt ? "italic text-raw-silver/45" : isOwnMessage ? "text-raw-text" : "text-raw-silver/85"
                 }`}>
+                  <button
+                    type="button"
+                    onClick={() => onOpenSenderProfile(message)}
+                    className="mr-1 text-[11px] font-semibold uppercase tracking-wide hover:underline"
+                    style={{ color: isOwnMessage ? "rgb(var(--raw-accent))" : "rgb(var(--raw-accent) / 0.65)" }}
+                  >
+                    @{message.senderName}:
+                  </button>
                   {message.text.split(/(@\w+)/g).map((part, i) =>
                     /^@\w+$/.test(part)
                       ? <span key={i} className="font-semibold text-raw-gold">{part}</span>
