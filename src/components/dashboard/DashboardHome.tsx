@@ -313,7 +313,7 @@ export function DashboardHome({
         </div>
         <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-2 md:items-stretch md:gap-6 md:overflow-visible md:px-0 md:pb-0">
           {/* Daily Spin */}
-          <div className={`flex aspect-square w-[78vw] max-w-[18rem] shrink-0 flex-col overflow-hidden p-4 rounded-[1.5rem] md:aspect-auto md:w-auto md:max-w-none md:p-6 ${isLight ? "border border-slate-200 bg-white shadow-[0_12px_28px_rgba(15,23,42,0.08)]" : "border border-white/10 bg-[#1a1a1a]"}`}>
+          <div className={`flex aspect-square w-[90vw] max-w-[22rem] shrink-0 flex-col overflow-visible p-4 rounded-[1.5rem] md:aspect-auto md:w-auto md:max-w-none md:p-6 ${isLight ? "border border-slate-200 bg-white shadow-[0_12px_28px_rgba(15,23,42,0.08)]" : "border border-white/10 bg-[#1a1a1a]"}`}>
             <div className="flex items-start justify-between">
               <div className="space-y-0.5">
                 <h3 className={`text-lg font-bold tracking-tight md:text-xl ${isLight ? "text-slate-950" : "text-white"}`}>Daily Spin</h3>
@@ -323,7 +323,7 @@ export function DashboardHome({
                 <Dices className="size-5 text-raw-gold" />
               </div>
             </div>
-            <div className="mt-3 min-h-0 flex-1 overflow-hidden md:mt-5 md:overflow-visible">
+            <div className="mt-3 min-h-0 flex-1 overflow-visible md:mt-5">
               {userId ? (
                 <DashboardDailySpin
                   userId={userId}
