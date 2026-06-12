@@ -386,6 +386,11 @@ export default function Dashboard({
     navigate("/dashboard");
   };
 
+  const handleBackToDashboardHome = () => {
+    setIsHome(true);
+    navigate("/dashboard");
+  };
+
   const handleDailySpinAward = (amount: number) => {
     if (user.role === "admin") {
       return award(amount);
@@ -561,7 +566,7 @@ export default function Dashboard({
         return (
           <Suspense fallback={dashboardSectionFallback}>
             <DashboardSectionShell>
-              <DashboardSettings userId={user.id} onLogout={onLogout} />
+              <DashboardSettings userId={user.id} onLogout={onLogout} onBackToDashboard={handleBackToDashboardHome} />
             </DashboardSectionShell>
           </Suspense>
         );
