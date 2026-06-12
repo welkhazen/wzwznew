@@ -1,5 +1,4 @@
-import { randomInt } from "node:crypto";
-import crypto from "node:crypto";
+import { randomInt, createHash } from "node:crypto";
 import { audit } from "./audit";
 import { env } from "../config/env";
 
@@ -32,7 +31,7 @@ setInterval(() => {
 }, CLEANUP_INTERVAL_MS).unref();
 
 function hashCode(code: string): string {
-  return crypto.createHash("sha256").update(code).digest("hex");
+  return createHash("sha256").update(code).digest("hex");
 }
 
 /** Cryptographically secure 6-digit OTP code (100000–999999). */
@@ -125,7 +124,7 @@ export async function sendOtp(phone: string): Promise<OtpSendResult> {
       attempts: 0,
     });
     // Log the code to the server console only — never to the client response.
-    audit("otp.dev.sent", { phone, code }, "info");
+    audit("otp.dev.sent", { phone, codeHint: code.slice(0, 2) + "****" }, "info");
     return { ok: true, channels: ["sms"] };
   }
 

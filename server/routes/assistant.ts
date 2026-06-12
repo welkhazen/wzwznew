@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
 import { z } from "zod";
@@ -209,7 +210,7 @@ assistantRouter.post("/feedback", requireAuth, async (req, res) => {
     : undefined;
 
   await appendFeedbackEntry({
-    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    id: `${Date.now()}-${randomUUID().replace(/-/g, "").slice(0, 8)}`,
     question: parsed.data.question,
     answer: parsed.data.answer,
     helpful: parsed.data.helpful,

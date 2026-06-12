@@ -41,7 +41,8 @@ setInterval(() => {
   const LOGIN_MAX_AGE_MS = 30 * 60 * 1000; // 2× lockout window
 
   for (const [key, entry] of loginAttempts) {
-    if (entry.lastAttemptAt + LOGIN_MAX_AGE_MS < now) loginAttempts.delete(key);
+    const refTime = entry.lastAttemptAt > 0 ? entry.lastAttemptAt : entry.lockedUntil;
+    if (refTime + LOGIN_MAX_AGE_MS < now) loginAttempts.delete(key);
   }
 
   for (const [token, entry] of magicLinks) {
