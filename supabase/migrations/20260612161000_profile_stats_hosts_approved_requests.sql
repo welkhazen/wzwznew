@@ -1,7 +1,4 @@
--- One round-trip aggregate for the profile stats grid.
--- All counts are bigint; the function returns a single JSON row.
--- Read-only, marked STABLE so PostgREST can cache where applicable.
-
+-- Hosts made means approved community host requests, not community polls.
 create or replace function public.get_profile_stats(p_user_id text)
 returns jsonb
 language sql
