@@ -733,14 +733,26 @@ export function DashboardCommunities({
                     </button>
                   )}
                 </div>
-                <button
-                  onClick={() => setFeedOpen((o) => !o)}
-                  title={feedOpen ? "Close feed" : "Open general feed"}
-                  className={`hidden sm:flex shrink-0 items-center gap-1.5 rounded-lg border px-2 py-1 text-[11px] transition-colors ${feedOpen ? "border-raw-gold/40 bg-raw-gold/10 text-raw-gold" : "border-raw-border/30 text-raw-silver/45 hover:border-raw-gold/20 hover:text-raw-gold"}`}
-                >
-                  <PanelRight className="h-3.5 w-3.5" />
-                  <span>Feed</span>
-                </button>
+                <div className={`hidden sm:flex shrink-0 items-center rounded-lg border text-[11px] transition-colors ${feedOpen ? "border-raw-gold/40 bg-raw-gold/10 text-raw-gold" : "border-raw-border/30 text-raw-silver/45"}`}>
+                  <button
+                    onClick={() => setFeedOpen((o) => !o)}
+                    title={feedOpen ? "Close feed" : "Open general feed"}
+                    className="flex items-center gap-1.5 px-2 py-1 hover:opacity-80"
+                  >
+                    <PanelRight className="h-3.5 w-3.5" />
+                    <span>Feed</span>
+                  </button>
+                  {feedOpen && (
+                    <button
+                      onClick={() => setFeedOpen(false)}
+                      title="Dismiss feed"
+                      className="border-l border-raw-gold/30 px-1.5 py-1 hover:bg-raw-gold/10"
+                      aria-label="Dismiss feed"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
               </div>
 
               <CommunityMessageTimeline
