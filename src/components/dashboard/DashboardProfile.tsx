@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Check, Heart, MessageSquare, Mic2, Pin, ShieldOff, Target, Trash2, User, Users, X } from "lucide-react";
+import { Check, Copy, Heart, MessageSquare, Mic2, Pin, Share2, ShieldOff, Target, Ticket, Trash2, User, Users, X } from "lucide-react";
 import { useProfileStats } from "@/hooks/useProfileStats";
 import type { PinnedMessageRecord } from "@/backend/supabase/controllers/userExtrasController";
 import type { Poll } from "@/store/useRawStore";
@@ -21,6 +21,58 @@ import {
 
 const TOKEN_BALANCE_STORAGE_PREFIX = "raw.polls.token-balance";
 const TOKEN_BALANCE_UPDATED_EVENT = "raw:token-balance-updated";
+
+const FOUNDING_INVITES_STORAGE_PREFIX = "raw.founding-invites";
+const FOUNDING_INVITE_COUNT = 2;
+
+function createInviteCode(slot: number): string {
+  const bytes = new Uint8Array(5);
+  if (typeof crypto !== "undefined" && crypto.getRandomValues) {
+    crypto.getRandomValues(bytes);
+  } else {
+    for (let i = 0; i < bytes.length; i += 1) {
+      bytes[i] = Math.floor(Math.random() * 256);
+    }
+  }
+
+  const randomPart = Array.from(bytes, (byte) => byte.toString(36).padStart(2, "0"))
+    .join("")
+    .slice(0, 8)
+    .toUpperCase();
+  return `RAW-${slot}-${randomPart}`;
+}
+
+function readFoundingInviteCodes(userId: string): string[] {
+  if (typeof window === "undefined") {
+    return Array.from({ length: FOUNDING_INVITE_COUNT }, (_, index) => `RAW-${index + 1}-FOUNDING`);
+  }
+
+  const storageKey = `${FOUNDING_INVITES_STORAGE_PREFIX}.${userId}`;
+  const saved = window.localStorage.getItem(storageKey);
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved) as unknown;
+      if (Array.isArray(parsed) && parsed.every((code) => typeof code === "string")) {
+        const codes = parsed.slice(0, FOUNDING_INVITE_COUNT);
+        while (codes.length < FOUNDING_INVITE_COUNT) {
+          codes.push(createInviteCode(codes.length + 1));
+        }
+        window.localStorage.setItem(storageKey, JSON.stringify(codes));
+        return codes;
+      }
+    } catch {
+      // Regenerate malformed local invite data below.
+    }
+  }
+
+  const codes = Array.from({ length: FOUNDING_INVITE_COUNT }, (_, index) => createInviteCode(index + 1));
+  window.localStorage.setItem(storageKey, JSON.stringify(codes));
+  return codes;
+}
+
+function buildInviteShareText(code: string): string {
+  return `I saved you a founding invite for RAW. Use code ${code} when you join.`;
+}
 
 function pushTokenBalance(userId: string, balance: number): void {
   if (typeof window === "undefined") return;
@@ -74,6 +126,8 @@ export function DashboardProfile({
 }: DashboardProfileProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [ownedInsightIds, setOwnedInsightIds] = useState<Set<string>>(() => readOwnedInsightIds(userId));
+  const [inviteCodes, setInviteCodes] = useState<string[]>(() => readFoundingInviteCodes(userId));
+  const [openInviteIndex, setOpenInviteIndex] = useState<number | null>(null);
 
   // Private identity
   const [privateAlias, setPrivateAlias] = useState<UserAliasRow | null>(null);
@@ -86,6 +140,8 @@ export function DashboardProfile({
 
   useEffect(() => {
     setOwnedInsightIds(readOwnedInsightIds(userId));
+    setInviteCodes(readFoundingInviteCodes(userId));
+    setOpenInviteIndex(null);
   }, [userId]);
 
   useEffect(() => {
@@ -165,6 +221,28 @@ export function DashboardProfile({
     } catch {
       toast({ title: "Could not remove name" });
     }
+  }
+
+  async function handleCopyInvite(code: string) {
+    try {
+      await navigator.clipboard.writeText(code);
+      toast({ title: "Invite code copied", description: code });
+    } catch {
+      toast({ title: "Could not copy invite", description: "Select the code and copy it manually." });
+    }
+  }
+
+  async function handleShareInvite(code: string) {
+    const shareText = buildInviteShareText(code);
+    if (navigator.share) {
+      try {
+        await navigator.share({ text: shareText });
+        return;
+      } catch {
+        // Fall back to copying below if native share is cancelled or unavailable.
+      }
+    }
+    await handleCopyInvite(shareText);
   }
 
   const handlePurchaseInsight = async (insightId: string, tokenPrice: number) => {
@@ -256,6 +334,84 @@ export function DashboardProfile({
           )}
         </div>
       </div>
+
+      {/* Founding invitation tickets */}
+      <section className="rounded-2xl border border-raw-gold/20 bg-raw-surface/40 px-4 py-5 sm:px-6">
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <div>
+            <p className="flex items-center gap-2 text-sm font-semibold text-raw-text">
+              <Ticket className="h-4 w-4 text-raw-gold/60" /> Founding invitations
+            </p>
+            <p className="mt-1 text-xs leading-relaxed text-raw-silver/40">
+              You get two founding invite codes. Reveal one, copy it, or share it with a friend.
+            </p>
+          </div>
+          <span className="rounded-full border border-raw-gold/25 bg-raw-gold/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-raw-gold/70">
+            2 total
+          </span>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          {inviteCodes.map((code, index) => {
+            const isOpen = openInviteIndex === index;
+            return (
+              <div
+                key={code}
+                role="button"
+                tabIndex={0}
+                onClick={() => setOpenInviteIndex(isOpen ? null : index)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    setOpenInviteIndex(isOpen ? null : index);
+                  }
+                }}
+                className="group relative overflow-hidden rounded-2xl border border-dashed border-raw-gold/30 bg-raw-black/25 p-4 text-left transition-all hover:-translate-y-0.5 hover:border-raw-gold/55 hover:bg-raw-gold/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/45"
+                aria-expanded={isOpen}
+              >
+                <div className="absolute -right-6 -top-6 h-20 w-20 rounded-full bg-raw-gold/10 blur-xl transition-opacity group-hover:opacity-100" />
+                <div className="relative flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-raw-gold/55">Invitation {index + 1}</p>
+                    <p className="mt-1 text-xs text-raw-silver/35">Tap ticket to {isOpen ? "hide" : "reveal"}</p>
+                  </div>
+                  <Ticket className="h-7 w-7 text-raw-gold/50" />
+                </div>
+
+                {isOpen && (
+                  <div className="relative mt-4 space-y-3 rounded-xl border border-raw-border/35 bg-raw-black/35 p-3">
+                    <code className="block select-all break-all font-mono text-sm font-bold tracking-[0.12em] text-raw-gold">
+                      {code}
+                    </code>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          void handleCopyInvite(code);
+                        }}
+                        className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-raw-border/40 px-3 py-2 text-[11px] font-semibold text-raw-silver/65 transition-colors hover:border-raw-gold/40 hover:text-raw-gold"
+                      >
+                        <Copy className="h-3.5 w-3.5" /> Copy
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          void handleShareInvite(code);
+                        }}
+                        className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-raw-gold px-3 py-2 text-[11px] font-bold text-raw-ink transition-opacity hover:opacity-90"
+                      >
+                        <Share2 className="h-3.5 w-3.5" /> Share
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </section>
 
       {/* Private identity card */}
       <div className="rounded-2xl border border-raw-border/40 bg-raw-surface/40 px-4 py-5 sm:px-6">
