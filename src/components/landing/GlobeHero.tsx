@@ -78,7 +78,10 @@ export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
               transition={{ duration: 1, delay: 0.3 }}
               className="select-none text-[2.1rem] font-black leading-[0.9] tracking-tight sm:text-[2.6rem] md:text-[3.825rem] lg:text-[5.1rem] xl:text-[6.8rem]"
             >
-              <span className="block relative">
+              <span className="sr-only">
+                raW — anonymous group chats, live polls, and online communities. Your Place. Your People. Your Self.
+              </span>
+              <span className="block relative" aria-hidden="true">
                 <span
                   className="font-black relative z-10 block"
                   style={{
