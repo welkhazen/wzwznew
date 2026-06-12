@@ -664,7 +664,20 @@ export async function claimPendingLandingWheelAvatarForUser(userId: string): Pro
   // columns get set. Idempotent on the server, safe to retry.
   try {
     const { claimFreeSpinAvatar } = await import("@/backend/supabase/controllers/avatarRewardsController");
-    await claimFreeSpinAvatar(userId, avatarId);
+    const claim = await claimFreeSpinAvatar(userId, avatarId);
+    if (claim.ok && claim.avatarId) {
+      const claimedAvatar = catalog.find((item) => item.id === claim.avatarId);
+      clearLandingWheelAvatarLocal();
+      if (!claimedAvatar) {
+        return { status: "unknown_avatar" };
+      }
+      await purchaseAvatarForUser(userId, claimedAvatar.id);
+      return {
+        status: claim.alreadyClaimed ? "already_claimed" : "granted",
+        avatarId: claimedAvatar.id,
+        level: claimedAvatar.level,
+      };
+    }
   } catch {
     // Best-effort — fall back to the legacy local-first grant below.
   }
