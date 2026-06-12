@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import {
   Eye,
   EyeOff,
+  ArrowLeft,
   KeyRound,
   Lock,
   ShieldOff,
@@ -22,6 +23,7 @@ import {
 interface DashboardSettingsProps {
   userId: string;
   onLogout: () => void;
+  onBackToDashboard: () => void;
 }
 
 type SettingsSection = "account" | "privacy" | "security" | "danger";
@@ -33,7 +35,7 @@ const SECTIONS: Array<{ key: SettingsSection; label: string; icon: typeof UserCo
   { key: "danger",   label: "Danger zone",  icon: Trash2 },
 ];
 
-export function DashboardSettings({ userId, onLogout }: DashboardSettingsProps) {
+export function DashboardSettings({ userId, onLogout, onBackToDashboard }: DashboardSettingsProps) {
   const { toast } = useToast();
   const [section, setSection] = useState<SettingsSection>("account");
 
@@ -123,28 +125,38 @@ export function DashboardSettings({ userId, onLogout }: DashboardSettingsProps) 
 
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="font-display text-xl tracking-wide text-raw-text sm:text-2xl">Settings</h1>
-        <p className="mt-1 text-xs text-raw-silver/40">Visibility, aliases, and account security.</p>
+      <div className="flex items-start gap-3">
+        <button
+          type="button"
+          onClick={onBackToDashboard}
+          className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-raw-border/30 bg-raw-surface/40 text-raw-silver/70 transition-colors hover:bg-raw-surface/60 hover:text-raw-text"
+          aria-label="Back to dashboard"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </button>
+        <div className="min-w-0">
+          <h1 className="font-display text-xl tracking-wide text-raw-text sm:text-2xl">Settings</h1>
+          <p className="mt-1 text-xs text-raw-silver/40">Visibility, aliases, and account security.</p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-[200px_minmax(0,1fr)]">
         {/* Left sidebar */}
         <nav className="rounded-2xl border border-raw-border/30 bg-raw-surface/30 p-1.5 md:self-start">
-          <ul className="flex gap-1 overflow-x-auto md:flex-col md:overflow-x-visible">
+          <ul className="grid grid-cols-2 gap-1 md:flex md:flex-col">
             {SECTIONS.map(({ key, label, icon: Icon }) => (
               <li key={key} className="md:w-full">
                 <button
                   type="button"
                   onClick={() => setSection(key)}
-                  className={`flex w-full items-center gap-2.5 whitespace-nowrap rounded-lg px-3 py-2 text-left text-sm transition-colors ${
+                  className={`flex w-full min-w-0 items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm transition-colors sm:gap-2.5 sm:px-3 ${
                     section === key
                       ? "bg-raw-gold/15 text-raw-gold"
                       : "text-raw-silver/70 hover:bg-raw-surface/60 hover:text-raw-text"
                   }`}
                 >
-                  <Icon className="h-3.5 w-3.5" />
-                  {label}
+                  <Icon className="h-3.5 w-3.5 shrink-0" />
+                  <span className="min-w-0 truncate">{label}</span>
                 </button>
               </li>
             ))}
