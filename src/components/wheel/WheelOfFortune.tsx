@@ -101,7 +101,7 @@ export function WheelOfFortune({ prizes, onSpinEnd, onSpinStart, disabled = fals
   const accentSoft = "rgb(var(--raw-accent) / 0.3)";
   const pointerGradientId = `pointerGrad-${pointerId}`;
   const pointerShadowId = `pointerShadow-${pointerId}`;
-  const wheelDisplaySize = "min(400px, calc(100vw - 3rem), calc(100svh - 12rem))";
+  const wheelDisplaySize = `min(${size}px, calc(100vw - 3rem), calc(100svh - 12rem))`;
 
   useEffect(() => {
     onSpinEndRef.current = onSpinEnd;
