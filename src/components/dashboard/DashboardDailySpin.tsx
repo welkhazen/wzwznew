@@ -309,7 +309,7 @@ export function DashboardDailySpin({ userId, isAdmin = false, onAwardXP, onAvata
             disabled={isSpinDisabled}
             prizeWeights={PRIZE_WEIGHTS}
             forcedPrizeId={forcedPrizeId}
-            radius={160}
+            radius={typeof window !== "undefined" && window.innerWidth < 640 ? 100 : 160}
             disabledLabel={isCooldownActive && !isAdmin ? countdown : undefined}
           />
         </div>
