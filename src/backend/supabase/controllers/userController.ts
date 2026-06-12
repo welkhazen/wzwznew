@@ -168,3 +168,30 @@ export async function deleteUserAlias(aliasId: string): Promise<void> {
   const { error } = await supabase.from('user_aliases').delete().eq('id', aliasId);
   if (error) throw error;
 }
+
+export interface ChatIdentityPrefs {
+  /** Selected chat name: a private alias, or null to post under the public username. */
+  alias: string | null;
+  /** Avatar level for the private identity, or null if never set. */
+  avatarLevel: number | null;
+}
+
+export async function getChatIdentity(userId: string): Promise<ChatIdentityPrefs | null> {
+  const { data, error } = await supabase
+    .from('users')
+    .select('chat_identity_alias, chat_avatar_level')
+    .eq('id', userId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  const row = data as { chat_identity_alias: string | null; chat_avatar_level: number | null };
+  return { alias: row.chat_identity_alias ?? null, avatarLevel: row.chat_avatar_level ?? null };
+}
+
+export async function setChatIdentity(alias: string | null, avatarLevel: number): Promise<void> {
+  const { error } = await supabase.rpc('set_chat_identity', {
+    p_alias: alias,
+    p_avatar_level: avatarLevel,
+  });
+  if (error) throw error;
+}

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Check, Heart, MessageSquare, Mic2, Pin, ShieldOff, Target, Trash2, Users, X } from "lucide-react";
+import { Check, Copy, Heart, MessageSquare, Mic2, Pin, Share2, ShieldOff, Target, Ticket, Trash2, User, Users, X } from "lucide-react";
 import { useProfileStats } from "@/hooks/useProfileStats";
 import type { PinnedMessageRecord } from "@/backend/supabase/controllers/userExtrasController";
 import type { Poll } from "@/store/useRawStore";
@@ -9,16 +9,87 @@ import { LEVEL_THEMES, getAvatar, getPrivateAvatarLevel, privateAvatarKey } from
 import { PersonalityInsightsInventory } from "@/components/dashboard/PersonalityInsightsInventory";
 import { addOwnedInsightId, readOwnedInsightIds } from "@/lib/insightsOwnership";
 import { spendTokens } from "@/lib/api/tokens";
+import { CHAT_IDENTITY_CHANGED_EVENT, readSelectedChatAlias, writeSelectedChatAlias } from "@/lib/identitySelection";
 import { toast } from "@/components/ui/use-toast";
 import {
   listUserAliases,
   savePrivateAlias,
   deleteUserAlias,
+  setChatIdentity,
   type UserAliasRow,
 } from "@/backend/supabase/controllers/userController";
 
 const TOKEN_BALANCE_STORAGE_PREFIX = "raw.polls.token-balance";
 const TOKEN_BALANCE_UPDATED_EVENT = "raw:token-balance-updated";
+
+const FOUNDING_INVITES_STORAGE_PREFIX = "raw.founding-invites";
+const FOUNDING_INVITE_COUNT = 1;
+const ONBOARDING_VOUCHER_STORAGE_PREFIX = "raw.onboarding.voucher";
+
+function createInviteCode(slot: number): string {
+  const bytes = new Uint8Array(5);
+  if (typeof crypto !== "undefined" && crypto.getRandomValues) {
+    crypto.getRandomValues(bytes);
+  } else {
+    for (let i = 0; i < bytes.length; i += 1) {
+      bytes[i] = Math.floor(Math.random() * 256);
+    }
+  }
+
+  const randomPart = Array.from(bytes, (byte) => byte.toString(36).padStart(2, "0"))
+    .join("")
+    .slice(0, 8)
+    .toUpperCase();
+  return `RAW-${slot}-${randomPart}`;
+}
+
+function readFoundingInviteCodes(userId: string): string[] {
+  if (typeof window === "undefined") {
+    return Array.from({ length: FOUNDING_INVITE_COUNT }, (_, index) => `RAW-${index + 1}-FOUNDING`);
+  }
+
+  const storageKey = `${FOUNDING_INVITES_STORAGE_PREFIX}.${userId}`;
+  const saved = window.localStorage.getItem(storageKey);
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved) as unknown;
+      if (Array.isArray(parsed) && parsed.every((code) => typeof code === "string")) {
+        const codes = parsed.slice(0, FOUNDING_INVITE_COUNT);
+        while (codes.length < FOUNDING_INVITE_COUNT) {
+          codes.push(createInviteCode(codes.length + 1));
+        }
+        window.localStorage.setItem(storageKey, JSON.stringify(codes));
+        return codes;
+      }
+    } catch {
+      // Regenerate malformed local invite data below.
+    }
+  }
+
+  const codes = Array.from({ length: FOUNDING_INVITE_COUNT }, (_, index) => createInviteCode(index + 1));
+  window.localStorage.setItem(storageKey, JSON.stringify(codes));
+  return codes;
+}
+
+function buildInviteShareText(code: string): string {
+  return `I saved you a founding invite for RAW. Use code ${code} when you join.`;
+}
+
+function countLocalVoucherUses(userId: string, codes: string[]): number {
+  if (typeof window === "undefined" || codes.length === 0) return 0;
+  const normalizedCodes = new Set(codes.map((code) => code.toUpperCase()));
+  let count = 0;
+
+  for (let index = 0; index < window.localStorage.length; index += 1) {
+    const key = window.localStorage.key(index);
+    if (!key?.startsWith(`${ONBOARDING_VOUCHER_STORAGE_PREFIX}.`)) continue;
+    if (key === `${ONBOARDING_VOUCHER_STORAGE_PREFIX}.${userId}`) continue;
+    const value = window.localStorage.getItem(key)?.trim().toUpperCase();
+    if (value && normalizedCodes.has(value)) count += 1;
+  }
+
+  return count;
+}
 
 function pushTokenBalance(userId: string, balance: number): void {
   if (typeof window === "undefined") return;
@@ -72,18 +143,37 @@ export function DashboardProfile({
 }: DashboardProfileProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [ownedInsightIds, setOwnedInsightIds] = useState<Set<string>>(() => readOwnedInsightIds(userId));
+  const [inviteCodes, setInviteCodes] = useState<string[]>(() => readFoundingInviteCodes(userId));
+  const [openInviteIndex, setOpenInviteIndex] = useState<number | null>(null);
+  const [localVoucherUses, setLocalVoucherUses] = useState(() => countLocalVoucherUses(userId, readFoundingInviteCodes(userId)));
 
   // Private identity
   const [privateAlias, setPrivateAlias] = useState<UserAliasRow | null>(null);
   const [aliasInput, setAliasInput] = useState("");
   const [aliasSaving, setAliasSaving] = useState(false);
   const [editingAlias, setEditingAlias] = useState(false);
+  const [selectedChatAlias, setSelectedChatAlias] = useState<string | null>(() => readSelectedChatAlias(userId));
   const [privateAvatarLevel, setPrivateAvatarLevel] = useState<number>(() => getPrivateAvatarLevel(userId));
   const [hoveredPrivateIndex, setHoveredPrivateIndex] = useState<number | null>(null);
 
   useEffect(() => {
+    const nextInviteCodes = readFoundingInviteCodes(userId);
     setOwnedInsightIds(readOwnedInsightIds(userId));
+    setInviteCodes(nextInviteCodes);
+    setLocalVoucherUses(countLocalVoucherUses(userId, nextInviteCodes));
+    setOpenInviteIndex(null);
   }, [userId]);
+
+  useEffect(() => {
+    const updateVoucherUses = () => setLocalVoucherUses(countLocalVoucherUses(userId, inviteCodes));
+    window.addEventListener("storage", updateVoucherUses);
+    window.addEventListener("raw:voucher-used", updateVoucherUses);
+    updateVoucherUses();
+    return () => {
+      window.removeEventListener("storage", updateVoucherUses);
+      window.removeEventListener("raw:voucher-used", updateVoucherUses);
+    };
+  }, [inviteCodes, userId]);
 
   useEffect(() => {
     listUserAliases(userId)
@@ -91,13 +181,40 @@ export function DashboardProfile({
         const priv = rows.find((r) => !r.is_public) ?? null;
         setPrivateAlias(priv);
         setAliasInput(priv?.alias ?? "");
+        setSelectedChatAlias((current) => {
+          if (!current) return null;
+          return priv && priv.alias.toLowerCase() === current.toLowerCase() ? current : null;
+        });
       })
       .catch(() => {});
+  }, [userId]);
+
+  useEffect(() => {
+    setSelectedChatAlias(readSelectedChatAlias(userId));
+    if (typeof window === "undefined") return;
+    const handleIdentityChange = (event: Event) => {
+      const detail = (event as CustomEvent<{ userId?: string; alias?: string | null }>).detail;
+      if (detail?.userId !== userId) return;
+      setSelectedChatAlias(detail.alias ?? null);
+      setPrivateAvatarLevel(getPrivateAvatarLevel(userId));
+    };
+    window.addEventListener(CHAT_IDENTITY_CHANGED_EVENT, handleIdentityChange);
+    return () => window.removeEventListener(CHAT_IDENTITY_CHANGED_EVENT, handleIdentityChange);
   }, [userId]);
 
   function handlePrivateAvatarChange(lvl: number) {
     setPrivateAvatarLevel(lvl);
     window.localStorage.setItem(privateAvatarKey(userId), String(lvl));
+    if (selectedChatAlias) {
+      writeSelectedChatAlias(userId, selectedChatAlias);
+    }
+    void setChatIdentity(selectedChatAlias, lvl).catch(() => {});
+  }
+
+  function handleSelectChatAlias(alias: string | null) {
+    setSelectedChatAlias(alias);
+    writeSelectedChatAlias(userId, alias);
+    void setChatIdentity(alias, privateAvatarLevel).catch(() => {});
   }
 
   async function handleSaveAlias() {
@@ -112,6 +229,7 @@ export function DashboardProfile({
       setPrivateAlias(row);
       setAliasInput(row.alias);
       setEditingAlias(false);
+      handleSelectChatAlias(row.alias);
       toast({ title: "Private name saved" });
     } catch (e) {
       toast({ title: "Could not save name", description: e instanceof Error ? e.message : "Try again." });
@@ -127,10 +245,35 @@ export function DashboardProfile({
       setPrivateAlias(null);
       setAliasInput("");
       setEditingAlias(false);
+      if (selectedChatAlias?.toLowerCase() === privateAlias.alias.toLowerCase()) {
+        handleSelectChatAlias(null);
+      }
       toast({ title: "Private name removed" });
     } catch {
       toast({ title: "Could not remove name" });
     }
+  }
+
+  async function handleCopyInvite(code: string) {
+    try {
+      await navigator.clipboard.writeText(code);
+      toast({ title: "Invite code copied", description: code });
+    } catch {
+      toast({ title: "Could not copy invite", description: "Select the code and copy it manually." });
+    }
+  }
+
+  async function handleShareInvite(code: string) {
+    const shareText = buildInviteShareText(code);
+    if (navigator.share) {
+      try {
+        await navigator.share({ text: shareText });
+        return;
+      } catch {
+        // Fall back to copying below if native share is cancelled or unavailable.
+      }
+    }
+    await handleCopyInvite(shareText);
   }
 
   const handlePurchaseInsight = async (insightId: string, tokenPrice: number) => {
@@ -160,12 +303,14 @@ export function DashboardProfile({
     { key: "hosts",       icon: STAT_ICONS.hosts,       label: "Hosts Made",        value: profileStats.hostsMade },
     { key: "communities", icon: STAT_ICONS.communities, label: "Communities Joined",value: profileStats.communitiesJoined },
     { key: "pinned",      icon: STAT_ICONS.pinned,      label: "Messages Pinned",   value: profileStats.messagesPinned },
-  ];
+  ].filter((stat) => stat.key !== "hosts" || Number(stat.value) > 0);
 
   const displayIndex = hoveredIndex ?? avatarLevel;
   const theme = getAvatar(displayIndex);
-  const ownedLevels = Array.from({ length: LEVEL_THEMES.length }, (_, i) => i + 1)
-    .filter((lvl) => ownedAvatarLevels.has(lvl));
+  const avatarThemeCount = Array.isArray(LEVEL_THEMES) && LEVEL_THEMES.length > 0 ? LEVEL_THEMES.length : Math.max(avatarLevel, 1);
+  const ownedLevelSet = ownedAvatarLevels instanceof Set ? ownedAvatarLevels : new Set<number>([avatarLevel]);
+  const ownedLevels = Array.from({ length: avatarThemeCount }, (_, i) => i + 1)
+    .filter((lvl) => ownedLevelSet.has(lvl));
 
   return (
     <div className="space-y-5">
@@ -221,11 +366,134 @@ export function DashboardProfile({
         </div>
       </div>
 
+      {/* Founding invitation tickets */}
+      <section className="rounded-2xl border border-raw-gold/20 bg-raw-surface/40 px-4 py-5 sm:px-6">
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <div>
+            <p className="flex items-center gap-2 text-sm font-semibold text-raw-text">
+              <Ticket className="h-4 w-4 text-raw-gold/60" /> Founding invitations
+            </p>
+            <p className="mt-1 text-xs leading-relaxed text-raw-silver/40">
+              You get one founding invite code. Reveal it, copy it, or share it with a friend.
+            </p>
+          </div>
+          <span className="rounded-full border border-raw-gold/25 bg-raw-gold/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-raw-gold/70">
+            1 total
+          </span>
+        </div>
+
+        {localVoucherUses > 0 ? (
+          <div className="mb-3 rounded-2xl border border-raw-gold/25 bg-raw-gold/10 px-4 py-3">
+            <p className="text-xs font-semibold text-raw-gold">
+              {localVoucherUses === 1 ? "1 person signed up using your code." : `${localVoucherUses} people signed up using your code.`}
+            </p>
+            <p className="mt-1 text-[11px] leading-relaxed text-raw-silver/45">
+              Nice. Your founding invite is bringing people into raW.
+            </p>
+          </div>
+        ) : null}
+
+        <div className="grid gap-3">
+          {inviteCodes.map((code, index) => {
+            const isOpen = openInviteIndex === index;
+            return (
+              <div
+                key={code}
+                role="button"
+                tabIndex={0}
+                onClick={() => setOpenInviteIndex(isOpen ? null : index)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    setOpenInviteIndex(isOpen ? null : index);
+                  }
+                }}
+                className="group relative overflow-hidden rounded-2xl border border-dashed border-raw-gold/30 bg-raw-black/25 p-4 text-left transition-all hover:-translate-y-0.5 hover:border-raw-gold/55 hover:bg-raw-gold/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/45"
+                aria-expanded={isOpen}
+              >
+                <div className="absolute -right-6 -top-6 h-20 w-20 rounded-full bg-raw-gold/10 blur-xl transition-opacity group-hover:opacity-100" />
+                <div className="relative flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-raw-gold/55">Invitation {index + 1}</p>
+                    <p className="mt-1 text-xs text-raw-silver/35">Tap ticket to {isOpen ? "hide" : "reveal"}</p>
+                  </div>
+                  <Ticket className="h-7 w-7 text-raw-gold/50" />
+                </div>
+
+                {isOpen && (
+                  <div className="relative mt-4 space-y-3 rounded-xl border border-raw-border/35 bg-raw-black/35 p-3">
+                    <code className="block select-all break-all font-mono text-sm font-bold tracking-[0.12em] text-raw-gold">
+                      {code}
+                    </code>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          void handleCopyInvite(code);
+                        }}
+                        className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-raw-border/40 px-3 py-2 text-[11px] font-semibold text-raw-silver/65 transition-colors hover:border-raw-gold/40 hover:text-raw-gold"
+                      >
+                        <Copy className="h-3.5 w-3.5" /> Copy
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          void handleShareInvite(code);
+                        }}
+                        className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-raw-gold px-3 py-2 text-[11px] font-bold text-raw-ink transition-opacity hover:opacity-90"
+                      >
+                        <Share2 className="h-3.5 w-3.5" /> Share
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
       {/* Private identity card */}
       <div className="rounded-2xl border border-raw-border/40 bg-raw-surface/40 px-4 py-5 sm:px-6">
         <div className="mb-4 flex items-center gap-2">
           <ShieldOff className="h-4 w-4 text-raw-gold/50" />
           <p className="text-sm font-semibold text-raw-text">Private identity</p>
+        </div>
+
+        <div className="mt-4 rounded-xl border border-raw-border/30 bg-raw-black/25 p-2">
+          <p className="mb-2 text-[10px] uppercase tracking-[0.16em] text-raw-silver/35">Chat name</p>
+          <button
+            type="button"
+            onClick={() => handleSelectChatAlias(null)}
+            className={`mb-1 flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs transition-colors ${
+              !selectedChatAlias ? "bg-raw-gold/15 text-raw-gold" : "text-raw-silver/60 hover:bg-white/5 hover:text-raw-text"
+            }`}
+          >
+            <span className="flex min-w-0 items-center gap-2">
+              <User className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">@{username}</span>
+            </span>
+            {!selectedChatAlias && <Check className="h-3.5 w-3.5 shrink-0" />}
+          </button>
+          {privateAlias && (
+            <button
+              type="button"
+              onClick={() => handleSelectChatAlias(privateAlias.alias)}
+              className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs transition-colors ${
+                selectedChatAlias?.toLowerCase() === privateAlias.alias.toLowerCase()
+                  ? "bg-raw-gold/15 text-raw-gold"
+                  : "text-raw-silver/60 hover:bg-white/5 hover:text-raw-text"
+              }`}
+            >
+              <span className="flex min-w-0 items-center gap-2">
+                <ShieldOff className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">@{privateAlias.alias}</span>
+              </span>
+              {selectedChatAlias?.toLowerCase() === privateAlias.alias.toLowerCase() && <Check className="h-3.5 w-3.5 shrink-0" />}
+            </button>
+          )}
         </div>
 
         <div className="flex items-center gap-3">
@@ -363,7 +631,7 @@ export function DashboardProfile({
       <section>
         <PersonalityInsightsInventory
           pollsAnswered={profileStats.polls || pollsAnswered}
-          totalPolls={polls.length}
+          totalPolls={(polls ?? []).length}
           tokenBalance={tokenBalance}
           ownedIds={ownedInsightIds}
           onPurchase={handlePurchaseInsight}

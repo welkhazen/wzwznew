@@ -1,11 +1,12 @@
 import { FloatingDock } from "@/components/ui/floating-dock";
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { readCommunityChats } from "@/lib/communityChat";
+import { hydrateChatIdentityFromServer } from "@/lib/identitySelection";
 import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
 import { fetchCommunities } from "@/backend/supabase/controllers/communityController";
 import { readCachedCommunities, writeCachedCommunities } from "@/lib/communityCache";
 import { getUserFavoriteCommunities, getUserPinnedMessages, removeUserPinnedMessage, type PinnedMessageRecord } from "@/backend/supabase/controllers/userExtrasController";
-import { Home as HomeIcon, MessageCircle, Target, User as UserIcon, LogOut, Trophy, Sparkles, Moon, CloudMoon, Sun } from "lucide-react";
+import { Home as HomeIcon, MessageCircle, Target, User as UserIcon, LogOut, Trophy, Sparkles, Moon, CloudMoon, Sun, Store } from "lucide-react";
 import LNTLogo from "@/assets/LNT.webp";
 import SYTLogo from "@/assets/logospeak.webp";
 import IIJMLogo from "@/assets/itisjustme.webp";
@@ -15,6 +16,7 @@ import { matchPath, useLocation, useNavigate } from "react-router-dom";
 import { DashboardNav, type DashboardTab } from "@/components/dashboard/DashboardNav";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { DashboardHome } from "@/components/dashboard/DashboardHome";
+import { DashboardStore } from "@/components/dashboard/DashboardStore";
 import { DashboardSectionShell } from "@/components/dashboard/DashboardSectionShell";
 import { CommunityHoldSwitcher, getCommunityHoldSwitcherTargets } from "@/components/dashboard/CommunityHoldSwitcher";
 import { NotificationConsentPrompt } from "@/components/notifications/NotificationConsentPrompt";
@@ -43,9 +45,22 @@ const DashboardProfile = lazy(() =>
 const DashboardWallet = lazy(() =>
   import("@/components/dashboard/DashboardWallet").then((module) => ({ default: module.DashboardWallet }))
 );
+const DashboardSettings = lazy(() =>
+  import("@/components/dashboard/DashboardSettings").then((module) => ({ default: module.DashboardSettings }))
+);
 const DashboardInventory = lazy(() =>
   import("@/components/dashboard/DashboardInventory").then((module) => ({ default: module.DashboardInventory }))
 );
+
+// Eagerly preload the most-visited tab chunks so they are ready before the user taps.
+void import("@/components/dashboard/DashboardCommunities");
+void import("@/components/dashboard/DashboardPolls");
+
+const COMMUNITY_LOGOS: Record<string, string> = {
+  lnt: LNTLogo,
+  syt: SYTLogo,
+  iijm: IIJMLogo,
+};
 
 const dashboardSectionFallback = (
   <DashboardSectionShell>
@@ -162,6 +177,12 @@ export default function Dashboard({
   useEffect(() => {
     void awardOnce("daily-login", getTodayKey(), XP_REWARDS.DAILY_LOGIN);
   }, [awardOnce]);
+
+  // Pull the chat-identity selection + private avatar from Supabase so they
+  // follow the account across devices (both are otherwise localStorage-only).
+  useEffect(() => {
+    void hydrateChatIdentityFromServer(user.id);
+  }, [user.id]);
 
   useEffect(() => {
     let cancelled = false;
@@ -365,6 +386,11 @@ export default function Dashboard({
     navigate("/dashboard");
   };
 
+  const handleBackToDashboardHome = () => {
+    setIsHome(true);
+    navigate("/dashboard");
+  };
+
   const handleDailySpinAward = (amount: number) => {
     if (user.role === "admin") {
       return award(amount);
@@ -486,6 +512,24 @@ export default function Dashboard({
             </DashboardSectionShell>
           </Suspense>
         );
+      case "store":
+        return (
+          <Suspense fallback={dashboardSectionFallback}>
+            <DashboardSectionShell>
+              <DashboardStore
+                polls={polls}
+                votedPolls={votedPolls}
+                avatarCatalog={avatarCatalog}
+                ownedAvatarLevels={ownedAvatarLevels}
+                onUnlockAvatar={unlockAvatarLevel}
+                onAvatarPurchased={markAvatarOwned}
+                avatarPricesByLevel={avatarPricesByLevel}
+                tokenBalance={tokenBalance}
+                userId={user.id}
+              />
+            </DashboardSectionShell>
+          </Suspense>
+        );
       case "wallet":
         return (
           <Suspense fallback={dashboardSectionFallback}>
@@ -509,8 +553,20 @@ export default function Dashboard({
                 pollsAnswered={votedPolls.size}
                 xp={progress?.xp ?? 0}
                 xpLevel={progress?.level ?? 1}
+                pinnedMessages={pinnedMessages}
+                onRemovePinnedMessage={handleRemovePinnedMessage}
+                polls={polls}
+                tokenBalance={tokenBalance}
                 onLogout={onLogout}
               />
+            </DashboardSectionShell>
+          </Suspense>
+        );
+      case "settings":
+        return (
+          <Suspense fallback={dashboardSectionFallback}>
+            <DashboardSectionShell>
+              <DashboardSettings userId={user.id} onLogout={onLogout} onBackToDashboard={handleBackToDashboardHome} />
             </DashboardSectionShell>
           </Suspense>
         );
@@ -642,6 +698,13 @@ export default function Dashboard({
             href: "#",
             onClick: () => handleTabChange("challenges"),
             active: !isHome && activeTab === "challenges",
+          },
+          {
+            title: "Store",
+            icon: <Store className="h-5 w-5" />,
+            href: "#",
+            onClick: () => handleTabChange("store"),
+            active: !isHome && activeTab === "store",
           },
         ]}
       />

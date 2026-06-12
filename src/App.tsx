@@ -15,11 +15,6 @@ const AskAI = lazy(() => import("./pages/AskAI"));
 const Security = lazy(() => import("./pages/Security"));
 const Terms = lazy(() => import("./pages/Terms"));
 const Privacy = lazy(() => import("./pages/Privacy"));
-const CommunityGuidelines = lazy(() => import("./pages/legal/CommunityGuidelines"));
-const Safety = lazy(() => import("./pages/legal/Safety"));
-const ReportContent = lazy(() => import("./pages/legal/ReportContent"));
-const Appeals = lazy(() => import("./pages/legal/Appeals"));
-const CookiePolicy = lazy(() => import("./pages/legal/CookiePolicy"));
 const PollsExplained = lazy(() => import("./pages/PollsExplained"));
 const CommunitiesExplained = lazy(() => import("./pages/CommunitiesExplained"));
 const PitchSelector = lazy(() => import("./pages/PitchSelector"));
@@ -52,11 +47,6 @@ const App = () => (
                 <Route path="/security" element={<Security />} />
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/privacy" element={<Privacy />} />
-                <Route path="/community-guidelines" element={<CommunityGuidelines />} />
-                <Route path="/safety" element={<Safety />} />
-                <Route path="/report-content" element={<ReportContent />} />
-                <Route path="/appeals" element={<Appeals />} />
-                <Route path="/cookie-policy" element={<CookiePolicy />} />
                 <Route path="/pitch" element={<PitchSelector />} />
                 <Route path="/pitch-v1" element={<PitchV1 />} />
                 <Route path="/pitch-v2" element={<PitchV2 />} />

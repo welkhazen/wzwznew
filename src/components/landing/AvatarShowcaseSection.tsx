@@ -71,7 +71,11 @@ const REVEAL_AVATAR_IMAGE_FIT: Record<string, RevealAvatarImageFit> = {
   "reveal-9": { scale: 1.42 },
 };
 
-export function AvatarShowcaseSection() {
+interface AvatarShowcaseSectionProps {
+  onSignupClick?: () => void;
+}
+
+export function AvatarShowcaseSection({ onSignupClick = () => undefined }: AvatarShowcaseSectionProps) {
   const sectionRef = useTrackSectionView("avatar");
   const { mode } = useTheme();
   const isLight = mode === "light";
@@ -709,7 +713,7 @@ In real life you are born with a name, a face, and a personality underneath. On 
         </AnimatePresence>
 
         <div className="mt-10 border-t border-raw-border/20 pt-10 sm:mt-14 sm:pt-14">
-          <WheelRewardInline onSignupClick={onSignupClick ?? (() => undefined)} />
+          <WheelRewardInline onSignupClick={onSignupClick} />
         </div>
       </div>
     </LandingSectionShell>
