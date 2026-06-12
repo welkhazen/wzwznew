@@ -4,6 +4,7 @@ import {
   EyeOff,
   KeyRound,
   Lock,
+  ShieldOff,
   Trash2,
   UserCog,
 } from "lucide-react";
@@ -13,16 +14,21 @@ import {
   getProfileVisibility,
   updateProfileVisibility,
 } from "@/backend/supabase/controllers/userController";
+import {
+  readBlockedCommunitySenders,
+  writeBlockedCommunitySenders,
+} from "@/lib/blockedCommunitySenders";
 
 interface DashboardSettingsProps {
   userId: string;
   onLogout: () => void;
 }
 
-type SettingsSection = "account" | "security" | "danger";
+type SettingsSection = "account" | "privacy" | "security" | "danger";
 
 const SECTIONS: Array<{ key: SettingsSection; label: string; icon: typeof UserCog }> = [
   { key: "account",  label: "Account",      icon: UserCog },
+  { key: "privacy",  label: "Privacy",      icon: ShieldOff },
   { key: "security", label: "Security",     icon: KeyRound },
   { key: "danger",   label: "Danger zone",  icon: Trash2 },
 ];
@@ -43,6 +49,16 @@ export function DashboardSettings({ userId, onLogout }: DashboardSettingsProps) 
   const [showOldPw, setShowOldPw] = useState(false);
   const [showNewPw, setShowNewPw] = useState(false);
   const [showConfirmPw, setShowConfirmPw] = useState(false);
+
+  // Blocked users
+  const [blockedKeys, setBlockedKeys] = useState<string[]>(() => readBlockedCommunitySenders(userId));
+
+  function handleUnblock(key: string) {
+    const next = blockedKeys.filter((k) => k !== key);
+    setBlockedKeys(next);
+    writeBlockedCommunitySenders(userId, next);
+    window.dispatchEvent(new StorageEvent("storage", { key: "raw.community.blocked-senders.v1" }));
+  }
 
   // Delete account
   const [delPw, setDelPw] = useState("");
@@ -156,6 +172,39 @@ export function DashboardSettings({ userId, onLogout }: DashboardSettingsProps) 
                 >
                   <span className={`absolute top-1 left-1 h-5 w-5 rounded-full bg-raw-text transition-transform ${profilePublic ? "translate-x-5" : "translate-x-0"}`} />
                 </button>
+              </div>
+            </div>
+          )}
+
+          {section === "privacy" && (
+            <div className="overflow-hidden rounded-2xl border border-raw-border/30 bg-raw-surface/30">
+              <div className="flex items-center gap-2.5 border-b border-raw-border/20 px-4 py-3.5">
+                <ShieldOff className="h-4 w-4 text-raw-gold/50" />
+                <span className="text-sm font-medium text-raw-text">Blocked users</span>
+              </div>
+              <div className="space-y-2 px-4 pb-4 pt-3">
+                <p className="text-xs text-raw-silver/40">Unblock someone to show their community messages again.</p>
+                {blockedKeys.length === 0 ? (
+                  <p className="rounded-2xl border border-raw-border/25 bg-raw-surface/20 px-4 py-6 text-center text-sm text-raw-silver/40">
+                    You haven't blocked anyone yet.
+                  </p>
+                ) : (
+                  blockedKeys.map((key) => (
+                    <div
+                      key={key}
+                      className="flex items-center justify-between gap-3 rounded-2xl border border-raw-border/25 bg-raw-surface/25 px-4 py-3"
+                    >
+                      <p className="truncate text-sm text-raw-text">@{key}</p>
+                      <button
+                        type="button"
+                        onClick={() => handleUnblock(key)}
+                        className="shrink-0 rounded-xl border border-raw-gold/30 bg-raw-gold/10 px-3 py-1.5 text-xs text-raw-gold hover:bg-raw-gold/15"
+                      >
+                        Unblock
+                      </button>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           )}
