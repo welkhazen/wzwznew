@@ -206,7 +206,7 @@ export function WheelOfFortune({ prizes, onSpinEnd, onSpinStart, disabled = fals
         <button
           onClick={handleSpin}
           disabled={isSpinning || disabled}
-          className={`hidden absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 rounded-full px-4 py-1.5 font-display text-[10px] uppercase tracking-[0.18em] transition-all whitespace-nowrap ${
+          className={`absolute left-1/2 top-1/2 z-10 flex -translate-x-1/2 -translate-y-1/2 rounded-full px-2.5 py-1 font-display text-[9px] uppercase tracking-[0.08em] transition-all whitespace-nowrap sm:hidden ${
             isSpinning || disabled
               ? "cursor-not-allowed bg-raw-surface/90 text-raw-silver/40"
               : "bg-raw-gold text-raw-black active:scale-95 shadow-[0_0_16px_rgb(var(--raw-accent)/0.5)]"
@@ -287,7 +287,7 @@ export function WheelOfFortune({ prizes, onSpinEnd, onSpinStart, disabled = fals
         <button
           onClick={handleSpin}
           disabled={isSpinning || disabled}
-          className={`mt-4 sm:mt-8 relative overflow-hidden rounded-full px-10 py-3.5 font-display text-sm uppercase tracking-[0.2em] transition-all ${
+          className={`mt-4 hidden overflow-hidden rounded-full px-10 py-3.5 font-display text-sm uppercase tracking-[0.2em] transition-all sm:relative sm:mt-8 sm:block ${
             isSpinning || disabled
               ? "cursor-not-allowed border border-raw-border/30 bg-raw-surface text-raw-silver/30"
               : "bg-raw-gold text-raw-black hover:scale-105 hover:shadow-[0_0_30px_rgb(var(--raw-accent)/0.3)] active:scale-95"
