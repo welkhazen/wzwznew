@@ -54,7 +54,7 @@ export function FAQSection() {
   };
 
   return (
-    <section id="faq" className="px-4 py-12 sm:px-6 sm:py-16 md:py-20">
+    <section id="faq" className="landing-section px-4 py-12 sm:px-6 sm:py-16 md:py-20">
       <div
         className="mx-auto max-w-6xl rounded-2xl border p-4 shadow-[0_20px_50px_rgba(0,0,0,0.18)] sm:rounded-[2rem] sm:p-6 md:p-8"
         style={{
