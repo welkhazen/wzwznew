@@ -323,6 +323,7 @@ function saveVoucherCode(userId: string, code: string): void {
   } else {
     window.localStorage.removeItem(key);
   }
+  window.dispatchEvent(new CustomEvent("raw:voucher-used", { detail: { userId, code } }));
 }
 
 function StepPill({ label, active, complete, onClick }: { label: string; active: boolean; complete: boolean; onClick?: () => void }) {
