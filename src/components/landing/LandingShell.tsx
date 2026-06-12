@@ -70,12 +70,13 @@ export default function LandingShell({
           </div>
         )}
 
-        <motion.div
-          className="relative overflow-x-hidden"
-          initial={{ opacity: 0, filter: "blur(14px)" }}
-          animate={{ opacity: siteReady ? 1 : 0.18, filter: siteReady ? "blur(0px)" : "blur(14px)" }}
-          transition={{ duration: 0.75, ease: "easeOut" }}
-        >
+        {siteReady && (
+          <motion.div
+            className="relative overflow-x-hidden"
+            initial={{ opacity: 0, filter: "blur(14px)" }}
+            animate={{ opacity: 1, filter: "blur(0px)" }}
+            transition={{ duration: 0.75, ease: "easeOut" }}
+          >
           <PerforatedBackground />
           <MatrixBackground />
 
@@ -139,7 +140,8 @@ export default function LandingShell({
 
             <LandingFooter />
           </div>
-        </motion.div>
+          </motion.div>
+        )}
       </div>
 
       <Suspense fallback={null}>
