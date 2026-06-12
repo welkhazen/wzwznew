@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { formatChatTimestamp } from "@/lib/communityChat";
 import type { CommunityChatMessageRecord } from "@/lib/communityChat.types";
+import { LEVEL_THEMES } from "@/lib/avataridentity";
 import type { CommunityPollRecord } from "@/backend/supabase/models/community-poll";
 
 interface MessageGroup {
@@ -153,6 +154,8 @@ export const CommunityMessageTimeline = memo(function CommunityMessageTimeline({
             const likedBy = message.likedBy ?? [];
             const alreadyLiked = likedBy.includes(userId);
             const likeCount = likedBy.length;
+            const avatarLevel = message.senderAvatarLevel ?? senderAvatarLevels[message.senderId] ?? 1;
+            const avatarTheme = LEVEL_THEMES[avatarLevel - 1] ?? LEVEL_THEMES[0];
 
             return (
               <article
@@ -171,6 +174,29 @@ export const CommunityMessageTimeline = memo(function CommunityMessageTimeline({
                 )}
 
                 <div className="flex w-full items-center gap-2">
+                  {/* Avatar */}
+                  <button
+                    type="button"
+                    onClick={() => onOpenSenderProfile(message)}
+                    className="shrink-0 overflow-hidden rounded-full"
+                    style={{ width: 24, height: 24, background: avatarTheme.bg }}
+                    aria-label={`View ${message.senderName}'s profile`}
+                  >
+                    {avatarTheme.imageSrc ? (
+                      <img
+                        src={avatarTheme.imageSrc}
+                        alt=""
+                        loading="lazy"
+                        decoding="async"
+                        className="h-full w-full object-cover"
+                        style={{ objectPosition: "center 35%" }}
+                      />
+                    ) : (
+                      <svg width={24} height={24} viewBox="0 0 24 24">
+                        <circle cx={12} cy={12} r={10} fill={avatarTheme.figure} opacity={0.85} />
+                      </svg>
+                    )}
+                  </button>
                   {/* Left: username + truncated text + timestamp */}
                   <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden">
                     <button
