@@ -53,7 +53,7 @@ interface OnboardingJourneyProps {
   onCompleteOnboarding: () => void | Promise<void>;
   onLogout: () => void;
   onClaimLandingWheelAvatar: () => Promise<void>;
-  markAvatarOwned: (level: number) => void;
+  markAvatarOwnedById: (avatarId: string) => void;
 }
 
 type WheelPoolEntry = { id: string; avatarId: string; name: string; imageSrc: string };
@@ -115,10 +115,9 @@ function readStoredSpinResult(): WheelPoolEntry | null {
   }
 }
 
-function findOwnedSpinResult(ownedAvatarLevels: Set<number>, avatarCatalog: AvatarCatalogItem[]): WheelPoolEntry | null {
+function findOwnedSpinResult(ownedAvatarIds: Set<string>): WheelPoolEntry | null {
   for (const entry of SPIN_WHEEL_POOL) {
-    const level = avatarCatalog.findIndex((avatar) => avatar.id === entry.avatarId) + 1;
-    if (level > 0 && ownedAvatarLevels.has(level)) {
+    if (ownedAvatarIds.has(entry.avatarId)) {
       return entry;
     }
   }
@@ -348,7 +347,7 @@ export function OnboardingJourney({
   onCompleteOnboarding,
   onLogout,
   onClaimLandingWheelAvatar,
-  markAvatarOwned,
+  markAvatarOwnedById,
 }: OnboardingJourneyProps) {
   const { data: supabasePolls } = useQuery({
     queryKey: ["onboarding-landing-polls"],
@@ -414,11 +413,8 @@ export function OnboardingJourney({
 
   useEffect(() => {
     if (!spinResult) return;
-    const idx = SPIN_POOL.findIndex((p) => p.catalogId === spinResult.avatarId);
-    if (idx >= 0) {
-      markAvatarOwned(FREE_ONBOARDING_AVATAR_COUNT + 1 + idx);
-    }
-  }, [spinResult, markAvatarOwned]);
+    markAvatarOwnedById(spinResult.avatarId);
+  }, [spinResult, markAvatarOwnedById]);
 
   useEffect(() => {
     const stepIndex = STEP_ORDER.indexOf(onboardingStep);
@@ -436,7 +432,6 @@ export function OnboardingJourney({
   const canContinueFromUsername =
     isValidUsername(publicUsernameDraft) &&
     (trimmedPrivateUsernameDraft.length === 0 || isValidUsername(trimmedPrivateUsernameDraft));
-  const canSelectPreviewAvatar = previewAvatarIndex <= FREE_ONBOARDING_AVATAR_COUNT || ownedAvatarLevels.has(previewAvatarIndex);
   const freeAvatarChoices = onboardingAvatars.slice(0, FREE_ONBOARDING_AVATAR_COUNT);
   const previewAvatarChoices: AvatarCatalogItem[] = onboardingAvatars.slice(FREE_ONBOARDING_AVATAR_COUNT);
   // Reward catalog ids on the server are `spin-<imageId>` / `signup-<imageId>`.
@@ -451,7 +446,6 @@ export function OnboardingJourney({
     return ids;
   }, [ownedAvatarIds]);
   const isPreviewAvatarOwned = (avatar: AvatarCatalogItem): boolean => {
-    if (ownedAvatarLevels.has(avatar.level)) return true;
     if (avatar.imageSrc) {
       const match = /(\d+)\.(?:png|webp|jpg|jpeg|svg)$/.exec(avatar.imageSrc);
       if (match) {
@@ -461,8 +455,11 @@ export function OnboardingJourney({
     }
     return false;
   };
-  const ownedPreviewAvatarChoices = previewAvatarChoices.filter((avatar) => ownedAvatarLevels.has(avatar.level));
-  const claimedSpinResult = spinResult ?? findOwnedSpinResult(ownedAvatarLevels, onboardingAvatars);
+  const canSelectPreviewAvatar = previewAvatarIndex <= FREE_ONBOARDING_AVATAR_COUNT || isPreviewAvatarOwned(previewAvatar);
+  const claimedSpinResult = spinResult ?? findOwnedSpinResult(ownedAvatarIds);
+  const claimedSpinAvatarChoice = claimedSpinResult
+    ? previewAvatarChoices.find((avatar) => avatar.imageSrc === claimedSpinResult.imageSrc) ?? null
+    : null;
   const previewAvatarPageCount = Math.max(1, Math.ceil(previewAvatarChoices.length / AVATAR_PAGE_SIZE));
   const visiblePreviewAvatarChoices = previewAvatarChoices.slice(avatarPage * AVATAR_PAGE_SIZE, (avatarPage + 1) * AVATAR_PAGE_SIZE);
 
@@ -523,7 +520,7 @@ export function OnboardingJourney({
       setIsSavingUsernames(false);
     }
 
-    if (onboardingStep === "avatar" && canSelectPreviewAvatar && previewAvatarIndex !== avatarIndex) {
+    if (onboardingStep === "avatar" && previewAvatarIndex <= FREE_ONBOARDING_AVATAR_COUNT && previewAvatarIndex !== avatarIndex) {
       track("onboarding_avatar_selected", { avatar_level: previewAvatarIndex, attempts: 1 });
       onAvatarChange(previewAvatarIndex);
     }
@@ -631,10 +628,7 @@ export function OnboardingJourney({
                     } finally {
                       setIsClaimingSpin(false);
                     }
-                    const spinIdx = SPIN_POOL.findIndex((p) => p.catalogId === entry.avatarId);
-                    if (spinIdx >= 0) {
-                      markAvatarOwned(FREE_ONBOARDING_AVATAR_COUNT + 1 + spinIdx);
-                    }
+                    markAvatarOwnedById(entry.avatarId);
                     track("onboarding_step_completed", {
                       step: "spin" as never,
                       step_index: STEP_ORDER.indexOf("spin"),
@@ -787,6 +781,39 @@ export function OnboardingJourney({
                       );
                     })}
                     </div>
+                    {claimedSpinAvatarChoice ? (
+                      <div className="mx-auto mt-5 w-full max-w-[11rem] min-[390px]:max-w-[12rem] sm:max-w-[24rem] md:mx-0">
+                        <p className="mb-3 text-center font-display text-[9px] uppercase tracking-[0.2em] text-raw-gold/70">
+                          Won avatar
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPreviewAvatarIndex(claimedSpinAvatarChoice.level);
+                            phonePreviewRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+                            track("onboarding_avatar_selected", { avatar_level: claimedSpinAvatarChoice.level, attempts: 1 });
+                          }}
+                          className="group mx-auto flex min-w-0 flex-col items-center gap-2 rounded-xl border border-raw-gold/35 bg-raw-gold/[0.04] p-3 transition hover:border-raw-gold/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/50"
+                          aria-label={`Preview won avatar ${claimedSpinAvatarChoice.name}`}
+                        >
+                          <AvatarFigure
+                            avatarIndex={claimedSpinAvatarChoice.level}
+                            size={avatarTileSize}
+                            selected={previewAvatarIndex === claimedSpinAvatarChoice.level}
+                            rarity={claimedSpinAvatarChoice.rarity}
+                            style={getPreviewOnlyAvatarImageScale(claimedSpinAvatarChoice.id)}
+                            themeOverride={claimedSpinAvatarChoice}
+                            loading="eager"
+                          />
+                          <span className="max-w-full truncate text-center font-display text-[9px] leading-tight tracking-[0.08em] text-raw-gold/90 sm:text-[10px]">
+                            {claimedSpinAvatarChoice.name}
+                          </span>
+                          <span className="rounded-full border border-raw-gold/45 px-1.5 py-0.5 text-[8px] uppercase tracking-[0.08em] text-raw-gold/70">
+                            owned
+                          </span>
+                        </button>
+                      </div>
+                    ) : null}
                   </div>
 
                 </div>
@@ -866,9 +893,6 @@ export function OnboardingJourney({
                             setPreviewAvatarIndex(index);
                             phonePreviewRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
                             track("onboarding_avatar_selected", { avatar_level: index, attempts: 1 });
-                            if (isOwned) {
-                              onAvatarChange(index);
-                            }
                           }}
                           className={`group relative flex min-w-0 flex-col items-center gap-2 rounded-xl p-2 pb-3 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/50 ${
                             isOwned ? "" : "cursor-help"
