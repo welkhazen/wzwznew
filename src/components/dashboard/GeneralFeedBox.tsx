@@ -148,6 +148,12 @@ export function GeneralFeedBox({
           <textarea
             value={feedText}
             onChange={(event) => setFeedText(event.target.value.slice(0, 500))}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                void handleSubmitFeedPost();
+              }
+            }}
             placeholder={userId ? "Write something..." : "Log in to write"}
             disabled={!userId || feedSubmitting}
             rows={1}
