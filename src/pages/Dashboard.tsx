@@ -16,6 +16,7 @@ import { matchPath, useLocation, useNavigate } from "react-router-dom";
 import { DashboardNav, type DashboardTab } from "@/components/dashboard/DashboardNav";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { DashboardHome } from "@/components/dashboard/DashboardHome";
+import { DashboardStore } from "@/components/dashboard/DashboardStore";
 import { DashboardSectionShell } from "@/components/dashboard/DashboardSectionShell";
 import { CommunityHoldSwitcher, getCommunityHoldSwitcherTargets } from "@/components/dashboard/CommunityHoldSwitcher";
 import { NotificationConsentPrompt } from "@/components/notifications/NotificationConsentPrompt";
@@ -496,6 +497,24 @@ export default function Dashboard({
                 onAvatarPurchased={markAvatarOwned}
                 avatarPricesByLevel={avatarPricesByLevel}
                 avatarCatalog={avatarCatalog}
+                tokenBalance={tokenBalance}
+                userId={user.id}
+              />
+            </DashboardSectionShell>
+          </Suspense>
+        );
+      case "store":
+        return (
+          <Suspense fallback={dashboardSectionFallback}>
+            <DashboardSectionShell>
+              <DashboardStore
+                polls={polls}
+                votedPolls={votedPolls}
+                avatarCatalog={avatarCatalog}
+                ownedAvatarLevels={ownedAvatarLevels}
+                onUnlockAvatar={unlockAvatarLevel}
+                onAvatarPurchased={markAvatarOwned}
+                avatarPricesByLevel={avatarPricesByLevel}
                 tokenBalance={tokenBalance}
                 userId={user.id}
               />
