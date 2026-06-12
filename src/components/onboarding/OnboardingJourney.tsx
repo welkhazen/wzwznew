@@ -427,7 +427,7 @@ export function OnboardingJourney({
   }, [onboardingStep]);
 
   const canContinueFromAvatar = avatarIndex >= 1 && (avatarIndex <= FREE_ONBOARDING_AVATAR_COUNT || ownedAvatarLevels.has(avatarIndex));
-  const canContinueFromPolls = answeredCount >= onboardingPolls.length;
+  const canContinueFromPolls = true;
   const canContinueFromProfile = profilePublic !== null;
   const canContinueFromCommunities = selectedCommunityIds.length >= 1;
   const canCompleteOnboarding = canContinueFromAvatar && canContinueFromPolls && canContinueFromCommunities;

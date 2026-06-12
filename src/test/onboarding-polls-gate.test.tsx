@@ -75,9 +75,9 @@ function renderPollStep(answeredPollIds = new Set<string>()) {
 }
 
 describe("onboarding polls gate", () => {
-  it("keeps continue disabled until all onboarding polls are answered", () => {
+  it("allows continuing even when no onboarding polls are answered", () => {
     renderPollStep();
 
-    expect(screen.getByRole("button", { name: /continue to communities/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /continue to communities/i })).toBeEnabled();
   });
 });
