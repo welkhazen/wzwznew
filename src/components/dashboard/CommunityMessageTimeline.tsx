@@ -170,9 +170,9 @@ export const CommunityMessageTimeline = memo(function CommunityMessageTimeline({
                   </div>
                 )}
 
-                <div className="flex items-center gap-2 w-full">
-                  {/* Left: username + text + timestamp */}
-                  <div className="flex items-center gap-1.5 flex-1 min-w-0 overflow-hidden">
+                <div className="flex w-full items-center gap-2">
+                  {/* Left: username + truncated text + timestamp */}
+                  <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden">
                     <button
                       type="button"
                       onClick={() => onOpenSenderProfile(message)}
@@ -192,16 +192,20 @@ export const CommunityMessageTimeline = memo(function CommunityMessageTimeline({
                     </span>
                     <span className="shrink-0 text-[10px] text-raw-silver/40">
                       {formatChatTimestamp(message.createdAt)}
-                      {likeCount > 0 && <span className="ml-1 inline-flex items-center gap-0.5 text-raw-gold/70"><Heart className="inline h-2 w-2 fill-current" />{likeCount}</span>}
+                      {likeCount > 0 && (
+                        <span className="ml-1 inline-flex items-center gap-0.5 text-raw-gold/70">
+                          <Heart className="inline h-2 w-2 fill-current" />{likeCount}
+                        </span>
+                      )}
                       {message.pinned && <span className="ml-1 text-raw-gold/60">Pinned</span>}
                       {message.deliveryStatus === "sending" && <span className="ml-1 text-raw-silver/35">Sending…</span>}
                       {message.deliveryStatus === "failed" && <span className="ml-1 text-red-300/80">Failed</span>}
                     </span>
                   </div>
 
-                  {/* Right: action buttons */}
+                  {/* Right: action buttons — always on same row */}
                   {!message.deletedAt && !message.deliveryStatus && (
-                    <div className="shrink-0 ml-auto flex items-center gap-1.5 opacity-0 group-hover/msg:opacity-100 transition-opacity">
+                    <div className="ml-auto flex shrink-0 items-center gap-1.5 opacity-0 transition-opacity group-hover/msg:opacity-100">
                       <button
                         onClick={() => onLikeMessage(message)}
                         className={`inline-flex items-center gap-1 border px-2 py-0.5 text-[10px] transition-all ${
@@ -224,32 +228,32 @@ export const CommunityMessageTimeline = memo(function CommunityMessageTimeline({
                               <MoreHorizontal className="h-3 w-3" />
                             </button>
                           </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="min-w-32 border-raw-border/30 bg-raw-black/95 text-raw-silver shadow-xl shadow-black/40">
-                          <DropdownMenuItem
-                            className="cursor-pointer gap-2 text-xs focus:bg-raw-surface/80 focus:text-raw-text"
-                            onClick={() => pinnedMessageIds.has(message.id) ? onUnpinMessage(message) : onPinMessage(message)}
-                          >
-                            <Pin className="h-3.5 w-3.5 text-raw-gold/80" />
-                            {pinnedMessageIds.has(message.id) ? "Unpin from profile" : "Pin to profile"}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="cursor-pointer gap-2 text-xs focus:bg-raw-surface/80 focus:text-raw-text"
-                            onClick={() => onOpenMessageReport(message)}
-                          >
-                            <AlertTriangle className="h-3.5 w-3.5 text-raw-gold/80" />
-                            Report
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="cursor-pointer gap-2 text-xs text-red-200/90 focus:bg-red-500/10 focus:text-red-100"
-                            onClick={() => onBlockMessageSender(message)}
-                          >
-                            <Ban className="h-3.5 w-3.5" />
-                            Block
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
-                  </div>
+                          <DropdownMenuContent align="end" className="min-w-32 border-raw-border/30 bg-raw-black/95 text-raw-silver shadow-xl shadow-black/40">
+                            <DropdownMenuItem
+                              className="cursor-pointer gap-2 text-xs focus:bg-raw-surface/80 focus:text-raw-text"
+                              onClick={() => pinnedMessageIds.has(message.id) ? onUnpinMessage(message) : onPinMessage(message)}
+                            >
+                              <Pin className="h-3.5 w-3.5 text-raw-gold/80" />
+                              {pinnedMessageIds.has(message.id) ? "Unpin from profile" : "Pin to profile"}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="cursor-pointer gap-2 text-xs focus:bg-raw-surface/80 focus:text-raw-text"
+                              onClick={() => onOpenMessageReport(message)}
+                            >
+                              <AlertTriangle className="h-3.5 w-3.5 text-raw-gold/80" />
+                              Report
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="cursor-pointer gap-2 text-xs text-red-200/90 focus:bg-red-500/10 focus:text-red-100"
+                              onClick={() => onBlockMessageSender(message)}
+                            >
+                              <Ban className="h-3.5 w-3.5" />
+                              Block
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+                    </div>
                   )}
                 </div>
 
