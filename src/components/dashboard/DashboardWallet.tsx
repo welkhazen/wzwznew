@@ -219,27 +219,27 @@ export function DashboardWallet() {
 
       {/* Monthly Subscription */}
       <section>
-        <div className="relative overflow-hidden rounded-3xl border border-raw-gold/30 bg-raw-black">
+        <div className="relative overflow-hidden rounded-2xl border border-raw-gold/30 bg-raw-black sm:rounded-3xl">
           {/* layered glow */}
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(241,196,45,0.22),transparent)]" />
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_50%_40%_at_90%_110%,rgba(241,196,45,0.10),transparent)]" />
           {/* dot grid */}
           <div className="pointer-events-none absolute inset-0 opacity-[0.07] [background-image:radial-gradient(rgba(255,255,255,0.8)_0.7px,transparent_0.7px)] [background-size:10px_10px]" />
 
-          <div className="relative px-5 pb-5 pt-6 sm:px-8 sm:pb-7 sm:pt-8">
+          <div className="relative px-4 pb-4 pt-4 sm:px-8 sm:pb-7 sm:pt-8">
             {/* badge */}
-            <div className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-raw-gold/40 bg-raw-gold/[0.08] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-raw-gold">
+            <div className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-raw-gold/40 bg-raw-gold/[0.08] px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-raw-gold sm:mb-4 sm:px-3 sm:text-[10px] sm:tracking-[0.18em]">
               <Zap className="h-2.5 w-2.5 fill-current" /> All Access
             </div>
 
             {/* price + perks row */}
-            <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-5">
               <div>
-                <p className="font-display text-5xl tracking-tight text-raw-text sm:text-6xl">
+                <p className="font-display text-4xl tracking-tight text-raw-text sm:text-6xl">
                   $5
-                  <span className="ml-2 text-base font-normal tracking-normal text-raw-silver/40">/ mo</span>
+                  <span className="ml-1.5 text-sm font-normal tracking-normal text-raw-silver/40 sm:ml-2 sm:text-base">/ mo</span>
                 </p>
-                <div className="mt-4 flex flex-col gap-1.5">
+                <div className="mt-3 flex flex-col gap-1 sm:mt-4 sm:gap-1.5">
                   <span className="flex items-center gap-2 text-xs text-raw-silver/55">
                     <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-raw-gold/70" />
                     Every community, no limits
@@ -255,7 +255,7 @@ export function DashboardWallet() {
               <div className="flex flex-col gap-1.5 sm:items-end">
                 <button
                   disabled
-                  className="w-full cursor-not-allowed rounded-2xl border border-raw-gold/25 bg-raw-gold/10 px-8 py-3.5 text-sm font-semibold text-raw-gold/50 sm:w-auto"
+                  className="w-full cursor-not-allowed rounded-xl border border-raw-gold/25 bg-raw-gold/10 px-6 py-3 text-sm font-semibold text-raw-gold/50 sm:w-auto sm:rounded-2xl sm:px-8 sm:py-3.5"
                 >
                   Coming Soon
                 </button>
