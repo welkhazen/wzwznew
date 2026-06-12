@@ -514,7 +514,7 @@ export function OnboardingJourney({
       setIsSavingUsernames(true);
       setUsernameSaveError("");
       try {
-        await onSaveUsernames(publicUsernameDraft, trimmedPrivateUsernameDraft || publicUsernameDraft);
+        await onSaveUsernames(publicUsernameDraft, trimmedPrivateUsernameDraft);
       } catch (error) {
         setUsernameSaveError(error instanceof Error ? error.message : "Could not save usernames.");
         setIsSavingUsernames(false);
