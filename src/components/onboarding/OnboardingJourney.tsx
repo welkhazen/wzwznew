@@ -15,7 +15,7 @@ import { avatarDisplayName } from "@/config/avatarNames";
 import { WheelOfFortune, type WheelPrize } from "@/components/wheel/WheelOfFortune";
 import { SpinWheelClaimBanner } from "@/components/wheel/SpinWheelClaimBanner";
 
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Ticket } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { SwipeablePollCard } from "./SwipeablePollCard";
 import { EnterRawModal } from "./EnterRawModal";
@@ -125,10 +125,12 @@ function findOwnedSpinResult(ownedAvatarIds: Set<string>): WheelPoolEntry | null
   return null;
 }
 
-const STEP_ORDER: OnboardingStep[] = ["spin", "username", "avatar", "polls", "communities"];
+const STEP_ORDER: OnboardingStep[] = ["spin", "username", "voucher", "avatar", "polls", "communities"];
 const STEP_LABELS: Record<OnboardingStep, string> = {
   spin: "spin",
   username: "username",
+  voucher: "voucher",
+  "early-signup-reward": "reward",
   avatar: "avatar",
   polls: "polls",
   profile: "profile",
@@ -139,6 +141,7 @@ const STEP_LABELS: Record<OnboardingStep, string> = {
 const FREE_ONBOARDING_AVATAR_COUNT = 8;
 const AVATAR_PAGE_SIZE = 8;
 const AGE_GATE_STORAGE_PREFIX = "raw.ageGateVerified";
+const ONBOARDING_VOUCHER_STORAGE_PREFIX = "raw.onboarding.voucher";
 
 const LANDING_ONBOARDING_AVATARS: readonly AvatarCatalogItem[] = [
   { id: "ember", level: 1, name: "Ember", price: "Free", imageSrc: "/avatars/avatar-3.svg", bg: "#1f0a05", figure: "#ff8a1f", ring: "#ff8a1f", glow: "#ff8a1f80", isActive: true, rarity: "common" },
@@ -307,6 +310,21 @@ function BackButton({ onClick }: { onClick: () => void }) {
   );
 }
 
+function readSavedVoucherCode(userId: string): string {
+  if (typeof window === "undefined") return "";
+  return window.localStorage.getItem(`${ONBOARDING_VOUCHER_STORAGE_PREFIX}.${userId}`) ?? "";
+}
+
+function saveVoucherCode(userId: string, code: string): void {
+  if (typeof window === "undefined") return;
+  const key = `${ONBOARDING_VOUCHER_STORAGE_PREFIX}.${userId}`;
+  if (code) {
+    window.localStorage.setItem(key, code);
+  } else {
+    window.localStorage.removeItem(key);
+  }
+}
+
 function StepPill({ label, active, complete, onClick }: { label: string; active: boolean; complete: boolean; onClick?: () => void }) {
   return (
     <button
@@ -384,6 +402,8 @@ export function OnboardingJourney({
   const [privateUsernameDraft, setPrivateUsernameDraft] = useState(privateUsername);
   const [usernameSaveError, setUsernameSaveError] = useState("");
   const [isSavingUsernames, setIsSavingUsernames] = useState(false);
+  const [voucherCodeDraft, setVoucherCodeDraft] = useState(() => readSavedVoucherCode(user.id));
+  const [voucherError, setVoucherError] = useState("");
   const onboardingAvatars = useMemo(() => fallbackAvatarCatalog(), []);
   const [isLoadingPreviewAvatars] = useState(false);
   const isMobile = useIsMobile();
@@ -412,13 +432,18 @@ export function OnboardingJourney({
   }, [user.id]);
 
   useEffect(() => {
+    setVoucherCodeDraft(readSavedVoucherCode(user.id));
+    setVoucherError("");
+  }, [user.id]);
+
+  useEffect(() => {
     if (!spinResult) return;
     markAvatarOwnedById(spinResult.avatarId);
   }, [spinResult, markAvatarOwnedById]);
 
   useEffect(() => {
     const stepIndex = STEP_ORDER.indexOf(onboardingStep);
-    track("onboarding_step_viewed", { step: onboardingStep as "spin" | "avatar" | "polls" | "communities" | "ready", step_index: stepIndex });
+    track("onboarding_step_viewed", { step: onboardingStep as "spin" | "username" | "voucher" | "avatar" | "polls" | "communities" | "ready", step_index: stepIndex });
     stepStartTimeRef.current = Date.now();
   }, [onboardingStep]);
 
@@ -432,6 +457,7 @@ export function OnboardingJourney({
   const canContinueFromUsername =
     isValidUsername(publicUsernameDraft) &&
     (trimmedPrivateUsernameDraft.length === 0 || isValidUsername(trimmedPrivateUsernameDraft));
+  const normalizedVoucherCode = voucherCodeDraft.trim().toUpperCase();
   const freeAvatarChoices = onboardingAvatars.slice(0, FREE_ONBOARDING_AVATAR_COUNT);
   const previewAvatarChoices: AvatarCatalogItem[] = onboardingAvatars.slice(FREE_ONBOARDING_AVATAR_COUNT);
   // Reward catalog ids on the server are `spin-<imageId>` / `signup-<imageId>`.
@@ -526,7 +552,7 @@ export function OnboardingJourney({
     }
 
     track("onboarding_step_completed", {
-      step: onboardingStep as "spin" | "avatar" | "polls" | "communities" | "ready",
+      step: onboardingStep as "spin" | "username" | "voucher" | "avatar" | "polls" | "communities" | "ready",
       duration_ms: Date.now() - stepStartTimeRef.current,
     });
     onSetOnboardingStep(getNextStep(onboardingStep));
@@ -535,6 +561,29 @@ export function OnboardingJourney({
   const goToPreviousStep = () => {
     const previous = getPreviousStep(onboardingStep);
     if (previous) onSetOnboardingStep(previous);
+  };
+
+  const continueWithVoucher = () => {
+    if (!normalizedVoucherCode) {
+      setVoucherError("Enter a voucher code or tap I don't have a voucher.");
+      return;
+    }
+
+    if (!normalizedVoucherCode.startsWith("RAW-")) {
+      setVoucherError("Voucher codes should start with RAW-.");
+      return;
+    }
+
+    saveVoucherCode(user.id, normalizedVoucherCode);
+    setVoucherError("");
+    void goToNextStep();
+  };
+
+  const skipVoucher = () => {
+    saveVoucherCode(user.id, "");
+    setVoucherCodeDraft("");
+    setVoucherError("");
+    void goToNextStep();
   };
 
   const currentStepIndex = STEP_ORDER.indexOf(onboardingStep);
@@ -712,6 +761,66 @@ export function OnboardingJourney({
                 <div className="flex items-center justify-between gap-3 pt-3">
                   <button type="button" onClick={goToPreviousStep} className="rounded-full border border-raw-border/50 px-5 py-2 font-display text-[10px] uppercase tracking-[0.2em] text-raw-silver/70 transition hover:border-raw-gold/40 hover:text-raw-gold">← Back</button>
                   <button type="button" disabled={!canContinueFromUsername || isSavingUsernames} onClick={() => void goToNextStep()} className={`rounded-full border px-6 py-2 font-display text-xs uppercase tracking-[0.2em] transition ${canContinueFromUsername && !isSavingUsernames ? "border-raw-gold/50 bg-raw-gold/15 text-raw-gold hover:bg-raw-gold/25" : "cursor-not-allowed border-raw-border/40 text-raw-silver/30"}`}>{isSavingUsernames ? "Saving..." : "Continue"}</button>
+                </div>
+              </div>
+            </section>
+          )}
+
+          {onboardingStep === "voucher" && (
+            <section>
+              <div className="mx-auto max-w-xl">
+                <div className="flex items-start gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-raw-gold/25 bg-raw-gold/10 text-raw-gold">
+                    <Ticket className="h-5 w-5" />
+                  </span>
+                  <div>
+                    <h2 className="font-display text-lg tracking-wide text-raw-text sm:text-xl">Do you have a voucher?</h2>
+                    <p className="mt-2 text-sm leading-relaxed text-raw-silver/55">
+                      If a friend shared a founding invite with you, enter it here. You can also skip this step.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-7 rounded-2xl border border-raw-border/35 bg-raw-black/45 p-4 sm:p-5">
+                  <label className="block">
+                    <span className="text-[10px] uppercase tracking-[0.22em] text-raw-gold/75">Voucher code</span>
+                    <input
+                      value={voucherCodeDraft}
+                      onChange={(event) => {
+                        setVoucherCodeDraft(event.target.value.toUpperCase());
+                        setVoucherError("");
+                      }}
+                      autoComplete="off"
+                      className="mt-2 w-full rounded-2xl border border-raw-gold/25 bg-raw-black/65 px-4 py-3 font-display text-base tracking-wide text-raw-text outline-none transition placeholder:font-sans placeholder:tracking-normal placeholder:text-raw-silver/25 focus:border-raw-gold/65 focus:shadow-[0_0_24px_rgba(242,210,26,0.12)]"
+                      placeholder="RAW-1-XXXXXXXX"
+                    />
+                  </label>
+                  <p className="mt-3 text-xs leading-relaxed text-raw-silver/45">
+                    Voucher redemption will be verified when invite codes are connected to the backend.
+                  </p>
+                  {voucherError ? (
+                    <p className="mt-3 rounded-xl border border-red-400/25 bg-red-500/10 px-3 py-2 text-xs text-red-200">{voucherError}</p>
+                  ) : null}
+                </div>
+
+                <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <BackButton onClick={goToPreviousStep} />
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <button
+                      type="button"
+                      onClick={skipVoucher}
+                      className="rounded-full border border-raw-border/50 px-5 py-2 font-display text-[10px] uppercase tracking-[0.2em] text-raw-silver/70 transition hover:border-raw-gold/40 hover:text-raw-gold"
+                    >
+                      I don't have a voucher
+                    </button>
+                    <button
+                      type="button"
+                      onClick={continueWithVoucher}
+                      className="rounded-full border border-raw-gold/50 bg-raw-gold/15 px-6 py-2 font-display text-xs uppercase tracking-[0.2em] text-raw-gold transition hover:bg-raw-gold/25"
+                    >
+                      Save voucher
+                    </button>
+                  </div>
                 </div>
               </div>
             </section>
