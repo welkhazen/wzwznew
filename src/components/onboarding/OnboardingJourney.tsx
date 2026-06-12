@@ -432,7 +432,10 @@ export function OnboardingJourney({
   const canContinueFromCommunities = selectedCommunityIds.length >= 1;
   const canCompleteOnboarding = canContinueFromAvatar && canContinueFromPolls && canContinueFromCommunities;
   const previewAvatar = onboardingAvatars[previewAvatarIndex - 1] ?? onboardingAvatars[0];
-  const canContinueFromUsername = isValidUsername(publicUsernameDraft) && isValidUsername(privateUsernameDraft);
+  const trimmedPrivateUsernameDraft = privateUsernameDraft.trim();
+  const canContinueFromUsername =
+    isValidUsername(publicUsernameDraft) &&
+    (trimmedPrivateUsernameDraft.length === 0 || isValidUsername(trimmedPrivateUsernameDraft));
   const canSelectPreviewAvatar = previewAvatarIndex <= FREE_ONBOARDING_AVATAR_COUNT || ownedAvatarLevels.has(previewAvatarIndex);
   const freeAvatarChoices = onboardingAvatars.slice(0, FREE_ONBOARDING_AVATAR_COUNT);
   const previewAvatarChoices: AvatarCatalogItem[] = onboardingAvatars.slice(FREE_ONBOARDING_AVATAR_COUNT);
@@ -511,7 +514,7 @@ export function OnboardingJourney({
       setIsSavingUsernames(true);
       setUsernameSaveError("");
       try {
-        await onSaveUsernames(publicUsernameDraft, privateUsernameDraft);
+        await onSaveUsernames(publicUsernameDraft, trimmedPrivateUsernameDraft || publicUsernameDraft);
       } catch (error) {
         setUsernameSaveError(error instanceof Error ? error.message : "Could not save usernames.");
         setIsSavingUsernames(false);
