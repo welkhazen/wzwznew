@@ -101,6 +101,7 @@ export function WheelOfFortune({ prizes, onSpinEnd, onSpinStart, disabled = fals
   const accentSoft = "rgb(var(--raw-accent) / 0.3)";
   const pointerGradientId = `pointerGrad-${pointerId}`;
   const pointerShadowId = `pointerShadow-${pointerId}`;
+  const wheelDisplaySize = "min(400px, calc(100vw - 3rem), calc(100svh - 12rem))";
 
   useEffect(() => {
     onSpinEndRef.current = onSpinEnd;
@@ -194,11 +195,12 @@ export function WheelOfFortune({ prizes, onSpinEnd, onSpinStart, disabled = fals
       </div>
 
       <div
-        className={`relative aspect-square w-full max-w-[min(400px,calc(100vw-3rem))] rounded-full p-1.5 shadow-[0_0_45px_rgb(var(--raw-accent)/0.18)] ${
+        className={`relative aspect-square w-full rounded-full p-1.5 shadow-[0_0_45px_rgb(var(--raw-accent)/0.18)] ${
           isLight
             ? "border border-raw-border/70 bg-[linear-gradient(160deg,rgb(246_249_255),rgb(221_229_241))]"
             : "border border-raw-gold/30 bg-black/30"
         }`}
+        style={{ maxWidth: wheelDisplaySize }}
       >
         {/* Center SPIN button — mobile only, sits inside the SVG center circle */}
         <button
@@ -285,7 +287,7 @@ export function WheelOfFortune({ prizes, onSpinEnd, onSpinStart, disabled = fals
         <button
           onClick={handleSpin}
           disabled={isSpinning || disabled}
-          className={`mt-6 sm:mt-8 relative overflow-hidden rounded-full px-10 py-3.5 font-display text-sm uppercase tracking-[0.2em] transition-all ${
+          className={`mt-4 sm:mt-8 relative overflow-hidden rounded-full px-10 py-3.5 font-display text-sm uppercase tracking-[0.2em] transition-all ${
             isSpinning || disabled
               ? "cursor-not-allowed border border-raw-border/30 bg-raw-surface text-raw-silver/30"
               : "bg-raw-gold text-raw-black hover:scale-105 hover:shadow-[0_0_30px_rgb(var(--raw-accent)/0.3)] active:scale-95"
