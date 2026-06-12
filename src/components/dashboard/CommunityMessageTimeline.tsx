@@ -22,6 +22,7 @@ interface CommunityMessageTimelineProps {
   polls: CommunityPollRecord[];
   groupedMessages: MessageGroup[];
   activeMessageCount: number;
+  isLoading?: boolean;
   canManagePolls: boolean;
   userId: string;
   username: string;
@@ -38,11 +39,33 @@ interface CommunityMessageTimelineProps {
   onOpenSenderProfile: (message: CommunityChatMessageRecord) => void;
 }
 
+const SKELETON_WIDTHS = ["w-48", "w-64", "w-40", "w-56", "w-36", "w-52", "w-44", "w-60"];
+
+function MessageSkeleton() {
+  return (
+    <div className="space-y-3">
+      {SKELETON_WIDTHS.map((w, i) => {
+        const isRight = i % 3 === 2;
+        return (
+          <div key={i} className={`flex items-start gap-2 ${isRight ? "flex-row-reverse" : ""}`}>
+            <div className="h-7 w-7 shrink-0 animate-pulse rounded-full bg-raw-surface/50" />
+            <div className={`space-y-1.5 ${isRight ? "items-end" : "items-start"} flex flex-col`}>
+              <div className="h-2.5 w-16 animate-pulse rounded-full bg-raw-surface/40" />
+              <div className={`h-8 animate-pulse rounded-xl bg-raw-surface/35 ${w}`} />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export const CommunityMessageTimeline = memo(function CommunityMessageTimeline({
   containerRef,
   polls,
   groupedMessages,
   activeMessageCount,
+  isLoading = false,
   canManagePolls,
   userId,
   username,
@@ -253,12 +276,13 @@ export const CommunityMessageTimeline = memo(function CommunityMessageTimeline({
         </div>
       ))}
 
-      {!groupedMessages.length && activeMessageCount === 0 && (
+      {isLoading && !groupedMessages.length && <MessageSkeleton />}
+      {!isLoading && !groupedMessages.length && activeMessageCount === 0 && (
         <div className="flex h-full items-center justify-center text-sm text-raw-silver/35">
           This group is quiet right now. Join and start the first real conversation.
         </div>
       )}
-      {!groupedMessages.length && activeMessageCount > 0 && (
+      {!isLoading && !groupedMessages.length && activeMessageCount > 0 && (
         <div className="flex h-full items-center justify-center text-sm text-raw-silver/35">
           No messages match your search.
         </div>

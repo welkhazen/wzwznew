@@ -746,6 +746,7 @@ export function DashboardCommunities({
                 polls={polls.communityPolls}
                 groupedMessages={chat.groupedMessages}
                 activeMessageCount={chat.activeMessages.length}
+                isLoading={chat.messagesLoading}
                 canManagePolls={canManagePolls}
                 userId={user.id}
                 username={user.username}
