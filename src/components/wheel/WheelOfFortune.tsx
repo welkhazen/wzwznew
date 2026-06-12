@@ -36,7 +36,7 @@ interface WheelOfFortuneProps {
   disabledLabel?: React.ReactNode;
 }
 
-const SPIN_DURATION = 5000;
+const SPIN_DURATION = 6500;
 const MIN_ROTATIONS = 5;
 const MAX_ROTATIONS = 8;
 
