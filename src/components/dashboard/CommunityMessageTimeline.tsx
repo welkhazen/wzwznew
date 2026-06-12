@@ -157,33 +157,12 @@ export const CommunityMessageTimeline = memo(function CommunityMessageTimeline({
             return (
               <article
                 key={message.id}
-                className={`group/msg border px-3.5 py-2.5 ${
+                className={`group/msg inline-block max-w-[85%] border px-3 py-2 ${
                   isOwnMessage
                     ? "border-raw-gold/25 bg-raw-gold/[0.04]"
                     : "border-raw-border/35 bg-raw-black/50"
                 }`}
               >
-                <div className="flex items-center justify-end gap-2 mb-0.5">
-                  <div className="flex items-center gap-2">
-                    {likeCount > 0 && (
-                      <span className="text-[10px] text-raw-gold/70 flex items-center gap-0.5">
-                        <Heart className="h-2.5 w-2.5 fill-current" />
-                        {likeCount}
-                      </span>
-                    )}
-                    {message.pinned && (
-                      <span className="text-[9px] text-raw-gold/60">Pinned</span>
-                    )}
-                    <span className="text-[10px] text-raw-silver/40">{formatChatTimestamp(message.createdAt)}</span>
-                    {message.deliveryStatus === "sending" && (
-                      <span className="text-[9px] text-raw-silver/35">Sending…</span>
-                    )}
-                    {message.deliveryStatus === "failed" && (
-                      <span className="text-[9px] text-red-300/80">Failed</span>
-                    )}
-                  </div>
-                </div>
-
                 {message.replyToText && (
                   <div className="mb-1.5 border border-raw-border/20 bg-raw-black/20 px-2.5 py-1.5 text-xs text-raw-silver/55">
                     <p className="font-medium text-raw-gold/75">↩ {message.replyToSenderName}</p>
@@ -191,7 +170,7 @@ export const CommunityMessageTimeline = memo(function CommunityMessageTimeline({
                   </div>
                 )}
 
-                <p className={`break-words [overflow-wrap:anywhere] text-sm leading-snug ${
+                <span className={`break-words [overflow-wrap:anywhere] text-sm leading-snug ${
                   message.deletedAt ? "italic text-raw-silver/45" : isOwnMessage ? "text-raw-text" : "text-raw-silver/85"
                 }`}>
                   <button
@@ -207,7 +186,14 @@ export const CommunityMessageTimeline = memo(function CommunityMessageTimeline({
                       ? <span key={i} className="font-semibold text-raw-gold">{part}</span>
                       : part
                   )}
-                </p>
+                  <span className="ml-2 text-[10px] text-raw-silver/40 align-middle">
+                    {formatChatTimestamp(message.createdAt)}
+                    {likeCount > 0 && <span className="ml-1.5 inline-flex items-center gap-0.5 text-raw-gold/70"><Heart className="inline h-2 w-2 fill-current" />{likeCount}</span>}
+                    {message.pinned && <span className="ml-1.5 text-raw-gold/60">Pinned</span>}
+                    {message.deliveryStatus === "sending" && <span className="ml-1.5 text-raw-silver/35">Sending…</span>}
+                    {message.deliveryStatus === "failed" && <span className="ml-1.5 text-red-300/80">Failed</span>}
+                  </span>
+                </span>
 
                 {message.deliveryStatus === "failed" && (
                   <button
