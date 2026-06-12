@@ -206,7 +206,7 @@ export function WheelOfFortune({ prizes, onSpinEnd, onSpinStart, disabled = fals
         <button
           onClick={handleSpin}
           disabled={isSpinning || disabled}
-          className={`absolute left-1/2 top-1/2 z-10 flex -translate-x-1/2 -translate-y-1/2 rounded-full px-4 py-1.5 font-display text-[10px] uppercase tracking-[0.18em] transition-all whitespace-nowrap sm:hidden ${
+          className={`absolute left-1/2 top-1/2 z-10 flex -translate-x-1/2 -translate-y-1/2 rounded-full px-2.5 py-1 font-display text-[9px] uppercase tracking-[0.08em] transition-all whitespace-nowrap sm:hidden ${
             isSpinning || disabled
               ? "cursor-not-allowed bg-raw-surface/90 text-raw-silver/40"
               : "bg-raw-gold text-raw-black active:scale-95 shadow-[0_0_16px_rgb(var(--raw-accent)/0.5)]"
