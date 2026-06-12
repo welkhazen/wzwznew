@@ -89,6 +89,11 @@ function toApiUser(user: UserRecord) {
 
 export const usersRouter = Router();
 
+// All user routes require an authenticated session.
+// Individual handlers still call findAuthenticatedUser() to load the DB record,
+// which also handles the edge case where a session references a deleted user.
+usersRouter.use(requireAuth);
+
 usersRouter.get("/me", async (req, res) => {
   const user = await findAuthenticatedUser(req);
   if (!user) {
