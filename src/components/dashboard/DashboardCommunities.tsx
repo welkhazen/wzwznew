@@ -786,7 +786,7 @@ export function DashboardCommunities({
               <div className="hidden sm:flex sm:flex-col sm:h-full sm:overflow-hidden sm:rounded-2xl sm:border sm:border-raw-border/20 sm:bg-raw-black/35">
                 <GeneralFeedBox
                   userId={user.id}
-                  isLight={false}
+                  isLight={isLight}
                   compact
                   showHeader
                   fillHeight
