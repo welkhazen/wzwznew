@@ -2,7 +2,7 @@
 // landing, onboarding, and the spin/claim systems. Anytime you'd
 // hardcode an avatar array elsewhere, import from here instead.
 
-export const FREE_SPIN_AVATAR_IDS = [43, 42, 52, 41, 13, 47, 40, 20] as const;
+export const FREE_SPIN_AVATAR_IDS = [43, 42, 52, 41, 13, 47, 40, 35, 20, 26] as const;
 
 // Early-signup reward pool. Must NOT overlap with FREE_SPIN_AVATAR_IDS.
 export const EARLY_SIGNUP_AVATAR_IDS = [29, 21, 25, 33] as const;
@@ -22,6 +22,5 @@ const _overlap = FREE_SPIN_AVATAR_IDS.filter((id) =>
   (EARLY_SIGNUP_AVATAR_IDS as readonly number[]).includes(id),
 );
 if (_overlap.length > 0) {
-  // eslint-disable-next-line no-console
   console.error("[avatarConfig] Spin and early-signup pools overlap:", _overlap);
 }

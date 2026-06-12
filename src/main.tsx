@@ -59,10 +59,7 @@ if (typeof window !== "undefined") {
   };
 }
 
-const shouldEnableSpeedInsights =
-  import.meta.env.PROD &&
-  (import.meta.env.VITE_ENABLE_SPEED_INSIGHTS === "true" ||
-    window.location.hostname.endsWith(".vercel.app"));
+const shouldEnableSpeedInsights = import.meta.env.PROD;
 
 if (typeof window !== "undefined" && import.meta.env.DEV) {
   const params = new URLSearchParams(window.location.search);

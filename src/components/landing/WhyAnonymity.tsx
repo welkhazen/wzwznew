@@ -5,16 +5,16 @@ const pillars = ["No real names", "Better honesty", "Better matching"];
 
 const cards = [
   {
-    title: "Less pressure",
-    description: "People answer more honestly when they are not performing.",
+    title: "No performance",
+    description: "No real-name pressure means more honest answers, cleaner signals, and better conversations.",
   },
   {
-    title: "Better communities",
-    description: "Real connection starts when people stop managing appearances.",
+    title: "Better matches",
+    description: "When people stop curating themselves, raW can guide them toward rooms that actually fit.",
   },
   {
-    title: "Stronger signals",
-    description: "Honest participation creates better recommendations over time.",
+    title: "Safer expression",
+    description: "A username and avatar create space to speak freely while keeping your offline identity separate.",
   },
 ];
 
@@ -29,6 +29,13 @@ export function WhyAnonymity() {
         style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 0 40px rgba(0,0,0,0.3)" }}
       >
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/30 to-transparent" />
+
+        <h2 className="text-center landing-heading">
+          Why anonymity works
+        </h2>
+        <p className="mx-auto mt-4 mb-8 max-w-2xl text-center text-sm leading-relaxed text-raw-silver/55 sm:mb-10 sm:text-base">
+          Take away the audience and people stop performing. That is the entire idea behind raW.
+        </p>
 
         <div className="grid grid-cols-3 gap-2 sm:gap-6">
           {cards.map((card, i) => (

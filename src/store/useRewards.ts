@@ -128,6 +128,10 @@ export function useRewards(user: User | null) {
     setOwnedAvatarIds((previous) => (previous.includes(candidate.id) ? previous : [...previous, candidate.id]));
   }, [avatarCatalog]);
 
+  const markAvatarOwnedById = useCallback((avatarId: string) => {
+    setOwnedAvatarIds((previous) => (previous.includes(avatarId) ? previous : [...previous, avatarId]));
+  }, []);
+
   const ownedAvatarLevels = useMemo(() => {
     if (ownedAvatarIds.length === 0) {
       return new Set<number>(avatarCatalog.length > 0 ? [1] : []);
@@ -163,6 +167,8 @@ export function useRewards(user: User | null) {
     }
   }, [avatarCatalog, inventoryLoaded, ownedAvatarIds, user]);
 
+  const ownedAvatarIdSet = useMemo(() => new Set(ownedAvatarIds), [ownedAvatarIds]);
+
   return useMemo(() => ({
     avatarLevel,
     setAvatarLevel,
@@ -170,8 +176,10 @@ export function useRewards(user: User | null) {
     selectAvatarForOnboarding,
     avatarCatalog,
     ownedAvatarLevels,
+    ownedAvatarIds: ownedAvatarIdSet,
     unlockAvatarLevel,
     markAvatarOwned,
+    markAvatarOwnedById,
     avatarPricesByLevel,
-  }), [avatarCatalog, avatarLevel, avatarPricesByLevel, changeAvatarLevel, markAvatarOwned, ownedAvatarLevels, selectAvatarForOnboarding, setAvatarLevel, unlockAvatarLevel]);
+  }), [avatarCatalog, avatarLevel, avatarPricesByLevel, changeAvatarLevel, markAvatarOwned, markAvatarOwnedById, ownedAvatarIdSet, ownedAvatarLevels, selectAvatarForOnboarding, setAvatarLevel, unlockAvatarLevel]);
 }

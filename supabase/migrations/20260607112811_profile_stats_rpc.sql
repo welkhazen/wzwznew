@@ -27,8 +27,9 @@ as $function$
     ),
     hosts_made as (
       select count(*) as n
-      from public.community_polls
-      where created_by_user_id = p_user_id
+      from public.community_requests
+      where requester_id = p_user_id
+        and status = 'approved'
     ),
     communities_joined as (
       select count(*) as n

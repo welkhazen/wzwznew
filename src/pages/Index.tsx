@@ -10,7 +10,8 @@ import { awardXP, XP_REWARDS } from "@/lib/userProgress";
 import { claimPendingLandingWheelAvatarForUser } from "@/lib/avatarCatalog";
 import { unlockCommunity } from "@/lib/communityAccess";
 import { joinCommunity } from "@/backend/supabase/controllers/communityController";
-import { updateProfileVisibility } from "@/backend/supabase/controllers/userController";
+import { saveOnboardingIdentities } from "@/backend/supabase/controllers/userController";
+import { APP_CANONICAL_HOST, buildCanonicalAppUrl } from "@/lib/canonicalHost";
 
 const LandingShellLazy = lazy(() => import("@/components/landing/LandingShell"));
 
@@ -29,8 +30,10 @@ const Index = () => {
     setAvatarLevel,
     selectAvatarForOnboarding,
     ownedAvatarLevels,
+    ownedAvatarIds,
     unlockAvatarLevel,
     markAvatarOwned,
+    markAvatarOwnedById,
     avatarPricesByLevel,
     avatarCatalog,
     onboardingStep,
@@ -80,8 +83,8 @@ const Index = () => {
       return;
     }
 
-    const targetUrl = `${window.location.protocol}//myraw.app${window.location.pathname}${window.location.search}${window.location.hash}`;
-    if (window.location.hostname !== "myraw.app") {
+    const targetUrl = buildCanonicalAppUrl(window.location);
+    if (window.location.hostname !== APP_CANONICAL_HOST) {
       window.location.replace(targetUrl);
     }
   }, [hostname, isLoggedIn, isTheRawMe, user]);
@@ -101,7 +104,7 @@ const Index = () => {
       <div className="flex min-h-screen items-center justify-center bg-raw-black px-6 text-center text-raw-silver/60">
         <div>
           <p className="font-display text-sm uppercase tracking-[0.25em] text-raw-gold/70">Redirecting</p>
-          <p className="mt-3 text-sm">Taking you to myraw.app...</p>
+          <p className="mt-3 text-sm">Taking you to www.myraw.app...</p>
         </div>
       </div>
     );
@@ -150,12 +153,14 @@ const Index = () => {
           avatarIndex={avatarLevel}
           onAvatarChange={selectAvatarForOnboarding}
           ownedAvatarLevels={ownedAvatarLevels}
+          ownedAvatarIds={ownedAvatarIds}
           avatarCatalog={avatarCatalog}
           onboardingStep={onboardingStep}
           onboardingAnsweredPollIds={onboardingAnsweredPollIds}
           publicUsername={onboardingPublicUsername}
           privateUsername={onboardingPrivateUsername}
-          onSaveUsernames={(publicUsername, privateUsername) => {
+          onSaveUsernames={async (publicUsername, privateUsername) => {
+            await saveOnboardingIdentities(publicUsername, privateUsername);
             setOnboardingPublicUsername(publicUsername);
             setOnboardingPrivateUsername(privateUsername);
           }}
@@ -180,17 +185,14 @@ const Index = () => {
             completeOnboarding();
             void awardXP(user.id, XP_REWARDS.ONBOARDING_COMPLETE);
           }}
-          profilePublic={user.profilePublic ?? null}
-          onSetProfilePublic={async (value) => {
-            await updateProfileVisibility(user.id, value);
-          }}
           onLogout={logout}
           onClaimLandingWheelAvatar={async () => {
             const result = await claimPendingLandingWheelAvatarForUser(user.id);
             if (result && (result.status === "granted" || result.status === "already_claimed")) {
-              markAvatarOwned(result.level);
+              markAvatarOwnedById(result.avatarId);
             }
           }}
+          markAvatarOwnedById={markAvatarOwnedById}
         />
       );
     }

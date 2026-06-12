@@ -5,8 +5,28 @@
   "outputDirectory": "dist",
   "installCommand": "npm ci",
   "regions": ["iad1"],
+  "redirects": [
+    {
+      "source": "/((?!api/|assets/|avatars/|models/|images/|manifest\\.webmanifest$|favicon\\.ico$|robots\\.txt$|sitemap\\.xml$|og-card\\.svg$|raw-logo-).*)",
+      "has": [{ "type": "host", "value": "theartofraw.me" }],
+      "destination": "https://www.myraw.app/$1",
+      "permanent": true
+    },
+    {
+      "source": "/((?!api/|assets/|avatars/|models/|images/|manifest\\.webmanifest$|favicon\\.ico$|robots\\.txt$|sitemap\\.xml$|og-card\\.svg$|raw-logo-).*)",
+      "has": [{ "type": "host", "value": "www.theartofraw.me" }],
+      "destination": "https://www.myraw.app/$1",
+      "permanent": true
+    },
+    {
+      "source": "/((?!api/|assets/|avatars/|models/|images/|manifest\\.webmanifest$|favicon\\.ico$|robots\\.txt$|sitemap\\.xml$|og-card\\.svg$|raw-logo-).*)",
+      "has": [{ "type": "host", "value": "myraw.app" }],
+      "destination": "https://www.myraw.app/$1",
+      "statusCode": 308
+    }
+  ],
   "rewrites": [
-    { "source": "/((?!api/|assets/|avatars/|models/|images/).*)", "destination": "/index.html" }
+    { "source": "/((?!api/|assets/|avatars/|models/|images/|manifest\\.webmanifest$|favicon\\.ico$|robots\\.txt$|sitemap\\.xml$|og-card\\.svg$).*)", "destination": "/index.html" }
   ],
   "headers": [
     {

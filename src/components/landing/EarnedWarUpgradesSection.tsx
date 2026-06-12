@@ -11,33 +11,33 @@ export function EarnedWarUpgradesSection() {
         {/* top shimmer line */}
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/30 to-transparent" />
 
-        <p className="text-[11px] uppercase tracking-[0.25em] text-raw-gold/70">War Rewards</p>
+        <p className="text-[11px] uppercase tracking-[0.25em] text-raw-gold/70">Progress Rewards</p>
 
         <h2 className="mt-3 landing-heading">
-          Earned War Upgrades
+          Level up by showing up
         </h2>
 
         <p className="mt-5 text-sm leading-relaxed text-raw-silver/60 sm:text-base">
-          We give back to those who are being{" "}
-          <span className="font-medium text-raw-gold/80">ra<span className="raw-word-w">W</span></span>. Earn{" "}
-          <span className="font-medium text-raw-gold/80">War Points</span> and{" "}
-          <span className="font-medium text-raw-gold/80">War-Up</span> by staying active — you
-          deserve it and earned it.
+          Showing up{" "}
+          <span className="font-medium text-raw-gold/80">ra<span className="raw-word-w">W</span></span>{" "}
+          pays off. Stay active, earn{" "}
+          <span className="font-medium text-raw-gold/80">War Points</span>, and{" "}
+          <span className="font-medium text-raw-gold/80">War-Up</span> through the ranks.
         </p>
         <p className="mt-3 text-sm leading-relaxed text-raw-silver/40">
-          The higher the Level, the higher the deserved privileges. The more the surprises.
+          The higher your level, the bigger the privileges — and the better the surprises.
         </p>
 
         <div className="mt-10 sm:mt-12">
           <img
             src={warLevelBadgesImage}
-            alt="War level badges"
+            alt="raW war level badges — anonymous avatar ranks earned by staying active"
             className="mx-auto w-full max-w-[660px]"
           />
         </div>
 
         <p className="mt-8 text-[11px] uppercase tracking-[0.2em] text-raw-silver/25">
-          Avatars unlock as you level up
+          New avatar rewards unlock as you level up
         </p>
       </div>
     </section>

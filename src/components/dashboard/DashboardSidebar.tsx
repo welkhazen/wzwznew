@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Archive, Home, MessageCircle, Store, Target, Trophy, LogOut } from "lucide-react";
+import { Home, MessageCircle, Store, Target, Trophy, LogOut } from "lucide-react";
 import { FloatingDock } from "@/components/ui/floating-dock";
 import { countUnreadMessages, type PersistedCommunityRecord } from "@/lib/communityChat";
 import { COMMUNITY_COVER_IMAGES } from "@/lib/communityConstants";
@@ -28,7 +28,6 @@ const NAV: { icon: typeof Home; label: string; tab: DashboardTab | "home" }[] = 
   { icon: Target,        label: "Polls",       tab: "polls"       },
   { icon: Trophy,        label: "Challenges",  tab: "challenges"  },
   { icon: Store,         label: "Store",       tab: "store"       },
-  { icon: Archive,       label: "Inventory",   tab: "inventory"   },
 ];
 
 const COMMUNITY_LOGOS: Record<string, string> = {

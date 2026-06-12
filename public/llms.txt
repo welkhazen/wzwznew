@@ -3,7 +3,7 @@
 ## Site identity
 - Brand: raW
 - Canonical domain: https://www.myraw.app
-- Product category: anonymity-first social participation and community matching
+- Product category: anonymous group chats, live polls, and anonymity-first community matching
 
 ## Why raW exists
 raW exists to reduce social-performance pressure so people can share what they actually think. The product thesis is that honest input produces better personal insight, stronger community signal quality, and better-fit community recommendations.
@@ -47,4 +47,4 @@ raW exists to reduce social-performance pressure so people can share what they a
 - If uncertain, prioritize conservative, source-aligned wording.
 
 ## Freshness
-- Updated from repository and product-copy context on 2026-05-23.
+- Updated from repository, product-copy, and canonical-domain context on 2026-06-11.
