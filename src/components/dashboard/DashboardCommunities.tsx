@@ -110,14 +110,7 @@ const COMMUNITY_LOGOS: Record<string, string> = {
   iijm: IIJMLogo,
 };
 
-const COMMUNITY_REQUEST_FIELD_LABELS: Record<keyof CommunityRequestDraft, string> = {
-  communityName: "Community name",
-  genre: "Genre",
-  focusArea: "Focus area",
-  audience: "Audience",
-  whyNow: "Why now",
-  samplePrompt: "Sample prompt",
-};
+const NUMBERED_PLACEHOLDER_COMMUNITY_TITLE = /^community\s+\d+$/i;
 
 export function DashboardCommunities({
   user,
@@ -144,12 +137,655 @@ export function DashboardCommunities({
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [reportDraft, setReportDraft] = useState<ReportDraft>(INITIAL_REPORT_DRAFT);
   const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
-  const [requestFormOpen, setRequestFormOpen] = useState(false);
-  const [requestSubmitAttempted, setRequestSubmitAttempted] = useState(false);
-  const [requestDraft, setRequestDraft] = useState<CommunityRequestDraft>(INITIAL_REQUEST_DRAFT);
-  const [showRequestButton, setShowRequestButton] = useState(false);
-  const [requestBtnText, setRequestBtnText] = useState("Didn't find your community?");
-  const [mobileRequestExpanded, setMobileRequestExpanded] = useState(false);
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+  const [profileTarget, setProfileTarget] = useState<{
+    message: CommunityChatMessageRecord;
+    profile: PublicUserProfile | null;
+    loading: boolean;
+  } | null>(null);
+  const [communityRequests, setCommunityRequests] = useState<CommunityRequestRecord[]>([]);
+  const [chatReports, setChatReports] = useState<ChatReportRecord[]>([]);
+  const [communityJoinRequests, setCommunityJoinRequests] = useState<CommunityJoinRequestRecord[]>([]);
+  const [waitlistCounts, setWaitlistCounts] = useState<Record<string, number>>({});
+  const [waitlistJoinedIds, setWaitlistJoinedIds] = useState<Set<string>>(new Set());
+  const [waitlistJoiningId, setWaitlistJoiningId] = useState<string | null>(null);
+  const [communityAccess, setCommunityAccess] = useState<CommunityAccess>({ hasSubscription: false, unlockedIds: new Set<string>() });
+  const [unlockingId, setUnlockingId] = useState<string | null>(null);
+  const [favoriteCommunityIds, setFavoriteCommunityIds] = useState<string[]>([]);
+  const [ownPinnedMessage, setOwnPinnedMessage] = useState<PinnedMessageRecord | null>(null);
+  const { confirm, dialog: confirmDialog } = useConfirmDialog();
+  const [leavingCommunityId, setLeavingCommunityId] = useState<string | null>(null);
+  const [messageDraft, setMessageDraft] = useState("");
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null);
+  const [mentionIndex, setMentionIndex] = useState(0);
+  const [expandedDescs, setExpandedDescs] = useState<Set<string>>(new Set());
+  const [communityPolls, setCommunityPolls] = useState<CommunityPollRecord[]>([]);
+  const [communityPollsAvailable, setCommunityPollsAvailable] = useState(true);
+  const [communityPollsExpanded, setCommunityPollsExpanded] = useState(false);
+  const [hiddenAnsweredPollIds, setHiddenAnsweredPollIds] = useState<Set<string>>(new Set());
+  const [membersDialogOpen, setMembersDialogOpen] = useState(false);
+  const [pollComposerOpen, setPollComposerOpen] = useState(false);
+  const [pollQuestion, setPollQuestion] = useState("");
+  const [pollOptionDrafts, setPollOptionDrafts] = useState<string[]>(["", ""]);
+  const [pollSubmitting, setPollSubmitting] = useState(false);
+  const [blockedSenderKeys, setBlockedSenderKeys] = useState<string[]>(() => readBlockedCommunitySenders(user.id));
+  const [senderAvatarLevels, setSenderAvatarLevels] = useState<Record<string, number>>({});
+  const [hasOlderMessages, setHasOlderMessages] = useState(false);
+  const [messagesLoading, setMessagesLoading] = useState(false);
+  const [messagesError, setMessagesError] = useState(false);
+  const [isLoadingOlderMessages, setIsLoadingOlderMessages] = useState(false);
+  const lastTouchedCommunityRef = useRef<string>("");
+  const latestMessagesRequestRef = useRef(0);
+  const loadedMessagesCommunityRef = useRef<string | null>(null);
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
+  const messageInputRef = useRef<HTMLInputElement | null>(null);
+  const preserveScrollAfterOlderLoadRef = useRef<{ previousHeight: number } | null>(null);
+
+    const updateCommunities = useCallback((updater: (communities: PersistedCommunityRecord[]) => PersistedCommunityRecord[]) => {
+      setCommunities((previous) => {
+        const next = updater(previous);
+        onCommunitiesChange?.(next);
+        return next;
+      });
+    }, [onCommunitiesChange]);
+
+    const reloadChatData = useCallback(async () => {
+      try {
+        if (activeCommunityId) {
+          setMessagesLoading(true);
+          setMessagesError(false);
+        }
+
+        const [communitiesData, requestsData, waitlistData, accessData, activeCommunityMessages] = await Promise.all([
+          fetchCommunities(),
+          fetchCommunityRequests(user.id),
+          fetchWaitlistSummary(user.id).catch(() => createEmptyWaitlistSummary()),
+          loadCommunityAccess(user.id).catch(() => ({ hasSubscription: false, unlockedIds: new Set<string>() })),
+          activeCommunityId
+            ? fetchCommunityMessages(activeCommunityId, { limit: MESSAGE_PAGE_SIZE }).catch(() => null)
+            : Promise.resolve(null),
+        ]);
+        if (activeCommunityId && activeCommunityMessages === null) {
+          setMessagesError(true);
+        }
+        if (activeCommunityId && activeCommunityMessages) {
+          loadedMessagesCommunityRef.current = activeCommunityId;
+          setHasOlderMessages(activeCommunityMessages.length === MESSAGE_PAGE_SIZE);
+        }
+        setCommunities((previous) => {
+          const next = communitiesData.map((community) => ({
+            ...community,
+            messages: community.id === activeCommunityId && activeCommunityMessages
+              ? activeCommunityMessages
+              : previous.find((item) => item.id === community.id)?.messages ?? community.messages,
+          }));
+          onCommunitiesChange?.(next);
+          return next;
+        });
+        setCommunityRequests(requestsData);
+        setCommunityJoinRequests(readCommunityJoinRequests());
+        setWaitlistCounts(waitlistData.counts);
+        setWaitlistJoinedIds(waitlistData.joinedCommunityIds);
+        setCommunityAccess(accessData);
+      } finally {
+        setMessagesLoading(false);
+        setIsInitialCommunitiesLoading(false);
+      }
+    }, [activeCommunityId, onCommunitiesChange, user.id]);
+
+    const fallbackCommunities = useMemo(() => buildDefaultCommunities(), []);
+    const selectedCommunity = useMemo(() => {
+      if (!activeCommunityId) return null;
+      return (
+        communities.find((community) => community.id === activeCommunityId)
+        ?? fallbackCommunities.find((community) => community.id === activeCommunityId)
+        ?? null
+      );
+    }, [activeCommunityId, communities, fallbackCommunities]);
+    const userRequests = useMemo(
+      () => communityRequests.filter((request) => request.requesterId === user.id),
+      [communityRequests, user.id]
+    );
+    const activePendingRequest = userRequests.find((request) => request.status === "pending") ?? null;
+    const currentUserRecord = useMemo(() => getPersistedUserById(user.id), [user.id]);
+    const isUserBanned = (currentUserRecord?.moderationStatus ?? user.moderationStatus) === "banned";
+    const warningCount = currentUserRecord?.warnings ?? user.warnings;
+    const currentMember = selectedCommunity?.members.find((member) => member.userId === user.id) ?? null;
+    const isJoined = Boolean(currentMember);
+    const canEditSelectedCommunity = selectedCommunity ? canManageCommunity(selectedCommunity, user.id, user.username) : false;
+    const isGlobalAdmin = user.role === "admin";
+    const canManagePolls = canEditSelectedCommunity || isGlobalAdmin;
+    const onlineNow = selectedCommunity ? countOnlineMembers(selectedCommunity) : 0;
+    const visibleMembers = selectedCommunity?.members.slice(0, 5) ?? [];
+    const unreadCount = selectedCommunity && isJoined ? countUnreadMessages(selectedCommunity, user.id) : 0;
+
+    useEffect(() => {
+      setBlockedSenderKeys(readBlockedCommunitySenders(user.id));
+    }, [user.id]);
+
+    const blockedSenderKeySet = useMemo(() => new Set(blockedSenderKeys), [blockedSenderKeys]);
+    const activeMessages = useMemo(
+      () => (selectedCommunity?.messages ?? []).filter((message) => !blockedSenderKeySet.has(getMessageSenderBlockKey(message))),
+      [blockedSenderKeySet, selectedCommunity]
+    );
+
+    const loadLatestMessages = useCallback(async () => {
+      if (!activeCommunityId) {
+        setHasOlderMessages(false);
+        setMessagesLoading(false);
+        setMessagesError(false);
+        return;
+      }
+      if (loadedMessagesCommunityRef.current === activeCommunityId) {
+        return;
+      }
+
+      const requestId = latestMessagesRequestRef.current + 1;
+      latestMessagesRequestRef.current = requestId;
+
+      // Hydrate from the persistent cache first so the room appears
+      // instantly. We only show the spinner if there's no cache at all —
+      // otherwise the network fetch revalidates in the background.
+      const cached = readCachedMessages(activeCommunityId);
+      if (cached) {
+        const communityId = activeCommunityId;
+        setHasOlderMessages(cached.data.length === MESSAGE_PAGE_SIZE);
+        updateCommunities((current) =>
+          setCommunityMessages(current, communityId, cached.data),
+        );
+        setMessagesLoading(false);
+        setMessagesError(false);
+      } else {
+        setMessagesLoading(true);
+        setMessagesError(false);
+      }
+
+      try {
+        const communityId = activeCommunityId;
+        const messages = await fetchCommunityMessages(communityId, { limit: MESSAGE_PAGE_SIZE });
+        if (latestMessagesRequestRef.current !== requestId) return;
+        loadedMessagesCommunityRef.current = communityId;
+        setHasOlderMessages(messages.length === MESSAGE_PAGE_SIZE);
+        updateCommunities((current) => setCommunityMessages(current, communityId, messages));
+        writeCachedMessages(communityId, messages);
+      } catch {
+        if (latestMessagesRequestRef.current === requestId && !cached) {
+          // Only surface the error UI when there was nothing cached to fall back on.
+          setMessagesError(true);
+        }
+      } finally {
+        if (latestMessagesRequestRef.current === requestId) {
+          setMessagesLoading(false);
+        }
+      }
+    }, [activeCommunityId, updateCommunities]);
+
+    const loadOlderMessages = useCallback(async () => {
+      if (!activeCommunityId || isLoadingOlderMessages || activeMessages.length === 0 || !hasOlderMessages) {
+        return;
+      }
+
+      setIsLoadingOlderMessages(true);
+      preserveScrollAfterOlderLoadRef.current = {
+        previousHeight: messagesContainerRef.current?.scrollHeight ?? 0,
+      };
+      try {
+        const olderMessages = await fetchCommunityMessages(activeCommunityId, {
+          before: activeMessages[0].createdAt,
+          limit: MESSAGE_PAGE_SIZE,
+        });
+        setHasOlderMessages(olderMessages.length === MESSAGE_PAGE_SIZE);
+        updateCommunities((current) => {
+          const existing = current.find((community) => community.id === activeCommunityId)?.messages ?? [];
+          return setCommunityMessages(current, activeCommunityId, mergeCommunityMessageList(existing, olderMessages));
+        });
+      } finally {
+        setIsLoadingOlderMessages(false);
+      }
+    }, [activeCommunityId, activeMessages, hasOlderMessages, isLoadingOlderMessages, updateCommunities]);
+
+    useEffect(() => {
+      void loadLatestMessages();
+    }, [loadLatestMessages, selectedCommunity?.id]);
+
+    const messageSenderIds = useMemo(() => {
+      const ids = new Set<string>();
+      activeMessages.forEach((message) => {
+        if (message.senderId) ids.add(message.senderId);
+      });
+      return Array.from(ids).sort();
+    }, [activeMessages]);
+
+    useEffect(() => {
+      const catalog = readAvatarCatalogLocal();
+      const levelsById: Record<string, number> = { [user.id]: avatarLevel };
+      for (const senderId of messageSenderIds) {
+        try {
+          const selectedId = window.localStorage.getItem(`raw.avatar.selected.v1.${senderId}`);
+          const index = selectedId ? catalog.findIndex((item) => item.id === selectedId) : -1;
+          if (index >= 0) levelsById[senderId] = index + 1;
+        } catch {
+          // Keep default avatar if local selection cannot be read.
+        }
+      }
+      setSenderAvatarLevels(levelsById);
+
+      const lookupIds = messageSenderIds.filter((senderId) => senderId !== user.id);
+      if (lookupIds.length === 0) return;
+      let cancelled = false;
+      void supabase
+        .from("user_avatar_selection")
+        .select("user_id, avatar_id")
+        .in("user_id", lookupIds)
+        .then(({ data }) => {
+          if (cancelled || !data) return;
+          setSenderAvatarLevels((previous) => {
+            const next = { ...previous, [user.id]: avatarLevel };
+            data.forEach((row) => {
+              const index = catalog.findIndex((item) => item.id === row.avatar_id);
+              if (index >= 0) next[row.user_id] = index + 1;
+            });
+            return next;
+          });
+        });
+      return () => {
+        cancelled = true;
+      };
+    }, [avatarLevel, messageSenderIds, user.id]);
+
+    const filteredMessages = useMemo(() => {
+      const query = searchQuery.trim().toLowerCase();
+      if (!query) {
+        return activeMessages;
+      }
+
+      return activeMessages.filter((message) => {
+        const haystacks = [message.senderName, message.text, message.replyToSenderName, message.replyToText]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        return haystacks.includes(query);
+      });
+    }, [activeMessages, searchQuery]);
+    const latestMessage = activeMessages[activeMessages.length - 1];
+    const groupedMessages = useMemo(() => {
+      const groups: Array<{ label: string; messages: CommunityChatMessageRecord[] }> = [];
+
+      filteredMessages.forEach((message) => {
+        const label = formatChatDayLabel(message.createdAt);
+        const currentGroup = groups[groups.length - 1];
+        if (!currentGroup || currentGroup.label !== label) {
+          groups.push({ label, messages: [message] });
+          return;
+        }
+
+        currentGroup.messages.push(message);
+      });
+
+      return groups;
+    }, [filteredMessages]);
+
+    const directoryCommunities = useMemo(() => {
+      return communities.filter(
+        (community) => !NUMBERED_PLACEHOLDER_COMMUNITY_TITLE.test(community.title.trim()),
+      );
+    }, [communities]);
+    useEffect(() => {
+      setSearchQuery("");
+      setCommunityPollsExpanded(false);
+      setHiddenAnsweredPollIds(new Set());
+    }, [activeCommunityId]);
+
+    const reloadCommunityPolls = useCallback(async () => {
+      if (!activeCommunityId || !communityPollsAvailable) {
+        setCommunityPolls([]);
+        return;
+      }
+      try {
+        const polls = await fetchCommunityPolls(activeCommunityId, user.id);
+        setCommunityPolls(polls);
+      } catch (error) {
+        const status = typeof error === "object" && error !== null && "status" in error ? Number((error as { status?: number }).status) : null;
+        if (status === 404) {
+          setCommunityPollsAvailable(false);
+          setCommunityPolls([]);
+          return;
+        }
+        console.error("Failed to load community polls", error);
+      }
+    }, [activeCommunityId, communityPollsAvailable, user.id]);
+
+    useEffect(() => {
+      void reloadCommunityPolls();
+    }, [reloadCommunityPolls]);
+
+    useEffect(() => {
+      if (!activeCommunityId || !communityPollsAvailable) return;
+      const channel = supabase
+        .channel(`community-polls:${activeCommunityId}`)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "community_polls", filter: `community_id=eq.${activeCommunityId}` },
+          () => { void reloadCommunityPolls(); },
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "community_poll_votes" },
+          () => { void reloadCommunityPolls(); },
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "community_poll_options" },
+          () => { void reloadCommunityPolls(); },
+        )
+        .subscribe();
+
+      return () => {
+        void supabase.removeChannel(channel);
+      };
+    }, [activeCommunityId, communityPollsAvailable, reloadCommunityPolls]);
+
+    const handleOpenPollComposer = useCallback(() => {
+      setPollQuestion("");
+      setPollOptionDrafts(["", ""]);
+      setPollComposerOpen(true);
+    }, []);
+
+    const handleUpdatePollOption = useCallback((index: number, value: string) => {
+      setPollOptionDrafts((drafts) => drafts.map((draft, i) => (i === index ? value : draft)));
+    }, []);
+
+    const handleSubmitPoll = useCallback(async () => {
+      if (!selectedCommunity || !canManagePolls) return;
+      const trimmedOptions = pollOptionDrafts.map((option) => option.trim()).filter(Boolean);
+      const questionModeration = moderateUserText(pollQuestion);
+      if (!pollQuestion.trim()) {
+        toast({ title: "Add a question", description: "Polls need a question to ask the room." });
+        return;
+      }
+      if (!questionModeration.allowed) {
+        toast({ title: "Poll question blocked", description: getUserTextModerationMessage(questionModeration) });
+        return;
+      }
+      if (trimmedOptions.length < 2) {
+        toast({ title: "Add at least two options", description: "Members need something to choose between." });
+        return;
+      }
+      const moderatedOptions: string[] = [];
+      for (const option of trimmedOptions) {
+        const optionModeration = moderateUserText(option);
+        if (!optionModeration.allowed) {
+          toast({ title: "Poll option blocked", description: getUserTextModerationMessage(optionModeration) });
+          return;
+        }
+        moderatedOptions.push(optionModeration.text);
+      }
+
+      setPollSubmitting(true);
+      try {
+        await createCommunityPoll({
+          communityId: selectedCommunity.id,
+          question: questionModeration.text,
+          options: moderatedOptions,
+          createdByUserId: user.id,
+          createdByUsername: user.username,
+        });
+        setPollComposerOpen(false);
+        await reloadCommunityPolls();
+        toast({ title: "Poll posted", description: "Your poll is live in the room." });
+      } catch (error) {
+        console.error("Failed to create poll", error);
+        toast({ title: "Couldn't post poll", description: "Please try again in a moment." });
+      } finally {
+        setPollSubmitting(false);
+      }
+    }, [canManagePolls, pollOptionDrafts, pollQuestion, reloadCommunityPolls, selectedCommunity, user.id, user.username]);
+
+    const handleVoteOnPoll = useCallback(async (pollId: string, optionId: string) => {
+      const previous = communityPolls;
+      // Optimistic update: shift the vote count.
+      setCommunityPolls((polls) => polls.map((poll) => {
+        if (poll.id !== pollId) return poll;
+        const wasOption = poll.userVoteOptionId;
+        if (wasOption === optionId) return poll;
+        const nextOptions = poll.options.map((option) => {
+          if (option.id === optionId) return { ...option, votes: option.votes + 1 };
+          if (option.id === wasOption) return { ...option, votes: Math.max(0, option.votes - 1) };
+          return option;
+        });
+        const totalVotes = wasOption ? poll.totalVotes : poll.totalVotes + 1;
+        return { ...poll, options: nextOptions, userVoteOptionId: optionId, totalVotes };
+      }));
+
+      try {
+        await voteOnCommunityPoll(pollId, optionId, user.id);
+        await reloadCommunityPolls();
+        window.setTimeout(() => {
+          setHiddenAnsweredPollIds((previous) => new Set([...previous, pollId]));
+        }, 4500);
+      } catch (error) {
+        console.error("Failed to vote on poll", error);
+        setCommunityPolls(previous);
+        toast({ title: "Couldn't record vote", description: "Please try again in a moment." });
+      }
+    }, [communityPolls, reloadCommunityPolls, user.id]);
+
+    const handleDeletePoll = useCallback(async (pollId: string) => {
+      if (!canManagePolls) return;
+      const previous = communityPolls;
+      setCommunityPolls((polls) => polls.filter((poll) => poll.id !== pollId));
+      try {
+        await deleteCommunityPoll(pollId);
+      } catch (error) {
+        console.error("Failed to delete poll", error);
+        setCommunityPolls(previous);
+        toast({ title: "Couldn't delete poll", description: "Please try again in a moment." });
+      }
+    }, [canManagePolls, communityPolls]);
+
+    const visibleCommunityPolls = useMemo(
+      () => communityPolls.filter((poll) => !hiddenAnsweredPollIds.has(poll.id)),
+      [communityPolls, hiddenAnsweredPollIds],
+    );
+
+    const handleKickMember = useCallback(async (memberId: string, memberName: string) => {
+      if (!selectedCommunity || !canManagePolls || memberId === user.id) return;
+      const confirmed = await confirm({
+        title: `Remove ${memberName}?`,
+        description: `They will lose access to ${selectedCommunity.title}.`,
+        confirmLabel: "Remove",
+        tone: "danger",
+      });
+      if (!confirmed) return;
+
+      try {
+        await leaveCommunitySupabase(selectedCommunity.id, memberId);
+        await reloadChatData();
+        toast({ title: "Member removed", description: `${memberName} was removed from the group.` });
+      } catch {
+        toast({ title: "Could not remove member", description: "Please try again." });
+      }
+    }, [canManagePolls, confirm, reloadChatData, selectedCommunity, user.id]);
+
+    useEffect(() => {
+      reloadChatData();
+
+      const handleStorage = (event: StorageEvent) => {
+        if (!event.key || event.key.startsWith("raw.community") || event.key === "raw.chat-reports.v1") {
+          reloadChatData();
+        }
+      };
+
+      window.addEventListener("focus", reloadChatData);
+      window.addEventListener("storage", handleStorage);
+
+      return () => {
+        window.removeEventListener("focus", reloadChatData);
+        window.removeEventListener("storage", handleStorage);
+      };
+    }, [reloadChatData]);
+
+    useCommunityMessagesRealtime(updateCommunities);
+
+    useEffect(() => {
+      let cancelled = false;
+      void (async () => {
+        try {
+          const ids = await getUserFavoriteCommunities(user.id);
+          if (!cancelled) setFavoriteCommunityIds(ids);
+        } catch {
+          // Best-effort.
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }, [user.id]);
+
+    useEffect(() => {
+      let cancelled = false;
+      void (async () => {
+        try {
+          const message = await getUserPinnedMessage(user.id);
+          if (!cancelled) setOwnPinnedMessage(message);
+        } catch {
+          // Best-effort.
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }, [user.id]);
+
+    const broadcastFavoritesUpdated = useCallback((ids: string[]) => {
+      window.dispatchEvent(new CustomEvent("raw:favorite-communities-updated", {
+        detail: { userId: user.id, ids },
+      }));
+    }, [user.id]);
+
+    const broadcastPinnedMessageUpdated = useCallback((message: PinnedMessageRecord | null) => {
+      window.dispatchEvent(new CustomEvent("raw:pinned-message-updated", {
+        detail: { userId: user.id, message },
+      }));
+    }, [user.id]);
+
+    const handleToggleFavorite = useCallback(async (communityId: string) => {
+      const isFavorite = favoriteCommunityIds.includes(communityId);
+      let next: string[];
+      if (isFavorite) {
+        next = favoriteCommunityIds.filter((id) => id !== communityId);
+      } else {
+        if (favoriteCommunityIds.length >= MAX_FAVORITE_COMMUNITIES) {
+          toast({ title: "Favorites full", description: `You can pick up to ${MAX_FAVORITE_COMMUNITIES} favorite communities.` });
+          return;
+        }
+        next = [...favoriteCommunityIds, communityId];
+      }
+      const previous = favoriteCommunityIds;
+      setFavoriteCommunityIds(next);
+      broadcastFavoritesUpdated(next);
+      try {
+        await setUserFavoriteCommunities(user.id, next);
+      } catch {
+        setFavoriteCommunityIds(previous);
+        broadcastFavoritesUpdated(previous);
+        toast({ title: "Could not update favorites", description: "Please try again." });
+      }
+    }, [broadcastFavoritesUpdated, favoriteCommunityIds, user.id]);
+
+    const handlePinMessageToProfile = useCallback(async (message: CommunityChatMessageRecord, community: PersistedCommunityRecord) => {
+      try {
+        const payload = {
+          messageId: message.id,
+          communityId: community.id,
+          communityTitle: community.title,
+          senderName: message.senderName,
+          messageText: message.text,
+          messageCreatedAt: message.createdAt,
+        };
+        await setUserPinnedMessage(user.id, payload);
+        const nextPinnedMessage = { ...payload, pinnedAt: new Date().toISOString() };
+        setOwnPinnedMessage(nextPinnedMessage);
+        broadcastPinnedMessageUpdated(nextPinnedMessage);
+        toast({ title: "Pinned to your profile", description: "Others will see this message on your chat profile." });
+      } catch {
+        toast({ title: "Could not pin message", description: "Please try again." });
+      }
+    }, [broadcastPinnedMessageUpdated, user.id]);
+
+    const handleClearPinnedMessage = useCallback(async () => {
+      try {
+        await clearUserPinnedMessage(user.id);
+        setOwnPinnedMessage(null);
+        broadcastPinnedMessageUpdated(null);
+        toast({ title: "Pinned message removed" });
+      } catch {
+        toast({ title: "Could not remove pinned message", description: "Please try again." });
+      }
+    }, [broadcastPinnedMessageUpdated, user.id]);
+
+    const handleOpenSenderProfile = useCallback((message: CommunityChatMessageRecord) => {
+      setProfileDialogOpen(true);
+      setProfileTarget({ message, profile: null, loading: true });
+      getPublicUserProfile(message.senderId)
+        .then((profile) => {
+          setProfileTarget((current) => (
+            current?.message.id === message.id ? { message, profile, loading: false } : current
+          ));
+        })
+        .catch(() => {
+          setProfileTarget((current) => (
+            current?.message.id === message.id ? { message, profile: null, loading: false } : current
+          ));
+        });
+    }, []);
+
+    useEffect(() => {
+      if (!selectedCommunity || !isJoined) {
+        return;
+      }
+
+      const touchKey = `${selectedCommunity.id}:${user.id}`;
+      if (lastTouchedCommunityRef.current === touchKey) {
+        return;
+      }
+
+      lastTouchedCommunityRef.current = touchKey;
+      touchMemberActivity(selectedCommunity.id, user.id, user.username)
+        .then(() => reloadChatData())
+        .catch(() => {});
+    }, [isJoined, reloadChatData, selectedCommunity, user.id, user.username]);
+
+    useEffect(() => {
+      if (!selectedCommunity || !isJoined || unreadCount === 0) {
+        return;
+      }
+
+      markCommunityReadSupabase(selectedCommunity.id, user.id)
+        .then(() => reloadChatData())
+        .catch(() => {});
+    }, [isJoined, reloadChatData, selectedCommunity, unreadCount, user.id]);
+
+    useLayoutEffect(() => {
+      if (!messagesContainerRef.current || searchQuery.trim()) {
+        return;
+      }
+
+      if (preserveScrollAfterOlderLoadRef.current) {
+        const { previousHeight } = preserveScrollAfterOlderLoadRef.current;
+        preserveScrollAfterOlderLoadRef.current = null;
+        messagesContainerRef.current.scrollTop += messagesContainerRef.current.scrollHeight - previousHeight;
+        return;
+      }
+
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }, [activeMessages, activeCommunityId, searchQuery]);
+
+    const handleJoinCommunity = async (communityId: string, shouldOpenPage = false) => {
+      const targetCommunity = communities.find((community) => community.id === communityId);
+      if (!targetCommunity) {
+        return;
+      }
 
   // Floating button scroll + collapse effects are moved inline since they're pure UI
   useState(() => {
