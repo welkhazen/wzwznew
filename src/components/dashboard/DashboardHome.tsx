@@ -336,9 +336,9 @@ export function DashboardHome({
           </div>
 
           {/* Right column: Daily Poll Progress on top, Level Up below */}
-          <div className="contents md:flex md:flex-col md:gap-6">
+          <div className="flex w-[78vw] max-w-[18rem] shrink-0 flex-col gap-4 md:w-auto md:max-w-none md:flex-1 md:gap-6">
             {/* Daily Poll Progress */}
-            <div className={`flex aspect-square w-[78vw] max-w-[18rem] shrink-0 flex-col space-y-4 p-4 rounded-[1.5rem] md:aspect-auto md:w-auto md:max-w-none md:flex-1 md:space-y-5 md:p-6 ${isLight ? "border border-slate-200 bg-white shadow-[0_12px_28px_rgba(15,23,42,0.08)]" : "border border-white/10 bg-[#1a1a1a]"}`}>
+            <div className={`flex min-h-[15.5rem] flex-col space-y-4 p-4 rounded-[1.5rem] md:min-h-0 md:flex-1 md:space-y-5 md:p-6 ${isLight ? "border border-slate-200 bg-white shadow-[0_12px_28px_rgba(15,23,42,0.08)]" : "border border-white/10 bg-[#1a1a1a]"}`}>
               <div className="flex items-start justify-between">
                 <div className="space-y-0.5">
                   <h3 className={`text-lg font-bold tracking-tight md:text-xl ${isLight ? "text-slate-950" : "text-white"}`}>Daily Poll Progress</h3>
@@ -366,7 +366,7 @@ export function DashboardHome({
             </div>
 
             {/* Level Up */}
-            <div className={`flex aspect-square w-[78vw] max-w-[18rem] shrink-0 flex-col space-y-4 p-4 rounded-[1.5rem] md:aspect-auto md:w-auto md:max-w-none md:flex-1 md:space-y-6 md:p-6 ${isLight ? "border border-slate-200 bg-white shadow-[0_12px_28px_rgba(15,23,42,0.08)]" : "border border-white/10 bg-[#1a1a1a]"}`}>
+            <div className={`flex min-h-[15.5rem] flex-col space-y-4 p-4 rounded-[1.5rem] md:min-h-0 md:flex-1 md:space-y-6 md:p-6 ${isLight ? "border border-slate-200 bg-white shadow-[0_12px_28px_rgba(15,23,42,0.08)]" : "border border-white/10 bg-[#1a1a1a]"}`}>
               <div className="flex items-start justify-between">
                 <div className="space-y-0.5">
                   <h3 className={`text-lg font-bold tracking-tight md:text-xl ${isLight ? "text-slate-950" : "text-white"}`}>Level Up</h3>
