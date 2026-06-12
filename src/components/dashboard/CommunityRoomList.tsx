@@ -185,26 +185,14 @@ export const CommunityRoomList = memo(function CommunityRoomList({
                       </div>
                     );
                   }
-                  // Token unlock temporarily disabled — archived until re-enabled.
-                  // Fall back to waitlist so the card always has an action.
-                  const onWaitlist = waitlistJoinedIds.has(community.id);
-                  const waitlistCount = waitlistCounts[community.id] ?? 0;
-                  const isJoining = waitlistJoiningId === community.id;
+                  // Non-locked community with no free slots — show a plain Join button.
                   return (
-                    <div className="space-y-1.5">
-                      <Button
-                        onClick={() => onJoinWaitlist(community)}
-                        disabled={onWaitlist || isJoining}
-                        className="w-full rounded-xl border border-raw-gold/30 bg-transparent px-2 py-2 text-xs text-raw-gold hover:bg-raw-gold/10 disabled:opacity-70"
-                      >
-                        <Lock className="h-3 w-3" /> {onWaitlist ? "On Waitlist" : "Join Waitlist"}
-                      </Button>
-                      <p className="text-center text-[10px] text-raw-silver/45">
-                        <span className="text-raw-gold/80">{waitlistCount}</span>
-                        <span className="text-raw-silver/35">/{waitlistUnlockThreshold}</span>
-                        <span className="ml-1">to unlock</span>
-                      </p>
-                    </div>
+                    <Button
+                      onClick={() => onPaidJoinCommunity(community.id, true)}
+                      className="w-full rounded-xl bg-raw-gold px-2 py-2 text-xs text-raw-ink hover:bg-raw-gold/90"
+                    >
+                      Join
+                    </Button>
                   );
                 })()}
               </div>
