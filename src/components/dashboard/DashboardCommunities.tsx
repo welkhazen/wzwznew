@@ -167,6 +167,8 @@ const COMMUNITY_LOGOS: Record<string, string> = {
   iijm: IIJMLogo,
 };
 
+const NUMBERED_PLACEHOLDER_COMMUNITY_TITLE = /^community\s+\d+$/i;
+
 export function DashboardCommunities({
   user,
   avatarLevel = 1,
@@ -514,7 +516,9 @@ export function DashboardCommunities({
     }, [filteredMessages]);
 
     const directoryCommunities = useMemo(() => {
-      return communities;
+      return communities.filter(
+        (community) => !NUMBERED_PLACEHOLDER_COMMUNITY_TITLE.test(community.title.trim()),
+      );
     }, [communities]);
     useEffect(() => {
       setSearchQuery("");
