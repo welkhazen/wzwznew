@@ -24,6 +24,6 @@ export interface Poll {
   locked: boolean;
 }
 
-export type OnboardingStep = "spin" | "username" | "avatar" | "polls" | "communities" | "marketplace" | "ready";
+export type OnboardingStep = "spin" | "username" | "voucher" | "early-signup-reward" | "avatar" | "polls" | "profile" | "communities" | "marketplace" | "ready";
 
 export const DAILY_POLL_LIMIT = 7;
