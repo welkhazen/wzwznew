@@ -10,7 +10,16 @@ import { isUserAdmin } from "../lib/admin";
 const inviteSchema = z.object({
   to: z.string().email(),
   communityName: z.string().min(2).max(80),
-  inviteLink: z.string().url(),
+  inviteLink: z.string().url().refine(
+    (url) => {
+      try {
+        return new URL(url).origin === new URL(env.APP_BASE_URL).origin;
+      } catch {
+        return false;
+      }
+    },
+    "Invite link must be on the app domain."
+  ),
 });
 
 const digestSchema = z.object({
