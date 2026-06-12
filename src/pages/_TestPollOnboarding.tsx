@@ -69,8 +69,14 @@ export default function TestPollOnboarding() {
       polls={MOCK_POLLS}
       avatarIndex={3}
       onAvatarChange={() => undefined}
+      ownedAvatarLevels={new Set([1, 2, 3])}
+      ownedAvatarIds={new Set()}
+      avatarCatalog={[]}
       onboardingStep={step}
       onboardingAnsweredPollIds={answered}
+      publicUsername={MOCK_USER.username}
+      privateUsername=""
+      onSaveUsernames={() => undefined}
       onSetOnboardingStep={setStep}
       onMarkPollAnswered={(pollId) =>
         setAnswered((previous) => {
@@ -91,6 +97,8 @@ export default function TestPollOnboarding() {
       }
       onCompleteOnboarding={() => setCompleted(true)}
       onLogout={() => undefined}
+      onClaimLandingWheelAvatar={async () => undefined}
+      markAvatarOwnedById={() => undefined}
     />
   );
 }

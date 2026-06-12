@@ -68,7 +68,7 @@ function renderPollStep(answeredPollIds = new Set<string>()) {
         onCompleteOnboarding={vi.fn()}
         onLogout={vi.fn()}
         onClaimLandingWheelAvatar={vi.fn()}
-        markAvatarOwned={vi.fn()}
+        markAvatarOwnedById={vi.fn()}
       />
     </QueryClientProvider>,
   );
