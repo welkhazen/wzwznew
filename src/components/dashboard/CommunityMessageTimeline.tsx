@@ -157,7 +157,7 @@ export const CommunityMessageTimeline = memo(function CommunityMessageTimeline({
             return (
               <article
                 key={message.id}
-                className={`group/msg inline-block max-w-[85%] border px-3 py-2 ${
+                className={`group/msg w-full border px-3 py-2 ${
                   isOwnMessage
                     ? "border-raw-gold/25 bg-raw-gold/[0.04]"
                     : "border-raw-border/35 bg-raw-black/50"
@@ -166,34 +166,96 @@ export const CommunityMessageTimeline = memo(function CommunityMessageTimeline({
                 {message.replyToText && (
                   <div className="mb-1.5 border border-raw-border/20 bg-raw-black/20 px-2.5 py-1.5 text-xs text-raw-silver/55">
                     <p className="font-medium text-raw-gold/75">↩ {message.replyToSenderName}</p>
-                    <p className="mt-0.5 truncate">{message.replyToText}</p>
+                    <p className="truncate">{message.replyToText}</p>
                   </div>
                 )}
 
-                <span className={`break-words [overflow-wrap:anywhere] text-sm leading-snug ${
-                  message.deletedAt ? "italic text-raw-silver/45" : isOwnMessage ? "text-raw-text" : "text-raw-silver/85"
-                }`}>
-                  <button
-                    type="button"
-                    onClick={() => onOpenSenderProfile(message)}
-                    className="mr-1 text-[11px] font-semibold uppercase tracking-wide hover:underline"
-                    style={{ color: isOwnMessage ? "rgb(var(--raw-accent))" : "rgb(var(--raw-accent) / 0.65)" }}
-                  >
-                    @{message.senderName}:
-                  </button>
-                  {message.text.split(/(@\w+)/g).map((part, i) =>
-                    /^@\w+$/.test(part)
-                      ? <span key={i} className="font-semibold text-raw-gold">{part}</span>
-                      : part
+                <div className="flex w-full items-center gap-2">
+                  {/* Left: username + truncated text + timestamp */}
+                  <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => onOpenSenderProfile(message)}
+                      className="shrink-0 text-[11px] font-semibold uppercase tracking-wide hover:underline"
+                      style={{ color: isOwnMessage ? "rgb(var(--raw-accent))" : "rgb(var(--raw-accent) / 0.65)" }}
+                    >
+                      @{message.senderName}:
+                    </button>
+                    <span className={`truncate text-sm ${
+                      message.deletedAt ? "italic text-raw-silver/45" : isOwnMessage ? "text-raw-text" : "text-raw-silver/85"
+                    }`}>
+                      {message.text.split(/(@\w+)/g).map((part, i) =>
+                        /^@\w+$/.test(part)
+                          ? <span key={i} className="font-semibold text-raw-gold">{part}</span>
+                          : part
+                      )}
+                    </span>
+                    <span className="shrink-0 text-[10px] text-raw-silver/40">
+                      {formatChatTimestamp(message.createdAt)}
+                      {likeCount > 0 && (
+                        <span className="ml-1 inline-flex items-center gap-0.5 text-raw-gold/70">
+                          <Heart className="inline h-2 w-2 fill-current" />{likeCount}
+                        </span>
+                      )}
+                      {message.pinned && <span className="ml-1 text-raw-gold/60">Pinned</span>}
+                      {message.deliveryStatus === "sending" && <span className="ml-1 text-raw-silver/35">Sending…</span>}
+                      {message.deliveryStatus === "failed" && <span className="ml-1 text-red-300/80">Failed</span>}
+                    </span>
+                  </div>
+
+                  {/* Right: action buttons — always on same row */}
+                  {!message.deletedAt && !message.deliveryStatus && (
+                    <div className="ml-auto flex shrink-0 items-center gap-1.5 opacity-0 transition-opacity group-hover/msg:opacity-100">
+                      <button
+                        onClick={() => onLikeMessage(message)}
+                        className={`inline-flex items-center gap-1 border px-2 py-0.5 text-[10px] transition-all ${
+                          alreadyLiked
+                            ? "border-raw-gold/45 bg-raw-gold/10 text-raw-gold"
+                            : "border-raw-border/20 text-raw-silver/40 hover:border-raw-gold/30"
+                        }`}
+                        aria-label={alreadyLiked ? "Unlike" : "Like"}
+                      >
+                        <Heart className={`h-2.5 w-2.5 ${alreadyLiked ? "fill-current" : ""}`} />
+                        Like
+                      </button>
+                      {!isOwnMessage && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button
+                              className="inline-flex items-center gap-1 border border-raw-border/20 px-2 py-0.5 text-[10px] text-raw-silver/45 hover:border-raw-gold/30 hover:text-raw-gold"
+                              aria-label="Message actions"
+                            >
+                              <MoreHorizontal className="h-3 w-3" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="min-w-32 border-raw-border/30 bg-raw-black/95 text-raw-silver shadow-xl shadow-black/40">
+                            <DropdownMenuItem
+                              className="cursor-pointer gap-2 text-xs focus:bg-raw-surface/80 focus:text-raw-text"
+                              onClick={() => pinnedMessageIds.has(message.id) ? onUnpinMessage(message) : onPinMessage(message)}
+                            >
+                              <Pin className="h-3.5 w-3.5 text-raw-gold/80" />
+                              {pinnedMessageIds.has(message.id) ? "Unpin from profile" : "Pin to profile"}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="cursor-pointer gap-2 text-xs focus:bg-raw-surface/80 focus:text-raw-text"
+                              onClick={() => onOpenMessageReport(message)}
+                            >
+                              <AlertTriangle className="h-3.5 w-3.5 text-raw-gold/80" />
+                              Report
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="cursor-pointer gap-2 text-xs text-red-200/90 focus:bg-red-500/10 focus:text-red-100"
+                              onClick={() => onBlockMessageSender(message)}
+                            >
+                              <Ban className="h-3.5 w-3.5" />
+                              Block
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+                    </div>
                   )}
-                  <span className="ml-2 text-[10px] text-raw-silver/40 align-middle">
-                    {formatChatTimestamp(message.createdAt)}
-                    {likeCount > 0 && <span className="ml-1.5 inline-flex items-center gap-0.5 text-raw-gold/70"><Heart className="inline h-2 w-2 fill-current" />{likeCount}</span>}
-                    {message.pinned && <span className="ml-1.5 text-raw-gold/60">Pinned</span>}
-                    {message.deliveryStatus === "sending" && <span className="ml-1.5 text-raw-silver/35">Sending…</span>}
-                    {message.deliveryStatus === "failed" && <span className="ml-1.5 text-red-300/80">Failed</span>}
-                  </span>
-                </span>
+                </div>
 
                 {message.deliveryStatus === "failed" && (
                   <button
@@ -202,58 +264,6 @@ export const CommunityMessageTimeline = memo(function CommunityMessageTimeline({
                   >
                     Retry
                   </button>
-                )}
-
-                {!message.deletedAt && !message.deliveryStatus && (
-                  <div className="mt-1.5 flex items-center gap-2 opacity-0 group-hover/msg:opacity-100 transition-opacity">
-                    <button
-                      onClick={() => onLikeMessage(message)}
-                      className={`inline-flex items-center gap-1 border px-2 py-0.5 text-[10px] transition-all ${
-                        alreadyLiked
-                          ? "border-raw-gold/45 bg-raw-gold/10 text-raw-gold"
-                          : "border-raw-border/20 text-raw-silver/40 hover:border-raw-gold/30"
-                      }`}
-                      aria-label={alreadyLiked ? "Unlike" : "Like"}
-                    >
-                      <Heart className={`h-2.5 w-2.5 ${alreadyLiked ? "fill-current" : ""}`} />
-                      Like
-                    </button>
-                    {!isOwnMessage && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button
-                            className="inline-flex items-center gap-1 border border-raw-border/20 px-2 py-0.5 text-[10px] text-raw-silver/45 hover:border-raw-gold/30 hover:text-raw-gold"
-                            aria-label="Message actions"
-                          >
-                            <MoreHorizontal className="h-3 w-3" />
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="min-w-32 border-raw-border/30 bg-raw-black/95 text-raw-silver shadow-xl shadow-black/40">
-                          <DropdownMenuItem
-                            className="cursor-pointer gap-2 text-xs focus:bg-raw-surface/80 focus:text-raw-text"
-                            onClick={() => pinnedMessageIds.has(message.id) ? onUnpinMessage(message) : onPinMessage(message)}
-                          >
-                            <Pin className="h-3.5 w-3.5 text-raw-gold/80" />
-                            {pinnedMessageIds.has(message.id) ? "Unpin from profile" : "Pin to profile"}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="cursor-pointer gap-2 text-xs focus:bg-raw-surface/80 focus:text-raw-text"
-                            onClick={() => onOpenMessageReport(message)}
-                          >
-                            <AlertTriangle className="h-3.5 w-3.5 text-raw-gold/80" />
-                            Report
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="cursor-pointer gap-2 text-xs text-red-200/90 focus:bg-red-500/10 focus:text-red-100"
-                            onClick={() => onBlockMessageSender(message)}
-                          >
-                            <Ban className="h-3.5 w-3.5" />
-                            Block
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
-                  </div>
                 )}
               </article>
             );
