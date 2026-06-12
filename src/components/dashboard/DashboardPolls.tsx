@@ -369,7 +369,7 @@ export function DashboardPolls({
     window.localStorage.setItem(answerTimestampsStorageKey, JSON.stringify(answerTimestamps));
   }, [answerTimestamps, answerTimestampsStorageKey, answersStorageKey, loadedAnswersStorageKey]);
 
-  const todayStart = useMemo(() => getDailyResetStartMs(), [dailyPollDayKey]);
+  const todayStart = getDailyResetStartMs();
   const answeredTodayIds = useMemo(() => {
     const ids = new Set<string>();
     for (const [pollId, ts] of Object.entries(answerTimestamps)) {

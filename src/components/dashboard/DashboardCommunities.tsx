@@ -357,7 +357,7 @@ export function DashboardCommunities({
         setMessagesLoading(false);
         setIsInitialCommunitiesLoading(false);
       }
-    }, [activeCommunityId, onCommunitiesChange, user.id]);
+    }, [activeCommunityId, onCommunitiesChange, updateCommunities, user.id]);
 
     const fallbackCommunities = useMemo(() => buildDefaultCommunities(), []);
     const selectedCommunity = useMemo(() => {
@@ -1137,7 +1137,7 @@ export function DashboardCommunities({
         updateCommunities((current) => markCommunityMessageFailed(current, selectedCommunity.id, optimisticMessage.id));
         toast({ title: "Failed to send message", description: "Please try again." });
       }
-    }, [isJoined, selectedChatAlias, selectedCommunity, updateCommunities, user.id, user.username]);
+    }, [avatarLevel, isJoined, selectedChatAlias, selectedCommunity, updateCommunities, user.id, user.username]);
 
     const handleSendMessage = useCallback(async () => {
       if (!selectedCommunity) {

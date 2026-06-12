@@ -78,11 +78,6 @@ const routeSeo: Record<string, RouteSeoConfig> = {
   "/security": { title: "Community Chat Safety & Privacy | raW", description: "Learn how raW protects people in anonymous online communities through privacy controls, moderation, reporting, and account security." },
   "/privacy": { title: "Privacy Policy | raW", description: "Read how raW handles account information, anonymous participation, privacy, and data security." },
   "/terms": { title: "Terms of Service | raW", description: "Read the terms for using raW's anonymous online community and group chat platform." },
-  "/community-guidelines": { title: "Community Guidelines | raW", description: "Read the community rules that keep raW's anonymous polls, avatars, and community chats safer and more respectful." },
-  "/safety": { title: "Safety Center | raW", description: "Learn how raW handles safety, moderation, reporting, and responsible participation in anonymous online communities." },
-  "/report-content": { title: "Report Content | raW", description: "Learn how to report unsafe or inappropriate content in raW's anonymous community chats." },
-  "/appeals": { title: "Appeals | raW", description: "Learn how raW members can appeal moderation decisions and request a review." },
-  "/cookie-policy": { title: "Cookie Policy | raW", description: "Read how raW uses cookies and similar technologies for security, analytics, and product functionality." },
 };
 
 function setMeta(selector: string, value: string) {
