@@ -68,41 +68,29 @@ const SPIN_WHEEL_POOL: readonly WheelPoolEntry[] = SPIN_POOL.map((entry, i) => (
   imageSrc: entry.imageSrc,
 }));
 
-const RANK_SEGMENT_COLORS: Record<number, { segment: string; text: string }> = {
-  1:  { segment: "#111111", text: "#9ca3af" },
-  2:  { segment: "#0a1525", text: "#60a5fa" },
-  3:  { segment: "#150825", text: "#c084fc" },
-  4:  { segment: "#251200", text: "#fb923c" },
-  5:  { segment: "#250808", text: "#f87171" },
-  6:  { segment: "#250814", text: "#f472b6" },
-  7:  { segment: "#1e1500", text: "#F1C42D" },
-  8:  { segment: "#101520", text: "#cbd5e1" },
-  9:  { segment: "#181818", text: "#f1f5f9" },
-  10: { segment: "#080e14", text: "#a78bfa" },
-};
-
-// Group spin pool entries by rank so onSpinEnd can randomly pick within a rank
-const SPIN_POOL_BY_RANK: ReadonlyMap<number, readonly WheelPoolEntry[]> = (() => {
-  const map = new Map<number, WheelPoolEntry[]>();
-  for (const entry of SPIN_WHEEL_POOL) {
-    const rank = getAvatarRank({ name: entry.name, id: entry.avatarId, imageSrc: entry.imageSrc });
-    const list = map.get(rank) ?? [];
-    list.push(entry);
-    map.set(rank, list);
-  }
-  return map;
-})();
+const WHEEL_AVATAR_SEGMENT_COLORS: Array<{ segment: string; text: string }> = [
+  { segment: "#101520", text: "#cbd5e1" },
+  { segment: "#071527", text: "#60a5fa" },
+  { segment: "#160926", text: "#c084fc" },
+  { segment: "#261208", text: "#fb923c" },
+  { segment: "#260812", text: "#f87171" },
+  { segment: "#250814", text: "#f472b6" },
+  { segment: "#1f1604", text: "#F1C42D" },
+  { segment: "#101820", text: "#93c5fd" },
+  { segment: "#0c0c10", text: "#f1f5f9" },
+  { segment: "#0b0f1f", text: "#a78bfa" },
+];
 
 function buildSpinPrizes(): WheelPrize[] {
-  const ranks = [...SPIN_POOL_BY_RANK.keys()].sort((a, b) => a - b);
-  return ranks.map((rank) => {
-    const theme = RANK_SEGMENT_COLORS[rank] ?? { segment: "#111111", text: "#9ca3af" };
+  return SPIN_WHEEL_POOL.map((entry, index) => {
+    const theme = WHEEL_AVATAR_SEGMENT_COLORS[index % WHEEL_AVATAR_SEGMENT_COLORS.length];
     return {
-      id: `rank-${rank}`,
-      label: `R${rank}`,
-      shortLabel: `R${rank}`,
+      id: entry.id,
+      label: entry.name,
+      shortLabel: entry.name,
       color: theme.segment,
       textColor: theme.text,
+      imageSrc: entry.imageSrc,
     };
   });
 }
@@ -623,10 +611,7 @@ export function OnboardingJourney({
                   disabled={!!claimedSpinResult || isClaimingSpin}
                   onSpinEnd={async (prize) => {
                     if (claimedSpinResult) return;
-                    const rankMatch = /^rank-(\d+)$/.exec(prize.id);
-                    const rank = rankMatch ? Number(rankMatch[1]) : 1;
-                    const rankPool = SPIN_POOL_BY_RANK.get(rank) ?? Array.from(SPIN_WHEEL_POOL);
-                    const entry = rankPool[Math.floor(Math.random() * rankPool.length)] ?? SPIN_WHEEL_POOL[0];
+                    const entry = SPIN_WHEEL_POOL.find((item) => item.id === prize.id) ?? SPIN_WHEEL_POOL[0];
                     setSpinResult(entry);
                     setSpinClaimError(null);
                     if (typeof window !== "undefined") {
