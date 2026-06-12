@@ -52,6 +52,10 @@ const DashboardInventory = lazy(() =>
   import("@/components/dashboard/DashboardInventory").then((module) => ({ default: module.DashboardInventory }))
 );
 
+// Eagerly preload the most-visited tab chunks so they are ready before the user taps.
+void import("@/components/dashboard/DashboardCommunities");
+void import("@/components/dashboard/DashboardPolls");
+
 const COMMUNITY_LOGOS: Record<string, string> = {
   lnt: LNTLogo,
   syt: SYTLogo,
