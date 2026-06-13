@@ -1,5 +1,8 @@
 @import url("https://fonts.googleapis.com/css2?family=Michroma&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap");
+/* Landing page redesign fonts — scoped to .landing-page-shell */
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -193,6 +196,21 @@
   font-family: 'Instrument Serif', Georgia, serif;
 }
 
+/* Landing redesign — Fraunces replaces Michroma/Instrument Serif for display
+   and editorial type, scoped to the landing page only. */
+.landing-page-shell .font-display {
+  font-family: 'Fraunces', Georgia, serif;
+  font-weight: 600;
+  font-optical-sizing: auto;
+}
+
+.landing-page-shell .font-editorial {
+  font-family: 'Fraunces', Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  font-optical-sizing: auto;
+}
+
 /* Gold glow effect */
 .glow-gold {
   box-shadow: 0 0 20px rgb(var(--raw-accent) / 0.15), 0 0 60px rgb(var(--raw-accent) / 0.05);
@@ -323,10 +341,12 @@ html.theme-light .raw-logo-w {
 }
 
 .landing-heading {
-  font-family: Michroma, sans-serif;
+  font-family: 'Fraunces', Georgia, serif;
+  font-weight: 600;
+  font-optical-sizing: auto;
   font-size: 1.875rem;
-  line-height: 1.05;
-  letter-spacing: 0.08em;
+  line-height: 1.12;
+  letter-spacing: 0.01em;
   color: rgb(var(--raw-accent));
   text-transform: none;
 }
@@ -581,7 +601,16 @@ html.theme-light .dashboard-enhanced-bg [class*="text-raw-silver/"] {
 
 .landing-page-shell {
   background: rgb(var(--raw-black));
-  font-family: "Michroma", "Inter", system-ui, sans-serif;
+  font-family: "Geist", "Inter", system-ui, sans-serif;
+  /* Softer corners for a less "boxed" feel across cards and panels */
+  --radius: 1.25rem;
+}
+
+.landing-page-shell :is(h1, h2, h3, h4, h5, h6) {
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 600;
+  font-optical-sizing: auto;
+  letter-spacing: 0.005em;
 }
 
 html:not(.theme-light) .landing-page-shell {
@@ -591,7 +620,7 @@ html:not(.theme-light) .landing-page-shell {
 }
 
 
-.landing-page-shell :is(p, a, button, label, li, input, textarea, h1, h2, h3, h4, h5, h6) {
+.landing-page-shell :is(p, a, button, label, li, input, textarea) {
   font-family: inherit;
 }
 
