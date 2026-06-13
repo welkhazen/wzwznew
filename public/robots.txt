@@ -13,4 +13,4 @@ Allow: /
 User-agent: *
 Allow: /
 
-Sitemap: https://theartofraw.me/sitemap.xml
+Sitemap: https://www.myraw.app/sitemap.xml

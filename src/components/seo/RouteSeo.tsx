@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
-const SITE_URL = "https://theartofraw.me";
+const SITE_URL = "https://www.myraw.app";
 const routeSeo: Record<string, { title: string; description: string }> = {
   "/": {
     title: "Anonymous Online Communities & Group Chats | raW",
