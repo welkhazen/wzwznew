@@ -9,6 +9,7 @@ import {
 } from "@/lib/inputSecurity";
 import type { AuthResult } from "@/store/useRawStore";
 import { track } from "@/lib/analytics";
+import { isValidInviteCode, normalizeInviteCode } from "@/lib/inviteCodes";
 
 interface SignupModalProps {
   open: boolean;
@@ -34,6 +35,7 @@ export function SignupModal({ open, onClose, onRequestSignupOtp, onVerifySignupO
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [inviteCode, setInviteCode] = useState("");
   const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
   const [sentChannels, setSentChannels] = useState<string[]>([]);
@@ -55,6 +57,7 @@ export function SignupModal({ open, onClose, onRequestSignupOtp, onVerifySignupO
       openedFiredRef.current = false;
       setPassword("");
       setConfirmPassword("");
+      setInviteCode("");
       setPhone("");
       setCode("");
       setSentChannels([]);
@@ -86,6 +89,7 @@ export function SignupModal({ open, onClose, onRequestSignupOtp, onVerifySignupO
     const normalizedUsername = normalizePlainText(sanitizeUsernameInput(username));
     const normalizedPassword = sanitizePasswordInput(password).trim();
     const normalizedConfirmPassword = sanitizePasswordInput(confirmPassword).trim();
+    const normalizedInviteCode = normalizeInviteCode(inviteCode);
     if (!isValidUsername(normalizedUsername) || normalizedPassword.length === 0) {
       setError("Use a 3-24 character username and enter a password.");
       return;
@@ -96,10 +100,15 @@ export function SignupModal({ open, onClose, onRequestSignupOtp, onVerifySignupO
       return;
     }
 
+    if (!isValidInviteCode(normalizedInviteCode)) {
+      setError("Enter a valid invite code.");
+      return;
+    }
+
     setIsSubmitting(true);
     setError("");
 
-    track("signup_started", { method: "username_password" });
+    track("signup_started", { method: "username_password", invite_code_verified: true });
 
     const result = await onRequestSignupOtp(normalizedUsername, normalizedPassword, "");
     if (!result.ok) {
@@ -286,6 +295,22 @@ export function SignupModal({ open, onClose, onRequestSignupOtp, onVerifySignupO
                   {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-xs text-raw-silver/40">Invite Code</label>
+              <input
+                type="text"
+                value={inviteCode}
+                onChange={(event) => setInviteCode(normalizeInviteCode(event.target.value))}
+                placeholder="RAW-ALPHA"
+                maxLength={24}
+                autoComplete="one-time-code"
+                className="w-full rounded-xl border border-raw-border bg-raw-black/50 px-4 py-3 text-sm uppercase tracking-[0.14em] text-raw-text placeholder:normal-case placeholder:tracking-normal placeholder:text-raw-silver/25 transition-all focus:border-raw-gold/30 focus:outline-none focus:ring-1 focus:ring-raw-gold/20"
+              />
+              <p className="mt-1.5 text-[11px] text-raw-silver/30">
+                Use one of the active invite codes from your dashboard home.
+              </p>
             </div>
 
             {error && (

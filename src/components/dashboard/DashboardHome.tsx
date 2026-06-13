@@ -10,6 +10,7 @@ import { useTheme } from "@/providers/useTheme";
 import { LevelProgressBanner } from "@/components/dashboard/LevelProgressBanner";
 import { WheelOfFortune } from "@/components/wheel/WheelOfFortune";
 import { buildSpinPrizes, DashboardDailySpin } from "@/components/dashboard/DashboardDailySpin";
+import { INVITE_CODES } from "@/lib/inviteCodes";
 
 interface DashboardHomeProps {
   username: string;
@@ -259,6 +260,42 @@ export function DashboardHome({
           </div>
         </div>
         <div className="absolute -right-12 -top-12 w-64 h-64 bg-raw-gold/5 blur-[80px] rounded-full pointer-events-none" />
+      </section>
+
+      <section className={`relative overflow-hidden rounded-[1.75rem] border p-5 sm:p-6 ${
+        isLight
+          ? "border-slate-200 bg-white shadow-[0_14px_34px_rgba(15,23,42,0.08)]"
+          : "border-white/10 bg-[#1a1a1a]"
+      }`}>
+        <div className="absolute -right-10 -top-12 h-32 w-32 rounded-full bg-raw-gold/10 blur-3xl" />
+        <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="max-w-xl">
+            <div className="flex items-center gap-2">
+              <Users className="size-4 text-raw-gold" />
+              <h2 className={`text-lg font-bold tracking-tight ${isLight ? "text-slate-950" : "text-white"}`}>Invite codes</h2>
+            </div>
+            <p className={`mt-2 text-sm leading-relaxed ${isLight ? "text-slate-500" : "text-white/45"}`}>
+              Share one of these two codes. New members can enter it in signup to verify access.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:min-w-[420px]">
+            {INVITE_CODES.map((inviteCode) => (
+              <div
+                key={inviteCode}
+                className={`rounded-2xl border px-4 py-3 ${
+                  isLight ? "border-slate-200 bg-slate-50" : "border-white/10 bg-black/25"
+                }`}
+              >
+                <p className={`text-[10px] uppercase tracking-[0.2em] ${isLight ? "text-slate-400" : "text-white/30"}`}>
+                  Active code
+                </p>
+                <p className="mt-1 font-display text-lg font-bold tracking-[0.16em] text-raw-gold">
+                  {inviteCode}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
 
       {/* ── Trending ── */}
