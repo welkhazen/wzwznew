@@ -33,6 +33,7 @@ const Index = () => {
     ownedAvatarIds,
     unlockAvatarLevel,
     markAvatarOwned,
+    markAvatarOwnedById,
     avatarPricesByLevel,
     avatarCatalog,
     onboardingStep,
@@ -188,10 +189,10 @@ const Index = () => {
           onClaimLandingWheelAvatar={async () => {
             const result = await claimPendingLandingWheelAvatarForUser(user.id);
             if (result && (result.status === "granted" || result.status === "already_claimed")) {
-              markAvatarOwned(result.level);
+              markAvatarOwnedById(result.avatarId);
             }
           }}
-          markAvatarOwned={markAvatarOwned}
+          markAvatarOwnedById={markAvatarOwnedById}
         />
       );
     }

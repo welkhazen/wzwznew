@@ -176,13 +176,14 @@ export interface ChatIdentityPrefs {
   avatarLevel: number | null;
 }
 
-export async function getChatIdentity(userId: string): Promise<ChatIdentityPrefs> {
+export async function getChatIdentity(userId: string): Promise<ChatIdentityPrefs | null> {
   const { data, error } = await supabase
     .from('users')
     .select('chat_identity_alias, chat_avatar_level')
     .eq('id', userId)
     .maybeSingle();
-  if (error || !data) return { alias: null, avatarLevel: null };
+  if (error) throw error;
+  if (!data) return null;
   const row = data as { chat_identity_alias: string | null; chat_avatar_level: number | null };
   return { alias: row.chat_identity_alias ?? null, avatarLevel: row.chat_avatar_level ?? null };
 }

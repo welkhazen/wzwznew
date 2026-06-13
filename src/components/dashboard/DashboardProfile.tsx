@@ -151,12 +151,24 @@ export function DashboardProfile({
   const [hoveredPrivateIndex, setHoveredPrivateIndex] = useState<number | null>(null);
 
   useEffect(() => {
+    const nextInviteCodes = readFoundingInviteCodes(userId);
     setOwnedInsightIds(readOwnedInsightIds(userId));
     const codes = readFoundingInviteCodes(userId);
     setInviteCodes(codes);
     persistFoundingInviteCodes(userId, codes);
     setOpenInviteIndex(null);
   }, [userId]);
+
+  useEffect(() => {
+    const updateVoucherUses = () => setLocalVoucherUses(countLocalVoucherUses(userId, inviteCodes));
+    window.addEventListener("storage", updateVoucherUses);
+    window.addEventListener("raw:voucher-used", updateVoucherUses);
+    updateVoucherUses();
+    return () => {
+      window.removeEventListener("storage", updateVoucherUses);
+      window.removeEventListener("raw:voucher-used", updateVoucherUses);
+    };
+  }, [inviteCodes, userId]);
 
   useEffect(() => {
     listUserAliases(userId)
@@ -286,7 +298,7 @@ export function DashboardProfile({
     { key: "hosts",       icon: STAT_ICONS.hosts,       label: "Hosts Made",        value: profileStats.hostsMade },
     { key: "communities", icon: STAT_ICONS.communities, label: "Communities Joined",value: profileStats.communitiesJoined },
     { key: "pinned",      icon: STAT_ICONS.pinned,      label: "Messages Pinned",   value: profileStats.messagesPinned },
-  ];
+  ].filter((stat) => stat.key !== "hosts" || Number(stat.value) > 0);
 
   const displayIndex = hoveredIndex ?? avatarLevel;
   const theme = getAvatar(displayIndex);
@@ -357,7 +369,7 @@ export function DashboardProfile({
               <Ticket className="h-4 w-4 text-raw-gold/60" /> Founding invitations
             </p>
             <p className="mt-1 text-xs leading-relaxed text-raw-silver/40">
-              You get two founding invite codes. Reveal one, copy it, or share it with a friend.
+              You get two founding invite codes. Reveal one, copy it, and share it with a friend who you know would like this or need this.
             </p>
           </div>
           <span className="rounded-full border border-raw-gold/25 bg-raw-gold/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-raw-gold/70">

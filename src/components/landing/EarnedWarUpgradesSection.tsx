@@ -31,7 +31,7 @@ export function EarnedWarUpgradesSection() {
         <div className="mt-10 sm:mt-12">
           <img
             src={warLevelBadgesImage}
-            alt="War level badges"
+            alt="raW war level badges — anonymous avatar ranks earned by staying active"
             className="mx-auto w-full max-w-[660px]"
           />
         </div>
