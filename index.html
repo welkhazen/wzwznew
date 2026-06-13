@@ -75,8 +75,68 @@
         gtag('config', gaId);
       })();
     </script>
+    <style>
+      /* Visually hide the crawlable landing block from sighted users without removing it
+         from the DOM or the accessibility tree (kept readable for crawlers + screen readers). */
+      .seo-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        clip-path: inset(50%);
+        white-space: nowrap;
+        border: 0;
+      }
+    </style>
   </head>
   <body>
+    <!--
+      Crawlable landing content.
+
+      Why this exists: the home page renders an "Enter raW" splash gate first, and the
+      real landing copy only loads after the user taps to enter. Crawlers don't tap, so
+      that copy was invisible to search engines. This static block ships the home page's
+      core messaging and internal links directly in the served HTML — so non-JS crawlers
+      (Bing, social scrapers, LLM bots) and Googlebot can index it WITHOUT removing the
+      gate UX for humans.
+
+      It is visually hidden from sighted users (the React gate is what they see), but it
+      stays in the DOM and the accessibility tree. Copy here mirrors the site's own SEO
+      descriptions — it is not different from what users get after entering (no cloaking).
+    -->
+    <div id="seo-landing" class="seo-only">
+      <h1>Anonymous Online Communities &amp; 24/7 Group Chats | raW</h1>
+      <p>
+        raW is an anonymity-first platform for honest conversation. Join anonymous online
+        communities and 24/7 group chats built around shared interests, live polls, and real
+        connection — without using your real identity.
+      </p>
+      <h2>Anonymous live polls</h2>
+      <p>
+        Answer anonymous live polls, compare your views, and get matched with online
+        communities and group chats that fit your interests.
+        <a href="/polls-explained">How polls work</a>
+      </p>
+      <h2>Interest-based communities</h2>
+      <p>
+        Anonymous, interest-based community chats help people speak honestly, find like-minded
+        people, and build real connections.
+        <a href="/communities-explained">How communities work</a>
+      </p>
+      <h2>Safety &amp; privacy</h2>
+      <p>
+        raW protects people in anonymous online communities through privacy controls,
+        moderation, reporting, and account security.
+        <a href="/security">Safety &amp; privacy</a>
+      </p>
+      <p>
+        Learn more in the <a href="/faq">FAQ</a>, or contact us at
+        <a href="mailto:info@myraw.app">info@myraw.app</a>.
+      </p>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
