@@ -13,7 +13,7 @@ import { joinCommunity } from "@/backend/supabase/controllers/communityControlle
 import { saveOnboardingIdentities } from "@/backend/supabase/controllers/userController";
 import { APP_CANONICAL_HOST, buildCanonicalAppUrl } from "@/lib/canonicalHost";
 
-const LandingShellLazy = lazy(() => import("@/components/landing/LandingShell"));
+const LandingShellLazy = lazy(() => import("@/components/landing-v2/LandingShellV2"));
 
 const Index = () => {
 
