@@ -3,8 +3,11 @@
   "configurations": [
     {
       "name": "wzwz-dev",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--", "--port", "5173"],
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "set PATH=C:\\Users\\willi\\AppData\\Local\\nvm\\v24.12.0;%PATH% && npm run dev -- --port 5173"
+      ],
       "port": 5173
     }
   ]

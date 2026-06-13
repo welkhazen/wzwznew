@@ -12,7 +12,7 @@ import { unlockCommunity } from "@/lib/communityAccess";
 import { joinCommunity } from "@/backend/supabase/controllers/communityController";
 import { updateProfileVisibility } from "@/backend/supabase/controllers/userController";
 
-const LandingShellLazy = lazy(() => import("@/components/landing/LandingShell"));
+const LandingShellLazy = lazy(() => import("@/components/landing-v2/LandingShellV2"));
 
 const Index = () => {
 
