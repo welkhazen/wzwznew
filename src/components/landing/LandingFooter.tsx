@@ -1,8 +1,8 @@
 import { MessageCircle, Mail } from "lucide-react";
 
 export function LandingFooter() {
-  const supportEmail = import.meta.env.VITE_SUPPORT_EMAIL ?? "support@theartofraw.me";
-  const supportWhatsAppNumber = import.meta.env.VITE_SUPPORT_WHATSAPP_NUMBER ?? "+201000000000";
+  const supportEmail = import.meta.env.VITE_SUPPORT_EMAIL ?? "info@myraw.app";
+  const supportWhatsAppNumber = import.meta.env.VITE_SUPPORT_WHATSAPP_NUMBER ?? "+96171148488";
   const whatsAppHref = `https://wa.me/${supportWhatsAppNumber.replace(/\D/g, "")}`;
 
   return (

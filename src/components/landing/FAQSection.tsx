@@ -32,7 +32,7 @@ export function FAQSection() {
 
     const subject = encodeURIComponent("raW FAQ question");
     const body = encodeURIComponent(`Name: ${name.trim() || "Anonymous"}\n\nQuestion:\n${trimmedQuestion}`);
-    window.location.href = `mailto:support@theartofraw.me?subject=${subject}&body=${body}`;
+    window.location.href = `mailto:info@myraw.app?subject=${subject}&body=${body}`;
   };
 
   return (
