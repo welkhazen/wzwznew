@@ -1,4 +1,5 @@
 @import url("https://fonts.googleapis.com/css2?family=Michroma&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&display=swap");
 
 :root {
   --raw-gold: #f1c42d;
@@ -51,8 +52,9 @@ html.theme-light {
   user-select: none;
   overflow: hidden;
 
-  font-family: "Michroma", system-ui, sans-serif;
-  letter-spacing: 0.48em;
+  font-family: "Geist", system-ui, sans-serif;
+  font-weight: 500;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--raw-button-text);
 
@@ -101,8 +103,8 @@ html.theme-light {
   width: min(78vw, 315px);
   min-height: 54px;
   padding: 14px 28px;
-  font-size: 8px;
-  letter-spacing: 0.34em;
+  font-size: 9px;
+  letter-spacing: 0.14em;
 }
 
 .raw-reveal-button::before { content:""; position:absolute; inset:3px; z-index:-2; border-radius:inherit; background: linear-gradient(135deg, rgba(255, 255, 255, 0.7), rgba(217, 217, 217, 0.24) 24%, rgba(241, 196, 45, 0.24) 48%, rgba(255, 255, 255, 0.16) 67%, rgba(0, 0, 0, 0.32)); opacity:0.72; filter:blur(0.2px); }
@@ -142,9 +144,9 @@ html.theme-light .raw-reveal-button[data-raw-state="hover"] {
 .raw-reveal-showcase__hero { display:flex; justify-content:center; margin-bottom:clamp(54px, 8vw, 84px); }
 .raw-reveal-showcase__states { position:relative; z-index:2; display:grid; grid-template-columns:1fr auto 1fr auto 1fr; align-items:center; gap:clamp(16px, 3vw, 36px); }
 .raw-reveal-showcase__state { display:flex; flex-direction:column; gap:18px; align-items:center; }
-.raw-reveal-showcase__state p { margin:0; font-family:"Michroma", system-ui, sans-serif; font-size:9px; letter-spacing:0.18em; color: color-mix(in srgb, var(--raw-button-text) 62%, transparent 38%); }
+.raw-reveal-showcase__state p { margin:0; font-family:"Geist", system-ui, sans-serif; font-size:9px; letter-spacing:0.18em; color: color-mix(in srgb, var(--raw-button-text) 62%, transparent 38%); }
 .raw-reveal-showcase__divider { width:1px; min-height:76px; background:linear-gradient(transparent, rgba(217, 217, 217, 0.38), transparent); }
 @keyframes rawRevealSweep { 0% { left:-26%; opacity:0; } 18% { opacity:0.65; } 52% { opacity:0.95; } 100% { left:112%; opacity:0; } }
-@media (max-width:900px){ .raw-reveal-button[data-raw-size="hero"]{ width:min(92vw, 620px); min-height:82px; letter-spacing:0.28em;} .raw-reveal-showcase__states{grid-template-columns:1fr;} .raw-reveal-showcase__divider{display:none;} }
-@media (max-width:520px){ .raw-reveal-button[data-raw-size="hero"],.raw-reveal-button[data-raw-size="default"],.raw-reveal-button[data-raw-size="mini"]{ width:100%; letter-spacing:0.18em;} .raw-reveal-button[data-raw-size="hero"]{ min-height:72px; font-size:10px; padding-inline:24px;} .raw-reveal-button[data-raw-size="mini"]{font-size:7.5px;} }
+@media (max-width:900px){ .raw-reveal-button[data-raw-size="hero"]{ width:min(92vw, 620px); min-height:82px; letter-spacing:0.12em;} .raw-reveal-showcase__states{grid-template-columns:1fr;} .raw-reveal-showcase__divider{display:none;} }
+@media (max-width:520px){ .raw-reveal-button[data-raw-size="hero"],.raw-reveal-button[data-raw-size="default"],.raw-reveal-button[data-raw-size="mini"]{ width:100%; letter-spacing:0.1em;} .raw-reveal-button[data-raw-size="hero"]{ min-height:72px; font-size:10px; padding-inline:24px;} .raw-reveal-button[data-raw-size="mini"]{font-size:8.5px;} }
 @media (prefers-reduced-motion: reduce){ .raw-reveal-button,.raw-reveal-button *,.raw-reveal-button::before,.raw-reveal-button::after{ animation:none !important; transition-duration:1ms !important; } }
