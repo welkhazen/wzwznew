@@ -10,7 +10,6 @@ import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
 import type { LandingNewAvatar } from "@/lib/landingNewAvatars";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 import { useTheme } from "@/providers/useTheme";
-import { RawRevealButton } from "../../../components/raw-reveal-button";
 import { WheelRewardInline } from "@/components/landing/WheelReward";
 
 const VISIBLE_COUNT = 4;
@@ -57,6 +56,21 @@ const REVEAL_AVATARS: readonly AvatarCatalogItem[] = [
 ];
 const LANDING_AVATARS: readonly AvatarCatalogItem[] = [...CHOOSER_AVATARS, ...REVEAL_AVATARS];
 
+// Landing "Unlockable Avatars" feature order. White Mirage and Rainbow Pulse
+// lead the first column (replacing Grey Sentinel and Red Phantom); the rest of
+// the unlockable pool follows and stays reachable via "Show More". The shared
+// SPIN_POOL is untouched, so the wheel and onboarding keep every avatar.
+const UNLOCKABLE_FEATURE_ORDER = [
+  "White Mirage",
+  "Blue Cipher",
+  "Purple Oracle",
+  "Orange Vortex",
+  "Rainbow Pulse",
+  "Pink Nova",
+  "Gold Warden",
+  "Platinum Echo",
+] as const;
+
 type RevealAvatarImageFit = { scale: number; objectPosition?: string };
 
 const REVEAL_AVATAR_IMAGE_FIT: Record<string, RevealAvatarImageFit> = {
@@ -84,15 +98,12 @@ export function AvatarShowcaseSection({ onSignupClick = () => undefined }: Avata
   const [startIndex, setStartIndex] = useState(0);
   const [desktopStart, setDesktopStart] = useState(0);
   const [showAll, setShowAll] = useState(false);
-  const [showExpandGrid, setShowExpandGrid] = useState(false);
   const [showUnlockableAvatars, setShowUnlockableAvatars] = useState(false);
-  const [expandedVisibleCount, setExpandedVisibleCount] = useState(CHOOSER_AVATARS.length);
   const [showMore, setShowMore] = useState(false);
   const [themeVersion, setThemeVersion] = useState(0);
   const [extraPreviewAvatar, setExtraPreviewAvatar] = useState<LandingNewAvatar | null>(null);
   const [newAvatars] = useState<LandingNewAvatar[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const phoneRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const nextThemes = [...LEVEL_THEMES];
@@ -112,19 +123,18 @@ export function AvatarShowcaseSection({ onSignupClick = () => undefined }: Avata
 
   const chooserAvatars = CHOOSER_AVATARS;
   const chooserTotal = chooserAvatars.length;
-  const unlockableAvatars = REVEAL_AVATARS;
+  const featuredUnlockableNames = new Set<string>(UNLOCKABLE_FEATURE_ORDER);
+  const unlockableAvatars = [
+    ...UNLOCKABLE_FEATURE_ORDER
+      .map((name) => REVEAL_AVATARS.find((avatar) => avatar.name === name))
+      .filter((avatar): avatar is AvatarCatalogItem => Boolean(avatar)),
+    ...REVEAL_AVATARS.filter((avatar) => !featuredUnlockableNames.has(avatar.name)),
+  ];
   const visibleUnlockableAvatars = (showUnlockableAvatars
     ? unlockableAvatars
     : unlockableAvatars.slice(0, FEATURED_UNLOCKABLE_COUNT)
   ).map((avatar) => ({ avatar, themeIndex: avatar.level }));
   const hasMoreUnlockableAvatars = unlockableAvatars.length > FEATURED_UNLOCKABLE_COUNT;
-  const expandedAvatarSource = SPIN_POOL
-    .map((entry) => REVEAL_AVATARS.find((avatar) => avatar.imageSrc === entry.imageSrc))
-    .filter((avatar): avatar is AvatarCatalogItem => Boolean(avatar));
-  const expandedAvatarTotal = expandedAvatarSource.length;
-  const visibleExtendedAvatars = expandedAvatarSource
-    .slice(0, expandedVisibleCount)
-    .map((avatar) => ({ avatar, themeIndex: avatar.level }));
   const previewAvatar = useMemo(
     () => extraPreviewAvatar ?? LANDING_AVATARS.find((avatar) => avatar.level === previewIndex) ?? chooserAvatars[0] ?? null,
     [chooserAvatars, extraPreviewAvatar, previewIndex]
@@ -132,14 +142,6 @@ export function AvatarShowcaseSection({ onSignupClick = () => undefined }: Avata
 
   const canPrev = true;
   const canNext = true;
-
-  useEffect(() => {
-    setExpandedVisibleCount(expandedAvatarTotal);
-  }, [expandedAvatarTotal, showExpandGrid]);
-
-  function handleToggleExpandGrid() {
-    setShowExpandGrid((open) => !open);
-  }
 
   // Per-image scale to normalise inner-circle size — each source image has
   // different transparent padding around the avatar circle.
@@ -351,7 +353,7 @@ In real life you are born with a name, a face, and a personality underneath. On 
       }
     >
       {/* ── Mobile (<sm): phone left + 2-col avatar grid right, 50/50 ── */}
-      <div ref={phoneRef} className="mx-auto flex w-full max-w-5xl flex-row items-start gap-3 sm:hidden">
+      <div className="mx-auto flex w-full max-w-5xl flex-row items-start gap-3 sm:hidden">
 
         {/* Phone: scaled to fit the left half while keeping the full home screen intact. */}
         <div
@@ -532,105 +534,6 @@ In real life you are born with a name, a face, and a personality underneath. On 
             </div>
           )}
         </div>
-      </div>
-
-      {/* ── Expand: full avatar grid ── */}
-      <div className="mx-auto mt-6 w-full max-w-5xl flex flex-col items-center">
-        <RawRevealButton
-          size="default"
-          state={showExpandGrid ? "hover" : "scroll"}
-          label={showExpandGrid ? "HIDE" : "EXPLORE MORE"}
-          onClick={handleToggleExpandGrid}
-          className="animate-[cta-breath_3.4s_ease-in-out_infinite] !text-white"
-        />
-
-        <AnimatePresence>
-          {showExpandGrid && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-              className="overflow-hidden w-full"
-            >
-              <div
-                className="relative mt-5 rounded-2xl border border-raw-border/40 bg-raw-surface/20 p-6 sm:p-8"
-                style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 0 40px rgba(0,0,0,0.3)" }}
-              >
-                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/30 to-transparent" />
-                <p className="mb-5 text-center font-display text-[10px] uppercase tracking-[0.28em] text-raw-gold/60 sm:mb-6">
-                  All Avatars
-                </p>
-                {visibleExtendedAvatars.length > 0 ? (
-                  <>
-                    <div className="grid grid-cols-2 place-items-start justify-items-center gap-x-6 gap-y-5 sm:grid-cols-5 sm:gap-x-5 sm:gap-y-6">
-                      {visibleExtendedAvatars.map(({ avatar, themeIndex }) => (
-                        <button
-                          key={avatar.id ?? themeIndex}
-                          type="button"
-                          onClick={() => {
-                            setExtraPreviewAvatar(null);
-                            setAvatarIndex(themeIndex);
-                            setPreviewIndex(themeIndex);
-                            phoneRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-                          }}
-                          onMouseEnter={() => setPreviewIndex(themeIndex)}
-                          onMouseLeave={() => setPreviewIndex(avatarIndex)}
-                          className="group flex w-12 flex-col items-center gap-1 outline-none sm:w-16 sm:gap-1.5 [content-visibility:auto] [contain-intrinsic-size:76px]"
-                          aria-label={`Select ${avatar.name}`}
-                        >
-                          <div
-                            className="relative flex h-14 w-14 items-center justify-center overflow-visible rounded-full transition-all duration-300 sm:h-16 sm:w-16"
-                            style={{ transition: "transform 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}
-                          >
-                            {avatar.imageSrc ? (
-                              <img
-                                src={avatar.imageSrc}
-                                alt={avatar.name}
-                                loading="lazy"
-                                decoding="async"
-                                draggable={false}
-                                className="h-[96%] w-[96%] rounded-full object-contain"
-                              />
-                            ) : (
-                              <AvatarFigure key={`${themeIndex}-${themeVersion}`} avatarIndex={themeIndex} size="sm" selected={avatarIndex === themeIndex} themeOverride={avatar} />
-                            )}
-                          </div>
-                          <span
-                            className="min-h-[1.35rem] text-center font-display text-[6px] uppercase leading-[1.15] tracking-wide transition-colors duration-200 sm:min-h-[1.5rem] sm:text-[7px]"
-                            style={{
-                              color: avatarIndex === themeIndex
-                                ? "#F1C42D"
-                                : isLight
-                                  ? "rgba(30,41,59,0.62)"
-                                  : "rgba(255,255,255,0.3)",
-                            }}
-                          >
-                            {avatar.name}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                    {expandedVisibleCount < expandedAvatarTotal && (
-                      <p className="mt-5 text-center font-display text-[8px] uppercase tracking-[0.22em] text-raw-silver/35">
-                        Loading more avatars...
-                      </p>
-                    )}
-                  </>
-                ) : (
-                  <div
-                    className="flex min-h-24 items-center justify-center rounded-xl border border-raw-border/30 bg-raw-black/30 px-4 text-center"
-                    aria-live="polite"
-                  >
-                    <p className="font-display text-[9px] uppercase tracking-[0.2em] text-white/45">
-                      More avatars are coming soon.
-                    </p>
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
 
       {/* ── Show More: new avatars drop-down ── */}

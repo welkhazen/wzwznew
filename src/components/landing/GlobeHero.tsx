@@ -70,14 +70,21 @@ export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
         style={{ y: contentY, opacity: contentOpacity }}
         className="relative z-10 mx-auto w-full max-w-5xl px-4 pt-20 text-center sm:px-6 sm:pt-14"
       >
-        <motion.p
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1.1, delay: 0.15 }}
-          className="text-[0.68rem] font-medium uppercase tracking-[0.45em] text-raw-silver/55 sm:text-xs"
+          className="flex items-center justify-center gap-3 sm:gap-4"
         >
-          Anonymous by design
-        </motion.p>
+          <span className="h-px w-8 bg-gradient-to-r from-transparent to-primary/55 sm:w-12" aria-hidden="true" />
+          <span
+            className="text-[0.68rem] font-semibold uppercase tracking-[0.45em] text-primary sm:text-xs"
+            style={{ textShadow: "0 0 18px hsl(var(--primary) / 0.45)" }}
+          >
+            Anonymous by design
+          </span>
+          <span className="h-px w-8 bg-gradient-to-l from-transparent to-primary/55 sm:w-12" aria-hidden="true" />
+        </motion.div>
 
         <h1 className="mt-7 font-editorial text-[3.2rem] leading-[1.02] tracking-tight text-foreground sm:mt-9 sm:text-7xl md:text-[5.4rem] lg:text-[6.2rem]">
           <span className="sr-only">
