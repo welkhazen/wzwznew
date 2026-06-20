@@ -68,7 +68,7 @@ export function Navbar({ isLoggedIn, username, onSignupClick }: NavbarProps) {
         <Link
           to="/"
           aria-label="raW — go to home"
-          className="flex items-center gap-2 font-display text-xl tracking-[0.3em] text-raw-text transition-opacity hover:opacity-90 sm:gap-3"
+          className="flex items-center gap-2 font-display text-xl tracking-[0.06em] text-raw-text transition-opacity hover:opacity-90 sm:gap-3"
         >
           <img
             src={RAW_LOGO_SRC}
