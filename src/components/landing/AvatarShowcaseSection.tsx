@@ -57,8 +57,9 @@ const REVEAL_AVATARS: readonly AvatarCatalogItem[] = [
 const LANDING_AVATARS: readonly AvatarCatalogItem[] = [...CHOOSER_AVATARS, ...REVEAL_AVATARS];
 
 // Landing "Unlockable Avatars" feature order. White Mirage and Rainbow Pulse
-// lead the first column (replacing Grey Sentinel and Red Phantom, which stay
-// in the shared spin pool for the wheel and onboarding).
+// lead the first column (replacing Grey Sentinel and Red Phantom); the rest of
+// the unlockable pool follows and stays reachable via "Show More". The shared
+// SPIN_POOL is untouched, so the wheel and onboarding keep every avatar.
 const UNLOCKABLE_FEATURE_ORDER = [
   "White Mirage",
   "Blue Cipher",
@@ -122,9 +123,13 @@ export function AvatarShowcaseSection({ onSignupClick = () => undefined }: Avata
 
   const chooserAvatars = CHOOSER_AVATARS;
   const chooserTotal = chooserAvatars.length;
-  const unlockableAvatars = UNLOCKABLE_FEATURE_ORDER
-    .map((name) => REVEAL_AVATARS.find((avatar) => avatar.name === name))
-    .filter((avatar): avatar is AvatarCatalogItem => Boolean(avatar));
+  const featuredUnlockableNames = new Set<string>(UNLOCKABLE_FEATURE_ORDER);
+  const unlockableAvatars = [
+    ...UNLOCKABLE_FEATURE_ORDER
+      .map((name) => REVEAL_AVATARS.find((avatar) => avatar.name === name))
+      .filter((avatar): avatar is AvatarCatalogItem => Boolean(avatar)),
+    ...REVEAL_AVATARS.filter((avatar) => !featuredUnlockableNames.has(avatar.name)),
+  ];
   const visibleUnlockableAvatars = (showUnlockableAvatars
     ? unlockableAvatars
     : unlockableAvatars.slice(0, FEATURED_UNLOCKABLE_COUNT)
