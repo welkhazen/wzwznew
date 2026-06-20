@@ -8,6 +8,7 @@ import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 import { track } from "@/lib/analytics";
 import { LANDING_WHEEL_SPIN_KEY } from "@/lib/avatarCatalog";
 import { avatarDisplayName } from "@/config/avatarNames";
+import { getAvatarRank } from "@/lib/avatarRank";
 
 const TRANSPARENT_REWARDS_IMAGE_SRC = "/images/avatar-rarity-chart.png";
 
@@ -50,6 +51,24 @@ function shouldResetStoredSpinForTesting(): boolean {
   if (!import.meta.env.DEV || typeof window === "undefined") return false;
   const [navigation] = window.performance.getEntriesByType("navigation") as PerformanceNavigationTiming[];
   return navigation?.type === "reload";
+}
+
+function rankOf(entry: PoolEntry): number {
+  return getAvatarRank({ name: entry.name, imageSrc: entry.imageSrc });
+}
+
+// Rarer avatars (higher rank tier) win less often. Linear gradient: rank 1
+// (grey) is 10x more likely to land than rank 10 (rainbow).
+function buildPrizeWeights(pool: PoolEntry[]): Record<string, number> {
+  return Object.fromEntries(pool.map((entry) => [entry.id, Math.max(1, 11 - rankOf(entry))]));
+}
+
+function rarityTier(rank: number): string {
+  if (rank >= 9) return "Legendary";
+  if (rank >= 7) return "Epic";
+  if (rank >= 5) return "Rare";
+  if (rank >= 3) return "Uncommon";
+  return "Common";
 }
 
 function buildPrizes(pool: PoolEntry[], isLight: boolean): WheelPrize[] {
@@ -98,6 +117,8 @@ export function WheelRewardInline({ onSignupClick }: WheelRewardProps) {
   }, []);
 
   const prizes = buildPrizes(pool, isLight);
+  const prizeWeights = buildPrizeWeights(pool);
+  const landedRank = landedEntry ? rankOf(landedEntry) : 0;
 
   function handleSpinEnd(prize: WheelPrize) {
     const entry = pool.find((p) => p.id === prize.id) ?? pool[0];
@@ -133,6 +154,11 @@ export function WheelRewardInline({ onSignupClick }: WheelRewardProps) {
             <Sparkles className="h-4 w-4 text-raw-gold" />
             <span className="font-display text-sm tracking-wide text-raw-gold">
               You won {landedEntry.name}
+            </span>
+          </div>
+          <div className="mb-2 flex justify-center">
+            <span className="rounded-full border border-raw-gold/40 bg-raw-gold/10 px-2.5 py-0.5 font-display text-[9px] uppercase tracking-[0.18em] text-raw-gold/90">
+              Rank {landedRank} / 10 · {rarityTier(landedRank)}
             </span>
           </div>
           <p className="mt-2 text-xs leading-relaxed text-raw-text/75">
@@ -177,6 +203,8 @@ export function WheelReward({ onSignupClick }: WheelRewardProps) {
   }, []);
 
   const prizes = buildPrizes(pool, isLight);
+  const prizeWeights = buildPrizeWeights(pool);
+  const landedRank = landedEntry ? rankOf(landedEntry) : 0;
 
   function handleSpinEnd(prize: WheelPrize) {
     const entry = pool.find((p) => p.id === prize.id) ?? pool[0];
@@ -195,7 +223,7 @@ export function WheelReward({ onSignupClick }: WheelRewardProps) {
     >
       <div className="flex flex-col items-center gap-6 sm:gap-10">
         <SpinWheelClaimBanner />
-        <WheelOfFortune prizes={prizes} onSpinEnd={handleSpinEnd} disabled={hasSpun} />
+        <WheelOfFortune prizes={prizes} prizeWeights={prizeWeights} onSpinEnd={handleSpinEnd} disabled={hasSpun} />
 
         {!rewardsImageMissing ? (
           <img
@@ -219,6 +247,11 @@ export function WheelReward({ onSignupClick }: WheelRewardProps) {
               <Sparkles className="h-4 w-4 text-raw-gold" />
               <span className="font-display text-sm tracking-wide text-raw-gold">
                 You won {landedEntry.name}
+              </span>
+            </div>
+            <div className="mb-2 flex justify-center">
+              <span className="rounded-full border border-raw-gold/40 bg-raw-gold/10 px-2.5 py-0.5 font-display text-[9px] uppercase tracking-[0.18em] text-raw-gold/90">
+                Rank {landedRank} / 10 · {rarityTier(landedRank)}
               </span>
             </div>
             <p className="mt-2 text-xs leading-relaxed text-raw-text/75">

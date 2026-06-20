@@ -2,7 +2,8 @@
 // landing, onboarding, and the spin/claim systems. Anytime you'd
 // hardcode an avatar array elsewhere, import from here instead.
 
-export const FREE_SPIN_AVATAR_IDS = [43, 42, 52, 41, 13, 47, 40, 35, 20, 26] as const;
+// Ordered by rank tier (rank 1 grey -> rank 10 rainbow); see src/lib/avatarRank.ts.
+export const FREE_SPIN_AVATAR_IDS = [43, 52, 41, 42, 13, 47, 40, 35, 20, 26] as const;
 
 // Early-signup reward pool. Must NOT overlap with FREE_SPIN_AVATAR_IDS.
 export const EARLY_SIGNUP_AVATAR_IDS = [29, 21, 25, 33] as const;
