@@ -2,6 +2,7 @@
 
 import React, { Suspense, lazy, useRef } from "react";
 import { motion, useScroll, useTransform } from "motion/react";
+import { ShieldCheck } from "lucide-react";
 import { track } from "@/lib/analytics";
 
 import { useTheme } from "@/providers/useTheme";
@@ -71,19 +72,25 @@ export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
         className="relative z-10 mx-auto w-full max-w-5xl px-4 pt-20 text-center sm:px-6 sm:pt-14"
       >
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1.1, delay: 0.15 }}
           className="flex items-center justify-center gap-3 sm:gap-4"
         >
-          <span className="h-px w-8 bg-gradient-to-r from-transparent to-primary/55 sm:w-12" aria-hidden="true" />
+          <span className="hidden h-px w-10 bg-gradient-to-r from-transparent to-primary/45 sm:block sm:w-16" aria-hidden="true" />
           <span
-            className="text-[0.68rem] font-semibold uppercase tracking-[0.45em] text-primary sm:text-xs"
-            style={{ textShadow: "0 0 18px hsl(var(--primary) / 0.45)" }}
+            className="inline-flex items-center gap-2 rounded-full border border-primary/35 bg-primary/[0.07] px-3.5 py-1.5 backdrop-blur-sm sm:px-4"
+            style={{ boxShadow: "0 0 28px hsl(var(--primary) / 0.22), inset 0 0 14px hsl(var(--primary) / 0.06)" }}
           >
-            Anonymous by design
+            <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-primary" aria-hidden="true" />
+            <span
+              className="text-[0.62rem] font-semibold uppercase tracking-[0.38em] text-primary sm:text-[0.72rem]"
+              style={{ textShadow: "0 0 16px hsl(var(--primary) / 0.5)" }}
+            >
+              Anonymous by design
+            </span>
           </span>
-          <span className="h-px w-8 bg-gradient-to-l from-transparent to-primary/55 sm:w-12" aria-hidden="true" />
+          <span className="hidden h-px w-10 bg-gradient-to-l from-transparent to-primary/45 sm:block sm:w-16" aria-hidden="true" />
         </motion.div>
 
         <h1 className="mt-7 font-editorial text-[3.2rem] leading-[1.02] tracking-tight text-foreground sm:mt-9 sm:text-7xl md:text-[5.4rem] lg:text-[6.2rem]">
