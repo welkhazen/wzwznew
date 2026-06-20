@@ -26,7 +26,6 @@ dist-ssr
 
 # Vite local dependency cache
 .vite-local-cache
-.env
 
 # understand-anything pipeline temp files
 .understand-anything/tmp/
@@ -43,3 +42,15 @@ graphify-deploy/
 .claude-flow/
 /playwright-report
 /test-results
+
+# Local environment/secrets files
+.env*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+*.p8
+
+# Local Claude/Codex machine-specific state
+.claude/settings.local.json
+.codex/environments/*.local.toml
