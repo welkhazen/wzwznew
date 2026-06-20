@@ -372,9 +372,9 @@ export function PersonalityInsightsSection() {
           <span className="inline-flex items-center rounded-full border border-raw-gold/40 bg-raw-gold/10 px-4 py-1 text-[10px] font-semibold uppercase tracking-[0.25em] text-raw-gold/80">
             Coming Soon
           </span>
-          <h2 className="mt-3 landing-heading">Personality Insights</h2>
+          <h2 className="mt-3 landing-heading">Insights that make your answers useful</h2>
           <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-raw-silver/50 sm:text-base">
-            The full reports are locked for now. Click any card to preview a sample infographic result.
+            Your poll answers can become visual reports about personality, relationships, emotional patterns, and decision-making. Preview what is coming next.
           </p>
         </div>
 
@@ -394,7 +394,7 @@ export function PersonalityInsightsSection() {
                     <p className="mt-3 text-xs leading-relaxed text-raw-silver/50">{insight.description}</p>
                     <LockedPreview insight={insight} isLight={isLight} />
                   </div>
-                  <div className="pointer-events-none absolute right-4 top-4 z-20 rounded-full border border-white/20 bg-black/60 px-3 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-white/85 backdrop-blur-sm">Locked · Sample</div>
+                  <div className="pointer-events-none absolute right-4 top-4 z-20 rounded-full border border-white/20 bg-black/60 px-3 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-white/85 backdrop-blur-sm">Preview · Coming Soon</div>
                 </GlareCard>
               </button>
             );

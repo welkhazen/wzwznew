@@ -2,7 +2,7 @@ import { supabase } from '../client';
 import type { UserRow, UserRole } from '../models/user';
 import {
   getUserFavoriteCommunities,
-  getUserPinnedMessage,
+  getUserPinnedMessages,
   type PinnedMessageRecord,
 } from './userExtrasController';
 
@@ -51,7 +51,7 @@ export interface PublicUserProfile {
   createdAt: string | null;
   profilePublic: boolean;
   favoriteCommunityIds: string[];
-  pinnedMessage: PinnedMessageRecord | null;
+  pinnedMessages: PinnedMessageRecord[];
 }
 
 export async function getPublicUserProfile(userId: string): Promise<PublicUserProfile | null> {
@@ -64,15 +64,15 @@ export async function getPublicUserProfile(userId: string): Promise<PublicUserPr
   if (!data) return null;
 
   const row = data as UserRow;
-  const isPublic = true;
+  const isPublic = row.profile_public ?? true;
 
   let favoriteCommunityIds: string[] = [];
-  let pinnedMessage: PinnedMessageRecord | null = null;
+  let pinnedMessages: PinnedMessageRecord[] = [];
   if (isPublic) {
     try {
-      [favoriteCommunityIds, pinnedMessage] = await Promise.all([
+      [favoriteCommunityIds, pinnedMessages] = await Promise.all([
         getUserFavoriteCommunities(userId),
-        getUserPinnedMessage(userId),
+        getUserPinnedMessages(userId),
       ]);
     } catch {
       // Profile extras are best-effort; fall back to empty/null on error.
@@ -87,8 +87,19 @@ export async function getPublicUserProfile(userId: string): Promise<PublicUserPr
     createdAt: isPublic ? row.created_at ?? null : null,
     profilePublic: isPublic,
     favoriteCommunityIds,
-    pinnedMessage,
+    pinnedMessages,
   };
+}
+
+export async function getProfileVisibility(userId: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('users')
+    .select('profile_public')
+    .eq('id', userId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data?.profile_public ?? true;
 }
 
 export async function updateProfileVisibility(userId: string, profilePublic: boolean): Promise<void> {
@@ -155,5 +166,32 @@ export async function addPrivateAlias(_userId: string, alias: string): Promise<U
 
 export async function deleteUserAlias(aliasId: string): Promise<void> {
   const { error } = await supabase.from('user_aliases').delete().eq('id', aliasId);
+  if (error) throw error;
+}
+
+export interface ChatIdentityPrefs {
+  /** Selected chat name: a private alias, or null to post under the public username. */
+  alias: string | null;
+  /** Avatar level for the private identity, or null if never set. */
+  avatarLevel: number | null;
+}
+
+export async function getChatIdentity(userId: string): Promise<ChatIdentityPrefs | null> {
+  const { data, error } = await supabase
+    .from('users')
+    .select('chat_identity_alias, chat_avatar_level')
+    .eq('id', userId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  const row = data as { chat_identity_alias: string | null; chat_avatar_level: number | null };
+  return { alias: row.chat_identity_alias ?? null, avatarLevel: row.chat_avatar_level ?? null };
+}
+
+export async function setChatIdentity(alias: string | null, avatarLevel: number): Promise<void> {
+  const { error } = await supabase.rpc('set_chat_identity', {
+    p_alias: alias,
+    p_avatar_level: avatarLevel,
+  });
   if (error) throw error;
 }

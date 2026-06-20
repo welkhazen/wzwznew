@@ -1,11 +1,12 @@
 import { FloatingDock } from "@/components/ui/floating-dock";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
-import type React from "react";
+import { readCommunityChats } from "@/lib/communityChat";
+import { hydrateChatIdentityFromServer } from "@/lib/identitySelection";
 import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
 import { fetchCommunities } from "@/backend/supabase/controllers/communityController";
 import { readCachedCommunities, writeCachedCommunities } from "@/lib/communityCache";
-import { getUserFavoriteCommunities, getUserPinnedMessage, type PinnedMessageRecord } from "@/backend/supabase/controllers/userExtrasController";
-import { Archive, Home as HomeIcon, MessageCircle, Target, User as UserIcon, LogOut, Trophy, Sparkles, Moon, CloudMoon, Sun } from "lucide-react";
+import { getUserFavoriteCommunities, getUserPinnedMessages, removeUserPinnedMessage, type PinnedMessageRecord } from "@/backend/supabase/controllers/userExtrasController";
+import { Home as HomeIcon, MessageCircle, Target, User as UserIcon, LogOut, Trophy, Sparkles, Moon, CloudMoon, Sun, Store } from "lucide-react";
 import LNTLogo from "@/assets/LNT.webp";
 import SYTLogo from "@/assets/logospeak.webp";
 import IIJMLogo from "@/assets/itisjustme.webp";
@@ -15,6 +16,7 @@ import { matchPath, useLocation, useNavigate } from "react-router-dom";
 import { DashboardNav, type DashboardTab } from "@/components/dashboard/DashboardNav";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { DashboardHome } from "@/components/dashboard/DashboardHome";
+import { DashboardStore } from "@/components/dashboard/DashboardStore";
 import { DashboardSectionShell } from "@/components/dashboard/DashboardSectionShell";
 import { CommunityHoldSwitcher, getCommunityHoldSwitcherTargets } from "@/components/dashboard/CommunityHoldSwitcher";
 import { NotificationConsentPrompt } from "@/components/notifications/NotificationConsentPrompt";
@@ -37,29 +39,28 @@ const DashboardChallenges = lazy(() =>
 const DashboardDailySpin = lazy(() =>
   import("@/components/dashboard/DashboardDailySpin").then((module) => ({ default: module.DashboardDailySpin }))
 );
-const DashboardSettings = lazy(() =>
-  import("@/components/dashboard/DashboardSettings").then((module) => ({ default: module.DashboardSettings }))
-);
 const DashboardProfile = lazy(() =>
   import("@/components/dashboard/DashboardProfile").then((module) => ({ default: module.DashboardProfile }))
 );
 const DashboardWallet = lazy(() =>
   import("@/components/dashboard/DashboardWallet").then((module) => ({ default: module.DashboardWallet }))
 );
+const DashboardSettings = lazy(() =>
+  import("@/components/dashboard/DashboardSettings").then((module) => ({ default: module.DashboardSettings }))
+);
 const DashboardInventory = lazy(() =>
   import("@/components/dashboard/DashboardInventory").then((module) => ({ default: module.DashboardInventory }))
 );
+
+// Eagerly preload the most-visited tab chunks so they are ready before the user taps.
+void import("@/components/dashboard/DashboardCommunities");
+void import("@/components/dashboard/DashboardPolls");
 
 const COMMUNITY_LOGOS: Record<string, string> = {
   lnt: LNTLogo,
   syt: SYTLogo,
   iijm: IIJMLogo,
 };
-const LONG_PRESS_MS = 500;
-const MOVE_CANCEL_PX = 10;
-const DashboardStore = lazy(() =>
-  import("@/components/dashboard/DashboardStore").then((module) => ({ default: module.DashboardStore }))
-);
 
 const dashboardSectionFallback = (
   <DashboardSectionShell>
@@ -124,7 +125,7 @@ export default function Dashboard({
     () => readCachedCommunities()?.data ?? [],
   );
   const [favoriteCommunityIds, setFavoriteCommunityIds] = useState<string[]>([]);
-  const [pinnedMessage, setPinnedMessage] = useState<PinnedMessageRecord | null>(null);
+  const [pinnedMessages, setPinnedMessages] = useState<PinnedMessageRecord[]>([]);
   const [isHome, setIsHome] = useState(true);
   const [mobileCommunityPickerOpen, setMobileCommunityPickerOpen] = useState(false);
   const [mobileCommunityAnchorRect, setMobileCommunityAnchorRect] = useState<DOMRect | null>(null);
@@ -171,12 +172,17 @@ export default function Dashboard({
       cancelled = true;
     };
     // Run once on mount.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     void awardOnce("daily-login", getTodayKey(), XP_REWARDS.DAILY_LOGIN);
   }, [awardOnce]);
+
+  // Pull the chat-identity selection + private avatar from Supabase so they
+  // follow the account across devices (both are otherwise localStorage-only).
+  useEffect(() => {
+    void hydrateChatIdentityFromServer(user.id);
+  }, [user.id]);
 
   useEffect(() => {
     let cancelled = false;
@@ -204,16 +210,16 @@ export default function Dashboard({
     let cancelled = false;
     void (async () => {
       try {
-        const message = await getUserPinnedMessage(user.id);
-        if (!cancelled) setPinnedMessage(message);
+        const messages = await getUserPinnedMessages(user.id);
+        if (!cancelled) setPinnedMessages(messages);
       } catch {
-        // Pinned profile message is best-effort; the profile still renders.
+        // Pinned profile messages are best-effort; the profile still renders.
       }
     })();
     const onChange = (event: Event) => {
-      const detail = (event as CustomEvent<{ userId?: string; message?: PinnedMessageRecord | null }>).detail;
+      const detail = (event as CustomEvent<{ userId?: string; messages?: PinnedMessageRecord[] }>).detail;
       if (!detail || detail.userId !== user.id) return;
-      setPinnedMessage(detail.message ?? null);
+      setPinnedMessages(detail.messages ?? []);
     };
     window.addEventListener("raw:pinned-message-updated", onChange);
     return () => {
@@ -221,6 +227,20 @@ export default function Dashboard({
       window.removeEventListener("raw:pinned-message-updated", onChange);
     };
   }, [user.id]);
+
+  const handleRemovePinnedMessage = async (messageId: string) => {
+    const previous = pinnedMessages;
+    const next = previous.filter((message) => message.messageId !== messageId);
+    setPinnedMessages(next);
+    try {
+      await removeUserPinnedMessage(user.id, messageId);
+      window.dispatchEvent(new CustomEvent("raw:pinned-message-updated", {
+        detail: { userId: user.id, messages: next },
+      }));
+    } catch {
+      setPinnedMessages(previous);
+    }
+  };
 
   const handleTabChange = (tab: DashboardTab) => {
     setActiveTab(tab);
@@ -366,6 +386,11 @@ export default function Dashboard({
     navigate("/dashboard");
   };
 
+  const handleBackToDashboardHome = () => {
+    setIsHome(true);
+    navigate("/dashboard");
+  };
+
   const handleDailySpinAward = (amount: number) => {
     if (user.role === "admin") {
       return award(amount);
@@ -476,7 +501,6 @@ export default function Dashboard({
                 polls={polls}
                 votedPolls={votedPolls}
                 avatarLevel={avatarLevel}
-                onAvatarChange={setAvatarLevel}
                 ownedAvatarLevels={ownedAvatarLevels}
                 onUnlockAvatar={unlockAvatarLevel}
                 onAvatarPurchased={markAvatarOwned}
@@ -529,10 +553,11 @@ export default function Dashboard({
                 pollsAnswered={votedPolls.size}
                 xp={progress?.xp ?? 0}
                 xpLevel={progress?.level ?? 1}
-                pinnedMessage={pinnedMessage}
-                onLogout={onLogout}
+                pinnedMessages={pinnedMessages}
+                onRemovePinnedMessage={handleRemovePinnedMessage}
                 polls={polls}
                 tokenBalance={tokenBalance}
+                onLogout={onLogout}
               />
             </DashboardSectionShell>
           </Suspense>
@@ -541,11 +566,7 @@ export default function Dashboard({
         return (
           <Suspense fallback={dashboardSectionFallback}>
             <DashboardSectionShell>
-              <DashboardSettings
-                userId={user.id}
-                pinnedMessage={pinnedMessage}
-                onLogout={onLogout}
-              />
+              <DashboardSettings userId={user.id} onLogout={onLogout} onBackToDashboard={handleBackToDashboardHome} />
             </DashboardSectionShell>
           </Suspense>
         );
@@ -679,11 +700,11 @@ export default function Dashboard({
             active: !isHome && activeTab === "challenges",
           },
           {
-            title: "Inventory",
-            icon: <Archive className="h-5 w-5" />,
+            title: "Store",
+            icon: <Store className="h-5 w-5" />,
             href: "#",
-            onClick: () => handleTabChange("inventory"),
-            active: !isHome && activeTab === "inventory",
+            onClick: () => handleTabChange("store"),
+            active: !isHome && activeTab === "store",
           },
         ]}
       />

@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DashboardCommunities } from "@/components/dashboard/DashboardCommunities";
+import { ThemeProvider } from "@/providers/ThemeProvider";
 import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
 import type { User } from "@/store/types";
 
@@ -112,15 +113,21 @@ vi.mock("@/backend/supabase/controllers/userController", () => ({
 
 vi.mock("@/backend/supabase/controllers/userExtrasController", () => ({
   MAX_FAVORITE_COMMUNITIES: 3,
+  MAX_PINNED_MESSAGES: 7,
+  PinnedMessageLimitError: class PinnedMessageLimitError extends Error {},
   getUserFavoriteCommunities: vi.fn(async () => []),
-  getUserPinnedMessage: vi.fn(async () => null),
+  getUserPinnedMessages: vi.fn(async () => []),
   setUserFavoriteCommunities: vi.fn(),
-  setUserPinnedMessage: vi.fn(),
-  clearUserPinnedMessage: vi.fn(),
+  addUserPinnedMessage: vi.fn(),
+  removeUserPinnedMessage: vi.fn(),
+  notifyMessagePinned: vi.fn(),
+  getPinNotifications: vi.fn(async () => []),
 }));
 
 vi.mock("@/lib/communityAccess", () => ({
   loadCommunityAccess: vi.fn(async () => ({ hasSubscription: false, unlockedIds: new Set<string>() })),
+  FREE_COMMUNITY_SLOTS: 2,
+  COMMUNITY_UNLOCK_TOKEN_COST: 10,
 }));
 
 vi.mock("@/lib/communityPushNotifications", () => ({
@@ -135,10 +142,12 @@ describe("DashboardCommunities", () => {
 
   it("renders the directory view", async () => {
     render(
-      <DashboardCommunities
-        user={testUser}
-        onOpenCommunity={vi.fn()}
-      />,
+      <ThemeProvider>
+        <DashboardCommunities
+          user={testUser}
+          onOpenCommunity={vi.fn()}
+        />
+      </ThemeProvider>,
     );
 
     expect(await screen.findByRole("heading", { name: "Communities" })).toBeInTheDocument();
@@ -147,10 +156,12 @@ describe("DashboardCommunities", () => {
 
   it("opens the request community dialog", async () => {
     render(
-      <DashboardCommunities
-        user={testUser}
-        onOpenCommunity={vi.fn()}
-      />,
+      <ThemeProvider>
+        <DashboardCommunities
+          user={testUser}
+          onOpenCommunity={vi.fn()}
+        />
+      </ThemeProvider>,
     );
 
     fireEvent.click(await screen.findByRole("button", { name: /Request a Community/i }));
@@ -161,12 +172,14 @@ describe("DashboardCommunities", () => {
 
   it("renders the chat page when activeCommunityId matches a loaded community", async () => {
     render(
-      <DashboardCommunities
-        user={testUser}
-        activeCommunityId="joined"
-        onOpenCommunity={vi.fn()}
-        onBackToCommunities={vi.fn()}
-      />,
+      <ThemeProvider>
+        <DashboardCommunities
+          user={testUser}
+          activeCommunityId="joined"
+          onOpenCommunity={vi.fn()}
+          onBackToCommunities={vi.fn()}
+        />
+      </ThemeProvider>,
     );
 
     await waitFor(() => {

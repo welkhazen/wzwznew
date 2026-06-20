@@ -10,25 +10,25 @@ import lateNightTalksVideo from "@/assets/2026-04-18 10_10_00.webm";
 const communities = [
   {
     title: "Late Night Talks",
-    description: "A 24/7 online group chat for deep late-night conversations, honest thoughts, and real connection.",
+    description: "A 24/7 anonymous group chat for the thoughts that hit hardest after midnight.",
     badge: "Founding Community",
     video: lateNightTalksVideo,
   },
   {
     title: "Speak Your Truth",
-    description: "An anonymous community chat where you can share your story, be heard, and support people through real experiences.",
+    description: "A safe anonymous community for stories, confessions, support, and truth without the performance.",
     badge: "Active",
     video: speakYourTruthVideo,
   },
   {
     title: "Is It Just Me?",
-    description: "An interest-based group chat for relatable moments, shared observations, and discovering that you are not alone.",
+    description: "A quick-hit community for relatable thoughts, shared weirdness, and the relief of realizing it is not just you.",
     badge: "Active",
     video: isItJustMeVideo,
   },
   {
     title: "Lebanon Initiatives",
-    description: "Sign up to join the waitlist.",
+    description: "Join the waitlist for local action, support, and community-led initiatives.",
     badge: "Waitlist",
     image: lebanonImage,
     waitlist: true,
@@ -136,10 +136,10 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
           {/* title */}
           <div className="mb-8 text-center sm:mb-12">
             <h2 className="landing-heading">
-              Anonymous online communities and 24/7 group chats.
+              Find the room where your truth makes sense.
             </h2>
             <p className="mx-auto mt-3 max-w-xl text-sm text-raw-silver/50 sm:mt-4 sm:text-base">
-              Find interest-based community chats where you can speak honestly, meet people who understand you, and build real connections without using your real identity.
+              Explore anonymous online communities built around moods, interests, and lived experiences — from late-night honesty to niche conversations that make you feel less alone.
             </p>
           </div>
 
@@ -289,7 +289,7 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
                   </div>
 
                   <p className="text-center text-[10px] uppercase tracking-[0.3em] text-raw-gold/70">
-                    Live chat preview
+                    Anonymous chat preview
                   </p>
                   <h3 className="mt-1 text-center font-display text-lg tracking-wide text-raw-text">
                     {selectedCommunity}

@@ -22,6 +22,5 @@ const _overlap = FREE_SPIN_AVATAR_IDS.filter((id) =>
   (EARLY_SIGNUP_AVATAR_IDS as readonly number[]).includes(id),
 );
 if (_overlap.length > 0) {
-  // eslint-disable-next-line no-console
   console.error("[avatarConfig] Spin and early-signup pools overlap:", _overlap);
 }

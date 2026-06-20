@@ -49,6 +49,7 @@ export interface SendCommunityMessageInput {
   text: string;
   replyToMessage?: CommunityChatMessageRecord | null;
   identityAlias?: string | null;
+  avatarLevel?: number | null;
 }
 
 export interface JoinCommunityInput {

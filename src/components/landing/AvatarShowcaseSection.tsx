@@ -15,6 +15,7 @@ import { WheelRewardInline } from "@/components/landing/WheelReward";
 
 const VISIBLE_COUNT = 4;
 const DESKTOP_COUNT = 8;
+const FEATURED_UNLOCKABLE_COUNT = 8;
 const MOBILE_PHONE_SCALE = 0.5;
 const CHOOSER_AVATARS: readonly AvatarCatalogItem[] = [
   { id: "ember", level: 2, name: "Ember", price: "0", imageSrc: "/avatars/avatar-3.svg", bg: "#1f0a05", figure: "#ff8a1f", ring: "#ff8a1f", glow: "#ff8a1f80", isActive: true, rarity: "common" },
@@ -56,11 +57,25 @@ const REVEAL_AVATARS: readonly AvatarCatalogItem[] = [
 ];
 const LANDING_AVATARS: readonly AvatarCatalogItem[] = [...CHOOSER_AVATARS, ...REVEAL_AVATARS];
 
+type RevealAvatarImageFit = { scale: number; objectPosition?: string };
+
+const REVEAL_AVATAR_IMAGE_FIT: Record<string, RevealAvatarImageFit> = {
+  "reveal-1": { scale: 1.18 }, // Silver Void / platinum-style frame
+  "reveal-2": { scale: 1.5 },
+  "reveal-3": { scale: 1.5 },
+  "reveal-4": { scale: 1.62 }, // Violet Mask has the most transparent padding.
+  "reveal-5": { scale: 1.5 },
+  "reveal-6": { scale: 1.12 },
+  "reveal-7": { scale: 1.5 },
+  "reveal-8": { scale: 1.22 },
+  "reveal-9": { scale: 1.42 },
+};
+
 interface AvatarShowcaseSectionProps {
   onSignupClick?: () => void;
 }
 
-export function AvatarShowcaseSection({ onSignupClick }: AvatarShowcaseSectionProps = {}) {
+export function AvatarShowcaseSection({ onSignupClick = () => undefined }: AvatarShowcaseSectionProps) {
   const sectionRef = useTrackSectionView("avatar");
   const { mode } = useTheme();
   const isLight = mode === "light";
@@ -70,6 +85,7 @@ export function AvatarShowcaseSection({ onSignupClick }: AvatarShowcaseSectionPr
   const [desktopStart, setDesktopStart] = useState(0);
   const [showAll, setShowAll] = useState(false);
   const [showExpandGrid, setShowExpandGrid] = useState(false);
+  const [showUnlockableAvatars, setShowUnlockableAvatars] = useState(false);
   const [expandedVisibleCount, setExpandedVisibleCount] = useState(CHOOSER_AVATARS.length);
   const [showMore, setShowMore] = useState(false);
   const [themeVersion, setThemeVersion] = useState(0);
@@ -96,6 +112,12 @@ export function AvatarShowcaseSection({ onSignupClick }: AvatarShowcaseSectionPr
 
   const chooserAvatars = CHOOSER_AVATARS;
   const chooserTotal = chooserAvatars.length;
+  const unlockableAvatars = REVEAL_AVATARS;
+  const visibleUnlockableAvatars = (showUnlockableAvatars
+    ? unlockableAvatars
+    : unlockableAvatars.slice(0, FEATURED_UNLOCKABLE_COUNT)
+  ).map((avatar) => ({ avatar, themeIndex: avatar.level }));
+  const hasMoreUnlockableAvatars = unlockableAvatars.length > FEATURED_UNLOCKABLE_COUNT;
   const expandedAvatarSource = SPIN_POOL
     .map((entry) => REVEAL_AVATARS.find((avatar) => avatar.imageSrc === entry.imageSrc))
     .filter((avatar): avatar is AvatarCatalogItem => Boolean(avatar));
@@ -117,6 +139,18 @@ export function AvatarShowcaseSection({ onSignupClick }: AvatarShowcaseSectionPr
 
   function handleToggleExpandGrid() {
     setShowExpandGrid((open) => !open);
+  }
+
+  // Per-image scale to normalise inner-circle size — each source image has
+  // different transparent padding around the avatar circle.
+  function getRevealAvatarImageStyle(avatarId?: string): React.CSSProperties {
+    const fit = avatarId ? REVEAL_AVATAR_IMAGE_FIT[avatarId] : undefined;
+
+    return {
+      objectPosition: fit?.objectPosition ?? "center center",
+      transform: `scale(${fit?.scale ?? 1.12})`,
+      transformOrigin: "center center",
+    };
   }
 
   function prev() {
@@ -199,6 +233,61 @@ export function AvatarShowcaseSection({ onSignupClick }: AvatarShowcaseSectionPr
     );
   }
 
+
+  function UnlockableAvatarButton({
+    avatar,
+    themeIndex,
+  }: {
+    avatar: AvatarCatalogItem;
+    themeIndex: number;
+  }) {
+    const isActive = themeIndex === previewIndex;
+    const isSelected = themeIndex === avatarIndex;
+
+    return (
+      <button
+        type="button"
+        onClick={() => { setExtraPreviewAvatar(null); setAvatarIndex(themeIndex); setPreviewIndex(themeIndex); }}
+        onMouseEnter={() => { setExtraPreviewAvatar(null); setPreviewIndex(themeIndex); }}
+        onMouseLeave={() => setPreviewIndex(avatarIndex)}
+        onFocus={() => { setExtraPreviewAvatar(null); setPreviewIndex(themeIndex); }}
+        onBlur={() => setPreviewIndex(avatarIndex)}
+        className="group flex min-w-0 flex-col items-center gap-1.5 outline-none"
+        aria-label={`Select unlockable avatar ${avatar.name}`}
+        aria-pressed={isSelected}
+      >
+        <div
+          className={`relative flex h-12 w-12 items-center justify-center rounded-full transition-all duration-300 sm:h-14 sm:w-14 ${
+            isActive ? "scale-110" : "scale-100 group-hover:scale-105"
+          }`}
+          style={{ transition: "transform 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}
+        >
+          {avatar.imageSrc ? (
+            <img
+              src={avatar.imageSrc}
+              alt={avatar.name}
+              loading="lazy"
+              decoding="async"
+              draggable={false}
+              className={`h-full w-full rounded-full object-contain transition-all duration-300 ${
+                isSelected || isActive ? "drop-shadow-[0_0_12px_rgba(241,196,45,0.45)]" : "opacity-80 group-hover:opacity-100"
+              }`}
+            />
+          ) : (
+            <AvatarFigure key={`${themeIndex}-${themeVersion}`} avatarIndex={themeIndex} size="sm" selected={isSelected || isActive} themeOverride={avatar} />
+          )}
+        </div>
+        <span
+          className={`min-h-[1.4rem] max-w-16 text-center font-display text-[6px] uppercase leading-[1.15] tracking-[0.12em] transition-colors duration-200 sm:text-[7px] ${
+            isActive ? "text-raw-gold" : "text-raw-silver/40 group-hover:text-raw-silver/75"
+          }`}
+        >
+          {avatar.name}
+        </span>
+      </button>
+    );
+  }
+
   function NavButton({
     direction,
     onClick,
@@ -250,16 +339,14 @@ export function AvatarShowcaseSection({ onSignupClick }: AvatarShowcaseSectionPr
         <span className="inline-flex flex-col items-center leading-[1.05]">
           <span className="text-[1em]">Your Avatar.</span>
           <span className="text-[0.8em]">Your Identity.</span>
-          <span className="text-[0.6em]">Your App.</span>
+          <span className="text-[0.6em]">Your Story.</span>
         </span>
       }
       description={
         <span className="block whitespace-pre-line">
-          {`On raW, your username is your constant identity.
+          {`Your username is your constant identity. Your avatar is your evolving one.
 
-Your avatar is your evolving identity.
-
-Just like in real life, every person is born with a name, an appearance, and an inner personality. On raW, your username is your name, your avatar is your appearance, and your answers, choices, and interactions reveal the deeper personality behind it.`}
+In real life you are born with a name, a face, and a personality underneath. On raW, your username is your name, your avatar is your face — and your answers reveal the personality behind them.`}
         </span>
       }
     >
@@ -406,7 +493,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -24 }}
                 transition={{ duration: 0.22 }}
-           className="grid grid-cols-4 grid-rows-2 place-items-start justify-items-center content-start gap-x-4 gap-y-0"
+                className="grid grid-cols-4 grid-rows-2 place-items-start justify-items-center content-start gap-x-4 gap-y-0"
               >
                 {desktopAvatars.map(({ avatar, index }) => (
                   <AvatarButton key={`${desktopStart}-${index}`} index={index} avatar={avatar} />
@@ -414,6 +501,36 @@ Just like in real life, every person is born with a name, an appearance, and an 
               </motion.div>
             </AnimatePresence>
           </div>
+
+          {unlockableAvatars.length > 0 && (
+            <div className="mt-8 border-t border-raw-border/25 pt-5">
+              <p className="mb-4 text-center font-display text-[10px] uppercase tracking-[0.25em] text-raw-gold/65">
+                Unlockable Avatars
+              </p>
+              <div className="grid grid-cols-4 place-items-start justify-items-center gap-x-4 gap-y-3">
+                {visibleUnlockableAvatars.map(({ avatar, themeIndex }) => (
+                  <UnlockableAvatarButton key={avatar.id} avatar={avatar} themeIndex={themeIndex} />
+                ))}
+              </div>
+              {hasMoreUnlockableAvatars && (
+                <div className="mt-4 flex justify-center">
+                  <button
+                    type="button"
+                    onClick={() => setShowUnlockableAvatars((open) => !open)}
+                    className="group relative flex items-center gap-2 rounded-full border border-raw-border/40 bg-raw-black/60 px-4 py-2 text-[9px] uppercase tracking-[0.18em] text-raw-silver/50 transition-all duration-300 hover:border-raw-gold/50 hover:text-raw-gold"
+                    aria-expanded={showUnlockableAvatars}
+                  >
+                    <div
+                      className="absolute inset-0 rounded-full opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                      style={{ boxShadow: "0 0 14px rgba(241,196,45,0.2), inset 0 0 10px rgba(241,196,45,0.05)" }}
+                    />
+                    <span className="relative">{showUnlockableAvatars ? "Show Less" : "Show More"}</span>
+                    <span className="relative transition-transform duration-300" style={{ transform: showUnlockableAvatars ? "rotate(180deg)" : "rotate(0deg)" }}>▾</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -596,7 +713,7 @@ Just like in real life, every person is born with a name, an appearance, and an 
         </AnimatePresence>
 
         <div className="mt-10 border-t border-raw-border/20 pt-10 sm:mt-14 sm:pt-14">
-          <WheelRewardInline onSignupClick={onSignupClick ?? (() => undefined)} />
+          <WheelRewardInline onSignupClick={onSignupClick} />
         </div>
       </div>
     </LandingSectionShell>

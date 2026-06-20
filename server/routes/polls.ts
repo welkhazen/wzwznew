@@ -12,6 +12,10 @@ const voteBodySchema = z.object({
   optionId: z.string().min(1).max(64),
 });
 
+const pollParamsSchema = z.object({
+  pollId: z.string().min(1).max(64).regex(/^[a-zA-Z0-9_-]+$/),
+});
+
 const randomPollsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(50).default(10),
 });
@@ -68,6 +72,11 @@ async function handleRandomPolls(req: Request, res: Response) {
 }
 
 async function handleVote(req: Request, res: Response) {
+  const parsedParams = pollParamsSchema.safeParse(req.params);
+  if (!parsedParams.success) {
+    return res.status(400).json({ error: "Invalid poll ID." });
+  }
+
   const parsed = voteBodySchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: "Invalid vote payload." });
@@ -75,7 +84,7 @@ async function handleVote(req: Request, res: Response) {
 
   const sessionData = getSessionData(req);
   const user = sessionData.userId ? await userRepository.findById(sessionData.userId) : null;
-  const { pollId } = req.params;
+  const { pollId } = parsedParams.data;
 
   const permission = canVote(user, sessionData, pollId);
   if (!permission.ok) {

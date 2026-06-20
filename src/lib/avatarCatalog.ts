@@ -18,6 +18,10 @@ export type AvatarCatalogItem = {
   showIn?: "landing" | "app" | "both";
   rarity?: AvatarRarity;
   dropWeight?: number;
+  /** Optional explicit frame color tier, e.g. "grey" / "platinum" / "rainbow". */
+  frame_color?: string;
+  /** Optional explicit rank tier (1..10). Overrides frame_color when set. */
+  rank_tier?: number;
 };
 
 const CATALOG_STORAGE_KEY = "raw.avatar.catalog.v2";
@@ -158,6 +162,10 @@ function sanitizeCatalog(items: AvatarCatalogItem[]): AvatarCatalogItem[] {
       glow: item.glow || DEFAULT_AVATAR_CATALOG[Math.min(idx, DEFAULT_AVATAR_CATALOG.length - 1)].glow,
       isActive: item.isActive !== false,
       isNew: item.isNew ?? false,
+      rarity: item.rarity,
+      dropWeight: item.dropWeight,
+      frame_color: item.frame_color,
+      rank_tier: item.rank_tier,
     });
   });
 
@@ -251,7 +259,7 @@ export function loadAvatarCatalog(): Promise<AvatarCatalogItem[]> {
   return Promise.resolve(readAvatarCatalogLocal());
 }
 
-const FULL_COLS = "id, level, name, price, image_src, bg, figure, ring, glow, is_active, is_new, rarity, drop_weight";
+const FULL_COLS = "id, level, name, price, image_src, bg, figure, ring, glow, is_active, is_new, rarity, drop_weight, frame_color, rank_tier";
 const BASE_COLS = "id, level, name, price, bg, figure, ring, glow, is_active";
 
 export async function loadAvatarCatalogSupabaseOnly(): Promise<AvatarCatalogItem[]> {
@@ -282,6 +290,8 @@ export async function loadAvatarCatalogSupabaseOnly(): Promise<AvatarCatalogItem
       isNew: false,
       rarity: (row.rarity as AvatarRarity | undefined) ?? "common",
       dropWeight: (row.drop_weight as number | undefined) ?? 100,
+      frame_color: (row.frame_color as string | undefined) ?? undefined,
+      rank_tier: (row.rank_tier as number | undefined) ?? undefined,
     }))
   );
 
@@ -654,7 +664,20 @@ export async function claimPendingLandingWheelAvatarForUser(userId: string): Pro
   // columns get set. Idempotent on the server, safe to retry.
   try {
     const { claimFreeSpinAvatar } = await import("@/backend/supabase/controllers/avatarRewardsController");
-    await claimFreeSpinAvatar(userId, avatarId);
+    const claim = await claimFreeSpinAvatar(userId, avatarId);
+    if (claim.ok && claim.avatarId) {
+      const claimedAvatar = catalog.find((item) => item.id === claim.avatarId);
+      clearLandingWheelAvatarLocal();
+      if (!claimedAvatar) {
+        return { status: "unknown_avatar" };
+      }
+      await purchaseAvatarForUser(userId, claimedAvatar.id);
+      return {
+        status: claim.alreadyClaimed ? "already_claimed" : "granted",
+        avatarId: claimedAvatar.id,
+        level: claimedAvatar.level,
+      };
+    }
   } catch {
     // Best-effort — fall back to the legacy local-first grant below.
   }

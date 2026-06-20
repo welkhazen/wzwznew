@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-labelledby="title desc" style="--accent:#fff1f2;--dark:#0f172a">
+  <title id="title">Match Maker</title>
+  <desc id="desc">Stylized community cover illustration for Match Maker.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ec4899"/>
+      <stop offset="1" stop-color="#f97316"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="35%" r="65%">
+      <stop offset="0" stop-color="white" stop-opacity=".32"/>
+      <stop offset="1" stop-color="white" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="640" height="360" rx="36" fill="url(#bg)"/>
+  <rect width="640" height="360" rx="36" fill="url(#glow)"/>
+  <circle cx="92" cy="76" r="74" fill="white" opacity=".10"/>
+  <circle cx="548" cy="286" r="112" fill="black" opacity=".14"/>
+  <path d="M42 304C139 229 204 228 303 303s180 76 295-2" fill="none" stroke="white" stroke-width="18" stroke-linecap="round" opacity=".13"/>
+  <g><path d="M287 241l-62-58c-50-47 17-122 62-69 45-53 112 22 62 69l-62 58z" fill="white" opacity=".9"/><path d="M389 227l-42-39c-34-32 11-83 42-47 31-36 76 15 42 47l-42 39z" fill="var(--accent)" opacity=".9"/><path d="M188 127c38-27 76-29 115-6" stroke="white" stroke-width="11" stroke-linecap="round" opacity=".55"/></g>
+  <text x="40" y="318" fill="white" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="800" letter-spacing="-.5" opacity=".96">Match Maker</text>
+</svg>

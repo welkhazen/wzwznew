@@ -2,23 +2,18 @@ import { useEffect, useRef, useState } from "react";
 import tokenImg from "@/assets/tokens.webp";
 import { useRawStore } from "@/store/useRawStore";
 import { useTheme } from "@/providers/useTheme";
+import { PACKAGES, PaymentModal } from "@/components/dashboard/DashboardWallet";
 
-type TokenPack = { id: string; tokens: number; priceUsd: number; label: string; tag?: string };
-
-const TOKEN_PACKS: TokenPack[] = [
-  { id: "tokens-50", tokens: 50, priceUsd: 5, label: "Starter" },
-  { id: "tokens-100", tokens: 100, priceUsd: 10, label: "Basic" },
-  { id: "tokens-200", tokens: 200, priceUsd: 18, label: "Popular", tag: "Popular" },
-  { id: "tokens-500", tokens: 500, priceUsd: 40, label: "Best Value", tag: "Best value" },
-  { id: "tokens-1000", tokens: 1000, priceUsd: 85, label: "Power User" },
-];
 
 export function TokenBalanceButton() {
   const { tokenBalance: balance } = useRawStore();
   const { mode } = useTheme();
   const [open, setOpen] = useState(false);
   const [spinning, setSpinning] = useState(false);
-  const [pendingPackId, setPendingPackId] = useState<string | null>(null);
+  const [selectedPackId, setSelectedPackId] = useState<string | null>(null);
+  const [paymentOpen, setPaymentOpen] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "apple-pay" | "google-pay" | null>(null);
+  const [cardDetails, setCardDetails] = useState({ number: "", expiry: "", cvc: "" });
   const spinTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const isLight = mode === "light";
@@ -34,11 +29,15 @@ export function TokenBalanceButton() {
   }
 
   function handleBuy(packId: string) {
-    setPendingPackId(packId);
-    // Real Stripe / payment integration plugs in here. The frontend cannot mint
-    // tokens directly (server returns 403); the buy click currently records
-    // intent and surfaces a "coming soon" hint until the checkout API lands.
-    window.setTimeout(() => setPendingPackId(null), 1600);
+    setSelectedPackId(packId);
+    setOpen(false);
+    setPaymentOpen(true);
+  }
+
+  function handleClosePayment() {
+    setPaymentOpen(false);
+    setPaymentMethod(null);
+    setCardDetails({ number: "", expiry: "", cvc: "" });
   }
 
   useEffect(() => {
@@ -137,39 +136,46 @@ export function TokenBalanceButton() {
             </span>
           </div>
           <div className="space-y-1.5">
-            {TOKEN_PACKS.map((pack) => {
-              const pending = pendingPackId === pack.id;
-              return (
-                <button
-                  key={pack.id}
-                  type="button"
-                  role="menuitem"
-                  onClick={() => handleBuy(pack.id)}
-                  disabled={pending}
-                  className={`flex w-full items-center justify-between rounded-xl border px-3 py-2 text-left transition focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/50 ${
-                    isLight
-                      ? "border-slate-200 hover:border-raw-gold/45 hover:bg-amber-50"
-                      : "border-raw-border/45 hover:border-raw-gold/45 hover:bg-raw-gold/[0.06]"
-                  } ${pending ? "opacity-60" : ""}`}
-                >
-                  <span className="flex items-center gap-2">
-                    <img src={tokenImg} alt="" width={20} height={20} className="shrink-0 object-contain" />
-                    <span>
-                      <span className="block text-sm font-semibold text-raw-gold">{pack.tokens.toLocaleString()} tokens</span>
-                      <span className={`text-[10px] uppercase tracking-[0.16em] ${isLight ? "text-slate-500" : "text-raw-silver/45"}`}>{pack.tag ?? pack.label}</span>
-                    </span>
+            {PACKAGES.map((pack) => (
+              <button
+                key={pack.id}
+                type="button"
+                role="menuitem"
+                onClick={() => handleBuy(pack.id)}
+                className={`flex w-full items-center justify-between rounded-xl border px-3 py-2 text-left transition focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/50 ${
+                  isLight
+                    ? "border-slate-200 hover:border-raw-gold/45 hover:bg-amber-50"
+                    : "border-raw-border/45 hover:border-raw-gold/45 hover:bg-raw-gold/[0.06]"
+                }`}
+              >
+                <span className="flex items-center gap-2">
+                  <img src={tokenImg} alt="" width={20} height={20} className="shrink-0 object-contain" />
+                  <span>
+                    <span className="block text-sm font-semibold text-raw-gold">{pack.tokens.toLocaleString()} tokens</span>
+                    <span className={`text-[10px] uppercase tracking-[0.16em] ${isLight ? "text-slate-500" : "text-raw-silver/45"}`}>{pack.label}</span>
                   </span>
-                  <span className={`text-xs font-semibold ${isLight ? "text-slate-700" : "text-raw-text"}`}>
-                    {pending ? "…" : `$${pack.priceUsd.toFixed(2)}`}
-                  </span>
-                </button>
-              );
-            })}
+                </span>
+                <span className={`text-xs font-semibold ${isLight ? "text-slate-700" : "text-raw-text"}`}>
+                  ${pack.price.toFixed(2)}
+                </span>
+              </button>
+            ))}
           </div>
           <p className={`mt-3 text-[10px] leading-relaxed ${isLight ? "text-slate-500" : "text-raw-silver/40"}`}>
             Token purchases process through a secure checkout. Earn free tokens daily from the spin and challenges.
           </p>
         </div>
+      )}
+      {paymentOpen && selectedPackId && (
+        <PaymentModal
+          selectedPackage={PACKAGES.find((p) => p.id === selectedPackId)!}
+          paymentMethod={paymentMethod}
+          cardDetails={cardDetails}
+          onPaymentMethodChange={setPaymentMethod}
+          onCardDetailsChange={setCardDetails}
+          onBack={handleClosePayment}
+          onClose={handleClosePayment}
+        />
       )}
     </div>
   );
