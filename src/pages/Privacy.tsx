@@ -33,27 +33,29 @@ export default function Privacy() {
 
             <section>
               <h2 className="text-lg font-semibold text-raw-text">2. Information We Collect</h2>
-              <p className="mt-2 text-sm leading-relaxed">We collect information you voluntarily provide:</p>
+              <p className="mt-2 text-sm leading-relaxed">
+                We focus on collecting raW data: the choices, votes, communities, messages, and engagement signals you create while using the platform. This data is primarily connected to your username and account features, not to a public real-world identity.
+              </p>
               <ul className="mt-3 space-y-2 text-sm">
-                <li>• Account information (username, password, email)</li>
-                <li>• Profile data (avatar selection, community preferences)</li>
-                <li>• Usage data (polls voted, communities joined, messages sent)</li>
-                <li>• Device information (IP address, browser type, device type)</li>
+                <li>• Account information needed to run your account, such as username and password</li>
+                <li>• Profile data, including avatar selection and community preferences</li>
+                <li>• raW engagement data, including polls voted, communities joined, messages sent, and features used</li>
+                <li>• Technical data needed for security and reliability, such as IP address, browser type, and device type</li>
               </ul>
             </section>
 
             <section>
               <h2 className="text-lg font-semibold text-raw-text">3. How We Use Your Information</h2>
               <p className="mt-2 text-sm leading-relaxed">
-                We use the information we collect to:
+                We use your raW engagement data to operate the product and to power The Cumulative Mind (The raW Engine), our system for trend analysis and correlation. The raW Engine looks for patterns in how people vote, join, talk, and engage so we can better understand what different users have in common.
               </p>
               <ul className="mt-3 space-y-2 text-sm">
                 <li>• Provide, maintain, and improve our services</li>
-                <li>• Process your account and deliver features</li>
-                <li>• Send administrative information and updates</li>
-                <li>• Respond to inquiries and provide customer support</li>
-                <li>• Analyze usage patterns and trends</li>
-                <li>• Detect and prevent fraudulent transactions and abuse</li>
+                <li>• Process your account and deliver features connected to your username</li>
+                <li>• Match you with people who show similar interests, opinions, and engagement patterns</li>
+                <li>• Recommend better communities, suggestions, polls, and services</li>
+                <li>• Analyze trends and correlations across engagement data</li>
+                <li>• Detect and prevent fraudulent activity, spam, and abuse</li>
               </ul>
             </section>
 
@@ -67,7 +69,7 @@ export default function Privacy() {
             <section>
               <h2 className="text-lg font-semibold text-raw-text">5. Anonymity & Account Features</h2>
               <p className="mt-2 text-sm leading-relaxed">
-                raW is designed for anonymous participation. Your username is not your real name, and your activity is not tied to your real identity. However, we retain account data necessary to operate the service and prevent abuse.
+                raW is designed for username-based participation. Your activity helps shape your raW profile, but the experience is built around a username rather than a required real name. We use your engagement to improve matching, recommendations, and communities through The Cumulative Mind (The raW Engine), while retaining the account and technical data needed to operate the service and prevent abuse.
               </p>
             </section>
 

@@ -369,7 +369,7 @@ export function DashboardProfile({
               <Ticket className="h-4 w-4 text-raw-gold/60" /> Founding invitations
             </p>
             <p className="mt-1 text-xs leading-relaxed text-raw-silver/40">
-              You get two founding invite codes. Reveal one, copy it, and share it with a friend who you know would like this or need this.
+              You get two founding invite codes. Reveal one, copy it, or share it with a friend.
             </p>
           </div>
           <span className="rounded-full border border-raw-gold/25 bg-raw-gold/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-raw-gold/70">
