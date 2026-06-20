@@ -1,12 +1,24 @@
-import { Suspense, lazy, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Suspense, lazy, useLayoutEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { PollShowcase } from "@/components/landing/PollShowcase";
+import { Navbar } from "@/components/landing/Navbar";
+import { StickyTicker } from "@/components/landing/StickyTicker";
+import { ProblemSection } from "@/components/landing/ProblemSection";
+import { HowItWorks } from "@/components/landing/HowItWorks";
 import { LandingFooter } from "@/components/landing/LandingFooter";
+import { ThemeProvider } from "@/providers/ThemeProvider";
 import type { AuthResult, User } from "@/store/types";
 import "./landing-v2.css";
 
 gsap.registerPlugin(ScrollTrigger);
+
+const GlobeHero = lazy(() =>
+  import("@/components/landing/GlobeHero").then((m) => ({ default: m.GlobeHero }))
+);
+const AvatarShowcaseSection = lazy(() =>
+  import("@/components/landing/AvatarShowcaseSection").then((m) => ({ default: m.AvatarShowcaseSection }))
+);
 
 const SignupModalLazy = lazy(() =>
   import("@/components/landing/SignupModal").then((module) => ({ default: module.SignupModal }))
@@ -35,27 +47,27 @@ const ROOMS = [
   {
     name: "Unsent Letters",
     line: "Everything you almost said, finally said.",
-    seed: "rawletters",
+    image: "/avatars/landing/pink-circuit.webp",
   },
   {
     name: "After the Breakup",
     line: "Grief, rage, and the slow glow-up. In that order.",
-    seed: "rawafter",
+    image: "/avatars/landing/neon-lynx.webp",
   },
   {
     name: "Night Shift Minds",
     line: "For the overthinkers awake while the world sleeps.",
-    seed: "rawnight",
+    image: "/avatars/landing/blue-signal.webp",
   },
   {
     name: "Mothers, Unfiltered",
     line: "Love without the highlight reel.",
-    seed: "rawmothers",
+    image: "/avatars/landing/solar-flame.webp",
   },
   {
     name: "The Quiet Ambitious",
     line: "Building something big without announcing it.",
-    seed: "rawquiet",
+    image: "/avatars/landing/violet-mask.webp",
   },
 ];
 
@@ -65,21 +77,21 @@ const VOICES = [
       "I typed something I had never told anyone. Four people answered within the hour. None of them know my name. All of them know me.",
     handle: "Cosmic Spark",
     tenure: "member for 8 months",
-    seed: "rawvoice1",
+    avatar: "/avatars/landing/neon-lynx.webp",
   },
   {
     quote:
       "I expected an app. I found the group chat I had been missing my whole adult life.",
     handle: "Bronze Phoenix",
     tenure: "member for 1 year",
-    seed: "rawvoice2",
+    avatar: "/avatars/landing/pink-circuit.webp",
   },
   {
     quote:
       "It is the only place where I am not performing. I show up wrecked and nobody flinches.",
     handle: "Iron Mind",
     tenure: "member for 5 months",
-    seed: "rawvoice3",
+    avatar: "/avatars/landing/violet-mask.webp",
   },
 ];
 
@@ -114,11 +126,11 @@ function GoldDot() {
   return <span className="mx-8 inline-block text-raw-gold/60" aria-hidden="true">&#9670;</span>;
 }
 
-function PillImage({ seed }: { seed: string }) {
+function PillImage({ image }: { image: string }) {
   return (
     <span
       className="mx-2 inline-block h-[0.85em] w-[2.2em] translate-y-[0.12em] rounded-full bg-cover bg-center align-baseline grayscale contrast-125 opacity-80"
-      style={{ backgroundImage: `url(https://picsum.photos/seed/${seed}/360/160)` }}
+      style={{ backgroundImage: `url(${image})` }}
       aria-hidden="true"
     />
   );
@@ -134,28 +146,13 @@ export default function LandingShellV2({
   login,
 }: LandingShellV2Props) {
   const [siteReady, setSiteReady] = useState(false);
-  const [veilGone, setVeilGone] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!siteReady) return;
-    const timer = window.setTimeout(() => setVeilGone(true), 800);
-    return () => window.clearTimeout(timer);
-  }, [siteReady]);
-
   useLayoutEffect(() => {
+    if (!siteReady) return;
     const ctx = gsap.context(() => {
       const mm = gsap.matchMedia();
       mm.add("(prefers-reduced-motion: no-preference)", () => {
-        gsap.from(".lv2-hero-rise", {
-          y: 44,
-          opacity: 0,
-          duration: 1.1,
-          stagger: 0.14,
-          ease: "power3.out",
-          delay: 0.15,
-        });
-
         gsap.to(".lv2-word", {
           opacity: 1,
           stagger: 0.06,
@@ -183,74 +180,41 @@ export default function LandingShellV2({
       });
     }, rootRef);
     return () => ctx.revert();
-  }, []);
+  }, [siteReady]);
 
   const openSignup = () => setShowSignup(true);
 
   return (
-    <div ref={rootRef} className="lv2 lv2-grain relative min-h-screen overflow-x-hidden bg-raw-black text-raw-text">
-      <PollShowcase
-        initialOpen
-        onOpenChange={(open) => {
-          if (open) setSiteReady(false);
-        }}
-        onResolved={() => setSiteReady(true)}
-      />
-
-      {!veilGone && (
-        <div
-          className={`fixed inset-0 z-30 bg-raw-black/80 backdrop-blur-xl transition-opacity duration-700 ${
-            siteReady ? "pointer-events-none opacity-0" : "opacity-100"
-          }`}
+    <ThemeProvider>
+      <div ref={rootRef} className="lv2 lv2-grain relative min-h-screen overflow-x-hidden bg-raw-black text-raw-text">
+        <PollShowcase
+          initialOpen
+          onOpenChange={(open) => {
+            if (open) setSiteReady(false);
+          }}
+          onResolved={() => setSiteReady(true)}
         />
-      )}
 
-      <header className="fixed inset-x-0 top-4 z-40 flex justify-center px-4">
-        <nav className="flex w-full max-w-3xl items-center justify-between rounded-full border border-raw-gold/15 bg-raw-black/65 py-2 pl-6 pr-2 backdrop-blur-xl">
-          <a href="#top" className="lv2-display text-lg font-bold tracking-tight">
-            <span className="raw-chrome-metallic">ra</span>
-            <span className="text-raw-gold">W</span>
-          </a>
-          <div className="hidden items-center gap-7 text-sm text-raw-silver/70 md:flex">
-            <a href="#inside" className="transition-colors hover:text-raw-text">Inside</a>
-            <a href="#rooms" className="transition-colors hover:text-raw-text">Rooms</a>
-            <a href="#voices" className="transition-colors hover:text-raw-text">Voices</a>
-            <a href="/faq" className="transition-colors hover:text-raw-text">FAQ</a>
-          </div>
-          <button
-            onClick={openSignup}
-            className="lv2-btn-gold rounded-full px-5 py-2 text-sm font-bold"
-          >
-            {isLoggedIn && user ? user.username : "Join raW"}
-          </button>
-        </nav>
-      </header>
+        <Navbar
+          isLoggedIn={isLoggedIn}
+          username={user?.username}
+          onSignupClick={() => setShowSignup(true)}
+        />
 
-      <main id="top" className="relative z-10 w-full max-w-full overflow-x-hidden">
-        <section className="lv2-hero-wash relative flex min-h-screen flex-col items-center justify-center px-6 pb-24 pt-36 text-center">
-          <p className="lv2-hero-rise mb-7 text-xs uppercase tracking-[0.45em] text-raw-gold/80">
-            The anonymous community
-          </p>
-          <h1
-            className="lv2-display lv2-hero-rise mx-auto w-full max-w-6xl text-balance font-extrabold leading-[1.02] text-raw-text"
-            style={{ fontSize: "clamp(2.75rem, 6.5vw, 5.5rem)" }}
-          >
-            Say the things you never say out loud.
-          </h1>
-          <p className="lv2-hero-rise mx-auto mt-8 max-w-2xl text-balance text-base leading-relaxed text-raw-silver/70 sm:text-lg">
-            A dark, quiet corner of the internet where you let it out, find your
-            people, and actually bond. No followers. No filters. No performing.
-          </p>
-          <div className="lv2-hero-rise mt-11 flex flex-col items-center gap-4 sm:flex-row">
-            <button onClick={openSignup} className="lv2-btn-gold rounded-full px-9 py-4 text-base font-bold">
-              Step inside
-            </button>
-            <a href="#inside" className="lv2-btn-ghost rounded-full px-9 py-4 text-base font-medium">
-              See what's inside
-            </a>
-          </div>
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-raw-black" />
-        </section>
+        <StickyTicker />
+
+        <main className="relative w-full max-w-full overflow-x-hidden">
+        <Suspense fallback={<div className="min-h-[620px] sm:min-h-[680px]" />}>
+          <GlobeHero onSignupClick={() => setShowSignup(true)} />
+        </Suspense>
+
+        <ProblemSection />
+
+        <HowItWorks />
+
+        <Suspense fallback={<div className="h-16" />}>
+          <AvatarShowcaseSection onSignupClick={() => setShowSignup(true)} />
+        </Suspense>
 
         <section aria-label="Voices from inside" className="border-y border-raw-border/70 py-7 [mask-image:linear-gradient(to_right,transparent,black_12%,black_88%,transparent)]">
           <div className="overflow-hidden whitespace-nowrap">
@@ -282,8 +246,8 @@ export default function LandingShellV2({
             <div className="mt-14 grid auto-rows-[200px] grid-flow-dense grid-cols-1 gap-4 md:grid-cols-6 md:auto-rows-[230px]">
               <article className="group relative overflow-hidden rounded-3xl border border-raw-border md:col-span-4 md:row-span-2">
                 <img
-                  src="https://picsum.photos/seed/rawcandle/1280/960"
-                  alt=""
+                  src="/avatars/landing/neon-lynx.webp"
+                  alt="Community in action"
                   loading="lazy"
                   className="absolute inset-0 h-full w-full object-cover opacity-55 grayscale contrast-125 transition-transform duration-700 ease-out group-hover:scale-105"
                 />
@@ -324,8 +288,8 @@ export default function LandingShellV2({
 
               <article className="group relative overflow-hidden rounded-3xl border border-raw-border md:col-span-3">
                 <img
-                  src="https://picsum.photos/seed/rawsmoke/960/640"
-                  alt=""
+                  src="/avatars/landing/blue-signal.webp"
+                  alt="Finding community"
                   loading="lazy"
                   className="absolute inset-0 h-full w-full object-cover opacity-45 grayscale contrast-125 transition-transform duration-700 ease-out group-hover:scale-105"
                 />
@@ -340,11 +304,11 @@ export default function LandingShellV2({
 
               <article className="flex flex-col justify-between rounded-3xl border border-raw-border bg-raw-surface/60 p-7 md:col-span-3">
                 <div className="flex -space-x-3">
-                  {["rawf1", "rawf2", "rawf3"].map((seed) => (
+                  {["/avatars/landing/pink-circuit.webp", "/avatars/landing/solar-flame.webp", "/avatars/landing/violet-mask.webp"].map((src, i) => (
                     <img
-                      key={seed}
-                      src={`https://picsum.photos/seed/${seed}/96/96`}
-                      alt=""
+                      key={i}
+                      src={src}
+                      alt="Community member"
                       loading="lazy"
                       className="h-10 w-10 rounded-full border-2 border-raw-black object-cover grayscale"
                     />
@@ -371,7 +335,7 @@ export default function LandingShellV2({
                   {word}{" "}
                 </span>
               ))}
-            <PillImage seed="rawvelvet" />
+            <PillImage image="/avatars/landing/solar-flame.webp" />
             {"Here, the volume is yours. Say it, and let a stranger whisper back:"
               .split(" ")
               .map((word, index) => (
@@ -380,7 +344,7 @@ export default function LandingShellV2({
                 </span>
               ))}
             <span className="lv2-word text-raw-gold">same.</span>
-            <PillImage seed="rawmidnight" />
+            <PillImage image="/avatars/landing/viozen.webp" />
           </p>
         </section>
 
@@ -426,8 +390,8 @@ export default function LandingShellV2({
                   className="lv2-slice group relative min-h-[88px] overflow-hidden rounded-2xl border border-raw-border text-left"
                 >
                   <img
-                    src={`https://picsum.photos/seed/${room.seed}/800/1100`}
-                    alt=""
+                    src={room.image}
+                    alt={room.name}
                     loading="lazy"
                     className="absolute inset-0 h-full w-full object-cover opacity-40 grayscale contrast-125 transition-opacity duration-700 group-hover:opacity-60"
                   />
@@ -461,8 +425,8 @@ export default function LandingShellV2({
                   </blockquote>
                   <figcaption className="mt-8 flex items-center gap-3">
                     <img
-                      src={`https://picsum.photos/seed/${voice.seed}/96/96`}
-                      alt=""
+                      src={voice.avatar}
+                      alt={voice.handle}
                       loading="lazy"
                       className="h-10 w-10 rounded-full object-cover grayscale"
                     />
@@ -500,15 +464,16 @@ export default function LandingShellV2({
         <LandingFooter />
       </main>
 
-      <Suspense fallback={null}>
-        <SignupModalLazy
-          open={showSignup}
-          onClose={() => setShowSignup(false)}
-          onRequestSignupOtp={requestSignupOtp}
-          onVerifySignupOtp={verifySignupOtp}
-          onLogin={login}
-        />
-      </Suspense>
-    </div>
+        <Suspense fallback={null}>
+          <SignupModalLazy
+            open={showSignup}
+            onClose={() => setShowSignup(false)}
+            onRequestSignupOtp={requestSignupOtp}
+            onVerifySignupOtp={verifySignupOtp}
+            onLogin={login}
+          />
+        </Suspense>
+      </div>
+    </ThemeProvider>
   );
 }
