@@ -4,7 +4,6 @@ import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
 import {
   ArrowLeft,
   Bell,
-  Ban,
   Camera,
   ChevronDown,
   Check,
@@ -14,16 +13,16 @@ import {
   Palette,
   Receipt,
   Settings,
+  ShieldOff,
   Sun,
   Sunset,
+  UserRound,
 } from "lucide-react";
 import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { LevelProgressBanner } from "@/components/dashboard/LevelProgressBanner";
 import { TokenBalanceButton } from "@/components/ui/TokenBalanceButton";
-import { apiFetch } from "@/lib/http";
 import { cn } from "@/lib/utils";
 import { readIssueReports, writeIssueReports, type IssueReportRecord } from "@/lib/adminData";
-import { readBlockedCommunitySenders, writeBlockedCommunitySenders } from "@/lib/blockedCommunitySenders";
 import { useTheme } from "@/providers/useTheme";
 import { THEME_MODE_LABELS, type AccentPresetId, type ThemeMode } from "@/providers/theme-context";
 import { xpProgressInLevel } from "@/lib/userProgress";
@@ -48,8 +47,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
 import { spendTokens } from "@/lib/api/tokens";
 import { supabase } from "@/lib/supabase";
+import { listUserAliases, setChatIdentity, type UserAliasRow } from "@/backend/supabase/controllers/userController";
+import { getPinNotifications, type PinNotificationRecord } from "@/backend/supabase/controllers/userExtrasController";
+import { getPrivateAvatarLevel } from "@/lib/avataridentity";
+import { CHAT_IDENTITY_CHANGED_EVENT, readSelectedChatAlias, writeSelectedChatAlias } from "@/lib/identitySelection";
 
-export type DashboardTab = "home" | "polls" | "challenges" | "daily-spin" | "communities" | "profile" | "settings" | "wallet" | "inventory" | "store";
+export type DashboardTab = "home" | "polls" | "challenges" | "daily-spin" | "communities" | "profile" | "settings" | "wallet" | "store";
 
 interface DashboardNavProps {
   userId: string;
@@ -179,7 +182,7 @@ function DeadlineCountdownBadge({ isLight }: { isLight: boolean }) {
 
 type DashboardNotification = {
   id: string;
-  type: "mention" | "like" | "community";
+  type: "mention" | "like" | "community" | "pinned";
   title: string;
   communityTitle: string;
   senderName?: string;
@@ -235,8 +238,6 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
   const [seenNotificationIds, setSeenNotificationIds] = useState<string[]>(() => readSeenNotificationIds(userId));
   const [appearanceOpen, setAppearanceOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
-  const [blockedUsersOpen, setBlockedUsersOpen] = useState(false);
-  const [blockedSenderKeys, setBlockedSenderKeys] = useState<string[]>(() => readBlockedCommunitySenders(userId));
   const [issueType, setIssueType] = useState(ISSUE_TYPE_OPTIONS[0]);
   const [issueDetails, setIssueDetails] = useState("");
   const [screenshotName, setScreenshotName] = useState("");
@@ -245,10 +246,58 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
   const [accentPurchaseId, setAccentPurchaseId] = useState<AccentPresetId | null>(null);
   const [ownedAccentIds, setOwnedAccentIds] = useState<AccentPresetId[]>(() => readOwnedAccentsCache(userId));
   const [tokenBalanceForUnlocks, setTokenBalanceForUnlocks] = useState<number>(() => readStoredTokenBalance(userId));
+  const [privateAliases, setPrivateAliases] = useState<UserAliasRow[]>([]);
+  const [pinNotifications, setPinNotifications] = useState<PinNotificationRecord[]>([]);
+  const [selectedChatAlias, setSelectedChatAlias] = useState<string | null>(() => readSelectedChatAlias(userId));
   const notifRef = useRef<HTMLDivElement>(null);
+  const effectiveAvatarLevel = selectedChatAlias ? getPrivateAvatarLevel(userId) : avatarLevel;
+
+  useEffect(() => {
+    let cancelled = false;
+    listUserAliases(userId)
+      .then((rows) => {
+        if (cancelled) return;
+        const privateRows = rows.filter((row) => !row.is_public).slice(0, 1);
+        setPrivateAliases(privateRows);
+        setSelectedChatAlias((current) => {
+          if (!current) return null;
+          return privateRows.some((row) => row.alias.toLowerCase() === current.toLowerCase()) ? current : null;
+        });
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [userId]);
+
+  const saveChatIdentity = (alias: string | null) => {
+    setSelectedChatAlias(alias);
+    writeSelectedChatAlias(userId, alias);
+    void setChatIdentity(alias, getPrivateAvatarLevel(userId)).catch(() => {});
+  };
+
+  useEffect(() => {
+    setSelectedChatAlias(readSelectedChatAlias(userId));
+    if (typeof window === "undefined") return;
+    const handleIdentityChange = (event: Event) => {
+      const detail = (event as CustomEvent<{ userId?: string; alias?: string | null }>).detail;
+      if (detail?.userId !== userId) return;
+      setSelectedChatAlias(detail.alias ?? null);
+    };
+    window.addEventListener(CHAT_IDENTITY_CHANGED_EVENT, handleIdentityChange);
+    return () => window.removeEventListener(CHAT_IDENTITY_CHANGED_EVENT, handleIdentityChange);
+  }, [userId]);
 
   useEffect(() => {
     setTokenBalanceForUnlocks(readStoredTokenBalance(userId));
+  }, [userId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    getPinNotifications(userId)
+      .then((rows) => {
+        if (!cancelled) setPinNotifications(rows);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
   }, [userId]);
 
   useEffect(() => {
@@ -313,8 +362,19 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
         }
       }
     }
+    for (const pin of pinNotifications) {
+      results.push({
+        id: `pinned:${pin.id}`,
+        type: "pinned",
+        title: `${pin.actorName} pinned your message to their profile`,
+        communityTitle: pin.communityTitle ?? "",
+        senderName: pin.actorName,
+        text: pin.messageText ?? "",
+        createdAt: pin.createdAt,
+      });
+    }
     return results.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  }, [userId, username, communities]);
+  }, [userId, username, communities, pinNotifications]);
   const unseenNotificationCount = useMemo(() => {
     const seen = new Set(seenNotificationIds);
     return notifications.filter((notification) => !seen.has(notification.id)).length;
@@ -322,30 +382,8 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
 
   useEffect(() => {
     setSeenNotificationIds(readSeenNotificationIds(userId));
-    setBlockedSenderKeys(readBlockedCommunitySenders(userId));
   }, [userId]);
 
-  const blockedSenderLabels = useMemo(() => {
-    const labels = new Map<string, string>();
-    for (const community of communities) {
-      for (const message of community.messages) {
-        const key = (message.senderId || message.senderName).trim().toLowerCase();
-        if (blockedSenderKeys.includes(key)) labels.set(key, message.senderName);
-      }
-      for (const member of community.members) {
-        const key = (member.userId || member.username).trim().toLowerCase();
-        if (blockedSenderKeys.includes(key)) labels.set(key, member.username);
-      }
-    }
-    return blockedSenderKeys.map((key) => ({ key, label: labels.get(key) ?? key }));
-  }, [blockedSenderKeys, communities]);
-
-  const handleUnblockSender = (senderKey: string) => {
-    const next = blockedSenderKeys.filter((key) => key !== senderKey);
-    setBlockedSenderKeys(next);
-    writeBlockedCommunitySenders(userId, next);
-    window.dispatchEvent(new StorageEvent("storage", { key: "raw.community.blocked-senders.v1" }));
-  };
 
   useEffect(() => {
     if (!userId) return;
@@ -515,18 +553,7 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
       status: "open",
     };
 
-    try {
-      const response = await apiFetch("/api/moderation/issue-reports", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(report),
-      });
-      if (!response.ok) {
-        throw new Error("Issue report API failed");
-      }
-    } catch {
-      writeIssueReports([report, ...readIssueReports()]);
-    }
+    writeIssueReports([report, ...readIssueReports()]);
 
     setIssueDetails("");
     setScreenshotName("");
@@ -646,11 +673,12 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
                     <div key={i} className={cn("border-b px-4 py-3 last:border-0", isEffectiveLight ? "border-slate-100" : "border-raw-border/15")}>
                       <div className="flex items-center gap-2">
                         <span className={`text-[9px] uppercase tracking-wider font-semibold rounded-full px-2 py-0.5 ${n.type === "like" ? "bg-raw-gold/15 text-raw-gold" : "bg-raw-silver/10 text-raw-silver/60"}`}>
-                          {n.type === "like" ? `♥ ${n.likeCount} like${(n.likeCount ?? 0) > 1 ? "s" : ""}` : n.type === "community" ? "New community" : "@ mention"}
+                          {n.type === "like" ? `♥ ${n.likeCount} like${(n.likeCount ?? 0) > 1 ? "s" : ""}` : n.type === "community" ? "New community" : n.type === "pinned" ? "📌 Pinned" : "@ mention"}
                         </span>
                         <p className={cn("text-[10px]", isEffectiveLight ? "text-slate-500" : "text-raw-silver/40")}>{n.communityTitle}</p>
                       </div>
                       {n.type === "mention" && <p className={cn("mt-1 text-xs", isEffectiveLight ? "text-slate-500" : "text-raw-silver/60")}>from @{n.senderName}</p>}
+                      {n.type === "pinned" && <p className={cn("mt-1 text-xs", isEffectiveLight ? "text-slate-500" : "text-raw-silver/60")}>{n.title}</p>}
                       <p className={cn("mt-1 text-sm leading-relaxed line-clamp-2", isEffectiveLight ? "text-slate-800" : "text-raw-text/80")}>{n.text}</p>
                     </div>
                   ))}
@@ -715,7 +743,7 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
                 className="flex items-center transition-opacity hover:opacity-80"
                 aria-label="Open profile menu"
               >
-                <AvatarFigure avatarIndex={avatarLevel} size="sm" selected />
+                <AvatarFigure avatarIndex={effectiveAvatarLevel} size="sm" selected />
               </button>
             </DropdownMenuTrigger>
 
@@ -739,12 +767,60 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
                     : "border-raw-gold/20 bg-raw-gold/[0.08] hover:bg-raw-gold/[0.12]",
                 )}
               >
-                <AvatarFigure avatarIndex={avatarLevel} size="sm" selected />
+                <AvatarFigure avatarIndex={effectiveAvatarLevel} size="sm" selected />
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-raw-text">View Profile</p>
-                  <p className={cn("truncate text-xs", isEffectiveLight ? "text-slate-600" : "text-raw-silver/50")}>@{username}</p>
+                  <p className={cn("truncate text-xs", isEffectiveLight ? "text-slate-600" : "text-raw-silver/50")}>@{selectedChatAlias ?? username}</p>
                 </div>
               </button>
+
+              <div className={cn("mx-1 mb-1 rounded-xl border p-1", isEffectiveLight ? "border-slate-200 bg-slate-50/80" : "border-raw-border/25 bg-raw-black/25")}>
+                <p className={cn("px-2 pb-1 pt-0.5 text-[10px] uppercase tracking-[0.18em]", isEffectiveLight ? "text-slate-500" : "text-raw-silver/45")}>
+                  Chat name
+                </p>
+                <button
+                  type="button"
+                  onClick={() => saveChatIdentity(null)}
+                  className={cn(
+                    "flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left text-xs transition-colors",
+                    selectedChatAlias === null
+                      ? "bg-raw-gold/15 text-raw-gold"
+                      : isEffectiveLight
+                        ? "text-slate-700 hover:bg-slate-100"
+                        : "text-raw-silver/80 hover:bg-raw-surface/70",
+                  )}
+                >
+                  <span className="flex min-w-0 items-center gap-2">
+                    <UserRound className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate">@{username}</span>
+                  </span>
+                  {selectedChatAlias === null && <Check className="h-3.5 w-3.5 shrink-0" />}
+                </button>
+                {privateAliases.map((alias) => {
+                  const isSelected = selectedChatAlias?.toLowerCase() === alias.alias.toLowerCase();
+                  return (
+                    <button
+                      key={alias.id}
+                      type="button"
+                      onClick={() => saveChatIdentity(alias.alias)}
+                      className={cn(
+                        "mt-1 flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left text-xs transition-colors",
+                        isSelected
+                          ? "bg-raw-gold/15 text-raw-gold"
+                          : isEffectiveLight
+                            ? "text-slate-700 hover:bg-slate-100"
+                            : "text-raw-silver/80 hover:bg-raw-surface/70",
+                      )}
+                    >
+                      <span className="flex min-w-0 items-center gap-2">
+                        <ShieldOff className="h-3.5 w-3.5 shrink-0" />
+                        <span className="truncate">@{alias.alias}</span>
+                      </span>
+                      {isSelected && <Check className="h-3.5 w-3.5 shrink-0" />}
+                    </button>
+                  );
+                })}
+              </div>
 
               <div className={cn("mx-1 mb-1 rounded-lg border px-2 py-1.5 sm:hidden", isEffectiveLight ? "border-slate-200 bg-slate-50" : "border-raw-border/25 bg-raw-black/30")}>
                 <div className="mb-1 flex items-center justify-between gap-2">
@@ -780,18 +856,6 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
               >
                 <Receipt className="mr-3 h-4 w-4" />
                 Billing
-              </DropdownMenuItem>
-
-              <DropdownMenuItem
-                onSelect={(event) => {
-                  event.preventDefault();
-                  setBlockedSenderKeys(readBlockedCommunitySenders(userId));
-                  setBlockedUsersOpen(true);
-                }}
-                className={cn("cursor-pointer rounded-lg px-2 py-1.5 text-xs focus:text-raw-text sm:px-3 sm:py-2.5 sm:text-sm", isEffectiveLight ? "text-slate-700 focus:bg-slate-100" : "text-raw-silver/80 focus:bg-raw-surface/80")}
-              >
-                <Ban className="mr-3 h-4 w-4" />
-                Blocked users
               </DropdownMenuItem>
 
               <DropdownMenuSeparator className={cn("my-1 sm:my-2", isEffectiveLight ? "bg-slate-200" : "bg-raw-border/30")} />
@@ -1062,53 +1126,6 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
         </DialogContent>
       </Dialog>
 
-      <Dialog open={blockedUsersOpen} onOpenChange={setBlockedUsersOpen}>
-        <DialogContent className="border-raw-border/40 bg-raw-black text-raw-text sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="font-display text-xl tracking-wide">Blocked users</DialogTitle>
-            <DialogDescription className="text-raw-silver/50">
-              Unblock someone to show their community messages again.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-2">
-            {blockedSenderLabels.length === 0 ? (
-              <p className="rounded-2xl border border-raw-border/25 bg-raw-surface/20 px-4 py-6 text-center text-sm text-raw-silver/40">
-                You have not blocked anyone yet.
-              </p>
-            ) : blockedSenderLabels.map((sender) => (
-              <div
-                key={sender.key}
-                className="flex items-center justify-between gap-3 rounded-2xl border border-raw-border/25 bg-raw-surface/25 px-4 py-3"
-              >
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-raw-text">@{sender.label}</p>
-                  <p className="truncate text-[10px] text-raw-silver/35">{sender.key}</p>
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => handleUnblockSender(sender.key)}
-                  className="shrink-0 rounded-xl border-raw-gold/30 bg-raw-gold/10 px-3 text-xs text-raw-gold hover:bg-raw-gold/15 hover:text-raw-gold"
-                >
-                  Unblock
-                </Button>
-              </div>
-            ))}
-          </div>
-
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setBlockedUsersOpen(false)}
-              className="rounded-xl text-raw-silver/70 hover:text-raw-text"
-            >
-              Close
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </nav>
   );
 }

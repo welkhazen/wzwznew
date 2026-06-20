@@ -85,7 +85,19 @@
       "PowerShell(npx supabase --version)",
       "Bash(grep -n \"Account Settings\\\\|</div>\\\\s*$\\\\|return.*;\\\\|^}\" src/components/dashboard/DashboardProfile.tsx)",
       "Bash(awk 'NR<=143 || NR>=354' src/components/dashboard/DashboardProfile.tsx)",
-      "Bash(mv /tmp/profile.tsx src/components/dashboard/DashboardProfile.tsx)"
+      "Bash(mv /tmp/profile.tsx src/components/dashboard/DashboardProfile.tsx)",
+      "Bash(ls ~/.claude/ 2>&1 | head -50; echo \"---SKILLS---\"; ls ~/.claude/skills/ 2>&1 | head -50; echo \"---PLUGINS---\"; ls ~/.claude/plugins/ 2>&1 | head -50)",
+      "Bash(which zip *)",
+      "PowerShell($dest = \"C:\\\\Users\\\\user\\\\OneDrive\\\\Desktop\\\\wzwz\\\\.claude\\\\skills\"; robocopy \"$env:USERPROFILE\\\\.claude\\\\skills\" $dest /E /NFL /NDL /NJH /NJS /NC /NS /NP | Out-Null; Write-Host \"Copied skill folders:\"; \\(Get-ChildItem $dest -Directory | Measure-Object\\).Count; Write-Host \"Size MB:\"; [math]::Round\\(\\(Get-ChildItem $dest -Recurse | Measure-Object -Property Length -Sum\\).Sum / 1MB, 2\\))",
+      "Bash(ls \"C:\\\\Users\\\\user\\\\.claude\\\\skills\" 2>nul | find /c /v \"\" & echo --- & ls \"C:\\\\Users\\\\user\\\\OneDrive\\\\Desktop\\\\wzwz\\\\.claude\\\\skills\" 2>nul | find /c /v \"\")",
+      "PowerShell($g = @\\(Get-ChildItem 'C:\\\\Users\\\\user\\\\.claude\\\\skills' -Directory -ErrorAction SilentlyContinue\\); $r = @\\(Get-ChildItem 'C:\\\\Users\\\\user\\\\OneDrive\\\\Desktop\\\\wzwz\\\\.claude\\\\skills' -Directory -ErrorAction SilentlyContinue\\); Write-Host \"global skills: $\\($g.Count\\)\"; Write-Host \"repo skills:   $\\($r.Count\\)\"; $missing = Compare-Object $r.Name $g.Name | Where-Object { $_.SideIndicator -eq '<=' }; Write-Host \"in repo but NOT in global: $\\($missing.Count\\)\"; $missing | ForEach-Object { $_.InputObject })",
+      "Bash(curl -s -o - -w \"\\\\nHTTP %{http_code}\\\\n\" -X POST \"https://iktusezbedndctnzhtwh.supabase.co/rest/v1/rpc/save_onboarding_identities\" -H \"apikey: sb_publishable_Q9Blujk00EQefY2CKQJkZQ_fjMoYO-r\" -H \"Authorization: Bearer sb_publishable_Q9Blujk00EQefY2CKQJkZQ_fjMoYO-r\" -H \"Content-Type: application/json\" -d \"{\\\\\"p_public_username\\\\\":\\\\\"test\\\\\",\\\\\"p_private_alias\\\\\":\\\\\"test\\\\\"}\")",
+      "Bash(curl -s -o - -w \"\\\\nHTTP %{http_code}\\\\n\" -X POST \"https://iktusezbedndctnzhtwh.supabase.co/rest/v1/rpc/save_onboarding_identities\" -H \"apikey: sb_publishable_Q9Blujk00EQefY2CKQJkZQ_fjMoYO-r\" -H \"Content-Type: application/json\" -d \"{\\\\\"p_public_username\\\\\":\\\\\"x\\\\\",\\\\\"p_private_alias\\\\\":\\\\\"y\\\\\"}\")",
+      "Bash(grep -rn \"{a.price} tokens\\\\|tokens\\\\`\\\\|tokens<\\\\|AvatarShop\\\\|AvatarStore\" src/components/dashboard/DashboardInventory.tsx)",
+      "Bash(Remove-Item \"C:\\\\Users\\\\user\\\\OneDrive\\\\Desktop\\\\wzwz\\\\src\\\\components\\\\dashboard\\\\DashboardInventory.tsx\")",
+      "Bash(git rm *)",
+      "mcp__5585acb7-0f6f-48b6-b782-9ad0e7207b5b__web_fetch_vercel_url",
+      "mcp__5585acb7-0f6f-48b6-b782-9ad0e7207b5b__get_access_to_vercel_url"
     ]
   }
 }

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-labelledby="title desc" style="--accent:#fde68a;--dark:#0f172a">
+  <title id="title">Best story I’ve been told</title>
+  <desc id="desc">Stylized community cover illustration for Best story I’ve been told.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#a16207"/>
+      <stop offset="1" stop-color="#7c2d12"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="35%" r="65%">
+      <stop offset="0" stop-color="white" stop-opacity=".32"/>
+      <stop offset="1" stop-color="white" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="640" height="360" rx="36" fill="url(#bg)"/>
+  <rect width="640" height="360" rx="36" fill="url(#glow)"/>
+  <circle cx="92" cy="76" r="74" fill="white" opacity=".10"/>
+  <circle cx="548" cy="286" r="112" fill="black" opacity=".14"/>
+  <path d="M42 304C139 229 204 228 303 303s180 76 295-2" fill="none" stroke="white" stroke-width="18" stroke-linecap="round" opacity=".13"/>
+  <g><path d="M184 113c48-22 93-17 136 17 43-34 88-39 136-17v159c-48-22-93-17-136 17-43-34-88-39-136-17V113z" fill="white" opacity=".88"/><path d="M320 130v159M219 157h58M219 194h72M363 157h58M363 194h72" stroke="var(--accent)" stroke-width="10" stroke-linecap="round"/><circle cx="320" cy="88" r="14" fill="var(--accent)"/></g>
+  <text x="40" y="318" fill="white" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="800" letter-spacing="-.5" opacity=".96">Best story I’ve been told</text>
+</svg>

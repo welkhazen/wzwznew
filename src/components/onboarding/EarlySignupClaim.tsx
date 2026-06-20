@@ -38,7 +38,7 @@ export function EarlySignupClaim({ userId, onResolved }: EarlySignupClaimProps) 
       </h2>
       <p className="mt-1 text-xs text-raw-silver/55 sm:text-sm">Choose 1 exclusive avatar — added straight to your inventory.</p>
 
-      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="mt-5 grid grid-cols-4 gap-3">
         {EARLY_SIGNUP_POOL.map((entry) => {
           const active = selected === entry.catalogId;
           return (

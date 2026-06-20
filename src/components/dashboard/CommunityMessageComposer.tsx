@@ -1,5 +1,6 @@
+import { memo } from "react";
 import type { Dispatch, RefObject, SetStateAction } from "react";
-import { BarChart3, Send } from "lucide-react";
+import { BarChart3, SendHorizontal } from "lucide-react";
 import type { CommunityChatMemberRecord } from "@/lib/communityChat.types";
 
 interface CommunityMessageComposerProps {
@@ -18,7 +19,7 @@ interface CommunityMessageComposerProps {
   onSendMessage: () => void;
 }
 
-export function CommunityMessageComposer({
+export const CommunityMessageComposer = memo(function CommunityMessageComposer({
   inputRef,
   draft,
   maxLength,
@@ -45,14 +46,14 @@ export function CommunityMessageComposer({
   };
 
   return (
-    <div className="border-t border-raw-border/15 px-3 py-3">
+    <div className="border-t border-raw-border/20">
       {disabled && (
-        <div className="mb-2 rounded-xl border border-red-400/20 bg-red-500/10 px-3 py-2 text-xs text-red-100">
+        <div className="border-b border-red-400/20 bg-red-500/10 px-3.5 py-2 text-xs text-red-100">
           Chat posting is disabled for this account.
         </div>
       )}
       {mentionQuery !== null && mentionMatches.length > 0 && (
-        <div className="mb-2 overflow-hidden rounded-xl border border-raw-border/30 bg-raw-black/90">
+        <div className="border-b border-raw-border/30 bg-raw-black/90">
           {mentionMatches.map((member, index) => (
             <button
               key={member.userId}
@@ -68,16 +69,16 @@ export function CommunityMessageComposer({
           ))}
         </div>
       )}
-      <div className="flex gap-2">
+      <div className="flex items-center gap-2 border-raw-border/35 bg-raw-black/35 px-3 py-2">
         {canManagePolls && (
           <button
             onClick={onOpenPollComposer}
             disabled={disabled}
             title="Post a poll"
             aria-label="Post a poll"
-            className="flex items-center justify-center rounded-xl border border-raw-border/30 bg-raw-surface/30 px-3 py-2.5 text-raw-silver/70 hover:border-raw-gold/40 hover:text-raw-gold disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-full border border-raw-border/40 bg-raw-surface/40 p-2 text-raw-silver/80 hover:border-raw-gold/40 hover:text-raw-gold disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <BarChart3 className="h-4 w-4" />
+            <BarChart3 className="h-3.5 w-3.5" />
           </button>
         )}
         <input
@@ -121,16 +122,16 @@ export function CommunityMessageComposer({
           }}
           placeholder="Type a message..."
           disabled={disabled}
-          className="flex-1 rounded-xl border border-raw-border/30 bg-raw-surface/30 px-4 py-2.5 text-sm text-raw-text placeholder:text-raw-silver/25 focus:border-raw-gold/25 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex-1 bg-transparent text-sm text-raw-text placeholder:text-raw-silver/35 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
         />
         <button
           onClick={onSendMessage}
           disabled={disabled}
-          className="flex items-center gap-1.5 rounded-xl bg-raw-gold px-4 py-2.5 text-sm font-semibold text-raw-ink disabled:cursor-not-allowed disabled:opacity-60"
+          className="rounded-full border border-raw-border/40 bg-raw-surface/40 p-2 text-raw-silver/80 hover:border-raw-gold/40 hover:text-raw-gold disabled:cursor-not-allowed disabled:opacity-60"
         >
-          <Send className="h-4 w-4" />
+          <SendHorizontal className="h-3.5 w-3.5" />
         </button>
       </div>
     </div>
   );
-}
+});

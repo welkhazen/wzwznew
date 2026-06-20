@@ -1,8 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Poll } from "@/store/useRawStore";
+import { getDailyResetStartMs, getTodayKey } from "@/store/useRawStore.storage";
 import { useTheme } from "@/providers/useTheme";
 import { PremiumPollCard } from "@/components/polls/PremiumPollCard";
 import { ShareButton } from "@/components/ui/share-button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { addPollComment, fetchPollComments } from "@/lib/api/polls";
 import { getUserTextModerationMessage, moderateUserText } from "@/lib/inputSecurity";
 import { isNoPollOption, isYesPollOption } from "@/lib/polls/normalizePollOptionText";
@@ -18,7 +26,9 @@ import {
   ChevronRight,
   Coins,
   Copy,
+  Download,
   Facebook,
+  History,
   Link2,
   Instagram,
   SendHorizontal,
@@ -170,10 +180,12 @@ async function generatePollImage(question: string, opt1: string, opt2: string, u
 
 function getNextUnlockTime(): string {
   const now = new Date();
-  const tomorrow = new Date(now);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  tomorrow.setHours(22, 0, 0, 0);
-  return tomorrow.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" }) + " at 10:00 PM";
+  const nextReset = new Date(now);
+  nextReset.setHours(22, 0, 0, 0);
+  if (now.getTime() >= nextReset.getTime()) {
+    nextReset.setDate(nextReset.getDate() + 1);
+  }
+  return nextReset.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" }) + " at 10:00 PM";
 }
 
 interface PollProgressProps {
@@ -212,6 +224,13 @@ interface PollHistoryComment {
   author: string;
   content: string;
   createdAt: string;
+}
+
+interface PollHistoryItem {
+  poll: Poll;
+  selectedAnswer: string;
+  answeredAt: number;
+  community: string;
 }
 
 interface DashboardPollsProps {
@@ -262,10 +281,19 @@ function readStoredAnswerTimestamps(storageKey: string): Record<string, number> 
   }
 }
 
-function startOfTodayMs(): number {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return d.getTime();
+function hashString(value: string): number {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash * 31 + value.charCodeAt(i)) >>> 0;
+  }
+  return hash;
+}
+
+function rotatePollsForDay(polls: Poll[], dayKey: string, limit: number): Poll[] {
+  if (polls.length === 0) return [];
+  const safeLimit = Math.min(Math.max(limit, 0), polls.length);
+  const offset = hashString(dayKey) % polls.length;
+  return [...polls.slice(offset), ...polls.slice(0, offset)].slice(0, safeLimit);
 }
 
 function buildPollShareText(poll: Poll): string {
@@ -278,6 +306,20 @@ function buildPollShareUrl(pollId: string): string {
   url.search = "";
   url.searchParams.set(POLL_SHARE_PARAM, getPollShareCode(pollId));
   return url.toString();
+}
+
+function csvEscape(value: string): string {
+  return `"${value.replace(/"/g, '""')}"`;
+}
+
+function formatAnsweredAt(timestamp: number): string {
+  if (!Number.isFinite(timestamp) || timestamp <= 0) return "Unknown";
+  return new Date(timestamp).toLocaleString([], {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 export function DashboardPolls({
@@ -310,6 +352,8 @@ export function DashboardPolls({
   const [sharedPollId, setSharedPollId] = useState<string | null>(null);
   const [shareCopied, setShareCopied] = useState(false);
   const [sharePickerOpen, setSharePickerOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const dailyPollDayKey = getTodayKey();
 
   const commentsEndRef = useRef<HTMLDivElement>(null);
 
@@ -325,7 +369,7 @@ export function DashboardPolls({
     window.localStorage.setItem(answerTimestampsStorageKey, JSON.stringify(answerTimestamps));
   }, [answerTimestamps, answerTimestampsStorageKey, answersStorageKey, loadedAnswersStorageKey]);
 
-  const todayStart = useMemo(() => startOfTodayMs(), []);
+  const todayStart = getDailyResetStartMs();
   const answeredTodayIds = useMemo(() => {
     const ids = new Set<string>();
     for (const [pollId, ts] of Object.entries(answerTimestamps)) {
@@ -364,30 +408,52 @@ export function DashboardPolls({
     }
   }, [hasSeenVoteHint, voteHintStorageKey]);
 
+  const dailyPolls = useMemo(
+    () => rotatePollsForDay(polls, dailyPollDayKey, dailyPollLimit),
+    [dailyPollDayKey, dailyPollLimit, polls]
+  );
+
   const unseenPolls = useMemo(
-    () => polls.filter((p) => !answeredTodayIds.has(p.id)),
-    [polls, answeredTodayIds]
+    () => dailyPolls.filter((p) => !answeredTodayIds.has(p.id)),
+    [dailyPolls, answeredTodayIds]
   );
 
   const answeredPolls = useMemo(
-    () => polls.filter((p) => answeredTodayIds.has(p.id)),
-    [polls, answeredTodayIds]
+    () => dailyPolls.filter((p) => answeredTodayIds.has(p.id)),
+    [dailyPolls, answeredTodayIds]
   );
-  const answeredPollHistory = useMemo(
-    () => answeredPolls.slice().reverse(),
-    [answeredPolls]
-  );
+  const answeredPollHistory = useMemo<PollHistoryItem[]>(() => {
+    return polls
+      .map((poll) => {
+        const selectedOptionId = answerHistory[poll.id];
+        if (!selectedOptionId) return null;
+        const selectedAnswer = selectedOptionId === "__skipped__"
+          ? "Skipped"
+          : (poll.options.find((option) => option.id === selectedOptionId)?.text ?? "Unknown");
+        return {
+          poll,
+          selectedAnswer,
+          answeredAt: answerTimestamps[poll.id] ?? 0,
+          community: "General",
+        };
+      })
+      .filter((item): item is PollHistoryItem => item !== null)
+      .sort((a, b) => b.answeredAt - a.answeredAt)
+      .slice(0, 50);
+  }, [answerHistory, answerTimestamps, polls]);
 
-  // Once the daily limit is hit, show today's answered polls (capped at dailyPollLimit).
-  // While still under the limit, show unseen polls capped at the daily limit so the gate
-  // triggers after the batch — not after all 100+ polls.
-  const displayPolls = isDailyPollLimitReached && answeredPolls.length > 0
-    ? answeredPolls.slice(0, dailyPollLimit)
+  const localAnsweredCount = answeredTodayIds.size;
+  const showMorePollsPaywall = (isDailyPollLimitReached || localAnsweredCount >= dailyPollLimit) && dailyPollLimit > 0;
+
+  // Once the daily limit is hit (server or local skips), show today's answered polls.
+  // While still under the limit, show unseen polls capped at the daily limit.
+  const displayPolls = showMorePollsPaywall
+    ? answeredPolls
     : unseenPolls.length > 0
-      ? unseenPolls.slice(0, dailyPollLimit)
+      ? unseenPolls
       : answeredPolls.length > 0
         ? answeredPolls
-        : polls;
+        : dailyPolls;
 
   useEffect(() => {
     if (currentPollIndex >= displayPolls.length && displayPolls.length > 0) {
@@ -463,17 +529,15 @@ export function DashboardPolls({
     };
   }, [currentPoll?.id, username]);
 
-  const selectedOptionId = currentPoll ? answerHistory[currentPoll.id] : undefined;
+  const selectedOptionId = currentPoll && answeredTodayIds.has(currentPoll.id) ? answerHistory[currentPoll.id] : undefined;
   const hasVotedCurrent = Boolean(selectedOptionId);
   const showSharedPollAnswerPrompt = Boolean(sharedPollId && currentPoll?.id === sharedPollId && hasVotedCurrent);
   const currentComments = currentPoll ? historyComments[currentPoll.id] ?? [] : [];
   const currentOptions = currentPoll ? resolveYesNoOptions(currentPoll) : null;
   const showVoteHint = currentPollIndex === 0 && !hasVotedCurrent && !hasSeenVoteHint;
-  const progressIndex = isDailyPollLimitReached
+  const progressIndex = showMorePollsPaywall
     ? Math.min(currentPollIndex, dailyPollLimit - 1)
-    : Math.min(dailyAnsweredCount + currentPollIndex, dailyPollLimit - 1);
-
-  const showMorePollsPaywall = isDailyPollLimitReached && dailyPollLimit > 0;
+    : Math.min(localAnsweredCount + currentPollIndex, dailyPollLimit - 1);
 
   const handleVote = (pollId: string, optionId: string) => {
     setHasSeenVoteHint(true);
@@ -491,6 +555,12 @@ export function DashboardPolls({
     if (!votedPolls.has(pollId)) {
       onVote(pollId, optionId);
     }
+  };
+
+  const handleSkip = () => {
+    if (!currentPoll) return;
+    setAnswerHistory((previous) => ({ ...previous, [currentPoll.id]: "__skipped__" }));
+    setAnswerTimestamps((previous) => ({ ...previous, [currentPoll.id]: Date.now() }));
   };
 
   const handleCommentAdd = async () => {
@@ -590,6 +660,26 @@ export function DashboardPolls({
     }
   };
 
+  const downloadHistoryCsv = () => {
+    const rows = [
+      ["question", "selected_answer", "community", "answered_at"],
+      ...answeredPollHistory.map((item) => [
+        item.poll.question,
+        item.selectedAnswer,
+        item.community,
+        item.answeredAt > 0 ? new Date(item.answeredAt).toISOString() : "",
+      ]),
+    ];
+    const csv = rows.map((row) => row.map(csvEscape).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "raw-poll-history.csv";
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
 
   if (!currentPoll) {
     return (
@@ -601,12 +691,64 @@ export function DashboardPolls({
 
   return (
     <div className="flex flex-col gap-6 sm:gap-8">
-      <header>
-        <h1 className="font-display text-xl tracking-wide text-raw-text sm:text-2xl">Polls</h1>
-        <p className="mt-2 text-xs text-raw-silver/45 sm:text-sm">
-          Anonymous voting, live percentages, and reflections from the community.
-        </p>
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="font-display text-xl tracking-wide text-raw-text sm:text-2xl">Polls</h1>
+          <p className="mt-2 text-xs text-raw-silver/45 sm:text-sm">
+            Anonymous voting, live percentages, and reflections from the community.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setHistoryOpen(true)}
+          className="inline-flex w-fit items-center gap-2 border border-raw-gold/35 bg-raw-black/45 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-raw-gold transition hover:border-raw-gold/60 hover:bg-raw-gold/10"
+        >
+          <History className="size-3.5" />
+          History
+        </button>
       </header>
+
+      <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
+        <DialogContent className="max-h-[85dvh] overflow-hidden border border-raw-border/40 bg-raw-black p-0 text-raw-text sm:max-w-2xl">
+          <div className="border-b border-raw-border/25 bg-gradient-to-br from-raw-gold/[0.08] via-raw-black to-raw-black px-5 py-5">
+            <DialogHeader className="space-y-2 text-left">
+              <DialogTitle className="font-display text-xl tracking-wide text-raw-text">Answer History</DialogTitle>
+              <DialogDescription className="text-sm leading-relaxed text-raw-silver/45">
+                Your last {answeredPollHistory.length} answered polls.
+              </DialogDescription>
+            </DialogHeader>
+            <button
+              type="button"
+              onClick={downloadHistoryCsv}
+              disabled={answeredPollHistory.length === 0}
+              className="mt-4 inline-flex items-center gap-2 border border-raw-gold/40 bg-raw-gold/10 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-raw-gold transition hover:bg-raw-gold/15 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <Download className="size-3.5" />
+              Download CSV
+            </button>
+          </div>
+          <div className="max-h-[58dvh] overflow-y-auto px-5 py-4">
+            {answeredPollHistory.length === 0 ? (
+              <p className="text-sm text-raw-silver/45">You have not answered any polls yet.</p>
+            ) : (
+              <div className="grid gap-3">
+                {answeredPollHistory.map((item) => (
+                  <article key={item.poll.id} className="border border-raw-border/25 bg-raw-surface/20 p-3">
+                    <p className="text-sm font-medium leading-relaxed text-raw-text">{item.poll.question}</p>
+                    <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-raw-silver/50">
+                      <span className="border border-raw-gold/25 bg-raw-gold/10 px-2 py-1 text-raw-gold/85">
+                        {item.selectedAnswer}
+                      </span>
+                      <span>{item.community}</span>
+                      <span>{formatAnsweredAt(item.answeredAt)}</span>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {showMorePollsPaywall && (
         <section className="border border-raw-gold/35 bg-gradient-to-r from-raw-gold/12 via-raw-black/60 to-raw-black/60 p-4 sm:p-5">
@@ -640,29 +782,23 @@ export function DashboardPolls({
       )}
 
       <section className="mx-auto flex w-full max-w-[460px] flex-col items-center gap-3 px-1 sm:gap-5">
-        <div className="flex w-full items-center justify-between gap-3 border border-raw-gold/25 bg-black/30 px-3 py-2 sm:hidden">
-          <p className="font-display text-[11px] uppercase tracking-[0.16em] text-raw-silver/75">Answer polls</p>
-          <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
-            <div className="h-1 w-full max-w-24 overflow-hidden bg-raw-border/50">
-              <div
-                className="h-full bg-[#F1C42D] shadow-[0_0_10px_rgba(241,196,45,0.45)]"
-                style={{ width: `${Math.min(100, Math.max(0, (dailyAnsweredCount / Math.max(1, dailyPollLimit)) * 100))}%` }}
-              />
-            </div>
-            <span className="shrink-0 text-[11px] font-semibold text-[#F1C42D]">{dailyAnsweredCount}/{dailyPollLimit}</span>
+        <div className="flex w-full flex-col gap-1 border border-raw-gold/25 bg-black/30 px-3 py-2 sm:hidden">
+          <div className="flex items-center justify-between">
+            <p className="font-display text-[11px] uppercase tracking-[0.16em] text-raw-silver/75">Answer polls</p>
           </div>
+          <PollProgress currentIndex={progressIndex} total={dailyPollLimit} answeredCount={localAnsweredCount} dailyLimit={dailyPollLimit} onSelect={setCurrentPollIndex} />
         </div>
 
         <div className="hidden w-full border border-raw-gold/20 bg-black/35 px-4 py-3 shadow-[inset_0_0_0_1px_rgba(241,196,45,0.08)] sm:block">
           <div className="flex items-center justify-between gap-3">
             <h3 className="min-w-0 font-display text-sm uppercase tracking-[0.18em] text-[#EBEBEB] sm:text-base">
-              2. Answer 7 polls
+              Answer polls
             </h3>
             <span className="shrink-0 border border-[#F1C42D]/60 bg-[#F1C42D]/10 px-3 py-1 text-[11px] uppercase tracking-[0.12em] text-[#F1C42D]">
-              {dailyAnsweredCount}/{dailyPollLimit}
+              {localAnsweredCount}/{dailyPollLimit}
             </span>
           </div>
-          <PollProgress currentIndex={progressIndex} total={dailyPollLimit} answeredCount={dailyAnsweredCount} dailyLimit={dailyPollLimit} onSelect={setCurrentPollIndex} />
+          <PollProgress currentIndex={progressIndex} total={dailyPollLimit} answeredCount={localAnsweredCount} dailyLimit={dailyPollLimit} onSelect={setCurrentPollIndex} />
         </div>
 
         <div className="relative w-full max-w-[24rem]">
@@ -693,9 +829,11 @@ export function DashboardPolls({
                 votes: currentOptions.noOption.votes,
               }}
               selectedOptionId={selectedOptionId}
+              disabled={showMorePollsPaywall}
               showHint={showVoteHint}
               onHintSeen={() => setHasSeenVoteHint(true)}
               onVote={(optionId) => handleVote(currentPoll.id, optionId)}
+              onSkip={showMorePollsPaywall ? undefined : handleSkip}
             />
           )}
 
@@ -708,7 +846,7 @@ export function DashboardPolls({
                 { icon: SendHorizontal, onClick: () => handleShare(currentPoll), label: "More apps" },
                 { icon: Link2, onClick: () => copyShareLink(currentPoll), label: "Copy link" },
               ]}
-              className="w-full border-raw-gold/45 bg-raw-gold/10 text-[11px] font-semibold uppercase tracking-[0.16em] text-raw-gold hover:bg-raw-gold/15 dark:border-raw-gold/45 dark:bg-raw-gold/10 dark:text-raw-gold dark:hover:bg-raw-gold/15"
+              className="w-full border-raw-gold/45 bg-raw-gold/10 text-[11px] font-semibold uppercase tracking-[0.16em] text-raw-gold hover:bg-raw-gold/15"
             >
               <Share2 className="size-3.5" />
               Share
@@ -809,76 +947,6 @@ export function DashboardPolls({
             {commentModerationError && (
               <p className="text-xs text-red-300">{commentModerationError}</p>
             )}
-          </div>
-        )}
-      </section>
-
-      <section className="border border-raw-border/30 bg-raw-black/35 p-4 sm:p-5">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-[10px] uppercase tracking-[0.18em] text-raw-gold/65">Answer history</p>
-            <h2 className="mt-1 font-display text-base tracking-wide text-raw-text">Polls you answered</h2>
-          </div>
-          <span className="shrink-0 border border-raw-gold/35 bg-raw-gold/10 px-3 py-1 text-[11px] text-raw-gold/80">
-            {answeredPollHistory.length}
-          </span>
-        </div>
-
-        {answeredPollHistory.length === 0 ? (
-          <p className="mt-4 text-sm text-raw-silver/45">
-            Answer a poll and it will appear here.
-          </p>
-        ) : (
-          <div className="mt-4 grid gap-3">
-            {answeredPollHistory.map((poll) => {
-              const selectedId = answerHistory[poll.id];
-              const selectedOption = poll.options.find((option) => option.id === selectedId);
-              const totalVotes = poll.options.reduce((sum, option) => sum + option.votes, 0);
-              const percent = selectedOption ? optionPercent(selectedOption.votes, totalVotes) : 0;
-
-              return (
-                <article
-                  key={poll.id}
-                  className="border border-raw-border/25 bg-raw-surface/20 p-3 sm:p-4"
-                >
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium leading-relaxed text-raw-text">
-                        {poll.question}
-                      </p>
-                      <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-raw-silver/45">
-                        <span className="border border-raw-gold/25 bg-raw-gold/10 px-2 py-1 text-raw-gold/80">
-                          You answered: {selectedOption?.text ?? "Unknown"}
-                        </span>
-                        <span>{percent}% picked this</span>
-                        <span>{totalVotes.toLocaleString()} votes</span>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setLockedPollId(poll.id)}
-                      className="shrink-0 border border-raw-border/35 px-3 py-2 text-[11px] uppercase tracking-[0.12em] text-raw-silver/65 transition hover:border-raw-gold/45 hover:text-raw-gold"
-                    >
-                      Review
-                    </button>
-                    <div className="w-full shrink-0 sm:w-44">
-                      <ShareButton
-                        links={[
-                          { icon: Smartphone, onClick: () => handleWhatsAppShare(poll), label: "Share on WhatsApp" },
-                          { icon: Instagram, onClick: () => handleInstagramShare(poll), label: "Share on Instagram" },
-                          { icon: Facebook, onClick: () => handleFacebookShare(poll), label: "Share on Facebook" },
-                          { icon: Link2, onClick: () => copyShareLink(poll), label: "Copy link" },
-                        ]}
-                        className="min-w-0 w-full border-raw-border/35 bg-raw-surface/20 px-3 py-2 text-[11px] uppercase tracking-[0.12em] text-raw-silver/65 hover:border-raw-gold/45 hover:bg-raw-gold/10 hover:text-raw-gold dark:border-raw-border/35 dark:bg-raw-surface/20 dark:text-raw-silver/65 dark:hover:bg-raw-gold/10 dark:hover:text-raw-gold"
-                      >
-                        <Copy className="size-3" />
-                        Share
-                      </ShareButton>
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
           </div>
         )}
       </section>

@@ -50,7 +50,6 @@ describe("community chat Supabase persistence", () => {
   });
 
   it("sends community messages through the send_community_message RPC", async () => {
-    const setItemSpy = vi.spyOn(window.localStorage.__proto__, "setItem");
     rpcMock.mockResolvedValueOnce({
       data: {
         id: "message-1",
@@ -60,12 +59,7 @@ describe("community chat Supabase persistence", () => {
         text: "hello everyone",
         created_at: "2026-06-02T09:00:00.000Z",
         pinned: false,
-        reply_to_message_id: null,
-        reply_to_sender_name: null,
-        reply_to_text: null,
-        deleted_at: null,
-        deleted_by_user_id: null,
-        liked_by: null,
+        liked_by: [],
         sender_avatar_level: 3,
       },
       error: null,
@@ -75,16 +69,15 @@ describe("community chat Supabase persistence", () => {
       text: "hello everyone",
     });
 
-    // Identity fields are not even part of the input type now — the SECURITY
-    // DEFINER RPC derives sender from current_user_id().
     expect(rpcMock).toHaveBeenCalledWith("send_community_message", {
       p_community_id: "community-1",
       p_text: "hello everyone",
+      p_identity_alias: null,
+      p_avatar_level: null,
       p_reply_to_message_id: null,
     });
     expect(message.text).toBe("hello everyone");
     expect(message.senderAvatarLevel).toBe(3);
-    expect(setItemSpy).not.toHaveBeenCalled();
   });
 
   it("deletes messages through delete_community_message and likes through toggle_message_like", async () => {

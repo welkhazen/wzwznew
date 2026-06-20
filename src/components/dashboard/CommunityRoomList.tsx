@@ -1,6 +1,8 @@
-import { Lock, Star, Users } from "lucide-react";
+import { memo } from "react";
+import { Lock, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CommunityBadge } from "@/components/dashboard/CommunityBadge";
+import { cn } from "@/lib/utils";
 import { countOnlineMembers, countUnreadMessages } from "@/lib/communityChat";
 import type { CommunityJoinRequestRecord } from "@/lib/adminData";
 import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
@@ -19,18 +21,17 @@ interface CommunityRoomListProps {
   waitlistUnlockThreshold: number;
   hasSubscriptionAccess: boolean;
   unlockedCommunityIds: Set<string>;
+  freeCommunitySlotsRemaining: number;
   unlockingId: string | null;
+  unlockTokenCost: number;
   onToggleDescription: (communityId: string) => void;
   onPaidJoinCommunity: (communityId: string, shouldOpenPage: boolean) => void;
   onJoinWaitlist: (community: PersistedCommunityRecord) => void;
   onOpenCommunity: (communityId: string) => void;
   onUnlockCommunity: (communityId: string) => void;
-  favoriteCommunityIds: string[];
-  onToggleFavorite: (communityId: string) => void;
-  favoriteLimitReached: boolean;
 }
 
-export function CommunityRoomList({
+export const CommunityRoomList = memo(function CommunityRoomList({
   communities,
   userId,
   logoUrlsByCommunityId,
@@ -44,15 +45,14 @@ export function CommunityRoomList({
   waitlistUnlockThreshold,
   hasSubscriptionAccess,
   unlockedCommunityIds,
+  freeCommunitySlotsRemaining,
   unlockingId,
+  unlockTokenCost,
   onToggleDescription,
   onPaidJoinCommunity,
   onJoinWaitlist,
   onOpenCommunity,
   onUnlockCommunity,
-  favoriteCommunityIds,
-  onToggleFavorite,
-  favoriteLimitReached,
 }: CommunityRoomListProps) {
   return (
     <div className="grid grid-cols-2 items-stretch gap-4 sm:gap-5 lg:grid-cols-2 xl:grid-cols-3">
@@ -78,39 +78,6 @@ export function CommunityRoomList({
               <div className="absolute bottom-2 right-2 rounded-full border border-raw-border/40 bg-raw-black/60 px-2 py-0.5 text-[9px] text-raw-silver/70 backdrop-blur-sm">
                 {joined ? "Joined" : community.locked ? "Locked" : "Not joined"}
               </div>
-              {joined && (() => {
-                const isFavorite = favoriteCommunityIds.includes(community.id);
-                const disabled = !isFavorite && favoriteLimitReached;
-                return (
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      if (disabled) return;
-                      onToggleFavorite(community.id);
-                    }}
-                    disabled={disabled}
-                    aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
-                    aria-pressed={isFavorite}
-                    title={
-                      isFavorite
-                        ? "Unfavorite"
-                        : disabled
-                          ? "Favorites limit reached (3)"
-                          : "Favorite (shows on your profile)"
-                    }
-                    className={`absolute left-2 top-2 flex h-7 w-7 items-center justify-center rounded-full border backdrop-blur-sm transition-colors ${
-                      isFavorite
-                        ? "border-raw-gold/60 bg-raw-gold/20 text-raw-gold"
-                        : disabled
-                          ? "border-raw-border/30 bg-raw-black/50 text-raw-silver/30"
-                          : "border-raw-border/40 bg-raw-black/55 text-raw-silver/70 hover:border-raw-gold/55 hover:text-raw-gold"
-                    }`}
-                  >
-                    <Star className={`h-3.5 w-3.5 ${isFavorite ? "fill-current" : ""}`} />
-                  </button>
-                );
-              })()}
             </div>
 
             <div className="flex flex-1 flex-col p-3 sm:p-5">
@@ -130,7 +97,7 @@ export function CommunityRoomList({
               </div>
 
               <div className="mt-2">
-                <p className={`text-[11px] leading-relaxed text-raw-silver/50 line-clamp-2 sm:${!isExpanded && descLong ? "line-clamp-3" : ""}`}>
+                <p className={cn("text-[11px] leading-relaxed text-raw-silver/50 line-clamp-2", !isExpanded && descLong && "sm:line-clamp-3")}>
                   {community.description}
                 </p>
                 {descLong && (
@@ -165,7 +132,7 @@ export function CommunityRoomList({
                         onClick={() => onPaidJoinCommunity(community.id, true)}
                         className="w-full rounded-xl bg-raw-gold px-2 py-2 text-xs text-raw-ink hover:bg-raw-gold/90"
                       >
-                        Join Group
+                        Join Group - {unlockTokenCost} tokens
                       </Button>
                     );
                   }
@@ -190,6 +157,7 @@ export function CommunityRoomList({
                   );
                 })() : (() => {
                   const isUnlocked = joined || hasSubscriptionAccess || unlockedCommunityIds.has(community.id);
+                  const canGetFree = freeCommunitySlotsRemaining > 0;
                   const isUnlocking = unlockingId === community.id;
                   if (isUnlocked) {
                     return (
@@ -201,13 +169,29 @@ export function CommunityRoomList({
                       </Button>
                     );
                   }
+                  if (canGetFree) {
+                    return (
+                      <div className="space-y-1.5">
+                        <Button
+                          onClick={() => onUnlockCommunity(community.id)}
+                          disabled={isUnlocking}
+                          className="w-full rounded-xl bg-raw-gold px-2 py-2 text-xs text-raw-ink hover:bg-raw-gold/90 disabled:opacity-70"
+                        >
+                          {isUnlocking ? "Opening…" : "Open Chat — Free"}
+                        </Button>
+                        <p className="text-center text-[10px] text-raw-silver/40">
+                          {freeCommunitySlotsRemaining} free slot{freeCommunitySlotsRemaining === 1 ? "" : "s"} remaining
+                        </p>
+                      </div>
+                    );
+                  }
+                  // Non-locked community with no free slots — show a plain Join button.
                   return (
                     <Button
-                      onClick={() => onUnlockCommunity(community.id)}
-                      disabled={isUnlocking}
-                      className="w-full rounded-xl bg-raw-gold px-2 py-2 text-xs text-raw-ink hover:bg-raw-gold/90 disabled:opacity-70"
+                      onClick={() => onPaidJoinCommunity(community.id, true)}
+                      className="w-full rounded-xl bg-raw-gold px-2 py-2 text-xs text-raw-ink hover:bg-raw-gold/90"
                     >
-                      {isUnlocking ? "Joining..." : "Open Chat"}
+                      Join
                     </Button>
                   );
                 })()}
@@ -218,4 +202,4 @@ export function CommunityRoomList({
       })}
     </div>
   );
-}
+});

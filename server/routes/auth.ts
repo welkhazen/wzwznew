@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { Request } from "express";
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
@@ -12,12 +13,51 @@ import { sendOtp, verifyOtp } from "../lib/otp";
 import { sendTransactionalEmail } from "../lib/email";
 import type { AuthSessionData } from "../types";
 
+// ---------------------------------------------------------------------------
+// In-memory state
+// NOTE: These maps are single-process only. In a multi-instance production
+// deployment, migrate to a shared store (Redis/Postgres).
+// All entries are TTL-bounded and swept by the cleanup interval below.
+// ---------------------------------------------------------------------------
+
 type LoginAttempt = {
   failures: number;
   lockedUntil: number;
+  lastAttemptAt: number;
+};
+
+type SignupRateEntry = {
+  count: number;
+  resetAt: number;
 };
 
 const loginAttempts = new Map<string, LoginAttempt>();
+const magicLinks = new Map<string, { userId: string; email: string; expiresAt: number }>();
+const signupByPhone = new Map<string, SignupRateEntry>();
+
+// Sweep all maps every 5 minutes so they cannot grow without bound.
+setInterval(() => {
+  const now = Date.now();
+  const LOGIN_MAX_AGE_MS = 30 * 60 * 1000; // 2× lockout window
+
+  for (const [key, entry] of loginAttempts) {
+    const refTime = entry.lastAttemptAt > 0 ? entry.lastAttemptAt : entry.lockedUntil;
+    if (refTime + LOGIN_MAX_AGE_MS < now) loginAttempts.delete(key);
+  }
+
+  for (const [token, entry] of magicLinks) {
+    if (entry.expiresAt < now) magicLinks.delete(token);
+  }
+
+  for (const [hash, entry] of signupByPhone) {
+    if (entry.resetAt < now) signupByPhone.delete(hash);
+  }
+}, 5 * 60 * 1000).unref();
+
+// ---------------------------------------------------------------------------
+// Schemas
+// ---------------------------------------------------------------------------
+
 const authErrorMessage = "Invalid username or password.";
 const usernameRegex = /^[a-zA-Z0-9._-]{3,24}$/;
 
@@ -52,6 +92,10 @@ const magicLinkVerifySchema = z.object({
   token: z.string().min(20),
 });
 
+// ---------------------------------------------------------------------------
+// Rate limiters
+// ---------------------------------------------------------------------------
+
 const signupLimiter = rateLimit({
   windowMs: 10 * 60 * 1000,
   limit: 8,
@@ -68,13 +112,17 @@ const loginLimiter = rateLimit({
   message: { error: "Too many attempts. Try again later." },
 });
 
-type SignupRateEntry = {
-  count: number;
-  resetAt: number;
-};
+const magicLinkLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many magic link requests. Try again later." },
+});
 
-const signupByPhone = new Map<string, SignupRateEntry>();
-const magicLinks = new Map<string, { userId: string; email: string; expiresAt: number }>();
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
 function getSessionData(req: Request): AuthSessionData {
   return req.session as unknown as AuthSessionData;
@@ -95,8 +143,9 @@ function isLocked(attempt: LoginAttempt | undefined): boolean {
 }
 
 function registerFailure(key: string) {
-  const attempt = loginAttempts.get(key) ?? { failures: 0, lockedUntil: 0 };
+  const attempt = loginAttempts.get(key) ?? { failures: 0, lockedUntil: 0, lastAttemptAt: 0 };
   attempt.failures += 1;
+  attempt.lastAttemptAt = Date.now();
 
   if (attempt.failures >= 5) {
     attempt.lockedUntil = Date.now() + 15 * 60 * 1000;
@@ -128,6 +177,15 @@ function incrementPhoneSendCount(phoneHash: string): void {
     entry.count += 1;
   }
 }
+
+// Generic response for magic-link requests — same for existing and non-existing emails.
+const MAGIC_LINK_GENERIC_RESPONSE = {
+  message: "If that email is registered, you'll receive a link shortly.",
+} as const;
+
+// ---------------------------------------------------------------------------
+// Router
+// ---------------------------------------------------------------------------
 
 export const authRouter = Router();
 const userRepository = getUserRepository();
@@ -300,18 +358,23 @@ authRouter.post("/logout", (req, res) => {
   });
 });
 
-authRouter.post("/magic-link/request", async (req, res) => {
+authRouter.post("/magic-link/request", magicLinkLimiter, async (req, res) => {
   const parsed = magicLinkRequestSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: "Invalid email address." });
   }
 
   const user = await userRepository.findByEmail(parsed.data.email);
+
+  // Always return the same generic response whether the email exists or not.
+  // This prevents email enumeration — callers cannot distinguish between
+  // "email not registered" and "link sent successfully".
   if (!user) {
-    return res.status(404).json({ error: "No account found for that email." });
+    audit("auth.magic_link.unknown_email", { ip: req.ip }, "info");
+    return res.status(200).json(MAGIC_LINK_GENERIC_RESPONSE);
   }
 
-  const token = crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "");
+  const token = randomUUID().replace(/-/g, "") + randomUUID().replace(/-/g, "");
   magicLinks.set(token, {
     userId: user.id,
     email: parsed.data.email,
@@ -321,7 +384,7 @@ authRouter.post("/magic-link/request", async (req, res) => {
   const link = `${env.APP_BASE_URL}/login?magic_token=${encodeURIComponent(token)}`;
   await sendTransactionalEmail("magic_link", parsed.data.email, { link });
 
-  return res.status(200).json({ ok: true });
+  return res.status(200).json(MAGIC_LINK_GENERIC_RESPONSE);
 });
 
 authRouter.post("/magic-link/verify", async (req, res) => {

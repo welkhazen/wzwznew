@@ -3,6 +3,7 @@
 // All in-app imports should resolve to this module via `@/lib/supabase`
 // (the public re-export) so we keep a single instance.
 import { createClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey =
@@ -16,16 +17,29 @@ if (!hasSupabaseConfig) {
   );
 }
 
-export const supabase = createClient(
-  hasSupabaseConfig ? supabaseUrl : "https://missing-supabase-url.supabase.co",
-  hasSupabaseConfig ? supabaseKey : "missing-supabase-publishable-key",
-  {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-  },
+declare global {
+  interface Window {
+    __rawSupabaseClient?: SupabaseClient;
   }
-);
+}
+
+function createBrowserSupabaseClient(): SupabaseClient {
+  return createClient(
+    hasSupabaseConfig ? supabaseUrl : "https://missing-supabase-url.supabase.co",
+    hasSupabaseConfig ? supabaseKey : "missing-supabase-publishable-key",
+    {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+      },
+    }
+  );
+}
+
+export const supabase =
+  typeof window !== "undefined"
+    ? (window.__rawSupabaseClient ??= createBrowserSupabaseClient())
+    : createBrowserSupabaseClient();
 
 export async function testConnection(): Promise<{ ok: boolean; message: string }> {
   try {

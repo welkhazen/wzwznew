@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-labelledby="title desc" style="--accent:#ef4444;--dark:#0f172a">
+  <title id="title">Am I Evil?</title>
+  <desc id="desc">Stylized community cover illustration for Am I Evil?.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7c3aed"/>
+      <stop offset="1" stop-color="#0f172a"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="35%" r="65%">
+      <stop offset="0" stop-color="white" stop-opacity=".32"/>
+      <stop offset="1" stop-color="white" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="640" height="360" rx="36" fill="url(#bg)"/>
+  <rect width="640" height="360" rx="36" fill="url(#glow)"/>
+  <circle cx="92" cy="76" r="74" fill="white" opacity=".10"/>
+  <circle cx="548" cy="286" r="112" fill="black" opacity=".14"/>
+  <path d="M42 304C139 229 204 228 303 303s180 76 295-2" fill="none" stroke="white" stroke-width="18" stroke-linecap="round" opacity=".13"/>
+  <g><circle cx="320" cy="176" r="82" fill="none" stroke="white" stroke-width="15" opacity=".75"/><path d="M262 120c25-44 91-44 116 0" fill="none" stroke="var(--accent)" stroke-width="16" stroke-linecap="round"/><path d="M272 213c32 28 64 28 96 0" fill="none" stroke="white" stroke-width="12" stroke-linecap="round" opacity=".85"/><path d="M242 95l-34-31M398 95l34-31" stroke="var(--accent)" stroke-width="13" stroke-linecap="round"/></g>
+  <text x="40" y="318" fill="white" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="800" letter-spacing="-.5" opacity=".96">Am I Evil?</text>
+</svg>
