@@ -21,8 +21,8 @@ function getUtmParams() {
 
 export function FinalCTA({ onSignupClick }: FinalCTAProps) {
   const sectionRef = useTrackSectionView("final_cta");
-  const supportWhatsAppNumber = import.meta.env.VITE_SUPPORT_WHATSAPP_NUMBER ?? "+201000000000";
-  const supportEmail = import.meta.env.VITE_SUPPORT_EMAIL ?? "support@theartofraw.me";
+  const supportWhatsAppNumber = import.meta.env.VITE_SUPPORT_WHATSAPP_NUMBER ?? "+96171148488";
+  const supportEmail = import.meta.env.VITE_SUPPORT_EMAIL ?? "info@myraw.app";
   const whatsAppHref = `https://wa.me/${supportWhatsAppNumber.replace(/\D/g, "")}`;
 
   const [ownerName, setOwnerName] = useState("");

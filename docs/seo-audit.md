@@ -10,6 +10,14 @@ real server), so findings are drawn from the code that is actually shipped to pr
 
 ---
 
+> **Status (2026-06-13):** The 🔴 critical domain mismatch (#1) and the 🟡 medium sitemap
+> (#7) and viewport-zoom (#8) items have been **fixed in this PR** — all canonical/OG/JSON-LD/
+> sitemap/robots references now use `https://www.myraw.app`. The 🟠 high items (#2–#4: SSR/
+> prerendering and the "Enter raW" gate) are larger architectural changes left as
+> recommendations. Note: support emails (`support@theartofraw.me`) and one footer brand label
+> (`FinalCTA.tsx`) still reference `theartofraw.me` — these are contact/brand copy, not SEO
+> signals, and were intentionally left for product to decide.
+
 ## Summary
 
 | Severity | Count | Headline |

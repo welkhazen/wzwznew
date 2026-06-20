@@ -34,6 +34,16 @@ const FAQ_ITEMS = [
   },
 ];
 
+const faqStructuredData = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: FAQ_ITEMS.map((item) => ({
+    "@type": "Question",
+    name: item.question,
+    acceptedAnswer: { "@type": "Answer", text: item.answer },
+  })),
+});
+
 export function FAQSection() {
   const [name, setName] = useState("");
   const [question, setQuestion] = useState("");
@@ -50,11 +60,12 @@ export function FAQSection() {
 
     const subject = encodeURIComponent("raW FAQ question");
     const body = encodeURIComponent(`Name: ${name.trim() || "Anonymous"}\n\nQuestion:\n${trimmedQuestion}`);
-    window.location.href = `mailto:support@theartofraw.me?subject=${subject}&body=${body}`;
+    window.location.href = `mailto:info@myraw.app?subject=${subject}&body=${body}`;
   };
 
   return (
     <section id="faq" className="px-4 py-12 sm:px-6 sm:py-16 md:py-20">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: faqStructuredData }} />
       <div
         className="mx-auto max-w-6xl rounded-2xl border p-4 shadow-[0_20px_50px_rgba(0,0,0,0.18)] sm:rounded-[2rem] sm:p-6 md:p-8"
         style={{

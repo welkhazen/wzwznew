@@ -151,12 +151,24 @@ export function DashboardProfile({
   const [hoveredPrivateIndex, setHoveredPrivateIndex] = useState<number | null>(null);
 
   useEffect(() => {
+    const nextInviteCodes = readFoundingInviteCodes(userId);
     setOwnedInsightIds(readOwnedInsightIds(userId));
     const codes = readFoundingInviteCodes(userId);
     setInviteCodes(codes);
     persistFoundingInviteCodes(userId, codes);
     setOpenInviteIndex(null);
   }, [userId]);
+
+  useEffect(() => {
+    const updateVoucherUses = () => setLocalVoucherUses(countLocalVoucherUses(userId, inviteCodes));
+    window.addEventListener("storage", updateVoucherUses);
+    window.addEventListener("raw:voucher-used", updateVoucherUses);
+    updateVoucherUses();
+    return () => {
+      window.removeEventListener("storage", updateVoucherUses);
+      window.removeEventListener("raw:voucher-used", updateVoucherUses);
+    };
+  }, [inviteCodes, userId]);
 
   useEffect(() => {
     listUserAliases(userId)
@@ -286,7 +298,7 @@ export function DashboardProfile({
     { key: "hosts",       icon: STAT_ICONS.hosts,       label: "Hosts Made",        value: profileStats.hostsMade },
     { key: "communities", icon: STAT_ICONS.communities, label: "Communities Joined",value: profileStats.communitiesJoined },
     { key: "pinned",      icon: STAT_ICONS.pinned,      label: "Messages Pinned",   value: profileStats.messagesPinned },
-  ];
+  ].filter((stat) => stat.key !== "hosts" || Number(stat.value) > 0);
 
   const displayIndex = hoveredIndex ?? avatarLevel;
   const theme = getAvatar(displayIndex);

@@ -45,6 +45,9 @@ const envSchema = z.object({
   OPENAI_MODEL: z.string().min(3).default("gpt-4o-mini"),
   ADMIN_USERNAMES: z.preprocess(emptyToUndefined, z.string().optional()),
   SIGNUP_INVITE_ONLY: z.preprocess(emptyToUndefined, z.enum(["true", "false"]).optional()),
+  // Set to "true" in development to log OTP codes to the server console.
+  // Must NOT be set in production — production requires a real SMS provider.
+  OTP_DEV_MODE: z.preprocess(emptyToUndefined, z.enum(["true", "false"]).optional()),
   SUPABASE_URL: z.preprocess(emptyToUndefined, z.string().url().optional()),
   SUPABASE_SERVICE_ROLE_KEY: z.preprocess(emptyToUndefined, z.string().min(20).optional()),
   ONESIGNAL_APP_ID: z.preprocess(emptyToUndefined, z.string().min(8).optional()),

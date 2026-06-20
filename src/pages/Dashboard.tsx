@@ -16,6 +16,7 @@ import { matchPath, useLocation, useNavigate } from "react-router-dom";
 import { DashboardNav, type DashboardTab } from "@/components/dashboard/DashboardNav";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { DashboardHome } from "@/components/dashboard/DashboardHome";
+import { DashboardStore } from "@/components/dashboard/DashboardStore";
 import { DashboardSectionShell } from "@/components/dashboard/DashboardSectionShell";
 import { CommunityHoldSwitcher, getCommunityHoldSwitcherTargets } from "@/components/dashboard/CommunityHoldSwitcher";
 import { NotificationConsentPrompt } from "@/components/notifications/NotificationConsentPrompt";
@@ -50,6 +51,10 @@ const DashboardSettings = lazy(() =>
 const DashboardInventory = lazy(() =>
   import("@/components/dashboard/DashboardInventory").then((module) => ({ default: module.DashboardInventory }))
 );
+
+// Eagerly preload the most-visited tab chunks so they are ready before the user taps.
+void import("@/components/dashboard/DashboardCommunities");
+void import("@/components/dashboard/DashboardPolls");
 
 const COMMUNITY_LOGOS: Record<string, string> = {
   lnt: LNTLogo,
@@ -381,6 +386,11 @@ export default function Dashboard({
     navigate("/dashboard");
   };
 
+  const handleBackToDashboardHome = () => {
+    setIsHome(true);
+    navigate("/dashboard");
+  };
+
   const handleDailySpinAward = (amount: number) => {
     if (user.role === "admin") {
       return award(amount);
@@ -502,6 +512,24 @@ export default function Dashboard({
             </DashboardSectionShell>
           </Suspense>
         );
+      case "store":
+        return (
+          <Suspense fallback={dashboardSectionFallback}>
+            <DashboardSectionShell>
+              <DashboardStore
+                polls={polls}
+                votedPolls={votedPolls}
+                avatarCatalog={avatarCatalog}
+                ownedAvatarLevels={ownedAvatarLevels}
+                onUnlockAvatar={unlockAvatarLevel}
+                onAvatarPurchased={markAvatarOwned}
+                avatarPricesByLevel={avatarPricesByLevel}
+                tokenBalance={tokenBalance}
+                userId={user.id}
+              />
+            </DashboardSectionShell>
+          </Suspense>
+        );
       case "wallet":
         return (
           <Suspense fallback={dashboardSectionFallback}>
@@ -538,7 +566,7 @@ export default function Dashboard({
         return (
           <Suspense fallback={dashboardSectionFallback}>
             <DashboardSectionShell>
-              <DashboardSettings userId={user.id} onLogout={onLogout} />
+              <DashboardSettings userId={user.id} onLogout={onLogout} onBackToDashboard={handleBackToDashboardHome} />
             </DashboardSectionShell>
           </Suspense>
         );

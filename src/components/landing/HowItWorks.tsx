@@ -43,7 +43,7 @@ export function HowItWorks() {
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/30 to-transparent" />
 
         <h2 className="mb-3 text-center landing-heading sm:mb-4">
-          How it works
+          How ra<span className="raw-word-w">W</span> works
         </h2>
         <p className="mx-auto mb-10 max-w-2xl px-1 text-center text-sm leading-relaxed text-raw-silver/60 sm:mb-14 sm:text-base">
           Build an anonymous identity, answer honest polls, and discover online communities
