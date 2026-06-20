@@ -103,7 +103,6 @@ export function AvatarShowcaseSection({ onSignupClick = () => undefined }: Avata
   const [extraPreviewAvatar, setExtraPreviewAvatar] = useState<LandingNewAvatar | null>(null);
   const [newAvatars] = useState<LandingNewAvatar[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const phoneRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const nextThemes = [...LEVEL_THEMES];
@@ -349,7 +348,7 @@ In real life you are born with a name, a face, and a personality underneath. On 
       }
     >
       {/* ── Mobile (<sm): phone left + 2-col avatar grid right, 50/50 ── */}
-      <div ref={phoneRef} className="mx-auto flex w-full max-w-5xl flex-row items-start gap-3 sm:hidden">
+      <div className="mx-auto flex w-full max-w-5xl flex-row items-start gap-3 sm:hidden">
 
         {/* Phone: scaled to fit the left half while keeping the full home screen intact. */}
         <div
