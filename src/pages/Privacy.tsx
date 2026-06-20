@@ -95,7 +95,7 @@ export default function Privacy() {
             <section>
               <h2 className="text-lg font-semibold text-raw-text">9. Contact Us</h2>
               <p className="mt-2 text-sm leading-relaxed">
-                If you have questions about this Privacy Policy or our privacy practices, please contact us at privacy@theartofraw.me or via WhatsApp.
+                If you have questions about this Privacy Policy or our privacy practices, please contact us at info@myraw.app or via WhatsApp.
               </p>
             </section>
 

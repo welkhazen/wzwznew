@@ -3,20 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>raW | Anonymous Group Chats, Live Polls &amp; Online Communities</title>
-    <meta name="description" content="No email. No phone. No real name. raW is anonymous group chats, live polls, and avatar identities — say what you actually think and find people who get you." />
-    <meta property="og:title" content="raW | Anonymous Group Chats, Live Polls &amp; Online Communities" />
-    <meta property="og:description" content="No email. No phone. No real name. Join anonymous group chats and live polls where honest opinions turn into real connection." />
-    <meta property="og:site_name" content="raW" />
+    <title>Anonymous Online Communities &amp; Group Chats | raW</title>
+    <meta name="description" content="Join anonymous online communities and 24/7 group chats built around honest conversation, shared interests, live polls, and real connection." />
+    <meta property="og:title" content="raW - Anonymous Online Communities &amp; Group Chats" />
+    <meta property="og:description" content="Find your people in anonymous, interest-based community chats. Share honestly, answer live polls, and connect without using your real identity." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://www.myraw.app/" />
-    <meta property="og:image" content="https://www.myraw.app/og-card.svg" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
+    <meta property="og:image" content="https://www.myraw.app/raw-logo-512.png" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="raW | Anonymous Group Chats, Live Polls &amp; Online Communities" />
-    <meta name="twitter:description" content="No email. No phone. No real name. Anonymous group chats and live polls where you can belong without performing." />
-    <meta name="twitter:image" content="https://www.myraw.app/og-card.svg" />
+    <meta name="twitter:title" content="raW - Anonymous Online Communities &amp; Group Chats" />
+    <meta name="twitter:description" content="Join anonymous, interest-based group chats for honest conversation and real connection." />
+    <meta name="twitter:image" content="https://www.myraw.app/raw-logo-512.png" />
     <link rel="canonical" href="https://www.myraw.app/" />
     <link rel="icon" type="image/webp" href="/favicon.webp" />
     <link rel="icon" type="image/png" href="/favicon.png" />
@@ -30,29 +27,15 @@
     <meta name="apple-mobile-web-app-title" content="raW" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <script type="application/ld+json">
-      [
-        {
-          "@context": "https://schema.org",
-          "@type": "Organization",
-          "name": "raW",
-          "url": "https://www.myraw.app/",
-          "logo": "https://www.myraw.app/raw-logo-512.png",
-          "description": "Anonymous group chats, live polls, and avatar identities — interest-based online communities for honest conversation and real connection.",
-          "sameAs": ["https://www.linkedin.com/company/theartofraw", "https://instagram.com/theartofraw"]
-        },
-        {
-          "@context": "https://schema.org",
-          "@type": "WebSite",
-          "name": "raW",
-          "url": "https://www.myraw.app/",
-          "description": "Anonymous group chats and live polls. Join with just a username — no email, no phone, no real name.",
-          "potentialAction": {
-            "@type": "SearchAction",
-            "target": "https://www.myraw.app/faq?q={search_term_string}",
-            "query-input": "required name=search_term_string"
-          }
-        }
-      ]
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "raW",
+        "url": "https://www.myraw.app/",
+        "logo": "https://www.myraw.app/raw-logo-512.png",
+        "description": "Anonymous online communities and interest-based group chats for honest conversation, live polls, and real connection.",
+        "sameAs": ["https://www.linkedin.com/company/theartofraw", "https://instagram.com/theartofraw"]
+      }
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -92,8 +75,68 @@
         gtag('config', gaId);
       })();
     </script>
+    <style>
+      /* Visually hide the crawlable landing block from sighted users without removing it
+         from the DOM or the accessibility tree (kept readable for crawlers + screen readers). */
+      .seo-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        clip-path: inset(50%);
+        white-space: nowrap;
+        border: 0;
+      }
+    </style>
   </head>
   <body>
+    <!--
+      Crawlable landing content.
+
+      Why this exists: the home page renders an "Enter raW" splash gate first, and the
+      real landing copy only loads after the user taps to enter. Crawlers don't tap, so
+      that copy was invisible to search engines. This static block ships the home page's
+      core messaging and internal links directly in the served HTML — so non-JS crawlers
+      (Bing, social scrapers, LLM bots) and Googlebot can index it WITHOUT removing the
+      gate UX for humans.
+
+      It is visually hidden from sighted users (the React gate is what they see), but it
+      stays in the DOM and the accessibility tree. Copy here mirrors the site's own SEO
+      descriptions — it is not different from what users get after entering (no cloaking).
+    -->
+    <div id="seo-landing" class="seo-only">
+      <h1>Anonymous Online Communities &amp; 24/7 Group Chats | raW</h1>
+      <p>
+        raW is an anonymity-first platform for honest conversation. Join anonymous online
+        communities and 24/7 group chats built around shared interests, live polls, and real
+        connection — without using your real identity.
+      </p>
+      <h2>Anonymous live polls</h2>
+      <p>
+        Answer anonymous live polls, compare your views, and get matched with online
+        communities and group chats that fit your interests.
+        <a href="/polls-explained">How polls work</a>
+      </p>
+      <h2>Interest-based communities</h2>
+      <p>
+        Anonymous, interest-based community chats help people speak honestly, find like-minded
+        people, and build real connections.
+        <a href="/communities-explained">How communities work</a>
+      </p>
+      <h2>Safety &amp; privacy</h2>
+      <p>
+        raW protects people in anonymous online communities through privacy controls,
+        moderation, reporting, and account security.
+        <a href="/security">Safety &amp; privacy</a>
+      </p>
+      <p>
+        Learn more in the <a href="/faq">FAQ</a>, or contact us at
+        <a href="mailto:info@myraw.app">info@myraw.app</a>.
+      </p>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

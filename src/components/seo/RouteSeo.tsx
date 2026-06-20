@@ -2,16 +2,7 @@ import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
 const SITE_URL = "https://www.myraw.app";
-const SOCIAL_IMAGE_URL = `${SITE_URL}/og-card.svg`;
-
-type StructuredData = Record<string, unknown>;
-type RouteSeoConfig = {
-  title: string;
-  description: string;
-  structuredData?: (canonicalUrl: string) => StructuredData[];
-};
-
-const routeSeo: Record<string, RouteSeoConfig> = {
+const routeSeo: Record<string, { title: string; description: string }> = {
   "/": {
     title: "raW | Anonymous Polls, Avatars & Online Communities",
     description: "Join raW to answer anonymous live polls, build an avatar identity, compare honest opinions, and find online communities where you actually belong.",
