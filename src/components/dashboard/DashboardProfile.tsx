@@ -23,8 +23,7 @@ const TOKEN_BALANCE_STORAGE_PREFIX = "raw.polls.token-balance";
 const TOKEN_BALANCE_UPDATED_EVENT = "raw:token-balance-updated";
 
 const FOUNDING_INVITES_STORAGE_PREFIX = "raw.founding-invites";
-const FOUNDING_INVITE_COUNT = 1;
-const ONBOARDING_VOUCHER_STORAGE_PREFIX = "raw.onboarding.voucher";
+const FOUNDING_INVITE_COUNT = 2;
 
 function createInviteCode(slot: number): string {
   const bytes = new Uint8Array(5);
@@ -49,7 +48,13 @@ function readFoundingInviteCodes(userId: string): string[] {
   }
 
   const storageKey = `${FOUNDING_INVITES_STORAGE_PREFIX}.${userId}`;
-  const saved = window.localStorage.getItem(storageKey);
+  let saved: string | null = null;
+  try {
+    saved = window.localStorage.getItem(storageKey);
+  } catch {
+    saved = null;
+  }
+
   if (saved) {
     try {
       const parsed = JSON.parse(saved) as unknown;
@@ -58,7 +63,6 @@ function readFoundingInviteCodes(userId: string): string[] {
         while (codes.length < FOUNDING_INVITE_COUNT) {
           codes.push(createInviteCode(codes.length + 1));
         }
-        window.localStorage.setItem(storageKey, JSON.stringify(codes));
         return codes;
       }
     } catch {
@@ -66,29 +70,20 @@ function readFoundingInviteCodes(userId: string): string[] {
     }
   }
 
-  const codes = Array.from({ length: FOUNDING_INVITE_COUNT }, (_, index) => createInviteCode(index + 1));
-  window.localStorage.setItem(storageKey, JSON.stringify(codes));
-  return codes;
+  return Array.from({ length: FOUNDING_INVITE_COUNT }, (_, index) => createInviteCode(index + 1));
+}
+
+function persistFoundingInviteCodes(userId: string, codes: string[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(`${FOUNDING_INVITES_STORAGE_PREFIX}.${userId}`, JSON.stringify(codes.slice(0, FOUNDING_INVITE_COUNT)));
+  } catch {
+    // Invite tickets remain usable for this session even if storage is blocked.
+  }
 }
 
 function buildInviteShareText(code: string): string {
   return `I saved you a founding invite for RAW. Use code ${code} when you join.`;
-}
-
-function countLocalVoucherUses(userId: string, codes: string[]): number {
-  if (typeof window === "undefined" || codes.length === 0) return 0;
-  const normalizedCodes = new Set(codes.map((code) => code.toUpperCase()));
-  let count = 0;
-
-  for (let index = 0; index < window.localStorage.length; index += 1) {
-    const key = window.localStorage.key(index);
-    if (!key?.startsWith(`${ONBOARDING_VOUCHER_STORAGE_PREFIX}.`)) continue;
-    if (key === `${ONBOARDING_VOUCHER_STORAGE_PREFIX}.${userId}`) continue;
-    const value = window.localStorage.getItem(key)?.trim().toUpperCase();
-    if (value && normalizedCodes.has(value)) count += 1;
-  }
-
-  return count;
 }
 
 function pushTokenBalance(userId: string, balance: number): void {
@@ -145,7 +140,6 @@ export function DashboardProfile({
   const [ownedInsightIds, setOwnedInsightIds] = useState<Set<string>>(() => readOwnedInsightIds(userId));
   const [inviteCodes, setInviteCodes] = useState<string[]>(() => readFoundingInviteCodes(userId));
   const [openInviteIndex, setOpenInviteIndex] = useState<number | null>(null);
-  const [localVoucherUses, setLocalVoucherUses] = useState(() => countLocalVoucherUses(userId, readFoundingInviteCodes(userId)));
 
   // Private identity
   const [privateAlias, setPrivateAlias] = useState<UserAliasRow | null>(null);
@@ -159,8 +153,9 @@ export function DashboardProfile({
   useEffect(() => {
     const nextInviteCodes = readFoundingInviteCodes(userId);
     setOwnedInsightIds(readOwnedInsightIds(userId));
-    setInviteCodes(nextInviteCodes);
-    setLocalVoucherUses(countLocalVoucherUses(userId, nextInviteCodes));
+    const codes = readFoundingInviteCodes(userId);
+    setInviteCodes(codes);
+    persistFoundingInviteCodes(userId, codes);
     setOpenInviteIndex(null);
   }, [userId]);
 
@@ -374,26 +369,15 @@ export function DashboardProfile({
               <Ticket className="h-4 w-4 text-raw-gold/60" /> Founding invitations
             </p>
             <p className="mt-1 text-xs leading-relaxed text-raw-silver/40">
-              You get one founding invite code. Reveal it, copy it, or share it with a friend.
+              You get two founding invite codes. Reveal one, copy it, or share it with a friend.
             </p>
           </div>
           <span className="rounded-full border border-raw-gold/25 bg-raw-gold/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-raw-gold/70">
-            1 total
+            2 total
           </span>
         </div>
 
-        {localVoucherUses > 0 ? (
-          <div className="mb-3 rounded-2xl border border-raw-gold/25 bg-raw-gold/10 px-4 py-3">
-            <p className="text-xs font-semibold text-raw-gold">
-              {localVoucherUses === 1 ? "1 person signed up using your code." : `${localVoucherUses} people signed up using your code.`}
-            </p>
-            <p className="mt-1 text-[11px] leading-relaxed text-raw-silver/45">
-              Nice. Your founding invite is bringing people into raW.
-            </p>
-          </div>
-        ) : null}
-
-        <div className="grid gap-3">
+        <div className="grid gap-3 sm:grid-cols-2">
           {inviteCodes.map((code, index) => {
             const isOpen = openInviteIndex === index;
             return (
