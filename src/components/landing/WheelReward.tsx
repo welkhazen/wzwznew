@@ -34,9 +34,18 @@ function readStoredSpin(pool: PoolEntry[]): PoolEntry | null {
   try {
     const raw = window.localStorage.getItem(LANDING_WHEEL_SPIN_KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as { prizeId?: unknown };
-    if (typeof parsed.prizeId !== "string") return null;
-    return pool.find((entry) => entry.id === parsed.prizeId) ?? null;
+    const parsed = JSON.parse(raw) as { prizeId?: unknown; avatarId?: unknown };
+    // Match by stable catalog id first so a stored win keeps pointing at the
+    // avatar that was actually won even if the wheel pool order changes. Fall
+    // back to the positional prize id for older stored values.
+    if (typeof parsed.avatarId === "string") {
+      const byAvatar = pool.find((entry) => entry.avatarId === parsed.avatarId);
+      if (byAvatar) return byAvatar;
+    }
+    if (typeof parsed.prizeId === "string") {
+      return pool.find((entry) => entry.id === parsed.prizeId) ?? null;
+    }
+    return null;
   } catch {
     return null;
   }
