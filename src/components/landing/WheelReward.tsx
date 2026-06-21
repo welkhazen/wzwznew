@@ -80,6 +80,35 @@ function rarityTier(rank: number): string {
   return "Common";
 }
 
+function AvatarRankRarityGrid({ pool, isLight }: { pool: PoolEntry[]; isLight: boolean }) {
+  return (
+    <div className="grid w-full max-w-3xl grid-cols-2 gap-2 sm:grid-cols-5">
+      {pool.map((entry) => {
+        const rank = rankOf(entry);
+        return (
+          <div
+            key={entry.id}
+            className={`rounded-xl border px-3 py-2 text-center shadow-[0_0_18px_rgb(var(--raw-accent)/0.06)] backdrop-blur-sm ${
+              isLight ? "border-raw-gold/30 bg-white/60" : "border-raw-gold/20 bg-raw-black/25"
+            }`}
+          >
+            <div className="mx-auto mb-1 h-8 w-8 overflow-hidden rounded-full border border-raw-gold/30 bg-black/60">
+              <img src={entry.imageSrc} alt="" className="h-full w-full object-cover" />
+            </div>
+            <div className="truncate text-[10px] text-raw-text/75">{entry.name}</div>
+            <div className="mt-1 font-display text-[10px] uppercase tracking-[0.18em] text-raw-gold/90">
+              Rank {rank}
+            </div>
+            <div className="text-[10px] uppercase tracking-[0.16em] text-raw-text/65">
+              {rarityTier(rank)}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function buildPrizes(pool: PoolEntry[], isLight: boolean): WheelPrize[] {
   return pool.map((entry, i) => ({
     id: entry.id,
@@ -140,6 +169,7 @@ export function WheelRewardInline({ onSignupClick }: WheelRewardProps) {
     <div className="flex flex-col items-center gap-6 sm:gap-10">
       <SpinWheelClaimBanner />
       <WheelOfFortune prizes={prizes} onSpinEnd={handleSpinEnd} disabled={hasSpun} />
+      <AvatarRankRarityGrid pool={pool} isLight={isLight} />
 
       {!rewardsImageMissing ? (
         <img
@@ -233,6 +263,7 @@ export function WheelReward({ onSignupClick }: WheelRewardProps) {
       <div className="flex flex-col items-center gap-6 sm:gap-10">
         <SpinWheelClaimBanner />
         <WheelOfFortune prizes={prizes} prizeWeights={prizeWeights} onSpinEnd={handleSpinEnd} disabled={hasSpun} />
+        <AvatarRankRarityGrid pool={pool} isLight={isLight} />
 
         {!rewardsImageMissing ? (
           <img
