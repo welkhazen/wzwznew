@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { BrandName } from "@/components/ui/brand-name";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { Shield, Users, MessageSquare, Star, Zap, Lock } from "lucide-react";
 
@@ -8,7 +9,7 @@ export default function CommunitiesExplained() {
       <header className="border-b border-raw-border/30 bg-raw-black/85 px-4 py-4 backdrop-blur-sm sm:px-6">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between">
           <Link to="/" className="font-display text-xl tracking-[0.2em] text-raw-text/85">
-            ra<span className="text-raw-gold">W</span>
+            <BrandName />
           </Link>
           <Link
             to="/"

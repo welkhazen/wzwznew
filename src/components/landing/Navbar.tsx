@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { BrandName } from "@/components/ui/brand-name";
 import { Link } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { ThemeCustomizer } from "@/components/theme/ThemeCustomizer";
@@ -81,7 +82,7 @@ export function Navbar({ isLoggedIn, username, onSignupClick }: NavbarProps) {
             className="h-8 w-8 shrink-0 sm:h-9 sm:w-9"
           />
           <span>
-            ra<span className="text-raw-gold">W</span>
+            <BrandName />
           </span>
         </Link>
 

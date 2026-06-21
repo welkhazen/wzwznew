@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import { BrandName } from "@/components/ui/brand-name";
 import {
   FacebookIcon,
   GithubIcon,
@@ -115,7 +116,7 @@ export function MinimalFooter({
               className="minimal-footer-brand w-max rounded-xl border border-transparent px-2 py-1 font-display text-2xl tracking-[0.22em] text-raw-text/85 transition-all hover:border-raw-gold/20 hover:bg-raw-gold/[0.06] hover:text-raw-text"
               aria-label="raW home"
             >
-              ra<span className="text-raw-gold">W</span>
+              <BrandName />
             </a>
 
             <p className="minimal-footer-tagline max-w-sm text-sm leading-relaxed text-raw-silver/70">

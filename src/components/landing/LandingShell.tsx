@@ -1,4 +1,5 @@
 import { Suspense, lazy, useState } from "react";
+import { BrandName } from "@/components/ui/brand-name";
 import { motion } from "framer-motion";
 import MatrixBackground from "@/components/ui/matrix-background";
 import { Navbar } from "@/components/landing/Navbar";
@@ -123,7 +124,7 @@ export default function LandingShell({
               >
                 <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/70 to-transparent" />
                 <h2 className="landing-heading">
-                  Ready to be ra<span className="raw-word-w">W</span>?
+                  Ready to be <BrandName />?
                 </h2>
                 <p className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-raw-silver/55 sm:text-base">
                   Join with just a username and password. No email, no phone, no real name — your people are already talking.
