@@ -386,15 +386,19 @@ export function PersonalityInsightsSection() {
                 <GlareCard className={`relative border ${insight.accentBorder} bg-raw-surface/30 p-3 transition-transform duration-200 hover:scale-[1.02] sm:p-7`}>
                   {!isLight && <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${insight.glowFrom} via-transparent to-transparent`} />}
                   <div className="relative z-10">
-                    <div className={`mb-4 inline-flex items-center gap-1.5 rounded-full border ${insight.accentBorder} ${insight.softSurface} px-3 py-1`}>
-                      <Icon className={`h-3 w-3 ${insight.accentText}`} />
-                      <span className={`text-[10px] font-medium uppercase tracking-wider ${insight.accentText}`}>{insight.badge}</span>
+                    <div className="mb-4 flex flex-wrap items-center gap-2">
+                      <div className={`inline-flex items-center gap-1.5 rounded-full border ${insight.accentBorder} ${insight.softSurface} px-3 py-1`}>
+                        <Icon className={`h-3 w-3 ${insight.accentText}`} />
+                        <span className={`text-[10px] font-medium uppercase tracking-wider ${insight.accentText}`}>{insight.badge}</span>
+                      </div>
+                      <div className="rounded-full border border-white/20 bg-black/60 px-3 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-white/85 backdrop-blur-sm">
+                        Preview · Coming Soon
+                      </div>
                     </div>
                     <h3 className={`font-display text-base tracking-wide ${insight.accentText}`}>{insight.name}</h3>
                     <p className="mt-3 text-xs leading-relaxed text-raw-silver/50">{insight.description}</p>
                     <LockedPreview insight={insight} isLight={isLight} />
                   </div>
-                  <div className="pointer-events-none absolute right-4 top-4 z-20 rounded-full border border-white/20 bg-black/60 px-3 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-white/85 backdrop-blur-sm">Preview · Coming Soon</div>
                 </GlareCard>
               </button>
             );
