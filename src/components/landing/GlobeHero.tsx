@@ -1,6 +1,7 @@
 "use client";
 
 import React, { Suspense, lazy, useRef } from "react";
+import { BrandName } from "@/components/ui/brand-name";
 import { motion, useScroll, useTransform } from "motion/react";
 import { ShieldCheck } from "lucide-react";
 import { track } from "@/lib/analytics";
@@ -119,7 +120,7 @@ export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
         >
           <div className="mx-auto h-px w-16 bg-primary/60" aria-hidden="true" />
           <p className="text-base leading-relaxed text-raw-silver/80 sm:text-lg">
-            This is ra<span className="raw-word-w">W</span> — rooms where you say what
+            This is <BrandName /> — rooms where you say what
             you actually think, and meet the people who get it.
           </p>
           <p className="text-sm leading-relaxed text-raw-silver/50">

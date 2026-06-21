@@ -124,11 +124,16 @@ export function AvatarShowcaseSection({ onSignupClick = () => undefined }: Avata
   const chooserAvatars = CHOOSER_AVATARS;
   const chooserTotal = chooserAvatars.length;
   const featuredUnlockableNames = new Set<string>(UNLOCKABLE_FEATURE_ORDER);
+  // Not showcased in the landing grid (Bronze Herald also has duplicate art).
+  // They remain claimable via the early-signup flow — only hidden here.
+  const hiddenUnlockableNames = new Set(["Bronze Herald", "Rose Warden"]);
   const unlockableAvatars = [
     ...UNLOCKABLE_FEATURE_ORDER
       .map((name) => REVEAL_AVATARS.find((avatar) => avatar.name === name))
       .filter((avatar): avatar is AvatarCatalogItem => Boolean(avatar)),
-    ...REVEAL_AVATARS.filter((avatar) => !featuredUnlockableNames.has(avatar.name)),
+    ...REVEAL_AVATARS.filter(
+      (avatar) => !featuredUnlockableNames.has(avatar.name) && !hiddenUnlockableNames.has(avatar.name),
+    ),
   ];
   const visibleUnlockableAvatars = (showUnlockableAvatars
     ? unlockableAvatars

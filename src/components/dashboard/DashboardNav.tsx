@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+import { BrandName } from "@/components/ui/brand-name";
 import { track } from "@/lib/analytics";
 import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
 import {
@@ -612,7 +613,7 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
         <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           {/* Logo — hidden on mobile when inside a community */}
           <a href="/" className={cn("font-display text-base tracking-[0.3em] shrink-0 sm:text-lg", isEffectiveLight ? "text-slate-950" : "text-raw-text", communityTitle ? "hidden sm:block" : "")}>
-            ra<span className="text-raw-gold">W</span>
+            <BrandName />
           </a>
           <DeadlineCountdownBadge isLight={isEffectiveLight} />
         </div>
