@@ -61,10 +61,14 @@ rank, and image must all agree.
 
 | ID | Rank | Tier | Name | Notes |
 |---:|---:|---|---|---|
-| 29 | 4 | Orange | Bronze Herald | |
-| 21 | 6 | Pink | Rose Warden | |
+| 29 | 4 | Orange | Bronze Herald | hidden from the landing "Unlockable Avatars" grid; still claimable |
+| 21 | 6 | Pink | Rose Warden | hidden from the landing "Unlockable Avatars" grid; still claimable |
 | 25 | 2 | Blue | Teal Siren | |
-| 33 | 2 | Blue | Azure Shade | duplicate artwork of #29 — displays as "Bronze Herald" |
+| 33 | 2 | Blue | Azure Shade | duplicate artwork of #29 — displays as "Bronze Herald"; hidden from grid |
+
+> The landing grid hides Bronze Herald and Rose Warden via `hiddenUnlockableNames`
+> in `AvatarShowcaseSection.tsx`. They remain in `EARLY_SIGNUP_AVATAR_IDS` and
+> claimable through the early-signup flow.
 
 ## Full catalog (all 54 avatars)
 
