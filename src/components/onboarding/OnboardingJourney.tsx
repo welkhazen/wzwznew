@@ -2,7 +2,6 @@ import { BrandName } from "@/components/ui/brand-name";
 import { highlightRawWordmark } from "@/components/ui/highlightRawWordmark";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import isItJustMeVideo from "@/assets/itisjustme.webm";
 import speakYourTruthVideo from "@/assets/speakyourheart.webm";
 import lntVideo from "@/assets/2026-04-18 10_10_00.webm";
 import { AvatarFigure } from "@/components/ui/avatar-figure";
@@ -254,7 +253,7 @@ const ONBOARDING_COMMUNITIES = [
     description: "Relatable moments, shared observations, and the quiet comfort of realizing you're not the only one.",
     members: "3",
     activeNow: "1 active",
-    video: isItJustMeVideo,
+    video: "/assets/IIJM.webm",
     image: undefined,
   },
   {
@@ -264,7 +263,7 @@ const ONBOARDING_COMMUNITIES = [
     members: "0",
     activeNow: "Early Access",
     locked: true,
-    image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=900&q=80",
+    image: "/assets/lebaneese.webp",
   },
 ];
 
