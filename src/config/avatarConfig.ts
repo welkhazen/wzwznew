@@ -18,7 +18,7 @@ export const EARLY_SIGNUP_CUTOFF_ISO = "2026-06-07T00:00:00Z";
 
 /** Helper: full /public/avatars URL for a numeric avatar id. */
 export function avatarImageSrc(id: number): string {
-  return `/avatars/${id}.png`;
+  return `/avatars/${id}.webp`;
 }
 
 /** Dev-time sanity check: the two pools must not overlap. */
