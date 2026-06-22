@@ -154,10 +154,9 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
               >
               <div
                 className={
-                  `rounded-2xl p-5 sm:p-6 relative overflow-visible transition-colors duration-200 ` +
-                  (c.video
-                      ? "bg-transparent border-0 shadow-none"
-                      : "border border-raw-border/50 bg-raw-surface/50 overflow-hidden")
+                  c.video
+                    ? "relative overflow-visible"
+                    : "rounded-2xl p-5 sm:p-6 relative overflow-visible transition-colors duration-200 border border-raw-border/50 bg-raw-surface/50 overflow-hidden"
                 }
               >
                 {c.video || c.image ? (
@@ -169,7 +168,7 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
                         loop
                         muted
                         playsInline
-                        preload="metadata"
+                        preload="none"
                       >
                         <source src={c.video} type={c.videoType ?? "video/webm"} />
                         Your browser does not support this video format.
