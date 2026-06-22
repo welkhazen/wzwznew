@@ -35,7 +35,8 @@ once per session when 50% visible.
 
 ## Current backend
 
-No analytics backend is currently wired. `track()` and related APIs log to the
-console in dev mode and no-op otherwise. To plug in a provider, implement the
-`AnalyticsClient` interface in `client.ts` and call `setClient()` at app
-startup.
+PostHog is wired at app startup when `VITE_POSTHOG_KEY` is set. The SDK is
+configured for explicit, typed events only: automatic pageviews are disabled in
+favor of `useTrackPageView()`, and autocapture is disabled so product metrics
+stay in `events.ts`. Without `VITE_POSTHOG_KEY`, `track()` and related APIs log
+to the console in dev mode and no-op otherwise.
