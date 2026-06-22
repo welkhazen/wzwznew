@@ -2,8 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 import { getMessagesForCommunity, type ChatMessage } from "@/lib/communityMessages";
-import isItJustMeVideo from "@/assets/itisjustme.webm";
-import lebanonImage from "@/assets/LB.webp";
 import speakYourTruthVideo from "@/assets/speakyourheart.webm";
 import lateNightTalksVideo from "@/assets/2026-04-18 10_10_00.webm";
 
@@ -24,13 +22,14 @@ const communities = [
     title: "Is It Just Me?",
     description: "A quick-hit community for relatable thoughts, shared weirdness, and the relief of realizing it is not just you.",
     badge: "Active",
-    video: isItJustMeVideo,
+    video: "/assets/IIJM.mp4",
+    videoType: "video/mp4",
   },
   {
     title: "Lebanon Initiatives",
     description: "Join the waitlist for local action, support, and community-led initiatives.",
     badge: "Waitlist",
-    image: lebanonImage,
+    image: "/assets/lebaneese.png",
     waitlist: true,
   },
 ];
