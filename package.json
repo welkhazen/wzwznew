@@ -21,7 +21,9 @@
     "test:load:local": "node scripts/load-test.js",
     "memory-pack:export-bootstrap": "node scripts/export-llm-bootstrap.mjs",
     "avatars:process": "node scripts/process-new-avatars.mjs",
-    "prepare": "husky"
+    "prepare": "husky",
+    "secrets:scan": "./scripts/secret-scan.sh detect",
+    "secrets:staged": "./scripts/secret-scan.sh staged"
   },
   "dependencies": {
     "@capacitor/cli": "^8.3.1",

@@ -11,3 +11,5 @@ if ls public/avatars/*.png public/avatars/*.jpg public/avatars/*.jpeg public/ava
   # Re-stage anything the script touched.
   git add public/avatars/ src/lib/generatedAvatarEntries.ts
 fi
+# Block accidental secret commits before they land in Git.
+./scripts/secret-scan.sh staged || exit 1
