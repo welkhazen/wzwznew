@@ -3,10 +3,13 @@
 // hardcode an avatar array elsewhere, import from here instead.
 
 // Ordered by rank tier (rank 1 grey -> rank 10 rainbow); see src/lib/avatarRank.ts.
-export const FREE_SPIN_AVATAR_IDS = [43, 52, 41, 42, 13, 47, 40, 35, 20, 26] as const;
+// Id 35 (the old "Platinum" slot) was removed — its artwork was mis-colored red.
+// Id 21 ("Rose Warden") now fills rank 7 ("Rose"), and Gold moved up to rank 8.
+export const FREE_SPIN_AVATAR_IDS = [43, 52, 41, 42, 13, 47, 21, 40, 20, 26] as const;
 
 // Early-signup reward pool. Must NOT overlap with FREE_SPIN_AVATAR_IDS.
-export const EARLY_SIGNUP_AVATAR_IDS = [29, 21, 25, 33] as const;
+// Emptied: all four ids were retired (21 was promoted into the spin pool above).
+export const EARLY_SIGNUP_AVATAR_IDS = [] as const;
 
 // Cutoff for who counts as an "early signup". Users with created_at
 // strictly before this timestamp can claim the early-signup reward;
