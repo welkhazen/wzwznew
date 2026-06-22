@@ -9,6 +9,8 @@ import { useTheme } from "@/providers/useTheme";
 interface Trait {
   label: string;
   value: number;
+  desc: string;
+  color: string;
 }
 
 interface InsightPreview {
@@ -45,10 +47,10 @@ const insights: InsightPreview[] = [
     summary: "You blend intuition and structure. You think in patterns, but still care about practical execution.",
     insight: "Your growth edge is turning reflection into faster action.",
     traits: [
-      { label: "Introversion", value: 61 },
-      { label: "Intuition", value: 78 },
-      { label: "Thinking", value: 56 },
-      { label: "Judging", value: 64 },
+      { label: "Introversion", value: 61, desc: "Prefers depth over breadth in social contexts", color: "#FB923C" },
+      { label: "Intuition", value: 78, desc: "Drawn to abstract patterns and future possibilities", color: "#FBBF24" },
+      { label: "Thinking", value: 56, desc: "Weighs logic and objectivity in decisions", color: "#F97316" },
+      { label: "Judging", value: 64, desc: "Prefers structure, plans, and closure", color: "#EA580C" },
     ],
     previewVariant: "quadrants",
   },
@@ -67,11 +69,11 @@ const insights: InsightPreview[] = [
     summary: "You combine high openness with stable emotional grounding and collaborative social behavior.",
     insight: "You thrive when structure supports curiosity.",
     traits: [
-      { label: "Openness", value: 82 },
-      { label: "Conscientiousness", value: 63 },
-      { label: "Extraversion", value: 49 },
-      { label: "Agreeableness", value: 71 },
-      { label: "Emotional Stability", value: 66 },
+      { label: "Openness", value: 82, desc: "Highly creative and open to new experiences", color: "#38BDF8" },
+      { label: "Conscientiousness", value: 94, desc: "Extremely organised and goal-oriented", color: "#34D399" },
+      { label: "Extraversion", value: 62, desc: "Moderately seeks social engagement", color: "#A78BFA" },
+      { label: "Agreeableness", value: 79, desc: "Cooperative and empathetic", color: "#F472B6" },
+      { label: "Neuroticism", value: 23, desc: "Naturally serene and resilient", color: "#FB923C" },
     ],
     previewVariant: "radar",
   },
@@ -90,10 +92,10 @@ const insights: InsightPreview[] = [
     summary: "You read social context well and usually respond with composure even when tension rises.",
     insight: "High empathy plus boundaries keeps your energy stable.",
     traits: [
-      { label: "Self-Awareness", value: 74 },
-      { label: "Self-Regulation", value: 69 },
-      { label: "Empathy", value: 83 },
-      { label: "Social Skill", value: 72 },
+      { label: "Self-Awareness", value: 74, desc: "Recognises emotional triggers clearly", color: "#34D399" },
+      { label: "Self-Regulation", value: 69, desc: "Manages impulses under pressure", color: "#10B981" },
+      { label: "Empathy", value: 83, desc: "Attuned to others' emotional states", color: "#6EE7B7" },
+      { label: "Social Skill", value: 72, desc: "Navigates group dynamics with ease", color: "#059669" },
     ],
     previewVariant: "bars",
   },
@@ -112,10 +114,10 @@ const insights: InsightPreview[] = [
     summary: "Under pressure, you can default to control and perfection as a way to avoid vulnerability.",
     insight: "Naming the pattern early reduces emotional overcorrection.",
     traits: [
-      { label: "Control Reflex", value: 71 },
-      { label: "Avoidance", value: 42 },
-      { label: "Defensiveness", value: 54 },
-      { label: "Repair Capacity", value: 77 },
+      { label: "Control Reflex", value: 71, desc: "Seeks to manage outcomes when anxious", color: "#E879F9" },
+      { label: "Avoidance", value: 42, desc: "Occasionally sidesteps conflict", color: "#C026D3" },
+      { label: "Defensiveness", value: 54, desc: "Moderate tendency to shield the ego", color: "#A855F7" },
+      { label: "Repair Capacity", value: 77, desc: "Strong ability to reconnect after rupture", color: "#D946EF" },
     ],
     previewVariant: "summary",
   },
@@ -134,10 +136,10 @@ const insights: InsightPreview[] = [
     summary: "You value independence highly. Closeness can feel suffocating, and you prefer self-sufficiency.",
     insight: "Growth comes from accepting support without interpreting it as weakness.",
     traits: [
-      { label: "Secure", value: 25 },
-      { label: "Anxious", value: 18 },
-      { label: "Avoidant", value: 78 },
-      { label: "Disorganized", value: 12 },
+      { label: "Secure", value: 25, desc: "Comfortable with closeness and independence", color: "#34D399" },
+      { label: "Anxious", value: 18, desc: "Fear of abandonment or inconsistency", color: "#FBBF24" },
+      { label: "Avoidant", value: 78, desc: "Strong preference for emotional distance", color: "#FB7185" },
+      { label: "Disorganized", value: 12, desc: "Conflicting approach to intimacy", color: "#A78BFA" },
     ],
     previewVariant: "timeline",
   },
@@ -156,202 +158,258 @@ const insights: InsightPreview[] = [
     summary: "You quickly detect patterns but can overweight first impressions in fast-moving contexts.",
     insight: "Brief counter-evidence checks improve decision quality.",
     traits: [
-      { label: "Confirmation Bias", value: 62 },
-      { label: "Anchoring", value: 58 },
-      { label: "Availability", value: 51 },
-      { label: "Outcome Bias", value: 45 },
+      { label: "Confirmation Bias", value: 62, desc: "Favours info that confirms existing beliefs", color: "#818CF8" },
+      { label: "Anchoring", value: 58, desc: "First data point heavily influences judgement", color: "#6366F1" },
+      { label: "Availability", value: 51, desc: "Recent events feel more likely to recur", color: "#A5B4FC" },
+      { label: "Outcome Bias", value: 45, desc: "Judges decisions by results not process", color: "#4F46E5" },
     ],
     previewVariant: "pie",
   },
 ];
 
+// ─── Locked card preview ──────────────────────────────────────────────────────
 
 function LockedPreview({ insight, isLight }: { insight: InsightPreview; isLight: boolean }) {
-  const accent = { color: insight.accentColor };
-  const previewPanelClass = isLight ? "border-slate-300/70 bg-slate-100/80" : "border-white/10 bg-black/30";
-  const mutedTextClass = isLight ? "text-slate-700" : "text-white/80";
-  const secondaryTextClass = isLight ? "text-slate-600" : "text-white/75";
-  const subtleBorderClass = isLight ? "border-slate-300/70 bg-white/45" : "border-white/10 bg-white/5";
+  const panelClass = isLight ? "border-slate-300/70 bg-slate-100/80" : "border-white/10 bg-black/30";
+  const mutedText = isLight ? "text-slate-700" : "text-white/80";
   const trackClass = isLight ? "bg-slate-300/80" : "bg-white/10";
 
   return (
-    <div className={`mt-3 rounded-xl border p-2 blur-[1px] sm:mt-5 sm:p-3 ${previewPanelClass}`}>
-      {insight.previewVariant === "radar" && (
-        <div className="space-y-2">
+    <div className={`mt-3 rounded-xl border p-2 blur-[1px] sm:mt-5 sm:p-3 ${panelClass}`}>
+      <div className="space-y-2">
+        {insight.previewVariant === "radar" && (
           <div
-            className={`h-14 rounded-lg border sm:h-24 ${
-              isLight ? "border-slate-300/70 bg-[radial-gradient(circle_at_center,rgba(148,163,184,0.22),transparent_70%)]" : "border-white/10 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.1),transparent_70%)]"
-            }`}
+            className={`mb-2 h-14 rounded-lg border sm:h-20 ${isLight ? "border-slate-300/70" : "border-white/10"}`}
+            style={{ background: `radial-gradient(circle at center, ${insight.accentColor}22, transparent 70%)` }}
           />
-          {insight.traits.slice(0, 3).map((trait) => (
-            <div key={trait.label} className="flex items-center justify-between text-[10px]">
-              <span className={mutedTextClass}>{trait.label}</span>
-              <span style={accent}>{trait.value}%</span>
+        )}
+        {insight.traits.slice(0, 3).map((trait) => (
+          <div key={trait.label}>
+            <div className={`mb-0.5 flex items-center justify-between text-[10px] ${mutedText}`}>
+              <span>{trait.label}</span>
+              <span style={{ color: trait.color }}>{trait.value}%</span>
             </div>
-          ))}
-        </div>
-      )}
-
-      {insight.previewVariant === "summary" && (
-        <div className="space-y-2 text-[10px]">
-          <p className={`rounded border px-2 py-1 ${subtleBorderClass} ${mutedTextClass}`}>AI Analysis Summary</p>
-          <p className="rounded border border-emerald-400/30 bg-emerald-500/10 px-2 py-1 text-emerald-200">Top Strengths & Advantages</p>
-          <p className="rounded border border-amber-400/30 bg-amber-500/10 px-2 py-1 text-amber-100">Growth Opportunities</p>
-        </div>
-      )}
-
-      {insight.previewVariant === "pie" && (
-        <div className="flex items-center gap-3">
-          <div
-            className={`h-12 w-12 rounded-full border sm:h-20 sm:w-20 ${isLight ? "border-slate-300/80" : "border-white/20"}`}
-            style={{
-              background: isLight
-                ? `conic-gradient(${insight.accentColor} 0 38%, rgba(148,163,184,0.35) 38% 66%, rgba(226,232,240,0.9) 66% 100%)`
-                : `conic-gradient(${insight.accentColor} 0 38%, rgba(255,255,255,0.18) 38% 66%, rgba(255,255,255,0.08) 66% 100%)`,
-            }}
-          />
-          <div className="space-y-1 text-[10px]">
-            {insight.traits.slice(0, 3).map((trait) => (
-              <p key={trait.label} className={secondaryTextClass}>{trait.label}: <span style={accent}>{trait.value}%</span></p>
-            ))}
+            <div className={`h-1 rounded-full ${trackClass}`}>
+              <div className="h-full rounded-full" style={{ width: `${trait.value}%`, backgroundColor: trait.color }} />
+            </div>
           </div>
-        </div>
-      )}
-
-      {insight.previewVariant === "bars" && (
-        <div className="space-y-2">
-          {insight.traits.map((trait) => (
-            <div key={trait.label}>
-              <p className={`mb-1 text-[10px] ${mutedTextClass}`}>{trait.label}</p>
-              <div className={`h-1.5 rounded-full ${trackClass}`}>
-                <div className="h-full rounded-full" style={{ width: `${trait.value}%`, backgroundColor: insight.accentColor }} />
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {insight.previewVariant === "quadrants" && (
-        <div className="grid grid-cols-2 gap-2 text-[10px]">
-          {insight.traits.map((trait) => (
-            <div key={trait.label} className={`rounded border p-2 ${subtleBorderClass}`}>
-              <p className={secondaryTextClass}>{trait.label}</p>
-              <p className="mt-1 font-semibold" style={accent}>{trait.value}%</p>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {insight.previewVariant === "timeline" && (
-        <div className="space-y-2">
-          {insight.traits.map((trait) => (
-            <div key={trait.label} className="flex items-center gap-2 text-[10px]">
-              <div className="h-2 w-2 rounded-full" style={{ backgroundColor: insight.accentColor }} />
-              <span className={mutedTextClass}>{trait.label}</span>
-              <span className="ml-auto" style={accent}>{trait.value}%</span>
-            </div>
-          ))}
-        </div>
-      )}
+        ))}
+      </div>
     </div>
   );
 }
 
-function DonutPreview({ traits, color }: { traits: Trait[]; color: string }) {
-  const cx = 80;
-  const cy = 80;
-  const r = 52;
-  const stroke = 16;
-  const c = 2 * Math.PI * r;
-  const total = Math.max(1, traits.reduce((sum, trait) => sum + trait.value, 0));
-  let offset = 0;
+// ─── Modal chart components ───────────────────────────────────────────────────
+
+function RadarChart({ traits }: { traits: Trait[] }) {
+  const n = traits.length;
+  const cx = 80, cy = 80, r = 52;
+
+  function getPoint(index: number, ratio: number) {
+    const angle = (Math.PI * 2 * index) / n - Math.PI / 2;
+    return { x: cx + r * ratio * Math.cos(angle), y: cy + r * ratio * Math.sin(angle) };
+  }
+
+  const gridLevels = [0.25, 0.5, 0.75, 1.0];
+  const gridPaths = gridLevels.map((level) =>
+    traits.map((_, i) => getPoint(i, level)).map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ") + " Z"
+  );
+  const dataPoints = traits.map((t, i) => getPoint(i, t.value / 100));
+  const dataPath = dataPoints.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ") + " Z";
+  const labelPoints = traits.map((t, i) => ({ ...getPoint(i, 1.3), label: t.label, color: t.color }));
 
   return (
     <svg viewBox="0 0 160 160" className="h-40 w-40 shrink-0">
-      <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={stroke} />
-      {traits.map((trait) => {
-        const segment = (trait.value / total) * c;
-        const current = offset;
-        offset += segment;
-
-        return (
-          <circle
-            key={trait.label}
-            cx={cx}
-            cy={cy}
-            r={r}
-            fill="none"
-            stroke={color}
-            strokeOpacity={0.25 + trait.value / 140}
-            strokeWidth={stroke}
-            strokeDasharray={`${segment} ${c - segment}`}
-            strokeDashoffset={-current}
-            transform={`rotate(-90 ${cx} ${cy})`}
-            strokeLinecap="round"
-          />
-        );
+      {gridPaths.map((d, i) => (
+        <path key={i} d={d} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth={0.8} />
+      ))}
+      {traits.map((_, i) => {
+        const end = getPoint(i, 1);
+        return <line key={i} x1={cx} y1={cy} x2={end.x} y2={end.y} stroke="rgba(255,255,255,0.07)" strokeWidth={0.8} />;
       })}
-      <text x="80" y="76" textAnchor="middle" className="fill-white text-[9px] uppercase tracking-[0.2em]">
-        Sample
-      </text>
-      <text x="80" y="94" textAnchor="middle" className="fill-white text-[11px] font-semibold">
-        Preview
-      </text>
+      <path d={dataPath} fill="rgba(56,189,248,0.15)" stroke="#38BDF8" strokeWidth={1.5} strokeLinejoin="round" />
+      {dataPoints.map((p, i) => (
+        <circle key={i} cx={p.x} cy={p.y} r={3} fill={traits[i].color} />
+      ))}
+      {labelPoints.map((p, i) => (
+        <text key={i} x={p.x} y={p.y} textAnchor="middle" dominantBaseline="middle"
+          style={{ fontSize: "6.5px", fill: p.color, fontWeight: 600 }}>
+          {p.label}
+        </text>
+      ))}
     </svg>
   );
 }
 
+function DonutChart({ traits }: { traits: Trait[] }) {
+  const cx = 80, cy = 80, r = 52, stroke = 16;
+  const c = 2 * Math.PI * r;
+  const total = Math.max(1, traits.reduce((s, t) => s + t.value, 0));
+  let offset = 0;
+  const dominant = traits.reduce((a, b) => (a.value > b.value ? a : b));
+
+  return (
+    <svg viewBox="0 0 160 160" className="h-40 w-40 shrink-0">
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={stroke} />
+      {traits.map((trait) => {
+        const segment = (trait.value / total) * c;
+        const cur = offset;
+        offset += segment;
+        return (
+          <circle key={trait.label} cx={cx} cy={cy} r={r} fill="none"
+            stroke={trait.color} strokeOpacity={0.85} strokeWidth={stroke}
+            strokeDasharray={`${segment} ${c - segment}`}
+            strokeDashoffset={-cur} transform={`rotate(-90 ${cx} ${cy})`}
+            strokeLinecap="butt" />
+        );
+      })}
+      <text x="80" y="73" textAnchor="middle" style={{ fontSize: "7px", fill: "rgba(255,255,255,0.4)", letterSpacing: "0.15em" }}>Dominant</text>
+      <text x="80" y="88" textAnchor="middle" style={{ fontSize: "10px", fill: dominant.color, fontWeight: 700 }}>{dominant.label}</text>
+    </svg>
+  );
+}
+
+function QuadrantChart({ traits }: { traits: Trait[] }) {
+  const positions = [{ x: 44, y: 44 }, { x: 116, y: 44 }, { x: 44, y: 116 }, { x: 116, y: 116 }];
+  return (
+    <svg viewBox="0 0 160 160" className="h-40 w-40 shrink-0">
+      <line x1="80" y1="8" x2="80" y2="152" stroke="rgba(255,255,255,0.1)" strokeWidth={0.8} />
+      <line x1="8" y1="80" x2="152" y2="80" stroke="rgba(255,255,255,0.1)" strokeWidth={0.8} />
+      {traits.map((trait, i) => {
+        const pos = positions[i];
+        const radius = 6 + (trait.value / 100) * 18;
+        return (
+          <g key={trait.label}>
+            <circle cx={pos.x} cy={pos.y} r={radius} fill={trait.color} fillOpacity={0.2} stroke={trait.color} strokeWidth={1} />
+            <circle cx={pos.x} cy={pos.y} r={3} fill={trait.color} />
+            <text x={pos.x} y={pos.y + radius + 9} textAnchor="middle" style={{ fontSize: "6px", fill: trait.color }}>{trait.label}</text>
+            <text x={pos.x} y={pos.y + radius + 17} textAnchor="middle" style={{ fontSize: "7px", fill: "rgba(255,255,255,0.6)", fontWeight: 700 }}>{trait.value}%</text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+function PieChart({ traits }: { traits: Trait[] }) {
+  const cx = 80, cy = 80, r = 52;
+  const total = traits.reduce((s, t) => s + t.value, 0);
+  let currentAngle = -Math.PI / 2;
+
+  function polarToXY(angle: number, radius: number) {
+    return { x: cx + radius * Math.cos(angle), y: cy + radius * Math.sin(angle) };
+  }
+
+  return (
+    <svg viewBox="0 0 160 160" className="h-40 w-40 shrink-0">
+      {traits.map((trait) => {
+        const angle = (trait.value / total) * Math.PI * 2;
+        const start = polarToXY(currentAngle, r);
+        const end = polarToXY(currentAngle + angle, r);
+        const largeArc = angle > Math.PI ? 1 : 0;
+        const midAngle = currentAngle + angle / 2;
+        const labelPos = polarToXY(midAngle, r * 0.65);
+        currentAngle += angle;
+        return (
+          <g key={trait.label}>
+            <path
+              d={`M ${cx} ${cy} L ${start.x} ${start.y} A ${r} ${r} 0 ${largeArc} 1 ${end.x} ${end.y} Z`}
+              fill={trait.color} fillOpacity={0.7} stroke="#0e0e0e" strokeWidth={1.5}
+            />
+            <text x={labelPos.x} y={labelPos.y} textAnchor="middle" dominantBaseline="middle"
+              style={{ fontSize: "7px", fill: "rgba(255,255,255,0.85)", fontWeight: 700 }}>
+              {trait.value}%
+            </text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+// ─── Modal ────────────────────────────────────────────────────────────────────
+
 function InsightModal({ insight, onClose, isLight }: { insight: InsightPreview; onClose: () => void; isLight: boolean }) {
+  const bg = isLight ? "border-black/10 bg-white text-stone-900" : "border-white/10 bg-[#0e0e0e] text-white";
+  const cardBg = isLight ? "border-slate-200 bg-slate-50" : "border-white/10 bg-black/20";
+  const mutedText = isLight ? "text-stone-500" : "text-white/45";
+  const bodyText = isLight ? "text-stone-700" : "text-white/70";
+  const trackBg = isLight ? "bg-slate-200" : "bg-white/10";
+
+  const hasTopChart = ["radar", "timeline", "quadrants", "pie"].includes(insight.previewVariant);
+
+  function TopChart() {
+    if (insight.previewVariant === "radar") return <RadarChart traits={insight.traits} />;
+    if (insight.previewVariant === "timeline") return <DonutChart traits={insight.traits} />;
+    if (insight.previewVariant === "quadrants") return <QuadrantChart traits={insight.traits} />;
+    if (insight.previewVariant === "pie") return <PieChart traits={insight.traits} />;
+    return null;
+  }
+
+  const traitSectionLabel: Record<InsightPreview["previewVariant"], string> = {
+    radar: "Big Five Traits",
+    bars: "EQ Dimensions",
+    timeline: "Attachment Breakdown",
+    quadrants: "MBTI Axes",
+    pie: "Bias Profile",
+    summary: "Core Traits",
+  };
+
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" onClick={onClose}>
       <div className="absolute inset-0 bg-black/80 backdrop-blur-md" />
-
       <div
-        className={`relative z-10 w-full max-w-sm rounded-2xl border p-6 shadow-2xl overflow-y-auto max-h-[90vh] ${
-          isLight ? "border-black/10 bg-white text-stone-900" : "border-white/10 bg-[#0e0e0e] text-white"
-        }`}
+        className={`relative z-10 w-full max-w-sm overflow-y-auto rounded-2xl border p-6 shadow-2xl max-h-[90vh] ${bg}`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-5 flex items-start justify-between">
           <div>
-            <p className={`mb-1 text-[10px] uppercase tracking-[0.2em] ${isLight ? "text-stone-400" : "text-white/35"}`}>{insight.badge}</p>
+            <p className={`mb-1 text-[10px] uppercase tracking-[0.2em] ${mutedText}`}>{insight.badge}</p>
             <h3 className={`text-lg font-bold ${isLight ? "text-stone-900" : "text-white"}`}>{insight.name}</h3>
           </div>
-          <button onClick={onClose} className="ml-3 mt-0.5 rounded-full bg-white/5 p-1.5 text-white/60 hover:text-white">
+          <button onClick={onClose} className={`ml-3 mt-0.5 rounded-full p-1.5 ${isLight ? "bg-slate-100 text-stone-500 hover:text-stone-800" : "bg-white/5 text-white/60 hover:text-white"}`}>
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="rounded-xl border border-white/10 bg-black/20 p-3">
-          <p className="text-center text-[10px] uppercase tracking-[0.16em] text-white/45">{insight.summaryTitle}</p>
-          <p className="mt-2 text-center text-xs text-white/70">{insight.summary}</p>
+        <div className={`rounded-xl border p-3 ${cardBg}`}>
+          <p className={`text-center text-[10px] uppercase tracking-[0.16em] ${mutedText}`}>{insight.summaryTitle}</p>
+          <p className={`mt-2 text-center text-xs ${bodyText}`}>{insight.summary}</p>
         </div>
 
-        <div className="mt-4 flex flex-col items-center gap-4 rounded-xl border border-white/10 bg-black/20 p-4">
-          <DonutPreview traits={insight.traits} color={insight.accentColor} />
-          <div className="w-full space-y-2">
+        <div className={`mt-4 rounded-xl border p-4 ${cardBg}`}>
+          {hasTopChart && (
+            <div className="mb-4 flex justify-center">
+              <TopChart />
+            </div>
+          )}
+          <p className={`mb-3 text-[10px] uppercase tracking-[0.18em] ${mutedText}`}>{traitSectionLabel[insight.previewVariant]}</p>
+          <div className="space-y-3">
             {insight.traits.map((trait) => (
               <div key={trait.label}>
-                <div className="mb-1 flex items-center justify-between text-xs">
-                  <span className="text-white/75">{trait.label}</span>
-                  <span style={{ color: insight.accentColor }} className="font-semibold">{trait.value}%</span>
+                <div className="mb-1 flex items-center justify-between">
+                  <span className={`text-xs font-semibold ${isLight ? "text-stone-800" : "text-white/90"}`}>{trait.label}</span>
+                  <span className="text-xs font-bold" style={{ color: trait.color }}>{trait.value}%</span>
                 </div>
-                <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
-                  <div className="h-full rounded-full" style={{ width: `${trait.value}%`, backgroundColor: insight.accentColor }} />
+                <div className={`h-1.5 overflow-hidden rounded-full ${trackBg}`}>
+                  <div className="h-full rounded-full" style={{ width: `${trait.value}%`, backgroundColor: trait.color }} />
                 </div>
+                <p className={`mt-0.5 text-[10px] leading-tight ${mutedText}`}>{trait.desc}</p>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="mt-4 rounded-xl border border-white/10 bg-black/20 p-3">
-          <p className="text-[10px] uppercase tracking-[0.16em] text-white/45">Insight</p>
-          <p className="mt-1 text-xs text-white/75">{insight.insight}</p>
+        <div className={`mt-4 rounded-xl border p-3 ${cardBg}`}>
+          <p className={`text-[10px] uppercase tracking-[0.16em] ${mutedText}`}>Insight</p>
+          <p className={`mt-1 text-xs ${bodyText}`}>{insight.insight}</p>
         </div>
       </div>
     </div>
   );
 }
+
+// ─── Section ──────────────────────────────────────────────────────────────────
 
 export function PersonalityInsightsSection() {
   const { mode } = useTheme();
@@ -406,7 +464,10 @@ export function PersonalityInsightsSection() {
         </div>
       </div>
 
-      {openInsight && createPortal(<InsightModal insight={openInsight} onClose={() => setOpenInsight(null)} isLight={isLight} />, document.body)}
+      {openInsight && createPortal(
+        <InsightModal insight={openInsight} onClose={() => setOpenInsight(null)} isLight={isLight} />,
+        document.body
+      )}
     </section>
   );
 }
