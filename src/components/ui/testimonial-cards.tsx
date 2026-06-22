@@ -74,6 +74,8 @@ export function TestimonialCard({
         src={src}
         alt={alt}
         draggable={false}
+        loading="lazy"
+        decoding="async"
         className="pointer-events-none max-h-full w-full rounded-[18px] object-contain"
       />
     </motion.div>
