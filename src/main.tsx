@@ -22,7 +22,10 @@ const posthogKey = import.meta.env.VITE_POSTHOG_KEY;
 if (posthogKey) {
   posthog.init(posthogKey, {
     api_host: import.meta.env.VITE_POSTHOG_HOST || "https://us.i.posthog.com",
-    capture_pageview: true,
+    defaults: "2026-01-30",
+    capture_pageview: false,
+    autocapture: false,
+    person_profiles: "identified_only",
   });
 
   setClient({
