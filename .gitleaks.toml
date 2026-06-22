@@ -1,0 +1,27 @@
+title = "wzwznew gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Repository-safe placeholders, examples, and generated dependency content"
+paths = [
+  '''^external/obsidian-second-brain/\.venv/''',
+  '''^node_modules/''',
+  '''^\.claude/skills/''',
+  '''^\.env\.example$''',
+  '''^external/obsidian-second-brain/\.env\.example$''',
+  '''^dist/''',
+  '''^dist-ssr/''',
+  '''^playwright-report/''',
+  '''^test-results/''',
+]
+regexes = [
+  '''your[-_ ]?(api[-_ ]?)?key''',
+  '''your[-_ ]?token''',
+  '''YOUR_[A-Z0-9_]+''',
+  '''<YOUR_[A-Z0-9_]+>''',
+  '''dummy''',
+  '''example\.supabase\.co''',
+  '''raw\.[A-Za-z0-9._-]+''',
+]

@@ -3,16 +3,6 @@
     "allow": [
       "PowerShell(supabase db push)",
       "PowerShell(npx supabase db push 2>&1)",
-      "Bash(curl -s 'https://zdqcnjwmahklqzzxqvcj.supabase.co/rest/v1/poll_comments?select=*&limit=5' -H 'apikey: sb_publishable_vIh_kvBsHvnJb1gaXqay6w_bHGyiU4P' -H 'Authorization: Bearer sb_publishable_vIh_kvBsHvnJb1gaXqay6w_bHGyiU4P')",
-      "Bash(curl -s https://zdqcnjwmahklqzzxqvcj.supabase.co/rest/v1/poll_comments -H 'apikey: sb_publishable_vIh_kvBsHvnJb1gaXqay6w_bHGyiU4P' -H 'Authorization: Bearer sb_publishable_vIh_kvBsHvnJb1gaXqay6w_bHGyiU4P' -H 'Accept: application/openapi+json' -X OPTIONS)",
-      "Bash(curl -s -X POST https://zdqcnjwmahklqzzxqvcj.supabase.co/rest/v1/poll_comments -H 'apikey: sb_publishable_vIh_kvBsHvnJb1gaXqay6w_bHGyiU4P' -H 'Authorization: Bearer sb_publishable_vIh_kvBsHvnJb1gaXqay6w_bHGyiU4P' -H 'Content-Type: application/json' -H 'Prefer: return=representation' -d '{\"poll_id\":\"109f8bb1-7d75-44cf-8694-0dc3368e1487\",\"text\":\"test comment\"}')",
-      "Bash(curl -s 'https://zdqcnjwmahklqzzxqvcj.supabase.co/rest/v1/poll_comments?select=*&limit=1' -H 'apikey: sb_publishable_vIh_kvBsHvnJb1gaXqay6w_bHGyiU4P' -H 'Authorization: Bearer sb_publishable_vIh_kvBsHvnJb1gaXqay6w_bHGyiU4P' -H 'Accept-Profile: public')",
-      "Bash(curl -s 'https://zdqcnjwmahklqzzxqvcj.supabase.co/rest/v1/?select=poll_comments' -H 'apikey: sb_publishable_vIh_kvBsHvnJb1gaXqay6w_bHGyiU4P' -H 'Authorization: Bearer sb_publishable_vIh_kvBsHvnJb1gaXqay6w_bHGyiU4P')",
-      "Bash(curl -s -X POST https://zdqcnjwmahklqzzxqvcj.supabase.co/rest/v1/poll_comments -H 'apikey: sb_publishable_vIh_kvBsHvnJb1gaXqay6w_bHGyiU4P' -H 'Authorization: Bearer sb_publishable_vIh_kvBsHvnJb1gaXqay6w_bHGyiU4P' -H 'Content-Type: application/json' -H 'Prefer: return=representation' -d '{\"poll_id\":\"109f8bb1-7d75-44cf-8694-0dc3368e1487\",\"__TRACKED_VAR__\":\"test\"}')",
-      "Bash(curl -s -X DELETE 'https://zdqcnjwmahklqzzxqvcj.supabase.co/rest/v1/poll_comments?id=eq.d4edce28-eccc-45ae-85ae-bff88e5bdcbb' -H 'apikey: sb_publishable_vIh_kvBsHvnJb1gaXqay6w_bHGyiU4P' -H 'Authorization: Bearer sb_publishable_vIh_kvBsHvnJb1gaXqay6w_bHGyiU4P')",
-      "Bash(curl -s -X POST https://zdqcnjwmahklqzzxqvcj.supabase.co/rest/v1/poll_comments -H 'apikey: sb_publishable_vIh_kvBsHvnJb1gaXqay6w_bHGyiU4P' -H 'Authorization: Bearer sb_publishable_vIh_kvBsHvnJb1gaXqay6w_bHGyiU4P' -H 'Content-Type: application/json' -H 'Prefer: return=representation' -d '{\"poll_id\":\"109f8bb1-7d75-44cf-8694-0dc3368e1487\",\"body\":\"afasdfasdf\"}')",
-      "Bash(curl -s 'https://zdqcnjwmahklqzzxqvcj.supabase.co/rest/v1/poll_comments?poll_id=eq.109f8bb1-7d75-44cf-8694-0dc3368e1487&select=body&order=created_at.desc' -H 'apikey: sb_publishable_vIh_kvBsHvnJb1gaXqay6w_bHGyiU4P' -H 'Authorization: Bearer sb_publishable_vIh_kvBsHvnJb1gaXqay6w_bHGyiU4P')",
-      "Bash(curl -s -X DELETE 'https://zdqcnjwmahklqzzxqvcj.supabase.co/rest/v1/poll_comments?body=eq.test&poll_id=eq.109f8bb1-7d75-44cf-8694-0dc3368e1487' -H 'apikey: sb_publishable_vIh_kvBsHvnJb1gaXqay6w_bHGyiU4P' -H 'Authorization: Bearer sb_publishable_vIh_kvBsHvnJb1gaXqay6w_bHGyiU4P')",
       "Bash(npx supabase *)",
       "Bash(Select-Object -First 5)",
       "Read(//c/Users/user/AppData/Roaming/Code/User/**)"
