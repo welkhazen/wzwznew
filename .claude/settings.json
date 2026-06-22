@@ -5,6 +5,7 @@
       "PowerShell(npx supabase db push 2>&1)",
       "Bash(npx supabase *)",
       "Bash(Select-Object -First 5)",
+      "Bash(npx skills add *)",
       "Read(//c/Users/user/AppData/Roaming/Code/User/**)"
     ]
   },
