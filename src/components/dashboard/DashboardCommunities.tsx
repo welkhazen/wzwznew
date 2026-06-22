@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import LNTLogo from "@/assets/LNT.webp";
 import SYTLogo from "@/assets/logospeak.webp";
@@ -57,7 +57,6 @@ import { PanelRight } from "lucide-react";
 
 const WAITLIST_UNLOCK_THRESHOLD = 200;
 const MAX_COMMUNITY_MESSAGE_LENGTH = 150;
-const HIDDEN_DASHBOARD_COMMUNITY_IDS = new Set(["c6", "c7", "c8", "c9", "c10", "c11", "c12"]);
 
 interface DashboardCommunitiesProps {
   user: User;
@@ -188,10 +187,6 @@ export function DashboardCommunities({
   const joinedCommunityCount = chat.communities.filter((c) => c.members.some((m) => m.userId === user.id)).length;
   const effectiveUnlockCount = Math.max(access.communityAccess.unlockedIds.size, joinedCommunityCount);
   const freeCommunitySlotsRemaining = Math.max(0, FREE_COMMUNITY_SLOTS - effectiveUnlockCount);
-  const visibleCommunities = useMemo(
-    () => chat.communities.filter((community) => !HIDDEN_DASHBOARD_COMMUNITY_IDS.has(community.id)),
-    [chat.communities],
-  );
 
   // --- Membership actions ---
   const handleJoinCommunity = useCallback(
@@ -476,7 +471,7 @@ export function DashboardCommunities({
       )}
 
       <CommunityRoomList
-        communities={visibleCommunities}
+        communities={chat.communities}
         userId={user.id}
         logoUrlsByCommunityId={COMMUNITY_LOGOS}
         coverImagesByCommunityId={COMMUNITY_COVER_IMAGES}
