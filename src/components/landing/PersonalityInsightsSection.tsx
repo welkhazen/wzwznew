@@ -440,8 +440,8 @@ export function PersonalityInsightsSection() {
           {insights.map((insight) => {
             const Icon = insight.icon;
             return (
-              <button key={insight.id} type="button" onClick={() => setOpenInsight(insight)} className="w-full text-left">
-                <GlareCard className={`relative border ${insight.accentBorder} bg-raw-surface/30 p-3 transition-transform duration-200 hover:scale-[1.02] sm:p-7`}>
+              <button key={insight.id} type="button" onClick={() => setOpenInsight(insight)} className="h-full w-full text-left">
+                <GlareCard className={`relative h-full border ${insight.accentBorder} bg-raw-surface/30 p-3 transition-transform duration-200 hover:scale-[1.02] sm:p-7`}>
                   {!isLight && <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${insight.glowFrom} via-transparent to-transparent`} />}
                   <div className="relative z-10">
                     <div className="mb-4 flex flex-wrap items-center gap-2">
