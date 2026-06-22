@@ -1,0 +1,71 @@
+name: Autofix Apply
+
+# Applies ONLY the fixes the CEO/CTO approved, after they reply to a PR with:
+#   /autofix apply 1 3
+# (the numbers from the Autofix Review checklist). Authorization is enforced:
+# only logins in AUTOFIX_APPROVERS (repo variable) may trigger a code change.
+# Requires the ANTHROPIC_API_KEY secret.
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  apply:
+    name: Apply approved fixes
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Gate: must be a PR comment, start with the command, and come from an
+    # authorized approver. AUTOFIX_APPROVERS is a repo variable like
+    # ["welkhazen","your-cto-login"]; defaults to the repo owner if unset.
+    if: >-
+      github.event.issue.pull_request &&
+      startsWith(github.event.comment.body, '/autofix apply') &&
+      contains(fromJSON(vars.AUTOFIX_APPROVERS || '["welkhazen"]'), github.event.comment.user.login)
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Reject if API key missing
+        if: env.ANTHROPIC_API_KEY == ''
+        run: |
+          gh pr comment ${{ github.event.issue.number }} \
+            --body "⚠️ Cannot apply fixes: the \`ANTHROPIC_API_KEY\` secret is not configured."
+          exit 1
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check out the PR branch
+        run: gh pr checkout ${{ github.event.issue.number }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Apply only approved fixes (Claude)
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            An authorized approver asked you to apply specific fixes from the
+            Autofix Review checklist on this PR. Their instruction was:
+
+            "${{ github.event.comment.body }}"
+
+            Do this:
+            1. Read the most recent Autofix Review comment on this PR to map the
+               approved numbers to their fixes.
+            2. Apply ONLY those fixes. Make minimal, surgical changes — do not
+               touch unrelated code, and do not apply items that were not approved.
+            3. Run `npm run lint` and `npx tsc -p tsconfig.app.json --noEmit` and
+               make sure your changes do not introduce new errors.
+            4. Commit with a clear message listing which numbered fixes you applied,
+               and push to this PR branch.
+            5. Reply to the PR with a short summary of exactly what changed and what
+               you intentionally skipped. If a requested fix turned out to be unsafe
+               or ambiguous, skip it and say why instead of guessing.

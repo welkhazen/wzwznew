@@ -1,0 +1,108 @@
+name: Autofix Review
+
+# After every commit on a PR, surface likely-new bugs and efficiency
+# opportunities as ONE simplified, CEO-readable checklist comment.
+# Nothing is changed here — fixes are only applied after explicit approval
+# (see autofix-apply.yml). The deterministic layer always runs; the Claude
+# layer runs only when ANTHROPIC_API_KEY is configured.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+concurrency:
+  group: autofix-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  review:
+    name: Detect + report
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      BASE_REF: origin/${{ github.event.pull_request.base.ref }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+        # Ensure the base branch is available locally for the diff.
+      - name: Fetch base branch
+        run: git fetch origin ${{ github.event.pull_request.base.ref }}
+
+      # --- Deterministic layer (always runs, free, no API key) ---
+      - name: Detect new correctness issues
+        run: node scripts/detect-new-issues.mjs --out autofix-report.md
+
+      # --- Claude layer (only when the API key secret exists) ---
+      - name: AI review (Claude)
+        if: env.ANTHROPIC_API_KEY != ''
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Review-only: Claude may read, run git, and post the PR comment,
+          # but may NOT modify any files.
+          claude_args: "--disallowedTools Edit,Write,MultiEdit,NotebookEdit"
+          prompt: |
+            You are the automated code reviewer for the raW project, reporting
+            to a non-engineer CEO and a technical CTO. Review ONLY the changes in
+            this pull request (use `git diff origin/${{ github.event.pull_request.base.ref }}...HEAD`).
+
+            A deterministic scan already ran — read `autofix-report.md` in the repo
+            root and fold its findings into your report (deduplicate, don't repeat
+            it verbatim).
+
+            Post ONE PR comment (update your existing one if present) with EXACTLY
+            these sections, in this order:
+
+            ## 🧭 CEO summary
+            2–4 plain-English sentences: overall risk of this change (Low/Medium/High),
+            and whether it is safe to merge. No jargon.
+
+            ## ✅ Proposed fixes — check the ones you want applied
+            A ranked checklist. For each item:
+            `- [ ] **#N · <SEVERITY: Critical/High/Medium/Low>** — <plain-language title>`
+            then on indented sub-bullets: the file:line, a one-line "why it matters",
+            whether it is **newly introduced by this PR** or **pre-existing**, and your
+            confidence (High/Med/Low). Put newly-introduced issues first. Be concise.
+            If there are no real bugs, say so and leave the checklist empty.
+
+            ## ⚡ Efficiency propositions (API calls & MCP/Supabase connections)
+            Look for: duplicate/redundant network calls, missing caching or request
+            de-duplication, N+1 fetches, over-fetching (selecting more than needed),
+            sequential awaits that could run in parallel, and connection reuse for
+            Supabase/MCP. For each: a CEO line (speed/cost impact in plain terms) and
+            a CTO line (the concrete technical change + file:line). Only include real,
+            specific opportunities in the changed code — no generic advice.
+
+            ## How to apply
+            Tell the reader: reply to this PR with `/autofix apply <numbers>`
+            (e.g. `/autofix apply 1 3`) to apply only those fixes. Only authorized
+            approvers can trigger it. Do not modify any code yourself in this run.
+
+            Keep the whole comment scannable. Use confidence honestly — flag
+            uncertainty rather than overstating.
+
+      # --- Fallback: no API key yet → still post the deterministic report ---
+      - name: Post deterministic report (no API key)
+        if: env.ANTHROPIC_API_KEY == ''
+        run: |
+          {
+            echo "## 🤖 Autofix review (deterministic layer only)"
+            echo ""
+            echo "> The Claude AI layer is disabled because the \`ANTHROPIC_API_KEY\` repository secret is not set. Add it in **Settings → Secrets and variables → Actions** to enable plain-language bug summaries and efficiency propositions."
+            echo ""
+            cat autofix-report.md
+          } > comment.md
+          gh pr comment ${{ github.event.pull_request.number }} --body-file comment.md
