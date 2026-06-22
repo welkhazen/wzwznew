@@ -58,12 +58,14 @@ const DashboardInventory = lazy(() =>
 // with the initial paint.
 void import("@/components/dashboard/DashboardCommunities");
 void import("@/components/dashboard/DashboardPolls");
+// DashboardDailySpin is shown on the home tab (default view), so preload it
+// eagerly rather than deferring to idle — it needs to be ready immediately.
+void import("@/components/dashboard/DashboardDailySpin");
 
 // Remaining lazy addon chunks. Add new lazy addons here so they get the same
 // idle-preload treatment and never flash the Suspense fallback on first switch.
 const DEFERRED_ADDON_PRELOADERS: Array<() => Promise<unknown>> = [
   () => import("@/components/dashboard/DashboardChallenges"),
-  () => import("@/components/dashboard/DashboardDailySpin"),
   () => import("@/components/dashboard/DashboardInventory"),
   () => import("@/components/dashboard/DashboardProfile"),
   () => import("@/components/dashboard/DashboardWallet"),

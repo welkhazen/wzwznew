@@ -1,4 +1,4 @@
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ContainerTextFlipLazy } from "@/components/ui/container-text-flip.lazy";
 import { ChevronRight, Dices, Zap, Flame, Users, BarChart3 } from "lucide-react";
 import type { Poll } from "@/store/useRawStore";
@@ -9,8 +9,12 @@ import { getTodayKey } from "@/store/useRawStore.storage";
 import { useTheme } from "@/providers/useTheme";
 import { LevelProgressBanner } from "@/components/dashboard/LevelProgressBanner";
 import { WheelOfFortune } from "@/components/wheel/WheelOfFortune";
-import { buildSpinPrizes, DashboardDailySpin } from "@/components/dashboard/DashboardDailySpin";
+import { buildSpinPrizes } from "@/lib/spin-prizes";
 import { GeneralFeedBox } from "@/components/dashboard/GeneralFeedBox";
+
+const DashboardDailySpin = lazy(() =>
+  import("@/components/dashboard/DashboardDailySpin").then((m) => ({ default: m.DashboardDailySpin }))
+);
 
 interface DashboardHomeProps {
   username: string;
@@ -325,12 +329,14 @@ export function DashboardHome({
             </div>
             <div className="mt-3 min-h-0 flex-1 overflow-visible md:mt-5">
               {userId ? (
-                <DashboardDailySpin
-                  userId={userId}
-                  isAdmin={isAdmin ?? false}
-                  onAwardXP={onAwardXP}
-                  onAvatarWon={onAvatarWon}
-                />
+                <Suspense fallback={null}>
+                  <DashboardDailySpin
+                    userId={userId}
+                    isAdmin={isAdmin ?? false}
+                    onAwardXP={onAwardXP}
+                    onAvatarWon={onAvatarWon}
+                  />
+                </Suspense>
               ) : null}
             </div>
           </div>

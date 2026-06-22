@@ -31,7 +31,7 @@ export function WhyAnonymity() {
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/30 to-transparent" />
 
         <h2 className="text-center landing-heading">
-          Why anonymity works
+          Why anonymity?
         </h2>
         <p className="mx-auto mt-4 mb-8 max-w-2xl text-center text-sm leading-relaxed text-raw-silver/55 sm:mb-10 sm:text-base">
           Take away the audience and people stop performing. That is the entire idea behind raW.
@@ -42,8 +42,16 @@ export function WhyAnonymity() {
             <GlareCard key={card.title}>
               <div className="h-full rounded-2xl border border-raw-border/40 bg-raw-surface/30 p-2 text-center sm:p-7">
                 <h3
-                  className="inline-block font-display text-[11px] leading-tight tracking-wide text-raw-gold animate-heartbeat will-change-transform sm:text-sm"
-                  style={{ animationDelay: `${i * 0.18}s` }}
+                  className={`inline-block font-display text-[11px] leading-tight tracking-wide sm:text-sm ${
+                    i === 1
+                      ? "text-raw-gold px-2 py-0.5 rounded"
+                      : "text-raw-gold animate-heartbeat will-change-transform"
+                  }`}
+                  style={
+                    i === 1
+                      ? { background: "rgba(var(--raw-accent), 0.22)", boxShadow: "0 0 0 1px rgba(var(--raw-accent), 0.18)" }
+                      : { animationDelay: `${i * 0.18}s` }
+                  }
                 >
                   {card.title}
                 </h3>
