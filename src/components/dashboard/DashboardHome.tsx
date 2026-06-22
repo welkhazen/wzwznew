@@ -1,4 +1,5 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { highlightRawWordmark } from "@/components/ui/highlightRawWordmark";
 import { ContainerTextFlipLazy } from "@/components/ui/container-text-flip.lazy";
 import { ChevronRight, Dices, Zap, Flame, Users, BarChart3 } from "lucide-react";
 import type { Poll } from "@/store/useRawStore";
@@ -303,7 +304,7 @@ export function DashboardHome({
               <Users className="size-4 text-raw-gold" />
               <h2 className={`text-xl font-bold tracking-tight ${isLight ? "text-slate-950" : "text-white"}`}>Recommended Rooms</h2>
             </div>
-            <p className={`text-[13px] ${isLight ? "text-slate-500" : "text-white/40"}`}>Recommended Rooms are specifically selected for you based on our raW matchmaker engine. How it works explained in FAQ.</p>
+            <p className={`text-[13px] ${isLight ? "text-slate-500" : "text-white/40"}`}>{highlightRawWordmark("Recommended Rooms are specifically selected for you based on our raW matchmaker engine. How it works explained in FAQ.")}</p>
           </div>
         </div>
         <UpcomingCommunitiesPreview isLight={isLight} />

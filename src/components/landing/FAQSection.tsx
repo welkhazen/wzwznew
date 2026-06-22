@@ -1,5 +1,6 @@
 import { FormEvent, useState } from "react";
 import { useTheme } from "@/providers/useTheme";
+import { highlightRawWordmark } from "@/components/ui/highlightRawWordmark";
 
 const FAQ_ITEMS = [
   {
@@ -78,7 +79,7 @@ export function FAQSection() {
         <div className="mb-8 flex flex-col gap-2">
           <p className="text-[11px] uppercase tracking-[0.2em] text-raw-gold/75">FAQ</p>
           <h2 className={`font-display text-2xl tracking-wide sm:text-3xl md:text-4xl ${isLight ? "text-[#1a1400]" : "text-raw-text"}`}>
-            Questions before you enter raW?
+            {highlightRawWordmark("Questions before you enter raW?")}
           </h2>
           <p className={`text-sm ${isLight ? "text-stone-500" : "text-raw-silver/55"}`}>
             Start here if you are wondering how anonymous polls, avatars, and community chats work.
@@ -95,8 +96,8 @@ export function FAQSection() {
                 borderColor: isLight ? "rgba(180,140,0,0.18)" : "rgba(var(--raw-border-rgb,120,120,120)/0.35)",
               }}
             >
-              <h3 className={`text-base font-semibold ${isLight ? "text-[#1a1400]" : "text-raw-text"}`}>{item.question}</h3>
-              <p className={`mt-2 text-sm leading-relaxed ${isLight ? "text-stone-600" : "text-raw-silver/60"}`}>{item.answer}</p>
+              <h3 className={`text-base font-semibold ${isLight ? "text-[#1a1400]" : "text-raw-text"}`}>{highlightRawWordmark(item.question)}</h3>
+              <p className={`mt-2 text-sm leading-relaxed ${isLight ? "text-stone-600" : "text-raw-silver/60"}`}>{highlightRawWordmark(item.answer)}</p>
             </article>
           ))}
         </div>

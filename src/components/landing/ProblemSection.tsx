@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
+import { highlightRawWordmark } from "@/components/ui/highlightRawWordmark";
 
 const truths = [
   {
@@ -52,16 +53,14 @@ export function ProblemSection() {
           transition={{ duration: 0.8, ease: "easeOut" }}
         >
           <p className="text-[0.68rem] font-medium uppercase tracking-[0.45em] text-raw-silver/50 sm:text-xs">
-            Why raW exists
+            {highlightRawWordmark("Why raW exists")}
           </p>
           <h2 className="mt-5 font-editorial text-4xl leading-[1.05] tracking-tight text-foreground sm:text-5xl md:text-6xl">
             Stop performing.
             <span className="block italic text-primary">Start belonging.</span>
           </h2>
           <p className="mt-6 max-w-xl text-sm leading-relaxed text-raw-silver/60 sm:text-base">
-            Social media turned everyone into a performer. raW is the opposite —
-            anonymous rooms where you say what you actually think, get heard, and
-            find people who get you. No followers, no likes, no act.
+            {highlightRawWordmark("Social media turned everyone into a performer. raW is the opposite — anonymous rooms where you say what you actually think, get heard, and find people who get you. No followers, no likes, no act.")}
           </p>
         </motion.div>
 
@@ -123,7 +122,7 @@ export function ProblemSection() {
                       className="overflow-hidden"
                     >
                       <p className="max-w-2xl pb-6 pl-11 pr-4 text-sm leading-relaxed text-raw-silver/60 sm:pl-[4.25rem] sm:text-base">
-                        {truth.body}
+                        {highlightRawWordmark(truth.body)}
                       </p>
                     </motion.div>
                   )}

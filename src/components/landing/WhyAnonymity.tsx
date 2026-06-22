@@ -1,5 +1,6 @@
 import { GlareCard } from "@/components/ui/glare-card";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
+import { highlightRawWordmark } from "@/components/ui/highlightRawWordmark";
 
 const pillars = ["No real names", "Better honesty", "Better matching"];
 
@@ -34,7 +35,7 @@ export function WhyAnonymity() {
           Why anonymity?
         </h2>
         <p className="mx-auto mt-4 mb-8 max-w-2xl text-center text-sm leading-relaxed text-raw-silver/55 sm:mb-10 sm:text-base">
-          Take away the audience and people stop performing. That is the entire idea behind raW.
+          {highlightRawWordmark("Take away the audience and people stop performing. That is the entire idea behind raW.")}
         </p>
 
         <div className="grid grid-cols-3 gap-2 sm:gap-6">
@@ -55,7 +56,7 @@ export function WhyAnonymity() {
                 >
                   {card.title}
                 </h3>
-                <p className="mt-1.5 text-[10px] leading-snug text-raw-silver/45 sm:mt-3 sm:text-sm sm:leading-relaxed">{card.description}</p>
+                <p className="mt-1.5 text-[10px] leading-snug text-raw-silver/45 sm:mt-3 sm:text-sm sm:leading-relaxed">{highlightRawWordmark(card.description)}</p>
               </div>
             </GlareCard>
           ))}

@@ -384,7 +384,7 @@ export function Terminal({
     <div
       ref={containerRef}
       className={cn(
-        "mx-auto w-full max-w-xl px-4 font-mono text-[0.7875rem]",
+        "mx-auto w-full max-w-xl px-4 font-mono text-sm sm:text-[0.7875rem]",
         className,
       )}
     >
@@ -406,7 +406,7 @@ export function Terminal({
         {/* Terminal Content */}
         <div
           ref={contentRef}
-          className="no-visible-scrollbar h-80 overflow-y-auto p-4 font-mono"
+          className="no-visible-scrollbar h-96 overflow-y-auto p-4 font-mono sm:h-80"
         >
           {lines.map((line, i) => (
             <div key={i} className={cn("leading-relaxed whitespace-pre-wrap", line.type === "command" && commandClassName, line.isLastCommand && "text-sm")}>

@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { BrandName } from "@/components/ui/brand-name";
+import { highlightRawWordmark } from "@/components/ui/highlightRawWordmark";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { BarChart2, Brain, Compass, ShieldCheck, Sparkles, Users } from "lucide-react";
 
@@ -40,7 +41,7 @@ export default function PollsExplained() {
               <div>
                 <h2 className="text-base font-semibold text-raw-text sm:text-lg">What are Live Polls?</h2>
                 <p className="mt-2 text-sm leading-relaxed text-raw-silver/65">
-                  Live Polls are short, anonymous Yes/No questions posted to the entire raW community. They cover real topics — relationships, society, ambition, identity, discomfort — things people think about but rarely say out loud. You answer, and you instantly see how the rest of the community responded. No judgment, no username attached to your vote.
+                  {highlightRawWordmark("Live Polls are short, anonymous Yes/No questions posted to the entire raW community. They cover real topics — relationships, society, ambition, identity, discomfort — things people think about but rarely say out loud. You answer, and you instantly see how the rest of the community responded. No judgment, no username attached to your vote.")}
                 </p>
               </div>
             </div>
@@ -53,7 +54,7 @@ export default function PollsExplained() {
               <div>
                 <h2 className="text-base font-semibold text-raw-text sm:text-lg">Why Anonymous?</h2>
                 <p className="mt-2 text-sm leading-relaxed text-raw-silver/65">
-                  When people know they are being watched, they perform. They vote for what looks good, not what they actually believe. Anonymity removes that pressure. Your answers on raW reflect your real views — and that is what makes the data meaningful. We do not sell your identity. We use patterns in aggregate to generate insights.
+                  {highlightRawWordmark("When people know they are being watched, they perform. They vote for what looks good, not what they actually believe. Anonymity removes that pressure. Your answers on raW reflect your real views — and that is what makes the data meaningful. We do not sell your identity. We use patterns in aggregate to generate insights.")}
                 </p>
               </div>
             </div>
@@ -69,7 +70,7 @@ export default function PollsExplained() {
                   A single answer tells you nothing. A hundred answers tell you everything. Over time, your response patterns across categories — risk, relationships, ambition, discomfort, community — converge into a consistent signal. That signal is your personality fingerprint.
                 </p>
                 <p className="mt-3 text-sm leading-relaxed text-raw-silver/65">
-                  This is why raW generates <span className="text-raw-gold/90">Personality Insights</span> — non-clinical, behavior-based identity reports that get sharper the more you answer. They measure things like your Signal Discipline (how consistent your choices are), your Growth Friction Index (whether you lean into discomfort or comfort), and your Collective Impact Lens (how much you weigh individual vs. community outcomes).
+                  This is why <BrandName /> generates <span className="text-raw-gold/90">Personality Insights</span> — non-clinical, behavior-based identity reports that get sharper the more you answer. They measure things like your Signal Discipline (how consistent your choices are), your Growth Friction Index (whether you lean into discomfort or comfort), and your Collective Impact Lens (how much you weigh individual vs. community outcomes).
                 </p>
               </div>
             </div>
@@ -82,7 +83,7 @@ export default function PollsExplained() {
               <div>
                 <h2 className="text-base font-semibold text-raw-text sm:text-lg">Seeing Where You Stand</h2>
                 <p className="mt-2 text-sm leading-relaxed text-raw-silver/65">
-                  After you vote, you see the live split — what percentage of raW agreed with you. This is not about being right or wrong. It is about understanding that most of your views are shared by a significant slice of the world, and that disagreement is normal, not dangerous. The goal is perspective, not validation.
+                  {highlightRawWordmark("After you vote, you see the live split — what percentage of raW agreed with you. This is not about being right or wrong. It is about understanding that most of your views are shared by a significant slice of the world, and that disagreement is normal, not dangerous. The goal is perspective, not validation.")}
                 </p>
               </div>
             </div>
@@ -95,7 +96,7 @@ export default function PollsExplained() {
               <div>
                 <h2 className="text-base font-semibold text-raw-text sm:text-lg">Where This Is Going</h2>
                 <p className="mt-2 text-sm leading-relaxed text-raw-silver/65">
-                  Polls are the foundation of everything raW will build. The more you answer, the more raW understands you — and the more useful it becomes to you.
+                  {highlightRawWordmark("Polls are the foundation of everything raW will build. The more you answer, the more raW understands you — and the more useful it becomes to you.")}
                 </p>
                 <ul className="mt-4 space-y-3 text-sm text-raw-silver/65">
                   {[
@@ -118,7 +119,7 @@ export default function PollsExplained() {
           <div className="mt-12 rounded-xl border border-raw-gold/20 bg-raw-gold/5 px-5 py-5 sm:mt-16">
             <p className="text-sm font-medium text-raw-gold">The bottom line</p>
             <p className="mt-2 text-sm leading-relaxed text-raw-silver/70">
-              Every poll you answer is a small act of honesty. In aggregate, those acts become a map of who you are — and a tool for raW to connect you with the right communities, insights, and people. The more honest you are, the more accurate the picture. The more accurate the picture, the more useful raW becomes.
+              {highlightRawWordmark("Every poll you answer is a small act of honesty. In aggregate, those acts become a map of who you are — and a tool for raW to connect you with the right communities, insights, and people. The more honest you are, the more accurate the picture. The more accurate the picture, the more useful raW becomes.")}
             </p>
           </div>
         </div>

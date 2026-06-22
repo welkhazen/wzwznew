@@ -205,7 +205,7 @@ export function LandingPollsSection({ onSignupClick }: LandingPollsSectionProps)
                       onClick={onSignupClick}
                       className="mt-4 rounded-full border border-raw-gold/35 bg-raw-gold/10 px-5 py-2 font-display text-[10px] uppercase tracking-[0.2em] text-raw-gold/85 transition hover:bg-raw-gold/15"
                     >
-                      Join raW
+                      Join ra<span className="text-[hsl(var(--accent))]">W</span>
                     </button>
                   </div>
                 </div>
