@@ -224,7 +224,7 @@ export function FinalCTA({ onSignupClick }: FinalCTAProps) {
           >
             Email: {supportEmail}
           </a>
-          <span className="text-xs text-raw-silver/35">theartofraw.me</span>
+          <span className="text-xs text-raw-silver/35">myraw.app</span>
         </div>
 
         <MinimalFooter />
