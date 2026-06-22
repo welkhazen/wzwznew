@@ -22,8 +22,8 @@ const communities = [
     title: "Is It Just Me?",
     description: "A quick-hit community for relatable thoughts, shared weirdness, and the relief of realizing it is not just you.",
     badge: "Active",
-    video: "/assets/IIJM.mp4",
-    videoType: "video/mp4",
+    video: "/assets/IIJM.webm",
+    videoType: "video/webm",
   },
   {
     title: "Lebanon Initiatives",
