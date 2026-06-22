@@ -357,79 +357,117 @@ In real life you are born with a name, a face, and a personality underneath. On 
         </span>
       }
     >
-      {/* ── Mobile (<sm): phone left + 2-col avatar grid right, 50/50 ── */}
-      <div className="mx-auto flex w-full max-w-5xl flex-row items-start gap-3 sm:hidden">
+      {/* ── Mobile (<sm): phone left + 2-col avatar grid right, 50/50 + unlockable avatars below ── */}
+      <div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-5 sm:hidden">
 
-        {/* Phone: scaled to fit the left half while keeping the full home screen intact. */}
-        <div
-          className="w-[43%] shrink-0 overflow-visible pt-1"
-          style={{ height: 646 * MOBILE_PHONE_SCALE }}
-        >
-          {/* Transform scaling avoids mobile browser zoom side effects. */}
+        {/* Phone + chooser grid row */}
+        <div className="flex w-full flex-row items-start gap-3">
+
+          {/* Phone: scaled to fit the left half while keeping the full home screen intact. */}
           <div
-            style={{
-              width: 280,
-              transform: `scale(${MOBILE_PHONE_SCALE})`,
-              transformOrigin: "top left",
-            }}
+            className="w-[43%] shrink-0 overflow-visible pt-1"
+            style={{ height: 646 * MOBILE_PHONE_SCALE }}
           >
-            <PhoneMockup className="w-[280px]" showStatusBar={false}>
-              <AvatarPhoneHomeScreen avatarIndex={previewIndex} compact previewAvatar={previewAvatar} />
-            </PhoneMockup>
+            {/* Transform scaling avoids mobile browser zoom side effects. */}
+            <div
+              style={{
+                width: 280,
+                transform: `scale(${MOBILE_PHONE_SCALE})`,
+                transformOrigin: "top left",
+              }}
+            >
+              <PhoneMockup className="w-[280px]" showStatusBar={false}>
+                <AvatarPhoneHomeScreen avatarIndex={previewIndex} compact previewAvatar={previewAvatar} />
+              </PhoneMockup>
+            </div>
+          </div>
+
+          {/* Avatar grid — right half, same height as phone */}
+          <div className="flex flex-1 flex-col min-w-0 pt-1 overflow-hidden" style={{ height: 646 * MOBILE_PHONE_SCALE }}>
+            <p className="mb-1 text-center font-display text-[8px] uppercase tracking-[0.14em] text-raw-gold/70">
+              Choose your avatar
+            </p>
+            <div
+              ref={scrollRef}
+              className="grid flex-1 grid-cols-2 grid-rows-5 place-items-center gap-x-1 gap-y-0"
+            >
+              {chooserAvatars.map((avatar) => {
+                const index = avatar.level;
+                const scaleClass = !avatar.imageSrc
+                  ? avatarIndex === index
+                    ? "scale-[0.82]"
+                    : "scale-[0.72]"
+                  : avatarIndex === index
+                    ? "scale-[0.7]"
+                    : "scale-[0.6]";
+                return (
+                  <button
+                    key={avatar.id}
+                    type="button"
+                    onClick={() => { setExtraPreviewAvatar(null); setAvatarIndex(index); setPreviewIndex(index); }}
+                    className="flex min-w-0 flex-col items-center gap-0 outline-none"
+                    aria-label={`Select ${avatar.name}`}
+                    aria-pressed={avatarIndex === index}
+                  >
+                    <div
+                      className={`rounded-full transition-all duration-200 ${scaleClass}`}
+                    >
+                      <AvatarFigure key={`${avatar.level}-${themeVersion}`} avatarIndex={avatar.level} size="sm" selected={avatarIndex === index} themeOverride={avatar} />
+                    </div>
+                    <span
+                      className="max-w-[46px] text-center font-display uppercase leading-tight transition-colors duration-200"
+                      style={{
+                        fontSize: "0.38rem",
+                        letterSpacing: "0.02em",
+                        color: avatarIndex === index
+                          ? "#F1C42D"
+                          : isLight
+                            ? "rgba(30,41,59,0.6)"
+                            : "rgba(255,255,255,0.42)",
+                      }}
+                    >
+                      {avatar.name.split(" ")[0]}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
 
-        {/* Avatar grid — right half, same height as phone */}
-        <div className="flex flex-1 flex-col min-w-0 pt-1 overflow-hidden" style={{ height: 646 * MOBILE_PHONE_SCALE }}>
-          <p className="mb-1 text-center font-display text-[8px] uppercase tracking-[0.14em] text-raw-gold/70">
-            Choose your avatar
-          </p>
-          <div
-            ref={scrollRef}
-            className="grid flex-1 grid-cols-2 grid-rows-5 place-items-center gap-x-1 gap-y-0"
-          >
-            {chooserAvatars.map((avatar) => {
-              const index = avatar.level;
-              const scaleClass = !avatar.imageSrc
-                ? avatarIndex === index
-                  ? "scale-[0.82]"
-                  : "scale-[0.72]"
-                : avatarIndex === index
-                  ? "scale-[0.7]"
-                  : "scale-[0.6]";
-              return (
+        {/* Unlockable avatars — compact 4-column grid for mobile */}
+        {unlockableAvatars.length > 0 && (
+          <div className="w-full">
+            <p className="mb-3 text-center font-display text-[8px] uppercase tracking-[0.18em] text-raw-gold/65">
+              Unlockable Avatars
+            </p>
+            <div className="grid grid-cols-4 place-items-center justify-items-center gap-x-2 gap-y-2">
+              {visibleUnlockableAvatars.slice(0, 4).map(({ avatar, themeIndex }) => (
+                <UnlockableAvatarButton key={avatar.id} avatar={avatar} themeIndex={themeIndex} />
+              ))}
+            </div>
+            {hasMoreUnlockableAvatars && (
+              <div className="mt-3 flex justify-center">
                 <button
-                  key={avatar.id}
                   type="button"
-                  onClick={() => { setExtraPreviewAvatar(null); setAvatarIndex(index); setPreviewIndex(index); }}
-                  className="flex min-w-0 flex-col items-center gap-0 outline-none"
-                  aria-label={`Select ${avatar.name}`}
-                  aria-pressed={avatarIndex === index}
+                  onClick={() => setShowUnlockableAvatars((open) => !open)}
+                  className="group relative flex items-center gap-1.5 rounded-full border border-raw-border/40 bg-raw-black/60 px-3 py-1.5 text-[7px] uppercase tracking-[0.16em] text-raw-silver/50 transition-all duration-300 hover:border-raw-gold/50 hover:text-raw-gold"
+                  aria-expanded={showUnlockableAvatars}
                 >
-                  <div
-                    className={`rounded-full transition-all duration-200 ${scaleClass}`}
-                  >
-                    <AvatarFigure key={`${avatar.level}-${themeVersion}`} avatarIndex={avatar.level} size="sm" selected={avatarIndex === index} themeOverride={avatar} />
-                  </div>
-                  <span
-                    className="max-w-[46px] text-center font-display uppercase leading-tight transition-colors duration-200"
-                    style={{
-                      fontSize: "0.38rem",
-                      letterSpacing: "0.02em",
-                      color: avatarIndex === index
-                        ? "#F1C42D"
-                        : isLight
-                          ? "rgba(30,41,59,0.6)"
-                          : "rgba(255,255,255,0.42)",
-                    }}
-                  >
-                    {avatar.name.split(" ")[0]}
-                  </span>
+                  <span className="relative">{showUnlockableAvatars ? "Less" : "More"}</span>
+                  <span className="relative transition-transform duration-300" style={{ transform: showUnlockableAvatars ? "rotate(180deg)" : "rotate(0deg)" }}>▾</span>
                 </button>
-              );
-            })}
+              </div>
+            )}
+            {showUnlockableAvatars && visibleUnlockableAvatars.length > 4 && (
+              <div className="mt-3 grid grid-cols-4 place-items-center justify-items-center gap-x-2 gap-y-2">
+                {visibleUnlockableAvatars.slice(4).map(({ avatar, themeIndex }) => (
+                  <UnlockableAvatarButton key={avatar.id} avatar={avatar} themeIndex={themeIndex} />
+                ))}
+              </div>
+            )}
           </div>
-        </div>
+        )}
       </div>
 
       {/* ── Tablet (sm–lg): phone on top, windowed avatar strip below ── */}
