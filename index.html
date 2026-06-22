@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -36,6 +36,13 @@
         "description": "Anonymous online communities and interest-based group chats for honest conversation, live polls, and real connection.",
         "sameAs": ["https://www.linkedin.com/company/theartofraw", "https://instagram.com/theartofraw"]
       }
+    </script>
+    <script>
+      (function() {
+        var mode = localStorage.getItem('raw.theme.mode.v1');
+        if (mode === 'light') document.documentElement.classList.add('theme-light');
+        else if (mode === 'dusk') document.documentElement.classList.add('theme-dusk');
+      })();
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
