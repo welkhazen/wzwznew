@@ -31,7 +31,7 @@ export function WhyAnonymity() {
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/30 to-transparent" />
 
         <h2 className="text-center landing-heading">
-          Why anonymity works
+          Why anonymity?
         </h2>
         <p className="mx-auto mt-4 mb-8 max-w-2xl text-center text-sm leading-relaxed text-raw-silver/55 sm:mb-10 sm:text-base">
           Take away the audience and people stop performing. That is the entire idea behind raW.
