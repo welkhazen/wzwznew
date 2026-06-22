@@ -360,17 +360,10 @@ export function AvatarShowcaseSection({ onSignupClick = () => undefined }: Avata
       <div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-4 sm:hidden">
 
         {/* 1 — Phone mockup */}
-        <div className="relative w-full overflow-hidden rounded-2xl border border-raw-border/40 bg-raw-surface/20 py-5"
-          style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 0 40px rgba(0,0,0,0.3)" }}>
-          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/30 to-transparent" />
-          <div className="flex justify-center">
-            <div style={{ width: 280, transform: `scale(${MOBILE_PHONE_SCALE})`, transformOrigin: "top center" }}>
-              <PhoneMockup className="w-[280px]" showStatusBar={false}>
-                <AvatarPhoneHomeScreen avatarIndex={previewIndex} compact previewAvatar={previewAvatar} />
-              </PhoneMockup>
-            </div>
-          </div>
-          <div style={{ height: 646 * MOBILE_PHONE_SCALE - 40 }} />
+        <div className="flex justify-center py-2">
+          <PhoneMockup className="w-[260px]" showStatusBar={false}>
+            <AvatarPhoneHomeScreen avatarIndex={previewIndex} compact previewAvatar={previewAvatar} />
+          </PhoneMockup>
         </div>
 
         {/* 2 — Avatar chooser */}
