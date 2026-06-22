@@ -1,5 +1,6 @@
 import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { getAvatar } from "@/lib/avataridentity";
+import { BrandName } from "@/components/ui/brand-name";
 
 interface AvatarPhoneHomeScreenProps {
   avatarIndex: number;
@@ -62,7 +63,7 @@ export function AvatarPhoneHomeScreen({ avatarIndex, compact = false, previewAva
               <div className="absolute inset-0 bg-gradient-to-b from-white/[0.08] via-transparent to-black/20" />
               {avatarArt}
             </div>
-            <span className="font-display text-[9px] tracking-[0.16em] text-[#222]">raW</span>
+            <BrandName className="font-display text-[9px] tracking-[0.16em] text-[#222]" />
           </div>
 
           <AppIcon kind="podcasts" label="Podcasts" compact />
@@ -119,7 +120,7 @@ export function AvatarPhoneHomeScreen({ avatarIndex, compact = false, previewAva
             <div className="absolute inset-0 bg-gradient-to-b from-white/[0.06] to-transparent" />
             {avatarArt}
           </div>
-          <span className="font-display text-[10px] tracking-[0.18em] text-[#222]">raW</span>
+          <BrandName className="font-display text-[10px] tracking-[0.18em] text-[#222]" />
         </div>
 
         <AppIcon kind="podcasts" label="Podcasts" />

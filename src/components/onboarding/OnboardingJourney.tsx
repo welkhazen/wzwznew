@@ -1,4 +1,5 @@
 import { BrandName } from "@/components/ui/brand-name";
+import { highlightRawWordmark } from "@/components/ui/highlightRawWordmark";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import isItJustMeVideo from "@/assets/itisjustme.webm";
@@ -596,7 +597,7 @@ export function OnboardingJourney({
           <div className="w-full rounded-2xl border border-raw-border/40 bg-raw-black/55 p-6 sm:p-8">
             <p className="text-[10px] uppercase tracking-[0.3em] text-raw-gold/70">Age confirmation</p>
             <h2 className="mt-3 font-display text-xl tracking-wide text-raw-text sm:text-2xl">Are you over 18?</h2>
-            <p className="mt-3 text-sm text-raw-silver/60">You need to confirm this before continuing to raW.</p>
+            <p className="mt-3 text-sm text-raw-silver/60">{highlightRawWordmark("You need to confirm this before continuing to raW.")}</p>
 
             <div className="mt-6 flex flex-col items-stretch gap-2 sm:flex-row sm:justify-center">
               <button
@@ -744,7 +745,7 @@ export function OnboardingJourney({
           {onboardingStep === "username" && (
             <section>
               <h2 className="font-display text-lg tracking-wide text-raw-text sm:text-xl">Choose your usernames</h2>
-              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-raw-silver/55">Your public username is how people know you across raW. Your private username is only for you.</p>
+              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-raw-silver/55">{highlightRawWordmark("Your public username is how people know you across raW. Your private username is only for you.")}</p>
               <div className="mx-auto mt-8 max-w-xl space-y-5">
                 <label className="block">
                   <span className="text-[10px] uppercase tracking-[0.22em] text-raw-gold/75">Public username</span>
@@ -1410,7 +1411,7 @@ export function OnboardingJourney({
 
               {!canCompleteOnboarding ? (
                 <p className="mt-4 text-center text-[11px] uppercase tracking-[0.18em] text-raw-silver/50 sm:text-right">
-                  Finish every step to enter raW
+                  {highlightRawWordmark("Finish every step to enter raW")}
                 </p>
               ) : null}
               {communitySaveError ? (

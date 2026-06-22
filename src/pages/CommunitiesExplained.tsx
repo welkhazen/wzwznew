@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { BrandName } from "@/components/ui/brand-name";
+import { highlightRawWordmark } from "@/components/ui/highlightRawWordmark";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { Shield, Users, MessageSquare, Star, Zap, Lock } from "lucide-react";
 
@@ -27,7 +28,7 @@ export default function CommunitiesExplained() {
             Anonymous Online Communities Built Around Who You Actually Are
           </h1>
           <p className="mt-4 text-sm leading-relaxed text-raw-silver/60 sm:text-base">
-            raW offers anonymous online communities and interest-based group chats where people can speak honestly, meet like-minded people, and build meaningful connections without using a real name or photo.
+            {highlightRawWordmark("raW offers anonymous online communities and interest-based group chats where people can speak honestly, meet like-minded people, and build meaningful connections without using a real name or photo.")}
           </p>
 
           <div className="mt-10 space-y-10 sm:mt-14">
@@ -39,7 +40,7 @@ export default function CommunitiesExplained() {
               <div>
                 <h2 className="text-base font-semibold text-raw-text sm:text-lg">What Are Anonymous Online Communities?</h2>
                 <p className="mt-2 text-sm leading-relaxed text-raw-silver/65">
-                  Each raW community is an online group chat organized around shared interests, experiences, and identity signals. Your live-poll answers help recommend communities where people are more likely to understand your perspective. You can also explore available communities and choose where you feel most comfortable joining the conversation.
+                  {highlightRawWordmark("Each raW community is an online group chat organized around shared interests, experiences, and identity signals. Your live-poll answers help recommend communities where people are more likely to understand your perspective. You can also explore available communities and choose where you feel most comfortable joining the conversation.")}
                 </p>
               </div>
             </div>
@@ -76,7 +77,7 @@ export default function CommunitiesExplained() {
               <div>
                 <h2 className="text-base font-semibold text-raw-text sm:text-lg">Anonymity Inside Communities</h2>
                 <p className="mt-2 text-sm leading-relaxed text-raw-silver/65">
-                  You participate under your raW username — no real name, no photo required, no social capital from outside. What you bring into a community is your actual self: your opinions, your consistency, your engagement. Reputation is built from behavior inside raW, not from who you are outside it.
+                  {highlightRawWordmark("You participate under your raW username — no real name, no photo required, no social capital from outside. What you bring into a community is your actual self: your opinions, your consistency, your engagement. Reputation is built from behavior inside raW, not from who you are outside it.")}
                 </p>
               </div>
             </div>
@@ -112,7 +113,7 @@ export default function CommunitiesExplained() {
               <div>
                 <h2 className="text-base font-semibold text-raw-text sm:text-lg">Where Communities Are Going</h2>
                 <p className="mt-2 text-sm leading-relaxed text-raw-silver/65">
-                  Communities on raW will evolve as our personality data deepens. Upcoming:
+                  {highlightRawWordmark("Communities on raW will evolve as our personality data deepens. Upcoming:")}
                 </p>
                 <ul className="mt-4 space-y-3 text-sm text-raw-silver/65">
                   {[
@@ -135,7 +136,7 @@ export default function CommunitiesExplained() {
           <div className="mt-12 rounded-xl border border-raw-gold/20 bg-raw-gold/5 px-5 py-5 sm:mt-16">
             <p className="text-sm font-medium text-raw-gold">The bottom line</p>
             <p className="mt-2 text-sm leading-relaxed text-raw-silver/70">
-              raW helps you find anonymous online communities where honest conversation feels easier. Answer polls, discover interest-based group chats, and connect with people who understand your experiences without bringing real-world social pressure into the room.
+              {highlightRawWordmark("raW helps you find anonymous online communities where honest conversation feels easier. Answer polls, discover interest-based group chats, and connect with people who understand your experiences without bringing real-world social pressure into the room.")}
             </p>
           </div>
         </div>

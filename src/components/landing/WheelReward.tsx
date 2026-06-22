@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Sparkles } from "lucide-react";
+import { highlightRawWordmark } from "@/components/ui/highlightRawWordmark";
 import { LandingSectionShell } from "@/components/landing/LandingSectionShell";
 import { WheelOfFortune, type WheelPrize } from "@/components/wheel/WheelOfFortune";
 import { SpinWheelClaimBanner } from "@/components/wheel/SpinWheelClaimBanner";
@@ -295,7 +296,7 @@ export function WheelReward({ onSignupClick }: WheelRewardProps) {
               </span>
             </div>
             <p className="mt-2 text-xs leading-relaxed text-raw-text/75">
-              You won this cool avatar from raW's early access wheel.
+              {highlightRawWordmark("You won this cool avatar from raW's early access wheel.")}
             </p>
             <button
               type="button"

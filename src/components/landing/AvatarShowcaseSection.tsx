@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { highlightRawWordmark } from "@/components/ui/highlightRawWordmark";
 import { ChevronLeft, ChevronRight, ChevronDown, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { LandingSectionShell } from "@/components/landing/LandingSectionShell";
@@ -351,9 +352,7 @@ export function AvatarShowcaseSection({ onSignupClick = () => undefined }: Avata
       }
       description={
         <span className="block whitespace-pre-line">
-          {`Your username is your constant identity. Your avatar is your evolving one.
-
-In real life you are born with a name, a face, and a personality underneath. On raW, your username is your name, your avatar is your face — and your answers reveal the personality behind them.`}
+          {highlightRawWordmark(`Your username is your constant identity. Your avatar is your evolving one.\n\nIn real life you are born with a name, a face, and a personality underneath. On raW, your username is your name, your avatar is your face — and your answers reveal the personality behind them.`)}
         </span>
       }
     >

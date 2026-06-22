@@ -45,7 +45,7 @@ export function EnterRawGate({ onEnter }: EnterRawGateProps) {
           data-testid="enter-raw-gate-button"
           className="enter-raw-gate-pulse mt-2 inline-flex min-h-[52px] w-full items-center justify-center rounded-xl bg-raw-gold px-8 py-3 font-display text-sm font-semibold uppercase tracking-[0.18em] text-raw-ink transition-transform hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/80 sm:w-auto sm:tracking-[0.22em]"
         >
-          Enter raW
+          Enter ra<span className="text-[hsl(var(--accent))]">W</span>
         </button>
         <p className="text-[10px] uppercase tracking-[0.3em] text-raw-silver/40">
           tap to begin

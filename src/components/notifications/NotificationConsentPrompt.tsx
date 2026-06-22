@@ -9,6 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useNotificationConsent } from "@/hooks/useNotificationConsent";
+import { highlightRawWordmark } from "@/components/ui/highlightRawWordmark";
 
 interface NotificationConsentPromptProps {
   userId: string;
@@ -32,7 +33,7 @@ export function NotificationConsentPrompt({ userId }: NotificationConsentPromptP
           </div>
           <DialogTitle>Turn on {platformLabel(platform)}</DialogTitle>
           <DialogDescription className="text-raw-silver/60">
-            Get alerts for likes, mentions, new communities, streak reminders, and important account updates. On iPhone, install raW to your Home Screen first for full push alerts.
+            {highlightRawWordmark("Get alerts for likes, mentions, new communities, streak reminders, and important account updates. On iPhone, install raW to your Home Screen first for full push alerts.")}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>

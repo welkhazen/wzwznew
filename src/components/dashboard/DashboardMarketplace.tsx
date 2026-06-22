@@ -1,5 +1,6 @@
 import { GlareCard } from "@/components/ui/glare-card";
 import { Palette, Crown, Sparkles, Shield, Lock, Gem } from "lucide-react";
+import { highlightRawWordmark } from "@/components/ui/highlightRawWordmark";
 
 interface MarketplaceItem {
   id: string;
@@ -156,7 +157,7 @@ export function DashboardMarketplace({ avatarLevel, xp = 0 }: { avatarLevel: num
                 </div>
 
                 <h3 className="font-display text-sm tracking-wide text-raw-text">{item.title}</h3>
-                <p className="mt-2 text-xs text-raw-silver/40 leading-relaxed">{item.description}</p>
+                <p className="mt-2 text-xs text-raw-silver/40 leading-relaxed">{highlightRawWordmark(item.description)}</p>
 
                 <div className="mt-5 flex items-center justify-between">
                   <span className={`text-xs font-medium ${
@@ -187,7 +188,7 @@ export function DashboardMarketplace({ avatarLevel, xp = 0 }: { avatarLevel: num
       {/* Coming soon */}
       <div className="rounded-2xl border border-raw-border/20 bg-raw-surface/20 p-8 text-center">
         <Shield className="h-6 w-6 text-raw-silver/20 mx-auto mb-3" />
-        <p className="font-display text-sm tracking-wide text-raw-silver/30">More items drop as raW grows</p>
+        <p className="font-display text-sm tracking-wide text-raw-silver/30">{highlightRawWordmark("More items drop as raW grows")}</p>
         <p className="mt-2 text-xs text-raw-silver/20">Custom community themes, animated avatars, voice effects, and more.</p>
       </div>
     </div>
