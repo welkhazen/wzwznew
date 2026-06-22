@@ -86,7 +86,7 @@ export function ProblemSection() {
                     className={`w-7 shrink-0 font-editorial text-sm italic transition-colors sm:w-9 sm:text-base ${
                       isOpen
                         ? "text-primary"
-                        : "text-raw-silver/40 group-hover:text-primary/70"
+                        : "text-raw-silver/60 group-hover:text-primary/70"
                     }`}
                   >
                     {String(i + 1).padStart(2, "0")}
@@ -100,7 +100,7 @@ export function ProblemSection() {
                   >
                     {truth.title}
                   </span>
-                  <span className="hidden text-[0.62rem] uppercase tracking-[0.3em] text-raw-silver/40 sm:block">
+                  <span className="hidden text-[0.62rem] uppercase tracking-[0.3em] text-raw-silver/55 sm:block">
                     {truth.label}
                   </span>
                   <span

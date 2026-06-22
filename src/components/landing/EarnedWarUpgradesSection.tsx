@@ -25,7 +25,7 @@ export function EarnedWarUpgradesSection() {
           <span className="font-medium text-raw-gold/80">War Points</span>, and{" "}
           <span className="font-medium text-raw-gold/80">War-Up</span> through the ranks.
         </p>
-        <p className="mt-3 text-sm leading-relaxed text-raw-silver/40">
+        <p className="mt-3 text-sm leading-relaxed text-raw-silver/60">
           The higher your level, the bigger the privileges — and the better the surprises.
         </p>
 
@@ -37,7 +37,7 @@ export function EarnedWarUpgradesSection() {
           />
         </div>
 
-        <p className="mt-8 text-[11px] uppercase tracking-[0.2em] text-raw-silver/25">
+        <p className="mt-8 text-[11px] uppercase tracking-[0.2em] text-raw-silver/45">
           New avatar rewards unlock as you level up
         </p>
       </div>
