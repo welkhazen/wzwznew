@@ -43,6 +43,9 @@ export function GeneralFeedBox({
   const [feedSubmitting, setFeedSubmitting] = useState(false);
   const [feedError, setFeedError] = useState("");
   const feedTextLength = feedText.trim().length;
+  const headingClassName = isLight ? "text-slate-950" : "text-raw-text";
+  const supportingTextClassName = isLight ? "text-slate-600" : "text-raw-silver/50";
+  const mutedTextClassName = isLight ? "text-slate-500" : "text-raw-silver/45";
 
   useEffect(() => {
     let cancelled = false;
@@ -89,11 +92,11 @@ export function GeneralFeedBox({
           <div className="space-y-0.5">
             <div className="flex items-center gap-2">
               <MessageSquare className="size-4 text-raw-gold" />
-              <h2 className="text-xl font-bold tracking-tight text-raw-text">General Feed</h2>
+              <h2 className={`text-xl font-bold tracking-tight ${headingClassName}`}>General Feed</h2>
             </div>
-            <p className="text-[13px] text-raw-silver/50">A shared space for quick thoughts from everyone.</p>
+            <p className={`text-[13px] ${supportingTextClassName}`}>A shared space for quick thoughts from everyone.</p>
           </div>
-          <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-raw-silver/45">
+          <span className={`text-[11px] font-bold uppercase tracking-[0.18em] ${mutedTextClassName}`}>
             {feedTextLength}/500
           </span>
         </div>
@@ -104,9 +107,9 @@ export function GeneralFeedBox({
           <div className="mb-4 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <MessageSquare className="size-4 text-raw-gold" />
-              <h2 className="text-sm font-bold tracking-tight text-raw-text">General Feed</h2>
+              <h2 className={`text-sm font-bold tracking-tight ${headingClassName}`}>General Feed</h2>
             </div>
-            <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-raw-silver/45">
+            <span className={`text-[10px] font-bold uppercase tracking-[0.16em] ${mutedTextClassName}`}>
               {feedTextLength}/500
             </span>
           </div>
