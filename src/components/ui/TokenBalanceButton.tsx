@@ -1,8 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import { Suspense, lazy, useEffect, useRef, useState } from "react";
 import tokenImg from "@/assets/tokens.webp";
 import { useRawStore } from "@/store/useRawStore";
 import { useTheme } from "@/providers/useTheme";
-import { PACKAGES, PaymentModal } from "@/components/dashboard/DashboardWallet";
+import { PACKAGES } from "@/lib/wallet-packages";
+
+const PaymentModal = lazy(() =>
+  import("@/components/dashboard/DashboardWallet").then((m) => ({ default: m.PaymentModal }))
+);
 
 
 export function TokenBalanceButton() {
@@ -167,15 +171,17 @@ export function TokenBalanceButton() {
         </div>
       )}
       {paymentOpen && selectedPackId && (
-        <PaymentModal
-          selectedPackage={PACKAGES.find((p) => p.id === selectedPackId)!}
-          paymentMethod={paymentMethod}
-          cardDetails={cardDetails}
-          onPaymentMethodChange={setPaymentMethod}
-          onCardDetailsChange={setCardDetails}
-          onBack={handleClosePayment}
-          onClose={handleClosePayment}
-        />
+        <Suspense fallback={null}>
+          <PaymentModal
+            selectedPackage={PACKAGES.find((p) => p.id === selectedPackId)!}
+            paymentMethod={paymentMethod}
+            cardDetails={cardDetails}
+            onPaymentMethodChange={setPaymentMethod}
+            onCardDetailsChange={setCardDetails}
+            onBack={handleClosePayment}
+            onClose={handleClosePayment}
+          />
+        </Suspense>
       )}
     </div>
   );

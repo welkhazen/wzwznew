@@ -1,10 +1,14 @@
+import { Suspense, lazy } from "react";
 import { Store } from "lucide-react";
-import {
-  AvatarShop,
-  LootSpin,
-} from "@/components/dashboard/DashboardInventory";
 import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
 import type { Poll } from "@/store/useRawStore";
+
+const AvatarShop = lazy(() =>
+  import("@/components/dashboard/DashboardInventory").then((m) => ({ default: m.AvatarShop }))
+);
+const LootSpin = lazy(() =>
+  import("@/components/dashboard/DashboardInventory").then((m) => ({ default: m.LootSpin }))
+);
 
 interface DashboardStoreProps {
   polls: Poll[];
@@ -41,26 +45,30 @@ export function DashboardStore({
 
       <section>
         <h2 className="mb-3 font-display text-sm tracking-wide text-raw-text">Avatar Shop</h2>
-        <AvatarShop
-          avatarCatalog={avatarCatalog}
-          ownedAvatarLevels={ownedAvatarLevels}
-          onUnlockAvatar={onUnlockAvatar}
-          onAvatarPurchased={onAvatarPurchased}
-          avatarPricesByLevel={avatarPricesByLevel}
-          tokenBalance={tokenBalance}
-          userId={userId}
-        />
+        <Suspense fallback={null}>
+          <AvatarShop
+            avatarCatalog={avatarCatalog}
+            ownedAvatarLevels={ownedAvatarLevels}
+            onUnlockAvatar={onUnlockAvatar}
+            onAvatarPurchased={onAvatarPurchased}
+            avatarPricesByLevel={avatarPricesByLevel}
+            tokenBalance={tokenBalance}
+            userId={userId}
+          />
+        </Suspense>
       </section>
 
       <section>
         <h2 className="mb-3 font-display text-sm tracking-wide text-raw-text">Loot Spin</h2>
-        <LootSpin
-          tokenBalance={tokenBalance}
-          avatarCatalog={avatarCatalog}
-          ownedAvatarLevels={ownedAvatarLevels}
-          userId={userId}
-          onAvatarPurchased={onAvatarPurchased}
-        />
+        <Suspense fallback={null}>
+          <LootSpin
+            tokenBalance={tokenBalance}
+            avatarCatalog={avatarCatalog}
+            ownedAvatarLevels={ownedAvatarLevels}
+            userId={userId}
+            onAvatarPurchased={onAvatarPurchased}
+          />
+        </Suspense>
       </section>
 
       {/* Personality Insights moved to the Profile tab. */}
