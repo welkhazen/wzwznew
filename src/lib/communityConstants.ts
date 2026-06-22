@@ -29,4 +29,5 @@ export const COMMUNITY_COVER_IMAGES: Record<string, string> = {
 export const COMMUNITY_COVER_VIDEOS: Record<string, string> = {
   lnt: lntCoverVideo,
   syt: sytVideo,
+  iijm: "/assets/IIJM.webm",
 };
