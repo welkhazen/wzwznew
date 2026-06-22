@@ -39,6 +39,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const root = document.documentElement;
     const selectedAccent = ACCENT_PRESETS.find((preset) => preset.id === accent) ?? ACCENT_PRESETS[0];
 
+    root.classList.toggle("dark", mode === "dark");
     root.classList.toggle("theme-light", mode === "light");
     root.classList.toggle("theme-dusk", mode === "dusk");
     root.dataset.themeMode = mode;
