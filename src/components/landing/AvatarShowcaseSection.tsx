@@ -357,87 +357,70 @@ In real life you are born with a name, a face, and a personality underneath. On 
         </span>
       }
     >
-      {/* ── Mobile (<sm): phone left + 2-col avatar grid right, 50/50 + unlockable avatars below ── */}
-      <div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-5 sm:hidden">
+      {/* ── Mobile (<sm): stacked sections — phone / chooser / unlockable ── */}
+      <div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-4 sm:hidden">
 
-        {/* Phone + chooser grid row */}
-        <div className="flex w-full flex-row items-start gap-3">
-
-          {/* Phone: scaled to fit the left half while keeping the full home screen intact. */}
-          <div
-            className="w-[43%] shrink-0 overflow-visible pt-1"
-            style={{ height: 646 * MOBILE_PHONE_SCALE }}
-          >
-            {/* Transform scaling avoids mobile browser zoom side effects. */}
-            <div
-              style={{
-                width: 280,
-                transform: `scale(${MOBILE_PHONE_SCALE})`,
-                transformOrigin: "top left",
-              }}
-            >
+        {/* 1 — Phone mockup */}
+        <div className="relative w-full overflow-hidden rounded-2xl border border-raw-border/40 bg-raw-surface/20 py-5"
+          style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 0 40px rgba(0,0,0,0.3)" }}>
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/30 to-transparent" />
+          <div className="flex justify-center">
+            <div style={{ width: 280, transform: `scale(${MOBILE_PHONE_SCALE})`, transformOrigin: "top center" }}>
               <PhoneMockup className="w-[280px]" showStatusBar={false}>
                 <AvatarPhoneHomeScreen avatarIndex={previewIndex} compact previewAvatar={previewAvatar} />
               </PhoneMockup>
             </div>
           </div>
+          {/* height spacer so the scaled phone doesn't collapse the card */}
+          <div style={{ height: 646 * MOBILE_PHONE_SCALE - 40 }} />
+        </div>
 
-          {/* Avatar grid — right half, same height as phone */}
-          <div className="flex flex-1 flex-col min-w-0 pt-1 overflow-hidden" style={{ height: 646 * MOBILE_PHONE_SCALE }}>
-            <p className="mb-1 text-center font-display text-[8px] uppercase tracking-[0.14em] text-raw-gold/70">
-              Choose your avatar
-            </p>
-            <div
-              ref={scrollRef}
-              className="grid flex-1 grid-cols-2 grid-rows-5 place-items-center gap-x-1 gap-y-0"
-            >
-              {chooserAvatars.map((avatar) => {
-                const index = avatar.level;
-                const scaleClass = !avatar.imageSrc
-                  ? avatarIndex === index
-                    ? "scale-[0.82]"
-                    : "scale-[0.72]"
-                  : avatarIndex === index
-                    ? "scale-[0.7]"
-                    : "scale-[0.6]";
-                return (
-                  <button
-                    key={avatar.id}
-                    type="button"
-                    onClick={() => { setExtraPreviewAvatar(null); setAvatarIndex(index); setPreviewIndex(index); }}
-                    className="flex min-w-0 flex-col items-center gap-0 outline-none"
-                    aria-label={`Select ${avatar.name}`}
-                    aria-pressed={avatarIndex === index}
+        {/* 2 — Avatar chooser */}
+        <div className="relative w-full overflow-hidden rounded-2xl border border-raw-border/40 bg-raw-surface/20 p-4"
+          style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 0 40px rgba(0,0,0,0.3)" }}>
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/30 to-transparent" />
+          <p className="mb-3 text-center font-display text-[8px] uppercase tracking-[0.18em] text-raw-gold/70">
+            Choose your avatar
+          </p>
+          <div
+            ref={scrollRef}
+            className="grid grid-cols-4 place-items-center gap-x-2 gap-y-3"
+          >
+            {chooserAvatars.map((avatar) => {
+              const index = avatar.level;
+              return (
+                <button
+                  key={avatar.id}
+                  type="button"
+                  onClick={() => { setExtraPreviewAvatar(null); setAvatarIndex(index); setPreviewIndex(index); }}
+                  className="flex min-w-0 flex-col items-center gap-1 outline-none"
+                  aria-label={`Select ${avatar.name}`}
+                  aria-pressed={avatarIndex === index}
+                >
+                  <div className={`rounded-full transition-all duration-200 ${avatarIndex === index ? "scale-110" : "scale-100"}`}>
+                    <AvatarFigure key={`${avatar.level}-${themeVersion}`} avatarIndex={avatar.level} size="sm" selected={avatarIndex === index} themeOverride={avatar} />
+                  </div>
+                  <span
+                    className="max-w-[46px] text-center font-display uppercase leading-tight transition-colors duration-200"
+                    style={{
+                      fontSize: "0.42rem",
+                      letterSpacing: "0.04em",
+                      color: avatarIndex === index ? "#F1C42D" : isLight ? "rgba(30,41,59,0.6)" : "rgba(255,255,255,0.42)",
+                    }}
                   >
-                    <div
-                      className={`rounded-full transition-all duration-200 ${scaleClass}`}
-                    >
-                      <AvatarFigure key={`${avatar.level}-${themeVersion}`} avatarIndex={avatar.level} size="sm" selected={avatarIndex === index} themeOverride={avatar} />
-                    </div>
-                    <span
-                      className="max-w-[46px] text-center font-display uppercase leading-tight transition-colors duration-200"
-                      style={{
-                        fontSize: "0.38rem",
-                        letterSpacing: "0.02em",
-                        color: avatarIndex === index
-                          ? "#F1C42D"
-                          : isLight
-                            ? "rgba(30,41,59,0.6)"
-                            : "rgba(255,255,255,0.42)",
-                      }}
-                    >
-                      {avatar.name.split(" ")[0]}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+                    {avatar.name.split(" ")[0]}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {/* Unlockable avatars — compact 4-column grid for mobile */}
+        {/* 3 — Unlockable avatars */}
         {unlockableAvatars.length > 0 && (
-          <div className="w-full">
+          <div className="relative w-full overflow-hidden rounded-2xl border border-raw-border/40 bg-raw-surface/20 p-4"
+            style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 0 40px rgba(0,0,0,0.3)" }}>
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/30 to-transparent" />
             <p className="mb-3 text-center font-display text-[8px] uppercase tracking-[0.18em] text-raw-gold/65">
               Unlockable Avatars
             </p>
