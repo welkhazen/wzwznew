@@ -110,9 +110,11 @@ Available gstack skills:
 - `/design-review` - Design review
 - `/setup-browser-cookies` - Setup browser cookies
 - `/setup-deploy` - Setup deployment
+- `/setup-gbrain` - Setup gbrain
 - `/retro` - Retrospective
 - `/investigate` - Investigation
 - `/document-release` - Document release
+- `/document-generate` - Document generation
 - `/codex` - Codex
 - `/cso` - CSO
 - `/autoplan` - Auto planning
