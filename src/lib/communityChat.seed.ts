@@ -5,6 +5,9 @@ import SYTLogo from "@/assets/logospeak.webp";
 // Fallback community shells used while the real chat API is loading or unavailable.
 // Members and messages are intentionally empty so the UI never flashes hardcoded
 // mock chat content before the API renders the actual data.
+//
+// Only Late Night Talk, Speak Your Truth, and Is It Just Me? are open. Every other
+// community is locked and surfaces "Join Waitlist" until it is released.
 export function buildDefaultCommunities(): PersistedCommunityRecord[] {
   return [
     {
@@ -63,6 +66,7 @@ export function buildDefaultCommunities(): PersistedCommunityRecord[] {
       description: "Funny but honest deal-breakers, tiny turnoffs, and the moments that suddenly change the vibe.",
       topic: "What gave you the ick faster than you expected?",
       status: "Active",
+      locked: true,
       createdAt: "2026-06-12T00:00:00.000Z",
       members: [],
       messages: [],
@@ -75,6 +79,7 @@ export function buildDefaultCommunities(): PersistedCommunityRecord[] {
       description: "Moral gray areas, guilty thoughts, and the anonymous jury for whether you crossed a line.",
       topic: "What choice made you wonder if you were the villain?",
       status: "Active",
+      locked: true,
       createdAt: "2026-06-12T00:00:00.000Z",
       members: [],
       messages: [],
@@ -87,6 +92,7 @@ export function buildDefaultCommunities(): PersistedCommunityRecord[] {
       description: "Odd shower thoughts, intrusive questions, and strange ideas that are safer to say anonymously.",
       topic: "What weird thought keeps popping into your head?",
       status: "Active",
+      locked: true,
       createdAt: "2026-06-12T00:00:00.000Z",
       members: [],
       messages: [],
@@ -99,6 +105,7 @@ export function buildDefaultCommunities(): PersistedCommunityRecord[] {
       description: "A grounded gut-check room for habits, feelings, and situations you are not sure everyone else gets.",
       topic: "What are you wondering is normal right now?",
       status: "Active",
+      locked: true,
       createdAt: "2026-06-12T00:00:00.000Z",
       members: [],
       messages: [],
@@ -111,6 +118,7 @@ export function buildDefaultCommunities(): PersistedCommunityRecord[] {
       description: "Direct conversations about pressure, confidence, friendship, dating, work, and being a guy today.",
       topic: "What do men need to talk about more honestly?",
       status: "Active",
+      locked: true,
       createdAt: "2026-06-12T00:00:00.000Z",
       members: [],
       messages: [],
@@ -123,6 +131,7 @@ export function buildDefaultCommunities(): PersistedCommunityRecord[] {
       description: "Games, squads, salty losses, clutch wins, and the culture around what everyone is playing.",
       topic: "What game has your attention right now?",
       status: "Active",
+      locked: true,
       createdAt: "2026-06-12T00:00:00.000Z",
       members: [],
       messages: [],
@@ -135,6 +144,7 @@ export function buildDefaultCommunities(): PersistedCommunityRecord[] {
       description: "Ideas, money moves, side hustles, founder lessons, and practical ambition without fake guru energy.",
       topic: "What business idea or money lesson are you thinking about?",
       status: "Active",
+      locked: true,
       createdAt: "2026-06-12T00:00:00.000Z",
       members: [],
       messages: [],
@@ -147,6 +157,7 @@ export function buildDefaultCommunities(): PersistedCommunityRecord[] {
       description: "Dating reads, chemistry checks, green flags, red flags, and honest takes on who fits who.",
       topic: "What match or dating situation needs a second opinion?",
       status: "Active",
+      locked: true,
       createdAt: "2026-06-12T00:00:00.000Z",
       members: [],
       messages: [],
@@ -159,6 +170,7 @@ export function buildDefaultCommunities(): PersistedCommunityRecord[] {
       description: "Low-stakes chaos, random prompts, mini-rants, and things to say when your brain needs noise.",
       topic: "What should bored people argue about for five minutes?",
       status: "Active",
+      locked: true,
       createdAt: "2026-06-12T00:00:00.000Z",
       members: [],
       messages: [],
@@ -171,6 +183,7 @@ export function buildDefaultCommunities(): PersistedCommunityRecord[] {
       description: "Fast, honest advice for the decision you need help with before you overthink it all night.",
       topic: "What do you need advice on right now?",
       status: "Active",
+      locked: true,
       createdAt: "2026-06-12T00:00:00.000Z",
       members: [],
       messages: [],
@@ -183,6 +196,7 @@ export function buildDefaultCommunities(): PersistedCommunityRecord[] {
       description: "A real but careful venting room for heavy days, bad moods, and not pretending everything is fine.",
       topic: "What is weighing on you today?",
       status: "Active",
+      locked: true,
       createdAt: "2026-06-12T00:00:00.000Z",
       members: [],
       messages: [],
@@ -195,6 +209,7 @@ export function buildDefaultCommunities(): PersistedCommunityRecord[] {
       description: "Unforgettable stories, strange lore, family legends, wild confessions, and tales worth retelling.",
       topic: "What is the best story someone ever told you?",
       status: "Active",
+      locked: true,
       createdAt: "2026-06-12T00:00:00.000Z",
       members: [],
       messages: [],
