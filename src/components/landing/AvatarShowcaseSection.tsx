@@ -448,55 +448,12 @@ export function AvatarShowcaseSection({ onSignupClick = () => undefined }: Avata
         )}
       </div>
 
-      {/* ── Tablet (sm–lg): phone on top, windowed avatar strip below ── */}
-      <div className="mx-auto hidden w-full max-w-5xl flex-col items-center gap-8 sm:flex lg:hidden">
-        <PhoneMockup className="w-[310px]" showStatusBar={false}>
-          <AvatarPhoneHomeScreen avatarIndex={previewIndex} previewAvatar={previewAvatar} />
-        </PhoneMockup>
-
-        <div
-          className="relative w-full overflow-hidden rounded-2xl border border-raw-border/40 bg-raw-surface/20 p-5 sm:p-6"
-          style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 0 40px rgba(0,0,0,0.3)" }}
-        >
-          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-raw-gold/30 to-transparent" />
-          <p className="mb-6 text-center font-display text-xs uppercase tracking-[0.25em] text-raw-gold/70">
-            Choose your avatar
-          </p>
-          <div className="flex items-center gap-4">
-            <NavButton direction="prev" onClick={prev} disabled={!canPrev} />
-            <div className="flex flex-1 flex-wrap items-center justify-center gap-6 transition-all duration-500">
-              {showAll
-                ? chooserAvatars.map((avatar, i) => (
-                    <AvatarButton key={i + 1} index={i + 1} avatar={avatar} />
-                  ))
-                : visibleAvatars.map(({ avatar, index }) => (
-                    <AvatarButton key={`${startIndex}-${index}`} index={index} avatar={avatar} />
-                  ))
-              }
-            </div>
-            <NavButton direction="next" onClick={next} disabled={!canNext} />
-          </div>
-          <div className="mt-5 flex justify-center">
-            <button
-              type="button"
-              onClick={() => setShowAll((v) => !v)}
-              className="group relative flex items-center gap-2 rounded-full border border-raw-border/40 bg-raw-black/60 px-5 py-2 text-xs uppercase tracking-[0.18em] text-raw-silver/50 transition-all duration-300 hover:border-raw-gold/50 hover:text-raw-gold"
-            >
-              <div className="absolute inset-0 rounded-full opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-                style={{ boxShadow: "0 0 14px rgba(241,196,45,0.2), inset 0 0 10px rgba(241,196,45,0.05)" }} />
-              <span className="relative">{showAll ? "Show Less" : "Show All Avatars"}</span>
-              <span className="relative transition-transform duration-300" style={{ transform: showAll ? "rotate(180deg)" : "rotate(0deg)" }}>▾</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Desktop (lg+): large phone left + 4x2 chooser grid right ── */}
-      <div className="mx-auto hidden w-full max-w-5xl flex-row items-stretch gap-10 lg:flex">
+      {/* ── Tablet + Desktop (sm+): phone left + chooser grid right ── */}
+      <div className="mx-auto hidden w-full max-w-5xl flex-row items-stretch gap-8 sm:flex lg:gap-10">
 
         <div className="flex shrink-0 justify-center">
-          <PhoneMockup className="w-[310px]" showStatusBar={false}>
-          <AvatarPhoneHomeScreen avatarIndex={previewIndex} previewAvatar={previewAvatar} />
+          <PhoneMockup className="w-[260px] lg:w-[310px]" showStatusBar={false}>
+            <AvatarPhoneHomeScreen avatarIndex={previewIndex} previewAvatar={previewAvatar} />
           </PhoneMockup>
         </div>
 
