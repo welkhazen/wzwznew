@@ -34,12 +34,12 @@ export function LandingSectionShell({
         {(eyebrow || title || description) && (
           <header className="mb-6 text-center sm:mb-10">
             {eyebrow && (
-              <div className="mb-2 flex items-center justify-center gap-2 sm:mb-3">
-                <div className="h-px w-6 bg-raw-gold/30 sm:w-8" />
-                <p className="font-display text-[10px] uppercase tracking-[0.28em] text-raw-gold/60 sm:tracking-[0.3em]">
+              <div className="mb-3 flex items-center justify-center gap-3 sm:mb-4">
+                <div className="h-px w-8 bg-raw-gold/40 sm:w-12" />
+                <p className="font-display text-xs uppercase tracking-[0.28em] text-raw-gold sm:text-sm sm:tracking-[0.3em]">
                   {highlightRawWordmark(eyebrow)}
                 </p>
-                <div className="h-px w-6 bg-raw-gold/30 sm:w-8" />
+                <div className="h-px w-8 bg-raw-gold/40 sm:w-12" />
               </div>
             )}
             {title && (
