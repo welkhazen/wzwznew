@@ -436,7 +436,7 @@ export function PersonalityInsightsSection() {
           </p>
         </div>
 
-        <div className="grid gap-3 sm:gap-6 md:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 sm:gap-6 md:grid-cols-3">
           {insights.map((insight) => {
             const Icon = insight.icon;
             return (
