@@ -16,7 +16,7 @@ the code files to change behavior, then update the table here.
 | Image files | `public/avatars/<id>.png` | The artwork. Filename is the numeric **id**. |
 | Names | `src/config/avatarNames.ts` | `NUMBERED_AVATAR_NAMES` (id → display name) and `DUPLICATE_AVATAR_IMAGE_IDS` (id → canonical id for re-used artwork). |
 | Ranks | `src/lib/avatarRank.ts` | `NUMBERED_AVATAR_RANKS` (id → rank 1–10) and `AVATAR_RANK_LABELS` (rank → color label). |
-| Pools | `src/config/avatarConfig.ts` | `FREE_SPIN_AVATAR_IDS` (the 10 spin-wheel avatars, **in rank order**) and `EARLY_SIGNUP_AVATAR_IDS` (the 4 signup avatars). |
+| Pools | `src/config/avatarConfig.ts` | `FREE_SPIN_AVATAR_IDS` (the 10 spin-wheel avatars, **in rank order**) and `EARLY_SIGNUP_AVATAR_IDS` (now empty — the early-signup pool was retired). |
 
 The server also keeps an `avatar_catalog` table (Supabase). Reward claims are
 validated against it (`spin-<id>` / `signup-<id>` must exist and be active), so
@@ -31,14 +31,18 @@ so lower ranks win more often (rank 1 is 10× more likely than rank 10).
 | Rank | Tier / color | | Rank | Tier / color |
 |---:|---|---|---:|---|
 | 1 | Grey | | 6 | Pink |
-| 2 | Blue | | 7 | Gold |
-| 3 | Purple | | 8 | Platinum |
+| 2 | Blue | | 7 | Rose |
+| 3 | Purple | | 8 | Gold |
 | 4 | Orange | | 9 | White |
 | 5 | Red | | 10 | Rainbow |
 
 **Naming rule:** an avatar's name should start with a word that matches its rank
 tier and its artwork color (e.g. a rank‑3 purple avatar → "Purple Oracle"). Name,
 rank, and image must all agree.
+
+> Id 35 ("Platinum Echo") was removed — its artwork was mis-colored red, not
+> platinum/silver. There is no rank-8 tier in the artwork anymore; "Platinum"
+> was replaced by inserting "Rose" at rank 7 and shifting "Gold" up to rank 8.
 
 ## The reward pools
 
@@ -52,23 +56,15 @@ rank, and image must all agree.
 | 4 | 4 | Orange | 42 | Orange Vortex |
 | 5 | 5 | Red | 13 | Red Phantom |
 | 6 | 6 | Pink | 47 | Pink Nova |
-| 7 | 7 | Gold | 40 | Gold Warden |
-| 8 | 8 | Platinum | 35 | Platinum Echo |
+| 7 | 7 | Rose | 21 | Rose Warden |
+| 8 | 8 | Gold | 40 | Gold Warden |
 | 9 | 9 | White | 20 | White Mirage |
 | 10 | 10 | Rainbow | 26 | Rainbow Pulse |
 
-**Early-signup** — `EARLY_SIGNUP_AVATAR_IDS` (must not overlap with the spin pool):
-
-| ID | Rank | Tier | Name | Notes |
-|---:|---:|---|---|---|
-| 29 | 4 | Orange | Bronze Herald | hidden from the landing "Unlockable Avatars" grid; still claimable |
-| 21 | 6 | Pink | Rose Warden | hidden from the landing "Unlockable Avatars" grid; still claimable |
-| 25 | 2 | Blue | Teal Siren | |
-| 33 | 2 | Blue | Azure Shade | duplicate artwork of #29 — displays as "Bronze Herald"; hidden from grid |
-
-> The landing grid hides Bronze Herald and Rose Warden via `hiddenUnlockableNames`
-> in `AvatarShowcaseSection.tsx`. They remain in `EARLY_SIGNUP_AVATAR_IDS` and
-> claimable through the early-signup flow.
+**Early-signup** — `EARLY_SIGNUP_AVATAR_IDS` is now empty. The feature was
+retired: id 21 ("Rose Warden") was promoted into the spin pool (slot 7 above),
+and ids 29, 25, 33 were dropped from every pool. `EarlySignupClaim.tsx` and the
+`claim_early_signup_avatar` RPC still exist but are unused/inert.
 
 ## Full catalog (all 54 avatars)
 
@@ -78,7 +74,7 @@ rank, and image must all agree.
 | 3 | Verdant Shade | 1 | Grey | — | `/avatars/3.png` |  |
 | 4 | Rose Signal | 6 | Pink | — | `/avatars/4.png` |  |
 | 5 | Violet Fang | 3 | Purple | — | `/avatars/5.png` |  |
-| 7 | Solar Flame | 7 | Gold | — | `/avatars/7.png` |  |
+| 7 | Solar Flame | 8 | Gold | — | `/avatars/7.png` |  |
 | 11 | Iron Halo | 1 | Grey | — | `/avatars/11.png` |  |
 | 12 | Frost Oracle | 2 | Blue | — | `/avatars/12.png` |  |
 | 13 | Red Phantom | 5 | Red | Spin · slot 5 | `/avatars/13.png` |  |
@@ -89,26 +85,25 @@ rank, and image must all agree.
 | 18 | Neon Lynx | 2 | Blue | — | `/avatars/18.png` |  |
 | 19 | Static Crown | 10 | Rainbow | — | `/avatars/19.png` |  |
 | 20 | White Mirage | 9 | White | Spin · slot 9 | `/avatars/20.png` |  |
-| 21 | Rose Warden | 6 | Pink | Early-signup | `/avatars/21.png` |  |
+| 21 | Rose Warden | 7 | Rose | Spin · slot 7 | `/avatars/21.png` |  |
 | 22 | Night Prism | 10 | Rainbow | — | `/avatars/22.png` |  |
 | 23 | Cyan Specter | 2 | Blue | — | `/avatars/23.png` |  |
 | 24 | Violet Mask | 3 | Purple | — | `/avatars/24.png` |  |
-| 25 | Teal Siren | 2 | Blue | Early-signup | `/avatars/25.png` |  |
+| 25 | Teal Siren | 2 | Blue | — | `/avatars/25.png` |  |
 | 26 | Rainbow Pulse | 10 | Rainbow | Spin · slot 10 | `/avatars/26.png` |  |
 | 27 | Black Comet | 1 | Grey | — | `/avatars/27.png` |  |
 | 28 | Copper Echo | 4 | Orange | — | `/avatars/28.png` |  |
-| 29 | Bronze Herald | 4 | Orange | Early-signup | `/avatars/29.png` |  |
+| 29 | Bronze Herald | 4 | Orange | — | `/avatars/29.png` |  |
 | 30 | Quartz Reaper | 9 | White | — | `/avatars/30.png` |  |
 | 31 | Glass Monarch | 9 | White | — | `/avatars/31.png` |  |
 | 32 | Ivory Glitch | 9 | White | — | `/avatars/32.png` |  |
-| 33 | Azure Shade | 2 | Blue | Early-signup | `/avatars/33.png` | duplicate of #29 (shown as "Bronze Herald") |
+| 33 | Azure Shade | 2 | Blue | — | `/avatars/33.png` | duplicate of #29 (shown as "Bronze Herald") |
 | 34 | Scarlet Node | 5 | Red | — | `/avatars/34.png` |  |
-| 35 | Platinum Echo | 8 | Platinum | Spin · slot 8 | `/avatars/35.png` |  |
 | 36 | Green Relic | 2 | Blue | — | `/avatars/36.png` |  |
 | 37 | Purple Hex | 3 | Purple | — | `/avatars/37.png` |  |
 | 38 | Ember Core | 4 | Orange | — | `/avatars/38.png` |  |
 | 39 | Ruby Signal | 5 | Red | — | `/avatars/39.png` |  |
-| 40 | Gold Warden | 7 | Gold | Spin · slot 7 | `/avatars/40.png` |  |
+| 40 | Gold Warden | 8 | Gold | Spin · slot 8 | `/avatars/40.png` | artwork pending replacement with new skull design |
 | 41 | Purple Oracle | 3 | Purple | Spin · slot 3 | `/avatars/41.png` |  |
 | 42 | Orange Vortex | 4 | Orange | Spin · slot 4 | `/avatars/42.png` |  |
 | 43 | Grey Sentinel | 1 | Grey | Spin · slot 1 | `/avatars/43.png` |  |
@@ -129,7 +124,7 @@ rank, and image must all agree.
 | 58 | Lavender Prism | 3 | Purple | — | `/avatars/58.png` |  |
 | 59 | Rose Comet | 6 | Pink | — | `/avatars/59.png` |  |
 
-> Ids 1, 6, 8, 9, 10 are intentionally absent (removed / never shipped). The
+> Ids 1, 6, 8, 9, 10, 35 are intentionally absent (removed / never shipped). The
 > "Pool" column is "—" for avatars not currently used in any reward pool; they
 > still exist as artwork and can be promoted into a pool later.
 
@@ -142,7 +137,7 @@ rank, and image must all agree.
    The dominant color must match the rank tier you intend (see ladder above).
 3. **Name it** in `src/config/avatarNames.ts` → add `  <id>: "Color Noun",`.
    The first word must be the tier color (Grey/Blue/Purple/Orange/Red/Pink/
-   Gold/Platinum/White/Rainbow or a synonym the rank resolver understands).
+   Rose/Gold/White/Rainbow or a synonym the rank resolver understands).
 4. **Rank it** in `src/lib/avatarRank.ts` → add `  <id>: <rank>,` to
    `NUMBERED_AVATAR_RANKS`. Rank must match the name color and the artwork.
 5. **(Optional) Add it to a pool** in `src/config/avatarConfig.ts`:

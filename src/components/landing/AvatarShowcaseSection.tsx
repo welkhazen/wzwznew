@@ -67,8 +67,8 @@ const UNLOCKABLE_FEATURE_ORDER = [
   "Orange Vortex",
   "Rainbow Pulse",
   "Pink Nova",
+  "Rose Warden",
   "Gold Warden",
-  "Platinum Echo",
 ] as const;
 
 type RevealAvatarImageFit = { scale: number; objectPosition?: string };
@@ -124,9 +124,9 @@ export function AvatarShowcaseSection({ onSignupClick = () => undefined }: Avata
   const chooserAvatars = CHOOSER_AVATARS;
   const chooserTotal = chooserAvatars.length;
   const featuredUnlockableNames = new Set<string>(UNLOCKABLE_FEATURE_ORDER);
-  // Not showcased in the landing grid (Bronze Herald also has duplicate art).
-  // They remain claimable via the early-signup flow — only hidden here.
-  const hiddenUnlockableNames = new Set(["Bronze Herald", "Rose Warden"]);
+  // Not showcased in the landing grid (Bronze Herald has duplicate art and is
+  // no longer in any reward pool, but stays out of the grid for consistency).
+  const hiddenUnlockableNames = new Set(["Bronze Herald"]);
   const unlockableAvatars = [
     ...UNLOCKABLE_FEATURE_ORDER
       .map((name) => REVEAL_AVATARS.find((avatar) => avatar.name === name))

@@ -34,7 +34,6 @@ export const NUMBERED_AVATAR_NAMES: Record<number, string> = {
   32: "Ivory Glitch",
   33: "Azure Shade",
   34: "Scarlet Node",
-  35: "Platinum Echo",
   36: "Green Relic",
   37: "Purple Hex",
   38: "Ember Core",
