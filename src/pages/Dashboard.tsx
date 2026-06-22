@@ -6,7 +6,7 @@ import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
 import { fetchCommunities } from "@/backend/supabase/controllers/communityController";
 import { readCachedCommunities, writeCachedCommunities } from "@/lib/communityCache";
 import { getUserFavoriteCommunities, getUserPinnedMessages, removeUserPinnedMessage, type PinnedMessageRecord } from "@/backend/supabase/controllers/userExtrasController";
-import { Home as HomeIcon, MessageCircle, Target, User as UserIcon, LogOut, Trophy, Sparkles, Moon, CloudMoon, Sun, Store } from "lucide-react";
+import { Home as HomeIcon, MessageCircle, Target, Trophy, Moon, CloudMoon, Sun, Store } from "lucide-react";
 import LNTLogo from "@/assets/LNT.webp";
 import SYTLogo from "@/assets/logospeak.webp";
 import IIJMLogo from "@/assets/itisjustme.webp";
@@ -52,9 +52,23 @@ const DashboardInventory = lazy(() =>
   import("@/components/dashboard/DashboardInventory").then((module) => ({ default: module.DashboardInventory }))
 );
 
-// Eagerly preload the most-visited tab chunks so they are ready before the user taps.
+// Eagerly preload the two most-visited tab chunks so they are ready before the
+// user taps. The remaining addon chunks are warmed during browser idle (see the
+// effect in Dashboard) so first-time switches stay instant without competing
+// with the initial paint.
 void import("@/components/dashboard/DashboardCommunities");
 void import("@/components/dashboard/DashboardPolls");
+
+// Remaining lazy addon chunks. Add new lazy addons here so they get the same
+// idle-preload treatment and never flash the Suspense fallback on first switch.
+const DEFERRED_ADDON_PRELOADERS: Array<() => Promise<unknown>> = [
+  () => import("@/components/dashboard/DashboardChallenges"),
+  () => import("@/components/dashboard/DashboardDailySpin"),
+  () => import("@/components/dashboard/DashboardInventory"),
+  () => import("@/components/dashboard/DashboardProfile"),
+  () => import("@/components/dashboard/DashboardWallet"),
+  () => import("@/components/dashboard/DashboardSettings"),
+];
 
 const COMMUNITY_LOGOS: Record<string, string> = {
   lnt: LNTLogo,
@@ -172,6 +186,25 @@ export default function Dashboard({
       cancelled = true;
     };
     // Run once on mount.
+  }, []);
+
+  // Warm the remaining addon chunks during browser idle so a first-time tab
+  // switch never flashes the Suspense fallback. import() is cached, so each
+  // preloader is a no-op once its chunk has already loaded.
+  useEffect(() => {
+    const warm = () => {
+      for (const preload of DEFERRED_ADDON_PRELOADERS) void preload();
+    };
+    const idle = window as typeof window & {
+      requestIdleCallback?: (cb: () => void) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+    if (typeof idle.requestIdleCallback === "function") {
+      const id = idle.requestIdleCallback(warm);
+      return () => idle.cancelIdleCallback?.(id);
+    }
+    const timer = window.setTimeout(warm, 1500);
+    return () => window.clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -632,23 +665,6 @@ export default function Dashboard({
         onOpenCommunity={handleOpenCommunity}
       />
 
-      {/* Mobile bottom nav replaced with FloatingDock */}
-      {/*
-      <nav
-        className="fixed bottom-0 left-0 right-0 z-40 lg:hidden"
-        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
-      >
-        <div className="border-t border-raw-border/25 bg-raw-black/95 backdrop-blur-2xl px-2 pt-1 pb-2 flex items-center justify-around">
-          <MobileNavBtn label="Home"       icon={<HomeIcon className="h-5 w-5" />}       active={isHome}                                    onClick={handleHomeClick} />
-          <MobileNavBtn label="Polls"      icon={<Target className="h-5 w-5" />}          active={!isHome && activeTab === "polls"}           onClick={() => handleTabChange("polls")} />
-          <MobileNavBtn label="Challenges" icon={<Trophy className="h-5 w-5" />}          active={!isHome && activeTab === "challenges"}      onClick={() => handleTabChange("challenges")} />
-          <MobileNavBtn label="Spin"       icon={<Sparkles className="h-5 w-5" />}        active={!isHome && activeTab === "daily-spin"}      onClick={() => handleTabChange("daily-spin")} />
-          <MobileNavBtn label="Groups"     icon={<MessageCircle className="h-5 w-5" />}   active={!isHome && activeTab === "communities"}     onClick={() => handleTabChange("communities")} />
-          <MobileNavBtn label="Me"         icon={<UserIcon className="h-5 w-5" />}        active={!isHome && activeTab === "profile"}         onClick={() => handleTabChange("profile")} />
-        </div>
-      </nav>
-      */}
-
       {/* FloatingDock for mobile navigation */}
       <FloatingDock
         items={[
@@ -733,48 +749,3 @@ export default function Dashboard({
   );
 }
 
-function MobileNavLink({
-  label,
-  href,
-  icon,
-}: {
-  label: string;
-  href: string;
-  icon?: React.ReactNode;
-}) {
-  return (
-    <a href={href} className="flex min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-0.5 px-2 py-1 rounded-lg text-raw-gold/80 transition-all hover:text-raw-gold">
-      {icon}
-      <span className="text-[10px] font-medium leading-none">{label}</span>
-    </a>
-  );
-}
-
-function MobileNavBtn({
-  label,
-  active,
-  onClick,
-  icon,
-}: {
-  label: string;
-  active: boolean;
-  onClick: () => void;
-  icon?: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex flex-col items-center justify-center gap-1 px-3 py-1.5 min-w-[48px] transition-all"
-      aria-current={active ? "page" : undefined}
-    >
-      <div className={`transition-all duration-200 ${active ? "text-raw-gold scale-110" : "text-raw-silver/40"}`}>
-        {icon}
-      </div>
-      <span className={`text-[9px] font-semibold tracking-wide leading-none transition-colors ${active ? "text-raw-gold" : "text-raw-silver/35"}`}>
-        {label}
-      </span>
-      {active && <div className="h-0.5 w-4 rounded-full bg-raw-gold mt-0.5" />}
-    </button>
-  );
-}
