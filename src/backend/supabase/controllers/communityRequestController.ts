@@ -53,20 +53,18 @@ export async function submitCommunityRequest(params: {
   const whyNow = assertUserTextAllowed(params.whyNow);
   const samplePrompt = params.samplePrompt.trim() ? assertUserTextAllowed(params.samplePrompt) : "";
 
-  const { data, error } = await supabase
-    .from('community_requests')
-    .insert({
-      requester_id: params.requesterId,
-      requester_name: params.requesterName,
-      community_name: communityName,
-      genre,
-      focus_area: focusArea,
-      audience,
-      why_now: whyNow,
-      sample_prompt: samplePrompt,
-    })
-    .select()
-    .single();
+  // Insert via SECURITY DEFINER RPC. A direct table insert is rejected because
+  // the browser client only sends the authenticated bearer token on .rpc()
+  // calls, and community_requests INSERT is restricted to the requester's own
+  // auth.uid(). The RPC derives requester_id / requester_name server-side.
+  const { data, error } = await supabase.rpc('submit_community_request', {
+    p_community_name: communityName,
+    p_genre: genre,
+    p_focus_area: focusArea,
+    p_audience: audience,
+    p_why_now: whyNow,
+    p_sample_prompt: samplePrompt,
+  });
 
   if (error) throw error;
   return mapRequest(data as DbRequest);
