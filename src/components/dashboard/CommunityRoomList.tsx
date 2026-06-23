@@ -65,18 +65,22 @@ export const CommunityRoomList = memo(function CommunityRoomList({
         const descLong = community.description.length > 120;
 
         return (
-          <div key={community.id} className="flex flex-col overflow-hidden rounded-2xl border border-raw-border/30 bg-raw-surface/35 shadow-[0_8px_24px_rgba(0,0,0,0.22)]">
-            <div className="relative h-28 shrink-0 overflow-hidden border-b border-raw-border/25 sm:h-44">
+          <div key={community.id} className="group flex flex-col overflow-hidden rounded-2xl border border-raw-border/30 bg-raw-surface/35 shadow-[0_8px_24px_rgba(0,0,0,0.22)] transition-all duration-300 hover:border-raw-gold/35 hover:shadow-[0_16px_40px_rgba(0,0,0,0.45),0_0_0_1px_rgba(241,196,45,0.12)]">
+            <div className="relative h-36 shrink-0 overflow-hidden border-b border-raw-border/25 sm:h-48">
               {coverVideo ? (
-                <video src={coverVideo} className="h-full w-full object-cover" autoPlay loop muted playsInline preload="auto" />
+                <video src={coverVideo} className="h-full w-full object-cover transition-transform duration-700 ease-out will-change-transform group-hover:scale-[1.04]" autoPlay loop muted playsInline preload="auto" />
               ) : coverImage ? (
-                <img src={coverImage} alt={`${community.title} cover`} className="h-full w-full object-cover" loading="lazy" />
+                <img src={coverImage} alt={`${community.title} cover`} className="h-full w-full object-cover transition-transform duration-700 ease-out will-change-transform group-hover:scale-[1.04]" loading="lazy" />
               ) : (
                 <div className="h-full w-full bg-gradient-to-br from-raw-gold/12 via-raw-surface/30 to-raw-black/70" />
               )}
-              {!coverVideo && <div className="absolute inset-0 bg-gradient-to-t from-raw-black/85 via-raw-black/30 to-transparent" />}
-              <div className="absolute bottom-2 right-2 rounded-full border border-raw-border/40 bg-raw-black/60 px-2 py-0.5 text-[9px] text-raw-silver/70 backdrop-blur-sm">
-                {joined ? "Joined" : community.locked ? "Locked" : "Not joined"}
+              <div className="absolute inset-0 bg-gradient-to-t from-raw-black/85 via-raw-black/25 to-transparent" />
+              <div className={`absolute bottom-2 right-2 rounded-full border px-2 py-0.5 text-[9px] backdrop-blur-sm transition-colors duration-300 ${
+                joined
+                  ? "border-emerald-400/40 bg-emerald-950/70 text-emerald-300/90"
+                  : "border-raw-border/40 bg-raw-black/60 text-raw-silver/70"
+              }`}>
+                {joined ? "● Joined" : community.locked ? "Locked" : "Not joined"}
               </div>
             </div>
 
