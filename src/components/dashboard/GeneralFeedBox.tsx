@@ -89,7 +89,7 @@ export function GeneralFeedBox({
           <div className="space-y-0.5">
             <div className="flex items-center gap-2">
               <MessageSquare className="size-4 text-raw-gold" />
-              <h2 className="text-xl font-bold tracking-tight text-raw-text">General Feed</h2>
+              <h2 className={`text-xl font-bold tracking-tight ${isLight ? "text-slate-950" : "text-raw-text"}`}>General Feed</h2>
             </div>
             <p className="text-[13px] text-raw-silver/50">A shared space for quick thoughts from everyone.</p>
           </div>
@@ -104,7 +104,7 @@ export function GeneralFeedBox({
           <div className="mb-4 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <MessageSquare className="size-4 text-raw-gold" />
-              <h2 className="text-sm font-bold tracking-tight text-raw-text">General Feed</h2>
+              <h2 className={`text-sm font-bold tracking-tight ${isLight ? "text-slate-950" : "text-raw-text"}`}>General Feed</h2>
             </div>
             <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-raw-silver/45">
               {feedTextLength}/500
