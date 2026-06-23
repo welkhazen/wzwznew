@@ -5,10 +5,10 @@
 
 -- Communities
 INSERT INTO public.communities (id, abbr, title, description, topic, status, locked, created_at) VALUES
-  ('lnt',  'LNT', 'Late Night Talks',       'Honest conversation when the world gets quiet and people finally say what they actually mean.',                          'What thought has been following you all week?',             'Active',       false, '2026-04-01T00:00:00Z'),
-  ('syt',  'SYT', 'Speak Your Truth',        'A space to say what you''ve been holding back. No filters, no judgment — just real voices sharing real experiences.',  'What''s something you''ve been afraid to say out loud?',    'Active',       false, '2026-04-01T00:00:00Z'),
-  ('iijm', 'IIM', 'Is It Just Me?',          'Relatable moments, shared observations, and the quiet comfort of realizing you''re not the only one.',                 'What''s something you do or feel that you thought was only you?', 'Active', false, '2026-04-01T00:00:00Z'),
-  ('li',   'LI',  'Lebanese Initiatives',    'A space for Lebanese change-makers, community builders, and people driving impact inside Lebanon and across the diaspora.', 'What initiative or project are you working on right now?', 'Early Access', true,  '2026-04-01T00:00:00Z')
+  ('lnt',  'LNT', 'Late Night Talks',       'Real talk after midnight.',                          'What thought has been following you all week?',             'Active',       false, '2026-04-01T00:00:00Z'),
+  ('syt',  'SYT', 'Speak Your Truth',        'Say what you''ve been holding back.',  'What''s something you''ve been afraid to say out loud?',    'Active',       false, '2026-04-01T00:00:00Z'),
+  ('iijm', 'IIM', 'Is It Just Me?',          'It''s never just you.',                 'What''s something you do or feel that you thought was only you?', 'Active', false, '2026-04-01T00:00:00Z'),
+  ('li',   'LI',  'Lebanese Initiatives',    'Lebanese builders making real moves.', 'What initiative or project are you working on right now?', 'Early Access', true,  '2026-04-01T00:00:00Z')
 ON CONFLICT (id) DO NOTHING;
 
 -- =============================================================
@@ -393,18 +393,18 @@ ON CONFLICT (id) DO UPDATE SET
 
 -- Additional category communities
 INSERT INTO public.communities (id, abbr, title, description, topic, status, locked, logo_url, created_at) VALUES
-  ('the-ick', 'ICK', 'The Ick', 'Funny but honest deal-breakers, tiny turnoffs, and the moments that suddenly change the vibe.', 'What gave you the ick faster than you expected?', 'Active', false, '/assets/community-covers/the-ick.svg', '2026-06-12T00:00:00Z'),
-  ('am-i-evil', 'AIE', 'Am I Evil?', 'Moral gray areas, guilty thoughts, and the anonymous jury for whether you crossed a line.', 'What choice made you wonder if you were the villain?', 'Active', false, '/assets/community-covers/am-i-evil.svg', '2026-06-12T00:00:00Z'),
-  ('weirdest-thoughts', 'MWT', 'My Weirdest Thoughts', 'Odd shower thoughts, intrusive questions, and strange ideas that are safer to say anonymously.', 'What weird thought keeps popping into your head?', 'Active', false, '/assets/community-covers/weirdest-thoughts.svg', '2026-06-12T00:00:00Z'),
-  ('is-this-normal', 'ITN', 'Is This Normal?', 'A grounded gut-check room for habits, feelings, and situations you are not sure everyone else gets.', 'What are you wondering is normal right now?', 'Active', false, '/assets/community-covers/is-this-normal.svg', '2026-06-12T00:00:00Z'),
-  ('mancave', 'MAN', 'The Mancave', 'Direct conversations about pressure, confidence, friendship, dating, work, and being a guy today.', 'What do men need to talk about more honestly?', 'Active', false, '/assets/community-covers/mancave.svg', '2026-06-12T00:00:00Z'),
-  ('gamer-gang', 'GG', 'Gamer Gang', 'Games, squads, salty losses, clutch wins, and the culture around what everyone is playing.', 'What game has your attention right now?', 'Active', false, '/assets/community-covers/gamer-gang.svg', '2026-06-12T00:00:00Z'),
-  ('bizniz-minded', 'BIZ', 'Bizniz Minded', 'Ideas, money moves, side hustles, founder lessons, and practical ambition without fake guru energy.', 'What business idea or money lesson are you thinking about?', 'Active', false, '/assets/community-covers/bizniz-minded.svg', '2026-06-12T00:00:00Z'),
-  ('match-maker', 'MM', 'Match Maker', 'Dating reads, chemistry checks, green flags, red flags, and honest takes on who fits who.', 'What match or dating situation needs a second opinion?', 'Active', false, '/assets/community-covers/match-maker.svg', '2026-06-12T00:00:00Z'),
-  ('fucking-bored', 'FB', 'Fucking Bored', 'Low-stakes chaos, random prompts, mini-rants, and things to say when your brain needs noise.', 'What should bored people argue about for five minutes?', 'Active', false, '/assets/community-covers/fucking-bored.svg', '2026-06-12T00:00:00Z'),
-  ('advice-now', 'ADV', 'Advice Now!', 'Fast, honest advice for the decision you need help with before you overthink it all night.', 'What do you need advice on right now?', 'Active', false, '/assets/community-covers/advice-now.svg', '2026-06-12T00:00:00Z'),
-  ('feeling-like-shit', 'FLS', 'I''m feeling like shit honestly...', 'A real but careful venting room for heavy days, bad moods, and not pretending everything is fine.', 'What is weighing on you today?', 'Active', false, '/assets/community-covers/feeling-like-shit.svg', '2026-06-12T00:00:00Z'),
-  ('best-story', 'BST', 'Best story I’ve been told', 'Unforgettable stories, strange lore, family legends, wild confessions, and tales worth retelling.', 'What is the best story someone ever told you?', 'Active', false, '/assets/community-covers/best-story.svg', '2026-06-12T00:00:00Z')
+  ('the-ick', 'ICK', 'The Ick', 'Tiny turnoffs, instant ick.', 'What gave you the ick faster than you expected?', 'Active', false, '/assets/community-covers/the-ick.svg', '2026-06-12T00:00:00Z'),
+  ('am-i-evil', 'AIE', 'Am I Evil?', 'Confess. The jury decides.', 'What choice made you wonder if you were the villain?', 'Active', false, '/assets/community-covers/am-i-evil.svg', '2026-06-12T00:00:00Z'),
+  ('weirdest-thoughts', 'MWT', 'My Weirdest Thoughts', 'Shower thoughts, said anonymously.', 'What weird thought keeps popping into your head?', 'Active', false, '/assets/community-covers/weirdest-thoughts.svg', '2026-06-12T00:00:00Z'),
+  ('is-this-normal', 'ITN', 'Is This Normal?', 'A quick gut-check from strangers.', 'What are you wondering is normal right now?', 'Active', false, '/assets/community-covers/is-this-normal.svg', '2026-06-12T00:00:00Z'),
+  ('mancave', 'MAN', 'The Mancave', 'Guy stuff, said straight.', 'What do men need to talk about more honestly?', 'Active', false, '/assets/community-covers/mancave.svg', '2026-06-12T00:00:00Z'),
+  ('gamer-gang', 'GG', 'Gamer Gang', 'Squads, clutch wins, salty losses.', 'What game has your attention right now?', 'Active', false, '/assets/community-covers/gamer-gang.svg', '2026-06-12T00:00:00Z'),
+  ('bizniz-minded', 'BIZ', 'Bizniz Minded', 'Money moves, no guru energy.', 'What business idea or money lesson are you thinking about?', 'Active', false, '/assets/community-covers/bizniz-minded.svg', '2026-06-12T00:00:00Z'),
+  ('match-maker', 'MM', 'Match Maker', 'Green flags, red flags, honest reads.', 'What match or dating situation needs a second opinion?', 'Active', false, '/assets/community-covers/match-maker.svg', '2026-06-12T00:00:00Z'),
+  ('fucking-bored', 'FB', 'Fucking Bored', 'Chaos for a bored brain.', 'What should bored people argue about for five minutes?', 'Active', false, '/assets/community-covers/fucking-bored.svg', '2026-06-12T00:00:00Z'),
+  ('advice-now', 'ADV', 'Advice Now!', 'Fast advice before you overthink.', 'What do you need advice on right now?', 'Active', false, '/assets/community-covers/advice-now.svg', '2026-06-12T00:00:00Z'),
+  ('feeling-like-shit', 'FLS', 'I''m feeling like shit honestly...', 'A soft place for heavy days.', 'What is weighing on you today?', 'Active', false, '/assets/community-covers/feeling-like-shit.svg', '2026-06-12T00:00:00Z'),
+  ('best-story', 'BST', 'Best story I’ve been told', 'Wild stories worth retelling.', 'What is the best story someone ever told you?', 'Active', false, '/assets/community-covers/best-story.svg', '2026-06-12T00:00:00Z')
 ON CONFLICT (id) DO UPDATE SET
   abbr = EXCLUDED.abbr,
   title = EXCLUDED.title,

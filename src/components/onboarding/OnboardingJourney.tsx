@@ -232,7 +232,7 @@ const ONBOARDING_COMMUNITIES = [
   {
     id: "lnt",
     title: "Late Night Talk",
-    description: "Honest conversation when the world gets quiet and people finally say what they actually mean.",
+    description: "Real talk after midnight.",
     members: "3",
     activeNow: "1 active",
     video: lntVideo,
@@ -241,7 +241,7 @@ const ONBOARDING_COMMUNITIES = [
   {
     id: "syt",
     title: "Speak Your Truth",
-    description: "A space to say what you've been holding back. No filters, no judgment — just real voices sharing real experiences.",
+    description: "Say what you've been holding back.",
     members: "3",
     activeNow: "1 active",
     video: speakYourTruthVideo,
@@ -250,7 +250,7 @@ const ONBOARDING_COMMUNITIES = [
   {
     id: "iijm",
     title: "Is It Just Me?",
-    description: "Relatable moments, shared observations, and the quiet comfort of realizing you're not the only one.",
+    description: "It's never just you.",
     members: "3",
     activeNow: "1 active",
     video: "/assets/IIJM.webm",
@@ -259,7 +259,7 @@ const ONBOARDING_COMMUNITIES = [
   {
     id: "li",
     title: "Lebanon Initiatives",
-    description: "A space for Lebanese change-makers, community builders, and people driving impact inside Lebanon and across the diaspora.",
+    description: "Lebanese builders making real moves.",
     members: "0",
     activeNow: "Early Access",
     locked: true,
