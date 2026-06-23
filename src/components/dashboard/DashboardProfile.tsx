@@ -159,16 +159,6 @@ export function DashboardProfile({
     setOpenInviteIndex(null);
   }, [userId]);
 
-  useEffect(() => {
-    const updateVoucherUses = () => setLocalVoucherUses(countLocalVoucherUses(userId, inviteCodes));
-    window.addEventListener("storage", updateVoucherUses);
-    window.addEventListener("raw:voucher-used", updateVoucherUses);
-    updateVoucherUses();
-    return () => {
-      window.removeEventListener("storage", updateVoucherUses);
-      window.removeEventListener("raw:voucher-used", updateVoucherUses);
-    };
-  }, [inviteCodes, userId]);
 
   useEffect(() => {
     listUserAliases(userId)
