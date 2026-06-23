@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useRef, useState } from "react";
+import { Suspense, lazy, useCallback, useEffect, useRef, useState } from "react";
 import tokenImg from "@/assets/tokens.webp";
 import { useRawStore } from "@/store/useRawStore";
 import { useTheme } from "@/providers/useTheme";
@@ -14,6 +14,7 @@ export function TokenBalanceButton() {
   const { mode } = useTheme();
   const [open, setOpen] = useState(false);
   const [spinning, setSpinning] = useState(false);
+  const [rippleKey, setRippleKey] = useState(0);
   const [selectedPackId, setSelectedPackId] = useState<string | null>(null);
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"card" | "apple-pay" | "google-pay" | null>(null);
@@ -22,15 +23,16 @@ export function TokenBalanceButton() {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const isLight = mode === "light";
 
-  function handleClick() {
+  const handleClick = useCallback(() => {
     if (spinning) return;
     setSpinning(true);
+    setRippleKey((k) => k + 1);
     if (spinTimerRef.current) clearTimeout(spinTimerRef.current);
     spinTimerRef.current = setTimeout(() => {
       setSpinning(false);
       setOpen((o) => !o);
-    }, 420);
-  }
+    }, 560);
+  }, [spinning]);
 
   function handleBuy(packId: string) {
     setSelectedPackId(packId);
@@ -66,57 +68,96 @@ export function TokenBalanceButton() {
     <div ref={wrapperRef} className="relative">
       <style>{`
         @keyframes token-spin {
-          0%   { transform: rotateY(0deg) scale(1); }
-          40%  { transform: rotateY(180deg) scale(1.15); }
-          80%  { transform: rotateY(320deg) scale(1.05); }
-          100% { transform: rotateY(360deg) scale(1); }
+          0%   { transform: translateY(0)   rotateY(0deg)   scale(1);    filter: drop-shadow(0 0 5px rgba(250,204,21,0.5)); }
+          25%  { transform: translateY(-6px) rotateY(180deg) scale(1.3);  filter: drop-shadow(0 0 18px rgba(250,204,21,1)); }
+          55%  { transform: translateY(-3px) rotateY(450deg) scale(1.12); filter: drop-shadow(0 0 10px rgba(250,204,21,0.7)); }
+          80%  { transform: translateY(2px)  rotateY(660deg) scale(0.94); filter: drop-shadow(0 0 6px rgba(250,204,21,0.5)); }
+          100% { transform: translateY(0)   rotateY(720deg) scale(1);    filter: drop-shadow(0 0 5px rgba(250,204,21,0.5)); }
         }
         .token-spin-anim {
-          animation: token-spin 0.42s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+          animation: token-spin 0.56s cubic-bezier(0.22, 1, 0.36, 1) forwards;
           transform-style: preserve-3d;
         }
+        @keyframes token-float {
+          0%, 100% { transform: translateY(0); }
+          50%      { transform: translateY(-3px); }
+        }
+        .token-float {
+          animation: token-float 2.4s ease-in-out infinite;
+        }
+        @keyframes ripple-ring {
+          0%   { transform: scale(0.6); opacity: 0.8; }
+          100% { transform: scale(2.4); opacity: 0; }
+        }
+        .ripple-ring {
+          animation: ripple-ring 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
         @keyframes balance-text-in {
-          from { opacity: 0; max-width: 0; }
-          to   { opacity: 1; max-width: 80px; }
+          from { opacity: 0; max-width: 0; transform: translateX(-6px); }
+          to   { opacity: 1; max-width: 80px; transform: translateX(0); }
         }
         .balance-text-in {
-          animation: balance-text-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+          animation: balance-text-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
           overflow: hidden;
           white-space: nowrap;
+        }
+        @keyframes dropdown-in {
+          from { opacity: 0; transform: translateY(-10px) scale(0.96); }
+          to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .dropdown-in {
+          animation: dropdown-in 0.22s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+          transform-origin: top right;
+        }
+        @keyframes btn-glow {
+          0%   { box-shadow: 0 0 0 0 rgba(250,204,21,0.55); }
+          60%  { box-shadow: 0 0 0 10px rgba(250,204,21,0); }
+          100% { box-shadow: 0 0 0 0 rgba(250,204,21,0); }
+        }
+        .btn-glow {
+          animation: btn-glow 0.55s ease-out forwards;
         }
       `}</style>
 
       <button
+        key={rippleKey > 0 ? `btn-${rippleKey}` : "btn"}
         type="button"
         onClick={handleClick}
         aria-label="Token balance"
         aria-expanded={open}
         aria-haspopup="menu"
-        className="flex items-center gap-1.5 rounded-xl border px-2 py-1 transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/50"
+        className={`relative flex items-center gap-1.5 rounded-xl border px-2 py-1 transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/50${spinning ? " btn-glow" : ""}`}
         style={{
           borderColor: open
             ? isLight ? "rgba(148,163,184,0.55)" : "rgba(250,204,21,0.45)"
-            : "transparent",
+            : spinning ? "rgba(250,204,21,0.3)" : "transparent",
           background: open
             ? isLight ? "rgba(255,255,255,0.92)" : "rgba(0,0,0,0.85)"
             : "transparent",
           boxShadow: open
-            ? isLight ? "0 6px 16px rgba(15,23,42,0.1)" : "0 0 12px rgba(250,204,21,0.12)"
+            ? isLight ? "0 6px 16px rgba(15,23,42,0.1)" : "0 0 16px rgba(250,204,21,0.15)"
             : "none",
           backdropFilter: open ? "blur(8px)" : "none",
         }}
       >
+        {/* ripple ring on click */}
+        {rippleKey > 0 && (
+          <span
+            key={rippleKey}
+            className="ripple-ring pointer-events-none absolute inset-0 rounded-xl border-2 border-raw-gold/70"
+          />
+        )}
         <img
           src={tokenImg}
           alt="Token"
           width={26}
           height={26}
           draggable={false}
-          className={`shrink-0 select-none object-contain${spinning ? " token-spin-anim" : ""}`}
-          style={{ filter: "drop-shadow(0 0 4px rgba(250,204,21,0.45))" }}
+          className={`shrink-0 select-none object-contain${spinning ? " token-spin-anim" : " token-float"}`}
+          style={{ filter: "drop-shadow(0 0 5px rgba(250,204,21,0.5))" }}
         />
         {open && !spinning && (
-          <span className="balance-text-in font-display text-xs tracking-wide text-raw-gold">
+          <span className="balance-text-in font-display text-xs tracking-wide text-raw-gold" style={{ textShadow: "0 0 8px rgba(250,204,21,0.5)" }}>
             {balance}
           </span>
         )}
@@ -125,7 +166,7 @@ export function TokenBalanceButton() {
       {open && !spinning && (
         <div
           role="menu"
-          className={`absolute right-0 top-[calc(100%+8px)] z-50 w-64 rounded-2xl border p-3 shadow-xl ${
+          className={`dropdown-in absolute right-0 top-[calc(100%+8px)] z-50 w-64 rounded-2xl border p-3 shadow-xl ${
             isLight ? "border-slate-200 bg-white text-slate-900" : "border-raw-gold/25 bg-raw-black/95 text-raw-text"
           }`}
           style={{
