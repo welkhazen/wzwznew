@@ -46,14 +46,12 @@ import { CommunityProfileDialog } from "@/components/dashboard/CommunityProfileD
 import { CommunityRequestDialog } from "@/components/dashboard/CommunityRequestDialog";
 import { CommunityReportDialog } from "@/components/dashboard/CommunityReportDialog";
 import { CommunityPollComposerDialog } from "@/components/dashboard/CommunityPollComposerDialog";
-import { GeneralFeedBox } from "@/components/dashboard/GeneralFeedBox";
 import { useCommunityChat } from "@/hooks/useCommunityChat";
 import { usePinnedMessages } from "@/hooks/usePinnedMessages";
 import { useCommunityAccess } from "@/hooks/useCommunityAccess";
 import { useCommunityPolls } from "@/hooks/useCommunityPolls";
 import { MAX_PINNED_MESSAGES } from "@/backend/supabase/controllers/userExtrasController";
 import { MAX_FAVORITE_COMMUNITIES } from "@/backend/supabase/controllers/userExtrasController";
-import { PanelRight } from "lucide-react";
 
 const WAITLIST_UNLOCK_THRESHOLD = 200;
 const MAX_COMMUNITY_MESSAGE_LENGTH = 150;
@@ -135,7 +133,6 @@ export function DashboardCommunities({
   // --- UI state ---
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedDescs, setExpandedDescs] = useState<Set<string>>(new Set());
-  const [feedOpen, setFeedOpen] = useState(false);
   const [leavingCommunityId, setLeavingCommunityId] = useState<string | null>(null);
   const [unlockingId, setUnlockingId] = useState<string | null>(null);
   const [membersDialogOpen, setMembersDialogOpen] = useState(false);
@@ -655,7 +652,7 @@ export function DashboardCommunities({
         )}
 
         {(!selectedCommunity.locked || chat.isJoined) && (
-          <div className={`flex flex-1 min-h-0 flex-col gap-4 overflow-hidden sm:flex-none sm:h-[calc(100dvh_-_260px)] sm:min-h-[360px] ${feedOpen ? "sm:grid sm:grid-cols-[1fr_360px] sm:items-stretch" : ""}`}>
+          <div className="flex flex-1 min-h-0 flex-col gap-4 overflow-hidden sm:flex-none sm:h-[calc(100dvh_-_260px)] sm:min-h-[360px]">
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden sm:h-full sm:rounded-2xl sm:border sm:border-raw-border/20 sm:bg-raw-black/35">
               {polls.visibleCommunityPolls.length > 0 && (
                 <div className="border-b border-raw-border/15 px-4 py-3">
@@ -734,26 +731,6 @@ export function DashboardCommunities({
                     </button>
                   )}
                 </div>
-                <div className={`hidden sm:flex shrink-0 items-center rounded-lg border text-[11px] transition-colors ${feedOpen ? "border-raw-gold/40 bg-raw-gold/10 text-raw-gold" : "border-raw-border/30 text-raw-silver/45"}`}>
-                  <button
-                    onClick={() => setFeedOpen((o) => !o)}
-                    title={feedOpen ? "Close feed" : "Open general feed"}
-                    className="flex items-center gap-1.5 px-2 py-1 hover:opacity-80"
-                  >
-                    <PanelRight className="h-3.5 w-3.5" />
-                    <span>Feed</span>
-                  </button>
-                  {feedOpen && (
-                    <button
-                      onClick={() => setFeedOpen(false)}
-                      title="Dismiss feed"
-                      className="border-l border-raw-gold/30 px-1.5 py-1 hover:bg-raw-gold/10"
-                      aria-label="Dismiss feed"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  )}
-                </div>
               </div>
 
               <CommunityMessageTimeline
@@ -795,18 +772,6 @@ export function DashboardCommunities({
               />
             </div>
 
-            {feedOpen && (
-              <div className="hidden sm:flex sm:flex-col sm:h-full sm:overflow-hidden sm:rounded-2xl sm:border sm:border-raw-border/20 sm:bg-raw-black/35">
-                <GeneralFeedBox
-                  userId={user.id}
-                  isLight={isLight}
-                  compact
-                  showHeader
-                  fillHeight
-                  communityId={selectedCommunity?.id}
-                />
-              </div>
-            )}
           </div>
         )}
       </motion.div>

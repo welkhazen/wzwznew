@@ -11,7 +11,7 @@ import { useTheme } from "@/providers/useTheme";
 import { LevelProgressBanner } from "@/components/dashboard/LevelProgressBanner";
 import { WheelOfFortune } from "@/components/wheel/WheelOfFortune";
 import { buildSpinPrizes } from "@/lib/spin-prizes";
-import { GeneralFeedBox } from "@/components/dashboard/GeneralFeedBox";
+import { TrendingPollsBox } from "@/components/dashboard/TrendingPollsBox";
 
 const DashboardDailySpin = lazy(() =>
   import("@/components/dashboard/DashboardDailySpin").then((m) => ({ default: m.DashboardDailySpin }))
@@ -291,9 +291,9 @@ export function DashboardHome({
         </div>
       </section>
 
-      {/* General Feed */}
+      {/* Trending Polls */}
       <section className={`space-y-5 border-t pt-10 ${isLight ? "border-slate-200" : "border-white/5"}`}>
-        <GeneralFeedBox userId={userId} isLight={isLight} />
+        <TrendingPollsBox isLight={isLight} onOpenPolls={() => onNavigate("polls")} />
       </section>
 
       {/* Recommended Rooms */}

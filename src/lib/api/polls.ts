@@ -154,6 +154,46 @@ export async function submitPollVote(pollId: string, optionId: string): Promise<
   return { optionVotes: parseOptionVotes(payload?.optionVotes) };
 }
 
+export interface TrendingPoll {
+  id: string;
+  question: string;
+  commentCount: number;
+}
+
+type TrendingPollRow = {
+  id?: string;
+  question?: string;
+  status?: string;
+  poll_comments?: Array<{ count?: number }> | { count?: number } | null;
+};
+
+export async function fetchTrendingPolls(limit = 5): Promise<TrendingPoll[]> {
+  const { data, error } = await supabase
+    .from("polls")
+    .select("id, question, status, poll_comments(count)")
+    .eq("status", "active")
+    .limit(50);
+  if (error) throw error;
+
+  const rows = (data ?? []) as TrendingPollRow[];
+  return rows
+    .map((row) => {
+      const commentsField = row.poll_comments;
+      const rawCount = Array.isArray(commentsField)
+        ? commentsField[0]?.count
+        : commentsField?.count;
+      const commentCount = Number(rawCount ?? 0);
+      return {
+        id: String(row.id ?? ""),
+        question: String(row.question ?? ""),
+        commentCount: Number.isFinite(commentCount) ? commentCount : 0,
+      };
+    })
+    .filter((poll) => poll.id && poll.question.trim().length > 0 && poll.commentCount > 0)
+    .sort((a, b) => b.commentCount - a.commentCount)
+    .slice(0, limit);
+}
+
 export async function fetchPollComments(pollId: string): Promise<PollCommentRow[]> {
   const { data, error } = await supabase
     .from("poll_comments")
