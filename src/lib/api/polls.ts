@@ -9,6 +9,7 @@ export interface PollCommentRow {
   created_at: string;
   user_id?: string | null;
   author_name?: string | null;
+  parent_comment_id?: string | null;
 }
 
 export interface PollVoteResult {
@@ -156,7 +157,7 @@ export async function submitPollVote(pollId: string, optionId: string): Promise<
 export async function fetchPollComments(pollId: string): Promise<PollCommentRow[]> {
   const { data, error } = await supabase
     .from("poll_comments")
-    .select("id, poll_id, text, created_at, user_id, author_name")
+    .select("id, poll_id, text, created_at, user_id, author_name, parent_comment_id")
     .eq("poll_id", pollId)
     .order("created_at", { ascending: true })
     .limit(50);
@@ -168,16 +169,20 @@ export async function addPollComment(
   pollId: string,
   text: string,
   author?: { id: string; name: string } | null,
+  parentCommentId?: string | null,
 ): Promise<PollCommentRow> {
   const payload: Record<string, unknown> = { poll_id: pollId, text };
   if (author) {
     payload.user_id = author.id;
     payload.author_name = author.name;
   }
+  if (parentCommentId) {
+    payload.parent_comment_id = parentCommentId;
+  }
   const { data, error } = await supabase
     .from("poll_comments")
     .insert(payload)
-    .select("id, poll_id, text, created_at, user_id, author_name")
+    .select("id, poll_id, text, created_at, user_id, author_name, parent_comment_id")
     .single();
   if (error || !data) throw error ?? new Error("Failed to create comment");
   return data as PollCommentRow;

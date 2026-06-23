@@ -226,6 +226,8 @@ interface PollHistoryComment {
   author: string;
   content: string;
   createdAt: string;
+  parentCommentId?: string | null;
+  parentAuthor?: string | null;
 }
 
 interface PollHistoryItem {
@@ -511,6 +513,10 @@ export function DashboardPolls({
     fetchPollComments(currentPoll.id)
       .then((comments) => {
         if (!isMounted) return;
+        const authorById = new Map<string, string>();
+        for (const c of comments) {
+          authorById.set(c.id, c.author_name?.trim() || "Anonymous");
+        }
         setHistoryComments((previous) => ({
           ...previous,
           [currentPoll.id]: comments.map((comment) => ({
@@ -521,6 +527,8 @@ export function DashboardPolls({
               hour: "2-digit",
               minute: "2-digit",
             }),
+            parentCommentId: comment.parent_comment_id ?? null,
+            parentAuthor: comment.parent_comment_id ? authorById.get(comment.parent_comment_id) ?? null : null,
           })),
         }));
       })
@@ -572,19 +580,22 @@ export function DashboardPolls({
 
     const content = commentDraft.trim();
     if (!content) return;
-    const finalText = replyingTo ? `@${replyingTo.author} ${content}` : content;
-    const moderation = moderateUserText(finalText);
+    const moderation = moderateUserText(content);
     if (!moderation.allowed) {
       setCommentModerationError(getUserTextModerationMessage(moderation));
       return;
     }
     setCommentModerationError(null);
 
+    const parentSnapshot = replyingTo;
+    const optimisticId = `${currentPoll.id}-${Date.now()}`;
     const nextComment: PollHistoryComment = {
-      id: `${currentPoll.id}-${Date.now()}`,
+      id: optimisticId,
       author: username,
       content: moderation.text,
       createdAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      parentCommentId: parentSnapshot?.commentId ?? null,
+      parentAuthor: parentSnapshot?.author ?? null,
     };
 
     setHistoryComments((previous) => ({
@@ -597,7 +608,18 @@ export function DashboardPolls({
     setTimeout(() => commentsEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
 
     try {
-      await addPollComment(currentPoll.id, moderation.text, { id: userId, name: username });
+      const saved = await addPollComment(
+        currentPoll.id,
+        moderation.text,
+        { id: userId, name: username },
+        parentSnapshot?.commentId ?? null,
+      );
+      setHistoryComments((previous) => ({
+        ...previous,
+        [currentPoll.id]: (previous[currentPoll.id] ?? []).map((c) =>
+          c.id === optimisticId ? { ...c, id: saved.id } : c,
+        ),
+      }));
     } catch (error) {
       console.error("Failed to save dashboard comment to Supabase", error);
     }
@@ -910,7 +932,19 @@ export function DashboardPolls({
                 </p>
               ) : (
                 currentComments.map((comment) => (
-                  <article key={comment.id} className="border border-raw-border/35 bg-raw-black/50 px-3.5 py-2.5">
+                  <article
+                    key={comment.id}
+                    className={`border border-raw-border/35 bg-raw-black/50 px-3.5 py-2.5 ${
+                      comment.parentCommentId ? "ml-4 border-l-2 border-l-raw-gold/50" : ""
+                    }`}
+                  >
+                    {comment.parentCommentId && comment.parentAuthor && (
+                      <p className={`mb-1 text-[10px] uppercase tracking-[0.1em] ${
+                        isLightMode ? "text-amber-700/70" : "text-raw-gold/55"
+                      }`}>
+                        ↳ Replying to @{comment.parentAuthor}
+                      </p>
+                    )}
                     <div className="flex items-center justify-between text-[11px] text-raw-silver/50">
                       <span>@{comment.author}</span>
                       <span>{comment.createdAt}</span>
