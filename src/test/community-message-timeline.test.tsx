@@ -104,7 +104,7 @@ describe("CommunityMessageTimeline", () => {
   it("calls the like callback when liking a message", () => {
     const props = renderTimeline();
 
-    fireEvent.click(screen.getAllByRole("button", { name: "Like message" })[0]);
+    fireEvent.click(screen.getAllByRole("button", { name: "Like" })[0]);
 
     expect(props.onLikeMessage).toHaveBeenCalledWith(ownMessage);
   });

@@ -64,6 +64,7 @@ export const CommunityMessageTimeline = memo(function CommunityMessageTimeline({
   canManagePolls,
   userId,
   username,
+  senderAvatarLevels,
   onDeletePoll,
   onVotePoll,
   onRetryMessage,
