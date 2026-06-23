@@ -114,7 +114,7 @@ function buildPrizes(pool: PoolEntry[], isLight: boolean): WheelPrize[] {
   return pool.map((entry, i) => ({
     id: entry.id,
     label: entry.name,
-    shortLabel: entry.name.split(" ")[0].toUpperCase(),
+    shortLabel: `R${rankOf(entry)}`,
     imageSrc: entry.imageSrc || undefined,
     color: isLight
       ? i % 2 === 0 ? "#e8edf5" : "#dde4ef"
