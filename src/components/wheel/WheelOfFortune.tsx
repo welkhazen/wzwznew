@@ -248,6 +248,18 @@ export function WheelOfFortune({ prizes, onSpinEnd, onSpinStart, disabled = fals
                       preserveAspectRatio="xMidYMid slice"
                       clipPath={`url(#${clipId})`}
                     />
+                    <text
+                      x={textPosition.x}
+                      y={textPosition.y + imgSize / 2 + 10}
+                      fill={prize.textColor}
+                      fontSize={9}
+                      fontWeight="700"
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      letterSpacing="0.5"
+                    >
+                      {prize.shortLabel}
+                    </text>
                   </g>
                 ) : (
                   <text
