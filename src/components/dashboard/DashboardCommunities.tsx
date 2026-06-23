@@ -536,7 +536,8 @@ export function DashboardCommunities({
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <div className="rounded-full border border-raw-border/30 px-3 py-1 text-[11px] text-raw-silver/40">
+            <div className="flex items-center gap-1.5 rounded-full border border-raw-border/30 px-3 py-1 text-[11px] text-raw-silver/40">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_4px_#34d399]" />
               {chat.onlineNow} online now
             </div>
             {chat.unreadCount > 0 && (
