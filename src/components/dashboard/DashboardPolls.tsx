@@ -31,9 +31,11 @@ import {
   History,
   Link2,
   Instagram,
+  Reply,
   SendHorizontal,
   Share2,
   Smartphone,
+  X as XIcon,
 } from "lucide-react";
 
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
@@ -346,6 +348,8 @@ export function DashboardPolls({
   const [historyComments, setHistoryComments] = useState<Record<string, PollHistoryComment[]>>({});
   const [commentDraft, setCommentDraft] = useState("");
   const [commentModerationError, setCommentModerationError] = useState<string | null>(null);
+  const [replyingTo, setReplyingTo] = useState<{ commentId: string; author: string } | null>(null);
+  const commentInputRef = useRef<HTMLInputElement>(null);
   const [currentPollIndex, setCurrentPollIndex] = useState(0);
   const [hasSeenVoteHint, setHasSeenVoteHint] = useState(false);
   const [lockedPollId, setLockedPollId] = useState<string | null>(null);
@@ -568,7 +572,8 @@ export function DashboardPolls({
 
     const content = commentDraft.trim();
     if (!content) return;
-    const moderation = moderateUserText(content);
+    const finalText = replyingTo ? `@${replyingTo.author} ${content}` : content;
+    const moderation = moderateUserText(finalText);
     if (!moderation.allowed) {
       setCommentModerationError(getUserTextModerationMessage(moderation));
       return;
@@ -588,6 +593,7 @@ export function DashboardPolls({
     }));
 
     setCommentDraft("");
+    setReplyingTo(null);
     setTimeout(() => commentsEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
 
     try {
@@ -595,6 +601,12 @@ export function DashboardPolls({
     } catch (error) {
       console.error("Failed to save dashboard comment to Supabase", error);
     }
+  };
+
+  const handleStartReply = (commentId: string, author: string) => {
+    setReplyingTo({ commentId, author });
+    setCommentModerationError(null);
+    setTimeout(() => commentInputRef.current?.focus(), 30);
   };
 
   const handleCommentKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -904,12 +916,47 @@ export function DashboardPolls({
                       <span>{comment.createdAt}</span>
                     </div>
                     <p className="mt-1 text-sm text-raw-silver/85">{comment.content}</p>
+                    <button
+                      type="button"
+                      onClick={() => handleStartReply(comment.id, comment.author)}
+                      className={`mt-1.5 inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.12em] transition ${
+                        isLightMode
+                          ? "text-slate-500 hover:text-amber-600"
+                          : "text-raw-silver/45 hover:text-raw-gold"
+                      }`}
+                    >
+                      <Reply className="size-3" />
+                      Reply
+                    </button>
                   </article>
                 ))
               )}
               <div ref={commentsEndRef} />
             </div>
 
+            {replyingTo && (
+              <div
+                className={`mb-2 flex items-center justify-between gap-2 border-l-2 px-3 py-1.5 text-[11px] ${
+                  isLightMode
+                    ? "border-amber-500 bg-amber-50 text-slate-700"
+                    : "border-raw-gold/65 bg-raw-gold/[0.08] text-raw-silver/70"
+                }`}
+              >
+                <span>
+                  Replying to <span className={isLightMode ? "font-semibold text-amber-700" : "font-semibold text-raw-gold"}>@{replyingTo.author}</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setReplyingTo(null)}
+                  className={`inline-flex size-5 items-center justify-center rounded-full transition ${
+                    isLightMode ? "text-slate-500 hover:bg-slate-200" : "text-raw-silver/55 hover:bg-raw-surface/40 hover:text-raw-silver"
+                  }`}
+                  aria-label="Cancel reply"
+                >
+                  <XIcon className="size-3" />
+                </button>
+              </div>
+            )}
             <form
               onSubmit={(event) => {
                 event.preventDefault();
@@ -920,13 +967,14 @@ export function DashboardPolls({
               }`}
             >
               <input
+                ref={commentInputRef}
                 value={commentDraft}
                 onChange={(event) => {
                   setCommentDraft(event.target.value);
                   setCommentModerationError(null);
                 }}
                 onKeyDown={handleCommentKeyDown}
-                placeholder="Add a comment..."
+                placeholder={replyingTo ? `Reply to @${replyingTo.author}...` : "Add a comment..."}
                 className={`flex-1 bg-transparent text-sm focus:outline-none ${
                   isLightMode ? "text-slate-800 placeholder:text-slate-400" : "text-raw-text placeholder:text-raw-silver/35"
                 }`}

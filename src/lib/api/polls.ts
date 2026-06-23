@@ -158,7 +158,7 @@ export async function fetchPollComments(pollId: string): Promise<PollCommentRow[
     .from("poll_comments")
     .select("id, poll_id, text, created_at, user_id, author_name")
     .eq("poll_id", pollId)
-    .order("created_at", { ascending: false })
+    .order("created_at", { ascending: true })
     .limit(50);
   if (error) throw error;
   return (data ?? []) as PollCommentRow[];
