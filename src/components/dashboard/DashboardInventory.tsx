@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Archive, BookOpen, Brain, CircleGauge, Fingerprint, Lock, Map, Sparkles, WandSparkles } from "lucide-react";
 import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { WheelOfFortune, type WheelPrize } from "@/components/wheel/WheelOfFortune";
-import { RARITY_CONFIG, RANK_TIERS } from "@/lib/avatarRarity";
+import { RARITY_CONFIG, RANK_TIERS, RANK_TIER_PRICING } from "@/lib/avatarRarity";
 import type { AvatarRarity } from "@/lib/avatarRarity";
 import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
 import { avatarDisplayName, avatarIdFromImageSrc, canonicalAvatarImageId } from "@/config/avatarNames";
@@ -322,7 +322,9 @@ export function AvatarShop({
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
       {visibleAvatars.map((avatar) => {
         const owned = ownedAvatarLevels.has(avatar.level);
-        const price = Number(avatarPricesByLevel[avatar.level] ?? avatar.price) || AVATAR_SHOP_PRICE;
+        const rank = hasAvatarRank(avatar) ? getAvatarRank(avatar) : 1;
+        const rankPrice = RANK_TIER_PRICING[rank]?.price ?? AVATAR_SHOP_PRICE;
+        const price = Number(avatarPricesByLevel[avatar.level]) || rankPrice;
         const canBuy = tokenBalance >= price;
         const rarity = avatar.rarity ?? "common";
         const rarityConfig = RARITY_CONFIG[rarity];

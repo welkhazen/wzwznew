@@ -19,6 +19,20 @@ export interface RarityConfig {
   defaultWeight: number;
 }
 
+/** Token price and owner cap per rank tier. Higher rank = higher price = fewer owners. */
+export const RANK_TIER_PRICING: Record<number, { price: number; maxOwners: number | null }> = {
+  1:  { price: 25,     maxOwners: null  }, // Grey     — unlimited
+  2:  { price: 75,     maxOwners: 10000 }, // Blue
+  3:  { price: 150,    maxOwners: 5000  }, // Purple
+  4:  { price: 300,    maxOwners: 2000  }, // Orange
+  5:  { price: 600,    maxOwners: 800   }, // Red
+  6:  { price: 1200,   maxOwners: 300   }, // Pink
+  7:  { price: 2500,   maxOwners: 100   }, // Rose
+  8:  { price: 5000,   maxOwners: 40    }, // Gold
+  9:  { price: 10000,  maxOwners: 15    }, // White
+  10: { price: 25000,  maxOwners: 5     }, // Rainbow
+};
+
 export const RARITY_CONFIG: Record<AvatarRarity, RarityConfig> = {
   common:    { label: "Common",    rank: 1,  color: "#9ca3af", glow: "#9ca3af60", defaultWeight: 1000 },
   uncommon:  { label: "Uncommon",  rank: 2,  color: "#f97316", glow: "#f9731660", defaultWeight: 400  },
