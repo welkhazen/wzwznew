@@ -10,6 +10,7 @@ import type { Poll } from "@/store/useRawStore";
 import TokenImage from "@/assets/tokens.webp";
 import { spendTokens } from "@/lib/api/tokens";
 import { getAvatarRank, hasAvatarRank } from "@/lib/avatarRank";
+import { toast } from "@/hooks/use-toast";
 
 interface DashboardInventoryProps {
   polls: Poll[];
@@ -354,6 +355,13 @@ export function AvatarShop({
             ) : (
               <button
                 onClick={async () => {
+                  if (!canBuy) {
+                    toast({
+                      title: "Not enough tokens",
+                      description: "You don't have enough tokens for this purchase. Go to the Wallet tab to get more.",
+                    });
+                    return;
+                  }
                   setUnlocking(avatar.level);
                   try {
                     const balance = await spendTokens(userId, price);
@@ -361,13 +369,17 @@ export function AvatarShop({
                     if (ok) {
                       updateTokenBalanceCache(userId, balance);
                       onAvatarPurchased(avatar.level);
+                      toast({
+                        title: "Avatar unlocked!",
+                        description: "Your new avatar can be found in the Profile section.",
+                      });
                     }
                   } catch {
                     // Keep shop state unchanged on payment or unlock failure.
                   }
                   setUnlocking(null);
                 }}
-                disabled={unlocking === avatar.level || !canBuy}
+                disabled={unlocking === avatar.level}
                 className="relative flex items-center gap-1.5 rounded-full border border-raw-gold/35 bg-raw-gold/10 px-3 py-1 text-[10px] text-raw-gold transition hover:bg-raw-gold/20 disabled:opacity-50"
               >
                 <img src={TokenImage} alt="" className="h-3 w-3 object-contain" />
@@ -483,6 +495,17 @@ export function LootSpin({ tokenBalance, avatarCatalog, ownedAvatarLevels, userI
           </p>
           {result.wonAvatar ? (
             <>
+              <div className="mt-2 flex flex-col items-center gap-1">
+                <AvatarFigure
+                  avatarIndex={result.wonAvatar.level}
+                  size="md"
+                  rarity={result.wonAvatar.rarity ?? "common"}
+                  themeOverride={result.wonAvatar}
+                />
+                <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: result.color }}>
+                  Rank: R{result.rank}
+                </p>
+              </div>
               <p className="mt-1 text-xs text-raw-silver/60">
                 You won <span className="font-semibold text-raw-text">{avatarName(result.wonAvatar)}</span>
               </p>
