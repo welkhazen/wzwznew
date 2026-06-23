@@ -134,5 +134,8 @@
   },
   "overrides": {
     "three-mesh-bvh": "^0.8.0"
+  },
+  "optionalDependencies": {
+    "sharp": "^0.34.5"
   }
 }

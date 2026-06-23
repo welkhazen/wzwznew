@@ -3,7 +3,7 @@
   "framework": "vite",
   "buildCommand": "vite build",
   "outputDirectory": "dist",
-  "installCommand": "npm ci --prefer-offline",
+  "installCommand": "npm ci --prefer-offline --omit=optional",
   "regions": ["iad1"],
   "redirects": [
     {
