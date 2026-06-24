@@ -251,16 +251,31 @@ class Star {
   }
 }
 
-export function SpiralAnimation() {
+interface SpiralAnimationProps {
+  className?: string
+}
+
+export function SpiralAnimation({ className = '' }: SpiralAnimationProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const animationRef = useRef<AnimationController | null>(null)
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
 
   useEffect(() => {
-    const handleResize = () => setDimensions({ width: window.innerWidth, height: window.innerHeight })
-    handleResize()
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
+    const canvas = canvasRef.current
+    const parent = canvas?.parentElement
+    if (!parent) return
+
+    const updateDimensions = () => {
+      const rect = parent.getBoundingClientRect()
+      setDimensions({ width: rect.width, height: rect.height })
+    }
+
+    updateDimensions()
+
+    const resizeObserver = new ResizeObserver(updateDimensions)
+    resizeObserver.observe(parent)
+
+    return () => resizeObserver.disconnect()
   }, [])
 
   useEffect(() => {
@@ -298,5 +313,5 @@ export function SpiralAnimation() {
     }
   }, [dimensions])
 
-  return <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
+  return <canvas ref={canvasRef} className={`absolute inset-0 h-full w-full ${className}`} />
 }
