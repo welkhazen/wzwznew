@@ -1,15 +1,49 @@
-import { motion } from "framer-motion";
-import { RadialOrbitalTimelineDemo } from "@/components/ui/radial-orbital-timeline-demo";
+import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { highlightRawWordmark } from "@/components/ui/highlightRawWordmark";
 import { SpiralAnimation } from "@/components/ui/spiral-animation";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 
+const problemRows = [
+  {
+    category: "Boredom",
+    title: "Fucking boredom is real.",
+    body: "You open your phone because you want something to happen, but nothing does. raW gives you live anonymous rooms where you can talk, react, answer, and meet people right now.",
+  },
+  {
+    category: "Loneliness",
+    title: "People everywhere. Still lonely.",
+    body: "Being surrounded by followers, contacts, and group chats does not always mean feeling known. raW helps you find people who actually match your thoughts, energy, and interests.",
+  },
+  {
+    category: "Judgment",
+    title: "No mask. Say it.",
+    body: "Some things are easier to say when your real name is not attached. raW gives you a safer place to be honest without turning your identity into the price of speaking.",
+  },
+  {
+    category: "Fake Social",
+    title: "Tired of performing? Same.",
+    body: "Most social apps reward looking perfect, interesting, or successful. raW is built for what people really think, feel, and want to say when the performance drops.",
+  },
+  {
+    category: "Lost",
+    title: "Not sure where you fit?",
+    body: "Sometimes you do not know what you need yet. Through questions, conversations, and communities, raW helps you understand yourself and where you naturally belong.",
+  },
+  {
+    category: "Discovery",
+    title: "Don’t know any interesting people?",
+    body: "Your current circle should not decide who you get to meet. raW helps you discover people through shared interests, honest answers, and conversations worth joining.",
+  },
+];
+
 export function ProblemSection() {
   const sectionRef = useTrackSectionView("problem");
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
     <section ref={sectionRef} className="landing-section relative px-4 py-14 sm:px-6 sm:py-20 md:py-28">
-      <div className="mx-auto w-full max-w-4xl">
+      <div className="mx-auto w-full max-w-6xl">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -28,9 +62,64 @@ export function ProblemSection() {
           </div>
         </motion.div>
 
-        <div className="mt-8 sm:mt-10">
-          <RadialOrbitalTimelineDemo />
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 26 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.8, ease: "easeOut", delay: 0.08 }}
+          className="mt-8 border-y border-raw-border/55 sm:mt-10"
+        >
+          {problemRows.map((item, index) => {
+            const isOpen = openIndex === index;
+            const itemId = `problem-truth-${index + 1}`;
+
+            return (
+              <div key={item.title} className="border-t border-raw-border/45 first:border-t-0">
+                <button
+                  type="button"
+                  aria-expanded={isOpen}
+                  aria-controls={itemId}
+                  onClick={() => setOpenIndex(isOpen ? null : index)}
+                  className="group w-full py-5 text-left transition-colors duration-300 hover:bg-raw-gold/[0.035] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/60 sm:py-7"
+                >
+                  <span className="grid grid-cols-[2.25rem_minmax(0,1fr)_1.5rem] items-center gap-3 sm:grid-cols-[3.5rem_minmax(0,1fr)_9rem_2rem] sm:gap-6">
+                    <span className="font-serif text-sm italic leading-none text-raw-silver/70 sm:text-base">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                    <span className="font-serif text-2xl font-semibold italic leading-tight text-raw-text/82 transition-colors duration-300 group-hover:text-raw-text sm:text-3xl">
+                      {item.title}
+                    </span>
+                    <span className="hidden justify-self-end font-display text-[0.56rem] uppercase tracking-[0.42em] text-raw-silver/45 transition-colors duration-300 group-hover:text-raw-gold/75 sm:block">
+                      {item.category}
+                    </span>
+                    <span className="justify-self-end font-display text-xl leading-none text-raw-silver/60 transition duration-300 group-hover:text-raw-gold">
+                      {isOpen ? "−" : "+"}
+                    </span>
+                  </span>
+                </button>
+
+                <AnimatePresence initial={false}>
+                  {isOpen && (
+                    <motion.div
+                      id={itemId}
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.28, ease: "easeOut" }}
+                      className="overflow-hidden"
+                    >
+                      <div className="pb-6 pl-[3.25rem] pr-4 sm:pl-[5.75rem] sm:pr-48">
+                        <p className="max-w-2xl text-sm leading-relaxed text-raw-silver/68 sm:text-base">
+                          {highlightRawWordmark(item.body)}
+                        </p>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            );
+          })}
+        </motion.div>
       </div>
     </section>
   );
