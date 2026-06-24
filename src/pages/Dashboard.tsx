@@ -76,6 +76,12 @@ const COMMUNITY_LOGOS: Record<string, string> = {
   iijm: IIJMLogo,
 };
 
+// Mobile long-press gesture tuning for the community dock switcher: how long a
+// press must be held to open the switcher, and how far a finger may drift
+// before the press is treated as a scroll/tap and cancelled.
+const LONG_PRESS_MS = 500;
+const MOVE_CANCEL_PX = 10;
+
 const dashboardSectionFallback = (
   <DashboardSectionShell>
     <div className="flex min-h-[240px] items-center justify-center text-sm text-raw-silver/60">
