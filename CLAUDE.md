@@ -4,6 +4,8 @@ Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-s
 
 **Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
 
+**Ponytail mode is active.** Lazy-senior-dev philosophy (simplest solution that works — YAGNI, reuse, stdlib/native before deps, shortest working diff) is injected every session by the `SessionStart` hook from `.claude/ponytail/PONYTAIL.md`. Tune it with `/ponytail lite|full|ultra|off`; review with `/ponytail-review`, `/ponytail-audit`, `/ponytail-debt`. See `/ponytail-help`.
+
 ## Brand wordmark rule
 
 The product name "raW" must always render with its capital **W** in the active
