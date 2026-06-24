@@ -70,7 +70,7 @@ export default defineConfig(({ mode }) => ({
           if (id.includes("node_modules/@tanstack")) {
             return "vendor-query";
           }
-          if (id.includes("node_modules/lucide-react") || id.includes("node_modules/@tabler/icons-react")) {
+          if (id.includes("node_modules/lucide-react")) {
             return "vendor-icons";
           }
         },
