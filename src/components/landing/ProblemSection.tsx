@@ -8,10 +8,7 @@ export function ProblemSection() {
   const sectionRef = useTrackSectionView("problem");
 
   return (
-    <section
-      ref={sectionRef}
-      className="landing-section relative px-4 py-14 sm:px-6 sm:py-28 md:py-32"
-    >
+    <section ref={sectionRef} className="landing-section relative px-4 py-14 sm:px-6 sm:py-20 md:py-28">
       <div className="mx-auto w-full max-w-4xl">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
@@ -29,20 +26,9 @@ export function ProblemSection() {
               </p>
             </div>
           </div>
-
-          <p className="text-[0.62rem] font-medium uppercase leading-relaxed tracking-[0.32em] text-raw-silver/50 sm:text-xs sm:tracking-[0.45em]">
-            {highlightRawWordmark("Why raW exists")}
-          </p>
-          <h2 className="mt-4 font-editorial text-4xl leading-[1.04] tracking-tight text-foreground sm:mt-5 sm:text-5xl md:text-6xl">
-            Stop performing.
-            <span className="block italic text-primary">Start belonging.</span>
-          </h2>
-          <p className="mx-auto mt-5 max-w-xl text-sm leading-relaxed text-raw-silver/60 sm:mx-0 sm:mt-6 sm:text-base">
-            {highlightRawWordmark("Social media turned everyone into a performer. raW is the opposite — anonymous rooms where you say what you actually think, get heard, and find people who get you. No followers, no likes, no act.")}
-          </p>
         </motion.div>
 
-        <div className="mt-9 sm:mt-14">
+        <div className="mt-8 sm:mt-10">
           <RadialOrbitalTimelineDemo />
         </div>
       </div>
