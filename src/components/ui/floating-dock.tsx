@@ -1,6 +1,5 @@
 "use client";
 import { cn } from "@/lib/utils";
-import { IconLayoutNavbarCollapse } from "@tabler/icons-react";
 import { useTheme } from "@/providers/useTheme";
 import type React from "react";
 import {
