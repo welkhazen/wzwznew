@@ -1,6 +1,6 @@
 // Policy = sliding-window cap per key. Keep names + windows here so endpoints
 // pick a policy by name and we have one place to tune them.
-export type RatePolicy = "signup" | "login" | "poll_vote" | "token_spend" | "change_password";
+export type RatePolicy = "signup" | "login" | "poll_vote" | "token_spend" | "change_password" | "delete_account";
 
 const POLICIES: Record<RatePolicy, { tokens: number; window: `${number} ${"s" | "m" | "h" | "d"}` }> = {
   signup:          { tokens: 5,  window: "10 m" },
@@ -8,6 +8,7 @@ const POLICIES: Record<RatePolicy, { tokens: number; window: `${number} ${"s" | 
   poll_vote:       { tokens: 30, window: "10 m" },
   token_spend:     { tokens: 20, window: "1 m"  },
   change_password: { tokens: 5,  window: "10 m" },
+  delete_account:  { tokens: 5,  window: "10 m" },
 };
 
 // In-memory sliding window. Per-Vercel-instance: each cold start resets state

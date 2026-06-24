@@ -7,10 +7,11 @@ import {
   mintAccessToken,
 } from "../_lib/sessionAuth.js";
 import { checkRateLimit, clientIp, rateLimitErrorResponse } from "../_lib/rateLimit.js";
+import { isValidInviteCode } from "../_lib/inviteCodes.js";
 
 export const config = { runtime: "edge" };
 
-type SignupBody = { username?: unknown; password?: unknown };
+type SignupBody = { username?: unknown; password?: unknown; inviteCode?: unknown };
 
 export default async function handler(request: Request): Promise<Response> {
   if (!supabaseServerClient) return json({ error: "supabase_not_configured" }, 503);
@@ -25,8 +26,11 @@ export default async function handler(request: Request): Promise<Response> {
   const body = await readJsonBody<SignupBody>(request);
   const username = typeof body?.username === "string" ? normalizeUsername(body.username) : "";
   const password = typeof body?.password === "string" ? body.password : "";
+  const inviteCode = typeof body?.inviteCode === "string" ? body.inviteCode : "";
   if (!username) return json({ error: "username_required" }, 400);
   if (password.length < 6) return json({ error: "password_too_short" }, 400);
+  if (!inviteCode) return json({ error: "invite_code_required" }, 403);
+  if (!isValidInviteCode(inviteCode)) return json({ error: "invalid_invite_code" }, 403);
 
   const { data, error } = await supabaseServerClient.rpc("create_user_with_password", {
     p_username: username,

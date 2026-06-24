@@ -29,7 +29,7 @@ export interface LandingShellV2Props {
   isLoggedIn: boolean;
   showSignup: boolean;
   setShowSignup: (open: boolean) => void;
-  requestSignupOtp: (username: string, password: string, phone: string) => Promise<AuthResult>;
+  requestSignupOtp: (username: string, password: string, inviteCode: string) => Promise<AuthResult>;
   verifySignupOtp: (code: string) => Promise<AuthResult>;
   login: (username: string, password: string) => Promise<AuthResult>;
 }

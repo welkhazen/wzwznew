@@ -52,7 +52,7 @@ import { getPinNotifications, type PinNotificationRecord } from "@/backend/supab
 import { getPrivateAvatarLevel } from "@/lib/avataridentity";
 import { CHAT_IDENTITY_CHANGED_EVENT, readSelectedChatAlias, writeSelectedChatAlias } from "@/lib/identitySelection";
 
-export type DashboardTab = "home" | "polls" | "challenges" | "daily-spin" | "communities" | "profile" | "settings" | "wallet" | "store";
+export type DashboardTab = "home" | "polls" | "challenges" | "daily-spin" | "communities" | "profile" | "settings" | "wallet" | "store" | "inventory";
 
 interface DashboardNavProps {
   userId: string;

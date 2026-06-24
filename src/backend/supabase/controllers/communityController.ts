@@ -1,5 +1,5 @@
 import { supabase } from '../client';
-import type { PersistedCommunityRecord, CommunityChatMemberRecord } from '@/lib/communityChat.types';
+import type { CommunityChatMessageRecord, PersistedCommunityRecord, CommunityChatMemberRecord } from '@/lib/communityChat.types';
 import type { CommunityRequestRecord } from '@/lib/adminData';
 import { buildCommunityAbbr } from '@/lib/communityChat.utils';
 import { mapCommunityMessage, type DbCommunityMessage } from './chatController';

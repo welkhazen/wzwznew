@@ -1,24 +1,21 @@
 import { FloatingDock } from "@/components/ui/floating-dock";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { readCommunityChats } from "@/lib/communityChat";
 import { hydrateChatIdentityFromServer } from "@/lib/identitySelection";
 import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
 import { fetchCommunities } from "@/backend/supabase/controllers/communityController";
 import { readCachedCommunities, writeCachedCommunities } from "@/lib/communityCache";
 import { getUserFavoriteCommunities, getUserPinnedMessages, removeUserPinnedMessage, type PinnedMessageRecord } from "@/backend/supabase/controllers/userExtrasController";
-import { Home as HomeIcon, MessageCircle, Target, User as UserIcon, LogOut, Trophy, Sparkles, Moon, CloudMoon, Sun, Store } from "lucide-react";
+import { Home as HomeIcon, MessageCircle, Target, Trophy, Store } from "lucide-react";
 import LNTLogo from "@/assets/LNT.webp";
 import SYTLogo from "@/assets/logospeak.webp";
 import IIJMLogo from "@/assets/itisjustme.webp";
-import { useTheme } from "@/providers/useTheme";
-import type { ThemeMode } from "@/providers/theme-context";
 import { matchPath, useLocation, useNavigate } from "react-router-dom";
 import { DashboardNav, type DashboardTab } from "@/components/dashboard/DashboardNav";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { DashboardHome } from "@/components/dashboard/DashboardHome";
 import { DashboardStore } from "@/components/dashboard/DashboardStore";
 import { DashboardSectionShell } from "@/components/dashboard/DashboardSectionShell";
-import { CommunityHoldSwitcher, getCommunityHoldSwitcherTargets } from "@/components/dashboard/CommunityHoldSwitcher";
+import { CommunityHoldSwitcher } from "@/components/dashboard/CommunityHoldSwitcher";
 import { NotificationConsentPrompt } from "@/components/notifications/NotificationConsentPrompt";
 import { LevelUpCelebration } from "@/components/ui/LevelUpCelebration";
 import { useUserProgress } from "@/store/useUserProgress";
@@ -61,6 +58,8 @@ const COMMUNITY_LOGOS: Record<string, string> = {
   syt: SYTLogo,
   iijm: IIJMLogo,
 };
+const LONG_PRESS_MS = 450;
+const MOVE_CANCEL_PX = 12;
 
 const dashboardSectionFallback = (
   <DashboardSectionShell>
@@ -113,10 +112,6 @@ export default function Dashboard({
 }: DashboardProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { mode, setMode } = useTheme();
-  const themeCycle: ThemeMode[] = ["dark", "dusk", "light"];
-  const nextMode = themeCycle[(themeCycle.indexOf(mode) + 1) % themeCycle.length];
-  const ModeIcon = mode === "dark" ? Moon : mode === "dusk" ? CloudMoon : Sun;
   const { progress, leveledUpTo, clearLevelUp, award, awardOnce } = useUserProgress(user.id);
   const [activeTab, setActiveTab] = useState<DashboardTab>("home");
   // Seed from the persistent cache so the user sees their communities
@@ -504,6 +499,7 @@ export default function Dashboard({
                 ownedAvatarLevels={ownedAvatarLevels}
                 onUnlockAvatar={unlockAvatarLevel}
                 onAvatarPurchased={markAvatarOwned}
+                onAvatarChange={setAvatarLevel}
                 avatarPricesByLevel={avatarPricesByLevel}
                 avatarCatalog={avatarCatalog}
                 tokenBalance={tokenBalance}
@@ -730,51 +726,5 @@ export default function Dashboard({
         </div>
       </main>
     </div>
-  );
-}
-
-function MobileNavLink({
-  label,
-  href,
-  icon,
-}: {
-  label: string;
-  href: string;
-  icon?: React.ReactNode;
-}) {
-  return (
-    <a href={href} className="flex min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-0.5 px-2 py-1 rounded-lg text-raw-gold/80 transition-all hover:text-raw-gold">
-      {icon}
-      <span className="text-[10px] font-medium leading-none">{label}</span>
-    </a>
-  );
-}
-
-function MobileNavBtn({
-  label,
-  active,
-  onClick,
-  icon,
-}: {
-  label: string;
-  active: boolean;
-  onClick: () => void;
-  icon?: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex flex-col items-center justify-center gap-1 px-3 py-1.5 min-w-[48px] transition-all"
-      aria-current={active ? "page" : undefined}
-    >
-      <div className={`transition-all duration-200 ${active ? "text-raw-gold scale-110" : "text-raw-silver/40"}`}>
-        {icon}
-      </div>
-      <span className={`text-[9px] font-semibold tracking-wide leading-none transition-colors ${active ? "text-raw-gold" : "text-raw-silver/35"}`}>
-        {label}
-      </span>
-      {active && <div className="h-0.5 w-4 rounded-full bg-raw-gold mt-0.5" />}
-    </button>
   );
 }

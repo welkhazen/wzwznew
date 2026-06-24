@@ -61,6 +61,7 @@ const MAX_COMMUNITY_MESSAGE_LENGTH = 150;
 interface DashboardCommunitiesProps {
   user: User;
   avatarLevel?: number;
+  tokenBalance?: number;
   activeCommunityId?: string | null;
   onOpenCommunity: (communityId: string) => void;
   onBackToCommunities?: () => void;

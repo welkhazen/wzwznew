@@ -185,13 +185,14 @@ export const CommunityRoomList = memo(function CommunityRoomList({
                       </div>
                     );
                   }
-                  // Non-locked community with no free slots — show a plain Join button.
+                  // Non-locked community with no free slots — unlock with tokens.
                   return (
                     <Button
-                      onClick={() => onPaidJoinCommunity(community.id, true)}
+                      onClick={() => onUnlockCommunity(community.id)}
+                      disabled={isUnlocking}
                       className="w-full rounded-xl bg-raw-gold px-2 py-2 text-xs text-raw-ink hover:bg-raw-gold/90"
                     >
-                      Join
+                      {isUnlocking ? "Unlocking…" : `Unlock — ${unlockTokenCost} tokens`}
                     </Button>
                   );
                 })()}

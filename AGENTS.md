@@ -127,6 +127,10 @@ Triage uses canonical labels (`needs-triage`, `needs-info`, `ready-for-agent`, `
 
 Repo is configured as single-context. See `docs/agents/domain.md`.
 
+### Windows MCP
+
+`windows-mcp` is Windows-only. Do not install or serve it from Linux agent containers; see `docs/agents/windows-mcp-setup.md`.
+
 ## Assistant interaction preference
 
 When responding, proactively suggest better alternatives that could make the workflow smoother when appropriate.

@@ -64,6 +64,7 @@ export const CommunityMessageTimeline = memo(function CommunityMessageTimeline({
   canManagePolls,
   userId,
   username,
+  senderAvatarLevels,
   onDeletePoll,
   onVotePoll,
   onRetryMessage,
@@ -239,7 +240,7 @@ export const CommunityMessageTimeline = memo(function CommunityMessageTimeline({
                             ? "border-raw-gold/45 bg-raw-gold/10 text-raw-gold"
                             : "border-raw-border/20 text-raw-silver/40 hover:border-raw-gold/30"
                         }`}
-                        aria-label={alreadyLiked ? "Unlike" : "Like"}
+                        aria-label={alreadyLiked ? "Unlike message" : "Like message"}
                       >
                         <Heart className={`h-2.5 w-2.5 ${alreadyLiked ? "fill-current" : ""}`} />
                         Like

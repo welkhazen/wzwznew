@@ -1,6 +1,7 @@
 /**
  * Minimal analytics client shape used internally. The production analytics
- * backend has been removed; `track()` etc. fall back to dev-mode console logs.
+ * backend is wired at app startup when configured; otherwise `track()` etc.
+ * fall back to dev-mode console logs.
  */
 export interface AnalyticsClient {
   capture: (name: string, properties?: Record<string, unknown>) => void;

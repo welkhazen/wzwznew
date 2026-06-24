@@ -31,9 +31,9 @@ export interface LandingShellProps {
   isLoggedIn: boolean;
   showSignup: boolean;
   setShowSignup: (open: boolean) => void;
-  requestSignupOtp: (email: string) => Promise<AuthResult>;
-  verifySignupOtp: (email: string, otp: string, username: string) => Promise<AuthResult>;
-  login: (email: string, otp: string) => Promise<AuthResult>;
+  requestSignupOtp: (username: string, password: string, inviteCode: string) => Promise<AuthResult>;
+  verifySignupOtp: (code: string) => Promise<AuthResult>;
+  login: (username: string, password: string) => Promise<AuthResult>;
 }
 
 export default function LandingShell({

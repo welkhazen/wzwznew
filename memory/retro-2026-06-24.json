@@ -1,0 +1,389 @@
+{
+  "date": "2026-06-24",
+  "window_since": "2026-06-17T00:00:00",
+  "window_days": 7,
+  "user": {
+    "name": "welkhazen",
+    "email": "225504039+welkhazen@users.noreply.github.com"
+  },
+  "metrics": {
+    "commits_to_main": 163,
+    "contributors": 6,
+    "prs_merged_detected": 72,
+    "insertions": 3924,
+    "deletions": 2882,
+    "net_loc": 1042,
+    "test_insertions": 1,
+    "test_ratio": 0.03,
+    "version_range": "0.0.0 -> 0.0.0",
+    "active_days": 4,
+    "sessions": 14,
+    "active_hours_est": 13.06,
+    "loc_per_session_hour": 521.07,
+    "test_file_count": 50,
+    "test_files_changed": 2,
+    "focus_dir": "src",
+    "focus_score": 40.49,
+    "team_streak": 0,
+    "your_streak": 0
+  },
+  "authors": {
+    "Claude": {
+      "commits": 27,
+      "insertions": 1768,
+      "deletions": 503,
+      "net": 1265,
+      "test_insertions": 1,
+      "test_ratio": 0.056561085972850686,
+      "top_areas": [
+        [
+          "src",
+          48
+        ],
+        [
+          "supabase",
+          6
+        ],
+        [
+          "docs",
+          6
+        ]
+      ],
+      "type_mix": {
+        "other": 26,
+        "fix": 1
+      },
+      "sessions": 10,
+      "peak_hours": [
+        [
+          12,
+          7
+        ],
+        [
+          7,
+          5
+        ],
+        [
+          11,
+          4
+        ]
+      ],
+      "biggest_commit": {
+        "hash": "09d216c",
+        "subject": "Add autofix review system: detect new bugs + confirm-before-fix",
+        "loc": 453
+      }
+    },
+    "KhazGPT": {
+      "commits": 38,
+      "insertions": 470,
+      "deletions": 460,
+      "net": 10,
+      "test_insertions": 0,
+      "test_ratio": 0.0,
+      "top_areas": [
+        [
+          "src",
+          13
+        ],
+        [
+          ".claude",
+          4
+        ],
+        [
+          "docs",
+          2
+        ]
+      ],
+      "type_mix": {
+        "other": 38
+      },
+      "sessions": 10,
+      "peak_hours": [
+        [
+          15,
+          8
+        ],
+        [
+          11,
+          8
+        ],
+        [
+          18,
+          6
+        ]
+      ],
+      "biggest_commit": {
+        "hash": "85badaf",
+        "subject": "Add automated secret scanning",
+        "loc": 331
+      }
+    },
+    "MohammadZeidan": {
+      "commits": 47,
+      "insertions": 0,
+      "deletions": 0,
+      "net": 0,
+      "test_insertions": 0,
+      "test_ratio": 0,
+      "top_areas": [],
+      "type_mix": {
+        "other": 47
+      },
+      "sessions": 6,
+      "peak_hours": [
+        [
+          16,
+          9
+        ],
+        [
+          15,
+          8
+        ],
+        [
+          13,
+          8
+        ]
+      ],
+      "biggest_commit": {
+        "hash": "3da2ce9",
+        "subject": "Merge pull request #629 from welkhazen/codex/trending-polls-replace-feed",
+        "loc": 0
+      }
+    },
+    "dependabot[bot]": {
+      "commits": 3,
+      "insertions": 56,
+      "deletions": 397,
+      "net": -341,
+      "test_insertions": 0,
+      "test_ratio": 0.0,
+      "top_areas": [
+        [
+          "package-lock.json",
+          3
+        ],
+        [
+          "package.json",
+          1
+        ]
+      ],
+      "type_mix": {
+        "other": 3
+      },
+      "sessions": 2,
+      "peak_hours": [
+        [
+          6,
+          2
+        ],
+        [
+          8,
+          1
+        ]
+      ],
+      "biggest_commit": {
+        "hash": "6d76052",
+        "subject": "Bump the npm_and_yarn group across 1 directory with 5 updates",
+        "loc": 426
+      }
+    },
+    "mhdzz1": {
+      "commits": 45,
+      "insertions": 1585,
+      "deletions": 1506,
+      "net": 79,
+      "test_insertions": 0,
+      "test_ratio": 0.0,
+      "top_areas": [
+        [
+          "src",
+          94
+        ],
+        [
+          "public",
+          16
+        ],
+        [
+          "vercel.json",
+          6
+        ]
+      ],
+      "type_mix": {
+        "feat": 14,
+        "fix": 4,
+        "chore": 4,
+        "other": 22,
+        "perf": 1
+      },
+      "sessions": 6,
+      "peak_hours": [
+        [
+          16,
+          8
+        ],
+        [
+          15,
+          8
+        ],
+        [
+          13,
+          8
+        ]
+      ],
+      "biggest_commit": {
+        "hash": "abdb3dd",
+        "subject": "chore(deps): remove sharp from devDependencies",
+        "loc": 537
+      }
+    },
+    "welkhazen": {
+      "commits": 3,
+      "insertions": 45,
+      "deletions": 16,
+      "net": 29,
+      "test_insertions": 0,
+      "test_ratio": 0.0,
+      "top_areas": [
+        [
+          "src",
+          3
+        ],
+        [
+          "supabase",
+          2
+        ]
+      ],
+      "type_mix": {
+        "other": 3
+      },
+      "sessions": 2,
+      "peak_hours": [
+        [
+          10,
+          2
+        ],
+        [
+          9,
+          1
+        ]
+      ],
+      "biggest_commit": {
+        "hash": "4191587",
+        "subject": "Delete placeholder dashboard communities",
+        "loc": 26
+      }
+    }
+  },
+  "commit_types": {
+    "other": 139,
+    "feat": 14,
+    "fix": 5,
+    "chore": 4,
+    "perf": 1
+  },
+  "hourly": {
+    "4": 3,
+    "5": 2,
+    "6": 2,
+    "7": 6,
+    "8": 3,
+    "9": 5,
+    "10": 4,
+    "11": 16,
+    "12": 16,
+    "13": 17,
+    "14": 14,
+    "15": 26,
+    "16": 17,
+    "17": 13,
+    "18": 19
+  },
+  "sessions": {
+    "deep": 5,
+    "medium": 3,
+    "micro": 6
+  },
+  "hotspots": [
+    [
+      "src/components/landing/AvatarShowcaseSection.tsx",
+      11
+    ],
+    [
+      "package-lock.json",
+      7
+    ],
+    [
+      "vercel.json",
+      6
+    ],
+    [
+      "package.json",
+      6
+    ],
+    [
+      "src/components/landing/WheelReward.tsx",
+      6
+    ],
+    [
+      "src/components/landing/Communities.tsx",
+      6
+    ],
+    [
+      "src/components/dashboard/DashboardCommunities.tsx",
+      5
+    ],
+    [
+      "src/lib/communityConstants.ts",
+      5
+    ],
+    [
+      "src/config/avatarConfig.ts",
+      4
+    ],
+    [
+      "src/components/landing/PersonalityInsightsSection.tsx",
+      4
+    ]
+  ],
+  "pr_size_buckets": {
+    "medium": 16,
+    "small": 52,
+    "large": 4
+  },
+  "ship_of_week": {
+    "key": "#552",
+    "loc": 728,
+    "subjects": [
+      "Add founding invite tickets to DashboardProfile with copy/share and local persistence"
+    ],
+    "url": "https://github.com/welkhazen/wzwznew/pull/552"
+  },
+  "tweetable_summary": "Week of Jun 17: 163 commits (6 contributors), +1042 net LOC, 0% tests, 72 PRs, peak: 15:00 | Streak: 0d",
+  "prior_retro_loaded": null,
+  "github_prs": {
+    "source": "gh pr list --state merged --search merged:>=2026-06-17, filtered baseRefName=main",
+    "count": 72,
+    "size_buckets": {
+      "medium": 16,
+      "small": 52,
+      "large": 4
+    },
+    "ship_of_week": {
+      "additions": 38,
+      "author": {
+        "id": "U_kgDODXDrJw",
+        "is_bot": false,
+        "login": "welkhazen",
+        "name": "KhazGPT"
+      },
+      "baseRefName": "main",
+      "deletions": 690,
+      "headRefName": "codex/add-invitation-code-generation-to-profile-r4bw81",
+      "mergedAt": "2026-06-20T06:22:28Z",
+      "number": 552,
+      "title": "Add founding invite tickets to DashboardProfile with copy/share and local persistence",
+      "url": "https://github.com/welkhazen/wzwznew/pull/552"
+    }
+  }
+}

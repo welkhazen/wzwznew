@@ -75,8 +75,8 @@ export function useAuth() {
   );
 
   const requestSignupOtp = useCallback(
-    async (username: string, password: string, _phone: string): Promise<AuthResult> => {
-      const result = await signUp(username, password);
+    async (username: string, password: string, inviteCode: string): Promise<AuthResult> => {
+      const result = await signUp(username, password, inviteCode);
       if (!result.ok || !result.user) return { ok: false, error: result.error };
       const u = toUser(result.user);
       setUser(u);

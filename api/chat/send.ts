@@ -2,6 +2,11 @@ import { json, readJsonBody } from "../_lib/authServer.js";
 import { isTrustedOrigin } from "../_lib/requestSecurity.js";
 import { supabaseServerClient } from "../_lib/supabaseServerClient.js";
 import { getRequestUserId } from "../_lib/sessionAuth.js";
+import {
+  assertUserTextAllowed,
+  getUserTextModerationMessage,
+  UserTextModerationError,
+} from "../_lib/userTextModeration.js";
 
 export const config = { runtime: "edge" };
 
@@ -52,7 +57,15 @@ export default async function handler(request: Request): Promise<Response> {
   if (replyToMessageId !== undefined && replyToMessageId !== null && (typeof replyToMessageId !== "string" || !/^[0-9a-f-]{36}$/.test(replyToMessageId)))
     return json({ error: "Invalid input.", details: "replyToMessageId" }, 400);
 
-  const trimmedText = text.trim();
+  let moderatedText: string;
+  try {
+    moderatedText = assertUserTextAllowed(text);
+  } catch (error) {
+    if (error instanceof UserTextModerationError) {
+      return json({ error: "moderation_blocked", details: getUserTextModerationMessage(error.result) }, 400);
+    }
+    throw error;
+  }
 
   const { data: user, error: userError } = await supabaseServerClient
     .from("users")
@@ -117,7 +130,7 @@ export default async function handler(request: Request): Promise<Response> {
       sender_id: userId,
       sender_name: senderName,
       sender_avatar_level: senderAvatarLevel,
-      text: trimmedText,
+      text: moderatedText,
       reply_to_message_id: replyToMessageId ?? null,
       reply_to_sender_name: replyToSenderName,
       reply_to_text: replyToText,

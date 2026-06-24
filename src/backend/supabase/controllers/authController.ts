@@ -102,6 +102,8 @@ async function clearSupabaseSession(): Promise<void> {
 
 const AUTH_ERROR_MESSAGES: Record<string, string> = {
   rate_limited: 'Too many attempts. Please wait a minute and try again.',
+  invite_code_required: 'Enter a valid invite code.',
+  invalid_invite_code: 'Enter a valid invite code.',
 };
 
 function authErrorMessage(error: string | undefined): string {
@@ -132,10 +134,10 @@ export async function completeUserOnboarding(_userId?: string): Promise<{ ok: bo
   return (data as { ok: boolean; error?: string }) ?? { ok: true };
 }
 
-export async function signUp(username: string, password: string): Promise<RpcResult> {
+export async function signUp(username: string, password: string, inviteCode: string): Promise<RpcResult> {
   const normalized = normalizeUsername(username);
   if (!normalized) return { ok: false, error: 'Username is required.' };
-  const payload = await postAuth('/api/auth/signup', { username: normalized, password });
+  const payload = await postAuth('/api/auth/signup', { username: normalized, password, inviteCode });
   await applySupabaseSession(payload.access_token);
   return toResult(payload);
 }
