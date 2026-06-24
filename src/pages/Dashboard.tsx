@@ -135,6 +135,11 @@ export default function Dashboard({
   const activeCommunityId = communityRouteMatch?.params.communityId ?? null;
 
   useEffect(() => {
+    // Remove legacy static landing SEO fallback so dashboard focus order starts inside the app.
+    document.getElementById("seo-landing")?.remove();
+  }, []);
+
+  useEffect(() => {
     if (activeCommunityId) {
       setActiveTab("communities");
       setIsHome(false);
