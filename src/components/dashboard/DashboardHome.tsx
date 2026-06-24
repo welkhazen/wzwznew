@@ -1,5 +1,4 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { highlightRawWordmark } from "@/components/ui/highlightRawWordmark";
 import { ContainerTextFlipLazy } from "@/components/ui/container-text-flip.lazy";
 import { ChevronRight, Dices, Zap, Flame, Users, BarChart3 } from "lucide-react";
 import type { Poll } from "@/store/useRawStore";
@@ -90,94 +89,6 @@ function CommunityCard({
         </p>
       </div>
     </button>
-  );
-}
-
-const UPCOMING_COMMUNITIES = [
-  {
-    abbr: "UH",
-    title: "Unfiltered Hours",
-    description: "Late thoughts, honest takes, no profile pressure.",
-    accent: "from-amber-100 via-rose-50 to-white",
-  },
-  {
-    abbr: "RR",
-    title: "Reality Check Room",
-    description: "Quick gut checks for the choices people overthink.",
-    accent: "from-sky-100 via-indigo-50 to-white",
-  },
-  {
-    abbr: "NT",
-    title: "No-Name Therapy",
-    description: "A softer place for venting without being known.",
-    accent: "from-violet-100 via-fuchsia-50 to-white",
-  },
-  {
-    abbr: "PV",
-    title: "Plot Twist Votes",
-    description: "Strange dilemmas, funny turns, and anonymous calls.",
-    accent: "from-emerald-100 via-teal-50 to-white",
-  },
-];
-
-function UpcomingCommunitiesPreview({
-  isLight,
-}: {
-  isLight: boolean;
-}) {
-  const cardPositions = [
-    "left-3 top-5 rotate-[-7deg]",
-    "right-5 top-4 rotate-[6deg]",
-    "left-12 bottom-4 rotate-[5deg]",
-    "right-16 bottom-5 rotate-[-5deg]",
-  ];
-
-  return (
-    <div
-      className={`relative min-h-[260px] overflow-hidden rounded-[2rem] border ${
-        isLight
-          ? "border-slate-200 bg-white/85 shadow-[0_18px_44px_rgba(15,23,42,0.1)]"
-          : "border-white/10 bg-[#181818]"
-      }`}
-    >
-      <div className={`absolute inset-0 bg-gradient-to-br ${isLight ? "from-white via-slate-50 to-indigo-50" : "from-white/5 via-raw-gold/5 to-indigo-500/10"}`} />
-      <div className="absolute inset-0 select-none blur-[7px]" aria-hidden="true">
-        {UPCOMING_COMMUNITIES.map((community, index) => (
-          <div
-            key={community.title}
-            className={`absolute h-32 w-52 rounded-3xl border p-4 opacity-55 ${cardPositions[index]} ${
-              isLight
-                ? "border-slate-200 bg-white shadow-[0_12px_32px_rgba(15,23,42,0.12)]"
-                : "border-white/10 bg-white/10"
-            }`}
-          >
-            <div className={`absolute inset-x-0 top-0 h-16 bg-gradient-to-br ${community.accent} ${isLight ? "opacity-90" : "opacity-25"}`} />
-            <div className="relative flex h-full flex-col justify-between">
-              <div className={`flex size-11 items-center justify-center rounded-2xl border font-display text-sm font-black ${
-                isLight ? "border-slate-200 bg-white text-slate-800" : "border-white/10 bg-white/10 text-white"
-              }`}>
-                {community.abbr}
-              </div>
-              <div>
-                <h3 className={`text-xs font-bold ${isLight ? "text-slate-950" : "text-white"}`}>{community.title}</h3>
-                <p className={`mt-1 text-[10px] leading-snug ${isLight ? "text-slate-500" : "text-white/45"}`}>{community.description}</p>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-white/85 to-transparent" />
-      <div className="relative flex min-h-[260px] items-center justify-center p-6">
-        <div className={`flex min-h-[150px] w-full max-w-xl flex-col items-center justify-center rounded-[1.75rem] border px-6 text-center backdrop-blur-xl ${
-          isLight
-            ? "border-raw-gold/25 bg-white/88 shadow-[0_18px_45px_rgba(15,23,42,0.12)]"
-            : "border-raw-gold/25 bg-black/70"
-        }`}>
-          <Users className="mb-3 size-5 text-raw-gold" />
-          <span className="text-xs font-semibold uppercase tracking-[0.3em] text-raw-gold">Coming Soon</span>
-        </div>
-      </div>
-    </div>
   );
 }
 
@@ -294,20 +205,6 @@ export function DashboardHome({
       {/* Trending Polls */}
       <section className={`space-y-5 border-t pt-10 ${isLight ? "border-slate-200" : "border-white/5"}`}>
         <TrendingPollsBox isLight={isLight} onOpenPolls={() => onNavigate("polls")} />
-      </section>
-
-      {/* Recommended Rooms */}
-      <section className={`space-y-5 border-t pt-10 ${isLight ? "border-slate-200" : "border-white/5"}`}>
-        <div className="flex justify-between items-end">
-          <div className="space-y-0.5">
-            <div className="flex items-center gap-2">
-              <Users className="size-4 text-raw-gold" />
-              <h2 className={`text-xl font-bold tracking-tight ${isLight ? "text-slate-950" : "text-white"}`}>Recommended Rooms</h2>
-            </div>
-            <p className={`text-[13px] ${isLight ? "text-slate-500" : "text-white/40"}`}>{highlightRawWordmark("Recommended Rooms are specifically selected for you based on our raW matchmaker engine. How it works explained in FAQ.")}</p>
-          </div>
-        </div>
-        <UpcomingCommunitiesPreview isLight={isLight} />
       </section>
 
       {/* ── Challenges ── */}
