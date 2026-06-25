@@ -104,6 +104,23 @@ usersRouter.get("/me", async (req, res) => {
   return res.status(200).json({ user: { ...toApiUser(user), role } });
 });
 
+usersRouter.get("/me/referral-notifications", async (req, res) => {
+  const user = await findAuthenticatedUser(req);
+  if (!user) {
+    return res.status(401).json({ error: "Not authenticated." });
+  }
+
+  const activations = await getUserRepository().listReferralActivations(user.id);
+  return res.status(200).json({
+    notifications: activations.slice(0, 20).map((activation) => ({
+      id: activation.id,
+      referredUsername: activation.referredUsername,
+      referralCode: activation.referralCode,
+      createdAt: new Date(activation.createdAt).toISOString(),
+    })),
+  });
+});
+
 usersRouter.patch("/me", async (req, res) => {
   const parsed = updateProfileSchema.safeParse(req.body);
   if (!parsed.success) {

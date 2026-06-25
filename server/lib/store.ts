@@ -1,4 +1,4 @@
-import type { AuthSessionData, BootstrapResponse, Poll, User, UserRecord } from "../types";
+import type { AuthSessionData, BootstrapResponse, Poll, ReferralActivationRecord, User, UserRecord } from "../types";
 import { POLL_QUESTION_SEEDS } from "../../src/features/polls/pollQuestions";
 
 const polls: Poll[] = POLL_QUESTION_SEEDS.map((poll, index) => ({
@@ -15,6 +15,7 @@ const usersById = new Map<string, UserRecord>();
 const userIdByUsername = new Map<string, string>();
 const userIdByPhoneHash = new Map<string, string>();
 const userIdByReferralCode = new Map<string, string>();
+const referralActivationsByInviterId = new Map<string, ReferralActivationRecord[]>();
 
 function normalizeUsername(username: string): string {
   return username.toLowerCase();
@@ -43,6 +44,32 @@ export function findUserByPhoneHash(phoneHash: string): UserRecord | null {
 export function findUserByReferralCode(referralCode: string): UserRecord | null {
   const userId = userIdByReferralCode.get(referralCode.toUpperCase());
   return userId ? usersById.get(userId) ?? null : null;
+}
+
+export function recordReferralActivation(referralCode: string, referredUserId: string): void {
+  const normalizedReferralCode = referralCode.toUpperCase();
+  const inviter = findUserByReferralCode(normalizedReferralCode);
+  const referredUser = findUserById(referredUserId);
+  if (!inviter || !referredUser || inviter.id === referredUser.id) return;
+
+  const existing = referralActivationsByInviterId.get(inviter.id) ?? [];
+  if (existing.some((activation) => activation.referredUserId === referredUser.id)) return;
+
+  referralActivationsByInviterId.set(inviter.id, [
+    {
+      id: crypto.randomUUID(),
+      inviterUserId: inviter.id,
+      referredUserId: referredUser.id,
+      referredUsername: referredUser.username,
+      referralCode: normalizedReferralCode,
+      createdAt: Date.now(),
+    },
+    ...existing,
+  ]);
+}
+
+export function listReferralActivationsForInviter(userId: string): ReferralActivationRecord[] {
+  return [...(referralActivationsByInviterId.get(userId) ?? [])];
 }
 
 function buildReferralCode(username: string): string {
