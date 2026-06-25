@@ -69,7 +69,7 @@ const SLUG_AVATAR_RANKS: Record<string, number> = {
   "crimson-muse": 5,
   "solar-flame": 7,
   "pink-circuit": 6,
-  "blu-fifer": 2,
+  "blu-fifer": 5,
   "viozen": 5,
 };
 
