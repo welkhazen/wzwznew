@@ -25,11 +25,17 @@ import {
   ChevronRight,
   Coins,
   Download,
+  Facebook,
   History,
+  Instagram,
+  Link2,
   Reply,
   SendHorizontal,
+  Share2,
+  Smartphone,
   X as XIcon,
 } from "lucide-react";
+import { ShareButton } from "@/components/ui/share-button";
 
 
 function getNextUnlockTime(): string {
@@ -495,6 +501,44 @@ export function DashboardPolls({
     URL.revokeObjectURL(url);
   };
 
+  const buildPollShareText = (poll: Poll) => `${poll.question}`;
+  const buildPollShareUrl = (pollId: string) => `${typeof window !== "undefined" ? window.location.origin : ""}/polls?${POLL_SHARE_PARAM}=${getPollShareCode(pollId)}`;
+
+  const copyShareLink = async (poll: Poll) => {
+    const text = `${buildPollShareText(poll)}\n${buildPollShareUrl(poll.id)}`;
+    await navigator.clipboard?.writeText(text);
+  };
+
+  const handleShare = async (poll: Poll) => {
+    const shareData = {
+      title: "raW poll",
+      text: buildPollShareText(poll),
+      url: buildPollShareUrl(poll.id),
+    };
+
+    if (navigator.share) {
+      await navigator.share(shareData).catch(() => undefined);
+      return;
+    }
+
+    await copyShareLink(poll);
+  };
+
+  const handleFacebookShare = (poll: Poll) => {
+    const url = encodeURIComponent(buildPollShareUrl(poll.id));
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, "_blank", "noopener,noreferrer");
+  };
+
+  const handleWhatsAppShare = (poll: Poll) => {
+    const text = encodeURIComponent(`${buildPollShareText(poll)}\n${buildPollShareUrl(poll.id)}`);
+    window.open(`https://wa.me/?text=${text}`, "_blank", "noopener,noreferrer");
+  };
+
+  const handleInstagramShare = async (poll: Poll) => {
+    const resolved = resolveYesNoOptions(poll);
+    const shareUrl = buildPollShareUrl(poll.id);
+    await handleShare({ ...poll, question: `${poll.question}\n\n${shareUrl}` });
+  };
 
   if (!currentPoll) {
     return (
@@ -662,6 +706,22 @@ export function DashboardPolls({
               </p>
             </div>
           )}
+
+          <div className="mt-4 flex justify-center">
+            <ShareButton
+              links={[
+                { icon: Smartphone, onClick: () => handleWhatsAppShare(currentPoll), label: "Share on WhatsApp" },
+                { icon: Instagram, onClick: () => handleInstagramShare(currentPoll), label: "Share on Instagram" },
+                { icon: Facebook, onClick: () => handleFacebookShare(currentPoll), label: "Share on Facebook" },
+                { icon: SendHorizontal, onClick: () => handleShare(currentPoll), label: "More apps" },
+                { icon: Link2, onClick: () => copyShareLink(currentPoll), label: "Copy link" },
+              ]}
+              className="w-full border-raw-gold/45 bg-raw-gold/10 text-[11px] font-semibold uppercase tracking-[0.16em] text-raw-gold hover:bg-raw-gold/15"
+            >
+              <Share2 className="size-3.5" />
+              Share
+            </ShareButton>
+          </div>
 
           <button
             onClick={() => { setLockedPollId(null); setCurrentPollIndex((previous) => Math.min(displayPolls.length - 1, previous + 1)); }}
