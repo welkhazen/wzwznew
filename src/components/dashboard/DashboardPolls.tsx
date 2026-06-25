@@ -495,7 +495,6 @@ export function DashboardPolls({
     URL.revokeObjectURL(url);
   };
 
-
   if (!currentPoll) {
     return (
       <div className="border border-raw-border/30 bg-raw-black/30 p-6 text-center text-sm text-raw-silver/55">

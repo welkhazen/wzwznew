@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 import { getMessagesForCommunity, type ChatMessage } from "@/lib/communityMessages";
+import { CoverVideo } from "@/components/ui/cover-video";
 import speakYourTruthVideo from "@/assets/speakyourheart.webm";
+import isItJustMeVideo from "@/assets/itisjustme.webm";
 import lateNightTalksVideo from "@/assets/2026-04-18 10_10_00.webm";
 
 const communities = [
@@ -22,8 +24,9 @@ const communities = [
     title: "Is It Just Me?",
     description: "A quick-hit community for relatable thoughts, shared weirdness, and the relief of realizing it is not just you.",
     badge: "Active",
-    video: "/assets/IIJM.webm",
+    video: isItJustMeVideo,
     videoType: "video/webm",
+    image: "/assets/itisjustme.png",
   },
   {
     title: "Lebanon Initiatives",
@@ -162,17 +165,12 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
                 {c.video || c.image ? (
                   <>
                     {c.video ? (
-                      <video
+                      <CoverVideo
                         className="rounded-xl w-full h-32 object-cover mb-3"
-                        autoPlay
-                        loop
-                        muted
-                        playsInline
-                        preload="none"
-                      >
-                        <source src={c.video} type={c.videoType ?? "video/webm"} />
-                        Your browser does not support this video format.
-                      </video>
+                        src={c.video}
+                        type={c.videoType ?? "video/webm"}
+                        poster={c.image}
+                      />
                     ) : (
                       <img
                         src={c.image}

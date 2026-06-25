@@ -2,6 +2,7 @@ import { memo } from "react";
 import { Lock, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CommunityBadge } from "@/components/dashboard/CommunityBadge";
+import { CoverVideo } from "@/components/ui/cover-video";
 import { cn } from "@/lib/utils";
 import { countOnlineMembers, countUnreadMessages } from "@/lib/communityChat";
 import type { CommunityJoinRequestRecord } from "@/lib/adminData";
@@ -68,7 +69,7 @@ export const CommunityRoomList = memo(function CommunityRoomList({
           <div key={community.id} className="group flex flex-col overflow-hidden rounded-2xl border border-raw-border/30 bg-raw-surface/35 shadow-[0_8px_24px_rgba(0,0,0,0.22)] transition-all duration-300 hover:border-raw-gold/35 hover:shadow-[0_16px_40px_rgba(0,0,0,0.45),0_0_0_1px_rgba(241,196,45,0.12)]">
             <div className="relative h-36 shrink-0 overflow-hidden border-b border-raw-border/25 sm:h-48">
               {coverVideo ? (
-                <video src={coverVideo} className="h-full w-full object-cover transition-transform duration-700 ease-out will-change-transform group-hover:scale-[1.04]" autoPlay loop muted playsInline preload="auto" />
+                <CoverVideo src={coverVideo} poster={coverImage} className="h-full w-full object-cover transition-transform duration-700 ease-out will-change-transform group-hover:scale-[1.04]" />
               ) : coverImage ? (
                 <img src={coverImage} alt={`${community.title} cover`} className="h-full w-full object-cover transition-transform duration-700 ease-out will-change-transform group-hover:scale-[1.04]" loading="lazy" />
               ) : (
