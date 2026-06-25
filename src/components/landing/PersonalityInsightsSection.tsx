@@ -201,9 +201,10 @@ function LockedPreview({ insight, isLight }: { insight: InsightPreview; isLight:
 
 // ─── Modal chart components ───────────────────────────────────────────────────
 
-function RadarChart({ traits }: { traits: Trait[] }) {
+function RadarChart({ traits, isLight }: { traits: Trait[]; isLight: boolean }) {
   const n = traits.length;
   const cx = 80, cy = 80, r = 52;
+  const gridStroke = isLight ? "rgba(100,100,100,0.25)" : "rgba(255,255,255,0.07)";
 
   function getPoint(index: number, ratio: number) {
     const angle = (Math.PI * 2 * index) / n - Math.PI / 2;
@@ -221,11 +222,11 @@ function RadarChart({ traits }: { traits: Trait[] }) {
   return (
     <svg viewBox="0 0 160 160" className="h-40 w-40 shrink-0">
       {gridPaths.map((d, i) => (
-        <path key={i} d={d} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth={0.8} />
+        <path key={i} d={d} fill="none" stroke={gridStroke} strokeWidth={0.8} />
       ))}
       {traits.map((_, i) => {
         const end = getPoint(i, 1);
-        return <line key={i} x1={cx} y1={cy} x2={end.x} y2={end.y} stroke="rgba(255,255,255,0.07)" strokeWidth={0.8} />;
+        return <line key={i} x1={cx} y1={cy} x2={end.x} y2={end.y} stroke={gridStroke} strokeWidth={0.8} />;
       })}
       <path d={dataPath} fill="rgba(56,189,248,0.15)" stroke="#38BDF8" strokeWidth={1.5} strokeLinejoin="round" />
       {dataPoints.map((p, i) => (
@@ -241,16 +242,18 @@ function RadarChart({ traits }: { traits: Trait[] }) {
   );
 }
 
-function DonutChart({ traits }: { traits: Trait[] }) {
+function DonutChart({ traits, isLight }: { traits: Trait[]; isLight: boolean }) {
   const cx = 80, cy = 80, r = 52, stroke = 16;
   const c = 2 * Math.PI * r;
   const total = Math.max(1, traits.reduce((s, t) => s + t.value, 0));
   let offset = 0;
   const dominant = traits.reduce((a, b) => (a.value > b.value ? a : b));
+  const bgStroke = isLight ? "rgba(100,100,100,0.2)" : "rgba(255,255,255,0.06)";
+  const labelColor = isLight ? "rgba(100,100,100,0.6)" : "rgba(255,255,255,0.4)";
 
   return (
     <svg viewBox="0 0 160 160" className="h-40 w-40 shrink-0">
-      <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={stroke} />
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke={bgStroke} strokeWidth={stroke} />
       {traits.map((trait) => {
         const segment = (trait.value / total) * c;
         const cur = offset;
@@ -263,18 +266,21 @@ function DonutChart({ traits }: { traits: Trait[] }) {
             strokeLinecap="butt" />
         );
       })}
-      <text x="80" y="73" textAnchor="middle" style={{ fontSize: "7px", fill: "rgba(255,255,255,0.4)", letterSpacing: "0.15em" }}>Dominant</text>
+      <text x="80" y="73" textAnchor="middle" style={{ fontSize: "7px", fill: labelColor, letterSpacing: "0.15em" }}>Dominant</text>
       <text x="80" y="88" textAnchor="middle" style={{ fontSize: "10px", fill: dominant.color, fontWeight: 700 }}>{dominant.label}</text>
     </svg>
   );
 }
 
-function QuadrantChart({ traits }: { traits: Trait[] }) {
+function QuadrantChart({ traits, isLight }: { traits: Trait[]; isLight: boolean }) {
   const positions = [{ x: 44, y: 44 }, { x: 116, y: 44 }, { x: 44, y: 116 }, { x: 116, y: 116 }];
+  const gridStroke = isLight ? "rgba(100,100,100,0.3)" : "rgba(255,255,255,0.1)";
+  const percentColor = isLight ? "rgba(100,100,100,0.7)" : "rgba(255,255,255,0.6)";
+
   return (
     <svg viewBox="0 0 160 160" className="h-40 w-40 shrink-0">
-      <line x1="80" y1="8" x2="80" y2="152" stroke="rgba(255,255,255,0.1)" strokeWidth={0.8} />
-      <line x1="8" y1="80" x2="152" y2="80" stroke="rgba(255,255,255,0.1)" strokeWidth={0.8} />
+      <line x1="80" y1="8" x2="80" y2="152" stroke={gridStroke} strokeWidth={0.8} />
+      <line x1="8" y1="80" x2="152" y2="80" stroke={gridStroke} strokeWidth={0.8} />
       {traits.map((trait, i) => {
         const pos = positions[i];
         const radius = 6 + (trait.value / 100) * 18;
@@ -283,7 +289,7 @@ function QuadrantChart({ traits }: { traits: Trait[] }) {
             <circle cx={pos.x} cy={pos.y} r={radius} fill={trait.color} fillOpacity={0.2} stroke={trait.color} strokeWidth={1} />
             <circle cx={pos.x} cy={pos.y} r={3} fill={trait.color} />
             <text x={pos.x} y={pos.y + radius + 9} textAnchor="middle" style={{ fontSize: "6px", fill: trait.color }}>{trait.label}</text>
-            <text x={pos.x} y={pos.y + radius + 17} textAnchor="middle" style={{ fontSize: "7px", fill: "rgba(255,255,255,0.6)", fontWeight: 700 }}>{trait.value}%</text>
+            <text x={pos.x} y={pos.y + radius + 17} textAnchor="middle" style={{ fontSize: "7px", fill: percentColor, fontWeight: 700 }}>{trait.value}%</text>
           </g>
         );
       })}
@@ -291,10 +297,12 @@ function QuadrantChart({ traits }: { traits: Trait[] }) {
   );
 }
 
-function PieChart({ traits }: { traits: Trait[] }) {
+function PieChart({ traits, isLight }: { traits: Trait[]; isLight: boolean }) {
   const cx = 80, cy = 80, r = 52;
   const total = traits.reduce((s, t) => s + t.value, 0);
   let currentAngle = -Math.PI / 2;
+  const strokeColor = isLight ? "#d0d0d0" : "#0e0e0e";
+  const textColor = isLight ? "rgba(100,100,100,0.9)" : "rgba(255,255,255,0.85)";
 
   function polarToXY(angle: number, radius: number) {
     return { x: cx + radius * Math.cos(angle), y: cy + radius * Math.sin(angle) };
@@ -314,10 +322,10 @@ function PieChart({ traits }: { traits: Trait[] }) {
           <g key={trait.label}>
             <path
               d={`M ${cx} ${cy} L ${start.x} ${start.y} A ${r} ${r} 0 ${largeArc} 1 ${end.x} ${end.y} Z`}
-              fill={trait.color} fillOpacity={0.7} stroke="#0e0e0e" strokeWidth={1.5}
+              fill={trait.color} fillOpacity={0.7} stroke={strokeColor} strokeWidth={1.5}
             />
             <text x={labelPos.x} y={labelPos.y} textAnchor="middle" dominantBaseline="middle"
-              style={{ fontSize: "7px", fill: "rgba(255,255,255,0.85)", fontWeight: 700 }}>
+              style={{ fontSize: "7px", fill: textColor, fontWeight: 700 }}>
               {trait.value}%
             </text>
           </g>
@@ -339,10 +347,10 @@ function InsightModal({ insight, onClose, isLight }: { insight: InsightPreview; 
   const hasTopChart = ["radar", "timeline", "quadrants", "pie"].includes(insight.previewVariant);
 
   function TopChart() {
-    if (insight.previewVariant === "radar") return <RadarChart traits={insight.traits} />;
-    if (insight.previewVariant === "timeline") return <DonutChart traits={insight.traits} />;
-    if (insight.previewVariant === "quadrants") return <QuadrantChart traits={insight.traits} />;
-    if (insight.previewVariant === "pie") return <PieChart traits={insight.traits} />;
+    if (insight.previewVariant === "radar") return <RadarChart traits={insight.traits} isLight={isLight} />;
+    if (insight.previewVariant === "timeline") return <DonutChart traits={insight.traits} isLight={isLight} />;
+    if (insight.previewVariant === "quadrants") return <QuadrantChart traits={insight.traits} isLight={isLight} />;
+    if (insight.previewVariant === "pie") return <PieChart traits={insight.traits} isLight={isLight} />;
     return null;
   }
 

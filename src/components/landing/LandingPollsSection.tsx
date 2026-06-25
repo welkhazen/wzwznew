@@ -127,11 +127,11 @@ export function LandingPollsSection({ onSignupClick }: LandingPollsSectionProps)
       <div className="mx-auto w-full max-w-md">
         <div className="mb-4 flex flex-col items-center">
           <div className="flex items-center gap-3">
-            <span className="h-px w-7 bg-white/35" />
-            <p className="text-[12px] font-medium tracking-[0.42em] text-white/85">
+            <span className={`h-px w-7 ${isLight ? "bg-stone-300" : "bg-white/35"}`} />
+            <p className={`text-[12px] font-medium tracking-[0.42em] ${isLight ? "text-stone-600" : "text-white/85"}`}>
               {index + 1} / {total}
             </p>
-            <span className="h-px w-7 bg-white/35" />
+            <span className={`h-px w-7 ${isLight ? "bg-stone-300" : "bg-white/35"}`} />
           </div>
           <div className="mt-3 flex items-center gap-2">
             {Array.from({ length: total }, (_, i) => (
@@ -140,7 +140,7 @@ export function LandingPollsSection({ onSignupClick }: LandingPollsSectionProps)
                 className={`h-[3px] transition-all ${
                   i === index
                     ? "w-9 bg-raw-gold shadow-[0_0_8px_rgb(var(--raw-accent)/0.7)]"
-                    : "w-6 bg-white/20"
+                    : isLight ? "w-6 bg-stone-300/60" : "w-6 bg-white/20"
                 }`}
               />
             ))}
