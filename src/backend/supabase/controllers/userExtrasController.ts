@@ -163,3 +163,37 @@ export async function getPinNotifications(userId: string): Promise<PinNotificati
     createdAt: row.created_at as string,
   }));
 }
+
+export async function registerFoundingInviteCodes(codes: string[], inviterId: string): Promise<void> {
+  if (codes.length === 0) return;
+  const { error } = await supabase
+    .from('founding_invites')
+    .upsert(
+      codes.map((code) => ({ code: code.toUpperCase(), inviter_id: inviterId })),
+      { onConflict: 'code', ignoreDuplicates: true },
+    );
+  if (error) throw error;
+}
+
+export interface FoundingInviteRedemptionRecord {
+  id: string;
+  referredUsername: string;
+  referralCode: string;
+  createdAt: string;
+}
+
+export async function getFoundingInviteRedemptions(userId: string): Promise<FoundingInviteRedemptionRecord[]> {
+  const { data, error } = await supabase
+    .from('founding_invite_redemptions')
+    .select('id, redeemed_username, code, created_at')
+    .eq('inviter_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(20);
+  if (error) throw error;
+  return (data ?? []).map((row) => ({
+    id: row.id as string,
+    referredUsername: row.redeemed_username as string,
+    referralCode: row.code as string,
+    createdAt: row.created_at as string,
+  }));
+}

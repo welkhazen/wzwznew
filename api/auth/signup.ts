@@ -18,6 +18,31 @@ function normalizeInviteCode(code: string): string {
   return code.trim().toUpperCase().replace(/\s+/g, "");
 }
 
+// Best-effort: notifies the inviter that their code was used. Invite codes are
+// registered by the client (see registerFoundingInviteCodes), so a code with no
+// matching row just means the inviter hasn't synced it yet — not an error.
+async function recordFoundingInviteRedemption(code: string, redeemedBy: string, redeemedUsername: string): Promise<void> {
+  if (!supabaseServerClient) return;
+  try {
+    const { data: invite, error: lookupError } = await supabaseServerClient
+      .from("founding_invites")
+      .select("inviter_id")
+      .eq("code", code)
+      .maybeSingle();
+    if (lookupError || !invite || invite.inviter_id === redeemedBy) return;
+
+    const { error: insertError } = await supabaseServerClient.from("founding_invite_redemptions").insert({
+      inviter_id: invite.inviter_id,
+      code,
+      redeemed_by: redeemedBy,
+      redeemed_username: redeemedUsername,
+    });
+    if (insertError) console.error("[auth.signup] founding invite redemption insert error", insertError);
+  } catch (err) {
+    console.error("[auth.signup] founding invite redemption error", err);
+  }
+}
+
 export default async function handler(request: Request): Promise<Response> {
   if (!supabaseServerClient) return json({ error: "supabase_not_configured" }, 503);
   if (request.method !== "POST") return json({ error: "method_not_allowed" }, 405);
@@ -57,6 +82,8 @@ export default async function handler(request: Request): Promise<Response> {
 
   const profile = await fetchSessionProfile(userId);
   if (!profile) return json({ error: "profile_not_found" }, 500);
+
+  await recordFoundingInviteRedemption(referralCode, userId, username);
 
   const accessToken = await mintAccessToken(userId);
   if (!accessToken) return json({ error: "session_not_configured" }, 500);
