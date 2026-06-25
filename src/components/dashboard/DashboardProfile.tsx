@@ -360,18 +360,20 @@ export function DashboardProfile({
         </div>
 
         {/* Public + Private selector row */}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <button
             type="button"
             onClick={() => setActiveIdentity("public")}
             aria-pressed={isPublicActive}
-            className={`flex min-w-0 flex-col items-center gap-2 rounded-2xl border px-3 py-4 transition-all ${
+            className={`group flex min-w-0 flex-col items-center gap-3 rounded-2xl border px-4 py-6 transition-all duration-300 ${
               isPublicActive
-                ? "border-raw-gold/60 bg-raw-gold/[0.08] shadow-[0_0_24px_rgba(241,196,45,0.12)]"
-                : "border-raw-border/40 bg-raw-black/20 hover:border-raw-gold/30"
+                ? "border-raw-gold/60 bg-raw-gold/[0.08] shadow-[0_0_32px_rgba(241,196,45,0.15)]"
+                : "border-raw-border/40 bg-raw-black/20 hover:border-raw-border/60 hover:bg-raw-black/30"
             }`}
           >
-            <AvatarFigure avatarIndex={avatarLevel} size="lg" selected={isPublicActive} />
+            <div className={`relative flex items-center justify-center transition-transform duration-300 ${isPublicActive ? "scale-110" : "group-hover:scale-105"}`}>
+              <AvatarFigure avatarIndex={avatarLevel} size="xl" selected={isPublicActive} />
+            </div>
             <span className="text-[10px] uppercase tracking-[0.18em] text-raw-silver/45">Public</span>
             <span className="w-full truncate text-sm font-bold text-raw-text">{username}</span>
           </button>
@@ -379,13 +381,15 @@ export function DashboardProfile({
             type="button"
             onClick={() => setActiveIdentity("private")}
             aria-pressed={!isPublicActive}
-            className={`flex min-w-0 flex-col items-center gap-2 rounded-2xl border px-3 py-4 transition-all ${
+            className={`group flex min-w-0 flex-col items-center gap-3 rounded-2xl border px-4 py-6 transition-all duration-300 ${
               !isPublicActive
-                ? "border-raw-gold/60 bg-raw-gold/[0.08] shadow-[0_0_24px_rgba(241,196,45,0.12)]"
-                : "border-raw-border/40 bg-raw-black/20 hover:border-raw-gold/30"
+                ? "border-raw-gold/60 bg-raw-gold/[0.08] shadow-[0_0_32px_rgba(241,196,45,0.15)]"
+                : "border-raw-border/40 bg-raw-black/20 hover:border-raw-border/60 hover:bg-raw-black/30"
             }`}
           >
-            <AvatarFigure avatarIndex={privateAvatarLevel} size="lg" selected={!isPublicActive} />
+            <div className={`relative flex items-center justify-center transition-transform duration-300 ${!isPublicActive ? "scale-110" : "group-hover:scale-105"}`}>
+              <AvatarFigure avatarIndex={privateAvatarLevel} size="xl" selected={!isPublicActive} />
+            </div>
             <span className="text-[10px] uppercase tracking-[0.18em] text-raw-silver/45">Private</span>
             <span className="w-full truncate text-sm font-bold text-raw-text">
               {privateAlias ? `@${privateAlias.alias}` : "Not set"}
