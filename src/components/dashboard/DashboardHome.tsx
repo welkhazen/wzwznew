@@ -1,5 +1,5 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ChevronRight, Dices, Zap, Flame, Users, BarChart3 } from "lucide-react";
+import { Check, ChevronDown, ChevronRight, Dices, Zap, Flame, ShieldOff, UserRound, Users, BarChart3 } from "lucide-react";
 import type { Poll } from "@/store/useRawStore";
 import type { DashboardTab } from "./DashboardNav";
 import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
@@ -18,6 +18,8 @@ interface DashboardHomeProps {
   username: string;
   identityName?: string;
   identityMode?: "public" | "private";
+  identityOptions?: Array<{ label: string; mode: "public" | "private"; value: string | null }>;
+  onIdentityChange?: (alias: string | null) => void;
   userId?: string;
   avatarLevel: number;
   polls: Poll[];
@@ -97,6 +99,8 @@ export function DashboardHome({
   username,
   identityName = username,
   identityMode = "public",
+  identityOptions,
+  onIdentityChange,
   userId,
   polls,
   dailyAnsweredCount,
@@ -121,8 +125,10 @@ export function DashboardHome({
     [mode, accentRgb],
   );
   const isLight = mode === "light";
+  const [identityMenuOpen, setIdentityMenuOpen] = useState(false);
   const dailyItemsLeft = Math.max(0, dailyPollLimit - dailyAnsweredCount);
   const allCommunities = communities;
+  const switcherOptions = identityOptions ?? [{ label: username, mode: "public" as const, value: null }];
 
   const spinStorageKey = userId ? `raw.daily-spin.${userId}` : null;
   const hasSpunToday = useMemo(() => {
@@ -170,7 +176,61 @@ export function DashboardHome({
       <section className="relative">
         <div className="relative z-10">
           <h1 className={`font-display max-w-2xl text-2xl leading-[1.08] sm:text-3xl md:text-4xl md:leading-[1.15] ${isLight ? "text-slate-950" : "text-white"}`}>
-            Feeling <span className="text-raw-gold">raW</span>, {identityName}
+            Feeling <span className="text-raw-gold">raW</span>,{" "}
+            <span className="relative inline-flex align-baseline">
+              <button
+                type="button"
+                onClick={() => setIdentityMenuOpen((open) => !open)}
+                className={`inline-flex max-w-[11rem] items-center gap-1 rounded-xl px-1.5 text-left transition-colors sm:max-w-[18rem] ${
+                  isLight ? "hover:bg-slate-100" : "hover:bg-white/5"
+                }`}
+                aria-expanded={identityMenuOpen}
+                aria-haspopup="menu"
+              >
+                <span className="truncate">{identityName}</span>
+                <ChevronDown className="mt-1 h-4 w-4 shrink-0 text-raw-gold" />
+              </button>
+              {identityMenuOpen && (
+                <div
+                  role="menu"
+                  className={`absolute left-0 top-full z-20 mt-2 w-64 rounded-2xl border p-1.5 text-sm shadow-xl ${
+                    isLight
+                      ? "border-slate-200 bg-white text-slate-950 shadow-slate-900/10"
+                      : "border-white/10 bg-[#151515] text-white shadow-black/40"
+                  }`}
+                >
+                  {switcherOptions.map((option) => {
+                    const isSelected = option.mode === identityMode && option.label === identityName;
+                    const Icon = option.mode === "public" ? UserRound : ShieldOff;
+                    return (
+                      <button
+                        key={`${option.mode}-${option.value ?? "public"}`}
+                        type="button"
+                        role="menuitemradio"
+                        aria-checked={isSelected}
+                        onClick={() => {
+                          onIdentityChange?.(option.value);
+                          setIdentityMenuOpen(false);
+                        }}
+                        className={`flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2 text-left transition-colors ${
+                          isSelected
+                            ? "bg-raw-gold/15 text-raw-gold"
+                            : isLight
+                              ? "text-slate-700 hover:bg-slate-100"
+                              : "text-white/75 hover:bg-white/5"
+                        }`}
+                      >
+                        <span className="flex min-w-0 items-center gap-2">
+                          <Icon className="h-4 w-4 shrink-0" />
+                          <span className="truncate">@{option.label}</span>
+                        </span>
+                        {isSelected && <Check className="h-4 w-4 shrink-0" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </span>
           </h1>
           <div className="mt-6 flex flex-wrap items-center gap-3">
             <div className={`flex items-center gap-2 rounded-full border px-4 py-2 ${isLight ? "border-slate-200 bg-white/85" : "border-white/10 bg-white/5"}`}>

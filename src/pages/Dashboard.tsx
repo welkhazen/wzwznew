@@ -1,11 +1,13 @@
 import { FloatingDock } from "@/components/ui/floating-dock";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { readCommunityChats } from "@/lib/communityChat";
-import { CHAT_IDENTITY_CHANGED_EVENT, hydrateChatIdentityFromServer, readSelectedChatAlias } from "@/lib/identitySelection";
+import { getPrivateAvatarLevel } from "@/lib/avataridentity";
+import { CHAT_IDENTITY_CHANGED_EVENT, hydrateChatIdentityFromServer, readSelectedChatAlias, writeSelectedChatAlias } from "@/lib/identitySelection";
 import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
 import { fetchCommunities } from "@/backend/supabase/controllers/communityController";
 import { readCachedCommunities, writeCachedCommunities } from "@/lib/communityCache";
 import { getUserFavoriteCommunities, getUserPinnedMessages, removeUserPinnedMessage, type PinnedMessageRecord } from "@/backend/supabase/controllers/userExtrasController";
+import { listUserAliases, setChatIdentity, type UserAliasRow } from "@/backend/supabase/controllers/userController";
 import { Home as HomeIcon, MessageCircle, Target, Trophy, Store } from "lucide-react";
 import LNTLogo from "@/assets/LNT.webp";
 import SYTLogo from "@/assets/logospeak.webp";
@@ -144,6 +146,7 @@ export default function Dashboard({
   const [favoriteCommunityIds, setFavoriteCommunityIds] = useState<string[]>([]);
   const [pinnedMessages, setPinnedMessages] = useState<PinnedMessageRecord[]>([]);
   const [selectedChatAlias, setSelectedChatAlias] = useState<string | null>(() => readSelectedChatAlias(user.id));
+  const [privateAliases, setPrivateAliases] = useState<UserAliasRow[]>([]);
   const [isHome, setIsHome] = useState(true);
   const [mobileCommunityPickerOpen, setMobileCommunityPickerOpen] = useState(false);
   const [mobileCommunityAnchorRect, setMobileCommunityAnchorRect] = useState<DOMRect | null>(null);
@@ -238,6 +241,12 @@ export default function Dashboard({
   }, [user.id]);
 
   useEffect(() => {
+    listUserAliases(user.id)
+      .then((rows) => setPrivateAliases(rows.filter((row) => !row.is_public)))
+      .catch(() => setPrivateAliases([]));
+  }, [user.id]);
+
+  useEffect(() => {
     let cancelled = false;
     void (async () => {
       try {
@@ -297,6 +306,16 @@ export default function Dashboard({
 
   const activeIdentityMode = selectedChatAlias ? "private" : "public";
   const activeIdentityName = selectedChatAlias ?? user.username;
+  const identityOptions = [
+    { label: user.username, mode: "public" as const, value: null },
+    ...privateAliases.map((alias) => ({ label: alias.alias, mode: "private" as const, value: alias.alias })),
+  ];
+
+  const handleIdentityChange = (alias: string | null) => {
+    setSelectedChatAlias(alias);
+    writeSelectedChatAlias(user.id, alias);
+    void setChatIdentity(alias, getPrivateAvatarLevel(user.id)).catch(() => {});
+  };
 
   const handleTabChange = (tab: DashboardTab) => {
     setActiveTab(tab);
@@ -470,6 +489,8 @@ export default function Dashboard({
             username={user.username}
             identityName={activeIdentityName}
             identityMode={activeIdentityMode}
+            identityOptions={identityOptions}
+            onIdentityChange={handleIdentityChange}
             avatarLevel={avatarLevel}
             polls={polls}
             votedPolls={votedPolls}
@@ -635,6 +656,8 @@ export default function Dashboard({
               username={user.username}
               identityName={activeIdentityName}
               identityMode={activeIdentityMode}
+              identityOptions={identityOptions}
+              onIdentityChange={handleIdentityChange}
               avatarLevel={avatarLevel}
               polls={polls}
               votedPolls={votedPolls}
