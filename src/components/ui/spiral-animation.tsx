@@ -144,8 +144,12 @@ class AnimationController {
   }
 
   public render(bgColor: string = 'black', fgColor: string = 'white') {
-    this.ctx.fillStyle = bgColor
-    this.ctx.fillRect(0, 0, this.size, this.size)
+    if (bgColor === 'transparent') {
+      this.ctx.clearRect(0, 0, this.size, this.size)
+    } else {
+      this.ctx.fillStyle = bgColor
+      this.ctx.fillRect(0, 0, this.size, this.size)
+    }
     this.ctx.save()
     this.ctx.translate(this.size / 2, this.size / 2)
 
