@@ -31,14 +31,35 @@ function resolveYesNoOptions(poll: Poll) {
   return yesOption && noOption ? { yesOption, noOption } : null;
 }
 
+function answersStorageKey(userId: string | undefined): string | null {
+  return userId ? `raw.poll-history.answers.${userId}` : null;
+}
+
 function readStoredSelections(userId: string | undefined): Record<string, string> {
-  if (!userId) return {};
+  const key = answersStorageKey(userId);
+  if (!key) return {};
   try {
-    const raw = window.localStorage.getItem(`raw.poll-history.answers.${userId}`);
+    const raw = window.localStorage.getItem(key);
     const parsed = raw ? (JSON.parse(raw) as Record<string, string>) : {};
     return parsed && typeof parsed === "object" ? parsed : {};
   } catch {
     return {};
+  }
+}
+
+function persistSelection(userId: string | undefined, pollId: string, optionId: string | null) {
+  const key = answersStorageKey(userId);
+  if (!key) return;
+  try {
+    const current = readStoredSelections(userId);
+    if (optionId) {
+      current[pollId] = optionId;
+    } else {
+      delete current[pollId];
+    }
+    window.localStorage.setItem(key, JSON.stringify(current));
+  } catch {
+    // ignore storage errors
   }
 }
 
@@ -89,6 +110,7 @@ export function TrendingPollsBox({
 
   const handleVote = useCallback(async (pollId: string, optionId: string) => {
     setSelectedByPoll((previous) => ({ ...previous, [pollId]: optionId }));
+    persistSelection(userId, pollId, optionId);
     setVoteOverrides((previous) => {
       const current = previous[pollId] ?? {};
       return {
@@ -113,6 +135,7 @@ export function TrendingPollsBox({
         delete next[pollId];
         return next;
       });
+      persistSelection(userId, pollId, null);
       setVoteOverrides((previous) => {
         const current = { ...(previous[pollId] ?? {}) };
         const optimistic = current[optionId] ?? 0;
@@ -122,7 +145,7 @@ export function TrendingPollsBox({
         return { ...previous, [pollId]: current };
       });
     }
-  }, []);
+  }, [userId]);
 
   return (
     <div
