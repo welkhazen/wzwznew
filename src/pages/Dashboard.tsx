@@ -6,12 +6,10 @@ import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
 import { fetchCommunities } from "@/backend/supabase/controllers/communityController";
 import { readCachedCommunities, writeCachedCommunities } from "@/lib/communityCache";
 import { getUserFavoriteCommunities, getUserPinnedMessages, removeUserPinnedMessage, type PinnedMessageRecord } from "@/backend/supabase/controllers/userExtrasController";
-import { Home as HomeIcon, MessageCircle, Target, Trophy, Moon, CloudMoon, Sun, Store } from "lucide-react";
+import { Home as HomeIcon, MessageCircle, Target, Trophy, Store } from "lucide-react";
 import LNTLogo from "@/assets/LNT.webp";
 import SYTLogo from "@/assets/logospeak.webp";
 import IIJMLogo from "@/assets/itisjustme.webp";
-import { useTheme } from "@/providers/useTheme";
-import type { ThemeMode } from "@/providers/theme-context";
 import { matchPath, useLocation, useNavigate } from "react-router-dom";
 import { DashboardNav, type DashboardTab } from "@/components/dashboard/DashboardNav";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
@@ -135,10 +133,6 @@ export default function Dashboard({
 }: DashboardProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { mode, setMode } = useTheme();
-  const themeCycle: ThemeMode[] = ["dark", "dusk", "light"];
-  const nextMode = themeCycle[(themeCycle.indexOf(mode) + 1) % themeCycle.length];
-  const ModeIcon = mode === "dark" ? Moon : mode === "dusk" ? CloudMoon : Sun;
   const { progress, leveledUpTo, clearLevelUp, award, awardOnce } = useUserProgress(user.id);
   const [activeTab, setActiveTab] = useState<DashboardTab>("home");
   // Seed from the persistent cache so the user sees their communities
@@ -160,6 +154,11 @@ export default function Dashboard({
   const mobileCommunitySuppressClickRef = useRef(false);
   const communityRouteMatch = matchPath("/dashboard/communities/:communityId", location.pathname);
   const activeCommunityId = communityRouteMatch?.params.communityId ?? null;
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    document.getElementById("seo-landing")?.remove();
+  }, []);
 
   useEffect(() => {
     if (activeCommunityId) {
@@ -539,16 +538,10 @@ export default function Dashboard({
           <Suspense fallback={dashboardSectionFallback}>
             <DashboardSectionShell>
               <DashboardInventory
-                polls={polls}
-                votedPolls={votedPolls}
                 avatarLevel={avatarLevel}
+                onAvatarChange={setAvatarLevel}
                 ownedAvatarLevels={ownedAvatarLevels}
-                onUnlockAvatar={unlockAvatarLevel}
-                onAvatarPurchased={markAvatarOwned}
-                avatarPricesByLevel={avatarPricesByLevel}
                 avatarCatalog={avatarCatalog}
-                tokenBalance={tokenBalance}
-                userId={user.id}
               />
             </DashboardSectionShell>
           </Suspense>
@@ -558,8 +551,6 @@ export default function Dashboard({
           <Suspense fallback={dashboardSectionFallback}>
             <DashboardSectionShell>
               <DashboardStore
-                polls={polls}
-                votedPolls={votedPolls}
                 avatarCatalog={avatarCatalog}
                 ownedAvatarLevels={ownedAvatarLevels}
                 onUnlockAvatar={unlockAvatarLevel}
