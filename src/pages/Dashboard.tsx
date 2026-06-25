@@ -462,7 +462,6 @@ export default function Dashboard({
             xp={progress?.xp ?? 0}
             xpLevel={progress?.level ?? 1}
             onNavigate={handleTabChange}
-            onOpenCommunity={handleOpenCommunity}
             onOpenPoll={handleOpenPoll}
             communities={dashboardCommunities}
             isAdmin={user.role === "admin"}
@@ -633,7 +632,6 @@ export default function Dashboard({
               xp={progress?.xp ?? 0}
               xpLevel={progress?.level ?? 1}
               onNavigate={handleTabChange}
-              onOpenCommunity={handleOpenCommunity}
               onOpenPoll={handleOpenPoll}
               communities={dashboardCommunities}
               isAdmin={user.role === "admin"}
