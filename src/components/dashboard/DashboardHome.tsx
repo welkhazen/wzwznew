@@ -1,9 +1,10 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ContainerTextFlipLazy } from "@/components/ui/container-text-flip.lazy";
-import { Dices, Zap, Users, BarChart3 } from "lucide-react";
+import { ChevronRight, Dices, Zap, Users, BarChart3 } from "lucide-react";
 import type { Poll } from "@/store/useRawStore";
 import type { DashboardTab } from "./DashboardNav";
 import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
+import { COMMUNITY_COVER_IMAGES, COMMUNITY_COVER_VIDEOS } from "@/lib/communityConstants";
 import { getTodayKey } from "@/store/useRawStore.storage";
 import { useTheme } from "@/providers/useTheme";
 import { LevelProgressBanner } from "@/components/dashboard/LevelProgressBanner";
@@ -27,10 +28,69 @@ interface DashboardHomeProps {
   xpLevel: number;
   communities: PersistedCommunityRecord[];
   onNavigate: (tab: DashboardTab) => void;
+  onOpenCommunity: (communityId: string) => void;
   onOpenPoll: (pollId: string) => void;
   isAdmin?: boolean;
   onAwardXP?: (amount: number) => Promise<void>;
   onAvatarWon?: (level: number) => void;
+}
+
+function CommunityCard({
+  community,
+  rank,
+  isLight,
+  onOpenCommunity,
+}: {
+  community: PersistedCommunityRecord;
+  rank?: number;
+  isLight: boolean;
+  onOpenCommunity: (id: string) => void;
+}) {
+  const coverImage = COMMUNITY_COVER_IMAGES[community.id] ?? community.logoUrl;
+  const coverVideo = COMMUNITY_COVER_VIDEOS[community.id];
+
+  return (
+    <button
+      onClick={() => onOpenCommunity(community.id)}
+      className={`group relative rounded-2xl text-left w-full cursor-pointer transition-all duration-200 overflow-hidden ${
+        isLight
+          ? "border border-slate-200 bg-white shadow-[0_10px_26px_rgba(15,23,42,0.08)] hover:border-raw-gold/40"
+          : "border border-white/5 bg-[#1a1a1a] hover:border-raw-gold/30"
+      }`}
+    >
+      {/* Cover */}
+      <div className="relative h-36 overflow-hidden">
+        {coverVideo ? (
+          <video src={coverVideo} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" autoPlay loop muted playsInline preload="auto" />
+        ) : coverImage ? (
+          <img src={coverImage} alt={community.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
+        ) : (
+          <div className="w-full h-full bg-raw-gold/5 flex items-center justify-center">
+            <span className="font-display text-4xl text-raw-gold/20">{community.abbr}</span>
+          </div>
+        )}
+        <div className={`absolute inset-0 bg-gradient-to-t ${isLight ? "from-white/88 via-white/20 to-transparent" : "from-[#1a1a1a]/80 to-transparent"}`} />
+        {rank !== undefined && (
+          <div className={`absolute top-2.5 right-2.5 px-1.5 py-0.5 rounded-lg text-[9px] font-black border ${
+            rank === 0
+              ? "bg-raw-gold/20 text-raw-gold border-raw-gold/30"
+              : isLight
+                ? "bg-white/80 text-slate-500 border-slate-200"
+                : "bg-black/50 text-white/50 border-white/10"
+          }`}>
+            #{rank + 1}
+          </div>
+        )}
+      </div>
+      {/* Info */}
+      <div className="p-4">
+        <h3 className={`text-sm font-bold leading-snug mb-1 ${isLight ? "text-slate-950" : "text-white"}`}>{community.title}</h3>
+        <p className={`text-[10px] uppercase tracking-[0.1em] font-bold flex items-center gap-1 ${isLight ? "text-slate-500" : "text-white/40"}`}>
+          <Users className="size-2.5" />{community.members.length} members
+        </p>
+      </div>
+    </button>
+  );
 }
 
 export function DashboardHome({
@@ -42,6 +102,7 @@ export function DashboardHome({
   xpLevel,
   communities,
   onNavigate,
+  onOpenCommunity,
   onOpenPoll,
   isAdmin,
   onAwardXP,
@@ -89,6 +150,13 @@ export function DashboardHome({
     return () => { if (spinTimerRef.current) window.clearInterval(spinTimerRef.current); };
   }, [hasSpunToday, updateSpinCountdown]);
 
+  const joinedCommunities = useMemo(() => {
+    if (!userId) return [];
+    return allCommunities.filter((community) =>
+      community.members.some((member) => member.userId === userId),
+    );
+  }, [allCommunities, userId]);
+
   const hasReachedDailyPollLimit = dailyAnsweredCount >= dailyPollLimit;
   const pollProgress = dailyPollLimit > 0 ? Math.min(100, (dailyAnsweredCount / dailyPollLimit) * 100) : 0;
 
@@ -114,6 +182,32 @@ export function DashboardHome({
         </div>
         <div className="absolute -right-12 -top-12 w-64 h-64 bg-raw-gold/5 blur-[80px] rounded-full pointer-events-none" />
       </section>
+
+      {/* ── Your Communities ── */}
+      {joinedCommunities.length > 0 && (
+        <section className="space-y-5">
+          <div className="flex justify-between items-end">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2">
+                <Users className="size-4 text-raw-gold" />
+                <h2 className={`text-xl font-bold tracking-tight ${isLight ? "text-slate-950" : "text-white"}`}>Your Communities</h2>
+              </div>
+              <p className={`text-[13px] ${isLight ? "text-slate-500" : "text-white/40"}`}>Anonymous circles you've joined.</p>
+            </div>
+            <button
+              onClick={() => onNavigate("communities")}
+              className="text-sm text-raw-gold hover:underline flex items-center gap-1 font-bold"
+            >
+              View All <ChevronRight className="size-4" />
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            {joinedCommunities.slice(0, 4).map((community) => (
+              <CommunityCard key={community.id} community={community} isLight={isLight} onOpenCommunity={onOpenCommunity} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Trending Polls */}
       <section className={`space-y-5 border-t pt-10 ${isLight ? "border-slate-200" : "border-white/5"}`}>
