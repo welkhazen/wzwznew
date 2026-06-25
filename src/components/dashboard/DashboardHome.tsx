@@ -1,6 +1,5 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ContainerTextFlipLazy } from "@/components/ui/container-text-flip.lazy";
-import { ChevronRight, Dices, Zap, Users, BarChart3 } from "lucide-react";
+import { ChevronRight, Dices, Zap, Flame, Users, BarChart3 } from "lucide-react";
 import type { Poll } from "@/store/useRawStore";
 import type { DashboardTab } from "./DashboardNav";
 import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
@@ -8,7 +7,6 @@ import { COMMUNITY_COVER_IMAGES, COMMUNITY_COVER_VIDEOS } from "@/lib/communityC
 import { getTodayKey } from "@/store/useRawStore.storage";
 import { useTheme } from "@/providers/useTheme";
 import { LevelProgressBanner } from "@/components/dashboard/LevelProgressBanner";
-import { WheelOfFortune } from "@/components/wheel/WheelOfFortune";
 import { buildSpinPrizes } from "@/lib/spin-prizes";
 import { TrendingPollsBox } from "@/components/dashboard/TrendingPollsBox";
 

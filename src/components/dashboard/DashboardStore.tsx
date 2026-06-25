@@ -1,7 +1,6 @@
 import { Suspense, lazy } from "react";
 import { Store } from "lucide-react";
 import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
-import type { Poll } from "@/store/useRawStore";
 import { RANK_TIERS, RANK_TIER_PRICING } from "@/lib/avatarRarity";
 import { AVATAR_RANK_LABELS } from "@/lib/avatarRank";
 import TokenImage from "@/assets/tokens.webp";
@@ -14,8 +13,6 @@ const LootSpin = lazy(() =>
 );
 
 interface DashboardStoreProps {
-  polls: Poll[];
-  votedPolls: Set<string>;
   avatarCatalog: AvatarCatalogItem[];
   ownedAvatarLevels: Set<number>;
   onUnlockAvatar: (level: number) => Promise<boolean>;

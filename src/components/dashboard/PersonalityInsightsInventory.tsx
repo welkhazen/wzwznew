@@ -70,7 +70,6 @@ const PERSONALITY_INSIGHTS = [
   },
 ];
 
-export const PERSONALITY_INSIGHTS_CATALOG = PERSONALITY_INSIGHTS;
 
 export function PersonalityInsightsInventory({
   pollsAnswered,
