@@ -14,7 +14,7 @@ import { track } from "@/lib/analytics";
 interface SignupModalProps {
   open: boolean;
   onClose: () => void;
-  onRequestSignupOtp: (username: string, password: string, phone: string) => Promise<AuthResult>;
+  onRequestSignupOtp: (username: string, password: string, phone: string, referralCode: string) => Promise<AuthResult>;
   onVerifySignupOtp: (code: string) => Promise<AuthResult>;
   onLogin: (username: string, password: string) => Promise<AuthResult>;
   source?: string;
@@ -31,11 +31,16 @@ function maskPhone(phone: string): string {
   return `${phone.slice(0, 4)}${"•".repeat(phone.length - 7)}${phone.slice(-3)}`;
 }
 
+function normalizeInviteCode(code: string): string {
+  return normalizePlainText(code).trim().toUpperCase().replace(/\s+/g, "");
+}
+
 export function SignupModal({ open, onClose, onRequestSignupOtp, onVerifySignupOtp, onLogin, source }: SignupModalProps) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [phone, setPhone] = useState("");
+  const [referralCode, setReferralCode] = useState("");
   const [code, setCode] = useState("");
   const [sentChannels, setSentChannels] = useState<string[]>([]);
   const [cooldown, setCooldown] = useState(0);
@@ -57,6 +62,7 @@ export function SignupModal({ open, onClose, onRequestSignupOtp, onVerifySignupO
       setPassword("");
       setConfirmPassword("");
       setPhone("");
+      setReferralCode("");
       setCode("");
       setSentChannels([]);
       setCooldown(0);
@@ -87,8 +93,14 @@ export function SignupModal({ open, onClose, onRequestSignupOtp, onVerifySignupO
     const normalizedUsername = normalizePlainText(sanitizeUsernameInput(username));
     const normalizedPassword = sanitizePasswordInput(password).trim();
     const normalizedConfirmPassword = sanitizePasswordInput(confirmPassword).trim();
+    const normalizedReferralCode = normalizeInviteCode(referralCode);
     if (!isValidUsername(normalizedUsername) || normalizedPassword.length === 0) {
       setError("Use a 3-24 character username and enter a password.");
+      return;
+    }
+
+    if (!normalizedReferralCode) {
+      setError("Enter your invitation code to sign up.");
       return;
     }
 
@@ -102,7 +114,7 @@ export function SignupModal({ open, onClose, onRequestSignupOtp, onVerifySignupO
 
     track("signup_started", { method: "username_password" });
 
-    const result = await onRequestSignupOtp(normalizedUsername, normalizedPassword, "");
+    const result = await onRequestSignupOtp(normalizedUsername, normalizedPassword, "", normalizedReferralCode);
     if (!result.ok) {
       track("signup_failed", { reason: result.error ?? "unknown", step: "details" });
       setError(result.error ?? "Unable to create account.");
@@ -287,6 +299,19 @@ export function SignupModal({ open, onClose, onRequestSignupOtp, onVerifySignupO
                   {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-xs text-raw-silver/40">Invitation Code</label>
+              <input
+                type="text"
+                value={referralCode}
+                onChange={(event) => setReferralCode(normalizeInviteCode(event.target.value))}
+                placeholder="RAW-1-XXXXXXXX"
+                maxLength={24}
+                autoComplete="off"
+                className="w-full rounded-xl border border-raw-border bg-raw-black/50 px-4 py-3 text-sm uppercase tracking-[0.08em] text-raw-text placeholder:normal-case placeholder:tracking-normal placeholder:text-raw-silver/25 transition-all focus:border-raw-gold/30 focus:outline-none focus:ring-1 focus:ring-raw-gold/20"
+              />
             </div>
 
             {error && (

@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Flame, MessageCircle } from "lucide-react";
 import {
+  fetchPollComments,
   fetchTrendingPolls,
   submitPollVote,
+  type PollCommentRow,
   type PollVoteResult,
   type TrendingPoll,
 } from "@/lib/api/polls";
@@ -14,7 +16,6 @@ interface TrendingPollsBoxProps {
   isLight?: boolean;
   polls: Poll[];
   userId?: string;
-  onOpenPoll: (pollId: string) => void;
 }
 
 interface TrendingEntry {
@@ -67,7 +68,6 @@ export function TrendingPollsBox({
   isLight = false,
   polls,
   userId,
-  onOpenPoll,
 }: TrendingPollsBoxProps) {
   const [trending, setTrending] = useState<TrendingPoll[]>([]);
   const [loading, setLoading] = useState(true);
@@ -75,6 +75,9 @@ export function TrendingPollsBox({
   const [selectedByPoll, setSelectedByPoll] = useState<Record<string, string>>(() =>
     readStoredSelections(userId),
   );
+  const [expandedCommentsPollId, setExpandedCommentsPollId] = useState<string | null>(null);
+  const [commentsByPoll, setCommentsByPoll] = useState<Record<string, PollCommentRow[]>>({});
+  const [commentsLoadingByPoll, setCommentsLoadingByPoll] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     setSelectedByPoll(readStoredSelections(userId));
@@ -147,6 +150,24 @@ export function TrendingPollsBox({
     }
   }, [userId]);
 
+  const handleToggleComments = useCallback((pollId: string) => {
+    setExpandedCommentsPollId((current) => (current === pollId ? null : pollId));
+
+    if (commentsByPoll[pollId] || commentsLoadingByPoll[pollId]) return;
+
+    setCommentsLoadingByPoll((previous) => ({ ...previous, [pollId]: true }));
+    fetchPollComments(pollId)
+      .then((comments) => {
+        setCommentsByPoll((previous) => ({ ...previous, [pollId]: comments }));
+      })
+      .catch(() => {
+        setCommentsByPoll((previous) => ({ ...previous, [pollId]: [] }));
+      })
+      .finally(() => {
+        setCommentsLoadingByPoll((previous) => ({ ...previous, [pollId]: false }));
+      });
+  }, [commentsByPoll, commentsLoadingByPoll]);
+
   return (
     <div
       className={`rounded-2xl border p-5 ${
@@ -163,7 +184,7 @@ export function TrendingPollsBox({
         Polls the community is talking about right now. Tap a side to vote — these don't count toward your daily 7.
       </p>
 
-      <div className="mt-5 space-y-7">
+      <div className="mt-5 grid gap-7 md:grid-cols-2">
         {loading ? (
           <p className={`text-sm ${isLight ? "text-slate-500" : "text-white/40"}`}>Loading…</p>
         ) : entries.length === 0 ? (
@@ -183,6 +204,9 @@ export function TrendingPollsBox({
               selectedOptionId === options.yesOption.id || selectedOptionId === options.noOption.id
                 ? selectedOptionId
                 : null;
+            const isCommentsOpen = expandedCommentsPollId === entry.poll.id;
+            const comments = commentsByPoll[entry.poll.id] ?? [];
+            const commentsLoading = Boolean(commentsLoadingByPoll[entry.poll.id]);
 
             return (
               <div key={entry.poll.id} className="space-y-3">
@@ -202,18 +226,59 @@ export function TrendingPollsBox({
                   onVote={(optionId) => handleVote(entry.poll.id, optionId)}
                 />
 
-                <button
-                  type="button"
-                  onClick={() => onOpenPoll(entry.poll.id)}
-                  className={`mx-auto flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] transition ${
-                    isLight
-                      ? "border-slate-200 bg-white text-slate-600 hover:border-amber-400 hover:text-amber-700"
-                      : "border-raw-gold/35 bg-raw-black/45 text-raw-gold hover:border-raw-gold/60 hover:bg-raw-gold/10"
-                  }`}
-                >
-                  <MessageCircle className="size-3.5" />
-                  {entry.commentCount} {entry.commentCount === 1 ? "comment" : "comments"} · Open poll
-                </button>
+                <div className="mx-auto flex flex-wrap items-center justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleToggleComments(entry.poll.id)}
+                    aria-expanded={isCommentsOpen}
+                    className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] transition ${
+                      isLight
+                        ? "border-slate-200 bg-white text-slate-600 hover:border-amber-400 hover:text-amber-700"
+                        : "border-raw-gold/35 bg-raw-black/45 text-raw-gold hover:border-raw-gold/60 hover:bg-raw-gold/10"
+                    }`}
+                  >
+                    <MessageCircle className="size-3.5" />
+                    {entry.commentCount} {entry.commentCount === 1 ? "comment" : "comments"}
+                  </button>
+                </div>
+
+                {isCommentsOpen && (
+                  <div
+                    className={`mx-auto w-full max-w-[22rem] rounded-2xl border px-4 py-3 ${
+                      isLight ? "border-slate-200 bg-white text-slate-700" : "border-white/10 bg-raw-black/45 text-raw-silver"
+                    }`}
+                  >
+                    <p className={`text-[10px] font-semibold uppercase tracking-[0.16em] ${isLight ? "text-slate-500" : "text-raw-gold/70"}`}>
+                      Comments
+                    </p>
+                    <div className="mt-3 max-h-48 space-y-2 overflow-y-auto pr-1">
+                      {commentsLoading ? (
+                        <p className={`text-xs ${isLight ? "text-slate-500" : "text-raw-silver/45"}`}>Loading comments...</p>
+                      ) : comments.length === 0 ? (
+                        <p className={`text-xs ${isLight ? "text-slate-500" : "text-raw-silver/45"}`}>No comments yet.</p>
+                      ) : (
+                        comments.map((comment) => (
+                          <div
+                            key={comment.id}
+                            className={`rounded-xl border px-3 py-2 ${
+                              isLight ? "border-slate-100 bg-slate-50" : "border-white/10 bg-white/[0.03]"
+                            }`}
+                          >
+                            <div className={`flex items-center justify-between gap-2 text-[10px] ${isLight ? "text-slate-500" : "text-raw-silver/40"}`}>
+                              <span className="truncate">@{comment.author_name?.trim() || "Anonymous"}</span>
+                              <span className="shrink-0">
+                                {new Date(comment.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                              </span>
+                            </div>
+                            <p className={`mt-1 text-sm leading-relaxed ${isLight ? "text-slate-700" : "text-raw-silver/80"}`}>
+                              {comment.text}
+                            </p>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })

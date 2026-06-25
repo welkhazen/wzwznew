@@ -32,7 +32,6 @@ interface DashboardHomeProps {
   communities: PersistedCommunityRecord[];
   onNavigate: (tab: DashboardTab) => void;
   onOpenCommunity: (communityId: string) => void;
-  onOpenPoll: (pollId: string) => void;
   isAdmin?: boolean;
   onAwardXP?: (amount: number) => Promise<void>;
   onAvatarWon?: (level: number) => void;
@@ -111,7 +110,6 @@ export function DashboardHome({
   communities,
   onNavigate,
   onOpenCommunity,
-  onOpenPoll,
   isAdmin,
   onAwardXP,
   onAvatarWon,
@@ -305,7 +303,6 @@ export function DashboardHome({
           isLight={isLight}
           polls={polls}
           userId={userId}
-          onOpenPoll={onOpenPoll}
         />
       </section>
 

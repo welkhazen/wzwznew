@@ -619,15 +619,16 @@ html:not(.theme-light) .landing-page-shell {
   --raw-surface: 65 65 65;
 }
 
-/* The landing page is a single branded experience — keep its palette pinned to
-   the dark design even when the app is in dusk mode. Without this, dusk's
-   lighter text tokens lose contrast against the lifted landing background and
-   the copy becomes nearly unreadable. */
+/* Dusk gets the same legibility lift dark mode gets above, but applied to
+   dusk's own cool-toned palette instead of being pinned to dark's — so the
+   landing page actually looks like dusk, not a dark clone. */
 html.theme-dusk .landing-page-shell {
-  --raw-silver: 217 217 217;
-  --raw-text: 235 235 235;
-  --raw-border: 26 26 26;
-  --raw-ink: 12 12 12;
+  --raw-black: 87 87 91;
+  --raw-surface: 103 103 109;
+  --raw-silver: 214 214 220;
+  --raw-text: 242 242 246;
+  --raw-border: 98 98 108;
+  --raw-ink: 20 20 24;
 }
 
 
