@@ -75,6 +75,8 @@ const signupRequestSchema = z.object({
   referralCode: z.string().trim().toUpperCase().min(4).max(16).optional(),
 });
 
+const foundingInviteCodeRegex = /^RAW-[12]-[A-Z0-9]{4,16}$/;
+
 const loginSchema = z.object({
   username: z.string().regex(usernameRegex),
   password: z.string().min(8).max(128),
@@ -202,14 +204,12 @@ authRouter.post("/signup/request-otp", signupLimiter, async (req, res) => {
     return res.status(400).json({ error: "Please enter a valid phone number with country code, e.g. +447911123456." });
   }
 
-  if (env.SIGNUP_INVITE_ONLY === "true") {
-    if (!referralCode) {
-      return res.status(403).json({ error: "Signup requires an invite code." });
-    }
-    const inviter = await userRepository.findByReferralCode(referralCode);
-    if (!inviter) {
-      return res.status(403).json({ error: "Invalid invite code." });
-    }
+  if (!referralCode) {
+    return res.status(403).json({ error: "Signup requires an invite code." });
+  }
+  const inviter = await userRepository.findByReferralCode(referralCode);
+  if (!inviter && !foundingInviteCodeRegex.test(referralCode)) {
+    return res.status(403).json({ error: "Invalid invite code." });
   }
 
   if (await userRepository.usernameExists(username)) {
