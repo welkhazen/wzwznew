@@ -29,6 +29,7 @@ interface DashboardHomeProps {
   communities: PersistedCommunityRecord[];
   onNavigate: (tab: DashboardTab) => void;
   onOpenCommunity: (communityId: string) => void;
+  onOpenPoll: (pollId: string) => void;
   isAdmin?: boolean;
   onAwardXP?: (amount: number) => Promise<void>;
   onAvatarWon?: (level: number) => void;
@@ -94,6 +95,7 @@ function CommunityCard({
 
 export function DashboardHome({
   userId,
+  polls,
   dailyAnsweredCount,
   dailyPollLimit,
   xp,
@@ -101,6 +103,7 @@ export function DashboardHome({
   communities,
   onNavigate,
   onOpenCommunity,
+  onOpenPoll,
   isAdmin,
   onAwardXP,
   onAvatarWon,
@@ -204,7 +207,12 @@ export function DashboardHome({
 
       {/* Trending Polls */}
       <section className={`space-y-5 border-t pt-10 ${isLight ? "border-slate-200" : "border-white/5"}`}>
-        <TrendingPollsBox isLight={isLight} onOpenPolls={() => onNavigate("polls")} />
+        <TrendingPollsBox
+          isLight={isLight}
+          polls={polls}
+          userId={userId}
+          onOpenPoll={onOpenPoll}
+        />
       </section>
 
       {/* ── Challenges ── */}
