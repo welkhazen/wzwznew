@@ -174,7 +174,11 @@ export function DashboardHome({
       <section className="relative">
         <div className="relative z-10">
           <h1 className={`font-display max-w-2xl text-2xl leading-[1.08] sm:text-3xl md:text-4xl md:leading-[1.15] ${isLight ? "text-slate-950" : "text-white"}`}>
-            Feeling <span className="text-raw-gold">raW</span>,{" "}
+            Feeling{" "}
+            <span aria-label="raW">
+              <span className={isLight ? "text-black" : "text-white"}>ra</span>
+              <span style={{ color: `rgb(${accentRgb})` }}>W</span>
+            </span>{", "}
             <span className="relative inline-flex align-baseline">
               <button
                 type="button"
@@ -185,7 +189,10 @@ export function DashboardHome({
                 aria-expanded={identityMenuOpen}
                 aria-haspopup="menu"
               >
-                <span className="truncate">{identityName}</span>
+                <span className="flex min-w-0 items-baseline">
+                  <span className="truncate">{identityName}</span>
+                  <span className="shrink-0">?</span>
+                </span>
                 <ChevronDown className="mt-1 h-4 w-4 shrink-0 text-raw-gold" />
               </button>
               {identityMenuOpen && (
