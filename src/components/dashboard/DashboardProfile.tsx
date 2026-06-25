@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Check, Copy, Heart, MessageSquare, Mic2, Pin, Share2, ShieldOff, Target, Ticket, Trash2, User, Users, X } from "lucide-react";
 import { useProfileStats } from "@/hooks/useProfileStats";
-import type { PinnedMessageRecord } from "@/backend/supabase/controllers/userExtrasController";
+import { registerFoundingInviteCodes, type PinnedMessageRecord } from "@/backend/supabase/controllers/userExtrasController";
 import type { Poll } from "@/store/useRawStore";
 import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { LevelProgressBanner } from "@/components/dashboard/LevelProgressBanner";
@@ -186,6 +186,7 @@ export function DashboardProfile({
     const codes = readFoundingInviteCodes(userId);
     setInviteCodes(codes);
     persistFoundingInviteCodes(userId, codes);
+    registerFoundingInviteCodes(codes, userId).catch(() => {});
     setOpenInviteIndex(null);
   }, [userId]);
 

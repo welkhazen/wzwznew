@@ -46,11 +46,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
-import { apiFetch } from "@/lib/http";
 import { spendTokens } from "@/lib/api/tokens";
 import { supabase } from "@/lib/supabase";
 import { listUserAliases, setChatIdentity, type UserAliasRow } from "@/backend/supabase/controllers/userController";
-import { getPinNotifications, type PinNotificationRecord } from "@/backend/supabase/controllers/userExtrasController";
+import { getFoundingInviteRedemptions, getPinNotifications, type PinNotificationRecord } from "@/backend/supabase/controllers/userExtrasController";
 import { getPrivateAvatarLevel } from "@/lib/avataridentity";
 import { CHAT_IDENTITY_CHANGED_EVENT, readSelectedChatAlias, writeSelectedChatAlias } from "@/lib/identitySelection";
 
@@ -242,10 +241,9 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
 
   useEffect(() => {
     let cancelled = false;
-    apiFetch("/api/users/me/referral-notifications")
-      .then((response) => response.ok ? response.json() as Promise<{ notifications?: ReferralNotificationRecord[] }> : { notifications: [] })
-      .then((payload) => {
-        if (!cancelled) setReferralNotifications(Array.isArray(payload.notifications) ? payload.notifications : []);
+    getFoundingInviteRedemptions(userId)
+      .then((rows) => {
+        if (!cancelled) setReferralNotifications(rows);
       })
       .catch(() => {});
     return () => { cancelled = true; };
