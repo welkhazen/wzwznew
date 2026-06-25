@@ -114,7 +114,16 @@ export function ProblemSection() {
         >
           <div className={`relative mb-7 h-32 w-full overflow-hidden rounded-[1.5rem] border border-raw-border/40 sm:mb-10 sm:h-44 sm:rounded-[1.75rem] md:h-52 ${getBgColor()}`}>
             <SpiralAnimation className="opacity-80" isDarkMode={mode !== "light"} />
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(10,10,10,0.08)_36%,rgba(10,10,10,0.72)_100%)]" />
+            <div
+              className="pointer-events-none absolute inset-0"
+              style={{
+                backgroundImage: mode === "light"
+                  ? "radial-gradient(circle at center, transparent 0%, rgba(100,100,100,0.04) 36%, rgba(100,100,100,0.12) 100%)"
+                  : mode === "dusk"
+                  ? "radial-gradient(circle at center, transparent 0%, rgba(10,10,10,0.04) 36%, rgba(10,10,10,0.4) 100%)"
+                  : "radial-gradient(circle at center, transparent 0%, rgba(10,10,10,0.08) 36%, rgba(10,10,10,0.72) 100%)"
+              }}
+            />
             <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-5 text-center">
               <p className={`max-w-[18rem] text-[0.56rem] font-medium uppercase leading-relaxed tracking-[0.28em] sm:max-w-none sm:text-xs sm:tracking-[0.4em] ${
                 mode === "light" ? "text-stone-700" : "text-raw-silver/70"
