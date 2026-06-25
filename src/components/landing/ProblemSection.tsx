@@ -89,19 +89,19 @@ export function ProblemSection() {
                   className="group w-full py-5 text-left transition-colors duration-300 hover:bg-raw-gold/[0.035] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/60 sm:py-7"
                 >
                   <span className="grid grid-cols-[2.25rem_minmax(0,1fr)_1.5rem] items-center gap-3 sm:grid-cols-[3.5rem_minmax(0,1fr)_9rem_2rem] sm:gap-6">
-                    <span className="font-editorial text-sm italic leading-none text-raw-silver/70 sm:text-base">
+                    <span className={`font-editorial text-sm italic leading-none sm:text-base ${isLight ? "text-stone-600" : "text-raw-silver/70"}`}>
                       {String(index + 1).padStart(2, "0")}
                     </span>
-                    <span className="font-editorial text-2xl font-semibold italic leading-tight text-raw-text/82 transition-colors duration-300 group-hover:text-raw-text sm:text-3xl">
+                    <span className={`font-editorial text-2xl font-semibold italic leading-tight transition-colors duration-300 group-hover:text-raw-text sm:text-3xl ${isLight ? "text-stone-900" : "text-raw-text/82"}`}>
                       {item.title}
                     </span>
-                    <span className="hidden justify-self-end font-display text-[0.56rem] uppercase tracking-[0.42em] text-raw-silver/45 transition-colors duration-300 group-hover:text-raw-gold/75 sm:block">
+                    <span className={`hidden justify-self-end font-display text-[0.56rem] uppercase tracking-[0.42em] transition-colors duration-300 group-hover:text-raw-gold/75 sm:block ${isLight ? "text-stone-500" : "text-raw-silver/45"}`}>
                       {item.category}
                     </span>
                     <span
                       aria-hidden="true"
-                      className={`justify-self-end font-display text-xl leading-none text-raw-silver/60 transition duration-300 group-hover:text-raw-gold ${
-                        isOpen ? "rotate-45 text-raw-gold" : ""
+                      className={`justify-self-end font-display text-xl leading-none transition duration-300 group-hover:text-raw-gold ${
+                        isOpen ? "rotate-45 text-raw-gold" : isLight ? "text-stone-400" : "text-raw-silver/60"
                       }`}
                     >
                       +
