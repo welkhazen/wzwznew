@@ -2,9 +2,11 @@ import { BrandName } from "@/components/ui/brand-name";
 import { highlightRawWordmark } from "@/components/ui/highlightRawWordmark";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import isItJustMeVideo from "@/assets/itisjustme.webm";
 import speakYourTruthVideo from "@/assets/speakyourheart.webm";
 import lntVideo from "@/assets/2026-04-18 10_10_00.webm";
 import { AvatarFigure } from "@/components/ui/avatar-figure";
+import { CoverVideo } from "@/components/ui/cover-video";
 import { setAvatarThemes } from "@/lib/avataridentity";
 import { AvatarPhoneHomeScreen } from "@/components/ui/avatar-phone-home-screen";
 import { PhoneMockup } from "@/components/ui/phone-mockup";
@@ -253,8 +255,8 @@ const ONBOARDING_COMMUNITIES = [
     description: "It's never just you.",
     members: "3",
     activeNow: "1 active",
-    video: "/assets/IIJM.webm",
-    image: undefined,
+    video: isItJustMeVideo,
+    image: "/assets/itisjustme.png",
   },
   {
     id: "li",
@@ -1348,13 +1350,10 @@ export function OnboardingJourney({
                       {/* Media */}
                       <div className="relative h-32 overflow-hidden sm:h-36">
                         {community.video ? (
-                          <video
+                          <CoverVideo
                             src={community.video}
+                            poster={community.image}
                             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                            autoPlay
-                            loop
-                            muted
-                            playsInline
                           />
                         ) : (
                           <img

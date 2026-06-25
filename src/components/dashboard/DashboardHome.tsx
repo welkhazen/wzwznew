@@ -9,6 +9,7 @@ import { useTheme } from "@/providers/useTheme";
 import { LevelProgressBanner } from "@/components/dashboard/LevelProgressBanner";
 import { buildSpinPrizes } from "@/lib/spin-prizes";
 import { TrendingPollsBox } from "@/components/dashboard/TrendingPollsBox";
+import { CoverVideo } from "@/components/ui/cover-video";
 
 const DashboardDailySpin = lazy(() =>
   import("@/components/dashboard/DashboardDailySpin").then((m) => ({ default: m.DashboardDailySpin }))
@@ -63,7 +64,7 @@ function CommunityCard({
       {/* Cover */}
       <div className="relative h-36 overflow-hidden">
         {coverVideo ? (
-          <video src={coverVideo} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" autoPlay loop muted playsInline preload="auto" />
+          <CoverVideo src={coverVideo} poster={coverImage} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
         ) : coverImage ? (
           <img src={coverImage} alt={community.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
         ) : (
