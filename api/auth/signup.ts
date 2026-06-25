@@ -10,7 +10,13 @@ import { checkRateLimit, clientIp, rateLimitErrorResponse } from "../_lib/rateLi
 
 export const config = { runtime: "edge" };
 
-type SignupBody = { username?: unknown; password?: unknown };
+type SignupBody = { username?: unknown; password?: unknown; referralCode?: unknown; inviteCode?: unknown };
+
+const INVITATION_CODE_PATTERN = /^RAW-[12]-[A-Z0-9]{4,16}$/;
+
+function normalizeInviteCode(code: string): string {
+  return code.trim().toUpperCase().replace(/\s+/g, "");
+}
 
 export default async function handler(request: Request): Promise<Response> {
   if (!supabaseServerClient) return json({ error: "supabase_not_configured" }, 503);
@@ -25,8 +31,15 @@ export default async function handler(request: Request): Promise<Response> {
   const body = await readJsonBody<SignupBody>(request);
   const username = typeof body?.username === "string" ? normalizeUsername(body.username) : "";
   const password = typeof body?.password === "string" ? body.password : "";
+  const referralCode = typeof body?.referralCode === "string"
+    ? normalizeInviteCode(body.referralCode)
+    : typeof body?.inviteCode === "string"
+      ? normalizeInviteCode(body.inviteCode)
+      : "";
   if (!username) return json({ error: "username_required" }, 400);
   if (password.length < 6) return json({ error: "password_too_short" }, 400);
+  if (!referralCode) return json({ error: "invitation_code_required" }, 403);
+  if (!INVITATION_CODE_PATTERN.test(referralCode)) return json({ error: "invalid_invitation_code" }, 403);
 
   const { data, error } = await supabaseServerClient.rpc("create_user_with_password", {
     p_username: username,
