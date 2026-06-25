@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import LNTLogo from "@/assets/LNT.webp";
 import SYTLogo from "@/assets/logospeak.webp";
@@ -151,13 +151,13 @@ export function DashboardCommunities({
   const [requestBtnText, setRequestBtnText] = useState("Didn't find your community?");
   const [mobileRequestExpanded, setMobileRequestExpanded] = useState(false);
 
-  // Floating button scroll + collapse effects are moved inline since they're pure UI
-  useState(() => {
+  // Show the floating "Request a Community" button once the user scrolls down.
+  useEffect(() => {
     if (typeof window === "undefined") return;
     const onScroll = () => setShowRequestButton(window.scrollY > 400);
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
-  });
+  }, []);
 
   // --- Hooks ---
   const chat = useCommunityChat(
