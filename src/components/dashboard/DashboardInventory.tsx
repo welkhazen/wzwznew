@@ -231,6 +231,7 @@ export function AvatarShop({
       <AvatarCustomRequestModal
         userId={userId}
         userName={userName}
+        tokenBalance={tokenBalance}
         isOpen={isRequestModalOpen}
         onClose={() => setIsRequestModalOpen(false)}
       />
