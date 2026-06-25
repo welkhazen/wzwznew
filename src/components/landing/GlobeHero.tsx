@@ -26,7 +26,8 @@ const headlineLines = [
 
 export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
   const { mode } = useTheme();
-  const globeColor = mode === "light" ? "#0A0A0A" : "#F5F5F5";
+  const isLight = mode === "light";
+  const globeColor = isLight ? "#0A0A0A" : "#F5F5F5";
 
   const sectionRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
@@ -105,7 +106,7 @@ export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.85, delay: 0.3 + i * 0.18, ease: "easeOut" }}
-              className={`block ${line.accent ? "italic text-primary" : ""}`}
+              className={`block ${line.accent ? "italic text-primary" : isLight ? "text-[#2a2000]" : ""}`}
             >
               {line.text}
             </motion.span>
