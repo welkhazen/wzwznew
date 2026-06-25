@@ -3,7 +3,6 @@ import type { Poll } from "@/store/useRawStore";
 import { getDailyResetStartMs, getTodayKey } from "@/store/useRawStore.storage";
 import { useTheme } from "@/providers/useTheme";
 import { PremiumPollCard } from "@/components/polls/PremiumPollCard";
-import { ShareButton } from "@/components/ui/share-button";
 import {
   Dialog,
   DialogContent,
@@ -25,160 +24,13 @@ import {
   ChevronLeft,
   ChevronRight,
   Coins,
-  Copy,
   Download,
-  Facebook,
   History,
-  Link2,
-  Instagram,
   Reply,
   SendHorizontal,
-  Share2,
-  Smartphone,
   X as XIcon,
 } from "lucide-react";
 
-function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + w - r, y);
-  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-  ctx.lineTo(x + w, y + h - r);
-  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-  ctx.lineTo(x + r, y + h);
-  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-  ctx.lineTo(x, y + r);
-  ctx.quadraticCurveTo(x, y, x + r, y);
-  ctx.closePath();
-}
-
-function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
-  const words = text.split(" ");
-  const lines: string[] = [];
-  let line = "";
-  for (const word of words) {
-    const test = line ? `${line} ${word}` : word;
-    if (ctx.measureText(test).width > maxWidth && line) {
-      lines.push(line);
-      line = word;
-    } else {
-      line = test;
-    }
-  }
-  if (line) lines.push(line);
-  return lines;
-}
-
-async function generatePollImage(question: string, opt1: string, opt2: string, url: string): Promise<Blob> {
-  const W = 1080, H = 1920;
-  const canvas = document.createElement("canvas");
-  canvas.width = W;
-  canvas.height = H;
-  const ctx = canvas.getContext("2d")!;
-
-  // Background
-  ctx.fillStyle = "#050505";
-  ctx.fillRect(0, 0, W, H);
-
-  // Dot grid
-  ctx.fillStyle = "rgba(235,235,235,0.07)";
-  for (let x = 18; x < W; x += 18) {
-    for (let y = 18; y < H; y += 18) {
-      ctx.beginPath();
-      ctx.arc(x, y, 1.5, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }
-
-  // Gold top accent
-  const topGrad = ctx.createLinearGradient(0, 0, W, 0);
-  topGrad.addColorStop(0, "rgba(241,196,45,0)");
-  topGrad.addColorStop(0.3, "#F1C42D");
-  topGrad.addColorStop(0.7, "#F1C42D");
-  topGrad.addColorStop(1, "rgba(241,196,45,0)");
-  ctx.fillStyle = topGrad;
-  ctx.fillRect(0, 0, W, 6);
-
-  // "raW" brand
-  ctx.fillStyle = "#F1C42D";
-  ctx.font = "bold 90px Arial, sans-serif";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText("raW", W / 2, 170);
-
-  ctx.fillStyle = "rgba(241,196,45,0.6)";
-  ctx.font = "38px Arial, sans-serif";
-  ctx.fillText("Community Poll", W / 2, 255);
-
-  // Divider
-  const divGrad = ctx.createLinearGradient(120, 0, W - 120, 0);
-  divGrad.addColorStop(0, "rgba(241,196,45,0)");
-  divGrad.addColorStop(0.3, "rgba(241,196,45,0.4)");
-  divGrad.addColorStop(0.7, "rgba(241,196,45,0.4)");
-  divGrad.addColorStop(1, "rgba(241,196,45,0)");
-  ctx.strokeStyle = divGrad;
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(120, 310);
-  ctx.lineTo(W - 120, 310);
-  ctx.stroke();
-
-  // Question
-  ctx.fillStyle = "#EBEBEB";
-  ctx.font = "bold 64px Arial, sans-serif";
-  ctx.textAlign = "center";
-  const qLines = wrapText(ctx, question, 860);
-  const qStartY = 520 - ((qLines.length - 1) * 84) / 2;
-  qLines.forEach((line, i) => ctx.fillText(line, W / 2, qStartY + i * 84));
-
-  const optY = qStartY + qLines.length * 84 + 100;
-  const btnW = 450, btnH = 130, gap = 36;
-  const btn1X = (W - btnW * 2 - gap) / 2;
-  const btn2X = btn1X + btnW + gap;
-
-  // Option 1 (neutral/silver)
-  ctx.fillStyle = "rgba(180,180,180,0.15)";
-  ctx.strokeStyle = "rgba(180,180,180,0.55)";
-  ctx.lineWidth = 3;
-  roundRect(ctx, btn1X, optY, btnW, btnH, 14);
-  ctx.fill();
-  ctx.stroke();
-  ctx.fillStyle = "#EBEBEB";
-  ctx.font = "bold 52px Arial, sans-serif";
-  ctx.textBaseline = "middle";
-  ctx.fillText(opt1, btn1X + btnW / 2, optY + btnH / 2);
-
-  // Option 2 (gold)
-  ctx.fillStyle = "rgba(241,196,45,0.15)";
-  ctx.strokeStyle = "rgba(241,196,45,0.8)";
-  roundRect(ctx, btn2X, optY, btnW, btnH, 14);
-  ctx.fill();
-  ctx.stroke();
-  ctx.fillStyle = "#F1C42D";
-  ctx.fillText(opt2, btn2X + btnW / 2, optY + btnH / 2);
-
-  // "Vote anonymously" text
-  ctx.fillStyle = "rgba(235,235,235,0.35)";
-  ctx.font = "36px Arial, sans-serif";
-  ctx.textBaseline = "middle";
-  ctx.fillText("Vote anonymously — see what everyone thinks", W / 2, optY + btnH + 80);
-
-  // URL at bottom
-  ctx.fillStyle = "rgba(241,196,45,0.55)";
-  ctx.font = "38px Arial, sans-serif";
-  ctx.fillText(url, W / 2, H - 110);
-
-  // Gold bottom accent
-  ctx.fillStyle = topGrad;
-  ctx.fillRect(0, H - 6, W, 6);
-
-  return new Promise<Blob>((resolve, reject) => {
-    canvas.toBlob((blob) => {
-      if (blob) resolve(blob);
-      else reject(new Error("Canvas toBlob failed"));
-    }, "image/png");
-  });
-}
 
 function getNextUnlockTime(): string {
   const now = new Date();
@@ -300,18 +152,6 @@ function rotatePollsForDay(polls: Poll[], dayKey: string, limit: number): Poll[]
   return [...polls.slice(offset), ...polls.slice(0, offset)].slice(0, safeLimit);
 }
 
-function buildPollShareText(poll: Poll): string {
-  return `Vote anonymously on raW: ${poll.question}`;
-}
-
-function buildPollShareUrl(pollId: string): string {
-  const url = new URL(window.location.href);
-  url.pathname = "/dashboard";
-  url.search = "";
-  url.searchParams.set(POLL_SHARE_PARAM, getPollShareCode(pollId));
-  return url.toString();
-}
-
 function csvEscape(value: string): string {
   return `"${value.replace(/"/g, '""')}"`;
 }
@@ -356,8 +196,6 @@ export function DashboardPolls({
   const [hasSeenVoteHint, setHasSeenVoteHint] = useState(false);
   const [lockedPollId, setLockedPollId] = useState<string | null>(null);
   const [sharedPollId, setSharedPollId] = useState<string | null>(null);
-  const [shareCopied, setShareCopied] = useState(false);
-  const [sharePickerOpen, setSharePickerOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const dailyPollDayKey = getTodayKey();
 
@@ -637,63 +475,6 @@ export function DashboardPolls({
     handleCommentAdd();
   };
 
-  const copyShareLink = async (poll: Poll) => {
-    const text = `${buildPollShareText(poll)}\n${buildPollShareUrl(poll.id)}`;
-    await navigator.clipboard?.writeText(text);
-    setShareCopied(true);
-    window.setTimeout(() => setShareCopied(false), 1600);
-  };
-
-  const handleShare = async (poll: Poll) => {
-    const shareData = {
-      title: "raW poll",
-      text: buildPollShareText(poll),
-      url: buildPollShareUrl(poll.id),
-    };
-
-    if (navigator.share) {
-      await navigator.share(shareData).catch(() => undefined);
-      return;
-    }
-
-    await copyShareLink(poll);
-  };
-
-  const handleFacebookShare = (poll: Poll) => {
-    const url = encodeURIComponent(buildPollShareUrl(poll.id));
-    window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, "_blank", "noopener,noreferrer");
-  };
-
-  const handleWhatsAppShare = (poll: Poll) => {
-    const text = encodeURIComponent(`${buildPollShareText(poll)}\n${buildPollShareUrl(poll.id)}`);
-    window.open(`https://wa.me/?text=${text}`, "_blank", "noopener,noreferrer");
-  };
-
-  const handleInstagramShare = async (poll: Poll) => {
-    const resolved = resolveYesNoOptions(poll);
-    const opt1 = resolved?.yesOption.text ?? poll.options[0]?.text ?? "";
-    const opt2 = resolved?.noOption.text ?? poll.options[1]?.text ?? "";
-    const shareUrl = buildPollShareUrl(poll.id);
-
-    try {
-      const blob = await generatePollImage(poll.question, opt1, opt2, shareUrl);
-      const file = new File([blob], "raw-poll.png", { type: "image/png" });
-      if (navigator.share && navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: "raW Poll", text: poll.question });
-        return;
-      }
-      // Fallback: download the image
-      const blobUrl = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = blobUrl;
-      a.download = "raw-poll.png";
-      a.click();
-      URL.revokeObjectURL(blobUrl);
-    } catch {
-      await handleShare(poll);
-    }
-  };
-
   const downloadHistoryCsv = () => {
     const rows = [
       ["question", "selected_answer", "community", "answered_at"],
@@ -869,29 +650,6 @@ export function DashboardPolls({
               onVote={(optionId) => handleVote(currentPoll.id, optionId)}
               onSkip={showMorePollsPaywall ? undefined : handleSkip}
             />
-          )}
-
-          <div className="mt-4 flex justify-center">
-            <ShareButton
-              links={[
-                { icon: Smartphone, onClick: () => handleWhatsAppShare(currentPoll), label: "Share on WhatsApp" },
-                { icon: Instagram, onClick: () => handleInstagramShare(currentPoll), label: "Share on Instagram" },
-                { icon: Facebook, onClick: () => handleFacebookShare(currentPoll), label: "Share on Facebook" },
-                { icon: SendHorizontal, onClick: () => handleShare(currentPoll), label: "More apps" },
-                { icon: Link2, onClick: () => copyShareLink(currentPoll), label: "Copy link" },
-              ]}
-              className="w-full border-raw-gold/45 bg-raw-gold/10 text-[11px] font-semibold uppercase tracking-[0.16em] text-raw-gold hover:bg-raw-gold/15"
-            >
-              <Share2 className="size-3.5" />
-              Share
-            </ShareButton>
-          </div>
-
-          {shareCopied && (
-            <p className="mt-2 flex items-center justify-center gap-1.5 text-[11px] text-raw-gold/75">
-              <Check className="size-3" />
-              Copied share text
-            </p>
           )}
 
           {showSharedPollAnswerPrompt && (
