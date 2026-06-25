@@ -16,6 +16,8 @@ const DashboardDailySpin = lazy(() =>
 
 interface DashboardHomeProps {
   username: string;
+  identityName?: string;
+  identityMode?: "public" | "private";
   userId?: string;
   avatarLevel: number;
   polls: Poll[];
@@ -92,6 +94,9 @@ function CommunityCard({
 }
 
 export function DashboardHome({
+  username,
+  identityName = username,
+  identityMode = "public",
   userId,
   polls,
   dailyAnsweredCount,
@@ -165,9 +170,15 @@ export function DashboardHome({
       <section className="relative">
         <div className="relative z-10">
           <h1 className={`font-display max-w-2xl text-2xl leading-[1.08] sm:text-3xl md:text-4xl md:leading-[1.15] ${isLight ? "text-slate-950" : "text-white"}`}>
-            Welcome to <span className="text-raw-gold">raW</span>.
+            Feeling <span className="text-raw-gold">raW</span>, {identityName}
           </h1>
-          <div className="mt-6 flex items-center gap-3">
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <div className={`flex items-center gap-2 rounded-full border px-4 py-2 ${isLight ? "border-slate-200 bg-white/85" : "border-white/10 bg-white/5"}`}>
+              <Flame className="size-3.5 text-raw-gold" />
+              <span className={`text-xs font-medium capitalize tracking-wide ${isLight ? "text-slate-600" : "text-white/60"}`}>
+                {identityMode} identity
+              </span>
+            </div>
             <div className={`flex items-center gap-2 px-4 py-2 rounded-full border ${isLight ? "border-slate-200 bg-white/85" : "border-white/10 bg-white/5"}`}>
               <BarChart3 className="size-3.5 text-raw-gold" />
               <span className={`text-xs font-medium tracking-wide ${isLight ? "text-slate-600" : "text-white/60"}`}>{dailyAnsweredCount} polls answered</span>
