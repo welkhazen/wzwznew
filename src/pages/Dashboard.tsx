@@ -1,7 +1,7 @@
 import { FloatingDock } from "@/components/ui/floating-dock";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { readCommunityChats } from "@/lib/communityChat";
-import { hydrateChatIdentityFromServer } from "@/lib/identitySelection";
+import { CHAT_IDENTITY_CHANGED_EVENT, hydrateChatIdentityFromServer, readSelectedChatAlias } from "@/lib/identitySelection";
 import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
 import { fetchCommunities } from "@/backend/supabase/controllers/communityController";
 import { readCachedCommunities, writeCachedCommunities } from "@/lib/communityCache";
@@ -143,6 +143,7 @@ export default function Dashboard({
   );
   const [favoriteCommunityIds, setFavoriteCommunityIds] = useState<string[]>([]);
   const [pinnedMessages, setPinnedMessages] = useState<PinnedMessageRecord[]>([]);
+  const [selectedChatAlias, setSelectedChatAlias] = useState<string | null>(() => readSelectedChatAlias(user.id));
   const [isHome, setIsHome] = useState(true);
   const [mobileCommunityPickerOpen, setMobileCommunityPickerOpen] = useState(false);
   const [mobileCommunityAnchorRect, setMobileCommunityAnchorRect] = useState<DOMRect | null>(null);
@@ -226,6 +227,17 @@ export default function Dashboard({
   }, [user.id]);
 
   useEffect(() => {
+    setSelectedChatAlias(readSelectedChatAlias(user.id));
+    const handleIdentityChange = (event: Event) => {
+      const detail = (event as CustomEvent<{ userId?: string; alias?: string | null }>).detail;
+      if (detail?.userId !== user.id) return;
+      setSelectedChatAlias(detail.alias ?? null);
+    };
+    window.addEventListener(CHAT_IDENTITY_CHANGED_EVENT, handleIdentityChange);
+    return () => window.removeEventListener(CHAT_IDENTITY_CHANGED_EVENT, handleIdentityChange);
+  }, [user.id]);
+
+  useEffect(() => {
     let cancelled = false;
     void (async () => {
       try {
@@ -282,6 +294,9 @@ export default function Dashboard({
       setPinnedMessages(previous);
     }
   };
+
+  const activeIdentityMode = selectedChatAlias ? "private" : "public";
+  const activeIdentityName = selectedChatAlias ?? user.username;
 
   const handleTabChange = (tab: DashboardTab) => {
     setActiveTab(tab);
@@ -453,6 +468,8 @@ export default function Dashboard({
           <DashboardHome
             userId={user.id}
             username={user.username}
+            identityName={activeIdentityName}
+            identityMode={activeIdentityMode}
             avatarLevel={avatarLevel}
             polls={polls}
             votedPolls={votedPolls}
@@ -616,6 +633,8 @@ export default function Dashboard({
             <DashboardHome
               userId={user.id}
               username={user.username}
+              identityName={activeIdentityName}
+              identityMode={activeIdentityMode}
               avatarLevel={avatarLevel}
               polls={polls}
               votedPolls={votedPolls}
