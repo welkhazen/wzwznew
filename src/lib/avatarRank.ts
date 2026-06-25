@@ -29,12 +29,12 @@ export const AVATAR_RANK_MAP: Record<string, number> = {
 // platinum. Id 21 moved from rank 6 (Pink) to rank 7 (Rose, newly added), and
 // the Gold tier (ids 7, 40) shifted from rank 7 to rank 8 to take its place.
 export const NUMBERED_AVATAR_RANKS: Record<number, number> = {
-  1: 1,  2: 3,  3: 1,  4: 6,  5: 4,  6: 5,  7: 8,  8: 1,  9: 2,  10: 2,
-  11: 1, 12: 2, 13: 5, 14: 3, 15: 1, 16: 6, 17: 1, 18: 2, 19: 10, 20: 9,
-  21: 7, 22: 10, 23: 2, 24: 4, 25: 2, 26: 10, 27: 1, 28: 3, 29: 3, 30: 9,
-  31: 9, 32: 9, 33: 2, 34: 5, 36: 2, 37: 4, 38: 3, 39: 5, 40: 8,
-  41: 4, 42: 3, 43: 1, 44: 2, 45: 5, 46: 4, 47: 6, 48: 2, 49: 4, 50: 4,
-  51: 5, 52: 2, 53: 1, 54: 9, 55: 6, 56: 2, 57: 6, 58: 4, 59: 6,
+  1: 1,  2: 3,  3: 1,  4: 6,  5: 3,  6: 5,  7: 8,  8: 1,  9: 2,  10: 2,
+  11: 1, 12: 2, 13: 5, 14: 3, 15: 1, 16: 6, 17: 4, 18: 2, 19: 10, 20: 9,
+  21: 7, 22: 10, 23: 2, 24: 4, 25: 2, 26: 10, 27: 5, 28: 9, 29: 7, 30: 9,
+  31: 8, 32: 3, 33: 2, 34: 10, 36: 2, 37: 3, 38: 8, 39: 5, 40: 8,
+  41: 3, 42: 5, 43: 1, 44: 2, 45: 8, 46: 3, 47: 6, 48: 2, 49: 3, 50: 3,
+  51: 5, 52: 2, 53: 2, 54: 9, 55: 7, 56: 2, 57: 3, 58: 3, 59: 6,
 };
 
 /**
@@ -67,9 +67,9 @@ const SLUG_AVATAR_RANKS: Record<string, number> = {
   "violet-mask": 3,
   "horned-iron": 5,
   "crimson-muse": 5,
-  "solar-flame": 7,
+  "solar-flame": 8,
   "pink-circuit": 6,
-  "blu-fifer": 2,
+  "blu-fifer": 5,
   "viozen": 5,
 };
 
