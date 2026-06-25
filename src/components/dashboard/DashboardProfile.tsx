@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Check, Copy, Heart, MessageSquare, Mic2, Pin, Share2, ShieldOff, Target, Ticket, Trash2, User, Users, X } from "lucide-react";
+import { Check, Copy, Heart, MessageSquare, Mic2, Pin, Share2, Target, Ticket, Trash2, Users, X } from "lucide-react";
 import { useProfileStats } from "@/hooks/useProfileStats";
 import type { PinnedMessageRecord } from "@/backend/supabase/controllers/userExtrasController";
 import type { Poll } from "@/store/useRawStore";
@@ -9,6 +9,7 @@ import { LEVEL_THEMES, getAvatar, getPrivateAvatarLevel, privateAvatarKey } from
 import { PersonalityInsightsInventory } from "@/components/dashboard/PersonalityInsightsInventory";
 import { addOwnedInsightId, readOwnedInsightIds } from "@/lib/insightsOwnership";
 import { spendTokens } from "@/lib/api/tokens";
+import { apiFetch } from "@/lib/http";
 import { CHAT_IDENTITY_CHANGED_EVENT, readSelectedChatAlias, writeSelectedChatAlias } from "@/lib/identitySelection";
 import { toast } from "@/components/ui/use-toast";
 import {
@@ -24,6 +25,13 @@ const TOKEN_BALANCE_UPDATED_EVENT = "raw:token-balance-updated";
 
 const FOUNDING_INVITES_STORAGE_PREFIX = "raw.founding-invites";
 const FOUNDING_INVITE_COUNT = 2;
+
+type ReferralNotificationRecord = {
+  id: string;
+  referredUsername: string;
+  referralCode: string;
+  createdAt: string;
+};
 
 function createInviteCode(slot: number): string {
   const bytes = new Uint8Array(5);
@@ -171,6 +179,7 @@ export function DashboardProfile({
   const [activeIdentity, setActiveIdentity] = useState<"public" | "private">("public");
   const [ownedInsightIds, setOwnedInsightIds] = useState<Set<string>>(() => readOwnedInsightIds(userId));
   const [inviteCodes, setInviteCodes] = useState<string[]>(() => readFoundingInviteCodes(userId));
+  const [claimedInviteCodes, setClaimedInviteCodes] = useState<Set<string>>(new Set());
   const [openInviteIndex, setOpenInviteIndex] = useState<number | null>(null);
 
   // Private identity
@@ -187,6 +196,25 @@ export function DashboardProfile({
     setInviteCodes(codes);
     persistFoundingInviteCodes(userId, codes);
     setOpenInviteIndex(null);
+  }, [userId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    apiFetch("/api/users/me/referral-notifications")
+      .then((response) => response.ok ? response.json() as Promise<{ notifications?: ReferralNotificationRecord[] }> : { notifications: [] })
+      .then((payload) => {
+        if (cancelled) return;
+        const claimedCodes = new Set(
+          (payload.notifications ?? [])
+            .map((notification) => notification.referralCode?.toUpperCase())
+            .filter((code): code is string => Boolean(code)),
+        );
+        setClaimedInviteCodes(claimedCodes);
+      })
+      .catch(() => {
+        if (!cancelled) setClaimedInviteCodes(new Set());
+      });
+    return () => { cancelled = true; };
   }, [userId]);
 
 
@@ -328,6 +356,9 @@ export function DashboardProfile({
   const ownedLevelSet = ownedAvatarLevels instanceof Set ? ownedAvatarLevels : new Set<number>([avatarLevel]);
   const ownedLevels = Array.from({ length: avatarThemeCount }, (_, i) => i + 1)
     .filter((lvl) => ownedLevelSet.has(lvl));
+  const claimedInviteIndexes = inviteCodes
+    .map((code, index) => claimedInviteCodes.has(code.toUpperCase()) ? index : null)
+    .filter((index): index is number => index !== null);
 
   const handleInventorySelect = (lvl: number) => {
     if (isPublicActive) {
@@ -407,40 +438,6 @@ export function DashboardProfile({
           </div>
         ) : (
           <div className="mt-4 space-y-3">
-            <div className="rounded-xl border border-raw-border/30 bg-raw-black/25 p-2">
-              <p className="mb-2 text-[10px] uppercase tracking-[0.16em] text-raw-silver/35">Chat name</p>
-              <button
-                type="button"
-                onClick={() => handleSelectChatAlias(null)}
-                className={`mb-1 flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs transition-colors ${
-                  !selectedChatAlias ? "bg-raw-gold/15 text-raw-gold" : "text-raw-silver/60 hover:bg-white/5 hover:text-raw-text"
-                }`}
-              >
-                <span className="flex min-w-0 items-center gap-2">
-                  <User className="h-3.5 w-3.5 shrink-0" />
-                  <span className="truncate">@{username}</span>
-                </span>
-                {!selectedChatAlias && <Check className="h-3.5 w-3.5 shrink-0" />}
-              </button>
-              {privateAlias && (
-                <button
-                  type="button"
-                  onClick={() => handleSelectChatAlias(privateAlias.alias)}
-                  className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs transition-colors ${
-                    selectedChatAlias?.toLowerCase() === privateAlias.alias.toLowerCase()
-                      ? "bg-raw-gold/15 text-raw-gold"
-                      : "text-raw-silver/60 hover:bg-white/5 hover:text-raw-text"
-                  }`}
-                >
-                  <span className="flex min-w-0 items-center gap-2">
-                    <ShieldOff className="h-3.5 w-3.5 shrink-0" />
-                    <span className="truncate">@{privateAlias.alias}</span>
-                  </span>
-                  {selectedChatAlias?.toLowerCase() === privateAlias.alias.toLowerCase() && <Check className="h-3.5 w-3.5 shrink-0" />}
-                </button>
-              )}
-            </div>
-
             <div className="rounded-xl border border-raw-border/30 bg-raw-black/25 p-3">
               {editingAlias || !privateAlias ? (
                 <div className="flex items-center gap-2">
@@ -528,9 +525,21 @@ export function DashboardProfile({
           </span>
         </div>
 
+        {claimedInviteIndexes.length > 0 && (
+          <div className="mb-4 rounded-xl border border-raw-gold/25 bg-raw-gold/10 px-3 py-2">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-raw-gold/75">
+              {claimedInviteIndexes.map((index) => `Code ${index + 1} claimed`).join(" · ")}
+            </p>
+            <p className="mt-1 text-xs text-raw-silver/45">
+              A shared invitation code has been claimed.
+            </p>
+          </div>
+        )}
+
         <div className="grid gap-3 sm:grid-cols-2">
           {inviteCodes.map((code, index) => {
             const isOpen = openInviteIndex === index;
+            const isClaimed = claimedInviteCodes.has(code.toUpperCase());
             return (
               <div
                 key={code}
@@ -549,7 +558,14 @@ export function DashboardProfile({
                 <div className="absolute -right-6 -top-6 h-20 w-20 rounded-full bg-raw-gold/10 blur-xl transition-opacity group-hover:opacity-100" />
                 <div className="relative flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-[10px] uppercase tracking-[0.18em] text-raw-gold/55">Invitation {index + 1}</p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-[10px] uppercase tracking-[0.18em] text-raw-gold/55">Invitation {index + 1}</p>
+                      {isClaimed && (
+                        <span className="rounded-full border border-raw-gold/25 bg-raw-gold/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-raw-gold/75">
+                          Claimed
+                        </span>
+                      )}
+                    </div>
                     <p className="mt-1 text-xs text-raw-silver/35">Tap ticket to {isOpen ? "hide" : "reveal"}</p>
                   </div>
                   <Ticket className="h-7 w-7 text-raw-gold/50" />
