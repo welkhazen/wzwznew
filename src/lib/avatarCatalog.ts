@@ -63,14 +63,14 @@ function markBackendMissingIfNeeded(error: unknown): void {
 }
 
 export const DEFAULT_AVATAR_CATALOG: readonly AvatarCatalogItem[] = [
-  { id: "ember", level: 1, name: "Ember", price: "50", imageSrc: "/avatars/avatar-3.svg", bg: "#1f0a05", figure: "#ff8a1f", ring: "#ff8a1f", glow: "#ff8a1f80", isActive: true, showIn: "both", rarity: "common" },
-  { id: "verdant", level: 2, name: "Verdant", price: "50", imageSrc: "/avatars/avatar-1.svg", bg: "#08160b", figure: "#22c55e", ring: "#22c55e", glow: "#22c55e80", isActive: true, showIn: "both", rarity: "common" },
-  { id: "horned", level: 3, name: "Horned", price: "50", imageSrc: "/avatars/avatar-5.svg", bg: "#1f0808", figure: "#ff2d3d", ring: "#ff2d3d", glow: "#ff2d3d80", isActive: true, showIn: "both", rarity: "common" },
-  { id: "pharaoh", level: 4, name: "Pharaoh", price: "50", imageSrc: "/avatars/avatar-6.svg", bg: "#1f1605", figure: "#f2d21a", ring: "#f2d21a", glow: "#f2d21a80", isActive: true, showIn: "both", rarity: "common" },
-  { id: "violet", level: 5, name: "Violet", price: "50", imageSrc: "/avatars/avatar-2.svg", bg: "#150a22", figure: "#b84dff", ring: "#b84dff", glow: "#b84dff80", isActive: true, showIn: "both", rarity: "common" },
-  { id: "rose", level: 6, name: "Rose", price: "50", imageSrc: "/avatars/avatar-4.svg", bg: "#1f0a14", figure: "#f43f5e", ring: "#f43f5e", glow: "#f43f5e80", isActive: true, showIn: "both", rarity: "common" },
-  { id: "black", level: 7, name: "Black", price: "50", imageSrc: "/avatars/avatar-7.svg", bg: "#0a0a0a", figure: "#cfd3da", ring: "#cfd3da", glow: "#cfd3da80", isActive: true, showIn: "both", rarity: "common" },
-  { id: "blue", level: 8, name: "Blue", price: "50", imageSrc: "/avatars/avatar-10.svg", bg: "#0a1424", figure: "#3b82f6", ring: "#3b82f6", glow: "#3b82f680", isActive: true, showIn: "both", rarity: "common" },
+  { id: "ember", level: 1, name: "Ember", price: "50", imageSrc: "/avatars/avatar-3.svg", bg: "#1f0a05", figure: "#cbd5e1", ring: "#cbd5e1", glow: "#cbd5e180", isActive: true, showIn: "both", rarity: "common", frame_color: "grey" },
+  { id: "verdant", level: 2, name: "Verdant", price: "50", imageSrc: "/avatars/avatar-1.svg", bg: "#08160b", figure: "#3b82f6", ring: "#3b82f6", glow: "#3b82f680", isActive: true, showIn: "both", rarity: "common", frame_color: "blue" },
+  { id: "horned", level: 3, name: "Horned", price: "50", imageSrc: "/avatars/avatar-5.svg", bg: "#1f0808", figure: "#d946ef", ring: "#d946ef", glow: "#d946ef80", isActive: true, showIn: "both", rarity: "common", frame_color: "purple" },
+  { id: "pharaoh", level: 4, name: "Pharaoh", price: "50", imageSrc: "/avatars/avatar-6.svg", bg: "#1f1605", figure: "#fb923c", ring: "#fb923c", glow: "#fb923c80", isActive: true, showIn: "both", rarity: "common", frame_color: "orange" },
+  { id: "violet", level: 5, name: "Violet", price: "50", imageSrc: "/avatars/avatar-2.svg", bg: "#150a22", figure: "#ef4444", ring: "#ef4444", glow: "#ef444480", isActive: true, showIn: "both", rarity: "common", frame_color: "red" },
+  { id: "rose", level: 6, name: "Rose", price: "50", imageSrc: "/avatars/avatar-4.svg", bg: "#1f0a14", figure: "#fb7185", ring: "#fb7185", glow: "#fb718580", isActive: true, showIn: "both", rarity: "common", frame_color: "pink" },
+  { id: "black", level: 7, name: "Black", price: "50", imageSrc: "/avatars/avatar-7.svg", bg: "#0a0a0a", figure: "#fbbf24", ring: "#fbbf24", glow: "#fbbf2490", isActive: true, showIn: "both", rarity: "common", frame_color: "rose" },
+  { id: "blue", level: 8, name: "Blue", price: "50", imageSrc: "/avatars/avatar-10.svg", bg: "#0a1424", figure: "#fbbf24", ring: "#fbbf24", glow: "#fbbf2490", isActive: true, showIn: "both", rarity: "common", frame_color: "gold" },
   { id: "silver-void", level: 9, name: avatarDisplayName(1), price: "50", imageSrc: "/avatars/1.webp", bg: "#111827", figure: "#cbd5e1", ring: "#cbd5e1", glow: "#cbd5e180", isActive: true, showIn: "both", rarity: "common" },
   { id: "neon-lynx", level: 10, name: avatarDisplayName(18), price: "50", imageSrc: "/avatars/18.png", bg: "#170f2e", figure: "#a855f7", ring: "#c084fc", glow: "#a855f780", isActive: true, showIn: "both", rarity: "common" },
   { id: "blue-signal", level: 11, name: avatarDisplayName(23), price: "50", imageSrc: "/avatars/23.png", bg: "#06131f", figure: "#22d3ee", ring: "#22d3ee", glow: "#22d3ee80", isActive: true, showIn: "both", rarity: "common" },
