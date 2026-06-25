@@ -596,6 +596,7 @@ export default function Dashboard({
                 avatarPricesByLevel={avatarPricesByLevel}
                 tokenBalance={tokenBalance}
                 userId={user.id}
+                userName={user.publicUsername || user.privateUsername || "User"}
               />
             </DashboardSectionShell>
           </Suspense>
