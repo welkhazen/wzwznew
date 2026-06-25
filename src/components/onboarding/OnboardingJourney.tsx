@@ -906,15 +906,17 @@ export function OnboardingJourney({
                           className="group mx-auto flex min-w-0 flex-col items-center gap-2 rounded-xl border border-raw-gold/35 bg-raw-gold/[0.04] p-3 transition hover:border-raw-gold/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/50"
                           aria-label={`Preview won avatar ${claimedSpinAvatarChoice.name}`}
                         >
-                          <AvatarFigure
-                            avatarIndex={claimedSpinAvatarChoice.level}
-                            size={avatarTileSize}
-                            selected={previewAvatarIndex === claimedSpinAvatarChoice.level}
-                            rarity={claimedSpinAvatarChoice.rarity}
-                            style={getPreviewOnlyAvatarImageScale(claimedSpinAvatarChoice.id)}
-                            themeOverride={claimedSpinAvatarChoice}
-                            loading="eager"
-                          />
+                          <div className="flex h-[4.5rem] items-center justify-center sm:h-[6.5rem]">
+                            <AvatarFigure
+                              avatarIndex={claimedSpinAvatarChoice.level}
+                              size={avatarTileSize}
+                              selected={previewAvatarIndex === claimedSpinAvatarChoice.level}
+                              rarity={claimedSpinAvatarChoice.rarity}
+                              style={getPreviewOnlyAvatarImageScale(claimedSpinAvatarChoice.id)}
+                              themeOverride={claimedSpinAvatarChoice}
+                              loading="eager"
+                            />
+                          </div>
                           <span className="max-w-full truncate text-center font-display text-[9px] leading-tight tracking-[0.08em] text-raw-gold/90 sm:text-[10px]">
                             {claimedSpinAvatarChoice.name}
                           </span>
