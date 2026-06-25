@@ -46,6 +46,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
+import { apiFetch } from "@/lib/http";
 import { spendTokens } from "@/lib/api/tokens";
 import { supabase } from "@/lib/supabase";
 import { listUserAliases, setChatIdentity, type UserAliasRow } from "@/backend/supabase/controllers/userController";
@@ -113,13 +114,20 @@ function writeOwnedAccentsCache(userId: string, ids: AccentPresetId[]): void {
 
 type DashboardNotification = {
   id: string;
-  type: "mention" | "like" | "community" | "pinned";
+  type: "mention" | "like" | "community" | "pinned" | "invite-claimed";
   title: string;
   communityTitle: string;
   senderName?: string;
   text: string;
   createdAt: string;
   likeCount?: number;
+};
+
+type ReferralNotificationRecord = {
+  id: string;
+  referredUsername: string;
+  referralCode: string;
+  createdAt: string;
 };
 
 function deliveredNotificationsKey(userId: string) {
@@ -179,6 +187,7 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
   const [tokenBalanceForUnlocks, setTokenBalanceForUnlocks] = useState<number>(() => readStoredTokenBalance(userId));
   const [privateAliases, setPrivateAliases] = useState<UserAliasRow[]>([]);
   const [pinNotifications, setPinNotifications] = useState<PinNotificationRecord[]>([]);
+  const [referralNotifications, setReferralNotifications] = useState<ReferralNotificationRecord[]>([]);
   const [selectedChatAlias, setSelectedChatAlias] = useState<string | null>(() => readSelectedChatAlias(userId));
   const notifRef = useRef<HTMLDivElement>(null);
   const effectiveAvatarLevel = selectedChatAlias ? getPrivateAvatarLevel(userId) : avatarLevel;
@@ -226,6 +235,17 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
     getPinNotifications(userId)
       .then((rows) => {
         if (!cancelled) setPinNotifications(rows);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [userId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    apiFetch("/api/users/me/referral-notifications")
+      .then((response) => response.ok ? response.json() as Promise<{ notifications?: ReferralNotificationRecord[] }> : { notifications: [] })
+      .then((payload) => {
+        if (!cancelled) setReferralNotifications(Array.isArray(payload.notifications) ? payload.notifications : []);
       })
       .catch(() => {});
     return () => { cancelled = true; };
@@ -304,8 +324,19 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
         createdAt: pin.createdAt,
       });
     }
+    for (const referral of referralNotifications) {
+      results.push({
+        id: `invite-claimed:${referral.id}`,
+        type: "invite-claimed",
+        title: "A shared invitation code has been claimed!",
+        communityTitle: "Founding invitations",
+        senderName: referral.referredUsername,
+        text: `@${referral.referredUsername} joined with ${referral.referralCode}.`,
+        createdAt: referral.createdAt,
+      });
+    }
     return results.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  }, [userId, username, communities, pinNotifications]);
+  }, [userId, username, communities, pinNotifications, referralNotifications]);
   const unseenNotificationCount = useMemo(() => {
     const seen = new Set(seenNotificationIds);
     return notifications.filter((notification) => !seen.has(notification.id)).length;

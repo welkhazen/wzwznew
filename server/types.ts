@@ -16,6 +16,15 @@ export interface UserRecord extends User {
   createdAt: number;
 }
 
+export interface ReferralActivationRecord {
+  id: string;
+  inviterUserId: string;
+  referredUserId: string;
+  referredUsername: string;
+  referralCode: string;
+  createdAt: number;
+}
+
 export interface PendingSignupData {
   username: string;
   passwordHash: string;

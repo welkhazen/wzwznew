@@ -1,10 +1,12 @@
-import type { UserRecord } from "../types";
+import type { ReferralActivationRecord, UserRecord } from "../types";
 import {
   createUser,
   findUserByReferralCode,
   findUserById,
   findUserByUsername,
+  listReferralActivationsForInviter,
   phoneHashExists,
+  recordReferralActivation,
   updateUserPasswordHash,
   updateUserProfile,
   usernameExists,
@@ -31,6 +33,7 @@ export interface UserRepository {
   phoneHashExists(phoneHash: string): Promise<boolean>;
   create(input: CreateUserInput): Promise<UserRecord>;
   registerReferralActivation(referralCode: string, referredUserId: string): Promise<void>;
+  listReferralActivations(userId: string): Promise<ReferralActivationRecord[]>;
   updateProfile(userId: string, updates: UpdateUserProfileInput): Promise<UpdateProfileResult>;
   updatePasswordHash(userId: string, passwordHash: string): Promise<boolean>;
 }
@@ -64,8 +67,12 @@ class MemoryUserRepository implements UserRepository {
     return createUser(input.username, input.passwordHash, input.phoneHash, input.referralCode);
   }
 
-  async registerReferralActivation(_referralCode: string, _referredUserId: string): Promise<void> {
-    return;
+  async registerReferralActivation(referralCode: string, referredUserId: string): Promise<void> {
+    recordReferralActivation(referralCode, referredUserId);
+  }
+
+  async listReferralActivations(userId: string): Promise<ReferralActivationRecord[]> {
+    return listReferralActivationsForInviter(userId);
   }
 
   async updateProfile(userId: string, updates: UpdateUserProfileInput): Promise<UpdateProfileResult> {
