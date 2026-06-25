@@ -182,30 +182,50 @@ export function DashboardHome({
       </section>
 
       {/* ── Your Communities ── */}
-      {joinedCommunities.length > 0 && (
-        <section className="space-y-5">
-          <div className="flex justify-between items-end">
-            <div className="space-y-0.5">
-              <div className="flex items-center gap-2">
-                <Users className="size-4 text-raw-gold" />
-                <h2 className={`text-xl font-bold tracking-tight ${isLight ? "text-slate-950" : "text-white"}`}>Your Communities</h2>
-              </div>
-              <p className={`text-[13px] ${isLight ? "text-slate-500" : "text-white/40"}`}>Anonymous circles you've joined.</p>
+      <section className="space-y-5">
+        <div className="flex justify-between items-end">
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-2">
+              <Users className="size-4 text-raw-gold" />
+              <h2 className={`text-xl font-bold tracking-tight ${isLight ? "text-slate-950" : "text-white"}`}>Your Communities</h2>
             </div>
-            <button
-              onClick={() => onNavigate("communities")}
-              className="text-sm text-raw-gold hover:underline flex items-center gap-1 font-bold"
-            >
-              View All <ChevronRight className="size-4" />
-            </button>
+            <p className={`text-[13px] ${isLight ? "text-slate-500" : "text-white/40"}`}>
+              {joinedCommunities.length > 0
+                ? "Anonymous circles you've joined."
+                : "You haven't joined any communities yet."}
+            </p>
           </div>
+          <button
+            onClick={() => onNavigate("communities")}
+            className="text-sm text-raw-gold hover:underline flex items-center gap-1 font-bold"
+          >
+            {joinedCommunities.length > 0 ? "View All" : "Browse"} <ChevronRight className="size-4" />
+          </button>
+        </div>
+        {joinedCommunities.length > 0 ? (
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             {joinedCommunities.slice(0, 4).map((community) => (
               <CommunityCard key={community.id} community={community} isLight={isLight} onOpenCommunity={onOpenCommunity} />
             ))}
           </div>
-        </section>
-      )}
+        ) : (
+          <button
+            type="button"
+            onClick={() => onNavigate("communities")}
+            className={`flex w-full flex-col items-center gap-2 rounded-2xl border border-dashed px-6 py-8 text-center transition ${
+              isLight
+                ? "border-slate-300 bg-white/60 text-slate-600 hover:border-amber-400 hover:text-amber-700"
+                : "border-white/15 bg-raw-black/30 text-white/55 hover:border-raw-gold/40 hover:text-raw-gold"
+            }`}
+          >
+            <Users className="size-6 text-raw-gold" />
+            <p className="text-sm font-semibold">Find your people</p>
+            <p className={`text-xs ${isLight ? "text-slate-500" : "text-white/40"}`}>
+              Tap to browse the {allCommunities.length} anonymous communities and join the ones that fit.
+            </p>
+          </button>
+        )}
+      </section>
 
       {/* Trending Polls */}
       <section className={`space-y-5 border-t pt-10 ${isLight ? "border-slate-200" : "border-white/5"}`}>
