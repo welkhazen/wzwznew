@@ -122,6 +122,37 @@ const STAT_ICONS = {
   pinned: Pin,
 } as const;
 
+interface AvatarGridProps {
+  levels: number[];
+  activeLevel: number;
+  activeIdentity: "public" | "private";
+  onSelect: (level: number) => void;
+  onPreview: (level: number | null) => void;
+}
+
+function AvatarGrid({ levels, activeLevel, activeIdentity, onSelect, onPreview }: AvatarGridProps) {
+  return (
+    <div className="mt-5 flex w-full flex-wrap justify-center gap-1.5">
+      {levels.map((lvl) => (
+        <button
+          key={lvl}
+          type="button"
+          onClick={() => onSelect(lvl)}
+          onMouseEnter={() => onPreview(lvl)}
+          onMouseLeave={() => onPreview(null)}
+          onFocus={() => onPreview(lvl)}
+          onBlur={() => onPreview(null)}
+          className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/40"
+          aria-label={`Use avatar ${lvl} for ${activeIdentity} identity`}
+          aria-pressed={lvl === activeLevel}
+        >
+          <AvatarFigure avatarIndex={lvl} size="sm" selected={lvl === activeLevel} />
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function DashboardProfile({
   userId,
   username,
@@ -136,7 +167,8 @@ export function DashboardProfile({
   polls,
   tokenBalance,
 }: DashboardProfileProps) {
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [hoveredAvatarLevel, setHoveredAvatarLevel] = useState<number | null>(null);
+  const [activeIdentity, setActiveIdentity] = useState<"public" | "private">("public");
   const [ownedInsightIds, setOwnedInsightIds] = useState<Set<string>>(() => readOwnedInsightIds(userId));
   const [inviteCodes, setInviteCodes] = useState<string[]>(() => readFoundingInviteCodes(userId));
   const [openInviteIndex, setOpenInviteIndex] = useState<number | null>(null);
@@ -148,10 +180,8 @@ export function DashboardProfile({
   const [editingAlias, setEditingAlias] = useState(false);
   const [selectedChatAlias, setSelectedChatAlias] = useState<string | null>(() => readSelectedChatAlias(userId));
   const [privateAvatarLevel, setPrivateAvatarLevel] = useState<number>(() => getPrivateAvatarLevel(userId));
-  const [hoveredPrivateIndex, setHoveredPrivateIndex] = useState<number | null>(null);
 
   useEffect(() => {
-    const nextInviteCodes = readFoundingInviteCodes(userId);
     setOwnedInsightIds(readOwnedInsightIds(userId));
     const codes = readFoundingInviteCodes(userId);
     setInviteCodes(codes);
@@ -290,12 +320,22 @@ export function DashboardProfile({
     { key: "pinned",      icon: STAT_ICONS.pinned,      label: "Messages Pinned",   value: profileStats.messagesPinned },
   ].filter((stat) => stat.key !== "hosts" || Number(stat.value) > 0);
 
-  const displayIndex = hoveredIndex ?? avatarLevel;
+  const isPublicActive = activeIdentity === "public";
+  const activeLevel = isPublicActive ? avatarLevel : privateAvatarLevel;
+  const displayIndex = hoveredAvatarLevel ?? activeLevel;
   const theme = getAvatar(displayIndex);
   const avatarThemeCount = Array.isArray(LEVEL_THEMES) && LEVEL_THEMES.length > 0 ? LEVEL_THEMES.length : Math.max(avatarLevel, 1);
   const ownedLevelSet = ownedAvatarLevels instanceof Set ? ownedAvatarLevels : new Set<number>([avatarLevel]);
   const ownedLevels = Array.from({ length: avatarThemeCount }, (_, i) => i + 1)
     .filter((lvl) => ownedLevelSet.has(lvl));
+
+  const handleInventorySelect = (lvl: number) => {
+    if (isPublicActive) {
+      onAvatarChange(lvl);
+    } else {
+      handlePrivateAvatarChange(lvl);
+    }
+  };
 
   return (
     <div className="space-y-5">
@@ -309,46 +349,167 @@ export function DashboardProfile({
         </p>
       </div>
 
-      {/* Avatar card */}
-      <div className="flex flex-col items-center rounded-2xl border border-raw-border/40 bg-raw-surface/40 px-4 py-5 text-center sm:px-6 sm:py-6">
-        <AvatarFigure avatarIndex={displayIndex} size="xl" selected />
-        <p className="mt-3 font-display text-lg tracking-wide text-raw-text">
-          {username}
-        </p>
-        <p className="text-[10px] uppercase tracking-[0.22em] text-raw-silver/30">Public name</p>
-        <p className="text-xs text-raw-gold/60">Level {displayIndex}</p>
-        <p className="text-[10px] text-raw-silver/30">{theme.name}</p>
-
-        <LevelProgressBanner xp={xp} level={xpLevel} className="mt-4 w-full" />
-
-        {/* Level selector — flex-wrap with fixed tile size so rows
-            never overlap and avatars stay aligned on every viewport. */}
-        <div className="mt-4 flex w-full flex-wrap justify-center gap-1.5">
-          {ownedLevels.map(
-            (lvl) => (
-              <button
-                key={lvl}
-                type="button"
-                onClick={() => {
-                  onAvatarChange(lvl);
-                }}
-                onMouseEnter={() => setHoveredIndex(lvl)}
-                onMouseLeave={() => setHoveredIndex(null)}
-                onFocus={() => setHoveredIndex(lvl)}
-                onBlur={() => setHoveredIndex(null)}
-                className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/40"
-                aria-label={`Preview level ${lvl}`}
-                aria-pressed={lvl === avatarLevel}
-              >
-                <AvatarFigure
-                  avatarIndex={lvl}
-                  size="sm"
-                  selected={lvl === avatarLevel}
-                />
-              </button>
-            )
-          )}
+      {/* Unified Identity card */}
+      <div className="rounded-2xl border border-raw-border/40 bg-raw-surface/40 px-4 py-5 sm:px-6 sm:py-6">
+        <div className="mb-4 text-center sm:text-left">
+          <p className="text-sm font-semibold text-raw-text">Identity</p>
+          <p className="mt-1 text-[11px] text-raw-silver/40">
+            Your public and private identity. Click one to edit.
+          </p>
         </div>
+
+        {/* Public + Private selector row */}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <button
+            type="button"
+            onClick={() => setActiveIdentity("public")}
+            aria-pressed={isPublicActive}
+            className={`flex min-w-0 flex-col items-center gap-2 rounded-2xl border px-3 py-4 transition-all ${
+              isPublicActive
+                ? "border-raw-gold/60 bg-raw-gold/[0.08] shadow-[0_0_24px_rgba(241,196,45,0.12)]"
+                : "border-raw-border/40 bg-raw-black/20 hover:border-raw-gold/30"
+            }`}
+          >
+            <AvatarFigure avatarIndex={avatarLevel} size="lg" selected={isPublicActive} />
+            <span className="text-[10px] uppercase tracking-[0.18em] text-raw-silver/45">Public</span>
+            <span className="w-full truncate text-sm font-bold text-raw-text">{username}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveIdentity("private")}
+            aria-pressed={!isPublicActive}
+            className={`flex min-w-0 flex-col items-center gap-2 rounded-2xl border px-3 py-4 transition-all ${
+              !isPublicActive
+                ? "border-raw-gold/60 bg-raw-gold/[0.08] shadow-[0_0_24px_rgba(241,196,45,0.12)]"
+                : "border-raw-border/40 bg-raw-black/20 hover:border-raw-gold/30"
+            }`}
+          >
+            <AvatarFigure avatarIndex={privateAvatarLevel} size="lg" selected={!isPublicActive} />
+            <span className="text-[10px] uppercase tracking-[0.18em] text-raw-silver/45">Private</span>
+            <span className="w-full truncate text-sm font-bold text-raw-text">
+              {privateAlias ? `@${privateAlias.alias}` : "Not set"}
+            </span>
+          </button>
+        </div>
+
+        <p className="mt-4 text-center text-[10px] uppercase tracking-[0.18em] text-raw-gold/70">
+          Currently editing: {isPublicActive ? "Public Identity" : "Private Identity"}
+        </p>
+
+        {/* Identity-specific details */}
+        {isPublicActive ? (
+          <div className="mt-4 flex flex-col items-center text-center">
+            <p className="font-display text-lg tracking-wide text-raw-text">{username}</p>
+            <p className="text-[10px] uppercase tracking-[0.22em] text-raw-silver/30">Public name</p>
+            <p className="text-xs text-raw-gold/60">Level {displayIndex}</p>
+            <p className="text-[10px] text-raw-silver/30">{theme.name}</p>
+            <LevelProgressBanner xp={xp} level={xpLevel} className="mt-4 w-full" />
+          </div>
+        ) : (
+          <div className="mt-4 space-y-3">
+            <div className="rounded-xl border border-raw-border/30 bg-raw-black/25 p-2">
+              <p className="mb-2 text-[10px] uppercase tracking-[0.16em] text-raw-silver/35">Chat name</p>
+              <button
+                type="button"
+                onClick={() => handleSelectChatAlias(null)}
+                className={`mb-1 flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs transition-colors ${
+                  !selectedChatAlias ? "bg-raw-gold/15 text-raw-gold" : "text-raw-silver/60 hover:bg-white/5 hover:text-raw-text"
+                }`}
+              >
+                <span className="flex min-w-0 items-center gap-2">
+                  <User className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">@{username}</span>
+                </span>
+                {!selectedChatAlias && <Check className="h-3.5 w-3.5 shrink-0" />}
+              </button>
+              {privateAlias && (
+                <button
+                  type="button"
+                  onClick={() => handleSelectChatAlias(privateAlias.alias)}
+                  className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs transition-colors ${
+                    selectedChatAlias?.toLowerCase() === privateAlias.alias.toLowerCase()
+                      ? "bg-raw-gold/15 text-raw-gold"
+                      : "text-raw-silver/60 hover:bg-white/5 hover:text-raw-text"
+                  }`}
+                >
+                  <span className="flex min-w-0 items-center gap-2">
+                    <ShieldOff className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate">@{privateAlias.alias}</span>
+                  </span>
+                  {selectedChatAlias?.toLowerCase() === privateAlias.alias.toLowerCase() && <Check className="h-3.5 w-3.5 shrink-0" />}
+                </button>
+              )}
+            </div>
+
+            <div className="rounded-xl border border-raw-border/30 bg-raw-black/25 p-3">
+              {editingAlias || !privateAlias ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    autoFocus
+                    type="text"
+                    value={aliasInput}
+                    onChange={(e) => setAliasInput(e.target.value.slice(0, 24))}
+                    placeholder="Private name (3–24 chars)"
+                    className="flex-1 rounded-lg border border-raw-border/40 bg-raw-black/40 px-3 py-2 text-sm text-raw-text placeholder:text-raw-silver/30 focus:border-raw-gold/60 focus:outline-none"
+                    disabled={aliasSaving}
+                    onKeyDown={(e) => { if (e.key === "Enter") void handleSaveAlias(); }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => void handleSaveAlias()}
+                    disabled={aliasSaving || aliasInput.trim().length < 3}
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-raw-gold text-raw-ink transition-opacity disabled:opacity-40"
+                  >
+                    <Check className="h-4 w-4" />
+                  </button>
+                  {privateAlias && (
+                    <button
+                      type="button"
+                      onClick={() => { setEditingAlias(false); setAliasInput(privateAlias.alias); }}
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-raw-border/40 text-raw-silver/50 hover:text-raw-text"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-bold text-raw-text">@{privateAlias.alias}</p>
+                    <p className="text-[10px] uppercase tracking-[0.16em] text-raw-silver/30">Private name</p>
+                  </div>
+                  <div className="flex gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setEditingAlias(true)}
+                      className="rounded-lg border border-raw-border/30 px-2.5 py-1 text-[11px] text-raw-silver/60 hover:border-raw-gold/30 hover:text-raw-gold"
+                    >
+                      Change
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void handleDeleteAlias()}
+                      className="rounded-lg border border-raw-border/30 px-2.5 py-1 text-[11px] text-raw-silver/40 hover:border-red-500/30 hover:text-red-400"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              )}
+              <p className="mt-2 text-[11px] text-raw-silver/30">
+                One private alias per account. Pick an avatar below.
+              </p>
+            </div>
+          </div>
+        )}
+
+        <AvatarGrid
+          levels={ownedLevels}
+          activeLevel={activeLevel}
+          activeIdentity={activeIdentity}
+          onSelect={handleInventorySelect}
+          onPreview={setHoveredAvatarLevel}
+        />
       </div>
 
       {/* Founding invitation tickets */}
@@ -428,129 +589,6 @@ export function DashboardProfile({
           })}
         </div>
       </section>
-
-      {/* Private identity card */}
-      <div className="rounded-2xl border border-raw-border/40 bg-raw-surface/40 px-4 py-5 sm:px-6">
-        <div className="mb-4 flex items-center gap-2">
-          <ShieldOff className="h-4 w-4 text-raw-gold/50" />
-          <p className="text-sm font-semibold text-raw-text">Private identity</p>
-        </div>
-
-        <div className="mt-4 rounded-xl border border-raw-border/30 bg-raw-black/25 p-2">
-          <p className="mb-2 text-[10px] uppercase tracking-[0.16em] text-raw-silver/35">Chat name</p>
-          <button
-            type="button"
-            onClick={() => handleSelectChatAlias(null)}
-            className={`mb-1 flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs transition-colors ${
-              !selectedChatAlias ? "bg-raw-gold/15 text-raw-gold" : "text-raw-silver/60 hover:bg-white/5 hover:text-raw-text"
-            }`}
-          >
-            <span className="flex min-w-0 items-center gap-2">
-              <User className="h-3.5 w-3.5 shrink-0" />
-              <span className="truncate">@{username}</span>
-            </span>
-            {!selectedChatAlias && <Check className="h-3.5 w-3.5 shrink-0" />}
-          </button>
-          {privateAlias && (
-            <button
-              type="button"
-              onClick={() => handleSelectChatAlias(privateAlias.alias)}
-              className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs transition-colors ${
-                selectedChatAlias?.toLowerCase() === privateAlias.alias.toLowerCase()
-                  ? "bg-raw-gold/15 text-raw-gold"
-                  : "text-raw-silver/60 hover:bg-white/5 hover:text-raw-text"
-              }`}
-            >
-              <span className="flex min-w-0 items-center gap-2">
-                <ShieldOff className="h-3.5 w-3.5 shrink-0" />
-                <span className="truncate">@{privateAlias.alias}</span>
-              </span>
-              {selectedChatAlias?.toLowerCase() === privateAlias.alias.toLowerCase() && <Check className="h-3.5 w-3.5 shrink-0" />}
-            </button>
-          )}
-        </div>
-
-        <div className="flex items-center gap-3">
-          <AvatarFigure avatarIndex={hoveredPrivateIndex ?? privateAvatarLevel} size="lg" selected />
-          <div className="min-w-0 flex-1">
-            {editingAlias || !privateAlias ? (
-              <div className="flex items-center gap-2">
-                <input
-                  autoFocus
-                  type="text"
-                  value={aliasInput}
-                  onChange={(e) => setAliasInput(e.target.value.slice(0, 24))}
-                  placeholder="Private name (3–24 chars)"
-                  className="flex-1 rounded-lg border border-raw-border/40 bg-raw-black/40 px-3 py-2 text-sm text-raw-text placeholder:text-raw-silver/30 focus:border-raw-gold/60 focus:outline-none"
-                  disabled={aliasSaving}
-                  onKeyDown={(e) => { if (e.key === "Enter") void handleSaveAlias(); }}
-                />
-                <button
-                  type="button"
-                  onClick={() => void handleSaveAlias()}
-                  disabled={aliasSaving || aliasInput.trim().length < 3}
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-raw-gold text-raw-ink transition-opacity disabled:opacity-40"
-                >
-                  <Check className="h-4 w-4" />
-                </button>
-                {privateAlias && (
-                  <button
-                    type="button"
-                    onClick={() => { setEditingAlias(false); setAliasInput(privateAlias.alias); }}
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-raw-border/40 text-raw-silver/50 hover:text-raw-text"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-            ) : (
-              <div className="flex items-center justify-between gap-2">
-                <div>
-                  <p className="text-sm font-bold text-raw-text">@{privateAlias.alias}</p>
-                  <p className="text-[10px] uppercase tracking-[0.16em] text-raw-silver/30">Private name</p>
-                </div>
-                <div className="flex gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => setEditingAlias(true)}
-                    className="rounded-lg border border-raw-border/30 px-2.5 py-1 text-[11px] text-raw-silver/60 hover:border-raw-gold/30 hover:text-raw-gold"
-                  >
-                    Change
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void handleDeleteAlias()}
-                    className="rounded-lg border border-raw-border/30 px-2.5 py-1 text-[11px] text-raw-silver/40 hover:border-red-500/30 hover:text-red-400"
-                  >
-                    Remove
-                  </button>
-                </div>
-              </div>
-            )}
-            <p className="mt-2 text-[11px] text-raw-silver/30">
-              One private alias per account. Pick an avatar below.
-            </p>
-          </div>
-        </div>
-
-        {/* Private avatar selector */}
-        <div className="mt-4 flex w-full flex-wrap justify-center gap-1.5">
-          {ownedLevels.map((lvl) => (
-            <button
-              key={lvl}
-              type="button"
-              onClick={() => handlePrivateAvatarChange(lvl)}
-              onMouseEnter={() => setHoveredPrivateIndex(lvl)}
-              onMouseLeave={() => setHoveredPrivateIndex(null)}
-              className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/40"
-              aria-label={`Use avatar ${lvl} for private identity`}
-              aria-pressed={lvl === privateAvatarLevel}
-            >
-              <AvatarFigure avatarIndex={lvl} size="sm" selected={lvl === privateAvatarLevel} />
-            </button>
-          ))}
-        </div>
-      </div>
 
       {/* Pinned messages */}
       {pinnedMessages.length > 0 && (
