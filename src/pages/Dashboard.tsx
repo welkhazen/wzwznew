@@ -11,6 +11,7 @@ import LNTLogo from "@/assets/LNT.webp";
 import SYTLogo from "@/assets/logospeak.webp";
 import IIJMLogo from "@/assets/itisjustme.webp";
 import { matchPath, useLocation, useNavigate } from "react-router-dom";
+import { getPollShareCode, POLL_SHARE_PARAM } from "@/lib/pollShare";
 import { DashboardNav, type DashboardTab } from "@/components/dashboard/DashboardNav";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { DashboardHome } from "@/components/dashboard/DashboardHome";
@@ -299,6 +300,12 @@ export default function Dashboard({
     navigate(`/dashboard/communities/${communityId}`);
   };
 
+  const handleOpenPoll = (pollId: string) => {
+    setActiveTab("polls");
+    setIsHome(false);
+    navigate(`/dashboard?${POLL_SHARE_PARAM}=${getPollShareCode(pollId)}`);
+  };
+
   const handleBackToCommunities = () => {
     setActiveTab("communities");
     setIsHome(false);
@@ -455,6 +462,7 @@ export default function Dashboard({
             xpLevel={progress?.level ?? 1}
             onNavigate={handleTabChange}
             onOpenCommunity={handleOpenCommunity}
+            onOpenPoll={handleOpenPoll}
             communities={dashboardCommunities}
             isAdmin={user.role === "admin"}
             onAwardXP={handleDailySpinAward}
@@ -617,6 +625,7 @@ export default function Dashboard({
               xpLevel={progress?.level ?? 1}
               onNavigate={handleTabChange}
               onOpenCommunity={handleOpenCommunity}
+              onOpenPoll={handleOpenPoll}
               communities={dashboardCommunities}
               isAdmin={user.role === "admin"}
               onAwardXP={handleDailySpinAward}

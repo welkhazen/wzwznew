@@ -27,6 +27,7 @@ interface DashboardHomeProps {
   communities: PersistedCommunityRecord[];
   onNavigate: (tab: DashboardTab) => void;
   onOpenCommunity: (communityId: string) => void;
+  onOpenPoll: (pollId: string) => void;
   isAdmin?: boolean;
   onAwardXP?: (amount: number) => Promise<void>;
   onAvatarWon?: (level: number) => void;
@@ -92,6 +93,7 @@ function CommunityCard({
 
 export function DashboardHome({
   userId,
+  polls,
   dailyAnsweredCount,
   dailyPollLimit,
   xp,
@@ -99,6 +101,7 @@ export function DashboardHome({
   communities,
   onNavigate,
   onOpenCommunity,
+  onOpenPoll,
   isAdmin,
   onAwardXP,
   onAvatarWon,
@@ -145,10 +148,12 @@ export function DashboardHome({
     return () => { if (spinTimerRef.current) window.clearInterval(spinTimerRef.current); };
   }, [hasSpunToday, updateSpinCountdown]);
 
-  const trending = useMemo(
-    () => [...allCommunities].sort((a, b) => b.members.length - a.members.length).slice(0, 4),
-    [allCommunities],
-  );
+  const joinedCommunities = useMemo(() => {
+    if (!userId) return [];
+    return allCommunities.filter((community) =>
+      community.members.some((member) => member.userId === userId),
+    );
+  }, [allCommunities, userId]);
 
   const hasReachedDailyPollLimit = dailyAnsweredCount >= dailyPollLimit;
   const pollProgress = dailyPollLimit > 0 ? Math.min(100, (dailyAnsweredCount / dailyPollLimit) * 100) : 0;
@@ -176,33 +181,40 @@ export function DashboardHome({
         <div className="absolute -right-12 -top-12 w-64 h-64 bg-raw-gold/5 blur-[80px] rounded-full pointer-events-none" />
       </section>
 
-      {/* ── Trending ── */}
-      <section className="space-y-5">
-        <div className="flex justify-between items-end">
-          <div className="space-y-0.5">
-            <div className="flex items-center gap-2">
-              <Flame className="size-4 text-raw-gold" />
-              <h2 className={`text-xl font-bold tracking-tight ${isLight ? "text-slate-950" : "text-white"}`}>Trending</h2>
+      {/* ── Your Communities ── */}
+      {joinedCommunities.length > 0 && (
+        <section className="space-y-5">
+          <div className="flex justify-between items-end">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2">
+                <Users className="size-4 text-raw-gold" />
+                <h2 className={`text-xl font-bold tracking-tight ${isLight ? "text-slate-950" : "text-white"}`}>Your Communities</h2>
+              </div>
+              <p className={`text-[13px] ${isLight ? "text-slate-500" : "text-white/40"}`}>Anonymous circles you've joined.</p>
             </div>
-            <p className={`text-[13px] ${isLight ? "text-slate-500" : "text-white/40"}`}>Most active anonymous circles.</p>
+            <button
+              onClick={() => onNavigate("communities")}
+              className="text-sm text-raw-gold hover:underline flex items-center gap-1 font-bold"
+            >
+              View All <ChevronRight className="size-4" />
+            </button>
           </div>
-          <button
-            onClick={() => onNavigate("communities")}
-            className="text-sm text-raw-gold hover:underline flex items-center gap-1 font-bold"
-          >
-            View All <ChevronRight className="size-4" />
-          </button>
-        </div>
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {trending.map((community, i) => (
-            <CommunityCard key={community.id} community={community} rank={i} isLight={isLight} onOpenCommunity={onOpenCommunity} />
-          ))}
-        </div>
-      </section>
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            {joinedCommunities.slice(0, 4).map((community) => (
+              <CommunityCard key={community.id} community={community} isLight={isLight} onOpenCommunity={onOpenCommunity} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Trending Polls */}
       <section className={`space-y-5 border-t pt-10 ${isLight ? "border-slate-200" : "border-white/5"}`}>
-        <TrendingPollsBox isLight={isLight} onOpenPolls={() => onNavigate("polls")} />
+        <TrendingPollsBox
+          isLight={isLight}
+          polls={polls}
+          userId={userId}
+          onOpenPoll={onOpenPoll}
+        />
       </section>
 
       {/* ── Challenges ── */}
