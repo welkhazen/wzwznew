@@ -171,23 +171,24 @@ export function PremiumPollCard({
             </div>
 
             {showHint && !isAnswered && (
-              <div className="mt-4 flex flex-col items-center">
-                <p className="text-center text-[10px] uppercase tracking-[0.2em]" style={{ color: "rgb(var(--raw-accent) / 0.75)" }}>tap to vote</p>
-                <ShareButton
-                  links={[
-                    { icon: MessageCircle, onClick: handleWhatsAppShare, label: "Share on WhatsApp" },
-                    { icon: Instagram, onClick: handleInstagramShare, label: "Share on Instagram" },
-                    { icon: Facebook, onClick: handleFacebookShare, label: "Share on Facebook" },
-                    { icon: SendHorizontal, onClick: handleNativeShare, label: "More apps" },
-                    { icon: Link2, onClick: handleCopyLink, label: "Copy link" },
-                  ]}
-                  className="mt-2 min-w-28 border-raw-gold/40 bg-raw-gold/10 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-raw-gold hover:bg-raw-gold/15 dark:border-raw-gold/40 dark:bg-raw-gold/10 dark:text-raw-gold dark:hover:bg-raw-gold/15"
-                >
-                  <Share2 className="size-3" />
-                  Share
-                </ShareButton>
-              </div>
+              <p className="mt-4 text-center text-[10px] uppercase tracking-[0.2em]" style={{ color: "rgb(var(--raw-accent) / 0.75)" }}>tap to vote</p>
             )}
+
+            <div className="mt-4 flex flex-col items-center">
+              <ShareButton
+                links={[
+                  { icon: MessageCircle, onClick: handleWhatsAppShare, label: "Share on WhatsApp" },
+                  { icon: Instagram, onClick: handleInstagramShare, label: "Share on Instagram" },
+                  { icon: Facebook, onClick: handleFacebookShare, label: "Share on Facebook" },
+                  { icon: SendHorizontal, onClick: handleNativeShare, label: "More apps" },
+                  { icon: Link2, onClick: handleCopyLink, label: "Copy link" },
+                ]}
+                className="min-w-28 border-raw-gold/40 bg-raw-gold/10 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-raw-gold hover:bg-raw-gold/15 dark:border-raw-gold/40 dark:bg-raw-gold/10 dark:text-raw-gold dark:hover:bg-raw-gold/15"
+              >
+                <Share2 className="size-3" />
+                Share
+              </ShareButton>
+            </div>
 
             <h2 className={`mt-4 flex min-h-[5.5rem] items-center text-center font-display text-[clamp(1rem,4.6vw,1.46rem)] leading-[1.4] [text-wrap:balance] sm:mt-5 sm:min-h-[7.75rem] ${isLight ? "text-[#2a2000]" : "text-[#dedede]"}`}>
               {question}
