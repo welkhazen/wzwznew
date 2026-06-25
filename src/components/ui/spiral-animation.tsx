@@ -19,6 +19,8 @@ class AnimationController {
   private timeline: gsap.core.Timeline
   private time = 0
   private stars: Star[] = []
+  private bgColor: string = 'black'
+  private fgColor: string = 'white'
 
   private readonly changeEventTime = 0.32
   private readonly cameraZ = -400
@@ -31,7 +33,11 @@ class AnimationController {
   constructor(
     private readonly ctx: CanvasRenderingContext2D,
     private readonly size: number,
+    bgColor?: string,
+    fgColor?: string,
   ) {
+    if (bgColor) this.bgColor = bgColor
+    if (fgColor) this.fgColor = fgColor
     this.timeline = gsap.timeline({ repeat: -1 })
 
     this.setupRandomGenerator()
@@ -65,7 +71,7 @@ class AnimationController {
       duration: 15,
       repeat: -1,
       ease: 'none',
-      onUpdate: () => this.render(),
+      onUpdate: () => this.render(this.bgColor, this.fgColor),
     })
   }
 
@@ -137,8 +143,8 @@ class AnimationController {
     }
   }
 
-  public render() {
-    this.ctx.fillStyle = 'black'
+  public render(bgColor: string = 'black', fgColor: string = 'white') {
+    this.ctx.fillStyle = bgColor
     this.ctx.fillRect(0, 0, this.size, this.size)
     this.ctx.save()
     this.ctx.translate(this.size / 2, this.size / 2)
@@ -147,9 +153,9 @@ class AnimationController {
     const t2 = this.constrain(this.map(this.time, this.changeEventTime, 1, 0, 1), 0, 1)
 
     this.ctx.rotate(-Math.PI * this.ease(t2, 2.7))
-    this.drawTrail(t1)
+    this.drawTrail(t1, fgColor)
 
-    this.ctx.fillStyle = 'white'
+    this.ctx.fillStyle = fgColor
     for (const star of this.stars) {
       star.render(t1, this)
     }
@@ -157,11 +163,11 @@ class AnimationController {
     this.ctx.restore()
   }
 
-  private drawTrail(t1: number) {
+  private drawTrail(t1: number, fgColor: string = 'white') {
     for (let i = 0; i < this.trailLength; i++) {
       const f = this.map(i, 0, this.trailLength, 1.1, 0.1)
       const sw = (1.3 * (1 - t1) + 3.0 * Math.sin(Math.PI * t1)) * f
-      this.ctx.fillStyle = 'white'
+      this.ctx.fillStyle = fgColor
       this.ctx.lineWidth = sw
       const position = this.spiralPath(t1 - 0.00015 * i)
       const rotated = this.rotate(position, new Vector2D(position.x + 5, position.y + 5), Math.sin(this.time * Math.PI * 2) * 0.5 + 0.5, i % 2 === 0)
@@ -253,12 +259,16 @@ class Star {
 
 interface SpiralAnimationProps {
   className?: string
+  isDarkMode?: boolean
 }
 
-export function SpiralAnimation({ className = '' }: SpiralAnimationProps) {
+export function SpiralAnimation({ className = '', isDarkMode = true }: SpiralAnimationProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const animationRef = useRef<AnimationController | null>(null)
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
+
+  const bgColor = isDarkMode ? 'black' : 'transparent'
+  const fgColor = isDarkMode ? 'white' : '#1a1a1a'
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -305,13 +315,13 @@ export function SpiralAnimation({ className = '' }: SpiralAnimationProps) {
     }
 
     animationRef.current?.destroy()
-    animationRef.current = new AnimationController(ctx, size)
+    animationRef.current = new AnimationController(ctx, size, bgColor, fgColor)
 
     return () => {
       animationRef.current?.destroy()
       animationRef.current = null
     }
-  }, [dimensions])
+  }, [dimensions, bgColor, fgColor])
 
   return <canvas ref={canvasRef} className={`absolute inset-0 h-full w-full ${className}`} />
 }
