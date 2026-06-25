@@ -41,8 +41,63 @@ const problemRows = [
 export function ProblemSection() {
   const sectionRef = useTrackSectionView("problem");
   const { mode } = useTheme();
-  const isLight = mode === "light";
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+
+  const getBgColor = () => {
+    switch (mode) {
+      case "light":
+        return "bg-slate-200/80";
+      case "dusk":
+        return "bg-slate-700/80";
+      case "dark":
+        return "bg-black/80";
+    }
+  };
+
+  const getNumberColor = () => {
+    switch (mode) {
+      case "light":
+        return "text-stone-600";
+      case "dusk":
+        return "text-slate-400";
+      case "dark":
+        return "text-raw-silver/70";
+    }
+  };
+
+  const getTitleColor = () => {
+    switch (mode) {
+      case "light":
+        return "text-stone-900";
+      case "dusk":
+        return "text-slate-100";
+      case "dark":
+        return "text-raw-text/82";
+    }
+  };
+
+  const getCategoryColor = () => {
+    switch (mode) {
+      case "light":
+        return "text-stone-500";
+      case "dusk":
+        return "text-slate-500";
+      case "dark":
+        return "text-raw-silver/45";
+    }
+  };
+
+  const getIconColor = (isOpen: boolean) => {
+    if (isOpen) return "text-raw-gold";
+    switch (mode) {
+      case "light":
+        return "text-stone-400";
+      case "dusk":
+        return "text-slate-500";
+      case "dark":
+        return "text-raw-silver/60";
+    }
+  };
 
   return (
     <section
@@ -57,7 +112,7 @@ export function ProblemSection() {
           transition={{ duration: 0.8, ease: "easeOut" }}
           className="text-center sm:text-left"
         >
-          <div className={`relative mb-7 h-32 w-full overflow-hidden rounded-[1.5rem] border border-raw-border/40 sm:mb-10 sm:h-44 sm:rounded-[1.75rem] md:h-52 ${isLight ? "bg-slate-200/80" : "bg-black/80"}`}>
+          <div className={`relative mb-7 h-32 w-full overflow-hidden rounded-[1.5rem] border border-raw-border/40 sm:mb-10 sm:h-44 sm:rounded-[1.75rem] md:h-52 ${getBgColor()}`}>
             <SpiralAnimation className="opacity-80" />
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(10,10,10,0.08)_36%,rgba(10,10,10,0.72)_100%)]" />
             <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-5 text-center">
@@ -89,19 +144,19 @@ export function ProblemSection() {
                   className="group w-full py-5 text-left transition-colors duration-300 hover:bg-raw-gold/[0.035] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/60 sm:py-7"
                 >
                   <span className="grid grid-cols-[2.25rem_minmax(0,1fr)_1.5rem] items-center gap-3 sm:grid-cols-[3.5rem_minmax(0,1fr)_9rem_2rem] sm:gap-6">
-                    <span className={`font-editorial text-sm italic leading-none sm:text-base ${isLight ? "text-stone-600" : "text-raw-silver/70"}`}>
+                    <span className={`font-editorial text-sm italic leading-none sm:text-base ${getNumberColor()}`}>
                       {String(index + 1).padStart(2, "0")}
                     </span>
-                    <span className={`font-editorial text-2xl font-semibold italic leading-tight transition-colors duration-300 group-hover:text-raw-text sm:text-3xl ${isLight ? "text-stone-900" : "text-raw-text/82"}`}>
+                    <span className={`font-editorial text-2xl font-semibold italic leading-tight transition-colors duration-300 group-hover:text-raw-text sm:text-3xl ${getTitleColor()}`}>
                       {item.title}
                     </span>
-                    <span className={`hidden justify-self-end font-display text-[0.56rem] uppercase tracking-[0.42em] transition-colors duration-300 group-hover:text-raw-gold/75 sm:block ${isLight ? "text-stone-500" : "text-raw-silver/45"}`}>
+                    <span className={`hidden justify-self-end font-display text-[0.56rem] uppercase tracking-[0.42em] transition-colors duration-300 group-hover:text-raw-gold/75 sm:block ${getCategoryColor()}`}>
                       {item.category}
                     </span>
                     <span
                       aria-hidden="true"
                       className={`justify-self-end font-display text-xl leading-none transition duration-300 group-hover:text-raw-gold ${
-                        isOpen ? "rotate-45 text-raw-gold" : isLight ? "text-stone-400" : "text-raw-silver/60"
+                        isOpen ? "rotate-45 text-raw-gold" : getIconColor(isOpen)
                       }`}
                     >
                       +
