@@ -16,7 +16,6 @@ interface TrendingPollsBoxProps {
   isLight?: boolean;
   polls: Poll[];
   userId?: string;
-  onOpenPoll: (pollId: string) => void;
 }
 
 interface TrendingEntry {
@@ -69,7 +68,6 @@ export function TrendingPollsBox({
   isLight = false,
   polls,
   userId,
-  onOpenPoll,
 }: TrendingPollsBoxProps) {
   const [trending, setTrending] = useState<TrendingPoll[]>([]);
   const [loading, setLoading] = useState(true);
@@ -241,17 +239,6 @@ export function TrendingPollsBox({
                   >
                     <MessageCircle className="size-3.5" />
                     {entry.commentCount} {entry.commentCount === 1 ? "comment" : "comments"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onOpenPoll(entry.poll.id)}
-                    className={`rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] transition ${
-                      isLight
-                        ? "border-slate-200 bg-white text-slate-600 hover:border-amber-400 hover:text-amber-700"
-                        : "border-raw-gold/35 bg-raw-black/45 text-raw-gold hover:border-raw-gold/60 hover:bg-raw-gold/10"
-                    }`}
-                  >
-                    Open poll
                   </button>
                 </div>
 
