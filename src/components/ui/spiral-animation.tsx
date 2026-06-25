@@ -268,7 +268,7 @@ export function SpiralAnimation({ className = '', isDarkMode = true }: SpiralAni
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
 
   const bgColor = isDarkMode ? 'black' : 'transparent'
-  const fgColor = isDarkMode ? 'white' : '#1a1a1a'
+  const fgColor = isDarkMode ? 'white' : '#22c55e'
 
   useEffect(() => {
     const canvas = canvasRef.current
