@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { AvatarFigure } from "@/components/ui/avatar-figure";
-import { AVATARS } from "@/lib/avatar-theme";
+import { AVATARS } from "@/lib/avataridentity";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 import { LandingSectionShell } from "@/components/landing/LandingSectionShell";
 
