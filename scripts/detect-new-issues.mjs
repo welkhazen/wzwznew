@@ -13,7 +13,7 @@
 // Always exits 0. This is a *report*, not a gate, and it never edits code —
 // nothing is fixed until the CEO approves specific items on the PR.
 
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { writeFileSync, appendFileSync, existsSync } from "node:fs";
 
 const OUT = (() => {
@@ -23,9 +23,12 @@ const OUT = (() => {
 
 const CODE_EXT = /\.(ts|tsx|js|jsx|mjs|cjs)$/;
 
-function sh(cmd) {
+// Run a binary with an explicit argument array (no shell). This avoids any
+// shell interpretation of values we interpolate — notably file paths that come
+// from `git diff` and could contain spaces or shell metacharacters.
+function run(bin, args) {
   try {
-    return { ok: true, out: execSync(cmd, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }) };
+    return { ok: true, out: execFileSync(bin, args, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }) };
   } catch (e) {
     return { ok: false, out: `${e.stdout ?? ""}${e.stderr ?? ""}` };
   }
@@ -33,22 +36,25 @@ function sh(cmd) {
 
 function resolveBase() {
   if (process.env.BASE_REF) {
-    const r = sh(`git merge-base HEAD ${process.env.BASE_REF}`);
+    const r = run("git", ["merge-base", "HEAD", process.env.BASE_REF]);
     if (r.ok && r.out.trim()) return r.out.trim();
   }
   for (const candidate of ["origin/main", "origin/preview", "main"]) {
-    const r = sh(`git merge-base HEAD ${candidate}`);
+    const r = run("git", ["merge-base", "HEAD", candidate]);
     if (r.ok && r.out.trim()) return r.out.trim();
   }
   return "HEAD~1";
 }
 
 const base = resolveBase();
-const changed = sh(`git diff --name-only ${base}...HEAD`).out
+const changed = run("git", ["diff", "--name-only", `${base}...HEAD`]).out
   .split("\n")
   .map((s) => s.trim())
   .filter((f) => f && CODE_EXT.test(f));
 const changedSet = new Set(changed);
+// Deleted files still appear in the diff; drop them before linting so ESLint
+// doesn't abort on a missing path and silently lose all results.
+const changedExisting = changed.filter((f) => existsSync(f));
 
 // ---- TypeScript ------------------------------------------------------------
 // Run every project config that exists, not just the root one: the root
@@ -57,12 +63,12 @@ const changedSet = new Set(changed);
 // type errors are caught, then dedupe by file:line:code.
 const TS_PROJECTS = ["tsconfig.app.json", "tsconfig.node.json"].filter(existsSync);
 const tsCommands = TS_PROJECTS.length
-  ? TS_PROJECTS.map((p) => `npx tsc -p ${p} --noEmit`)
-  : ["npx tsc --noEmit"];
+  ? TS_PROJECTS.map((p) => ["tsc", "-p", p, "--noEmit"])
+  : [["tsc", "--noEmit"]];
 const tsSeen = new Set();
 const tsAll = [];
-for (const cmd of tsCommands) {
-  for (const m of sh(cmd).out
+for (const args of tsCommands) {
+  for (const m of run("npx", args).out
     .split("\n")
     .map((l) => l.match(/^(.*?)\((\d+),(\d+)\): error (TS\d+): (.*)$/))
     .filter(Boolean)) {
@@ -75,10 +81,10 @@ for (const cmd of tsCommands) {
 }
 const tsNew = tsAll.filter((e) => changedSet.has(e.file));
 
-// ---- ESLint (changed files only) -------------------------------------------
+// ---- ESLint (changed files that still exist) -------------------------------
 const lintNew = [];
-if (changed.length) {
-  const r = sh(`npx eslint --format json ${changed.map((f) => JSON.stringify(f)).join(" ")}`);
+if (changedExisting.length) {
+  const r = run("npx", ["eslint", "--no-error-on-unmatched-pattern", "--format", "json", ...changedExisting]);
   const start = r.out.indexOf("[");
   if (start !== -1) {
     try {
@@ -103,7 +109,7 @@ if (changed.length) {
 let auditHigh = 0;
 let auditCritical = 0;
 {
-  const r = sh("npm audit --json");
+  const r = run("npm", ["audit", "--json"]);
   try {
     const v = JSON.parse(r.out).metadata?.vulnerabilities ?? {};
     auditHigh = v.high ?? 0;

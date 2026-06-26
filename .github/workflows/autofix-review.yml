@@ -32,6 +32,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -39,7 +40,9 @@ jobs:
       - run: npm ci
         # Ensure the base branch is available locally for the diff.
       - name: Fetch base branch
-        run: git fetch origin ${{ github.event.pull_request.base.ref }}
+        env:
+          PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: git fetch origin "$PR_BASE_REF"
 
       # --- Deterministic layer (always runs, free, no API key) ---
       - name: Detect new correctness issues

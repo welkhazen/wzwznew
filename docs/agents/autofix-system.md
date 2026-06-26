@@ -7,7 +7,7 @@ approve**. Nothing in your code changes without explicit sign-off.
 
 ## How it works
 
-```
+```text
 commit pushed to a PR
         │
         ▼
@@ -65,7 +65,7 @@ commit pushed to a PR
   numbered and tagged with severity, whether it's newly introduced or
   pre-existing, and a confidence level.
 - **Approve fixes:** reply to the PR with the numbers you want, e.g.
-  ```
+  ```text
   /autofix apply 1 3
   ```
   The apply job changes only those items, verifies them, and pushes a commit
