@@ -13,7 +13,6 @@ import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
 import { LANDING_WHEEL_SPIN_KEY } from "@/lib/avatarCatalog";
 import { avatarDisplayName } from "@/config/avatarNames";
 import { WheelOfFortune, type WheelPrize } from "@/components/wheel/WheelOfFortune";
-import { SpinWheelClaimBanner } from "@/components/wheel/SpinWheelClaimBanner";
 
 import { ChevronLeft, ChevronRight, Ticket } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -215,18 +214,6 @@ const FALLBACK_POLLS: OnboardingPoll[] = [
   },
 ];
 
-const EXTRA_ONBOARDING_POLLS: OnboardingPoll[] = [
-  {
-    id: "launch-feedback-loop",
-    question: "How often should raW ask members for product feedback during launch?",
-    options: ["Every week", "Every 2 weeks"],
-  },
-  {
-    id: "launch-community-priority",
-    question: "What matters most in your first community?",
-    options: ["Serious debate", "Constructive support"],
-  },
-];
 
 const ONBOARDING_COMMUNITIES = [
   {
@@ -682,7 +669,7 @@ export function OnboardingJourney({
                     track("onboarding_step_completed", {
                       step: "spin" as never,
                       step_index: STEP_ORDER.indexOf("spin"),
-                      time_in_step: Date.now() - stepStartTimeRef.current,
+                      duration_ms: Date.now() - stepStartTimeRef.current,
                     });
                   }}
                 />

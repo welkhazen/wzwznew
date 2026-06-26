@@ -126,7 +126,7 @@ function parseOptionVotes(value: unknown): Record<string, number> {
 
   return Object.fromEntries(
     Object.entries(value as Record<string, unknown>)
-      .map(([key, count]) => [key, Number(count)])
+      .map(([key, count]) => [key, Number(count)] as [string, number])
       .filter(([, count]) => Number.isFinite(count) && count >= 0)
   );
 }

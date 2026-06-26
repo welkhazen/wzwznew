@@ -20,7 +20,6 @@ import {
   resolvePollShareCode,
 } from "@/lib/pollShare";
 import {
-  Check,
   ChevronLeft,
   ChevronRight,
   Coins,
@@ -110,11 +109,6 @@ function resolveYesNoOptions(poll: Poll) {
     yesOption;
 
   return yesOption && noOption ? { yesOption, noOption } : null;
-}
-
-function optionPercent(optionVotes: number, totalVotes: number): number {
-  if (totalVotes <= 0) return 0;
-  return Math.round((optionVotes / totalVotes) * 100);
 }
 
 function readStoredAnswerHistory(storageKey: string): Record<string, string> {

@@ -134,7 +134,7 @@ export function appendOptimisticMessage(
     const withoutExisting = community.messages.filter((entry) => entry.id !== message.id);
     return {
       ...community,
-      messages: [...withoutExisting, { ...message, deliveryStatus: "sending" }].sort((a, b) =>
+      messages: [...withoutExisting, { ...message, deliveryStatus: "sending" as const }].sort((a, b) =>
         a.createdAt.localeCompare(b.createdAt),
       ),
     };

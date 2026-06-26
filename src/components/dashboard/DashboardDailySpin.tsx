@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Gift, Sparkles, Star, Zap, Clock } from "lucide-react";
-import { WheelOfFortune } from "@/components/wheel/WheelOfFortune";
+import { WheelOfFortune, type WheelPrize } from "@/components/wheel/WheelOfFortune";
 import { buildSpinPrizes } from "@/lib/spin-prizes";
 import { useTheme } from "@/providers/useTheme";
 import {
@@ -65,7 +65,11 @@ export function DashboardDailySpin({ userId, isAdmin = false, onAwardXP, onAvata
     () => accentPresets.find((preset) => preset.id === accent)?.rgb ?? "241 196 45",
     [accent, accentPresets],
   );
-  const prizes = useMemo(() => buildSpinPrizes(mode, accentRgb), [accentRgb, mode]);
+  // buildSpinPrizes only distinguishes light vs dark; dusk renders as dark.
+  const prizes = useMemo(
+    () => buildSpinPrizes(mode === "light" ? "light" : "dark", accentRgb),
+    [accentRgb, mode],
+  );
   const adminRewardOptions = useMemo(
     () => [
       { id: "random", label: "Random (weighted)" },
@@ -78,7 +82,7 @@ export function DashboardDailySpin({ userId, isAdmin = false, onAwardXP, onAvata
     ],
     [],
   );
-  const [selectedRewardId, setSelectedRewardId] = useState<string | null>(null);
+  const [, setSelectedRewardId] = useState<string | null>(null);
   const [lastSpinAt, setLastSpinAt] = useState<number | null>(() => {
     try {
       const stored = localStorage.getItem(storageKey);
@@ -150,7 +154,6 @@ export function DashboardDailySpin({ userId, isAdmin = false, onAwardXP, onAvata
     return () => window.clearInterval(timer);
   }, [updateCountdown]);
 
-  const selectedPrize = prizes.find((prize) => prize.id === selectedRewardId) ?? null;
 
   const handleSpinStart = useCallback(() => {
     if (isAdmin) return;
@@ -224,7 +227,6 @@ export function DashboardDailySpin({ userId, isAdmin = false, onAwardXP, onAvata
     setPrizeModal(null);
   };
 
-  const selectedMessage = selectedPrize ? prizeMessages[selectedPrize.id] : null;
   const modalMessage = prizeModal ? prizeMessages[prizeModal.id] : null;
   const jackpotCoins = useMemo(
     () =>

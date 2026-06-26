@@ -29,10 +29,15 @@ jobs:
         run: npm ci
 
       - name: Typecheck
-        run: npx tsc --noEmit
+        # Bare `tsc --noEmit` against the solution tsconfig (files: []) checks
+        # nothing. Run each referenced project explicitly so app + node code is
+        # actually type-checked.
+        run: |
+          npx tsc -p tsconfig.app.json --noEmit
+          npx tsc -p tsconfig.node.json --noEmit
 
       - name: Lint
-        run: npx eslint api components server src --max-warnings=0
+        run: npx eslint api server src --max-warnings=0
 
       - name: Build
         env:

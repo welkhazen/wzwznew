@@ -23,7 +23,6 @@ const Index = () => {
     sessionLoaded,
     polls,
     votedPolls,
-    freeVotesUsed,
     showSignup,
     setShowSignup,
     avatarLevel,
@@ -124,7 +123,6 @@ const Index = () => {
           open={showSignup}
           onClose={() => setShowSignup(false)}
           onRequestSignupOtp={requestSignupOtp}
-          onVerifySignupOtp={verifySignupOtp}
           onLogin={login}
           source="shared-poll"
         />

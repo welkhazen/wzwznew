@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Check, Copy, Heart, MessageSquare, Mic2, Pin, Share2, ShieldOff, Target, Ticket, Trash2, User, Users, X } from "lucide-react";
+import { Check, Copy, Heart, MessageSquare, Mic2, Pin, Share2, Target, Ticket, Trash2, Users, X } from "lucide-react";
 import { useProfileStats } from "@/hooks/useProfileStats";
 import { registerFoundingInviteCodes, getFoundingInviteRedemptions, type PinnedMessageRecord } from "@/backend/supabase/controllers/userExtrasController";
 import type { Poll } from "@/store/useRawStore";

@@ -1,6 +1,6 @@
 import { memo } from "react";
 import type { RefObject } from "react";
-import { AlertTriangle, Ban, BarChart3, Heart, MoreHorizontal, Pin, SendHorizontal, Trash2 } from "lucide-react";
+import { AlertTriangle, Ban, BarChart3, Heart, MoreHorizontal, Pin, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,

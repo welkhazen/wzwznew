@@ -1,14 +1,12 @@
-import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, lazy, useMemo, useState } from "react";
 import { Check, ChevronDown, ChevronRight, Dices, Zap, Flame, ShieldOff, UserRound, Users, BarChart3 } from "lucide-react";
 import type { Poll } from "@/store/useRawStore";
 import type { DashboardTab } from "./DashboardNav";
 import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
 import { COMMUNITY_COVER_IMAGES, COMMUNITY_COVER_VIDEOS } from "@/lib/communityConstants";
-import { getTodayKey } from "@/store/useRawStore.storage";
 import { useTheme } from "@/providers/useTheme";
 import { BrandName } from "@/components/ui/brand-name";
 import { LevelProgressBanner } from "@/components/dashboard/LevelProgressBanner";
-import { buildSpinPrizes } from "@/lib/spin-prizes";
 import { TrendingPollsBox } from "@/components/dashboard/TrendingPollsBox";
 
 const DashboardDailySpin = lazy(() =>
@@ -114,49 +112,11 @@ export function DashboardHome({
   onAwardXP,
   onAvatarWon,
 }: DashboardHomeProps) {
-  const { mode, accent, accentPresets } = useTheme();
-  const accentRgb = useMemo(
-    () => accentPresets.find((preset) => preset.id === accent)?.rgb ?? "241 196 45",
-    [accent, accentPresets],
-  );
-  const spinPrizes = useMemo(
-    () => buildSpinPrizes(mode === "light" ? "light" : "dark", accentRgb),
-    [mode, accentRgb],
-  );
+  const { mode } = useTheme();
   const isLight = mode === "light";
   const [identityMenuOpen, setIdentityMenuOpen] = useState(false);
-  const dailyItemsLeft = Math.max(0, dailyPollLimit - dailyAnsweredCount);
   const allCommunities = communities;
   const switcherOptions = identityOptions ?? [{ label: username, mode: "public" as const, value: null }];
-
-  const spinStorageKey = userId ? `raw.daily-spin.${userId}` : null;
-  const hasSpunToday = useMemo(() => {
-    if (!spinStorageKey) return false;
-    try {
-      const stored = localStorage.getItem(spinStorageKey);
-      if (!stored) return false;
-      return (JSON.parse(stored) as { date: string }).date === getTodayKey();
-    } catch { return false; }
-  }, [spinStorageKey]);
-
-  const [spinCountdown, setSpinCountdown] = useState("");
-  const spinTimerRef = useRef<number | null>(null);
-  const updateSpinCountdown = useCallback(() => {
-    const now = new Date();
-    const midnight = new Date();
-    midnight.setHours(24, 0, 0, 0);
-    const diff = midnight.getTime() - now.getTime();
-    const h = Math.floor(diff / 3_600_000);
-    const m = Math.floor((diff % 3_600_000) / 60_000);
-    const s = Math.floor((diff % 60_000) / 1_000);
-    setSpinCountdown(`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`);
-  }, []);
-  useEffect(() => {
-    if (!hasSpunToday) { setSpinCountdown(""); return; }
-    updateSpinCountdown();
-    spinTimerRef.current = window.setInterval(updateSpinCountdown, 1000);
-    return () => { if (spinTimerRef.current) window.clearInterval(spinTimerRef.current); };
-  }, [hasSpunToday, updateSpinCountdown]);
 
   const joinedCommunities = useMemo(() => {
     if (!userId) return [];

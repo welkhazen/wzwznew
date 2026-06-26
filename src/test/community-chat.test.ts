@@ -22,28 +22,6 @@ vi.mock("@/backend/supabase/client", () => ({
   },
 }));
 
-function successfulSingle(data: unknown) {
-  return {
-    insert: vi.fn(() => ({
-      select: vi.fn(() => ({
-        single: vi.fn(async () => ({ data, error: null })),
-      })),
-    })),
-  };
-}
-
-function successfulMutation() {
-  const query = {
-    upsert: vi.fn(async () => ({ error: null })),
-    insert: vi.fn(async () => ({ error: null })),
-    update: vi.fn(() => query),
-    delete: vi.fn(() => query),
-    eq: vi.fn(() => query),
-    then: vi.fn((resolve: (value: { error: null }) => unknown) => resolve({ error: null })),
-  };
-  return query;
-}
-
 describe("community chat Supabase persistence", () => {
   beforeEach(() => {
     vi.clearAllMocks();

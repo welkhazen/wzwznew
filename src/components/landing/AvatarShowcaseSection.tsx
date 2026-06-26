@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { highlightRawWordmark } from "@/components/ui/highlightRawWordmark";
-import { ChevronLeft, ChevronRight, ChevronDown, Sparkles } from "lucide-react";
+import { ChevronDown, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { LandingSectionShell } from "@/components/landing/LandingSectionShell";
 import { AvatarFigure } from "@/components/ui/avatar-figure";
@@ -13,10 +13,8 @@ import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 import { useTheme } from "@/providers/useTheme";
 import { WheelRewardInline } from "@/components/landing/WheelReward";
 
-const VISIBLE_COUNT = 4;
 const DESKTOP_COUNT = 8;
 const FEATURED_UNLOCKABLE_COUNT = 8;
-const MOBILE_PHONE_SCALE = 0.5;
 const CHOOSER_AVATARS: readonly AvatarCatalogItem[] = [
   { id: "ember", level: 2, name: "Ember", price: "0", imageSrc: "/avatars/avatar-3.svg", bg: "#1f0a05", figure: "#ff8a1f", ring: "#ff8a1f", glow: "#ff8a1f80", isActive: true, rarity: "common" },
   { id: "verdant", level: 3, name: "Verdant", price: "0", imageSrc: "/avatars/avatar-1.svg", bg: "#08160b", figure: "#22c55e", ring: "#22c55e", glow: "#22c55e80", isActive: true, rarity: "common" },
@@ -72,20 +70,6 @@ const UNLOCKABLE_FEATURE_ORDER = [
   "Gold Warden",
 ] as const;
 
-type RevealAvatarImageFit = { scale: number; objectPosition?: string };
-
-const REVEAL_AVATAR_IMAGE_FIT: Record<string, RevealAvatarImageFit> = {
-  "reveal-1": { scale: 1.18 }, // Silver Void / platinum-style frame
-  "reveal-2": { scale: 1.5 },
-  "reveal-3": { scale: 1.5 },
-  "reveal-4": { scale: 1.62 }, // Violet Mask has the most transparent padding.
-  "reveal-5": { scale: 1.5 },
-  "reveal-6": { scale: 1.12 },
-  "reveal-7": { scale: 1.5 },
-  "reveal-8": { scale: 1.22 },
-  "reveal-9": { scale: 1.42 },
-};
-
 interface AvatarShowcaseSectionProps {
   onSignupClick?: () => void;
 }
@@ -96,9 +80,7 @@ export function AvatarShowcaseSection({ onSignupClick = () => undefined }: Avata
   const isLight = mode === "light";
   const [avatarIndex, setAvatarIndex] = useState(CHOOSER_AVATARS[0].level);
   const [previewIndex, setPreviewIndex] = useState(CHOOSER_AVATARS[0].level);
-  const [startIndex, setStartIndex] = useState(0);
-  const [desktopStart, setDesktopStart] = useState(0);
-  const [showAll, setShowAll] = useState(false);
+  const [desktopStart] = useState(0);
   const [showUnlockableAvatars, setShowUnlockableAvatars] = useState(false);
   const [showMore, setShowMore] = useState(false);
   const [themeVersion, setThemeVersion] = useState(0);
@@ -145,42 +127,6 @@ export function AvatarShowcaseSection({ onSignupClick = () => undefined }: Avata
     () => extraPreviewAvatar ?? LANDING_AVATARS.find((avatar) => avatar.level === previewIndex) ?? chooserAvatars[0] ?? null,
     [chooserAvatars, extraPreviewAvatar, previewIndex]
   );
-
-  const canPrev = true;
-  const canNext = true;
-
-  // Per-image scale to normalise inner-circle size — each source image has
-  // different transparent padding around the avatar circle.
-  function getRevealAvatarImageStyle(avatarId?: string): React.CSSProperties {
-    const fit = avatarId ? REVEAL_AVATAR_IMAGE_FIT[avatarId] : undefined;
-
-    return {
-      objectPosition: fit?.objectPosition ?? "center center",
-      transform: `scale(${fit?.scale ?? 1.12})`,
-      transformOrigin: "center center",
-    };
-  }
-
-  function prev() {
-    setStartIndex((i) => (i - 1 + chooserTotal) % chooserTotal);
-  }
-
-  function next() {
-    setStartIndex((i) => (i + 1) % chooserTotal);
-  }
-
-  function prevDesktop() {
-    setDesktopStart((i) => (i - DESKTOP_COUNT + chooserTotal) % chooserTotal);
-  }
-
-  function nextDesktop() {
-    setDesktopStart((i) => (i + DESKTOP_COUNT) % chooserTotal);
-  }
-
-  const visibleAvatars = Array.from({ length: VISIBLE_COUNT }, (_, i) => {
-    const idx = (startIndex + i) % chooserTotal;
-    return { avatar: chooserAvatars[idx], index: chooserAvatars[idx].level };
-  });
 
   const desktopAvatars = Array.from({ length: DESKTOP_COUNT }, (_, i) => {
     const idx = (desktopStart + i) % chooserTotal;
@@ -296,48 +242,6 @@ export function AvatarShowcaseSection({ onSignupClick = () => undefined }: Avata
     );
   }
 
-  function NavButton({
-    direction,
-    onClick,
-    disabled,
-  }: {
-    direction: "prev" | "next";
-    onClick: () => void;
-    disabled: boolean;
-  }) {
-    return (
-      <button
-        type="button"
-        onClick={onClick}
-        disabled={disabled}
-        className={`group relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-all duration-300 ${
-          disabled ? "opacity-20 cursor-not-allowed" : "cursor-pointer"
-        }`}
-        aria-label={direction === "prev" ? "Previous avatars" : "Next avatars"}
-      >
-        {/* Background layers */}
-        <div className="absolute inset-0 rounded-full border border-raw-border/40 bg-raw-black/60 transition-all duration-300 group-hover:border-raw-gold/50 group-hover:bg-raw-black/80" />
-        <div className="absolute inset-0 rounded-full opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-          style={{ boxShadow: "0 0 16px rgba(241,196,45,0.25), inset 0 0 12px rgba(241,196,45,0.06)" }}
-        />
-        {/* Gold shimmer on hover */}
-        <div className="absolute inset-0 overflow-hidden rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <div className="absolute inset-0 bg-gradient-to-br from-raw-gold/10 via-transparent to-transparent" />
-        </div>
-
-        <div className={`relative transition-transform duration-300 ${
-          direction === "prev"
-            ? "group-hover:-translate-x-0.5"
-            : "group-hover:translate-x-0.5"
-        }`}>
-          {direction === "prev"
-            ? <ChevronLeft className="h-5 w-5 text-raw-silver/60 transition-colors duration-300 group-hover:text-raw-gold" />
-            : <ChevronRight className="h-5 w-5 text-raw-silver/60 transition-colors duration-300 group-hover:text-raw-gold" />
-          }
-        </div>
-      </button>
-    );
-  }
 
   return (
     <LandingSectionShell

@@ -29,7 +29,7 @@ export default function RadialOrbitalTimeline({ timelineData, showTitleButtons =
   const [expandedItems, setExpandedItems] = useState<Record<number, boolean>>({});
   const [pulseEffect, setPulseEffect] = useState<Record<number, boolean>>({});
   const [activeNodeId, setActiveNodeId] = useState<number | null>(null);
-  const [activeNodePos, setActiveNodePos] = useState<{ x: number; y: number } | null>(null);
+  const [, setActiveNodePos] = useState<{ x: number; y: number } | null>(null);
   const [isCompact, setIsCompact] = useState(false);
   const [isTinyPhone, setIsTinyPhone] = useState(false);
 

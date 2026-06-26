@@ -42,7 +42,6 @@ export function useConfirmDialog() {
   const dialog = (
     <AlertDialog open={pending !== null}>
       <AlertDialogContent
-        onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
         className="!bg-raw-surface/95 border-raw-border/40 backdrop-blur"
       >
