@@ -9,6 +9,7 @@ import {
   Trash2,
   UserCog,
 } from "lucide-react";
+import { AdminBlockedWordsSettings } from "@/components/dashboard/AdminBlockedWordsSettings";
 import { useToast } from "@/hooks/use-toast";
 import { changePassword, deleteAccount } from "@/backend/supabase/controllers/authController";
 import {
@@ -22,22 +23,25 @@ import {
 
 interface DashboardSettingsProps {
   userId: string;
+  isAdmin?: boolean;
   onLogout: () => void;
   onBackToDashboard: () => void;
 }
 
-type SettingsSection = "account" | "privacy" | "security" | "danger";
+type SettingsSection = "account" | "privacy" | "admin" | "security" | "danger";
 
 const SECTIONS: Array<{ key: SettingsSection; label: string; icon: typeof UserCog }> = [
   { key: "account",  label: "Account",      icon: UserCog },
   { key: "privacy",  label: "Privacy",      icon: ShieldOff },
+  { key: "admin",    label: "Admin",        icon: Lock },
   { key: "security", label: "Security",     icon: KeyRound },
   { key: "danger",   label: "Danger zone",  icon: Trash2 },
 ];
 
-export function DashboardSettings({ userId, onLogout, onBackToDashboard }: DashboardSettingsProps) {
+export function DashboardSettings({ userId, isAdmin = false, onLogout, onBackToDashboard }: DashboardSettingsProps) {
   const { toast } = useToast();
   const [section, setSection] = useState<SettingsSection>("account");
+  const visibleSections = isAdmin ? SECTIONS : SECTIONS.filter((item) => item.key !== "admin");
 
   // Visibility
   const [profilePublic, setProfilePublic] = useState(true);
@@ -144,7 +148,7 @@ export function DashboardSettings({ userId, onLogout, onBackToDashboard }: Dashb
         {/* Left sidebar */}
         <nav className="rounded-2xl border border-raw-border/30 bg-raw-surface/30 p-1.5 md:self-start">
           <ul className="grid grid-cols-2 gap-1 md:flex md:flex-col">
-            {SECTIONS.map(({ key, label, icon: Icon }) => (
+            {visibleSections.map(({ key, label, icon: Icon }) => (
               <li key={key} className="md:w-full">
                 <button
                   type="button"
@@ -219,6 +223,10 @@ export function DashboardSettings({ userId, onLogout, onBackToDashboard }: Dashb
                 )}
               </div>
             </div>
+          )}
+
+          {section === "admin" && isAdmin && (
+            <AdminBlockedWordsSettings />
           )}
 
           {section === "security" && (
