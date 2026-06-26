@@ -31,6 +31,7 @@ class AnimationController {
   constructor(
     private readonly ctx: CanvasRenderingContext2D,
     private readonly size: number,
+    public particleColor: string = 'white',
   ) {
     this.timeline = gsap.timeline({ repeat: -1 })
 
@@ -148,7 +149,7 @@ class AnimationController {
     this.ctx.rotate(-Math.PI * this.ease(t2, 2.7))
     this.drawTrail(t1)
 
-    this.ctx.fillStyle = 'white'
+    this.ctx.fillStyle = this.particleColor
     for (const star of this.stars) {
       star.render(t1, this)
     }
@@ -160,7 +161,7 @@ class AnimationController {
     for (let i = 0; i < this.trailLength; i++) {
       const f = this.map(i, 0, this.trailLength, 1.1, 0.1)
       const sw = (1.3 * (1 - t1) + 3.0 * Math.sin(Math.PI * t1)) * f
-      this.ctx.fillStyle = 'white'
+      this.ctx.fillStyle = this.particleColor
       this.ctx.lineWidth = sw
       const position = this.spiralPath(t1 - 0.00015 * i)
       const rotated = this.rotate(position, new Vector2D(position.x + 5, position.y + 5), Math.sin(this.time * Math.PI * 2) * 0.5 + 0.5, i % 2 === 0)
@@ -252,9 +253,10 @@ class Star {
 
 interface SpiralAnimationProps {
   className?: string
+  color?: string
 }
 
-export function SpiralAnimation({ className = '' }: SpiralAnimationProps) {
+export function SpiralAnimation({ className = '', color = 'white' }: SpiralAnimationProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const animationRef = useRef<AnimationController | null>(null)
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
@@ -304,13 +306,13 @@ export function SpiralAnimation({ className = '' }: SpiralAnimationProps) {
     }
 
     animationRef.current?.destroy()
-    animationRef.current = new AnimationController(ctx, size)
+    animationRef.current = new AnimationController(ctx, size, color)
 
     return () => {
       animationRef.current?.destroy()
       animationRef.current = null
     }
-  }, [dimensions])
+  }, [dimensions, color])
 
   return <canvas ref={canvasRef} className={`absolute inset-0 h-full w-full ${className}`} />
 }
