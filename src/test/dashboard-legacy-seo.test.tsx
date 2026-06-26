@@ -22,6 +22,18 @@ vi.mock("@/components/dashboard/DashboardHome", () => ({
   DashboardHome: () => <section data-testid="dashboard-home" />,
 }));
 
+vi.mock("@/components/dashboard/DashboardCommunities", () => ({
+  DashboardCommunities: () => <section data-testid="dashboard-communities" />,
+}));
+
+vi.mock("@/components/dashboard/DashboardPolls", () => ({
+  DashboardPolls: () => <section data-testid="dashboard-polls" />,
+}));
+
+vi.mock("@/components/dashboard/DashboardDailySpin", () => ({
+  DashboardDailySpin: () => <section data-testid="dashboard-daily-spin" />,
+}));
+
 vi.mock("@/components/dashboard/DashboardStore", () => ({
   DashboardStore: () => <section data-testid="dashboard-store" />,
 }));
@@ -63,7 +75,10 @@ vi.mock("@/lib/communityCache", () => ({
 }));
 
 vi.mock("@/lib/identitySelection", () => ({
+  CHAT_IDENTITY_CHANGED_EVENT: "raw:chat-identity-changed",
   hydrateChatIdentityFromServer: vi.fn(async () => undefined),
+  readSelectedChatAlias: vi.fn(() => null),
+  writeSelectedChatAlias: vi.fn(),
 }));
 
 vi.mock("@/store/useUserProgress", () => ({

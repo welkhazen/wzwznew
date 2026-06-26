@@ -137,13 +137,13 @@ describe("CommunityRoomList", () => {
     expect(props.onPaidJoinCommunity).toHaveBeenCalledWith("locked", true);
   });
 
-  it("unjoined unlocked cards call onUnlockCommunity via the unlock button", () => {
+  it("unjoined unlocked cards with no free slots call the paid join callback", () => {
     const props = renderRoomList({
       communities: [community({ id: "public", title: "Public Room", locked: false })],
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /Unlock — \d+ tokens/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Join" }));
 
-    expect(props.onUnlockCommunity).toHaveBeenCalledWith("public");
+    expect(props.onPaidJoinCommunity).toHaveBeenCalledWith("public", true);
   });
 });

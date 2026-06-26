@@ -1,10 +1,10 @@
-name: CI
+name: PR CI
 
 on:
   pull_request:
-    branches: [preview, main]
+    branches: [main]
   push:
-    branches: [preview, main]
+    branches: [main]
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -12,25 +12,42 @@ concurrency:
 
 jobs:
   verify:
-    name: Lint + Typecheck + Test + Build
+    name: Install, lint, build, and test
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
+
+      - name: Install dependencies
+        run: npm ci
+
       - name: Typecheck
         run: npx tsc --noEmit
-      - name: Lint (strict — no warnings allowed)
-        run: npm run lint:ci
-      - name: Test
-        run: npm test -- --run
+
+      - name: Lint
+        run: npx eslint api components server src --max-warnings=0
+
       - name: Build
         env:
-          # Dummy env so Vite doesn't choke; real values are set in Vercel.
           VITE_SUPABASE_URL: https://example.supabase.co
           VITE_SUPABASE_PUBLISHABLE_KEY: dummy
         run: npm run build
+
+      - name: Unit tests
+        run: npm run test
+
+      - name: Server tests
+        env:
+          VITE_SUPABASE_URL: https://example.supabase.co
+          VITE_SUPABASE_PUBLISHABLE_KEY: dummy
+          SESSION_SECRET: ci-session-secret
+          PHONE_HMAC_KEY: ci-phone-hmac-key
+          AUTH_PASSWORD_PEPPER: ci-password-pepper
+        run: npm run test:server
