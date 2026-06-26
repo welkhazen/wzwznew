@@ -631,6 +631,14 @@ html.theme-dusk .landing-page-shell {
   --raw-ink: 20 20 24;
 }
 
+/* Spiral banner box: dark gradient in dark/dusk, light slate in light mode */
+.spiral-banner {
+  background: linear-gradient(to bottom, #1c1c22, #000);
+}
+html.theme-light .spiral-banner {
+  background: rgb(226 232 240);
+}
+
 
 .landing-page-shell :is(p, a, button, label, li, input, textarea) {
   font-family: inherit;
