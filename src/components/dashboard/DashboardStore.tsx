@@ -20,6 +20,7 @@ interface DashboardStoreProps {
   avatarPricesByLevel: Record<number, string>;
   tokenBalance: number;
   userId: string;
+  userName: string;
 }
 
 export function DashboardStore({
@@ -30,6 +31,7 @@ export function DashboardStore({
   avatarPricesByLevel,
   tokenBalance,
   userId,
+  userName,
 }: DashboardStoreProps) {
   return (
     <div className="space-y-8">
@@ -95,6 +97,7 @@ export function DashboardStore({
             avatarPricesByLevel={avatarPricesByLevel}
             tokenBalance={tokenBalance}
             userId={userId}
+            userName={userName}
           />
         </Suspense>
       </section>

@@ -9,14 +9,15 @@ export const AVATAR_RANK_MAP: Record<string, number> = {
   grey: 1,
   gray: 1,
   blue: 2,
-  purple: 3,
+  green: 3,
   orange: 4,
-  red: 5,
-  pink: 6,
-  rose: 7,
-  gold: 8,
-  white: 9,
-  rainbow: 10,
+  purple: 5,
+  red: 6,
+  pink: 7,
+  rose: 8,
+  gold: 9,
+  white: 10,
+  rainbow: 11,
 };
 
 /**
@@ -26,15 +27,15 @@ export const AVATAR_RANK_MAP: Record<string, number> = {
  * back to grey/R1 — adjust here when the rank ladder grows.
  */
 // Id 35 ("Platinum Echo") was purged — its artwork was mis-colored red, not
-// platinum. Id 21 moved from rank 6 (Pink) to rank 7 (Rose, newly added), and
-// the Gold tier (ids 7, 40) shifted from rank 7 to rank 8 to take its place.
+// platinum. Rank system updated: added Green (R3), shifted Orange (R4), Purple (R5),
+// Red (R6), Pink (R7), Rose (R8), Gold (R9), White (R10), and Rainbow→S1 (R11).
 export const NUMBERED_AVATAR_RANKS: Record<number, number> = {
-  1: 1,  2: 4,  3: 1,  4: 6,  5: 3,  6: 5,  7: 8,  8: 1,  9: 2,  10: 2,
-  11: 1, 12: 2, 13: 5, 14: 4, 15: 1, 16: 6, 17: 1, 18: 2, 19: 10, 20: 9,
-  21: 7, 22: 10, 23: 2, 24: 3, 25: 2, 26: 10, 27: 1, 28: 4, 29: 4, 30: 9,
-  31: 9, 32: 9, 33: 2, 34: 5, 36: 2, 37: 3, 38: 4, 39: 5, 40: 8,
-  41: 3, 42: 4, 43: 1, 44: 2, 45: 5, 46: 3, 47: 6, 48: 2, 49: 3, 50: 3,
-  51: 5, 52: 2, 53: 1, 54: 9, 55: 6, 56: 2, 57: 6, 58: 3, 59: 6,
+  1: 1,  2: 4,  3: 1,  4: 7,  5: 4,  6: 6,  7: 9,  8: 1,  9: 2,  10: 2,
+  11: 1, 12: 2, 13: 6, 14: 4, 15: 1, 16: 7, 17: 5, 18: 2, 19: 11, 20: 10,
+  21: 8, 22: 11, 23: 2, 24: 5, 25: 2, 26: 11, 27: 6, 28: 10, 29: 8, 30: 10,
+  31: 9, 32: 4, 33: 2, 34: 11, 36: 3, 37: 4, 38: 9, 39: 6, 40: 9,
+  41: 4, 42: 6, 43: 1, 44: 2, 45: 9, 46: 4, 47: 7, 48: 2, 49: 4, 50: 4,
+  51: 6, 52: 2, 53: 3, 54: 10, 55: 8, 56: 2, 57: 4, 58: 4, 59: 7,
 };
 
 /**
@@ -64,26 +65,28 @@ const SLUG_AVATAR_RANKS: Record<string, number> = {
   "silver-void": 1,
   "neon-lynx": 2,
   "blue-signal": 2,
-  "violet-mask": 3,
-  "horned-iron": 5,
-  "crimson-muse": 5,
-  "solar-flame": 7,
-  "pink-circuit": 6,
-  "blu-fifer": 2,
-  "viozen": 5,
+  "violet-mask": 4,
+  "horned-iron": 6,
+  "crimson-muse": 6,
+  "solar-flame": 9,
+  "pink-circuit": 7,
+  "blu-fifer": 6,
+  "viozen": 6,
 };
 
 export const AVATAR_RANK_LABELS: Record<number, string> = {
   1: "Grey",
   2: "Blue",
-  3: "Purple",
+  3: "Green",
   4: "Orange",
-  5: "Red",
-  6: "Pink",
-  7: "Rose",
-  8: "Gold",
-  9: "White",
-  10: "Rainbow",
+  5: "Purple",
+  6: "Red",
+  7: "Pink",
+  8: "Rose",
+  9: "Gold",
+  10: "White",
+  11: "S1",
+  12: "C1",
 };
 
 type RankableAvatar = Pick<AvatarCatalogItem, "name" | "id"> & {
@@ -149,13 +152,14 @@ export function getAvatarRank(avatar: RankableAvatar): number {
   }
 
   const haystack = `${avatar.name ?? ""} ${avatar.id ?? ""}`.toLowerCase();
-  if (/rainbow|prism|spectrum/.test(haystack)) return 10;
-  if (/white|snow|glass|ivory/.test(haystack)) return 9;
-  if (/gold|yellow|pharaoh|solar|sun|diamond/.test(haystack)) return 8;
-  if (/pink|magenta|fuchsia/.test(haystack)) return 6;
-  if (/red|crimson|ruby|scarlet|blood|horned/.test(haystack)) return 5;
-  if (/orange|ember|bronze|copper|amber/.test(haystack)) return 4;
-  if (/purple|violet|amethyst|lilac|lavender/.test(haystack)) return 3;
+  if (/rainbow|prism|spectrum/.test(haystack)) return 11;
+  if (/white|snow|glass|ivory/.test(haystack)) return 10;
+  if (/gold|yellow|pharaoh|solar|sun|diamond/.test(haystack)) return 9;
+  if (/pink|magenta|fuchsia/.test(haystack)) return 7;
+  if (/red|crimson|ruby|scarlet|blood|horned/.test(haystack)) return 6;
+  if (/orange|ember|bronze|copper|amber/.test(haystack)) return 5;
+  if (/purple|violet|amethyst|lilac|lavender/.test(haystack)) return 4;
+  if (/green|lime|emerald|jade|forest|grass/.test(haystack)) return 3;
   if (/\bblu\b|blue|cyan|azure|teal|frost|indigo|aqua/.test(haystack)) return 2;
   return 1; // grey fallback
 }
