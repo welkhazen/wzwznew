@@ -6,6 +6,7 @@ import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
 import { COMMUNITY_COVER_IMAGES, COMMUNITY_COVER_VIDEOS } from "@/lib/communityConstants";
 import { getTodayKey } from "@/store/useRawStore.storage";
 import { useTheme } from "@/providers/useTheme";
+import { BrandName } from "@/components/ui/brand-name";
 import { LevelProgressBanner } from "@/components/dashboard/LevelProgressBanner";
 import { buildSpinPrizes } from "@/lib/spin-prizes";
 import { TrendingPollsBox } from "@/components/dashboard/TrendingPollsBox";
@@ -174,7 +175,7 @@ export function DashboardHome({
       <section className="relative">
         <div className="relative z-10">
           <h1 className={`font-display max-w-2xl text-2xl leading-[1.08] sm:text-3xl md:text-4xl md:leading-[1.15] ${isLight ? "text-slate-950" : "text-white"}`}>
-            Feeling <span className="text-raw-gold">raW</span>,{" "}
+            Feeling <BrandName />,{" "}
             <span className="relative inline-flex align-baseline">
               <button
                 type="button"
@@ -229,6 +230,7 @@ export function DashboardHome({
                 </div>
               )}
             </span>
+            ?
           </h1>
           <div className="mt-6 flex flex-wrap items-center gap-3">
             <div className={`flex items-center gap-2 rounded-full border px-4 py-2 ${isLight ? "border-slate-200 bg-white/85" : "border-white/10 bg-white/5"}`}>
