@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Home, MessageCircle, Store, Target, Trophy, LogOut } from "lucide-react";
+import { Home, MessageCircle, Store, Target, Trophy, LogOut, Shield } from "lucide-react";
 import { FloatingDock } from "@/components/ui/floating-dock";
 import { countUnreadMessages, type PersistedCommunityRecord } from "@/lib/communityChat";
 import { COMMUNITY_COVER_IMAGES } from "@/lib/communityConstants";
@@ -20,6 +20,7 @@ interface DashboardSidebarProps {
   communities: PersistedCommunityRecord[];
   favoriteCommunityIds: string[];
   onOpenCommunity: (communityId: string) => void;
+  showAdminLink?: boolean;
 }
 
 const NAV: { icon: typeof Home; label: string; tab: DashboardTab | "home" }[] = [
@@ -46,6 +47,7 @@ export function DashboardSidebar({
   communities,
   favoriteCommunityIds,
   onOpenCommunity,
+  showAdminLink = false,
 }: DashboardSidebarProps) {
   const joinedCommunities = useMemo(
     () => communities.filter((community) => community.members.some((member) => member.userId === userId)),
@@ -139,6 +141,15 @@ export function DashboardSidebar({
 
       {/* Bottom actions */}
       <div className="flex flex-col items-center gap-2 pb-5">
+        {showAdminLink && (
+          <button
+            title="Admin"
+            onClick={() => window.location.assign("/admin")}
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-raw-gold/30 bg-raw-gold/10 text-raw-gold transition-all hover:border-raw-gold/60 hover:bg-raw-gold/15"
+          >
+            <Shield className="h-4 w-4" />
+          </button>
+        )}
         <button
           title="Log Out"
           onClick={onLogout}

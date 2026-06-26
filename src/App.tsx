@@ -9,6 +9,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { RouteSeo } from "@/components/seo/RouteSeo";
 
 const Index = lazy(() => import("./pages/Index"));
+const Admin = lazy(() => import("./pages/Admin"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const FAQ = lazy(() => import("./pages/FAQ"));
 const AskAI = lazy(() => import("./pages/AskAI"));
@@ -38,6 +39,7 @@ const App = () => (
             <Suspense fallback={routeFallback}>
               <Routes>
                 <Route path="/" element={<Index />} />
+                <Route path="/admin" element={<Admin />} />
                 <Route path="/dashboard" element={<Index />} />
                 <Route path="/dashboard/communities/:communityId" element={<Index />} />
                 <Route path="/faq" element={<FAQ />} />

@@ -704,6 +704,7 @@ export default function Dashboard({
         communities={dashboardCommunities}
         favoriteCommunityIds={favoriteCommunityIds}
         onOpenCommunity={handleOpenCommunity}
+        showAdminLink={user.role === "admin"}
       />
 
       {/* FloatingDock for mobile navigation */}
