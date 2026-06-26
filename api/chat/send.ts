@@ -2,6 +2,8 @@ import { json, readJsonBody } from "../_lib/authServer.js";
 import { isTrustedOrigin } from "../_lib/requestSecurity.js";
 import { supabaseServerClient } from "../_lib/supabaseServerClient.js";
 import { getRequestUserId } from "../_lib/sessionAuth.js";
+import { listBlockedWords } from "../_lib/blockedWordsStore.js";
+import { checkServerText, parseEnvDenylist } from "../_lib/serverModeration.js";
 
 export const config = { runtime: "edge" };
 
@@ -53,6 +55,17 @@ export default async function handler(request: Request): Promise<Response> {
     return json({ error: "Invalid input.", details: "replyToMessageId" }, 400);
 
   const trimmedText = text.trim();
+
+  // Enforce blocked words + link/number rules server-side before any DB write.
+  const [dbBlockedWords] = await Promise.all([listBlockedWords(supabaseServerClient)]);
+  const blockedTerms = [
+    ...parseEnvDenylist(process.env.VITE_RAW_TEXT_DENYLIST),
+    ...dbBlockedWords.map((w) => w.normalizedTerm),
+  ];
+  const moderation = checkServerText(trimmedText, blockedTerms);
+  if (!moderation.allowed) {
+    return json({ error: "Message contains blocked content.", code: moderation.violation }, 422);
+  }
 
   const { data: user, error: userError } = await supabaseServerClient
     .from("users")
