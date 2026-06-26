@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Flame, MessageCircle, Heart, Reply2, Send } from "lucide-react";
+import { Flame, MessageCircle, Heart, Reply, Send } from "lucide-react";
 import {
   fetchPollComments,
   fetchTrendingPolls,
@@ -342,7 +342,7 @@ export function TrendingPollsBox({
                                   isLight ? "text-slate-400 hover:text-blue-500" : "text-raw-silver/50 hover:text-blue-400"
                                 }`}
                               >
-                                <Reply2 className="h-3.5 w-3.5" />
+                                <Reply className="h-3.5 w-3.5" />
                                 Reply
                               </button>
                             </div>
