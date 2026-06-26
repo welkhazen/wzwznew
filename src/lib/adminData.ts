@@ -106,6 +106,7 @@ const memoryStore = {
   chatReports: [] as ChatReportRecord[],
   communityJoinRequests: [] as CommunityJoinRequestRecord[],
   avatarCustomRequests: [] as AvatarCustomRequestRecord[],
+  blockedWords: [] as string[],
 };
 
 function readJsonArray<T>(storageKey: string): T[] {
@@ -354,4 +355,17 @@ export function createAvatarCustomRequest(requesterId: string, requesterName: st
   };
   writeAvatarCustomRequests([request, ...readAvatarCustomRequests()]);
   return request;
+}
+
+function normalizeBlockedWord(word: string): string {
+  return word.trim().toLowerCase();
+}
+
+export function readBlockedWords(): string[] {
+  return [...memoryStore.blockedWords];
+}
+
+export function writeBlockedWords(words: string[]): void {
+  const normalized = [...new Set(words.map(normalizeBlockedWord).filter(Boolean))].sort();
+  memoryStore.blockedWords = normalized;
 }
