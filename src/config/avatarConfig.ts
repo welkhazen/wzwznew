@@ -2,10 +2,11 @@
 // landing, onboarding, and the spin/claim systems. Anytime you'd
 // hardcode an avatar array elsewhere, import from here instead.
 
-// Ordered by rank tier (rank 1 grey -> rank 10 rainbow); see src/lib/avatarRank.ts.
+// Ordered by rank tier (rank 1 grey -> rank 9 white); see src/lib/avatarRank.ts.
 // Id 35 (the old "Platinum" slot) was removed — its artwork was mis-colored red.
 // Id 21 ("Rose Warden") now fills rank 7 ("Rose"), and Gold moved up to rank 8.
-export const FREE_SPIN_AVATAR_IDS = [43, 52, 41, 42, 13, 47, 21, 40, 20, 26] as const;
+// Id 26 (Rainbow Pulse, R10) replaced by id 37 (Purple Hex, R3) to add a second purple slot.
+export const FREE_SPIN_AVATAR_IDS = [43, 52, 41, 37, 42, 13, 47, 21, 40, 20] as const;
 
 // Early-signup reward pool. Must NOT overlap with FREE_SPIN_AVATAR_IDS.
 // Emptied: all four ids were retired (21 was promoted into the spin pool above).
@@ -16,9 +17,12 @@ export const EARLY_SIGNUP_AVATAR_IDS = [] as const;
 // users created at or after this timestamp cannot.
 export const EARLY_SIGNUP_CUTOFF_ISO = "2026-06-07T00:00:00Z";
 
+// Avatars that have a .webp file; all others fall back to .png.
+const WEBP_AVATAR_IDS = new Set([1, 6, 8, 13, 20, 21, 26, 40, 41, 42, 43, 47, 52]);
+
 /** Helper: full /public/avatars URL for a numeric avatar id. */
 export function avatarImageSrc(id: number): string {
-  return `/avatars/${id}.webp`;
+  return `/avatars/${id}.${WEBP_AVATAR_IDS.has(id) ? "webp" : "png"}`;
 }
 
 /** Dev-time sanity check: the two pools must not overlap. */
