@@ -18,6 +18,12 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "cap:sync": "npm run build && npx cap sync",
+    "mobile:build": "npm run build",
+    "mobile:sync": "npm run build && npx cap sync",
+    "mobile:sync:android": "npm run build && npx cap sync android",
+    "mobile:sync:ios": "npm run build && npx cap sync ios",
+    "mobile:open:android": "npx cap open android",
+    "mobile:open:ios": "npx cap open ios",
     "test:load:local": "node scripts/load-test.js",
     "memory-pack:export-bootstrap": "node scripts/export-llm-bootstrap.mjs",
     "avatars:process": "node scripts/process-new-avatars.mjs",
@@ -91,7 +97,8 @@
     "three": "^0.183.2",
     "vaul": "^0.9.9",
     "web-vitals": "^5.2.0",
-    "zod": "^3.25.76"
+    "zod": "^3.25.76",
+    "@capacitor/android": "^8.3.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",
