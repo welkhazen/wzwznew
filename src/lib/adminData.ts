@@ -78,12 +78,24 @@ export interface IssueReportRecord {
   resolvedBy?: string;
 }
 
+export interface AvatarCustomRequestRecord {
+  id: string;
+  requesterId: string;
+  requesterName: string;
+  description: string;
+  submittedAt: string;
+  status: "pending" | "approved" | "rejected";
+  reviewedAt?: string;
+  reviewedBy?: string;
+}
+
 const USER_STORAGE_KEY = "raw.users.v1";
 const AUTH_SESSION_STORAGE_KEY = "raw.auth-session.v1";
 export const COMMUNITY_REQUESTS_STORAGE_KEY = "raw.community-requests.v1";
 export const CHAT_REPORTS_STORAGE_KEY = "raw.chat-reports.v1";
 export const COMMUNITY_JOIN_REQUESTS_STORAGE_KEY = "raw.community-join-requests.v1";
 export const ISSUE_REPORTS_STORAGE_KEY = "raw.issue-reports.v1";
+export const AVATAR_CUSTOM_REQUESTS_STORAGE_KEY = "raw.avatar-custom-requests.v1";
 
 const ADMIN_USERNAMES = new Set(["admin", "rawadmin", "founder", "owner"]);
 
@@ -93,7 +105,7 @@ const memoryStore = {
   communityRequests: [] as CommunityRequestRecord[],
   chatReports: [] as ChatReportRecord[],
   communityJoinRequests: [] as CommunityJoinRequestRecord[],
-  blockedWords: [] as string[],
+  avatarCustomRequests: [] as AvatarCustomRequestRecord[],
 };
 
 function readJsonArray<T>(storageKey: string): T[] {
@@ -111,6 +123,10 @@ function readJsonArray<T>(storageKey: string): T[] {
 
   if (storageKey === COMMUNITY_JOIN_REQUESTS_STORAGE_KEY) {
     return [...memoryStore.communityJoinRequests] as T[];
+  }
+
+  if (storageKey === AVATAR_CUSTOM_REQUESTS_STORAGE_KEY) {
+    return [...memoryStore.avatarCustomRequests] as T[];
   }
 
   return [];
@@ -134,14 +150,14 @@ function writeJsonArray<T>(storageKey: string, entries: T[]): void {
   if (storageKey === COMMUNITY_JOIN_REQUESTS_STORAGE_KEY) {
     memoryStore.communityJoinRequests = entries as CommunityJoinRequestRecord[];
   }
+
+  if (storageKey === AVATAR_CUSTOM_REQUESTS_STORAGE_KEY) {
+    memoryStore.avatarCustomRequests = entries as AvatarCustomRequestRecord[];
+  }
 }
 
 function normalizeUsernameKey(username: string): string {
   return username.trim().toLowerCase();
-}
-
-function normalizeBlockedWord(value: string): string {
-  return value.trim().toLocaleLowerCase();
 }
 
 export function toUserId(username: string): string {
@@ -269,15 +285,6 @@ export function writeIssueReports(reports: IssueReportRecord[]): void {
   localStorage.setItem(ISSUE_REPORTS_STORAGE_KEY, JSON.stringify(reports));
 }
 
-export function readBlockedWords(): string[] {
-  return [...memoryStore.blockedWords];
-}
-
-export function writeBlockedWords(words: string[]): void {
-  const normalized = [...new Set(words.map(normalizeBlockedWord).filter(Boolean))].sort();
-  memoryStore.blockedWords = normalized;
-}
-
 const ADMIN_POLLS_STORAGE_KEY = "raw.admin.polls.v1";
 
 export interface AdminPollRecord {
@@ -325,4 +332,26 @@ export function formatAdminTimestamp(value: string): string {
     hour: "numeric",
     minute: "2-digit",
   }).format(new Date(value));
+}
+
+export function readAvatarCustomRequests(): AvatarCustomRequestRecord[] {
+  return readJsonArray<AvatarCustomRequestRecord>(AVATAR_CUSTOM_REQUESTS_STORAGE_KEY);
+}
+
+export function writeAvatarCustomRequests(requests: AvatarCustomRequestRecord[]): void {
+  writeJsonArray(AVATAR_CUSTOM_REQUESTS_STORAGE_KEY, requests);
+}
+
+export function createAvatarCustomRequest(requesterId: string, requesterName: string, description: string): AvatarCustomRequestRecord {
+  const id = crypto.randomUUID();
+  const request: AvatarCustomRequestRecord = {
+    id,
+    requesterId,
+    requesterName,
+    description: description.trim(),
+    submittedAt: new Date().toISOString(),
+    status: "pending",
+  };
+  writeAvatarCustomRequests([request, ...readAvatarCustomRequests()]);
+  return request;
 }

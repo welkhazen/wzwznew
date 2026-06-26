@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Archive, Lock, Sparkles } from "lucide-react";
+import { Archive, Lock, Sparkles, Wand2 } from "lucide-react";
 import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { WheelOfFortune, type WheelPrize } from "@/components/wheel/WheelOfFortune";
 import { RARITY_CONFIG, RANK_TIERS, RANK_TIER_PRICING } from "@/lib/avatarRarity";
@@ -10,6 +10,7 @@ import TokenImage from "@/assets/tokens.webp";
 import { spendTokens } from "@/lib/api/tokens";
 import { getAvatarRank, hasAvatarRank } from "@/lib/avatarRank";
 import { toast } from "@/hooks/use-toast";
+import { AvatarCustomRequestModal } from "./AvatarCustomRequestModal";
 
 interface DashboardInventoryProps {
   avatarLevel: number;
@@ -26,6 +27,7 @@ interface AvatarCommerceProps {
   avatarPricesByLevel: Record<number, string>;
   tokenBalance: number;
   userId: string;
+  userName: string;
 }
 
 const AVATAR_SHOP_PRICE = 50;
@@ -64,11 +66,13 @@ export function AvatarShop({
   avatarPricesByLevel,
   tokenBalance,
   userId,
+  userName,
   onAvatarPurchased,
 }: AvatarCommerceProps) {
   const [unlocking, setUnlocking] = useState<number | null>(null);
   const [showAll, setShowAll] = useState(false);
   const [rankFilter, setRankFilter] = useState<number | null>(null);
+  const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const ownedImageKeys = ownedAvatarImageKeys(avatarCatalog, ownedAvatarLevels);
   const seenShopImageKeys = new Set<string>();
 
@@ -168,6 +172,14 @@ export function AvatarShop({
               <span className="relative rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 text-[10px] text-emerald-300">
                 Owned
               </span>
+            ) : avatar.id === "s1-custom" ? (
+              <button
+                onClick={() => setIsRequestModalOpen(true)}
+                className="relative flex items-center gap-1.5 rounded-full border border-raw-gold/35 bg-raw-gold/10 px-3 py-1 text-[10px] text-raw-gold transition hover:bg-raw-gold/20"
+              >
+                <Wand2 className="h-3 w-3" />
+                Request Design
+              </button>
             ) : (
               <button
                 onClick={async () => {
@@ -215,6 +227,14 @@ export function AvatarShop({
           {showAll ? "Show Less" : "Show More"}
         </button>
       ) : null}
+
+      <AvatarCustomRequestModal
+        userId={userId}
+        userName={userName}
+        tokenBalance={tokenBalance}
+        isOpen={isRequestModalOpen}
+        onClose={() => setIsRequestModalOpen(false)}
+      />
     </div>
   );
 }
