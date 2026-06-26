@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Check, Copy, Heart, MessageSquare, Mic2, Pin, Share2, ShieldOff, Target, Ticket, Trash2, User, Users, X } from "lucide-react";
 import { useProfileStats } from "@/hooks/useProfileStats";
-import { registerFoundingInviteCodes, type PinnedMessageRecord } from "@/backend/supabase/controllers/userExtrasController";
+import { registerFoundingInviteCodes, getFoundingInviteRedemptions, type PinnedMessageRecord } from "@/backend/supabase/controllers/userExtrasController";
 import type { Poll } from "@/store/useRawStore";
 import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { LevelProgressBanner } from "@/components/dashboard/LevelProgressBanner";
@@ -172,6 +172,7 @@ export function DashboardProfile({
   const [ownedInsightIds, setOwnedInsightIds] = useState<Set<string>>(() => readOwnedInsightIds(userId));
   const [inviteCodes, setInviteCodes] = useState<string[]>(() => readFoundingInviteCodes(userId));
   const [openInviteIndex, setOpenInviteIndex] = useState<number | null>(null);
+  const [redeemedCodes, setRedeemedCodes] = useState<Set<string>>(new Set());
 
   // Private identity
   const [privateAlias, setPrivateAlias] = useState<UserAliasRow | null>(null);
@@ -188,6 +189,11 @@ export function DashboardProfile({
     persistFoundingInviteCodes(userId, codes);
     registerFoundingInviteCodes(codes, userId).catch(() => {});
     setOpenInviteIndex(null);
+    getFoundingInviteRedemptions(userId)
+      .then((redemptions) => {
+        setRedeemedCodes(new Set(redemptions.map((r) => r.referralCode.toUpperCase())));
+      })
+      .catch(() => {});
   }, [userId]);
 
 
@@ -498,31 +504,44 @@ export function DashboardProfile({
         <div className="grid gap-3 sm:grid-cols-2">
           {inviteCodes.map((code, index) => {
             const isOpen = openInviteIndex === index;
+            const isUsed = redeemedCodes.has(code.toUpperCase());
             return (
               <div
                 key={code}
                 role="button"
                 tabIndex={0}
-                onClick={() => setOpenInviteIndex(isOpen ? null : index)}
+                onClick={() => !isUsed && setOpenInviteIndex(isOpen ? null : index)}
                 onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === " ") {
+                  if (!isUsed && (event.key === "Enter" || event.key === " ")) {
                     event.preventDefault();
                     setOpenInviteIndex(isOpen ? null : index);
                   }
                 }}
-                className="group relative overflow-hidden rounded-2xl border border-dashed border-raw-gold/30 bg-raw-black/25 p-4 text-left transition-all hover:-translate-y-0.5 hover:border-raw-gold/55 hover:bg-raw-gold/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/45"
+                className={`group relative overflow-hidden rounded-2xl border border-dashed p-4 text-left transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/45 ${
+                  isUsed
+                    ? "cursor-default border-raw-border/20 bg-raw-black/15 opacity-60"
+                    : "border-raw-gold/30 bg-raw-black/25 hover:-translate-y-0.5 hover:border-raw-gold/55 hover:bg-raw-gold/10"
+                }`}
                 aria-expanded={isOpen}
               >
                 <div className="absolute -right-6 -top-6 h-20 w-20 rounded-full bg-raw-gold/10 blur-xl transition-opacity group-hover:opacity-100" />
                 <div className="relative flex items-center justify-between gap-3">
                   <div>
                     <p className="text-[10px] uppercase tracking-[0.18em] text-raw-gold/55">Invitation {index + 1}</p>
-                    <p className="mt-1 text-xs text-raw-silver/35">Tap ticket to {isOpen ? "hide" : "reveal"}</p>
+                    <p className="mt-1 text-xs text-raw-silver/35">
+                      {isUsed ? "Code has been used" : `Tap ticket to ${isOpen ? "hide" : "reveal"}`}
+                    </p>
                   </div>
-                  <Ticket className="h-7 w-7 text-raw-gold/50" />
+                  {isUsed ? (
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-raw-gold/15">
+                      <Check className="h-4 w-4 text-raw-gold" />
+                    </span>
+                  ) : (
+                    <Ticket className="h-7 w-7 text-raw-gold/50" />
+                  )}
                 </div>
 
-                {isOpen && (
+                {isOpen && !isUsed && (
                   <div className="relative mt-4 space-y-3 rounded-xl border border-raw-border/35 bg-raw-black/35 p-3">
                     <code className="block select-all break-all font-mono text-sm font-bold tracking-[0.12em] text-raw-gold">
                       {code}
