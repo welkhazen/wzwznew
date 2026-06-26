@@ -72,7 +72,7 @@ export default async function handler(request: Request): Promise<Response> {
     .select("code")
     .eq("code", referralCode)
     .maybeSingle();
-  if (existingRedemption) return json({ error: "invalid_invitation_code" }, 403);
+  if (existingRedemption) return json({ error: "invitation_code_already_used" }, 403);
 
   const { data, error } = await supabaseServerClient.rpc("create_user_with_password", {
     p_username: username,

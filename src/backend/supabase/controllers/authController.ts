@@ -102,6 +102,7 @@ async function clearSupabaseSession(): Promise<void> {
 
 const AUTH_ERROR_MESSAGES: Record<string, string> = {
   invalid_invitation_code: 'That invitation code is not valid.',
+  invitation_code_already_used: 'This code has already been used.',
   invitation_code_required: 'Enter your invitation code to sign up.',
   rate_limited: 'Too many attempts. Please wait a minute and try again.',
 };
