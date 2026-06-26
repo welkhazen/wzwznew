@@ -84,6 +84,7 @@ export const COMMUNITY_REQUESTS_STORAGE_KEY = "raw.community-requests.v1";
 export const CHAT_REPORTS_STORAGE_KEY = "raw.chat-reports.v1";
 export const COMMUNITY_JOIN_REQUESTS_STORAGE_KEY = "raw.community-join-requests.v1";
 export const ISSUE_REPORTS_STORAGE_KEY = "raw.issue-reports.v1";
+export const BLOCKED_WORDS_STORAGE_KEY = "raw.blocked-words.v1";
 
 const ADMIN_USERNAMES = new Set(["admin", "rawadmin", "founder", "owner"]);
 
@@ -93,6 +94,7 @@ const memoryStore = {
   communityRequests: [] as CommunityRequestRecord[],
   chatReports: [] as ChatReportRecord[],
   communityJoinRequests: [] as CommunityJoinRequestRecord[],
+  blockedWords: [] as string[],
 };
 
 function readJsonArray<T>(storageKey: string): T[] {
@@ -137,6 +139,10 @@ function writeJsonArray<T>(storageKey: string, entries: T[]): void {
 
 function normalizeUsernameKey(username: string): string {
   return username.trim().toLowerCase();
+}
+
+function normalizeBlockedWord(value: string): string {
+  return value.trim().toLocaleLowerCase();
 }
 
 export function toUserId(username: string): string {
@@ -262,6 +268,27 @@ export function readIssueReports(): IssueReportRecord[] {
 
 export function writeIssueReports(reports: IssueReportRecord[]): void {
   localStorage.setItem(ISSUE_REPORTS_STORAGE_KEY, JSON.stringify(reports));
+}
+
+export function readBlockedWords(): string[] {
+  try {
+    const raw = localStorage.getItem(BLOCKED_WORDS_STORAGE_KEY);
+    const parsed = raw ? (JSON.parse(raw) as unknown) : memoryStore.blockedWords;
+    if (!Array.isArray(parsed)) return [];
+    return [...new Set(parsed.map((word) => typeof word === "string" ? normalizeBlockedWord(word) : "").filter(Boolean))];
+  } catch {
+    return [...memoryStore.blockedWords];
+  }
+}
+
+export function writeBlockedWords(words: string[]): void {
+  const normalized = [...new Set(words.map(normalizeBlockedWord).filter(Boolean))].sort();
+  memoryStore.blockedWords = normalized;
+  try {
+    localStorage.setItem(BLOCKED_WORDS_STORAGE_KEY, JSON.stringify(normalized));
+  } catch {
+    // memoryStore keeps admin controls working in non-browser/test contexts.
+  }
 }
 
 const ADMIN_POLLS_STORAGE_KEY = "raw.admin.polls.v1";

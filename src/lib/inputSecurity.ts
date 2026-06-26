@@ -1,3 +1,5 @@
+import { readBlockedWords } from "@/lib/adminData";
+
 // eslint-disable-next-line no-control-regex -- intentional: this regex strips control chars from user input
 const CONTROL_CHARS_REGEX = /[\u0000-\u001F\u007F]/g;
 const MULTIPLE_SPACES_REGEX = /\s+/g;
@@ -71,7 +73,10 @@ export function parseUserTextDenylist(value: string | undefined): string[] {
 }
 
 export function getConfiguredUserTextDenylist(): string[] {
-  return parseUserTextDenylist(import.meta.env.VITE_RAW_TEXT_DENYLIST);
+  return [...new Set([
+    ...parseUserTextDenylist(import.meta.env.VITE_RAW_TEXT_DENYLIST),
+    ...readBlockedWords(),
+  ])];
 }
 
 function escapeRegExp(value: string): string {
