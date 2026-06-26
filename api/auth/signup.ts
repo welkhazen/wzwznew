@@ -66,6 +66,14 @@ export default async function handler(request: Request): Promise<Response> {
   if (!referralCode) return json({ error: "invitation_code_required" }, 403);
   if (!INVITATION_CODE_PATTERN.test(referralCode)) return json({ error: "invalid_invitation_code" }, 403);
 
+  // Reject if this code has already been redeemed
+  const { data: existingRedemption } = await supabaseServerClient
+    .from("founding_invite_redemptions")
+    .select("code")
+    .eq("code", referralCode)
+    .maybeSingle();
+  if (existingRedemption) return json({ error: "invalid_invitation_code" }, 403);
+
   const { data, error } = await supabaseServerClient.rpc("create_user_with_password", {
     p_username: username,
     p_password: password,
