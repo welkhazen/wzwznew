@@ -22,6 +22,7 @@ This project follows a simple release discipline:
 - Route logged-in token balance reads, token awards, and poll-unlock token spending through a Vercel API endpoint.
 - Add `docs/SECURITY_NOTES.md` documenting the API boundary, RPC security model, rate-limit policy, and required production environment variables.
 - Start changelog discipline for production releases.
+- Add a Supabase-backed admin API for managing globally persistent blocked words.
 
 ### Changed
 
@@ -40,6 +41,7 @@ This project follows a simple release discipline:
 - Token spending now uses the atomic `spend_tokens` RPC through a single conditional `UPDATE ... WHERE token_balance >= p_amount`, closing the previous JavaScript read-modify-write race window that could double-spend under concurrency.
 - Community membership and admin writes now go through SECURITY DEFINER RPCs: `joinCommunity`, `leaveCommunity`, `touchMemberActivity`, `markCommunityRead`, `setCommunityNotifications`, `updateCommunityPresentation`, and `createCommunityFromRequest`. User-scoped calls derive identity from `current_user_id()`; admin-only calls are gated on `is_admin()`.
 - Rate limiting now applies to `/api/auth/signup`, `/api/auth/login`, `/api/auth/change-password`, `/api/polls/[pollId]/vote`, and `/api/users/[userId]/tokens` via Upstash sliding windows. Production fails closed when Upstash environment variables are missing.
+- Blocked-word admin writes are now gated by the server session and persisted in Supabase instead of browser storage.
 
 ### Performance
 
