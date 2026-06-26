@@ -46,7 +46,7 @@ const PerforatedBackground = memo(() => {
       `}</style>
       {/* Dark mode background */}
       <div
-        className="fixed inset-0 pointer-events-none z-[0] dark:block hidden"
+        className="perforated-dark fixed inset-0 pointer-events-none z-[0] dark:block hidden"
         style={{
           background: `
             /* Center dark vignette - softer */
@@ -63,9 +63,24 @@ const PerforatedBackground = memo(() => {
           animation: 'dotDrift 20s ease-in-out infinite, dotPulse 8s ease-in-out infinite',
         }}
       />
+      {/* Dusk mode background — same dark dots but with a cool-dark base */}
+      <div
+        className="perforated-dusk fixed inset-0 pointer-events-none z-[0] hidden"
+        style={{
+          background: `
+            radial-gradient(ellipse 80% 80% at 50% 50%, transparent 30%, hsl(240 10% 6% / 0.4) 90%),
+            radial-gradient(circle at center, hsl(240 8% 22%) 1px, transparent 1px),
+            radial-gradient(circle at center, hsl(240 8% 14%) 2.5px, transparent 2.5px),
+            linear-gradient(145deg, hsl(240 10% 10%) 0%, hsl(240 10% 7%) 50%, hsl(240 10% 9%) 100%)
+          `,
+          backgroundSize: '100% 100%, 8px 8px, 12px 12px, 100% 100%',
+          backgroundAttachment: 'fixed',
+          animation: 'dotDrift 20s ease-in-out infinite, dotPulse 8s ease-in-out infinite',
+        }}
+      />
       {/* Light mode background */}
       <div
-        className="fixed inset-0 pointer-events-none z-[0] dark:hidden block"
+        className="perforated-light fixed inset-0 pointer-events-none z-[0] dark:hidden block"
         style={{
           background: `
             /* Center light vignette - subtle warmth */

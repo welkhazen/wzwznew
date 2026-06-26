@@ -631,6 +631,11 @@ html.theme-dusk .landing-page-shell {
   --raw-ink: 20 20 24;
 }
 
+/* PerforatedBackground: dusk mode shows its own dark-cool variant */
+html.theme-dusk .perforated-dark { display: none !important; }
+html.theme-dusk .perforated-light { display: none !important; }
+html.theme-dusk .perforated-dusk { display: block !important; }
+
 /* Spiral banner box: dark gradient in dark/dusk, light slate in light mode */
 .spiral-banner {
   background: linear-gradient(to bottom, #1c1c22, #000);
