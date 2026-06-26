@@ -23,6 +23,7 @@ This project follows a simple release discipline:
 - Add `docs/SECURITY_NOTES.md` documenting the API boundary, RPC security model, rate-limit policy, and required production environment variables.
 - Start changelog discipline for production releases.
 - Add a Supabase-backed admin API for managing globally persistent blocked words.
+- Add an admin settings UI for listing, saving, and removing blocked words.
 
 ### Changed
 

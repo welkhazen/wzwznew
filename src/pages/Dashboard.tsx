@@ -636,7 +636,12 @@ export default function Dashboard({
         return (
           <Suspense fallback={dashboardSectionFallback}>
             <DashboardSectionShell>
-              <DashboardSettings userId={user.id} onLogout={onLogout} onBackToDashboard={handleBackToDashboardHome} />
+              <DashboardSettings
+                userId={user.id}
+                isAdmin={user.role === "admin"}
+                onLogout={onLogout}
+                onBackToDashboard={handleBackToDashboardHome}
+              />
             </DashboardSectionShell>
           </Suspense>
         );
