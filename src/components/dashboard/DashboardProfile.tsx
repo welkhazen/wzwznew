@@ -408,40 +408,6 @@ export function DashboardProfile({
           </div>
         ) : (
           <div className="mt-4 space-y-3">
-            <div className="rounded-xl border border-raw-border/30 bg-raw-black/25 p-2">
-              <p className="mb-2 text-[10px] uppercase tracking-[0.16em] text-raw-silver/35">Chat name</p>
-              <button
-                type="button"
-                onClick={() => handleSelectChatAlias(null)}
-                className={`mb-1 flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs transition-colors ${
-                  !selectedChatAlias ? "bg-raw-gold/15 text-raw-gold" : "text-raw-silver/60 hover:bg-white/5 hover:text-raw-text"
-                }`}
-              >
-                <span className="flex min-w-0 items-center gap-2">
-                  <User className="h-3.5 w-3.5 shrink-0" />
-                  <span className="truncate">@{username}</span>
-                </span>
-                {!selectedChatAlias && <Check className="h-3.5 w-3.5 shrink-0" />}
-              </button>
-              {privateAlias && (
-                <button
-                  type="button"
-                  onClick={() => handleSelectChatAlias(privateAlias.alias)}
-                  className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs transition-colors ${
-                    selectedChatAlias?.toLowerCase() === privateAlias.alias.toLowerCase()
-                      ? "bg-raw-gold/15 text-raw-gold"
-                      : "text-raw-silver/60 hover:bg-white/5 hover:text-raw-text"
-                  }`}
-                >
-                  <span className="flex min-w-0 items-center gap-2">
-                    <ShieldOff className="h-3.5 w-3.5 shrink-0" />
-                    <span className="truncate">@{privateAlias.alias}</span>
-                  </span>
-                  {selectedChatAlias?.toLowerCase() === privateAlias.alias.toLowerCase() && <Check className="h-3.5 w-3.5 shrink-0" />}
-                </button>
-              )}
-            </div>
-
             <div className="rounded-xl border border-raw-border/30 bg-raw-black/25 p-3">
               {editingAlias || !privateAlias ? (
                 <div className="flex items-center gap-2">
