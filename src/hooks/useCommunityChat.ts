@@ -16,6 +16,7 @@ import {
   sendMessage as sendMessageSupabase,
 } from "@/backend/supabase/controllers/chatController";
 import { supabase } from "@/backend/supabase/client";
+import { getUserTextModerationMessage, moderateUserText } from "@/lib/inputSecurity";
 import { readAvatarCatalogLocal } from "@/lib/avatarCatalog";
 import { getPrivateAvatarLevel } from "@/lib/avataridentity";
 import { CHAT_IDENTITY_CHANGED_EVENT, readSelectedChatAlias } from "@/lib/identitySelection";
@@ -476,6 +477,11 @@ export function useCommunityChat(
     if (!trimmed) return;
     if (trimmed.length > MAX_COMMUNITY_MESSAGE_LENGTH) {
       toast({ title: "Message too long", description: `Max ${MAX_COMMUNITY_MESSAGE_LENGTH} characters.` });
+      return;
+    }
+    const moderation = moderateUserText(trimmed);
+    if (!moderation.allowed) {
+      toast({ title: "Message blocked", description: getUserTextModerationMessage(moderation) });
       return;
     }
     await sendOptimisticMessage(trimmed);
