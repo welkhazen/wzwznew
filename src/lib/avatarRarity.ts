@@ -56,15 +56,15 @@ export const RARITY_ORDER: AvatarRarity[] = [
 // Rank 1–12 with colors: grey/blue/green/orange/purple/red/pink/rose/gold/white/s1/c1
 export const RANK_TIERS = [
   { rank: 1,  label: "Rank 1",  rarity: "common"    as AvatarRarity, color: "#9ca3af", glow: "#9ca3af40", weight: 1000 },
-  { rank: 2,  label: "Rank 2",  rarity: "uncommon"  as AvatarRarity, color: "#f97316", glow: "#f9731640", weight: 400  },
+  { rank: 2,  label: "Rank 2",  rarity: "uncommon"  as AvatarRarity, color: "#3b82f6", glow: "#3b82f640", weight: 400  },
   { rank: 3,  label: "Rank 3",  rarity: "rare"      as AvatarRarity, color: "#22c55e", glow: "#22c55e40", weight: 240  },
-  { rank: 4,  label: "Rank 4",  rarity: "epic"      as AvatarRarity, color: "#3b82f6", glow: "#3b82f640", weight: 160  },
+  { rank: 4,  label: "Rank 4",  rarity: "epic"      as AvatarRarity, color: "#f97316", glow: "#f9731640", weight: 160  },
   { rank: 5,  label: "Rank 5",  rarity: "legendary" as AvatarRarity, color: "#a855f7", glow: "#a855f740", weight: 80   },
   { rank: 6,  label: "Rank 6",  rarity: "mythic"    as AvatarRarity, color: "#ef4444", glow: "#ef444440", weight: 40   },
   { rank: 7,  label: "Rank 7",  rarity: "exotic"    as AvatarRarity, color: "#ec4899", glow: "#ec489940", weight: 20   },
-  { rank: 8,  label: "Rank 8",  rarity: "gold"      as AvatarRarity, color: "#facc15", glow: "#facc1540", weight: 8    },
-  { rank: 9,  label: "Rank 9",  rarity: "platinum"  as AvatarRarity, color: "#e2e8f0", glow: "#e2e8f040", weight: 4    },
+  { rank: 8,  label: "Rank 8",  rarity: "gold"      as AvatarRarity, color: "#fb7185", glow: "#fb718540", weight: 8    },
+  { rank: 9,  label: "Rank 9",  rarity: "platinum"  as AvatarRarity, color: "#facc15", glow: "#facc1540", weight: 4    },
   { rank: 10, label: "Rank 10", rarity: "white"     as AvatarRarity, color: "#f8fafc", glow: "#f8fafc40", weight: 2    },
-  { rank: 11, label: "Rank 11", rarity: "rainbow"   as AvatarRarity, color: "#ff6b6b", glow: "#ff6b6b40", weight: 1    },
+  { rank: 11, label: "Rank 11", rarity: "rainbow"   as AvatarRarity, color: "#a78bfa", glow: "#a78bfa40", weight: 1    },
   { rank: 12, label: "Rank 12", rarity: "rainbow"   as AvatarRarity, color: "#fbbf24", glow: "#fbbf2440", weight: 1    },
 ] as const;
