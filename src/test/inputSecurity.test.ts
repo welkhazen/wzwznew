@@ -1,12 +1,17 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import {
   assertUserTextAllowed,
   moderateUserText,
   parseUserTextDenylist,
   UserTextModerationError,
 } from "@/lib/inputSecurity";
+import { writeBlockedWords } from "@/lib/adminData";
 
 describe("user text moderation", () => {
+  afterEach(() => {
+    writeBlockedWords([]);
+  });
+
   it("allows normal public text and normalizes whitespace", () => {
     const result = moderateUserText("  hello   everyone  ", { denylist: [] });
 
@@ -31,6 +36,15 @@ describe("user text moderation", () => {
 
   it("parses comma and newline separated denylist config", () => {
     expect(parseUserTextDenylist("Alpha, beta\nalpha")).toEqual(["alpha", "beta"]);
+  });
+
+  it("blocks admin-managed denylist terms by default", () => {
+    writeBlockedWords(["adminterm"]);
+
+    const result = moderateUserText("please hide adminterm");
+
+    expect(result.allowed).toBe(false);
+    expect(result.violations[0]).toMatchObject({ type: "denylist", value: "adminterm" });
   });
 
   it("throws a moderation error from assertUserTextAllowed", () => {
