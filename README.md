@@ -1,86 +1,95 @@
-# Welcome to your Lovable project
+# raW
 
-<!-- Small change made for testing purposes -->
+raW is a privacy-first social polling and community app. It combines anonymous polls, interest-based community chats, avatar-based identity, rewards, moderation tools, and admin workflows for managing content and user safety.
 
-Test push: this line was added to test git push functionality.
-
-## Project info
-
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
-
-## How can I edit this code?
-
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
+## Tech Stack
 
 - Vite
-- TypeScript
 - React
-- shadcn-ui
+- TypeScript
 - Tailwind CSS
+- shadcn-ui / Radix UI
+- Supabase
+- Capacitor
+- Vercel
 
+## Local Setup
 
-## Local env setup
+Install dependencies:
 
-Copy the env template and keep secrets in a local file:
+```sh
+npm ci
+```
+
+Create a local environment file:
 
 ```sh
 cp .env.example .env.local
 ```
 
-## How can I deploy this project?
+Fill in the required Supabase, auth, analytics, notification, and server values in `.env.local`. Keep secrets out of source control.
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+Start the frontend:
 
-## Can I connect a custom domain to my Lovable project?
+```sh
+npm run dev
+```
 
-Yes, you can!
+Start the local API server when backend routes are needed:
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+```sh
+npm run dev:server
+```
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+## Checks
+
+Run unit tests:
+
+```sh
+npm run test
+```
+
+Run server tests:
+
+```sh
+npm run test:server
+```
+
+Run lint:
+
+```sh
+npm run lint
+```
+
+Create a production build:
+
+```sh
+npm run build
+```
+
+## Deployment
+
+The app is configured for Vercel:
+
+- Framework: Vite
+- Install command: `npm ci --prefer-offline`
+- Build command: `vite build`
+- Output directory: `dist`
+
+Production deployment requires the Vercel project environment variables to match `.env.example`, including Supabase client/server keys, auth secrets, analytics keys, Sentry/PostHog settings, notification credentials, and any cron or AI assistant secrets used by the backend.
+
+## Mobile Builds
+
+Capacitor is configured for native builds. After frontend changes that affect the mobile shell, run:
+
+```sh
+npm run cap:sync
+```
+
+Then build and test through the native iOS or Android project tooling.
+
+## Repository Notes
+
+- Do not commit `.env.local` or other secret-bearing files.
+- Keep pull requests focused and run the relevant checks before review.
+- Update `CHANGELOG.md` only for production behavior changes.
