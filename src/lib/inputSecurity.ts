@@ -1,4 +1,4 @@
-import { readBlockedWords } from "@/lib/adminData";
+import { readBlockedWords, writeBlockedWords } from "@/lib/adminData";
 
 // eslint-disable-next-line no-control-regex -- intentional: this regex strips control chars from user input
 const CONTROL_CHARS_REGEX = /[\u0000-\u001F\u007F]/g;
@@ -150,4 +150,25 @@ export function assertUserTextAllowed(value: string, options?: UserTextModeratio
   }
 
   return result.text;
+}
+
+/**
+ * Fetches the current blocked-word list from the server and seeds the
+ * in-memory store so that subsequent `moderateUserText()` calls use the
+ * real DB-backed list.  Non-fatal: static env denylist still applies if
+ * this request fails (e.g. user not authenticated yet).
+ */
+export async function seedBlockedWordsFromServer(): Promise<void> {
+  try {
+    const response = await fetch("/api/moderation/blocked-terms", {
+      credentials: "include",
+    });
+    if (!response.ok) return;
+    const body = (await response.json()) as { terms?: unknown };
+    if (Array.isArray(body.terms)) {
+      writeBlockedWords(body.terms.filter((t): t is string => typeof t === "string"));
+    }
+  } catch {
+    // Non-fatal — static VITE_RAW_TEXT_DENYLIST still applies.
+  }
 }

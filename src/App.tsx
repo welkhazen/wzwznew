@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/providers/ThemeProvider";
 import { AnalyticsProvider } from "@/components/analytics/AnalyticsProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { RouteSeo } from "@/components/seo/RouteSeo";
+import { useBlockedWordsSeed } from "@/hooks/useBlockedWordsSeed";
 
 const Index = lazy(() => import("./pages/Index"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -26,12 +27,18 @@ const TestPollOnboarding = import.meta.env.DEV
 
 const routeFallback = <div className="sr-only">Loading page…</div>;
 
+function ModerationInit() {
+  useBlockedWordsSeed();
+  return null;
+}
+
 const App = () => (
   <ErrorBoundary>
     <ThemeProvider>
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        <ModerationInit />
         <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <AnalyticsProvider>
             <RouteSeo />
