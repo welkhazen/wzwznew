@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { highlightRawWordmark } from "@/components/ui/highlightRawWordmark";
 import { SpiralAnimation } from "@/components/ui/spiral-animation";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
+import { useTheme } from "@/providers/useTheme";
 
 const problemRows = [
   {
@@ -37,9 +38,29 @@ const problemRows = [
   },
 ];
 
+function usePrimaryColor() {
+  const [color, setColor] = useState('white');
+  const { mode, accent } = useTheme();
+  const frameRef = useRef<number>(0);
+
+  useEffect(() => {
+    const update = () => {
+      const raw = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
+      setColor(raw ? `hsl(${raw})` : 'white');
+    };
+    update();
+    // re-read on next frame so CSS variable has settled after accent change
+    frameRef.current = requestAnimationFrame(update);
+    return () => cancelAnimationFrame(frameRef.current);
+  }, [mode, accent]);
+
+  return mode === 'light' ? color : 'white';
+}
+
 export function ProblemSection() {
   const sectionRef = useTrackSectionView("problem");
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const particleColor = usePrimaryColor();
 
   return (
     <section
@@ -55,7 +76,7 @@ export function ProblemSection() {
           className="text-center sm:text-left"
         >
           <div className="spiral-banner relative mb-7 h-32 w-full overflow-hidden rounded-[1.5rem] border border-raw-border/40 sm:mb-10 sm:h-44 sm:rounded-[1.75rem] md:h-52">
-            <SpiralAnimation className="opacity-80" />
+            <SpiralAnimation className="opacity-80" color={particleColor} />
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(10,10,10,0.08)_36%,rgba(10,10,10,0.72)_100%)]" />
             <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-5 text-center">
               <p className="max-w-[18rem] text-[0.56rem] font-medium uppercase leading-relaxed tracking-[0.28em] text-raw-silver/70 sm:max-w-none sm:text-xs sm:tracking-[0.4em]">
