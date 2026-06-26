@@ -60,10 +60,15 @@ function readStoredExtraBatches(storageKey: string, answeredStorageKey: string):
   }
 }
 
-function emitTokenBalanceUpdated(storageKey: string, balance: number): void {
-  window.dispatchEvent(new CustomEvent(TOKEN_BALANCE_UPDATED_EVENT, {
-    detail: { storageKey, balance },
-  }));
+function persistTokenBalance(storageKey: string, balance: number): void {
+  try {
+    window.localStorage.setItem(storageKey, String(balance));
+    window.dispatchEvent(new CustomEvent(TOKEN_BALANCE_UPDATED_EVENT, {
+      detail: { storageKey, balance },
+    }));
+  } catch {
+    // ignore storage errors
+  }
 }
 
 export function usePolls(isLoggedIn: boolean, userId?: string) {
@@ -138,12 +143,7 @@ export function usePolls(isLoggedIn: boolean, userId?: string) {
     fetchTokenBalance(userId)
       .then((balance) => {
         setTokenBalance(balance);
-        try {
-          window.localStorage.setItem(TOKEN_BALANCE_KEY, String(balance));
-          emitTokenBalanceUpdated(TOKEN_BALANCE_KEY, balance);
-        } catch {
-          // ignore
-        }
+        persistTokenBalance(TOKEN_BALANCE_KEY, balance);
       })
       .catch(() => {
         // keep local value on network error
@@ -202,12 +202,7 @@ export function usePolls(isLoggedIn: boolean, userId?: string) {
       try {
         const newBalance = await spendTokens(userId, UNLOCK_TOKEN_COST);
         setTokenBalance(newBalance);
-        try {
-          window.localStorage.setItem(TOKEN_BALANCE_KEY, String(newBalance));
-          emitTokenBalanceUpdated(TOKEN_BALANCE_KEY, newBalance);
-        } catch {
-          // ignore
-        }
+        persistTokenBalance(TOKEN_BALANCE_KEY, newBalance);
       } catch {
         // Roll back optimistic update on failure
         setTokenBalance((prev) => prev + UNLOCK_TOKEN_COST);
@@ -216,12 +211,7 @@ export function usePolls(isLoggedIn: boolean, userId?: string) {
     } else {
       setTokenBalance((prev) => {
         const next = prev - UNLOCK_TOKEN_COST;
-        try {
-          window.localStorage.setItem(TOKEN_BALANCE_KEY, String(next));
-          emitTokenBalanceUpdated(TOKEN_BALANCE_KEY, next);
-        } catch {
-          // ignore storage errors
-        }
+        persistTokenBalance(TOKEN_BALANCE_KEY, next);
         return next;
       });
       setExtraBatchesUnlocked((prev) => prev + 1);
@@ -235,12 +225,7 @@ export function usePolls(isLoggedIn: boolean, userId?: string) {
     if (isLoggedIn && userId) {
       setTokenBalance((previous) => {
         const next = previous + safeAmount;
-        try {
-          window.localStorage.setItem(TOKEN_BALANCE_KEY, String(next));
-          emitTokenBalanceUpdated(TOKEN_BALANCE_KEY, next);
-        } catch {
-          // ignore storage errors
-        }
+        persistTokenBalance(TOKEN_BALANCE_KEY, next);
         return next;
       });
 
@@ -251,12 +236,7 @@ export function usePolls(isLoggedIn: boolean, userId?: string) {
 
     setTokenBalance((previous) => {
       const next = previous + safeAmount;
-      try {
-        window.localStorage.setItem(TOKEN_BALANCE_KEY, String(next));
-        emitTokenBalanceUpdated(TOKEN_BALANCE_KEY, next);
-      } catch {
-        // ignore storage errors
-      }
+      persistTokenBalance(TOKEN_BALANCE_KEY, next);
       return next;
     });
   }, [TOKEN_BALANCE_KEY, isLoggedIn, userId]);
