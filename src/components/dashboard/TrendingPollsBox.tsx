@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Flame, MessageCircle } from "lucide-react";
+import { Flame, MessageCircle, Heart, Reply2, Send } from "lucide-react";
 import {
   fetchPollComments,
   fetchTrendingPolls,
@@ -78,6 +78,10 @@ export function TrendingPollsBox({
   const [expandedCommentsPollId, setExpandedCommentsPollId] = useState<string | null>(null);
   const [commentsByPoll, setCommentsByPoll] = useState<Record<string, PollCommentRow[]>>({});
   const [commentsLoadingByPoll, setCommentsLoadingByPoll] = useState<Record<string, boolean>>({});
+  const [commentInputByPoll, setCommentInputByPoll] = useState<Record<string, string>>({});
+  const [likesByCommentId, setLikesByCommentId] = useState<Record<string, number>>({});
+  const [likedCommentIds, setLikedCommentIds] = useState<Set<string>>(new Set());
+  const [replyingToCommentId, setReplyingToCommentId] = useState<string | null>(null);
 
   useEffect(() => {
     setSelectedByPoll(readStoredSelections(userId));
@@ -168,6 +172,44 @@ export function TrendingPollsBox({
       });
   }, [commentsByPoll, commentsLoadingByPoll]);
 
+  const handleAddComment = useCallback((pollId: string) => {
+    const text = (commentInputByPoll[pollId] ?? "").trim();
+    if (!text) return;
+
+    const newComment: PollCommentRow = {
+      id: `comment-${Date.now()}`,
+      poll_id: pollId,
+      text,
+      author_name: `@user-${userId?.slice(0, 4)}`,
+      created_at: new Date().toISOString(),
+    };
+
+    setCommentsByPoll((previous) => ({
+      ...previous,
+      [pollId]: [...(previous[pollId] ?? []), newComment],
+    }));
+
+    setCommentInputByPoll((previous) => ({ ...previous, [pollId]: "" }));
+  }, [commentInputByPoll, userId]);
+
+  const handleLikeComment = useCallback((commentId: string) => {
+    setLikedCommentIds((previous) => {
+      const next = new Set(previous);
+      if (next.has(commentId)) {
+        next.delete(commentId);
+      } else {
+        next.add(commentId);
+      }
+      return next;
+    });
+
+    setLikesByCommentId((previous) => {
+      const current = previous[commentId] ?? 0;
+      const isLiked = likedCommentIds.has(commentId);
+      return { ...previous, [commentId]: isLiked ? current - 1 : current + 1 };
+    });
+  }, [likedCommentIds]);
+
   return (
     <div
       className={`rounded-2xl border p-5 ${
@@ -244,18 +286,19 @@ export function TrendingPollsBox({
 
                 {isCommentsOpen && (
                   <div
-                    className={`mx-auto w-full max-w-[22rem] rounded-2xl border px-4 py-3 ${
+                    className={`mx-auto w-full max-w-[22rem] rounded-2xl border px-4 py-3 space-y-3 ${
                       isLight ? "border-slate-200 bg-white text-slate-700" : "border-white/10 bg-raw-black/45 text-raw-silver"
                     }`}
                   >
                     <p className={`text-[10px] font-semibold uppercase tracking-[0.16em] ${isLight ? "text-slate-500" : "text-raw-gold/70"}`}>
                       Comments
                     </p>
-                    <div className="mt-3 max-h-48 space-y-2 overflow-y-auto pr-1">
+
+                    <div className="max-h-48 space-y-2 overflow-y-auto pr-1">
                       {commentsLoading ? (
                         <p className={`text-xs ${isLight ? "text-slate-500" : "text-raw-silver/45"}`}>Loading comments...</p>
                       ) : comments.length === 0 ? (
-                        <p className={`text-xs ${isLight ? "text-slate-500" : "text-raw-silver/45"}`}>No comments yet.</p>
+                        <p className={`text-xs ${isLight ? "text-slate-500" : "text-raw-silver/45"}`}>No comments yet. Be first!</p>
                       ) : (
                         comments.map((comment) => (
                           <div
@@ -273,9 +316,73 @@ export function TrendingPollsBox({
                             <p className={`mt-1 text-sm leading-relaxed ${isLight ? "text-slate-700" : "text-raw-silver/80"}`}>
                               {comment.text}
                             </p>
+                            <div className="mt-2 flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleLikeComment(comment.id)}
+                                className={`flex items-center gap-1 text-[11px] transition ${
+                                  likedCommentIds.has(comment.id)
+                                    ? isLight
+                                      ? "text-red-500"
+                                      : "text-red-400"
+                                    : isLight
+                                    ? "text-slate-400 hover:text-red-500"
+                                    : "text-raw-silver/50 hover:text-red-400"
+                                }`}
+                              >
+                                <Heart
+                                  className={`h-3.5 w-3.5 ${likedCommentIds.has(comment.id) ? "fill-current" : ""}`}
+                                />
+                                {likesByCommentId[comment.id] ?? 0}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setReplyingToCommentId(replyingToCommentId === comment.id ? null : comment.id)}
+                                className={`flex items-center gap-1 text-[11px] transition ${
+                                  isLight ? "text-slate-400 hover:text-blue-500" : "text-raw-silver/50 hover:text-blue-400"
+                                }`}
+                              >
+                                <Reply2 className="h-3.5 w-3.5" />
+                                Reply
+                              </button>
+                            </div>
                           </div>
                         ))
                       )}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        placeholder="Add a comment…"
+                        value={commentInputByPoll[entry.poll.id] ?? ""}
+                        onChange={(e) =>
+                          setCommentInputByPoll((prev) => ({ ...prev, [entry.poll.id]: e.target.value }))
+                        }
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            handleAddComment(entry.poll.id);
+                          }
+                        }}
+                        className={`flex-1 rounded-lg px-3 py-1.5 text-sm outline-none transition ${
+                          isLight
+                            ? "border border-slate-200 bg-white text-slate-700 placeholder:text-slate-400 focus:border-blue-400"
+                            : "border border-white/10 bg-white/5 text-raw-silver placeholder:text-raw-silver/40 focus:border-raw-gold/50"
+                        }`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleAddComment(entry.poll.id)}
+                        disabled={!(commentInputByPoll[entry.poll.id] ?? "").trim()}
+                        className={`flex items-center justify-center rounded-lg p-2 transition disabled:opacity-40 ${
+                          isLight
+                            ? "bg-blue-500 text-white hover:bg-blue-600"
+                            : "bg-raw-gold/20 text-raw-gold hover:bg-raw-gold/30"
+                        }`}
+                      >
+                        <Send className="h-3.5 w-3.5" />
+                      </button>
                     </div>
                   </div>
                 )}
