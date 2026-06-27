@@ -2,7 +2,9 @@ import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
 const SITE_URL = "https://www.myraw.app";
-const SOCIAL_IMAGE_URL = `${SITE_URL}/og-card.svg`;
+// Social scrapers (Facebook, X/Twitter, LinkedIn, Slack, WhatsApp) do not render
+// SVG OG images — they require a raster format. Use the 1200x630 PNG card.
+const SOCIAL_IMAGE_URL = `${SITE_URL}/og-card.png`;
 
 type StructuredData = Record<string, unknown>;
 type RouteSeoConfig = {
@@ -27,6 +29,17 @@ const routeSeo: Record<string, RouteSeoConfig> = {
           target: `${SITE_URL}/faq?q={search_term_string}`,
           "query-input": "required name=search_term_string",
         },
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "MobileApplication",
+        name: "raW",
+        url: canonicalUrl,
+        applicationCategory: "SocialNetworkingApplication",
+        operatingSystem: "iOS, Android, Web",
+        description: "Anonymous social app for live polls, avatar identities, and interest-based online communities where you can speak honestly and find where you belong.",
+        offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+        image: SOCIAL_IMAGE_URL,
       },
     ],
   },
