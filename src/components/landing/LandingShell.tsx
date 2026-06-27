@@ -33,9 +33,8 @@ export interface LandingShellProps {
   isLoggedIn: boolean;
   showSignup: boolean;
   setShowSignup: (open: boolean) => void;
-  requestSignupOtp: (username: string, password: string, phone: string, referralCode: string) => Promise<AuthResult>;
-  verifySignupOtp: (email: string, otp: string, username: string) => Promise<AuthResult>;
-  login: (email: string, otp: string) => Promise<AuthResult>;
+  signup: (username: string, password: string, referralCode: string) => Promise<AuthResult>;
+  login: (username: string, password: string) => Promise<AuthResult>;
 }
 
 export default function LandingShell({
@@ -43,8 +42,7 @@ export default function LandingShell({
   isLoggedIn,
   showSignup,
   setShowSignup,
-  requestSignupOtp,
-  verifySignupOtp,
+  signup,
   login,
 }: LandingShellProps) {
   const [siteReady, setSiteReady] = useState(false);
@@ -150,7 +148,7 @@ export default function LandingShell({
         <SignupModalLazy
           open={showSignup}
           onClose={() => setShowSignup(false)}
-          onRequestSignupOtp={requestSignupOtp}
+          onSignup={signup}
           onLogin={login}
         />
       </Suspense>

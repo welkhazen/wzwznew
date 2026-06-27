@@ -56,8 +56,7 @@ export function useRawStore() {
     completeOnboarding: onboarding.completeOnboarding,
     resetOnboardingProgress: onboarding.resetOnboardingProgress,
     vote: polls.vote,
-    requestSignupOtp: auth.requestSignupOtp,
-    verifySignupOtp: auth.verifySignupOtp,
+    signup: auth.signup,
     login: auth.login,
     logout: auth.logout,
   }), [auth, communities, onboarding, polls, rewards]);

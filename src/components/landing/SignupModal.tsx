@@ -14,29 +14,24 @@ import { track } from "@/lib/analytics";
 interface SignupModalProps {
   open: boolean;
   onClose: () => void;
-  onRequestSignupOtp: (username: string, password: string, phone: string, referralCode: string) => Promise<AuthResult>;
+  onSignup: (username: string, password: string, referralCode: string) => Promise<AuthResult>;
   onLogin: (username: string, password: string) => Promise<AuthResult>;
   source?: string;
 }
 
 type AuthMode = "signup" | "login";
-type SignupStep = "details" | "verify";
 
 function normalizeInviteCode(code: string): string {
   return normalizePlainText(code).trim().toUpperCase().replace(/\s+/g, "");
 }
 
-export function SignupModal({ open, onClose, onRequestSignupOtp, onLogin, source }: SignupModalProps) {
+export function SignupModal({ open, onClose, onSignup, onLogin, source }: SignupModalProps) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [, setPhone] = useState("");
   const [referralCode, setReferralCode] = useState("");
-  const [, setCode] = useState("");
-  const [, setSentChannels] = useState<string[]>([]);
   const [cooldown, setCooldown] = useState(0);
   const [mode, setMode] = useState<AuthMode>("signup");
-  const [, setSignupStep] = useState<SignupStep>("details");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -52,12 +47,8 @@ export function SignupModal({ open, onClose, onRequestSignupOtp, onLogin, source
       openedFiredRef.current = false;
       setPassword("");
       setConfirmPassword("");
-      setPhone("");
       setReferralCode("");
-      setCode("");
-      setSentChannels([]);
       setCooldown(0);
-      setSignupStep("details");
       setError("");
       setIsSubmitting(false);
       setShowPassword(false);
@@ -90,6 +81,11 @@ export function SignupModal({ open, onClose, onRequestSignupOtp, onLogin, source
       return;
     }
 
+    if (normalizedPassword.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return;
+    }
+
     if (!normalizedReferralCode) {
       setError("Enter your invitation code to sign up.");
       return;
@@ -105,13 +101,11 @@ export function SignupModal({ open, onClose, onRequestSignupOtp, onLogin, source
 
     track("signup_started", { method: "username_password" });
 
-    const result = await onRequestSignupOtp(normalizedUsername, normalizedPassword, "", normalizedReferralCode);
+    const result = await onSignup(normalizedUsername, normalizedPassword, normalizedReferralCode);
     if (!result.ok) {
       track("signup_failed", { reason: result.error ?? "unknown", step: "details" });
       setError(result.error ?? "Unable to create account.");
       setIsSubmitting(false);
-    } else {
-      track("signup_otp_sent", { channel: "sms", attempt: 1 });
     }
   };
 
@@ -177,7 +171,6 @@ export function SignupModal({ open, onClose, onRequestSignupOtp, onLogin, source
             type="button"
             onClick={() => {
               setMode("signup");
-              setSignupStep("details");
               setError("");
               setConfirmPassword("");
             }}
@@ -191,7 +184,6 @@ export function SignupModal({ open, onClose, onRequestSignupOtp, onLogin, source
             type="button"
             onClick={() => {
               setMode("login");
-              setSignupStep("details");
               setError("");
               setConfirmPassword("");
             }}
@@ -240,6 +232,7 @@ export function SignupModal({ open, onClose, onRequestSignupOtp, onLogin, source
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+              <p className="mt-1.5 text-[11px] text-raw-silver/30">Use at least 8 characters.</p>
             </div>
 
             <div>

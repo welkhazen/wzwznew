@@ -74,8 +74,8 @@ export function useAuth() {
     [],
   );
 
-  const requestSignupOtp = useCallback(
-    async (username: string, password: string, _phone: string, referralCode: string): Promise<AuthResult> => {
+  const signup = useCallback(
+    async (username: string, password: string, referralCode: string): Promise<AuthResult> => {
       const result = await signUp(username, password, referralCode);
       if (!result.ok || !result.user) return { ok: false, error: result.error };
       const u = toUser(result.user);
@@ -100,10 +100,6 @@ export function useAuth() {
     [],
   );
 
-  const verifySignupOtp = useCallback(async (_code: string): Promise<AuthResult> => {
-    return { ok: true };
-  }, []);
-
   const logout = useCallback(async () => {
     await signOut();
     setUser(null);
@@ -123,11 +119,10 @@ export function useAuth() {
       sessionLoaded,
       showSignup,
       setShowSignup,
-      requestSignupOtp,
-      verifySignupOtp,
+      signup,
       login,
       logout,
     }),
-    [login, logout, requestSignupOtp, sessionLoaded, showSignup, user, verifySignupOtp],
+    [login, logout, signup, sessionLoaded, showSignup, user],
   );
 }

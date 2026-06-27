@@ -11,7 +11,6 @@ export interface User {
 
 export interface UserRecord extends User {
   passwordHash: string;
-  phoneHash: string;
   votedPollIds: Set<string>;
   createdAt: number;
 }
@@ -23,16 +22,6 @@ export interface ReferralActivationRecord {
   referredUsername: string;
   referralCode: string;
   createdAt: number;
-}
-
-export interface PendingSignupData {
-  username: string;
-  passwordHash: string;
-  phone: string;
-  phoneHash: string;
-  referralCode?: string;
-  sentAt: number;
-  attempts: number;
 }
 
 export interface PollOption {
@@ -51,7 +40,6 @@ export interface Poll {
 export interface AuthSessionData {
   userId?: string;
   anonymousVotes?: string[];
-  pendingSignup?: PendingSignupData;
 }
 
 export interface BootstrapResponse {
