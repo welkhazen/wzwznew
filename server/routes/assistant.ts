@@ -66,8 +66,8 @@ CORE FEATURES:
 - XP & Streaks: Earn XP from poll voting, community messages, challenges. Daily streak tracking in profile.
 
 AUTHENTICATION & ACCOUNTS:
-- Sign up via phone OTP or email magic link
-- Users have username, password, optional email/phone
+- Sign up with username, password, and invitation code
+- Users have username and password; no email or phone is required for beta signup
 - Session management with logout functionality
 - Admin accounts with moderation dashboard
 

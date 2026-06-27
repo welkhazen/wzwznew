@@ -9,7 +9,6 @@
 export type Surface = "landing" | "app" | "admin";
 export type DeviceClass = "mobile" | "tablet" | "desktop";
 export type AuthMethod = "username_password" | "oauth_google";
-export type OtpChannel = "sms" | "whatsapp" | "email";
 export type OnboardingStepName =
   | "avatar"
   | "polls"
@@ -124,24 +123,10 @@ export type AppEvent =
       };
     }
   | {
-      name: "signup_otp_sent";
-      properties: {
-        channel: OtpChannel;
-        attempt: number;
-      };
-    }
-  | {
-      name: "signup_otp_verified";
-      properties: {
-        attempts_used: number;
-        time_to_verify_ms: number;
-      };
-    }
-  | {
       name: "signup_failed";
       properties: {
         reason: string;
-        step: "details" | "otp" | "verify";
+        step: "details";
       };
     }
   | {

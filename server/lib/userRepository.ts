@@ -5,7 +5,6 @@ import {
   findUserById,
   findUserByUsername,
   listReferralActivationsForInviter,
-  phoneHashExists,
   recordReferralActivation,
   updateUserPasswordHash,
   updateUserProfile,
@@ -16,7 +15,6 @@ import {
 type CreateUserInput = {
   username: string;
   passwordHash: string;
-  phoneHash: string;
   referralCode?: string;
 };
 
@@ -30,7 +28,6 @@ export interface UserRepository {
   findByEmail(email: string): Promise<UserRecord | null>;
   findByReferralCode(referralCode: string): Promise<UserRecord | null>;
   usernameExists(username: string): Promise<boolean>;
-  phoneHashExists(phoneHash: string): Promise<boolean>;
   create(input: CreateUserInput): Promise<UserRecord>;
   registerReferralActivation(referralCode: string, referredUserId: string): Promise<void>;
   listReferralActivations(userId: string): Promise<ReferralActivationRecord[]>;
@@ -59,12 +56,8 @@ class MemoryUserRepository implements UserRepository {
     return usernameExists(username);
   }
 
-  async phoneHashExists(userPhoneHash: string): Promise<boolean> {
-    return phoneHashExists(userPhoneHash);
-  }
-
   async create(input: CreateUserInput): Promise<UserRecord> {
-    return createUser(input.username, input.passwordHash, input.phoneHash, input.referralCode);
+    return createUser(input.username, input.passwordHash, input.referralCode);
   }
 
   async registerReferralActivation(referralCode: string, referredUserId: string): Promise<void> {

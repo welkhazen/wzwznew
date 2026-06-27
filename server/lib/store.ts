@@ -13,7 +13,6 @@ const polls: Poll[] = POLL_QUESTION_SEEDS.map((poll, index) => ({
 
 const usersById = new Map<string, UserRecord>();
 const userIdByUsername = new Map<string, string>();
-const userIdByPhoneHash = new Map<string, string>();
 const userIdByReferralCode = new Map<string, string>();
 const referralActivationsByInviterId = new Map<string, ReferralActivationRecord[]>();
 
@@ -33,11 +32,6 @@ export function findUserById(userId: string): UserRecord | null {
 
 export function findUserByUsername(username: string): UserRecord | null {
   const userId = userIdByUsername.get(normalizeUsername(username));
-  return userId ? usersById.get(userId) ?? null : null;
-}
-
-export function findUserByPhoneHash(phoneHash: string): UserRecord | null {
-  const userId = userIdByPhoneHash.get(phoneHash);
   return userId ? usersById.get(userId) ?? null : null;
 }
 
@@ -81,7 +75,7 @@ function buildReferralCode(username: string): string {
   return candidate;
 }
 
-export function createUser(username: string, passwordHash: string, phoneHash: string, referralCode?: string): UserRecord {
+export function createUser(username: string, passwordHash: string, referralCode?: string): UserRecord {
   const id = crypto.randomUUID();
   const now = Date.now();
   const normalizedReferralCode = (referralCode ?? buildReferralCode(username)).toUpperCase();
@@ -95,23 +89,17 @@ export function createUser(username: string, passwordHash: string, phoneHash: st
     updatedAt: now,
     passwordChangedAt: now,
     passwordHash,
-    phoneHash,
     votedPollIds: new Set<string>(),
   };
 
   usersById.set(id, user);
   userIdByUsername.set(normalizeUsername(username), id);
-  userIdByPhoneHash.set(phoneHash, id);
   userIdByReferralCode.set(normalizedReferralCode, id);
   return user;
 }
 
 export function usernameExists(username: string): boolean {
   return userIdByUsername.has(normalizeUsername(username));
-}
-
-export function phoneHashExists(phoneHash: string): boolean {
-  return userIdByPhoneHash.has(phoneHash);
 }
 
 export function updateUserProfile(

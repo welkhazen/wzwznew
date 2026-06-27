@@ -55,8 +55,7 @@ const Index = () => {
     unlockExtraPolls,
     completeOnboarding,
     vote,
-    requestSignupOtp,
-    verifySignupOtp,
+    signup,
     login,
     logout,
   } = useRawStore();
@@ -122,7 +121,7 @@ const Index = () => {
         <SignupModal
           open={showSignup}
           onClose={() => setShowSignup(false)}
-          onRequestSignupOtp={requestSignupOtp}
+          onSignup={signup}
           onLogin={login}
           source="shared-poll"
         />
@@ -232,8 +231,7 @@ const Index = () => {
         isLoggedIn={isLoggedIn}
         showSignup={showSignup}
         setShowSignup={setShowSignup}
-        requestSignupOtp={requestSignupOtp}
-        verifySignupOtp={verifySignupOtp}
+        signup={signup}
         login={login}
       />
     </Suspense>
