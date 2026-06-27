@@ -5,7 +5,6 @@ import { Menu, X } from "lucide-react";
 import { ThemeCustomizer } from "@/components/theme/ThemeCustomizer";
 import { ThemeModeSwitcher } from "@/components/theme/ThemeModeSwitcher";
 import { track } from "@/lib/analytics";
-import { useTheme } from "@/providers/useTheme";
 
 const RAW_LOGO_SRC = "/raw-logo-96.png";
 
@@ -17,8 +16,6 @@ interface NavbarProps {
 
 export function Navbar({ isLoggedIn, username, onSignupClick }: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { mode } = useTheme();
-  const isLightMode = mode === "light";
   const [navVisible, setNavVisible] = useState(true);
 
   useEffect(() => {
@@ -78,7 +75,7 @@ export function Navbar({ isLoggedIn, username, onSignupClick }: NavbarProps) {
             width={36}
             height={36}
             decoding="async"
-            fetchpriority="high"
+            fetchPriority="high"
             className="h-8 w-8 shrink-0 sm:h-9 sm:w-9"
           />
           <span>

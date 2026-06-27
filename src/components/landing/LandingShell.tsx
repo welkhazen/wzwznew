@@ -151,7 +151,6 @@ export default function LandingShell({
           open={showSignup}
           onClose={() => setShowSignup(false)}
           onRequestSignupOtp={requestSignupOtp}
-          onVerifySignupOtp={verifySignupOtp}
           onLogin={login}
         />
       </Suspense>

@@ -999,3 +999,4 @@ html.theme-light .landing-page-shell footer {
   .animate-marquee-vertical {
     animation: marquee-vertical var(--duration) linear infinite;
   }
+}

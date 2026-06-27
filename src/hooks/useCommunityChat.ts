@@ -31,8 +31,8 @@ import {
   setCommunityMessages,
 } from "@/lib/communityChatState";
 import { buildDefaultCommunities } from "@/lib/communityChat.seed";
-import { getCommunitySenderBlockKey, readBlockedCommunitySenders, writeBlockedCommunitySenders } from "@/lib/blockedCommunitySenders";
-import { readCommunityJoinRequests, writeCommunityJoinRequests, type ChatReportRecord, type CommunityJoinRequestRecord } from "@/lib/adminData";
+import { readBlockedCommunitySenders, writeBlockedCommunitySenders } from "@/lib/blockedCommunitySenders";
+import { readCommunityJoinRequests, type ChatReportRecord, type CommunityJoinRequestRecord } from "@/lib/adminData";
 import type { CommunityChatMessageRecord, PersistedCommunityRecord } from "@/lib/communityChat.types";
 import type { CommunityRequestRecord } from "@/lib/adminData";
 import { useCommunityMessagesRealtime } from "@/hooks/useCommunityMessagesRealtime";
@@ -76,8 +76,8 @@ export interface CommunityChatState {
   unreadCount: number;
   visibleMembers: PersistedCommunityRecord["members"];
   canEditSelectedCommunity: boolean;
-  messagesContainerRef: React.RefObject<HTMLDivElement | null>;
-  messageInputRef: React.RefObject<HTMLInputElement | null>;
+  messagesContainerRef: React.RefObject<HTMLDivElement>;
+  messageInputRef: React.RefObject<HTMLInputElement>;
   profileDialogOpen: boolean;
   profileTarget: { message: CommunityChatMessageRecord; profile: PublicUserProfile | null; loading: boolean } | null;
   setProfileDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -124,8 +124,8 @@ export function useCommunityChat(
     loading: boolean;
   } | null>(null);
 
-  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
-  const messageInputRef = useRef<HTMLInputElement | null>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const messageInputRef = useRef<HTMLInputElement>(null);
   const lastTouchedCommunityRef = useRef<string>("");
   const latestMessagesRequestRef = useRef(0);
   const loadedMessagesCommunityRef = useRef<string | null>(null);
@@ -144,7 +144,6 @@ export function useCommunityChat(
 
   const isJoined = Boolean(selectedCommunity?.members.find((m) => m.userId === userId));
   const canEditSelectedCommunity = selectedCommunity ? canManageCommunity(selectedCommunity, userId, username) : false;
-  const isGlobalAdmin = false; // passed via canManagePolls check below
   const canManagePolls = canEditSelectedCommunity;
   const onlineNow = selectedCommunity ? countOnlineMembers(selectedCommunity) : 0;
   const visibleMembers = selectedCommunity?.members.slice(0, 5) ?? [];
@@ -428,7 +427,7 @@ export function useCommunityChat(
         senderAvatarLevel: sendAvatarLevel,
         text: trimmedMessage,
         createdAt: new Date().toISOString(),
-        deliveryStatus: "pending" as const,
+        deliveryStatus: "sending" as const,
         likedBy: [],
       };
       updateCommunities((current) => appendOptimisticMessage(current, selectedCommunity.id, optimisticMessage));

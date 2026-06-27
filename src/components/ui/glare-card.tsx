@@ -7,9 +7,9 @@ interface GlareCardProps {
 
 export function GlareCard({ children, className = "" }: GlareCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
-  const [glarePos, setGlarePos] = useState({ x: 50, y: 50 });
+  const [, setGlarePos] = useState({ x: 50, y: 50 });
   const [rotation, setRotation] = useState({ x: 0, y: 0 });
-  const [isHovered, setIsHovered] = useState(false);
+  const [, setIsHovered] = useState(false);
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (!cardRef.current) return;

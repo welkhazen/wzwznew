@@ -204,7 +204,6 @@ function DraggablePollCard({
     : "0 0 0 1px rgba(241,196,45,0.08), 0 0 40px rgba(241,196,45,0.12), 0 20px 60px rgba(0,0,0,0.6)";
 
   const textPrimary = isLight ? "#1a1a1a" : "#ffffff";
-  const textSecondary = isLight ? "rgba(60,50,20,0.6)" : "rgba(255,255,255,0.45)";
   const goldAccent = isLight ? "rgba(160,120,10,0.85)" : GOLD;
 
   const variants = {

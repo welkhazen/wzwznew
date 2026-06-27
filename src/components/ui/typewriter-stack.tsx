@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 
@@ -23,12 +23,6 @@ interface TypewriterStackProps {
   rawWordBaseClassName?: string;
   rawWClassName?: string;
   lineClassNamesByIndex?: Partial<Record<number, string>>;
-}
-
-function splitFirstWord(value: string): [string, string] {
-  const spaceIndex = value.indexOf(" ");
-  if (spaceIndex === -1) return [value, ""];
-  return [value.slice(0, spaceIndex), value.slice(spaceIndex)];
 }
 
 type Phase = "typing" | "pausing" | "done";

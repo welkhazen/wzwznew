@@ -69,6 +69,7 @@ describe("theme accent previews", () => {
         avatarLevel={1}
         onProfileClick={vi.fn()}
         onBillingClick={vi.fn()}
+        onSettingsClick={vi.fn()}
         onLogout={vi.fn()}
         communities={[]}
       />,

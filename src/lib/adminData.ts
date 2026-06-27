@@ -90,7 +90,6 @@ export interface AvatarCustomRequestRecord {
 }
 
 const USER_STORAGE_KEY = "raw.users.v1";
-const AUTH_SESSION_STORAGE_KEY = "raw.auth-session.v1";
 export const COMMUNITY_REQUESTS_STORAGE_KEY = "raw.community-requests.v1";
 export const CHAT_REPORTS_STORAGE_KEY = "raw.chat-reports.v1";
 export const COMMUNITY_JOIN_REQUESTS_STORAGE_KEY = "raw.community-join-requests.v1";

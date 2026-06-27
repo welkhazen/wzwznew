@@ -58,8 +58,7 @@ function renderTimeline(overrides: Partial<React.ComponentProps<typeof Community
       },
     ],
     activeMessageCount: 2,
-    messagesLoading: false,
-    messagesError: false,
+    isLoading: false,
     canManagePolls: false,
     userId: "user-me",
     username: "me",
@@ -135,7 +134,7 @@ describe("CommunityMessageTimeline", () => {
 
   it("does not show message actions for own messages held in moderation review", () => {
     renderTimeline({
-      groupedMessages: [{ label: "Today", messages: [{ ...ownMessage, moderationStatus: "hold" }] }],
+      groupedMessages: [{ label: "Today", messages: [{ ...ownMessage, moderationStatus: "hold" } as typeof ownMessage] }],
     });
 
     expect(screen.queryByRole("button", { name: "Message actions" })).not.toBeInTheDocument();
@@ -154,7 +153,7 @@ describe("CommunityMessageTimeline", () => {
     renderTimeline({
       groupedMessages: [],
       activeMessageCount: 0,
-      messagesLoading: true,
+      isLoading: false,
     });
 
     expect(screen.getByText("This group is quiet right now. Join and start the first real conversation.")).toBeInTheDocument();

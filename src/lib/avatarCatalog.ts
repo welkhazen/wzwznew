@@ -103,18 +103,6 @@ export const DEFAULT_AVATAR_CATALOG: readonly AvatarCatalogItem[] = [
   ...GENERATED_AVATAR_ENTRIES.map(withNumberedAvatarName),
 ];
 
-const WHEEL_AVATAR_IDS = new Set([
-  "silver-void",
-  "neon-lynx",
-  "blue-signal",
-  "violet-mask",
-  "horned-iron",
-  "crimson-muse",
-  "solar-flame",
-  "pink-circuit",
-  "blu-fifer",
-]);
-
 const LANDING_WHEEL_PRIZE_TO_AVATAR_ID: Record<string, string> = {
   "wheel-avatar-1": "silver-void",
   "wheel-avatar-2": "neon-lynx",
@@ -230,7 +218,7 @@ async function refreshAvatarCatalogFromSupabase(): Promise<void> {
         .select(cols)
         .eq("is_active", true)
         .order("level", { ascending: true });
-      if (!error) { data = d as Record<string, unknown>[]; break; }
+      if (!error) { data = d as unknown as Record<string, unknown>[]; break; }
       markBackendMissingIfNeeded(error);
       if (cols === BASE_COLS) return;
     }
@@ -272,7 +260,7 @@ export async function loadAvatarCatalogSupabaseOnly(): Promise<AvatarCatalogItem
       .select(cols)
       .eq("is_active", true)
       .order("level", { ascending: true });
-    if (!error) { data = d as Record<string, unknown>[]; break; }
+    if (!error) { data = d as unknown as Record<string, unknown>[]; break; }
     if (cols === BASE_COLS) throw new Error(error.message || "Could not load avatar catalog from Supabase.");
   }
 
@@ -326,7 +314,7 @@ export async function loadFullAvatarCatalog(): Promise<AvatarCatalogItem[]> {
       .from("avatar_catalog")
       .select(cols)
       .order("level", { ascending: true });
-    if (!error) { data = d as Record<string, unknown>[]; break; }
+    if (!error) { data = d as unknown as Record<string, unknown>[]; break; }
     if (cols === BASE_COLS) throw new Error(error.message || "Could not load full avatar catalog from Supabase.");
   }
 

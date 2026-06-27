@@ -31,7 +31,6 @@ export function LevelProgressBanner({ xp, level, compact = false, className }: L
   const nextLevel = Math.min(safeLevel + 1, XP_MAX_LEVEL);
   const isMax = safeLevel >= XP_MAX_LEVEL;
   const { current, needed, pct } = xpProgressInLevel(xp, safeLevel);
-  const badgeFrameSize = compact ? "h-9 w-9" : "h-12 w-12";
   const badgeImageSize = compact ? "h-7 w-7" : "h-9 w-9";
   const progressLabel = isMax ? `${xp.toLocaleString()} XP` : `${current.toLocaleString()} / ${needed.toLocaleString()} XP`;
 

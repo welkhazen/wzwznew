@@ -24,7 +24,7 @@ function getStoredAccent(): AccentPresetId {
   }
 
   const storedAccent = window.localStorage.getItem(THEME_ACCENT_STORAGE_KEY) as AccentPresetId | null;
-  return ACCENT_PRESETS.some((preset) => preset.id === storedAccent) ? storedAccent : "gold";
+  return storedAccent !== null && ACCENT_PRESETS.some((preset) => preset.id === storedAccent) ? storedAccent : "gold";
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {

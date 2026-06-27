@@ -10,7 +10,15 @@ export type Surface = "landing" | "app" | "admin";
 export type DeviceClass = "mobile" | "tablet" | "desktop";
 export type AuthMethod = "username_password" | "oauth_google";
 export type OtpChannel = "sms" | "whatsapp" | "email";
-export type OnboardingStepName = "avatar" | "polls" | "profile" | "communities" | "ready";
+export type OnboardingStepName =
+  | "avatar"
+  | "polls"
+  | "profile"
+  | "communities"
+  | "ready"
+  | "spin"
+  | "username"
+  | "voucher";
 export type WaitlistRole = "owner" | "provider" | "user";
 export type ModerationAction =
   | "warn"
@@ -51,6 +59,8 @@ export type AppEvent =
           | "why_anonymity"
           | "faq"
           | "security"
+          | "problem"
+          | "personality_insights"
           | "final_cta";
       };
     }
@@ -67,6 +77,7 @@ export type AppEvent =
       properties: {
         poll_id: string;
         option_id: string;
+        answer?: "yes" | "no";
         votes_used: number;
         gate_reached: boolean;
       };
@@ -90,6 +101,12 @@ export type AppEvent =
       properties: {
         video_id: string;
         watched_pct: number;
+      };
+    }
+  | {
+      name: "anon_question_submitted";
+      properties: {
+        source: string;
       };
     }
 
@@ -130,7 +147,7 @@ export type AppEvent =
   | {
       name: "signup_completed";
       properties: {
-        time_since_first_visit_ms: number;
+        time_since_first_visit_ms?: number;
         source: string;
       };
     }
@@ -200,6 +217,7 @@ export type AppEvent =
       name: "onboarding_step_completed";
       properties: {
         step: OnboardingStepName;
+        step_index?: number;
         duration_ms: number;
       };
     }
@@ -209,6 +227,7 @@ export type AppEvent =
         total_duration_ms: number;
         polls_answered: number;
         communities_selected: number;
+        source?: string;
       };
     }
 

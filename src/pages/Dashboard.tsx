@@ -1,6 +1,5 @@
 import { FloatingDock } from "@/components/ui/floating-dock";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { readCommunityChats } from "@/lib/communityChat";
 import { getPrivateAvatarLevel } from "@/lib/avataridentity";
 import { CHAT_IDENTITY_CHANGED_EVENT, hydrateChatIdentityFromServer, readSelectedChatAlias, writeSelectedChatAlias } from "@/lib/identitySelection";
 import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
@@ -18,7 +17,7 @@ import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { DashboardHome } from "@/components/dashboard/DashboardHome";
 import { DashboardStore } from "@/components/dashboard/DashboardStore";
 import { DashboardSectionShell } from "@/components/dashboard/DashboardSectionShell";
-import { CommunityHoldSwitcher, getCommunityHoldSwitcherTargets } from "@/components/dashboard/CommunityHoldSwitcher";
+import { CommunityHoldSwitcher } from "@/components/dashboard/CommunityHoldSwitcher";
 import { NotificationConsentPrompt } from "@/components/notifications/NotificationConsentPrompt";
 import { LevelUpCelebration } from "@/components/ui/LevelUpCelebration";
 import { useUserProgress } from "@/store/useUserProgress";
@@ -530,7 +529,6 @@ export default function Dashboard({
               <DashboardCommunities
                 user={user}
                 avatarLevel={avatarLevel}
-                tokenBalance={tokenBalance}
                 activeCommunityId={activeCommunityId}
                 onOpenCommunity={handleOpenCommunity}
                 onBackToCommunities={handleBackToCommunities}
@@ -589,6 +587,7 @@ export default function Dashboard({
           <Suspense fallback={dashboardSectionFallback}>
             <DashboardSectionShell>
               <DashboardStore
+                userName={user.username}
                 avatarCatalog={avatarCatalog}
                 ownedAvatarLevels={ownedAvatarLevels}
                 onUnlockAvatar={unlockAvatarLevel}

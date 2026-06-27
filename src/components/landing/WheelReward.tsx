@@ -64,7 +64,7 @@ function shouldResetStoredSpinForTesting(): boolean {
 }
 
 function rankOf(entry: PoolEntry): number {
-  return getAvatarRank({ name: entry.name, imageSrc: entry.imageSrc });
+  return getAvatarRank({ id: entry.avatarId, name: entry.name, imageSrc: entry.imageSrc });
 }
 
 // Rarer avatars (higher rank tier) win less often. Linear gradient: rank 1
@@ -169,7 +169,7 @@ export function WheelRewardInline({ onSignupClick }: WheelRewardProps) {
   return (
     <div className="flex flex-col items-center gap-6 sm:gap-10">
       <SpinWheelClaimBanner />
-      <WheelOfFortune prizes={prizes} onSpinEnd={handleSpinEnd} disabled={hasSpun} />
+      <WheelOfFortune prizes={prizes} prizeWeights={prizeWeights} onSpinEnd={handleSpinEnd} disabled={hasSpun} />
       <AvatarRankRarityGrid pool={pool} isLight={isLight} />
 
       {!rewardsImageMissing ? (

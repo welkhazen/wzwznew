@@ -69,19 +69,6 @@ function getTextPosition(index: number, total: number, radius: number): { x: num
   };
 }
 
-function getLabelLines(label: string): string[] {
-  const parts = label.trim().split(/\s+/);
-  if (parts.length <= 1) {
-    return [label];
-  }
-
-  if (parts.length === 2) {
-    return [parts[0], parts[1]];
-  }
-
-  const midpoint = Math.ceil(parts.length / 2);
-  return [parts.slice(0, midpoint).join(" "), parts.slice(midpoint).join(" ")];
-}
 
 export function WheelOfFortune({ prizes, onSpinEnd, onSpinStart, disabled = false, prizeWeights, forcedPrizeId = null, radius: radiusProp = 200, previewOnly = false, disabledLabel }: WheelOfFortuneProps) {
   const { mode } = useTheme();

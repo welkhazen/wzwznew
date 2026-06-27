@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 
 /**
  * Listens to window.visualViewport to detect the iOS virtual keyboard.
@@ -7,7 +7,6 @@ import { useEffect, useRef } from "react";
  * Also sets --keyboard-offset on <html> for any CSS that needs it.
  */
 export function useKeyboardOffset(targetRef?: React.RefObject<HTMLElement | null>): void {
-  const lastHeight = useRef<number>(typeof window !== "undefined" ? window.innerHeight : 0);
 
   useEffect(() => {
     const vv = window.visualViewport;

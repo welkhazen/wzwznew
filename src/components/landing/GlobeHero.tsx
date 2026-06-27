@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense, lazy, useRef } from "react";
+import { Suspense, lazy, useRef } from "react";
 import { BrandName } from "@/components/ui/brand-name";
 import { motion, useScroll, useTransform } from "motion/react";
 import { ShieldCheck } from "lucide-react";

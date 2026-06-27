@@ -15,7 +15,6 @@ interface SignupModalProps {
   open: boolean;
   onClose: () => void;
   onRequestSignupOtp: (username: string, password: string, phone: string, referralCode: string) => Promise<AuthResult>;
-  onVerifySignupOtp: (code: string) => Promise<AuthResult>;
   onLogin: (username: string, password: string) => Promise<AuthResult>;
   source?: string;
 }
@@ -23,29 +22,21 @@ interface SignupModalProps {
 type AuthMode = "signup" | "login";
 type SignupStep = "details" | "verify";
 
-function maskPhone(phone: string): string {
-  if (phone.length <= 7) {
-    return phone;
-  }
-
-  return `${phone.slice(0, 4)}${"•".repeat(phone.length - 7)}${phone.slice(-3)}`;
-}
-
 function normalizeInviteCode(code: string): string {
   return normalizePlainText(code).trim().toUpperCase().replace(/\s+/g, "");
 }
 
-export function SignupModal({ open, onClose, onRequestSignupOtp, onVerifySignupOtp, onLogin, source }: SignupModalProps) {
+export function SignupModal({ open, onClose, onRequestSignupOtp, onLogin, source }: SignupModalProps) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [phone, setPhone] = useState("");
+  const [, setPhone] = useState("");
   const [referralCode, setReferralCode] = useState("");
-  const [code, setCode] = useState("");
-  const [sentChannels, setSentChannels] = useState<string[]>([]);
+  const [, setCode] = useState("");
+  const [, setSentChannels] = useState<string[]>([]);
   const [cooldown, setCooldown] = useState(0);
   const [mode, setMode] = useState<AuthMode>("signup");
-  const [signupStep, setSignupStep] = useState<SignupStep>("details");
+  const [, setSignupStep] = useState<SignupStep>("details");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -124,29 +115,6 @@ export function SignupModal({ open, onClose, onRequestSignupOtp, onVerifySignupO
     }
   };
 
-  const handleVerifySignup = async (event?: React.FormEvent, overrideCode?: string) => {
-    event?.preventDefault();
-    const verificationCode = overrideCode ?? code;
-
-    if (!/^\d{6}$/.test(verificationCode)) {
-      setError("Enter the 6-digit code.");
-      return;
-    }
-
-    setIsSubmitting(true);
-    setError("");
-
-    const result = await onVerifySignupOtp(verificationCode);
-    if (!result.ok) {
-      track("signup_failed", { reason: result.error ?? "otp_invalid", step: "otp" });
-      setError(result.error ?? "Verification failed.");
-    } else {
-      track("signup_otp_verified", { attempts_used: 1, time_to_verify_ms: 0 });
-    }
-
-    setIsSubmitting(false);
-  };
-
   const handleLogin = async (event: React.FormEvent) => {
     event.preventDefault();
     const normalizedUsername = normalizePlainText(sanitizeUsernameInput(username));
@@ -175,10 +143,6 @@ export function SignupModal({ open, onClose, onRequestSignupOtp, onVerifySignupO
   };
 
   const isSignup = mode === "signup";
-  const channelSummary =
-    sentChannels.length > 0
-      ? sentChannels.map((channel) => channel === "whatsapp" ? "WhatsApp" : "SMS").join(" + ")
-      : "SMS or WhatsApp";
 
   return createPortal(
     <div

@@ -2,7 +2,6 @@ import { GlareCard } from "@/components/ui/glare-card";
 import { useTrackSectionView } from "@/lib/analytics/useTrackSectionView";
 import { highlightRawWordmark } from "@/components/ui/highlightRawWordmark";
 
-const pillars = ["No real names", "Better honesty", "Better matching"];
 
 const cards = [
   {

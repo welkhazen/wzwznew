@@ -35,7 +35,6 @@ import {
   COMMUNITY_UNLOCK_TOKEN_COST,
 } from "@/lib/communityAccess";
 import { getUserTextModerationMessage, moderateUserText } from "@/lib/inputSecurity";
-import { useTheme } from "@/providers/useTheme";
 import type { User } from "@/store/types";
 import { CommunityMessageTimeline } from "@/components/dashboard/CommunityMessageTimeline";
 import { CommunityMessageComposer } from "@/components/dashboard/CommunityMessageComposer";
@@ -50,7 +49,6 @@ import { useCommunityChat } from "@/hooks/useCommunityChat";
 import { usePinnedMessages } from "@/hooks/usePinnedMessages";
 import { useCommunityAccess } from "@/hooks/useCommunityAccess";
 import { useCommunityPolls } from "@/hooks/useCommunityPolls";
-import { MAX_PINNED_MESSAGES } from "@/backend/supabase/controllers/userExtrasController";
 import { MAX_FAVORITE_COMMUNITIES } from "@/backend/supabase/controllers/userExtrasController";
 
 const WAITLIST_UNLOCK_THRESHOLD = 200;
@@ -125,8 +123,6 @@ export function DashboardCommunities({
   onBackToCommunities,
   onCommunitiesChange,
 }: DashboardCommunitiesProps) {
-  const { mode } = useTheme();
-  const isLight = mode === "light";
   const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const isGlobalAdmin = user.role === "admin";
 
@@ -145,7 +141,7 @@ export function DashboardCommunities({
   const [requestSubmitAttempted, setRequestSubmitAttempted] = useState(false);
   const [requestDraft, setRequestDraft] = useState<CommunityRequestDraft>(INITIAL_REQUEST_DRAFT);
   const [showRequestButton, setShowRequestButton] = useState(false);
-  const [requestBtnText, setRequestBtnText] = useState("Didn't find your community?");
+  const requestBtnText = "Didn't find your community?";
   const [mobileRequestExpanded, setMobileRequestExpanded] = useState(false);
 
   // Floating button scroll + collapse effects are moved inline since they're pure UI
