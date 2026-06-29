@@ -139,7 +139,7 @@ export default function LandingShell({
                   onClick={() => setShowSignup(true)}
                   className="mt-7 inline-flex min-h-11 items-center justify-center rounded-xl border border-raw-gold/45 bg-raw-gold px-8 py-3.5 text-base font-semibold text-raw-ink transition hover:bg-raw-gold/90 sm:text-lg"
                 >
-                  Join Now — Free
+                  Join Now
                 </button>
               </div>
             </section>
