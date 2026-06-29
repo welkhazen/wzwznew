@@ -10,7 +10,6 @@ import { track } from "@/lib/analytics";
 import { LANDING_WHEEL_SPIN_KEY } from "@/lib/avatarCatalog";
 import { avatarDisplayName } from "@/config/avatarNames";
 
-const TRANSPARENT_REWARDS_IMAGE_SRC = "/images/avatar-rarity-chart.png";
 
 type PoolEntry = { id: string; avatarId: string; name: string; imageSrc: string };
 
@@ -94,7 +93,6 @@ export function WheelRewardInline({ onSignupClick }: WheelRewardProps) {
     }
     return readStoredSpin(getPool());
   });
-  const [rewardsImageMissing, setRewardsImageMissing] = useState(true);
   const hasSpun = Boolean(landedEntry);
 
   useEffect(() => {
@@ -173,7 +171,6 @@ export function WheelReward({ onSignupClick }: WheelRewardProps) {
     }
     return readStoredSpin(getPool());
   });
-  const [rewardsImageMissing, setRewardsImageMissing] = useState(true);
   const hasSpun = Boolean(landedEntry);
 
   useEffect(() => {
@@ -207,14 +204,6 @@ export function WheelReward({ onSignupClick }: WheelRewardProps) {
         <SpinWheelClaimBanner />
         <WheelOfFortune prizes={prizes} onSpinEnd={handleSpinEnd} disabled={hasSpun} />
 
-        {!rewardsImageMissing ? (
-          <img
-            src={TRANSPARENT_REWARDS_IMAGE_SRC}
-            alt="Avatar rarity chart"
-            className={`w-full max-w-5xl object-contain ${isLight ? "opacity-80" : "mix-blend-screen"}`}
-            onError={() => setRewardsImageMissing(true)}
-          />
-        ) : null}
 
         {landedEntry && (
           <div className={`w-full max-w-md rounded-2xl border p-4 text-center transition-all duration-500 sm:p-5 ${
