@@ -37,12 +37,10 @@ interface DashboardHomeProps {
 
 function CommunityCard({
   community,
-  rank,
   isLight,
   onOpenCommunity,
 }: {
   community: PersistedCommunityRecord;
-  rank?: number;
   isLight: boolean;
   onOpenCommunity: (id: string) => void;
 }) {
@@ -70,17 +68,6 @@ function CommunityCard({
           </div>
         )}
         <div className={`absolute inset-0 bg-gradient-to-t ${isLight ? "from-white/88 via-white/20 to-transparent" : "from-[#1a1a1a]/80 to-transparent"}`} />
-        {rank !== undefined && (
-          <div className={`absolute top-2.5 right-2.5 px-1.5 py-0.5 rounded-lg text-[9px] font-black border ${
-            rank === 0
-              ? "bg-raw-gold/20 text-raw-gold border-raw-gold/30"
-              : isLight
-                ? "bg-white/80 text-slate-500 border-slate-200"
-                : "bg-black/50 text-white/50 border-white/10"
-          }`}>
-            #{rank + 1}
-          </div>
-        )}
       </div>
       {/* Info */}
       <div className="p-4">

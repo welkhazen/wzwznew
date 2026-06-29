@@ -1,8 +1,6 @@
 import { Suspense, lazy } from "react";
 import { Store } from "lucide-react";
 import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
-import { RANK_TIERS, RANK_TIER_PRICING } from "@/lib/avatarRarity";
-import { AVATAR_RANK_LABELS } from "@/lib/avatarRank";
 import TokenImage from "@/assets/tokens.webp";
 
 const AvatarShop = lazy(() =>
@@ -41,50 +39,9 @@ export function DashboardStore({
           Store
         </h1>
         <p className="mt-1 text-xs text-raw-silver/40">
-          Buy avatars and identity reports, or spin for rarity rewards. Owned items live in your Inventory.
+          Buy avatars and spin for rare rewards. Owned items live in your Inventory.
         </p>
       </header>
-
-      {/* Rank Pricing Legend */}
-      <section>
-        <h2 className="mb-3 font-display text-sm tracking-wide text-raw-text">Rank Tiers</h2>
-        <div className="overflow-hidden rounded-2xl border border-raw-border/30 bg-raw-black/40">
-          <div className="grid grid-cols-4 border-b border-raw-border/20 px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-raw-silver/40">
-            <span>Rank</span>
-            <span>Rarity</span>
-            <span className="text-center">Price</span>
-            <span className="text-right">Supply</span>
-          </div>
-          {RANK_TIERS.map((tier) => {
-            const pricing = RANK_TIER_PRICING[tier.rank];
-            const label = AVATAR_RANK_LABELS[tier.rank] ?? `R${tier.rank}`;
-            return (
-              <div
-                key={tier.rank}
-                className="grid grid-cols-4 items-center border-b border-raw-border/10 px-4 py-2.5 last:border-0"
-              >
-                <span className="flex items-center gap-1.5">
-                  <span
-                    className="h-2 w-2 rounded-full"
-                    style={{ backgroundColor: tier.color, boxShadow: `0 0 5px ${tier.color}` }}
-                  />
-                  <span className="text-[11px] font-semibold" style={{ color: tier.color }}>
-                    R{tier.rank}
-                  </span>
-                </span>
-                <span className="text-[11px] text-raw-silver/60">{label}</span>
-                <span className="flex items-center justify-center gap-1 text-[11px] font-semibold text-raw-gold">
-                  <img src={TokenImage} alt="" className="h-3 w-3 object-contain" />
-                  {pricing.price.toLocaleString()}
-                </span>
-                <span className="text-right text-[11px] text-raw-silver/50">
-                  {pricing.maxOwners === null ? "∞" : `≤ ${pricing.maxOwners.toLocaleString()}`}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </section>
 
       <section>
         <h2 className="mb-3 font-display text-sm tracking-wide text-raw-text">Avatar Shop</h2>

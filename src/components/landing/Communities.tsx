@@ -168,7 +168,7 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
                         loop
                         muted
                         playsInline
-                        preload="none"
+                        preload="auto"
                       >
                         <source src={c.video} type={c.videoType ?? "video/webm"} />
                         Your browser does not support this video format.
