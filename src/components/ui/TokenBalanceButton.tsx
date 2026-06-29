@@ -78,13 +78,6 @@ export function TokenBalanceButton() {
           animation: token-spin 0.56s cubic-bezier(0.22, 1, 0.36, 1) forwards;
           transform-style: preserve-3d;
         }
-        @keyframes token-float {
-          0%, 100% { transform: translateY(0); }
-          50%      { transform: translateY(-3px); }
-        }
-        .token-float {
-          animation: token-float 2.4s ease-in-out infinite;
-        }
         @keyframes ripple-ring {
           0%   { transform: scale(0.6); opacity: 0.8; }
           100% { transform: scale(2.4); opacity: 0; }
@@ -153,7 +146,7 @@ export function TokenBalanceButton() {
           width={26}
           height={26}
           draggable={false}
-          className={`shrink-0 select-none object-contain${spinning ? " token-spin-anim" : " token-float"}`}
+          className={`shrink-0 select-none object-contain${spinning ? " token-spin-anim" : ""}`}
           style={{ filter: "drop-shadow(0 0 5px rgba(250,204,21,0.5))" }}
         />
         {open && !spinning && (
