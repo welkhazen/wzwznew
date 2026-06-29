@@ -11,7 +11,6 @@ const IMAGE_SCALE_BY_SRC: Record<string, number> = {
   "/avatars/6.webp": 1.0,                     // Crimson Muse
   "/avatars/landing/solar-flame.webp": 1.45,  // Solar Flame
   "/avatars/landing/pink-circuit.webp": 1.22, // Pink Circuit
-  "/avatars/landing/blu-fifer.webp": 1.42,    // Blu Fifer
 };
 
 export interface WheelPrize {

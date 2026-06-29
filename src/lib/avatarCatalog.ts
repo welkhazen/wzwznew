@@ -112,7 +112,6 @@ const LANDING_WHEEL_PRIZE_TO_AVATAR_ID: Record<string, string> = {
   "wheel-avatar-6": "crimson-muse",
   "wheel-avatar-7": "solar-flame",
   "wheel-avatar-8": "pink-circuit",
-  "wheel-avatar-10": "blu-fifer",
 };
 
 export type DailySpinAvatarGrantResult =
