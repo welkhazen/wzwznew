@@ -43,12 +43,10 @@ export const NUMBERED_AVATAR_NAMES: Record<number, string> = {
   42: "Orange Vortex",
   43: "Grey Sentinel",
   44: "Aqua Phantom",
-  45: "Rust Revenant",
   46: "Lilac Runner",
   47: "Pink Nova",
   48: "Teal Ghost",
   49: "Indigo Circuit",
-  50: "Violet Pulse",
   51: "Crimson Echo",
   52: "Blue Cipher",
   53: "Lime Warden",
@@ -57,7 +55,6 @@ export const NUMBERED_AVATAR_NAMES: Record<number, string> = {
   56: "Cyan Relic",
   57: "Magenta Shade",
   58: "Lavender Prism",
-  59: "Rose Comet",
 };
 
 export function avatarDisplayName(imageId: number): string {
