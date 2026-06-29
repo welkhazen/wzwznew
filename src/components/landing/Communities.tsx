@@ -165,10 +165,13 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
                       <video
                         className="rounded-xl w-full h-32 object-cover mb-3"
                         autoPlay
-                        loop
                         muted
                         playsInline
-                        preload="none"
+                        preload="auto"
+                        onEnded={(e) => {
+                          e.currentTarget.currentTime = 0;
+                          e.currentTarget.play();
+                        }}
                       >
                         <source src={c.video} type={c.videoType ?? "video/webm"} />
                         Your browser does not support this video format.
