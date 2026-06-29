@@ -2,11 +2,13 @@
 // landing, onboarding, and the spin/claim systems. Anytime you'd
 // hardcode an avatar array elsewhere, import from here instead.
 
-// Ordered by rank tier (rank 1 grey -> rank 9 white); see src/lib/avatarRank.ts.
-// Id 35 (the old "Platinum" slot) was removed — its artwork was mis-colored red.
-// Id 21 ("Rose Warden") now fills rank 7 ("Rose"), and Gold moved up to rank 8.
-// Id 26 (Rainbow Pulse, R10) replaced by id 37 (Purple Hex, R3) to add a second purple slot.
-export const FREE_SPIN_AVATAR_IDS = [43, 52, 41, 37, 42, 13, 47, 21, 40, 20] as const;
+// One avatar per rank tier (R1 Grey → R11 S1). See src/lib/avatarRank.ts for the full ladder.
+// Id 35 (old "Platinum") was removed — mis-colored artwork.
+// Id 36 (Green Relic, R3) added — fills the Green tier gap.
+// Id 23 (Gold Specter, R9) replaces id 40 (Gold Warden, actually R8 Rose).
+// Id 26 (Rainbow Pulse, R11 S1) restored — previously swapped out for a second Purple slot.
+// Id 37 (Purple Hex) and id 40 (Gold Warden) removed — both were rank-duplicates.
+export const FREE_SPIN_AVATAR_IDS = [43, 52, 36, 42, 41, 13, 47, 21, 23, 20, 26] as const;
 
 // Early-signup reward pool. Must NOT overlap with FREE_SPIN_AVATAR_IDS.
 // Emptied: all four ids were retired (21 was promoted into the spin pool above).
