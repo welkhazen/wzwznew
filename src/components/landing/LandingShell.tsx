@@ -61,6 +61,12 @@ export default function LandingShell({
         isLoggedIn={isLoggedIn}
         username={user?.username}
         onSignupClick={() => setShowSignup(true)}
+        onDonateClick={() => {
+          const faqSection = document.getElementById("faq");
+          if (faqSection) {
+            faqSection.scrollIntoView({ behavior: "smooth" });
+          }
+        }}
       />
 
       <div className="relative min-h-screen overflow-x-hidden">

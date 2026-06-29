@@ -12,9 +12,10 @@ interface NavbarProps {
   isLoggedIn: boolean;
   username?: string;
   onSignupClick: () => void;
+  onDonateClick?: () => void;
 }
 
-export function Navbar({ isLoggedIn, username, onSignupClick }: NavbarProps) {
+export function Navbar({ isLoggedIn, username, onSignupClick, onDonateClick }: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [navVisible, setNavVisible] = useState(true);
 
@@ -108,6 +109,21 @@ export function Navbar({ isLoggedIn, username, onSignupClick }: NavbarProps) {
             <>
               <ThemeModeSwitcher />
               <ThemeCustomizer placement="inline" triggerStyle="compact" accentAccess="free" className="flex shrink-0" />
+              {onDonateClick && (
+                <button
+                  onClick={() => {
+                    track("landing_cta_clicked", {
+                      cta_id: "navbar_donate",
+                      cta_text: "Why Donate?",
+                      source_section: "navbar",
+                    });
+                    onDonateClick();
+                  }}
+                  className="hidden rounded-full border border-raw-gold/40 px-3 py-2.5 text-xs font-semibold text-raw-gold transition-all hover:bg-raw-gold/10 sm:px-5 sm:text-sm lg:inline-block"
+                >
+                  Why Donate?
+                </button>
+              )}
               <button
                 onClick={handleSignupClick}
                 className="min-h-11 rounded-full bg-raw-gold px-3 py-2.5 text-xs font-semibold text-raw-black transition-all hover:bg-raw-gold/90 hover:shadow-lg hover:shadow-raw-gold/20 sm:px-5 sm:text-sm"
