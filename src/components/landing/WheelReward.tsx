@@ -170,15 +170,6 @@ export function WheelRewardInline({ onSignupClick }: WheelRewardProps) {
       <WheelOfFortune prizes={prizes} prizeWeights={prizeWeights} onSpinEnd={handleSpinEnd} disabled={hasSpun} />
       <AvatarRankRarityGrid pool={pool} isLight={isLight} />
 
-      {!rewardsImageMissing ? (
-        <img
-          src={TRANSPARENT_REWARDS_IMAGE_SRC}
-          alt="Avatar rarity chart"
-          className={`w-full max-w-5xl object-contain ${isLight ? "opacity-80" : "mix-blend-screen"}`}
-          onError={() => setRewardsImageMissing(true)}
-        />
-      ) : null}
-
       {landedEntry && (
         <div className={`w-full max-w-md rounded-2xl border p-4 text-center transition-all duration-500 sm:p-5 ${
           isLight
