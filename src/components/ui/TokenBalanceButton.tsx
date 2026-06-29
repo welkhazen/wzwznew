@@ -102,14 +102,6 @@ export function TokenBalanceButton() {
           animation: dropdown-in 0.22s cubic-bezier(0.22, 1, 0.36, 1) forwards;
           transform-origin: top right;
         }
-        @keyframes btn-glow {
-          0%   { box-shadow: 0 0 0 0 rgba(250,204,21,0.55); }
-          60%  { box-shadow: 0 0 0 10px rgba(250,204,21,0); }
-          100% { box-shadow: 0 0 0 0 rgba(250,204,21,0); }
-        }
-        .btn-glow {
-          animation: btn-glow 0.55s ease-out forwards;
-        }
       `}</style>
 
       <button
@@ -119,7 +111,7 @@ export function TokenBalanceButton() {
         aria-label="Token balance"
         aria-expanded={open}
         aria-haspopup="menu"
-        className={`relative flex items-center gap-1.5 rounded-xl border px-2 py-1 transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/50${spinning ? " btn-glow" : ""}`}
+        className="relative flex items-center gap-1.5 rounded-xl border px-2 py-1 transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/50"
         style={{
           borderColor: open
             ? isLight ? "rgba(148,163,184,0.55)" : "rgba(250,204,21,0.45)"
@@ -133,13 +125,6 @@ export function TokenBalanceButton() {
           backdropFilter: open ? "blur(8px)" : "none",
         }}
       >
-        {/* ripple ring on click */}
-        {rippleKey > 0 && (
-          <span
-            key={rippleKey}
-            className="ripple-ring pointer-events-none absolute inset-0 rounded-xl border-2 border-raw-gold/70"
-          />
-        )}
         <img
           src={tokenImg}
           alt="Token"
@@ -150,7 +135,7 @@ export function TokenBalanceButton() {
           style={{ filter: "drop-shadow(0 0 5px rgba(250,204,21,0.5))" }}
         />
         {open && !spinning && (
-          <span className="balance-text-in font-display text-xs tracking-wide text-raw-gold" style={{ textShadow: "0 0 8px rgba(250,204,21,0.5)" }}>
+          <span className="font-display text-xs tracking-wide text-raw-gold">
             {balance}
           </span>
         )}
