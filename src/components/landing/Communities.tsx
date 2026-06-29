@@ -169,8 +169,18 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
                         playsInline
                         preload="auto"
                         onEnded={(e) => {
-                          e.currentTarget.currentTime = 0;
-                          e.currentTarget.play();
+                          const video = e.currentTarget;
+                          video.currentTime = 0;
+                          video.play().catch(() => {
+                            video.currentTime = 0;
+                            video.play();
+                          });
+                        }}
+                        onTimeUpdate={(e) => {
+                          const video = e.currentTarget;
+                          if (video.duration && Math.abs(video.currentTime - video.duration) < 0.01) {
+                            video.currentTime = 0;
+                          }
                         }}
                       >
                         <source src={c.video} type={c.videoType ?? "video/webm"} />
