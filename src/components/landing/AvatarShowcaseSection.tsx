@@ -55,19 +55,17 @@ const REVEAL_AVATARS: readonly AvatarCatalogItem[] = [
 ];
 const LANDING_AVATARS: readonly AvatarCatalogItem[] = [...CHOOSER_AVATARS, ...REVEAL_AVATARS];
 
-// Landing "Unlockable Avatars" feature order. White Mirage and Rainbow Pulse
-// lead the first column (replacing Grey Sentinel and Red Phantom); the rest of
-// the unlockable pool follows and stays reachable via "Show More". The shared
-// SPIN_POOL is untouched, so the wheel and onboarding keep every avatar.
+// Featured 8 shown upfront (rarest first). Green Relic, Blue Cipher, Grey Sentinel
+// appear in "Show More" as the lower-tier entries.
 const UNLOCKABLE_FEATURE_ORDER = [
+  "Rainbow Pulse",
   "White Mirage",
-  "Blue Cipher",
+  "Gold Specter",
+  "Rose Warden",
+  "Pink Nova",
+  "Red Phantom",
   "Purple Oracle",
   "Orange Vortex",
-  "Rainbow Pulse",
-  "Pink Nova",
-  "Rose Warden",
-  "Gold Warden",
 ] as const;
 
 interface AvatarShowcaseSectionProps {
