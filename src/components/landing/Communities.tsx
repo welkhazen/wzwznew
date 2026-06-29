@@ -178,8 +178,9 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
                         }}
                         onTimeUpdate={(e) => {
                           const video = e.currentTarget;
-                          if (video.duration && Math.abs(video.currentTime - video.duration) < 0.01) {
+                          if (video.duration && video.currentTime >= video.duration - 0.05) {
                             video.currentTime = 0;
+                            video.play();
                           }
                         }}
                       >
