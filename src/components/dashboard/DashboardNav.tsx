@@ -20,13 +20,11 @@ import {
   UserRound,
 } from "lucide-react";
 import { AvatarFigure } from "@/components/ui/avatar-figure";
-import { LevelProgressBanner } from "@/components/dashboard/LevelProgressBanner";
 import { TokenBalanceButton } from "@/components/ui/TokenBalanceButton";
 import { cn } from "@/lib/utils";
 import { readIssueReports, writeIssueReports, type IssueReportRecord } from "@/lib/adminData";
 import { useTheme } from "@/providers/useTheme";
 import { THEME_MODE_LABELS, type AccentPresetId, type ThemeMode } from "@/providers/theme-context";
-import { xpProgressInLevel } from "@/lib/userProgress";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -66,8 +64,6 @@ interface DashboardNavProps {
   communityTitle?: string;
   onBack?: () => void;
   communities: PersistedCommunityRecord[];
-  xp?: number;
-  level?: number;
 }
 
 const ISSUE_TYPE_OPTIONS = ["Harmful content", "Bug or broken screen", "Account or billing", "Other"];
@@ -168,7 +164,7 @@ function readStoredTokenBalance(userId: string): number {
   }
 }
 
-export function DashboardNav({ userId, username, avatarLevel, onProfileClick, onSettingsClick, onBillingClick, onLogout, communityTitle, onBack, communities, xp = 0, level = 1 }: DashboardNavProps) {
+export function DashboardNav({ userId, username, avatarLevel, onProfileClick, onSettingsClick, onBillingClick, onLogout, communityTitle, onBack, communities }: DashboardNavProps) {
   const { mode, accent, accentPresets, setMode, setAccent } = useTheme();
   const [hoveredMode, setHoveredMode] = useState<ThemeMode | null>(null);
   const [hoveredAccent, setHoveredAccent] = useState<AccentPresetId | null>(null);
@@ -536,7 +532,6 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
   ];
   const modeIndex = modeOptions.findIndex((option) => option.mode === mode);
   const effectiveModeIndex = modeOptions.findIndex((option) => option.mode === effectiveMode);
-  const mobileXpProgress = xpProgressInLevel(xp, level);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -780,26 +775,6 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
                   );
                 })}
               </div>
-
-              <div className={cn("mx-1 mb-1 rounded-lg border px-2 py-1.5 sm:hidden", isEffectiveLight ? "border-slate-200 bg-slate-50" : "border-raw-border/25 bg-raw-black/30")}>
-                <div className="mb-1 flex items-center justify-between gap-2">
-                  <span className="font-display text-[10px] tracking-wide text-[#8f96ff]">Lvl {level}</span>
-                  <span className={cn("text-[9px]", isEffectiveLight ? "text-slate-500" : "text-raw-silver/55")}>{xp.toLocaleString()} XP</span>
-                </div>
-                <div className="h-1.5 overflow-hidden rounded-full bg-raw-border/20">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-raw-gold/75 to-raw-gold"
-                    style={{ width: `${mobileXpProgress.pct}%` }}
-                  />
-                </div>
-              </div>
-
-              <LevelProgressBanner
-                xp={xp}
-                level={level}
-                compact
-                className={cn("mx-1 mb-1 hidden sm:block", isEffectiveLight ? "border-slate-200 bg-slate-50" : "border-raw-border/25 bg-raw-black/30")}
-              />
 
               <DropdownMenuItem
                 onClick={onSettingsClick}

@@ -19,7 +19,6 @@ import { DashboardStore } from "@/components/dashboard/DashboardStore";
 import { DashboardSectionShell } from "@/components/dashboard/DashboardSectionShell";
 import { CommunityHoldSwitcher } from "@/components/dashboard/CommunityHoldSwitcher";
 import { NotificationConsentPrompt } from "@/components/notifications/NotificationConsentPrompt";
-import { LevelUpCelebration } from "@/components/ui/LevelUpCelebration";
 import { useUserProgress } from "@/store/useUserProgress";
 import { XP_REWARDS } from "@/lib/userProgress";
 import { getTodayKey } from "@/store/useRawStore.storage";
@@ -134,7 +133,7 @@ export default function Dashboard({
 }: DashboardProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { progress, leveledUpTo, clearLevelUp, award, awardOnce } = useUserProgress(user.id);
+  const { progress, award, awardOnce } = useUserProgress(user.id);
   const [activeTab, setActiveTab] = useState<DashboardTab>("home");
   // Seed from the persistent cache so the user sees their communities
   // instantly on remount instead of a cold spinner.
@@ -488,8 +487,6 @@ export default function Dashboard({
             votedPolls={votedPolls}
             dailyAnsweredCount={dailyAnsweredCount}
             dailyPollLimit={dailyPollLimit}
-            xp={progress?.xp ?? 0}
-            xpLevel={progress?.level ?? 1}
             onNavigate={handleTabChange}
             onOpenCommunity={handleOpenCommunity}
             communities={dashboardCommunities}
@@ -620,8 +617,6 @@ export default function Dashboard({
                 onUnlockAvatar={unlockAvatarLevel}
                 avatarPricesByLevel={avatarPricesByLevel}
                 pollsAnswered={votedPolls.size}
-                xp={progress?.xp ?? 0}
-                xpLevel={progress?.level ?? 1}
                 pinnedMessages={pinnedMessages}
                 onRemovePinnedMessage={handleRemovePinnedMessage}
                 polls={polls}
@@ -659,8 +654,6 @@ export default function Dashboard({
               votedPolls={votedPolls}
               dailyAnsweredCount={dailyAnsweredCount}
               dailyPollLimit={dailyPollLimit}
-              xp={progress?.xp ?? 0}
-              xpLevel={progress?.level ?? 1}
               onNavigate={handleTabChange}
               onOpenCommunity={handleOpenCommunity}
               communities={dashboardCommunities}
@@ -677,9 +670,6 @@ export default function Dashboard({
     <div
       className="dashboard-enhanced-bg relative min-h-screen overflow-hidden bg-raw-black"
     >
-      {leveledUpTo !== null && (
-        <LevelUpCelebration newLevel={leveledUpTo} onClose={clearLevelUp} />
-      )}
       <NotificationConsentPrompt userId={user.id} />
       <DashboardNav
         userId={user.id}
@@ -692,8 +682,6 @@ export default function Dashboard({
         communityTitle={activeCommunityTitle}
         onBack={handleBackToCommunities}
         communities={dashboardCommunities}
-        xp={progress?.xp ?? 0}
-        level={progress?.level ?? 1}
       />
 
       <DashboardSidebar

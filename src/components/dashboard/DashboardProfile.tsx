@@ -4,7 +4,6 @@ import { useProfileStats } from "@/hooks/useProfileStats";
 import { registerFoundingInviteCodes, getFoundingInviteRedemptions, type PinnedMessageRecord } from "@/backend/supabase/controllers/userExtrasController";
 import type { Poll } from "@/store/useRawStore";
 import { AvatarFigure } from "@/components/ui/avatar-figure";
-import { LevelProgressBanner } from "@/components/dashboard/LevelProgressBanner";
 import { LEVEL_THEMES, getAvatar, getPrivateAvatarLevel, privateAvatarKey } from "@/lib/avataridentity";
 import { PersonalityInsightsInventory } from "@/components/dashboard/PersonalityInsightsInventory";
 import { addOwnedInsightId, readOwnedInsightIds } from "@/lib/insightsOwnership";
@@ -102,8 +101,6 @@ interface DashboardProfileProps {
   onUnlockAvatar: (level: number) => Promise<boolean>;
   avatarPricesByLevel: Record<number, string>;
   pollsAnswered: number;
-  xp?: number;
-  xpLevel?: number;
   pinnedMessages?: PinnedMessageRecord[];
   onRemovePinnedMessage?: (messageId: string) => void;
   onLogout: () => void;
@@ -160,8 +157,6 @@ export function DashboardProfile({
   onAvatarChange,
   ownedAvatarLevels,
   pollsAnswered,
-  xp = 0,
-  xpLevel = 1,
   pinnedMessages = [],
   onRemovePinnedMessage,
   polls,
@@ -410,7 +405,6 @@ export function DashboardProfile({
             <p className="text-[10px] uppercase tracking-[0.22em] text-raw-silver/30">Public name</p>
             <p className="text-xs text-raw-gold/60">Level {displayIndex}</p>
             <p className="text-[10px] text-raw-silver/30">{theme.name}</p>
-            <LevelProgressBanner xp={xp} level={xpLevel} className="mt-4 w-full" />
           </div>
         ) : (
           <div className="mt-4 space-y-3">
