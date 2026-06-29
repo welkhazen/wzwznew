@@ -55,12 +55,6 @@ set frame_color = 'white', rank_tier = 10
 where image_src is not null
   and substring(image_src from '/avatars/(\d+)\.(?:png|webp|jpg|jpeg|svg)$')::int = 34;
 
--- ID 45: Rust Revenant → R8 (Gold)
-update public.avatar_catalog
-set frame_color = 'gold', rank_tier = 8
-where image_src is not null
-  and substring(image_src from '/avatars/(\d+)\.(?:png|webp|jpg|jpeg|svg)$')::int = 45;
-
 -- ID 57: Magenta Shade → R3 (Green)
 update public.avatar_catalog
 set frame_color = 'green', rank_tier = 3
