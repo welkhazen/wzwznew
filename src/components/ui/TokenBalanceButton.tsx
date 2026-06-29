@@ -67,6 +67,33 @@ export function TokenBalanceButton() {
   return (
     <div ref={wrapperRef} className="relative">
       <style>{`
+        @keyframes token-spin {
+          0%   { transform: translateY(0)   rotateY(0deg)   scale(1);    filter: drop-shadow(0 0 5px rgba(250,204,21,0.5)); }
+          25%  { transform: translateY(-6px) rotateY(180deg) scale(1.3);  filter: drop-shadow(0 0 18px rgba(250,204,21,1)); }
+          55%  { transform: translateY(-3px) rotateY(450deg) scale(1.12); filter: drop-shadow(0 0 10px rgba(250,204,21,0.7)); }
+          80%  { transform: translateY(2px)  rotateY(660deg) scale(0.94); filter: drop-shadow(0 0 6px rgba(250,204,21,0.5)); }
+          100% { transform: translateY(0)   rotateY(720deg) scale(1);    filter: drop-shadow(0 0 5px rgba(250,204,21,0.5)); }
+        }
+        .token-spin-anim {
+          animation: token-spin 0.56s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+          transform-style: preserve-3d;
+        }
+        @keyframes ripple-ring {
+          0%   { transform: scale(0.6); opacity: 0.8; }
+          100% { transform: scale(2.4); opacity: 0; }
+        }
+        .ripple-ring {
+          animation: ripple-ring 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+        @keyframes balance-text-in {
+          from { opacity: 0; max-width: 0; transform: translateX(-6px); }
+          to   { opacity: 1; max-width: 80px; transform: translateX(0); }
+        }
+        .balance-text-in {
+          animation: balance-text-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+          overflow: hidden;
+          white-space: nowrap;
+        }
         @keyframes dropdown-in {
           from { opacity: 0; transform: translateY(-10px) scale(0.96); }
           to   { opacity: 1; transform: translateY(0) scale(1); }
@@ -104,7 +131,8 @@ export function TokenBalanceButton() {
           width={26}
           height={26}
           draggable={false}
-          className="shrink-0 select-none object-contain"
+          className={`shrink-0 select-none object-contain${spinning ? " token-spin-anim" : ""}`}
+          style={{ filter: "drop-shadow(0 0 5px rgba(250,204,21,0.5))" }}
         />
         {open && !spinning && (
           <span className="font-display text-xs tracking-wide text-raw-gold">

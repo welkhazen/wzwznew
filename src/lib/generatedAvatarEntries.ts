@@ -13,12 +13,10 @@ export const GENERATED_AVATAR_ENTRIES: readonly AvatarCatalogItem[] = [
   { id: "avatar-42", level: 42, name: "Avatar 42", price: "50", imageSrc: "/avatars/42.png", bg: "#0b0301", figure: "#581808", ring: "#581808", glow: "#58180880", isActive: true, showIn: "both", rarity: "common" },
   { id: "avatar-43", level: 43, name: "Avatar 43", price: "50", imageSrc: "/avatars/43.png", bg: "#030509", figure: "#182848", ring: "#182848", glow: "#18284880", isActive: true, showIn: "both", rarity: "common" },
   { id: "avatar-44", level: 44, name: "Avatar 44", price: "50", imageSrc: "/avatars/44.png", bg: "#010b10", figure: "#085888", ring: "#085888", glow: "#08588880", isActive: true, showIn: "both", rarity: "common" },
-  { id: "avatar-45", level: 45, name: "Avatar 45", price: "50", imageSrc: "/avatars/45.png", bg: "#0b0301", figure: "#581808", ring: "#581808", glow: "#58180880", isActive: true, showIn: "both", rarity: "common" },
   { id: "avatar-46", level: 46, name: "Avatar 46", price: "50", imageSrc: "/avatars/46.png", bg: "#18121c", figure: "#c898e8", ring: "#c898e8", glow: "#c898e880", isActive: true, showIn: "both", rarity: "common" },
   { id: "avatar-47", level: 47, name: "Avatar 47", price: "50", imageSrc: "/avatars/47.png", bg: "#0e0109", figure: "#780848", ring: "#780848", glow: "#78084880", isActive: true, showIn: "both", rarity: "common" },
   { id: "avatar-48", level: 48, name: "Avatar 48", price: "50", imageSrc: "/avatars/48.png", bg: "#010505", figure: "#082828", ring: "#082828", glow: "#08282880", isActive: true, showIn: "both", rarity: "common" },
   { id: "avatar-49", level: 49, name: "Avatar 49", price: "50", imageSrc: "/avatars/49.png", bg: "#07030b", figure: "#381858", ring: "#381858", glow: "#38185880", isActive: true, showIn: "both", rarity: "common" },
-  { id: "avatar-50", level: 50, name: "Avatar 50", price: "50", imageSrc: "/avatars/50.png", bg: "#100c16", figure: "#8868b8", ring: "#8868b8", glow: "#8868b880", isActive: true, showIn: "both", rarity: "common" },
   { id: "avatar-51", level: 51, name: "Avatar 51", price: "50", imageSrc: "/avatars/51.png", bg: "#1a050b", figure: "#d82858", ring: "#d82858", glow: "#d8285880", isActive: true, showIn: "both", rarity: "common" },
   { id: "avatar-52", level: 52, name: "Avatar 52", price: "50", imageSrc: "/avatars/52.png", bg: "#010505", figure: "#082828", ring: "#082828", glow: "#08282880", isActive: true, showIn: "both", rarity: "common" },
   { id: "avatar-53", level: 53, name: "Avatar 53", price: "50", imageSrc: "/avatars/53.png", bg: "#0b0c01", figure: "#586808", ring: "#586808", glow: "#58680880", isActive: true, showIn: "both", rarity: "common" },
@@ -27,5 +25,4 @@ export const GENERATED_AVATAR_ENTRIES: readonly AvatarCatalogItem[] = [
   { id: "avatar-56", level: 56, name: "Avatar 56", price: "50", imageSrc: "/avatars/56.png", bg: "#050b0c", figure: "#285868", ring: "#285868", glow: "#28586880", isActive: true, showIn: "both", rarity: "common" },
   { id: "avatar-57", level: 57, name: "Avatar 57", price: "50", imageSrc: "/avatars/57.png", bg: "#180e1e", figure: "#c878f8", ring: "#c878f8", glow: "#c878f880", isActive: true, showIn: "both", rarity: "common" },
   { id: "avatar-58", level: 58, name: "Avatar 58", price: "50", imageSrc: "/avatars/58.png", bg: "#1a181e", figure: "#d8c8f8", ring: "#d8c8f8", glow: "#d8c8f880", isActive: true, showIn: "both", rarity: "common" },
-  { id: "avatar-59", level: 59, name: "Avatar 59", price: "50", imageSrc: "/avatars/59.png", bg: "#1e141a", figure: "#f8a8d8", ring: "#f8a8d8", glow: "#f8a8d880", isActive: true, showIn: "both", rarity: "common" },
 ];
