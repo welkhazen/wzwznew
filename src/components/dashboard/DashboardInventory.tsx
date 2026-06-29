@@ -71,6 +71,7 @@ export function AvatarShop({
 }: AvatarCommerceProps) {
   const [unlocking, setUnlocking] = useState<number | null>(null);
   const [showAll, setShowAll] = useState(false);
+  const [rankFilter, setRankFilter] = useState<number | null>(null);
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const ownedImageKeys = ownedAvatarImageKeys(avatarCatalog, ownedAvatarLevels);
   const seenShopImageKeys = new Set<string>();
@@ -87,7 +88,15 @@ export function AvatarShop({
     },
   );
 
-  const visibleAvatars = showAll ? purchasable : purchasable.slice(0, 8);
+  const availableRanks = Array.from(
+    new Set(purchasable.filter(hasAvatarRank).map(getAvatarRank))
+  ).sort((a, b) => a - b);
+
+  const filtered = rankFilter === null
+    ? purchasable
+    : purchasable.filter((a) => hasAvatarRank(a) && getAvatarRank(a) === rankFilter);
+
+  const visibleAvatars = showAll ? filtered : filtered.slice(0, 8);
 
   if (purchasable.length === 0) {
     return (
@@ -99,6 +108,35 @@ export function AvatarShop({
 
   return (
     <div>
+      {availableRanks.length > 0 && (
+        <div className="mb-4 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => { setRankFilter(null); setShowAll(false); }}
+            className={`rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-wider transition ${
+              rankFilter === null
+                ? "border-raw-gold/60 bg-raw-gold/20 text-raw-gold"
+                : "border-raw-border/30 bg-raw-black/30 text-raw-silver/50 hover:border-raw-gold/30 hover:text-raw-silver"
+            }`}
+          >
+            All
+          </button>
+          {availableRanks.map((rank) => (
+            <button
+              key={rank}
+              type="button"
+              onClick={() => { setRankFilter(rank === rankFilter ? null : rank); setShowAll(false); }}
+              className={`rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-wider transition ${
+                rankFilter === rank
+                  ? "border-raw-gold/60 bg-raw-gold/20 text-raw-gold"
+                  : "border-raw-border/30 bg-raw-black/30 text-raw-silver/50 hover:border-raw-gold/30 hover:text-raw-silver"
+              }`}
+            >
+              R{rank}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
       {visibleAvatars.map((avatar) => {
         const owned = ownedAvatarLevels.has(avatar.level);
@@ -175,7 +213,7 @@ export function AvatarShop({
         );
       })}
       </div>
-      {purchasable.length > 8 ? (
+      {filtered.length > 8 ? (
         <button
           type="button"
           onClick={() => setShowAll((current) => !current)}
