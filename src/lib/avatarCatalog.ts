@@ -77,8 +77,8 @@ export const DEFAULT_AVATAR_CATALOG: readonly AvatarCatalogItem[] = [
   { id: "violet-mask", level: 12, name: avatarDisplayName(24), price: "50", imageSrc: "/avatars/24.png", bg: "#1a1028", figure: "#d946ef", ring: "#d946ef", glow: "#d946ef80", isActive: true, showIn: "both", rarity: "common" },
   { id: "horned-iron", level: 13, name: avatarDisplayName(5), price: "50", imageSrc: "/avatars/5.png", bg: "#1f0a05", figure: "#fb923c", ring: "#fb923c", glow: "#fb923c80", isActive: true, showIn: "both", rarity: "common" },
   { id: "crimson-muse", level: 14, name: avatarDisplayName(6), price: "50", imageSrc: "/avatars/6.webp", bg: "#2a0b0b", figure: "#f97316", ring: "#f97316", glow: "#f9731680", isActive: true, showIn: "both", rarity: "common" },
-  { id: "solar-flame", level: 15, name: avatarDisplayName(7), price: "50", imageSrc: "/avatars/7.png", bg: "#241005", figure: "#facc15", ring: "#facc15", glow: "#facc1590", isActive: true, showIn: "both", rarity: "common" },
-  { id: "pink-circuit", level: 16, name: avatarDisplayName(35), price: "50", imageSrc: "/avatars/35.png", bg: "#2a0b1c", figure: "#fb7185", ring: "#fb7185", glow: "#fb718580", isActive: true, showIn: "both", rarity: "common" },
+  { id: "solar-flame", level: 15, name: avatarDisplayName(7), price: "50", imageSrc: "/avatars/landing/solar-flame.webp", bg: "#241005", figure: "#facc15", ring: "#facc15", glow: "#facc1590", isActive: true, showIn: "both", rarity: "common" },
+  { id: "pink-circuit", level: 16, name: "Pink Circuit", price: "50", imageSrc: "/avatars/landing/pink-circuit.webp", bg: "#2a0b1c", figure: "#fb7185", ring: "#fb7185", glow: "#fb718580", isActive: true, showIn: "both", rarity: "common" },
   { id: "s1-custom", level: 100, name: "S1 Custom", price: "40000", imageSrc: "/avatars/s1-custom.png", bg: "#0a0a0a", figure: "#ffd700", ring: "#ffd700", glow: "#ffd700cc", isActive: true, showIn: "app", rarity: "legendary", rank_tier: 11, frame_color: "gold" },
   ...Array.from({ length: 18 }, (_, index): AvatarCatalogItem | null => {
     const level = index + 17;
