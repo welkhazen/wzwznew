@@ -22,7 +22,7 @@ export const NUMBERED_AVATAR_NAMES: Record<number, string> = {
   20: "White Mirage",
   21: "Rose Warden",
   22: "Night Prism",
-  23: "Cyan Specter",
+  23: "Gold Specter",
   24: "Violet Mask",
   25: "Teal Siren",
   26: "Rainbow Pulse",

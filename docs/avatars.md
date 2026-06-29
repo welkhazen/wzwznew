@@ -87,7 +87,7 @@ and ids 29, 25, 33 were dropped from every pool. `EarlySignupClaim.tsx` and the
 | 20 | White Mirage | 9 | White | Spin · slot 9 | `/avatars/20.png` |  |
 | 21 | Rose Warden | 7 | Rose | Spin · slot 7 | `/avatars/21.png` |  |
 | 22 | Night Prism | 10 | Rainbow | — | `/avatars/22.png` |  |
-| 23 | Cyan Specter | 2 | Blue | — | `/avatars/23.png` |  |
+| 23 | Gold Specter | 9 | Gold | — | `/avatars/23.png` | artwork is gold/orange; renamed from "Cyan Specter" |
 | 24 | Violet Mask | 3 | Purple | — | `/avatars/24.png` |  |
 | 25 | Teal Siren | 2 | Blue | — | `/avatars/25.png` |  |
 | 26 | Rainbow Pulse | 10 | Rainbow | Spin · slot 10 | `/avatars/26.png` |  |
