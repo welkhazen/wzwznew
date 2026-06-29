@@ -63,4 +63,19 @@ describe("avatar rank data stays in lockstep with the catalog", () => {
     }
     expect(offenders, `rank sources disagree (sync slug table, canonical override, and catalog rank_tier): ${offenders.join("; ")}`).toEqual([]);
   });
+
+  it("every slug entry matches the rank its catalog item actually resolves to", () => {
+    // getAvatarRank tries rank_tier / frame_color / NUMBERED_AVATAR_RANKS before
+    // the slug lookup, so a slug entry on an item that resolves earlier is dead
+    // and can silently contradict the displayed rank. Catch that here.
+    const byId = new Map(DEFAULT_AVATAR_CATALOG.map((item) => [item.id, item]));
+    const offenders: string[] = [];
+    for (const [id, slugRank] of Object.entries(SLUG_AVATAR_RANKS)) {
+      const item = byId.get(id);
+      if (!item) continue; // DB-only avatars (blu-fifer, viozen) aren't in the static catalog
+      const resolved = getAvatarRank(item);
+      if (resolved !== slugRank) offenders.push(`${id}: slug=${slugRank} but getAvatarRank=${resolved}`);
+    }
+    expect(offenders, `slug rank is overridden by a higher-priority source — remove the dead entry or fix the authoritative one: ${offenders.join("; ")}`).toEqual([]);
+  });
 });
