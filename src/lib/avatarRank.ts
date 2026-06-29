@@ -18,6 +18,7 @@ export const AVATAR_RANK_MAP: Record<string, number> = {
   gold: 9,
   white: 10,
   rainbow: 11,
+  custom: 12,
 };
 
 /**
