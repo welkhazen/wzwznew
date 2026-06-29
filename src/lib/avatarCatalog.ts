@@ -186,7 +186,7 @@ export function readAvatarCatalogLocal(): AvatarCatalogItem[] {
     return items.map((item) => ({
       ...item,
       imageSrc: DEFAULT_IMAGE_SRC_BY_ID.get(item.id) ?? item.imageSrc,
-      name: CANONICAL_NAME_BY_ID[item.id] ?? item.name,
+      ...CANONICAL_OVERRIDES_BY_ID[item.id],
     }));
   } catch {
     return cloneCatalog(DEFAULT_AVATAR_CATALOG);
@@ -220,11 +220,11 @@ const DEFAULT_IMAGE_SRC_BY_ID = new Map(
   DEFAULT_AVATAR_CATALOG.filter((i) => i.imageSrc).map((i) => [i.id, i.imageSrc!])
 );
 
-// Authoritative names that override whatever Supabase has stored.
-// Used when an avatar was renamed but the DB hasn't been migrated yet.
-const CANONICAL_NAME_BY_ID: Record<string, string> = {
-  "blue-signal": "Gold Specter",
-  "blu-fifer": "Red Fifer",
+// Authoritative overrides that win over whatever Supabase has stored.
+// Covers name, frame_color, and rank_tier so a stale DB can't revert them.
+const CANONICAL_OVERRIDES_BY_ID: Record<string, Partial<Pick<AvatarCatalogItem, "name" | "frame_color" | "rank_tier">>> = {
+  "blue-signal": { name: "Gold Specter", frame_color: "gold", rank_tier: 9 },
+  "blu-fifer":   { name: "Red Fifer",    frame_color: "red",  rank_tier: 6 },
 };
 
 async function refreshAvatarCatalogFromSupabase(): Promise<void> {
@@ -246,7 +246,7 @@ async function refreshAvatarCatalogFromSupabase(): Promise<void> {
       return {
         id,
         level: row.level as number,
-        name: CANONICAL_NAME_BY_ID[id] ?? (row.name as string),
+        name: (row.name as string),
         price: row.price as string,
         imageSrc: DEFAULT_IMAGE_SRC_BY_ID.get(id) ?? (row.image_src as string | undefined) ?? undefined,
         bg: row.bg as string,
@@ -257,6 +257,7 @@ async function refreshAvatarCatalogFromSupabase(): Promise<void> {
         isNew: false,
         rarity: (row.rarity as AvatarRarity | undefined) ?? "common",
         dropWeight: (row.drop_weight as number | undefined) ?? 100,
+        ...CANONICAL_OVERRIDES_BY_ID[id],
       };
     });
 
