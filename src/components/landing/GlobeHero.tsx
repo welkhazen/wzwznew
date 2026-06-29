@@ -59,7 +59,7 @@ export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
       className="relative flex min-h-[620px] items-center justify-center overflow-hidden pb-12 pt-10 sm:min-h-[680px] sm:pt-14"
     >
       {/* Globe behind text, centered, melted into the dark */}
-      <div className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center opacity-70">
+      <div className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center opacity-100">
         <div className="h-[340px] w-[340px] md:h-[440px] md:w-[440px] lg:h-[560px] lg:w-[560px]">
           <Suspense fallback={null}>
             <LazyGlobeScene globeColor={globeColor} />
