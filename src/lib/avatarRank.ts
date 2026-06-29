@@ -33,7 +33,7 @@ export const AVATAR_RANK_MAP: Record<string, number> = {
 export const NUMBERED_AVATAR_RANKS: Record<number, number> = {
   1: 1,  2: 4,  3: 1,  4: 7,  5: 5,  6: 4,  7: 9,  8: 1,  9: 2,  10: 2,
   11: 1, 12: 2, 13: 6, 14: 4, 15: 1, 16: 7, 17: 4, 18: 2, 19: 11, 20: 10,
-  21: 8, 22: 11, 23: 2, 24: 5, 25: 2, 26: 11, 27: 6, 28: 10, 29: 8, 30: 3,
+  21: 8, 22: 11, 23: 9, 24: 5, 25: 2, 26: 11, 27: 6, 28: 10, 29: 8, 30: 3,
   31: 9, 32: 5, 33: 2, 34: 11, 36: 3, 37: 5, 38: 9, 39: 6, 40: 8,
   41: 5, 42: 4, 43: 1, 44: 2, 46: 5, 47: 7, 48: 2, 49: 5,
   51: 7, 52: 2, 53: 3, 54: 8, 55: 8, 56: 2, 57: 5, 58: 5,
@@ -65,7 +65,8 @@ export function hasAvatarRank(avatar: Pick<AvatarCatalogItem, "id" | "imageSrc">
 const SLUG_AVATAR_RANKS: Record<string, number> = {
   "silver-void": 1,
   "neon-lynx": 2,
-  "blue-signal": 2,
+  "blue-signal": 9,
+  "blu-fifer": 6,
   "violet-mask": 4,
   "horned-iron": 6,
   "crimson-muse": 4,

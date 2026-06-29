@@ -73,7 +73,7 @@ export const DEFAULT_AVATAR_CATALOG: readonly AvatarCatalogItem[] = [
   { id: "blue", level: 8, name: "Blue", price: "50", imageSrc: "/avatars/avatar-10.svg", bg: "#0a1424", figure: "#fbbf24", ring: "#fbbf24", glow: "#fbbf2490", isActive: true, showIn: "both", rarity: "common", frame_color: "gold" },
   { id: "silver-void", level: 9, name: avatarDisplayName(1), price: "50", imageSrc: "/avatars/1.webp", bg: "#111827", figure: "#cbd5e1", ring: "#cbd5e1", glow: "#cbd5e180", isActive: true, showIn: "both", rarity: "common" },
   { id: "neon-lynx", level: 10, name: avatarDisplayName(18), price: "50", imageSrc: "/avatars/18.png", bg: "#170f2e", figure: "#a855f7", ring: "#c084fc", glow: "#a855f780", isActive: true, showIn: "both", rarity: "common" },
-  { id: "blue-signal", level: 11, name: avatarDisplayName(23), price: "50", imageSrc: "/avatars/23.png", bg: "#06131f", figure: "#22d3ee", ring: "#22d3ee", glow: "#22d3ee80", isActive: true, showIn: "both", rarity: "common" },
+  { id: "blue-signal", level: 11, name: avatarDisplayName(23), price: "50", imageSrc: "/avatars/23.png", bg: "#16100a", figure: "#facc15", ring: "#facc15", glow: "#facc1590", isActive: true, showIn: "both", rarity: "common", frame_color: "gold", rank_tier: 9 },
   { id: "violet-mask", level: 12, name: avatarDisplayName(24), price: "50", imageSrc: "/avatars/24.png", bg: "#1a1028", figure: "#d946ef", ring: "#d946ef", glow: "#d946ef80", isActive: true, showIn: "both", rarity: "common" },
   { id: "horned-iron", level: 13, name: avatarDisplayName(5), price: "50", imageSrc: "/avatars/5.png", bg: "#1f0a05", figure: "#fb923c", ring: "#fb923c", glow: "#fb923c80", isActive: true, showIn: "both", rarity: "common" },
   { id: "crimson-muse", level: 14, name: avatarDisplayName(6), price: "50", imageSrc: "/avatars/6.webp", bg: "#2a0b0b", figure: "#f97316", ring: "#f97316", glow: "#f9731680", isActive: true, showIn: "both", rarity: "common" },
@@ -186,6 +186,7 @@ export function readAvatarCatalogLocal(): AvatarCatalogItem[] {
     return items.map((item) => ({
       ...item,
       imageSrc: DEFAULT_IMAGE_SRC_BY_ID.get(item.id) ?? item.imageSrc,
+      name: CANONICAL_NAME_BY_ID[item.id] ?? item.name,
     }));
   } catch {
     return cloneCatalog(DEFAULT_AVATAR_CATALOG);
@@ -219,6 +220,13 @@ const DEFAULT_IMAGE_SRC_BY_ID = new Map(
   DEFAULT_AVATAR_CATALOG.filter((i) => i.imageSrc).map((i) => [i.id, i.imageSrc!])
 );
 
+// Authoritative names that override whatever Supabase has stored.
+// Used when an avatar was renamed but the DB hasn't been migrated yet.
+const CANONICAL_NAME_BY_ID: Record<string, string> = {
+  "blue-signal": "Gold Specter",
+  "blu-fifer": "Red Fifer",
+};
+
 async function refreshAvatarCatalogFromSupabase(): Promise<void> {
   try {
     let data: Record<string, unknown>[] | null = null;
@@ -238,7 +246,7 @@ async function refreshAvatarCatalogFromSupabase(): Promise<void> {
       return {
         id,
         level: row.level as number,
-        name: row.name as string,
+        name: CANONICAL_NAME_BY_ID[id] ?? (row.name as string),
         price: row.price as string,
         imageSrc: DEFAULT_IMAGE_SRC_BY_ID.get(id) ?? (row.image_src as string | undefined) ?? undefined,
         bg: row.bg as string,
