@@ -182,7 +182,11 @@ export function readAvatarCatalogLocal(): AvatarCatalogItem[] {
     if (!raw) return cloneCatalog(DEFAULT_AVATAR_CATALOG);
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return cloneCatalog(DEFAULT_AVATAR_CATALOG);
-    return includeMissingDefaultAvatars(sanitizeCatalog(parsed as AvatarCatalogItem[]));
+    const items = includeMissingDefaultAvatars(sanitizeCatalog(parsed as AvatarCatalogItem[]));
+    return items.map((item) => ({
+      ...item,
+      imageSrc: DEFAULT_IMAGE_SRC_BY_ID.get(item.id) ?? item.imageSrc,
+    }));
   } catch {
     return cloneCatalog(DEFAULT_AVATAR_CATALOG);
   }
@@ -208,6 +212,13 @@ export function readAvatarThemesFromCache(): AvatarCatalogItem[] {
   return readAvatarCatalogLocal();
 }
 
+// Correct image paths from local source code always win over whatever
+// Supabase has stored — guards against stale .png paths in the DB when
+// the actual file on disk is .webp (or vice-versa).
+const DEFAULT_IMAGE_SRC_BY_ID = new Map(
+  DEFAULT_AVATAR_CATALOG.filter((i) => i.imageSrc).map((i) => [i.id, i.imageSrc!])
+);
+
 async function refreshAvatarCatalogFromSupabase(): Promise<void> {
   try {
     let data: Record<string, unknown>[] | null = null;
@@ -222,21 +233,24 @@ async function refreshAvatarCatalogFromSupabase(): Promise<void> {
       if (cols === BASE_COLS) return;
     }
 
-    const mapped = (data ?? []).map((row) => ({
-      id: row.id as string,
-      level: row.level as number,
-      name: row.name as string,
-      price: row.price as string,
-      imageSrc: (row.image_src as string | undefined) ?? undefined,
-      bg: row.bg as string,
-      figure: row.figure as string,
-      ring: row.ring as string,
-      glow: row.glow as string,
-      isActive: row.is_active as boolean,
-      isNew: false,
-      rarity: (row.rarity as AvatarRarity | undefined) ?? "common",
-      dropWeight: (row.drop_weight as number | undefined) ?? 100,
-    }));
+    const mapped = (data ?? []).map((row) => {
+      const id = row.id as string;
+      return {
+        id,
+        level: row.level as number,
+        name: row.name as string,
+        price: row.price as string,
+        imageSrc: DEFAULT_IMAGE_SRC_BY_ID.get(id) ?? (row.image_src as string | undefined) ?? undefined,
+        bg: row.bg as string,
+        figure: row.figure as string,
+        ring: row.ring as string,
+        glow: row.glow as string,
+        isActive: row.is_active as boolean,
+        isNew: false,
+        rarity: (row.rarity as AvatarRarity | undefined) ?? "common",
+        dropWeight: (row.drop_weight as number | undefined) ?? 100,
+      };
+    });
 
     if (mapped.length > 0) writeAvatarCatalogLocal(mapped);
   } catch { /* stay on local cache */ }
