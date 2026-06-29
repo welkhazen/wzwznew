@@ -12,6 +12,7 @@ import { useBlockedWordsSeed } from "@/hooks/useBlockedWordsSeed";
 const Index = lazy(() => import("./pages/Index"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const FAQ = lazy(() => import("./pages/FAQ"));
+const WhyDonate = lazy(() => import("./pages/WhyDonate"));
 const AskAI = lazy(() => import("./pages/AskAI"));
 const Security = lazy(() => import("./pages/Security"));
 const Terms = lazy(() => import("./pages/Terms"));
@@ -48,6 +49,7 @@ const App = () => (
                 <Route path="/dashboard" element={<Index />} />
                 <Route path="/dashboard/communities/:communityId" element={<Index />} />
                 <Route path="/faq" element={<FAQ />} />
+                <Route path="/why-donate" element={<WhyDonate />} />
                 <Route path="/polls-explained" element={<PollsExplained />} />
                 <Route path="/communities-explained" element={<CommunitiesExplained />} />
                 <Route path="/ask" element={<AskAI />} />

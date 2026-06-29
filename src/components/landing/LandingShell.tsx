@@ -1,4 +1,5 @@
 import { Suspense, lazy, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { BrandName } from "@/components/ui/brand-name";
 import { highlightRawWordmark } from "@/components/ui/highlightRawWordmark";
 import { motion } from "framer-motion";
@@ -45,6 +46,7 @@ export default function LandingShell({
   signup,
   login,
 }: LandingShellProps) {
+  const navigate = useNavigate();
   const [siteReady, setSiteReady] = useState(false);
 
   return (
@@ -61,12 +63,7 @@ export default function LandingShell({
         isLoggedIn={isLoggedIn}
         username={user?.username}
         onSignupClick={() => setShowSignup(true)}
-        onDonateClick={() => {
-          const faqSection = document.getElementById("faq");
-          if (faqSection) {
-            faqSection.scrollIntoView({ behavior: "smooth" });
-          }
-        }}
+        onDonateClick={() => navigate("/why-donate")}
       />
 
       <div className="relative min-h-screen overflow-x-hidden">
