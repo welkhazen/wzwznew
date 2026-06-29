@@ -1,6 +1,5 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import { LEVEL_THEMES, type AvatarTheme } from "@/lib/avataridentity";
-import { RARITY_CONFIG, type AvatarRarity } from "@/lib/avatarRarity";
 
 interface AvatarFigureProps {
   avatarIndex: number;
