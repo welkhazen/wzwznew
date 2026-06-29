@@ -90,7 +90,7 @@ export const DEFAULT_AVATAR_CATALOG: readonly AvatarCatalogItem[] = [
       level,
       name: avatarDisplayName(level),
       price: "50",
-      imageSrc: `/avatars/${level}.png`,
+      imageSrc: `/avatars/${level}.${[20, 21, 26].includes(level) ? "webp" : "png"}`,
       bg: "#111827",
       figure: "#cbd5e1",
       ring: "#cbd5e1",

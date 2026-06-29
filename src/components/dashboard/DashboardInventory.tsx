@@ -161,11 +161,6 @@ export function AvatarShop({
 
             <div className="relative text-center">
               <p className="text-xs font-medium text-raw-text line-clamp-1">{avatarName(avatar)}</p>
-              {hasAvatarRank(avatar) ? (
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-raw-silver/60">
-                  Rank: R{getAvatarRank(avatar)}
-                </p>
-              ) : null}
             </div>
 
             {owned ? (
@@ -338,9 +333,6 @@ export function LootSpin({ tokenBalance, avatarCatalog, ownedAvatarLevels, userI
                   rarity={result.wonAvatar.rarity ?? "common"}
                   themeOverride={result.wonAvatar}
                 />
-                <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: result.color }}>
-                  Rank: R{result.rank}
-                </p>
               </div>
               <p className="mt-1 text-xs text-raw-silver/60">
                 You won <span className="font-semibold text-raw-text">{avatarName(result.wonAvatar)}</span>
@@ -427,11 +419,6 @@ export function DashboardInventory({
                   <AvatarFigure avatarIndex={avatar.level} size="md" selected={avatar.level === avatarLevel} rarity={rarity} />
                   <div className="relative text-center">
                     <p className="text-xs font-medium text-raw-text line-clamp-1">{avatarName(avatar)}</p>
-                    {hasAvatarRank(avatar) ? (
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-raw-silver/60">
-                        Rank: R{getAvatarRank(avatar)}
-                      </p>
-                    ) : null}
                     <p className="mt-1 text-[10px] text-raw-silver/45">
                       {avatar.level === avatarLevel ? "Selected" : "Tap to use"}
                     </p>
