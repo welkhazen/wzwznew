@@ -61,14 +61,15 @@ export function hasAvatarRank(avatar: Pick<AvatarCatalogItem, "id" | "imageSrc">
   return true;
 }
 
-/** Slug-based image-source overrides for catalog rows that don't use /avatars/<n>.png. */
-const SLUG_AVATAR_RANKS: Record<string, number> = {
+// Slug-based image-source overrides for catalog rows that don't use
+// /avatars/<n>.png. Avatars on a numbered path get their rank from
+// NUMBERED_AVATAR_RANKS (it resolves first), so do NOT add numbered-path ids
+// here — the entry would be dead and could silently contradict the real rank.
+export const SLUG_AVATAR_RANKS: Record<string, number> = {
   "silver-void": 1,
   "neon-lynx": 2,
   "blue-signal": 9,
   "blu-fifer": 6,
-  "violet-mask": 4,
-  "horned-iron": 6,
   "crimson-muse": 4,
   "solar-flame": 9,
   "pink-circuit": 7,

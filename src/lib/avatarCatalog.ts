@@ -222,7 +222,7 @@ const DEFAULT_IMAGE_SRC_BY_ID = new Map(
 
 // Authoritative overrides that win over whatever Supabase has stored.
 // Covers name, frame_color, and rank_tier so a stale DB can't revert them.
-const CANONICAL_OVERRIDES_BY_ID: Record<string, Partial<Pick<AvatarCatalogItem, "name" | "frame_color" | "rank_tier">>> = {
+export const CANONICAL_OVERRIDES_BY_ID: Record<string, Partial<Pick<AvatarCatalogItem, "name" | "frame_color" | "rank_tier">>> = {
   "blue-signal": { name: "Gold Specter", frame_color: "gold", rank_tier: 9 },
   "blu-fifer":   { name: "Red Fifer",    frame_color: "red",  rank_tier: 6 },
 };
