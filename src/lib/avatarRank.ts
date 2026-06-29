@@ -62,7 +62,7 @@ export function hasAvatarRank(avatar: Pick<AvatarCatalogItem, "id" | "imageSrc">
 }
 
 /** Slug-based image-source overrides for catalog rows that don't use /avatars/<n>.png. */
-const SLUG_AVATAR_RANKS: Record<string, number> = {
+export const SLUG_AVATAR_RANKS: Record<string, number> = {
   "silver-void": 1,
   "neon-lynx": 2,
   "blue-signal": 9,
