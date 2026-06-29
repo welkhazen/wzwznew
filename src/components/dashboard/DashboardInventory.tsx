@@ -2,10 +2,13 @@ import { useState } from "react";
 import { Archive, Lock, Sparkles, Wand2 } from "lucide-react";
 import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { WheelOfFortune, type WheelPrize } from "@/components/wheel/WheelOfFortune";
+import { RARITY_CONFIG, RANK_TIERS, RANK_TIER_PRICING } from "@/lib/avatarRarity";
+import type { AvatarRarity } from "@/lib/avatarRarity";
 import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
 import { avatarDisplayName, avatarIdFromImageSrc, canonicalAvatarImageId } from "@/config/avatarNames";
 import TokenImage from "@/assets/tokens.webp";
 import { spendTokens } from "@/lib/api/tokens";
+import { getAvatarRank, hasAvatarRank } from "@/lib/avatarRank";
 import { toast } from "@/hooks/use-toast";
 import { AvatarCustomRequestModal } from "./AvatarCustomRequestModal";
 
@@ -68,6 +71,7 @@ export function AvatarShop({
 }: AvatarCommerceProps) {
   const [unlocking, setUnlocking] = useState<number | null>(null);
   const [showAll, setShowAll] = useState(false);
+  const [rankFilter, setRankFilter] = useState<number | null>(null);
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const ownedImageKeys = ownedAvatarImageKeys(avatarCatalog, ownedAvatarLevels);
   const seenShopImageKeys = new Set<string>();
@@ -84,7 +88,15 @@ export function AvatarShop({
     },
   );
 
-  const visibleAvatars = showAll ? purchasable : purchasable.slice(0, 8);
+  const availableRanks = Array.from(
+    new Set(purchasable.filter(hasAvatarRank).map(getAvatarRank))
+  ).sort((a, b) => a - b);
+
+  const filtered = rankFilter === null
+    ? purchasable
+    : purchasable.filter((a) => hasAvatarRank(a) && getAvatarRank(a) === rankFilter);
+
+  const visibleAvatars = showAll ? filtered : filtered.slice(0, 8);
 
   if (purchasable.length === 0) {
     return (
@@ -96,10 +108,41 @@ export function AvatarShop({
 
   return (
     <div>
+      {availableRanks.length > 0 && (
+        <div className="mb-4 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => { setRankFilter(null); setShowAll(false); }}
+            className={`rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-wider transition ${
+              rankFilter === null
+                ? "border-raw-gold/60 bg-raw-gold/20 text-raw-gold"
+                : "border-raw-border/30 bg-raw-black/30 text-raw-silver/50 hover:border-raw-gold/30 hover:text-raw-silver"
+            }`}
+          >
+            All
+          </button>
+          {availableRanks.map((rank) => (
+            <button
+              key={rank}
+              type="button"
+              onClick={() => { setRankFilter(rank === rankFilter ? null : rank); setShowAll(false); }}
+              className={`rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-wider transition ${
+                rankFilter === rank
+                  ? "border-raw-gold/60 bg-raw-gold/20 text-raw-gold"
+                  : "border-raw-border/30 bg-raw-black/30 text-raw-silver/50 hover:border-raw-gold/30 hover:text-raw-silver"
+              }`}
+            >
+              R{rank}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
       {visibleAvatars.map((avatar) => {
         const owned = ownedAvatarLevels.has(avatar.level);
-        const price = Number(avatarPricesByLevel[avatar.level]) || AVATAR_SHOP_PRICE;
+        const rank = hasAvatarRank(avatar) ? getAvatarRank(avatar) : 1;
+        const rankPrice = RANK_TIER_PRICING[rank]?.price ?? AVATAR_SHOP_PRICE;
+        const price = Number(avatarPricesByLevel[avatar.level]) || rankPrice;
         const canBuy = tokenBalance >= price;
         const rarity = avatar.rarity ?? "common";
         const rarityConfig = RARITY_CONFIG[rarity];
@@ -118,6 +161,11 @@ export function AvatarShop({
 
             <div className="relative text-center">
               <p className="text-xs font-medium text-raw-text line-clamp-1">{avatarName(avatar)}</p>
+              {hasAvatarRank(avatar) ? (
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-raw-silver/60">
+                  Rank: R{getAvatarRank(avatar)}
+                </p>
+              ) : null}
             </div>
 
             {owned ? (
@@ -195,16 +243,14 @@ export function AvatarShop({
 
 const SPIN_COST = 50;
 
+type SpinResult = (typeof RANK_TIERS)[number] & { wonAvatar?: AvatarCatalogItem };
+
 interface LootSpinProps {
   tokenBalance: number;
   avatarCatalog: AvatarCatalogItem[];
   ownedAvatarLevels: Set<number>;
   userId: string;
   onAvatarPurchased: (level: number) => void;
-}
-
-interface SpinResult {
-  wonAvatar: AvatarCatalogItem;
 }
 
 export function LootSpin({ tokenBalance, avatarCatalog, ownedAvatarLevels, userId, onAvatarPurchased }: LootSpinProps) {
@@ -214,26 +260,34 @@ export function LootSpin({ tokenBalance, avatarCatalog, ownedAvatarLevels, userI
 
   const canSpin = tokenBalance >= SPIN_COST;
 
-  const availableAvatars = avatarCatalog.filter(
-    (avatar) => {
-      const imageKey = avatarImageKey(avatar);
-      return !ownedAvatarLevels.has(avatar.level) && !ownedImageKeys.has(imageKey);
-    },
-  );
-
-  const wheelPrizes: WheelPrize[] = availableAvatars.map((avatar, i) => ({
-    id: String(avatar.level),
-    label: avatarName(avatar),
-    shortLabel: avatarName(avatar).slice(0, 8),
-    color: i % 2 === 0 ? "#1a1a1a" : "#0e0e0e",
-    textColor: "#F1C42D",
+  const wheelPrizes: WheelPrize[] = RANK_TIERS.map((tier) => ({
+    id: String(tier.rank),
+    label: tier.label,
+    shortLabel: tier.rank === 10 ? "R10" : `R${tier.rank}`,
+    color: `${tier.color}22`,
+    textColor: tier.color,
   }));
 
+  const prizeWeights = RANK_TIERS.reduce<Partial<Record<string, number>>>((acc, tier) => {
+    acc[String(tier.rank)] = tier.weight;
+    return acc;
+  }, {});
+
   const handleSpinEnd = (prize: WheelPrize) => {
-    const avatar = availableAvatars.find((a) => String(a.level) === prize.id) ?? availableAvatars[0];
-    if (avatar) {
-      setResult({ wonAvatar: avatar });
-    }
+    const tier = RANK_TIERS.find((t) => String(t.rank) === prize.id) ?? RANK_TIERS[0];
+    const seenPrizeImageKeys = new Set<string>();
+    const eligible = avatarCatalog.filter(
+      (avatar) => {
+        const imageKey = avatarImageKey(avatar);
+        if ((avatar.rarity as AvatarRarity) !== tier.rarity || ownedAvatarLevels.has(avatar.level) || ownedImageKeys.has(imageKey) || seenPrizeImageKeys.has(imageKey)) {
+          return false;
+        }
+        seenPrizeImageKeys.add(imageKey);
+        return true;
+      },
+    );
+    const won = eligible.length > 0 ? eligible[Math.floor(Math.random() * eligible.length)] : undefined;
+    setResult({ ...tier, wonAvatar: won });
   };
 
   const handleClaim = async () => {
@@ -250,37 +304,46 @@ export function LootSpin({ tokenBalance, avatarCatalog, ownedAvatarLevels, userI
     <div className="rounded-2xl border border-raw-border/35 bg-raw-black/45 p-5">
       <div className="mb-4 flex items-center gap-2">
         <Sparkles className="h-4 w-4 text-raw-gold/60" />
-        <h3 className="font-display text-sm tracking-wide text-raw-text">Loot Spin</h3>
+        <h3 className="font-display text-sm tracking-wide text-raw-text">Rank Spin</h3>
         <span className="ml-auto flex items-center gap-1 rounded-full border border-raw-border/35 bg-raw-black/50 px-2.5 py-1 text-[10px] text-raw-silver/50">
           <img src={TokenImage} alt="" className="h-3 w-3 object-contain" />
           {SPIN_COST} per spin
         </span>
       </div>
 
-      {wheelPrizes.length > 0 ? (
-        <>
-          <div className="flex justify-center">
-            <WheelOfFortune
-              prizes={wheelPrizes}
-              onSpinEnd={handleSpinEnd}
-              disabled={!canSpin || !!result}
-              radius={145}
-            />
-          </div>
+      <div className="flex justify-center">
+        <WheelOfFortune
+          prizes={wheelPrizes}
+          prizeWeights={prizeWeights}
+          onSpinEnd={handleSpinEnd}
+          disabled={!canSpin || !!result}
+          radius={145}
+        />
+      </div>
 
-          {result && (
-            <div className="mt-4 rounded-xl border border-raw-gold/30 bg-gradient-to-b from-raw-gold/[0.08] to-raw-gold/[0.02] px-4 py-3 text-center">
-              <div className="mb-2 flex items-center justify-center gap-2">
+      {result && (
+        <div
+          className="mt-4 rounded-xl border px-4 py-3 text-center"
+          style={{ borderColor: `${result.color}50`, background: `${result.glow}18` }}
+        >
+          <p className="text-sm font-bold" style={{ color: result.color }}>
+            {result.label}!
+          </p>
+          {result.wonAvatar ? (
+            <>
+              <div className="mt-2 flex flex-col items-center gap-1">
                 <AvatarFigure
                   avatarIndex={result.wonAvatar.level}
-                  size="sm"
+                  size="md"
                   rarity={result.wonAvatar.rarity ?? "common"}
                   themeOverride={result.wonAvatar}
                 />
-                <Sparkles className="h-4 w-4 text-raw-gold" />
+                <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: result.color }}>
+                  Rank: R{result.rank}
+                </p>
               </div>
-              <p className="text-sm font-semibold text-raw-gold">
-                You won {avatarName(result.wonAvatar)}!
+              <p className="mt-1 text-xs text-raw-silver/60">
+                You won <span className="font-semibold text-raw-text">{avatarName(result.wonAvatar)}</span>
               </p>
               <button
                 onClick={handleClaim}
@@ -289,15 +352,14 @@ export function LootSpin({ tokenBalance, avatarCatalog, ownedAvatarLevels, userI
               >
                 {isClaiming ? "Claiming…" : "Claim Avatar"}
               </button>
-            </div>
+            </>
+          ) : (
+            <p className="mt-1 text-xs text-raw-silver/45">
+              No unclaimed avatars at this rank yet — check back later!
+            </p>
           )}
-        </>
-      ) : (
-        <div className="flex items-center justify-center rounded-xl border border-raw-border/30 bg-raw-surface/20 py-6 text-center">
-          <p className="text-xs text-raw-silver/45">No avatars available to spin for right now.</p>
         </div>
       )}
-
       {!canSpin && !result && (
         <div className="mt-4 flex items-center justify-center gap-1.5 rounded-xl border border-raw-border/30 bg-raw-surface/20 py-2.5 text-sm font-semibold text-raw-silver/45">
           <Lock className="h-3.5 w-3.5" />
@@ -365,6 +427,11 @@ export function DashboardInventory({
                   <AvatarFigure avatarIndex={avatar.level} size="md" selected={avatar.level === avatarLevel} rarity={rarity} />
                   <div className="relative text-center">
                     <p className="text-xs font-medium text-raw-text line-clamp-1">{avatarName(avatar)}</p>
+                    {hasAvatarRank(avatar) ? (
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-raw-silver/60">
+                        Rank: R{getAvatarRank(avatar)}
+                      </p>
+                    ) : null}
                     <p className="mt-1 text-[10px] text-raw-silver/45">
                       {avatar.level === avatarLevel ? "Selected" : "Tap to use"}
                     </p>

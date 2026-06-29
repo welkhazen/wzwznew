@@ -22,6 +22,7 @@ import type { OnboardingStep, Poll, User } from "@/store/useRawStore";
 import { track } from "@/lib/analytics";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { isValidUsername, sanitizeUsernameInput } from "@/lib/inputSecurity";
+import { getAvatarRank, hasAvatarRank, imageIdFromCatalogId } from "@/lib/avatarRank";
 
 type OnboardingPoll = {
   id: string;
@@ -868,6 +869,11 @@ export function OnboardingJourney({
                           }`}>
                             {avatar.name.split(" ")[0]}
                           </span>
+                          {hasAvatarRank(avatar) ? (
+                            <span className="text-[7px] uppercase tracking-[0.08em] text-raw-silver/55 sm:text-[8px]">
+                              Rank: R{getAvatarRank(avatar)}
+                            </span>
+                          ) : null}
                         </button>
                       );
                     })}
@@ -1008,6 +1014,11 @@ export function OnboardingJourney({
                           }`}>
                             {avatar.name.split(" ")[0]}
                           </span>
+                          {hasAvatarRank(avatar) ? (
+                            <span className="relative z-10 text-[8px] uppercase tracking-[0.08em] text-raw-silver/55 sm:text-[9px]">
+                              Rank: R{getAvatarRank(avatar)}
+                            </span>
+                          ) : null}
                           <span className={`relative z-10 rounded-full border px-1.5 py-0.5 text-[8px] uppercase tracking-[0.08em] ${
                             isOwned ? "border-raw-gold/45 text-raw-gold/70" : "border-raw-border/35 text-raw-silver/35"
                           }`}>
