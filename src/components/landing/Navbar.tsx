@@ -60,7 +60,7 @@ export function Navbar({ isLoggedIn, username, onSignupClick, onDonateClick }: N
 
   return (
     <nav
-      className="landing-navbar fixed top-0 left-0 right-0 z-50 overflow-hidden border-b border-raw-border/50 bg-raw-black/80 backdrop-blur-xl transition-transform duration-300 ease-in-out"
+      className="landing-navbar fixed top-0 left-0 right-0 z-40 overflow-hidden border-b border-raw-border/50 bg-raw-black/80 backdrop-blur-xl transition-transform duration-300 ease-in-out pointer-events-auto"
       style={{ transform: navVisible ? "translateY(0)" : "translateY(-100%)" }}
     >
       <div className="flex h-16 w-full items-center justify-between px-4 sm:px-6 lg:px-10">

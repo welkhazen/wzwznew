@@ -35,7 +35,7 @@ const Globe: React.FC<{
         <meshBasicMaterial
           color={color}
           transparent
-          opacity={0.15}
+          opacity={0.35}
           wireframe
         />
       </mesh>
