@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { DEFAULT_AVATAR_CATALOG } from "@/lib/avatarCatalog";
 import { RANK_TIER_PRICING } from "@/lib/avatarRarity";
+import { getAvatarRank } from "@/lib/avatarRank";
 
 describe("avatar rank pricing", () => {
   it("matches the published token ladder", () => {
@@ -19,5 +21,37 @@ describe("avatar rank pricing", () => {
       "11": 25000,
       "12": 50000,
     });
+  });
+
+  it("prices known R2 shop avatars at 75 tokens", () => {
+    const names = ["Neon Lynx", "Teal Siren", "Aqua Phantom", "Teal Ghost", "Blue Cipher", "Cyan Relic"];
+    const offenders = names
+      .map((name) => {
+        const avatar = DEFAULT_AVATAR_CATALOG.find((item) => item.name === name);
+        if (!avatar) return `${name}: missing from catalog`;
+
+        const rank = getAvatarRank(avatar);
+        const price = RANK_TIER_PRICING[rank]?.price;
+        return rank === 2 && price === 75 ? null : `${name}: R${rank}, ${price ?? "missing"} tokens`;
+      })
+      .filter((message): message is string => message !== null);
+
+    expect(offenders, `R2 shop avatar price drift: ${offenders.join("; ")}`).toEqual([]);
+  });
+
+  it("prices known R3 shop avatars at 100 tokens", () => {
+    const names = ["Quartz Reaper", "Green Relic", "Lime Warden"];
+    const offenders = names
+      .map((name) => {
+        const avatar = DEFAULT_AVATAR_CATALOG.find((item) => item.name === name);
+        if (!avatar) return `${name}: missing from catalog`;
+
+        const rank = getAvatarRank(avatar);
+        const price = RANK_TIER_PRICING[rank]?.price;
+        return rank === 3 && price === 100 ? null : `${name}: R${rank}, ${price ?? "missing"} tokens`;
+      })
+      .filter((message): message is string => message !== null);
+
+    expect(offenders, `R3 shop avatar price drift: ${offenders.join("; ")}`).toEqual([]);
   });
 });
