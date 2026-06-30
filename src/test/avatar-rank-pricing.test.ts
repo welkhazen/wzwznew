@@ -40,7 +40,7 @@ describe("avatar rank pricing", () => {
   });
 
   it("prices known R3 shop avatars at 100 tokens", () => {
-    const names = ["Quartz Reaper", "Green Relic", "Lime Warden"];
+    const names = ["Quartz Reaper", "Green Relic", "Lime Warden", "Night Prism"];
     const offenders = names
       .map((name) => {
         const avatar = DEFAULT_AVATAR_CATALOG.find((item) => item.name === name);
