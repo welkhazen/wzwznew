@@ -26,25 +26,6 @@ const headlineLines = [
   { text: "Your self.", accent: true },
 ];
 
-function HeroOrbFallback() {
-  return (
-    <div
-      aria-hidden="true"
-      className="absolute inset-0 rounded-full opacity-80 sm:opacity-65"
-      style={{
-        background: [
-          "radial-gradient(circle at 48% 42%, rgba(245,245,245,0.18), rgba(241,196,45,0.12) 30%, rgba(241,196,45,0.04) 52%, transparent 72%)",
-          "repeating-linear-gradient(78deg, transparent 0 18px, rgba(245,245,245,0.13) 18px 19px, transparent 19px 36px)",
-          "repeating-linear-gradient(102deg, transparent 0 22px, rgba(245,245,245,0.09) 22px 23px, transparent 23px 44px)",
-        ].join(", "),
-        boxShadow: "0 0 54px rgba(241,196,45,0.14)",
-        maskImage: "radial-gradient(circle, black 0 58%, transparent 73%)",
-        WebkitMaskImage: "radial-gradient(circle, black 0 58%, transparent 73%)",
-      }}
-    />
-  );
-}
-
 export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
   const { mode } = useTheme();
   const globeColor = mode === "light" ? "#0A0A0A" : "#F5F5F5";
@@ -122,8 +103,11 @@ export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
       <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_50%_28%,rgba(241,196,45,0.08),transparent_32%),linear-gradient(180deg,rgba(0,0,0,0.14),rgba(0,0,0,0.62))] sm:hidden" />
       {/* Globe behind text, centered, melted into the dark */}
       <div className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center opacity-100">
-        <div className="relative h-[300px] w-[300px] sm:h-[390px] sm:w-[390px] md:h-[440px] md:w-[440px] lg:h-[560px] lg:w-[560px]">
-          {!realOrbReady && <HeroOrbFallback />}
+        <div className="relative h-[340px] w-[340px] md:h-[440px] md:w-[440px] lg:h-[560px] lg:w-[560px]">
+          <div
+            className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_50%_45%,rgba(241,196,45,0.16),rgba(241,196,45,0.05)_32%,transparent_68%)] opacity-95 blur-[0.2px]"
+            aria-hidden="true"
+          />
           {GlobeScene && (
             <div className={`absolute inset-0 transition-opacity duration-300 ${realOrbReady ? "opacity-100" : "opacity-0"}`}>
               <GlobeScene
