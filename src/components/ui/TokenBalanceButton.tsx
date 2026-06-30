@@ -15,8 +15,6 @@ export function TokenBalanceButton() {
   const [open, setOpen] = useState(false);
   const [selectedPackId, setSelectedPackId] = useState<string | null>(null);
   const [paymentOpen, setPaymentOpen] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "apple-pay" | "google-pay" | null>(null);
-  const [cardDetails, setCardDetails] = useState({ number: "", expiry: "", cvc: "" });
   const wrapperRef = useRef<HTMLDivElement>(null);
   const isLight = mode === "light";
 
@@ -32,8 +30,6 @@ export function TokenBalanceButton() {
 
   function handleClosePayment() {
     setPaymentOpen(false);
-    setPaymentMethod(null);
-    setCardDetails({ number: "", expiry: "", cvc: "" });
   }
 
   useEffect(() => {
@@ -136,7 +132,7 @@ export function TokenBalanceButton() {
             ))}
           </div>
           <p className={`mt-3 text-[10px] leading-relaxed ${isLight ? "text-slate-500" : "text-raw-silver/40"}`}>
-            Token purchases process through a secure checkout. Earn free tokens daily from the spin and challenges.
+            Token purchases are coming soon. Earn free tokens daily from the spin and challenges.
           </p>
         </div>
       )}
@@ -144,10 +140,6 @@ export function TokenBalanceButton() {
         <Suspense fallback={null}>
           <PaymentModal
             selectedPackage={PACKAGES.find((p) => p.id === selectedPackId)!}
-            paymentMethod={paymentMethod}
-            cardDetails={cardDetails}
-            onPaymentMethodChange={setPaymentMethod}
-            onCardDetailsChange={setCardDetails}
             onBack={handleClosePayment}
             onClose={handleClosePayment}
           />
