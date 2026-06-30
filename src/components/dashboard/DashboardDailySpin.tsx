@@ -246,7 +246,7 @@ export function DashboardDailySpin({ userId, isAdmin = false, onAwardXP, onAvata
   const forcedPrizeId = isAdmin && adminSelectedRewardId !== "random" ? adminSelectedRewardId : null;
 
   return (
-    <div className="space-y-6 sm:space-y-8">
+    <div className="space-y-4 sm:space-y-8">
 
       {isAdmin && (
         <div className="mx-auto flex w-full max-w-md flex-col gap-2 rounded-2xl border border-raw-border/45 bg-raw-surface/35 p-3">
@@ -268,13 +268,13 @@ export function DashboardDailySpin({ userId, isAdmin = false, onAwardXP, onAvata
       )}
 
       <div
-        className={`rounded-2xl border p-4 sm:rounded-[2rem] sm:p-6 md:p-8 ${
+        className={`rounded-2xl border p-3 sm:rounded-[2rem] sm:p-6 md:p-8 ${
           mode === "light"
             ? "border-raw-border/70 bg-[radial-gradient(circle_at_50%_10%,rgba(241,196,45,0.2),rgba(224,231,242,0.96)_58%)]"
             : "border-raw-border/35 bg-[radial-gradient(circle_at_50%_10%,rgba(241,196,45,0.08),rgba(0,0,0,0.8)_48%)]"
         }`}
       >
-        <div className="flex justify-center pt-2">
+        <div className="flex justify-center pt-1 sm:pt-2">
           <WheelOfFortune
             prizes={prizes}
             onSpinEnd={handleSpinEnd}

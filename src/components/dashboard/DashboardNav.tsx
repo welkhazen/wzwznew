@@ -704,9 +704,9 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
             <DropdownMenuContent
               align="end"
               sideOffset={10}
-              collisionPadding={12}
+              collisionPadding={16}
               className={cn(
-                "w-[min(21rem,calc(100vw-1.25rem))] overflow-visible rounded-2xl p-1.5 text-raw-text sm:max-h-[min(78dvh,620px)] sm:w-[min(22rem,calc(100vw-1rem))] sm:overflow-y-auto sm:overscroll-contain sm:p-2",
+                "max-h-[min(78dvh,620px)] w-[min(17.5rem,calc(100vw-2rem))] overflow-y-auto overscroll-contain rounded-2xl p-1.5 text-raw-text sm:w-[min(22rem,calc(100vw-1rem))] sm:p-2",
                 isEffectiveLight
                   ? "border border-slate-300/80 bg-[linear-gradient(160deg,rgba(255,255,255,0.97),rgba(242,247,255,0.96))] shadow-[0_20px_50px_rgba(28,38,58,0.18)]"
                   : "border border-raw-border/40 bg-[linear-gradient(160deg,rgba(17,17,17,0.96),rgba(9,9,9,0.98))] shadow-[0_20px_50px_rgba(0,0,0,0.55)]",
