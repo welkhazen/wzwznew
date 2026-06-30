@@ -54,4 +54,20 @@ describe("avatar rank pricing", () => {
 
     expect(offenders, `R3 shop avatar price drift: ${offenders.join("; ")}`).toEqual([]);
   });
+
+  it("prices known R4 shop avatars at 150 tokens", () => {
+    const names = ["Crimson Muse", "Void Runner", "Orange Vortex"];
+    const offenders = names
+      .map((name) => {
+        const avatar = DEFAULT_AVATAR_CATALOG.find((item) => item.name === name);
+        if (!avatar) return `${name}: missing from catalog`;
+
+        const rank = getAvatarRank(avatar);
+        const price = RANK_TIER_PRICING[rank]?.price;
+        return rank === 4 && price === 150 ? null : `${name}: R${rank}, ${price ?? "missing"} tokens`;
+      })
+      .filter((message): message is string => message !== null);
+
+    expect(offenders, `R4 shop avatar price drift: ${offenders.join("; ")}`).toEqual([]);
+  });
 });

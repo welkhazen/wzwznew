@@ -235,11 +235,17 @@ const DEFAULT_IMAGE_SRC_BY_ID = new Map(
 export const CANONICAL_OVERRIDES_BY_ID: Record<string, Partial<Pick<AvatarCatalogItem, "name" | "frame_color" | "rank_tier">>> = {
   "blue-signal": { name: "Gold Specter", frame_color: "gold", rank_tier: 9 },
   "blu-fifer":   { name: "Red Fifer",    frame_color: "red",  rank_tier: 6 },
+  "crimson-muse": { frame_color: "orange", rank_tier: 4 },
+  "avatar-17": { frame_color: "orange", rank_tier: 4 },
+  "avatar-42": { frame_color: "orange", rank_tier: 4 },
 };
 
 export const CANONICAL_OVERRIDE_MIGRATIONS_BY_ID: Record<keyof typeof CANONICAL_OVERRIDES_BY_ID, string> = {
   "blue-signal": "20260630124500_avatar_catalog_authoritative_backfill.sql",
   "blu-fifer": "20260630124500_avatar_catalog_authoritative_backfill.sql",
+  "crimson-muse": "20260630133000_avatar_r4_authoritative_backfill.sql",
+  "avatar-17": "20260630133000_avatar_r4_authoritative_backfill.sql",
+  "avatar-42": "20260630133000_avatar_r4_authoritative_backfill.sql",
 };
 
 async function refreshAvatarCatalogFromSupabase(): Promise<void> {
