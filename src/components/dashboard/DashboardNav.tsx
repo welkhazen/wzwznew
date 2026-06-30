@@ -324,8 +324,7 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
         type: "invite-claimed",
         title: "A shared invitation code has been claimed!",
         communityTitle: "Founding invitations",
-        senderName: referral.referredUsername,
-        text: `@${referral.referredUsername} joined with ${referral.referralCode}.`,
+        text: `Your code ${referral.referralCode} has been used.`,
         createdAt: referral.createdAt,
       });
     }
@@ -627,7 +626,7 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
                     <div key={i} className={cn("border-b px-4 py-3 last:border-0", isEffectiveLight ? "border-slate-100" : "border-raw-border/15")}>
                       <div className="flex items-center gap-2">
                         <span className={`text-[9px] uppercase tracking-wider font-semibold rounded-full px-2 py-0.5 ${n.type === "like" ? "bg-raw-gold/15 text-raw-gold" : "bg-raw-silver/10 text-raw-silver/60"}`}>
-                          {n.type === "like" ? `♥ ${n.likeCount} like${(n.likeCount ?? 0) > 1 ? "s" : ""}` : n.type === "community" ? "New community" : n.type === "pinned" ? "📌 Pinned" : "@ mention"}
+                          {n.type === "like" ? `♥ ${n.likeCount} like${(n.likeCount ?? 0) > 1 ? "s" : ""}` : n.type === "community" ? "New community" : n.type === "pinned" ? "📌 Pinned" : n.type === "invite-claimed" ? "Code used" : "@ mention"}
                         </span>
                         <p className={cn("text-[10px]", isEffectiveLight ? "text-slate-500" : "text-raw-silver/40")}>{n.communityTitle}</p>
                       </div>
