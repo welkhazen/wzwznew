@@ -7,17 +7,11 @@ import MatrixBackground from "@/components/ui/matrix-background";
 import { Navbar } from "@/components/landing/Navbar";
 import { ProblemSection } from "@/components/landing/ProblemSection";
 import { GlobeHero } from "@/components/landing/GlobeHero";
-import { HowItWorks } from "@/components/landing/HowItWorks";
 import { PollShowcase } from "@/components/landing/PollShowcase";
 import { Communities } from "@/components/landing/Communities";
 import { PersonalityInsightsSection } from "@/components/landing/PersonalityInsightsSection";
 import { AvatarShowcaseSection } from "@/components/landing/AvatarShowcaseSection";
 import { LandingPollsSection } from "@/components/landing/LandingPollsSection";
-import { WhyAnonymity } from "@/components/landing/WhyAnonymity";
-const TestimonialsSection = lazy(() =>
-  import("@/components/landing/TestimonialsSection").then((m) => ({ default: m.TestimonialsSection }))
-);
-import { EarnedWarUpgradesSection } from "@/components/landing/EarnedWarUpgradesSection";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { FAQSection } from "@/components/landing/FAQSection";
 import PerforatedBackground from "@/components/ui/perforated-background";
@@ -84,14 +78,9 @@ export default function LandingShell({
           <div className="relative max-sm:z-10">
             <GlobeHero onSignupClick={() => setShowSignup(true)} />
             <ProblemSection />
-            <HowItWorks />
-            <AvatarShowcaseSection onSignupClick={() => setShowSignup(true)} />
             <LandingPollsSection onSignupClick={() => setShowSignup(true)} />
             <Communities onSignupClick={() => setShowSignup(true)} />
-            <WhyAnonymity />
-            <Suspense fallback={<div className="h-16" />}>
-              <TestimonialsSection />
-            </Suspense>
+            <AvatarShowcaseSection onSignupClick={() => setShowSignup(true)} />
 
             <section className="landing-section px-4 py-8 sm:px-6 sm:py-12">
               <div
@@ -104,12 +93,11 @@ export default function LandingShell({
                     {highlightRawWordmark("What raW is building next")}
                   </h3>
                   <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-raw-silver/55">
-                    {highlightRawWordmark("See how raW turns anonymous answers into sharper insights, better rewards, and safer community matching.")}
+                    {highlightRawWordmark("Personality Insight is coming soon: anonymous answers turned into sharper self-understanding.")}
                   </p>
                 </div>
 
                 <PersonalityInsightsSection />
-                <EarnedWarUpgradesSection />
               </div>
             </section>
 
