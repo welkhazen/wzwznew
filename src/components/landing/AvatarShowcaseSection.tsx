@@ -55,17 +55,17 @@ const REVEAL_AVATARS: readonly AvatarCatalogItem[] = [
 ];
 const LANDING_AVATARS: readonly AvatarCatalogItem[] = [...CHOOSER_AVATARS, ...REVEAL_AVATARS];
 
-// Featured 8 shown upfront (rarest first). Green Relic, Blue Cipher, Grey Sentinel
-// appear in "Show More" as the lower-tier entries.
+// Featured 8 shown upfront (lowest tier first). Rainbow Pulse, White Mirage, Gold Specter
+// appear in "Show More" as the higher-tier entries.
 const UNLOCKABLE_FEATURE_ORDER = [
-  "Rainbow Pulse",
-  "White Mirage",
-  "Gold Specter",
-  "Rose Warden",
-  "Pink Nova",
-  "Red Phantom",
-  "Purple Oracle",
+  "Grey Sentinel",
+  "Blue Cipher",
+  "Green Relic",
   "Orange Vortex",
+  "Purple Oracle",
+  "Red Phantom",
+  "Pink Nova",
+  "Rose Warden",
 ] as const;
 
 interface AvatarShowcaseSectionProps {
