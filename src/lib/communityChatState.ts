@@ -160,11 +160,17 @@ export function appendOptimisticMessage(
   return communities.map((community) => {
     if (community.id !== communityId) return community;
     const withoutExisting = community.messages.filter((entry) => entry.id !== message.id);
+    const nextMessage = { ...message, deliveryStatus: "sending" as const };
+    const tail = withoutExisting[withoutExisting.length - 1];
+    if (!tail || nextMessage.createdAt >= tail.createdAt) {
+      return {
+        ...community,
+        messages: [...withoutExisting, nextMessage],
+      };
+    }
     return {
       ...community,
-      messages: [...withoutExisting, { ...message, deliveryStatus: "sending" as const }].sort((a, b) =>
-        a.createdAt.localeCompare(b.createdAt),
-      ),
+      messages: [...withoutExisting, nextMessage].sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
     };
   });
 }
