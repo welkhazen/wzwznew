@@ -5,24 +5,24 @@ import React, { useRef } from "react";
 import * as THREE from "three";
 
 const Globe: React.FC<{
+  animate: boolean;
   rotationSpeed: number;
   radius: number;
+  segments: number;
   color?: string;
-}> = ({ rotationSpeed, radius, color = "#F5F5F5" }) => {
+}> = ({ animate, rotationSpeed, radius, segments, color = "#F5F5F5" }) => {
   const groupRef = useRef<THREE.Group>(null!);
 
   useFrame(() => {
-    if (groupRef.current) {
-      groupRef.current.rotation.y += rotationSpeed;
-      groupRef.current.rotation.x += rotationSpeed * 0.3;
-      groupRef.current.rotation.z += rotationSpeed * 0.1;
-    }
+    if (!animate || !groupRef.current) return;
+    groupRef.current.rotation.y += rotationSpeed;
+    groupRef.current.rotation.x += rotationSpeed * 0.2;
   });
 
   return (
     <group ref={groupRef}>
       <mesh>
-        <sphereGeometry args={[radius, 64, 64]} />
+        <sphereGeometry args={[radius, segments, segments]} />
         <meshBasicMaterial
           color={color}
           transparent
