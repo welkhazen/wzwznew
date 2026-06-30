@@ -32,6 +32,7 @@ const DAILY_SPIN_AVATAR_CLAIM_PREFIX = "raw.daily-spin.avatar-claim.v1.";
 export const LANDING_WHEEL_SPIN_KEY = "raw.landing-wheel.spin.v1";
 let avatarBackendMissingTables = false;
 let avatarCatalogLocalWriteFailed = false;
+let _catalogCache: AvatarCatalogItem[] | null = null;
 
 function withNumberedAvatarName(item: AvatarCatalogItem): AvatarCatalogItem {
   const imageId = avatarIdFromImageSrc(item.imageSrc);
@@ -171,27 +172,37 @@ export function getDefaultAvatarCatalog(): AvatarCatalogItem[] {
 }
 
 export function readAvatarCatalogLocal(): AvatarCatalogItem[] {
+  if (_catalogCache) return _catalogCache;
   if (typeof window === "undefined") return cloneCatalog(DEFAULT_AVATAR_CATALOG);
 
   try {
     const raw = window.localStorage.getItem(CATALOG_STORAGE_KEY);
-    if (!raw) return cloneCatalog(DEFAULT_AVATAR_CATALOG);
+    if (!raw) { _catalogCache = cloneCatalog(DEFAULT_AVATAR_CATALOG); return _catalogCache; }
     const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return cloneCatalog(DEFAULT_AVATAR_CATALOG);
+    if (!Array.isArray(parsed)) { _catalogCache = cloneCatalog(DEFAULT_AVATAR_CATALOG); return _catalogCache; }
     const items = includeMissingDefaultAvatars(sanitizeCatalog(parsed as AvatarCatalogItem[]));
-    return items.map((item) => ({
+    _catalogCache = items.map((item) => ({
       ...item,
       imageSrc: DEFAULT_IMAGE_SRC_BY_ID.get(item.id) ?? item.imageSrc,
       ...CANONICAL_OVERRIDES_BY_ID[item.id],
     }));
+    return _catalogCache;
   } catch {
-    return cloneCatalog(DEFAULT_AVATAR_CATALOG);
+    _catalogCache = cloneCatalog(DEFAULT_AVATAR_CATALOG);
+    return _catalogCache;
   }
+}
+
+export function buildAvatarIdToLevelMap(catalog: AvatarCatalogItem[]): Map<string, number> {
+  const map = new Map<string, number>();
+  catalog.forEach((item, index) => map.set(item.id, index + 1));
+  return map;
 }
 
 export function writeAvatarCatalogLocal(items: AvatarCatalogItem[]): AvatarCatalogItem[] {
   const next = sanitizeCatalog(items);
   if (typeof window !== "undefined") {
+    _catalogCache = null;
     avatarCatalogLocalWriteFailed = false;
     try {
       window.localStorage.setItem(CATALOG_STORAGE_KEY, JSON.stringify(next));
