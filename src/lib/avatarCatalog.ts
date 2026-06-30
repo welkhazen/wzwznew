@@ -238,6 +238,15 @@ export const CANONICAL_OVERRIDES_BY_ID: Record<string, Partial<Pick<AvatarCatalo
   "crimson-muse": { frame_color: "orange", rank_tier: 4 },
   "avatar-17": { frame_color: "orange", rank_tier: 4 },
   "avatar-42": { frame_color: "orange", rank_tier: 4 },
+  "violet-mask": { frame_color: "purple", rank_tier: 5 },
+  "horned-iron": { frame_color: "purple", rank_tier: 5 },
+  "avatar-32": { frame_color: "purple", rank_tier: 5 },
+  "avatar-37": { frame_color: "purple", rank_tier: 5 },
+  "avatar-41": { frame_color: "purple", rank_tier: 5 },
+  "avatar-46": { frame_color: "purple", rank_tier: 5 },
+  "avatar-49": { frame_color: "purple", rank_tier: 5 },
+  "avatar-57": { frame_color: "purple", rank_tier: 5 },
+  "avatar-58": { frame_color: "purple", rank_tier: 5 },
 };
 
 export const CANONICAL_OVERRIDE_MIGRATIONS_BY_ID: Record<keyof typeof CANONICAL_OVERRIDES_BY_ID, string> = {
@@ -246,6 +255,15 @@ export const CANONICAL_OVERRIDE_MIGRATIONS_BY_ID: Record<keyof typeof CANONICAL_
   "crimson-muse": "20260630133000_avatar_r4_authoritative_backfill.sql",
   "avatar-17": "20260630133000_avatar_r4_authoritative_backfill.sql",
   "avatar-42": "20260630133000_avatar_r4_authoritative_backfill.sql",
+  "violet-mask": "20260630134500_avatar_r5_authoritative_backfill.sql",
+  "horned-iron": "20260630134500_avatar_r5_authoritative_backfill.sql",
+  "avatar-32": "20260630134500_avatar_r5_authoritative_backfill.sql",
+  "avatar-37": "20260630134500_avatar_r5_authoritative_backfill.sql",
+  "avatar-41": "20260630134500_avatar_r5_authoritative_backfill.sql",
+  "avatar-46": "20260630134500_avatar_r5_authoritative_backfill.sql",
+  "avatar-49": "20260630134500_avatar_r5_authoritative_backfill.sql",
+  "avatar-57": "20260630134500_avatar_r5_authoritative_backfill.sql",
+  "avatar-58": "20260630134500_avatar_r5_authoritative_backfill.sql",
 };
 
 async function refreshAvatarCatalogFromSupabase(): Promise<void> {
