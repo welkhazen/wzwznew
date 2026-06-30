@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_AVATAR_CATALOG } from "@/lib/avatarCatalog";
 import { RANK_TIER_PRICING } from "@/lib/avatarRarity";
-import { getAvatarRank } from "@/lib/avatarRank";
+import { getAvatarRank, SLUG_AVATAR_RANKS } from "@/lib/avatarRank";
 
 describe("avatar rank pricing", () => {
   it("matches the published token ladder", () => {
@@ -95,5 +95,27 @@ describe("avatar rank pricing", () => {
       .filter((message): message is string => message !== null);
 
     expect(offenders, `R5 shop avatar price drift: ${offenders.join("; ")}`).toEqual([]);
+  });
+
+  it("prices known R6 shop avatars at 600 tokens", () => {
+    const names = ["Black Comet", "Ruby Signal"];
+    const offenders = names
+      .map((name) => {
+        const avatar = DEFAULT_AVATAR_CATALOG.find((item) => item.name === name);
+        if (!avatar) return `${name}: missing from catalog`;
+
+        const rank = getAvatarRank(avatar);
+        const price = RANK_TIER_PRICING[rank]?.price;
+        return rank === 6 && price === 600 ? null : `${name}: R${rank}, ${price ?? "missing"} tokens`;
+      })
+      .filter((message): message is string => message !== null);
+
+    const redFiferRank = SLUG_AVATAR_RANKS["blu-fifer"];
+    const redFiferPrice = redFiferRank ? RANK_TIER_PRICING[redFiferRank]?.price : undefined;
+    if (redFiferRank !== 6 || redFiferPrice !== 600) {
+      offenders.push(`Red Fifer: R${redFiferRank ?? "missing"}, ${redFiferPrice ?? "missing"} tokens`);
+    }
+
+    expect(offenders, `R6 shop avatar price drift: ${offenders.join("; ")}`).toEqual([]);
   });
 });
