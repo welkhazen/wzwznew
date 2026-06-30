@@ -5,16 +5,30 @@ import { PerspectiveCamera } from "@react-three/drei";
 import { Globe } from "@/components/ui/globe-hero";
 
 interface GlobeHeroSceneProps {
+  animate: boolean;
   globeColor: string;
+  onReady: () => void;
+  quality: "mobile" | "desktop";
 }
 
-export function GlobeHeroScene({ globeColor }: GlobeHeroSceneProps) {
+export function GlobeHeroScene({ animate, globeColor, onReady, quality }: GlobeHeroSceneProps) {
+  const isMobile = quality === "mobile";
+
   return (
-    <Canvas gl={{ powerPreference: "low-power", antialias: false, alpha: true }} dpr={[1, 1.5]}>
+    <Canvas
+      dpr={isMobile ? [1, 1] : [1, 1.25]}
+      frameloop={animate ? "always" : "demand"}
+      gl={{ powerPreference: "low-power", antialias: false, alpha: true }}
+      onCreated={onReady}
+    >
       <PerspectiveCamera makeDefault position={[0, 0, 3]} fov={75} />
-      <ambientLight intensity={0.6} />
-      <pointLight position={[10, 10, 10]} intensity={0.8} />
-      <Globe rotationSpeed={0.004} radius={1.1} color={globeColor} />
+      <Globe
+        animate={animate}
+        color={globeColor}
+        radius={1.05}
+        rotationSpeed={isMobile ? 0.0018 : 0.003}
+        segments={isMobile ? 32 : 48}
+      />
     </Canvas>
   );
 }

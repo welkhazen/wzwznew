@@ -30,6 +30,8 @@ export function useOnboarding(isLoggedIn: boolean, user?: User | null) {
     if (entry) {
       const restoredStep = entry.step === "profile"
         ? "communities"
+        : entry.step === "voucher"
+          ? "avatar"
         : entry.step === "spin" && window.localStorage.getItem(LANDING_WHEEL_SPIN_KEY)
           ? "username"
           : entry.step;

@@ -12,7 +12,13 @@ interface GlobeHeroProps {
   onSignupClick: () => void;
 }
 
-type GlobeSceneComponent = ComponentType<{ globeColor: string }>;
+type GlobeQuality = "mobile" | "desktop";
+type GlobeSceneComponent = ComponentType<{
+  animate: boolean;
+  globeColor: string;
+  onReady: () => void;
+  quality: GlobeQuality;
+}>;
 
 const headlineLines = [
   { text: "Your place.", accent: false },
@@ -25,6 +31,8 @@ export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
   const globeColor = mode === "light" ? "#0A0A0A" : "#F5F5F5";
   const prefersReducedMotion = useReducedMotion();
   const [GlobeScene, setGlobeScene] = useState<GlobeSceneComponent | null>(null);
+  const [realOrbReady, setRealOrbReady] = useState(false);
+  const [globeQuality, setGlobeQuality] = useState<GlobeQuality>("desktop");
 
   const sectionRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
@@ -35,9 +43,9 @@ export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
   const contentOpacity = useTransform(scrollYProgress, [0, 0.75], [1, 0]);
 
   useEffect(() => {
-    if (prefersReducedMotion) return;
-    const isDesktop = window.matchMedia("(min-width: 640px)").matches;
-    if (!isDesktop) return;
+    const isMobile = !window.matchMedia("(min-width: 640px)").matches;
+    setGlobeQuality(isMobile ? "mobile" : "desktop");
+    setRealOrbReady(false);
 
     let cancelled = false;
     let timeoutId: number | null = null;
@@ -47,11 +55,14 @@ export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
           if (!cancelled) setGlobeScene(() => module.GlobeHeroScene);
         })
         .catch(() => {
-          if (!cancelled) setGlobeScene(null);
+          if (!cancelled) {
+            setGlobeScene(null);
+            setRealOrbReady(false);
+          }
         });
     };
 
-    if ("requestIdleCallback" in window) {
+    if (!isMobile && "requestIdleCallback" in window) {
       const idleId = window.requestIdleCallback(loadOrb, { timeout: 1400 });
       return () => {
         cancelled = true;
@@ -60,7 +71,7 @@ export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
       };
     }
 
-    timeoutId = window.setTimeout(loadOrb, 900);
+    timeoutId = window.setTimeout(loadOrb, isMobile ? 80 : 600);
     return () => {
       cancelled = true;
       if (timeoutId !== null) window.clearTimeout(timeoutId);
@@ -98,8 +109,13 @@ export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
             aria-hidden="true"
           />
           {GlobeScene && (
-            <div className="absolute inset-0">
-              <GlobeScene globeColor={globeColor} />
+            <div className={`absolute inset-0 transition-opacity duration-300 ${realOrbReady ? "opacity-100" : "opacity-0"}`}>
+              <GlobeScene
+                animate={!prefersReducedMotion}
+                globeColor={globeColor}
+                onReady={() => setRealOrbReady(true)}
+                quality={globeQuality}
+              />
             </div>
           )}
         </div>
