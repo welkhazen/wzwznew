@@ -255,7 +255,10 @@ export function LootSpin({ tokenBalance, avatarCatalog, ownedAvatarLevels, userI
 
   const canSpin = tokenBalance >= SPIN_COST;
 
-  const wheelPrizes: WheelPrize[] = RANK_TIERS.map((tier) => ({
+  // R12 (C1) is excluded from the spin; it remains in the Rank Tiers legend.
+  const spinTiers = RANK_TIERS.filter((tier) => tier.rank !== 12);
+
+  const wheelPrizes: WheelPrize[] = spinTiers.map((tier) => ({
     id: String(tier.rank),
     label: tier.label,
     shortLabel: tier.rank === 10 ? "R10" : `R${tier.rank}`,
@@ -263,7 +266,7 @@ export function LootSpin({ tokenBalance, avatarCatalog, ownedAvatarLevels, userI
     textColor: tier.color,
   }));
 
-  const prizeWeights = RANK_TIERS.reduce<Partial<Record<string, number>>>((acc, tier) => {
+  const prizeWeights = spinTiers.reduce<Partial<Record<string, number>>>((acc, tier) => {
     acc[String(tier.rank)] = tier.weight;
     return acc;
   }, {});
