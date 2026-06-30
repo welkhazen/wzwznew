@@ -7,20 +7,12 @@ import { PACKAGES } from "@/lib/wallet-packages";
 
 export interface PaymentModalProps {
   selectedPackage: (typeof PACKAGES)[number];
-  paymentMethod: "card" | "apple-pay" | "google-pay" | null;
-  cardDetails: { number: string; expiry: string; cvc: string };
-  onPaymentMethodChange: (method: "card" | "apple-pay" | "google-pay") => void;
-  onCardDetailsChange: (details: { number: string; expiry: string; cvc: string }) => void;
   onBack: () => void;
   onClose: () => void;
 }
 
 export function PaymentModal({
   selectedPackage,
-  paymentMethod,
-  cardDetails,
-  onPaymentMethodChange,
-  onCardDetailsChange,
   onClose,
 }: PaymentModalProps) {
   useEffect(() => {
@@ -41,7 +33,7 @@ export function PaymentModal({
         <div className="p-5 sm:p-6">
           {/* header */}
           <div className="mb-5 flex items-center justify-between">
-            <h3 className="font-display text-lg tracking-wide text-raw-text">Payment method</h3>
+            <h3 className="font-display text-lg tracking-wide text-raw-text">Payments coming soon</h3>
             <button
               onClick={onClose}
               className="flex h-8 w-8 items-center justify-center rounded-full border border-raw-border/40 text-raw-silver/60 transition hover:border-raw-gold/40 hover:text-raw-text"
@@ -62,101 +54,26 @@ export function PaymentModal({
             </div>
           </div>
 
-          {/* payment methods */}
-          <p className="mb-3 text-xs uppercase tracking-[0.2em] text-raw-silver/50">Select payment method</p>
-          <div className="space-y-2.5 mb-5">
-            {(["card", "apple-pay", "google-pay"] as const).map((method) => {
-              const active = paymentMethod === method;
-              const meta = {
-                card:       { label: "Credit / Debit Card", sub: "Visa, Mastercard, Amex", icon: (
-                  <svg className="h-5 w-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>), bg: "bg-gradient-to-br from-blue-500/30 to-purple-500/30" },
-                "apple-pay": { label: "Apple Pay", sub: "Fast & secure", icon: (
-                  <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M17.05 13.5c-.91 0-1.82.55-1.82 1.5s.91 1.5 1.82 1.5c.94 0 1.84-.55 1.84-1.5s-.9-1.5-1.84-1.5zm-11.5 0c-.91 0-1.82.55-1.82 1.5s.91 1.5 1.82 1.5c.94 0 1.84-.55 1.84-1.5s-.9-1.5-1.84-1.5zM5.5 11h13c1.1 0 2-.9 2-2v-1c0-1.1-.9-2-2-2h-1V5c0-.55-.45-1-1-1s-1 .45-1 1v1h-3V5c0-.55-.45-1-1-1s-1 .45-1 1v1h-1c-1.1 0-2 .9-2 2v1c0 1.1.9 2 2 2z" />
-                  </svg>), bg: "bg-black" },
-                "google-pay": { label: "Google Pay", sub: "Fast & secure", icon: (
-                  <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z" />
-                  </svg>), bg: "bg-gradient-to-br from-blue-500/30 via-red-500/30 to-yellow-500/30" },
-              }[method];
-              return (
-                <button
-                  key={method}
-                  onClick={() => onPaymentMethodChange(method)}
-                  className={`w-full rounded-xl border p-3.5 text-left transition ${active ? "border-raw-gold/60 bg-raw-gold/10" : "border-raw-border/40 bg-raw-surface/20 hover:border-raw-gold/40"}`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${meta.bg}`}>{meta.icon}</div>
-                      <div>
-                        <p className="text-sm font-semibold text-raw-text">{meta.label}</p>
-                        <p className="text-xs text-raw-silver/50">{meta.sub}</p>
-                      </div>
-                    </div>
-                    {active && <CheckCircle2 className="h-5 w-5 shrink-0 text-raw-gold" />}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* card fields */}
-          {paymentMethod === "card" && (
-            <div className="space-y-3 rounded-xl bg-raw-surface/30 p-4 mb-5">
-              <div>
-                <label className="text-xs uppercase tracking-[0.2em] text-raw-silver/60">Card number</label>
-                <input
-                  type="text"
-                  placeholder="4242 4242 4242 4242"
-                  maxLength={19}
-                  value={cardDetails.number}
-                  onChange={(e) => {
-                    let val = e.target.value.replace(/\s/g, "");
-                    val = val.replace(/(\d{4})(?=\d)/g, "$1 ");
-                    onCardDetailsChange({ ...cardDetails, number: val });
-                  }}
-                  className="mt-2 w-full rounded-lg border border-raw-border/40 bg-raw-black/50 px-3 py-2 text-sm text-raw-text outline-none transition focus:border-raw-gold/60"
-                />
+          <div className="mb-5 rounded-xl border border-raw-border/40 bg-raw-surface/25 p-4">
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-raw-gold/10 text-raw-gold">
+                <Lock className="h-4 w-4" />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs uppercase tracking-[0.2em] text-raw-silver/60">Expiry</label>
-                  <input
-                    type="text"
-                    placeholder="MM/YY"
-                    maxLength={5}
-                    value={cardDetails.expiry}
-                    onChange={(e) => {
-                      let val = e.target.value.replace(/\D/g, "");
-                      if (val.length >= 2) val = val.slice(0, 2) + "/" + val.slice(2, 4);
-                      onCardDetailsChange({ ...cardDetails, expiry: val });
-                    }}
-                    className="mt-2 w-full rounded-lg border border-raw-border/40 bg-raw-black/50 px-3 py-2 text-sm text-raw-text outline-none transition focus:border-raw-gold/60"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs uppercase tracking-[0.2em] text-raw-silver/60">CVC</label>
-                  <input
-                    type="text"
-                    placeholder="123"
-                    maxLength={4}
-                    value={cardDetails.cvc}
-                    onChange={(e) => onCardDetailsChange({ ...cardDetails, cvc: e.target.value.replace(/\D/g, "") })}
-                    className="mt-2 w-full rounded-lg border border-raw-border/40 bg-raw-black/50 px-3 py-2 text-sm text-raw-text outline-none transition focus:border-raw-gold/60"
-                  />
-                </div>
+              <div>
+                <p className="text-sm font-semibold text-raw-text">Checkout is not available yet.</p>
+                <p className="mt-1 text-xs leading-relaxed text-raw-silver/50">
+                  Token purchases are coming soon. No card details can be entered or stored right now.
+                </p>
               </div>
             </div>
-          )}
+          </div>
 
           <button
-            disabled={!paymentMethod}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-raw-gold px-8 py-3.5 text-sm font-semibold text-raw-ink transition hover:bg-raw-gold/90 disabled:cursor-not-allowed disabled:opacity-40"
+            disabled
+            className="flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-xl bg-raw-gold/20 px-8 py-3.5 text-sm font-semibold text-raw-gold/55"
           >
             <Lock className="h-4 w-4" />
-            Complete Purchase
+            Coming Soon
           </button>
 
           <p className="mt-4 text-center text-[10px] text-raw-silver/30">
@@ -171,22 +88,16 @@ export function PaymentModal({
 
 function closePayment(
   setPaymentOpen: (v: boolean) => void,
-  setPaymentMethod: (v: null) => void,
-  setCardDetails: (v: { number: string; expiry: string; cvc: string }) => void,
 ) {
   setPaymentOpen(false);
-  setPaymentMethod(null);
-  setCardDetails({ number: "", expiry: "", cvc: "" });
 }
 
 export function DashboardWallet() {
   const { tokenBalance: balance } = useRawStore();
   const [selected, setSelected] = useState<string | null>(null);
   const [paymentOpen, setPaymentOpen] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "apple-pay" | "google-pay" | null>(null);
-  const [cardDetails, setCardDetails] = useState({ number: "", expiry: "", cvc: "" });
 
-  const handleClose = () => closePayment(setPaymentOpen, setPaymentMethod, setCardDetails);
+  const handleClose = () => closePayment(setPaymentOpen);
 
   return (
     <div className="space-y-6 sm:space-y-8">
@@ -252,7 +163,7 @@ export function DashboardWallet() {
                 >
                   Coming Soon
                 </button>
-                <p className="text-center text-[10px] text-raw-silver/25 sm:text-right">Stripe · Secure checkout</p>
+                <p className="text-center text-[10px] text-raw-silver/25 sm:text-right">Payments coming soon</p>
               </div>
             </div>
           </div>
@@ -309,15 +220,11 @@ export function DashboardWallet() {
         </div>
       </section>
 
-      <p className="text-xs text-raw-silver/35">Tap a package to purchase. Tokens never expire.</p>
+      <p className="text-xs text-raw-silver/35">Token purchases are coming soon. Tokens never expire.</p>
 
       {paymentOpen && selected && (
         <PaymentModal
           selectedPackage={PACKAGES.find((p) => p.id === selected)!}
-          paymentMethod={paymentMethod}
-          cardDetails={cardDetails}
-          onPaymentMethodChange={setPaymentMethod}
-          onCardDetailsChange={setCardDetails}
           onBack={handleClose}
           onClose={handleClose}
         />

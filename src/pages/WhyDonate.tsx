@@ -1,29 +1,16 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
-import { ArrowLeft, X, Lock, CreditCard } from "lucide-react";
+import { ArrowLeft, X, Lock } from "lucide-react";
 import { BrandName } from "@/components/ui/brand-name";
 
 const DONATION_AMOUNTS = [5, 10, 25, 50];
 
 function DonationModal({ amount, onClose }: { amount: number; onClose: () => void }) {
-  const [cardNumber, setCardNumber] = useState("");
-  const [expiry, setExpiry] = useState("");
-  const [cvc, setCvc] = useState("");
-  const [name, setName] = useState("");
-
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = ""; };
   }, []);
-
-  function formatCardNumber(v: string) {
-    return v.replace(/\D/g, "").slice(0, 16).replace(/(.{4})/g, "$1 ").trim();
-  }
-  function formatExpiry(v: string) {
-    const d = v.replace(/\D/g, "").slice(0, 4);
-    return d.length > 2 ? `${d.slice(0, 2)}/${d.slice(2)}` : d;
-  }
 
   return createPortal(
     <div
@@ -35,7 +22,7 @@ function DonationModal({ amount, onClose }: { amount: number; onClose: () => voi
         <div className="p-5 sm:p-6">
           {/* header */}
           <div className="mb-5 flex items-center justify-between">
-            <h3 className="font-display text-lg tracking-wide text-raw-text">Complete donation</h3>
+            <h3 className="font-display text-lg tracking-wide text-raw-text">Donations coming soon</h3>
             <button
               onClick={onClose}
               className="flex h-8 w-8 items-center justify-center rounded-full border border-raw-border/40 text-raw-silver/60 transition hover:border-raw-gold/40 hover:text-raw-text"
@@ -53,70 +40,32 @@ function DonationModal({ amount, onClose }: { amount: number; onClose: () => voi
             </div>
           </div>
 
-          {/* card fields */}
-          <p className="mb-3 text-xs uppercase tracking-[0.2em] text-raw-silver/50">Card details</p>
-          <div className="space-y-3">
-            <div>
-              <label className="mb-1 block text-xs text-raw-silver/60">Cardholder name</label>
-              <input
-                type="text"
-                placeholder="Jane Doe"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full rounded-xl border border-raw-border/40 bg-raw-black/60 px-4 py-3 text-sm text-raw-text placeholder-raw-silver/30 outline-none focus:border-raw-gold/50"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs text-raw-silver/60">Card number</label>
-              <div className="relative">
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  placeholder="1234 5678 9012 3456"
-                  value={cardNumber}
-                  onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
-                  className="w-full rounded-xl border border-raw-border/40 bg-raw-black/60 px-4 py-3 pr-10 text-sm text-raw-text placeholder-raw-silver/30 outline-none focus:border-raw-gold/50"
-                />
-                <CreditCard className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-raw-silver/30" />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="mb-1 block text-xs text-raw-silver/60">Expiry</label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  placeholder="MM/YY"
-                  value={expiry}
-                  onChange={(e) => setExpiry(formatExpiry(e.target.value))}
-                  className="w-full rounded-xl border border-raw-border/40 bg-raw-black/60 px-4 py-3 text-sm text-raw-text placeholder-raw-silver/30 outline-none focus:border-raw-gold/50"
-                />
+          <div className="rounded-xl border border-raw-border/40 bg-raw-surface/25 p-4">
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-raw-gold/10 text-raw-gold">
+                <Lock className="h-4 w-4" />
               </div>
               <div>
-                <label className="mb-1 block text-xs text-raw-silver/60">CVC</label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  placeholder="123"
-                  value={cvc}
-                  onChange={(e) => setCvc(e.target.value.replace(/\D/g, "").slice(0, 4))}
-                  className="w-full rounded-xl border border-raw-border/40 bg-raw-black/60 px-4 py-3 text-sm text-raw-text placeholder-raw-silver/30 outline-none focus:border-raw-gold/50"
-                />
+                <p className="text-sm font-semibold text-raw-text">Donation payments are not available yet.</p>
+                <p className="mt-1 text-xs leading-relaxed text-raw-silver/50">
+                  We are not collecting card details right now. This page will support donations once checkout is ready.
+                </p>
               </div>
             </div>
           </div>
 
           {/* submit */}
           <button
-            className="mt-6 w-full rounded-full bg-raw-gold py-3.5 text-base font-semibold text-raw-black transition hover:bg-raw-gold/90"
+            disabled
+            className="mt-6 w-full cursor-not-allowed rounded-full bg-raw-gold/20 py-3.5 text-base font-semibold text-raw-gold/55"
           >
-            Donate ${amount}
+            Coming Soon
           </button>
 
           {/* security note */}
           <p className="mt-3 flex items-center justify-center gap-1.5 text-[11px] text-raw-silver/40">
             <Lock className="h-3 w-3" />
-            Payments are encrypted and secure
+            No payment details can be entered
           </p>
         </div>
       </div>
@@ -231,7 +180,7 @@ export default function WhyDonate() {
               onClick={() => setModalOpen(true)}
               className="inline-flex min-h-11 items-center justify-center rounded-full bg-raw-gold px-8 py-3 text-base font-semibold text-raw-black transition hover:bg-raw-gold/90"
             >
-              Donate ${selectedAmount}
+              Donations Coming Soon
             </button>
           </section>
         </div>
