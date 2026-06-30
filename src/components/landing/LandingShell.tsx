@@ -6,9 +6,7 @@ import { motion } from "framer-motion";
 import MatrixBackground from "@/components/ui/matrix-background";
 import { Navbar } from "@/components/landing/Navbar";
 import { ProblemSection } from "@/components/landing/ProblemSection";
-const GlobeHero = lazy(() =>
-  import("@/components/landing/GlobeHero").then((m) => ({ default: m.GlobeHero }))
-);
+import { GlobeHero } from "@/components/landing/GlobeHero";
 import { HowItWorks } from "@/components/landing/HowItWorks";
 import { PollShowcase } from "@/components/landing/PollShowcase";
 import { Communities } from "@/components/landing/Communities";
@@ -84,9 +82,7 @@ export default function LandingShell({
           <MatrixBackground />
 
           <div className="relative max-sm:z-10">
-            <Suspense fallback={<div className="min-h-[620px] sm:min-h-[680px]" />}>
-              <GlobeHero onSignupClick={() => setShowSignup(true)} />
-            </Suspense>
+            <GlobeHero onSignupClick={() => setShowSignup(true)} />
             <ProblemSection />
             <HowItWorks />
             <AvatarShowcaseSection onSignupClick={() => setShowSignup(true)} />
