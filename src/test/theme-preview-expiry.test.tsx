@@ -31,7 +31,7 @@ vi.mock("@/lib/supabase", () => ({
 }));
 
 vi.mock("@/lib/api/tokens", () => ({ spendTokens: vi.fn() }));
-vi.mock("@/components/ui/use-toast", () => ({ toast: vi.fn() }));
+vi.mock("@/hooks/use-toast", () => ({ toast: vi.fn() }));
 vi.mock("@/components/ui/avatar-figure", () => ({ AvatarFigure: () => <span>Avatar</span> }));
 
 function expectRootAccent(rgb: string) {

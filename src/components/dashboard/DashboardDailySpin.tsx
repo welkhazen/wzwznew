@@ -16,7 +16,7 @@ import {
   type DailySpinAvatarPoolItem,
 } from "@/lib/dailySpinAvatarPool";
 import { grantDailySpinAvatarOnceForUser } from "@/lib/avatarCatalog";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 
 const SPIN_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 

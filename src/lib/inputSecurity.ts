@@ -124,22 +124,15 @@ export function moderateUserText(
   };
 }
 
+const MODERATION_MESSAGES: Partial<Record<string, string>> = {
+  denylist: "This contains a blocked word. Rephrase it and try again.",
+  link:     "Links are not allowed in public text yet.",
+  number:   "Phone numbers or long number sequences are not allowed in public text yet.",
+};
+
 export function getUserTextModerationMessage(result: UserTextModerationResult): string {
-  const firstViolation = result.violations[0]?.type;
-
-  if (firstViolation === "denylist") {
-    return "This contains a blocked word. Rephrase it and try again.";
-  }
-
-  if (firstViolation === "link") {
-    return "Links are not allowed in public text yet.";
-  }
-
-  if (firstViolation === "number") {
-    return "Phone numbers or long number sequences are not allowed in public text yet.";
-  }
-
-  return "This text cannot be posted right now.";
+  const type = result.violations[0]?.type;
+  return MODERATION_MESSAGES[type ?? ""] ?? "This text cannot be posted right now.";
 }
 
 export function assertUserTextAllowed(value: string, options?: UserTextModerationOptions): string {

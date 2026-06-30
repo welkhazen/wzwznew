@@ -44,7 +44,7 @@ const testCommunity: PersistedCommunityRecord = {
   ],
 };
 
-vi.mock("@/components/ui/use-toast", () => ({
+vi.mock("@/hooks/use-toast", () => ({
   toast: vi.fn(),
 }));
 
