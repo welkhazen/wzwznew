@@ -167,7 +167,7 @@ export function Communities({ onSignupClick }: CommunitiesProps) {
                         autoPlay
                         muted
                         playsInline
-                        preload="auto"
+                        preload="metadata"
                         onEnded={(e) => {
                           const video = e.currentTarget;
                           video.currentTime = 0;
