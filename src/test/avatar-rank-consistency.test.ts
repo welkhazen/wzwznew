@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { DEFAULT_AVATAR_CATALOG, CANONICAL_OVERRIDES_BY_ID } from "@/lib/avatarCatalog";
+import { existsSync, readFileSync } from "node:fs";
+import path from "node:path";
+import {
+  DEFAULT_AVATAR_CATALOG,
+  CANONICAL_OVERRIDES_BY_ID,
+  CANONICAL_OVERRIDE_MIGRATIONS_BY_ID,
+} from "@/lib/avatarCatalog";
 import {
   AVATAR_RANK_MAP,
   AVATAR_RANK_LABELS,
@@ -14,6 +20,7 @@ import {
 // ponytail: asserts data consistency only — no runtime logic is exercised.
 
 const LABELED_TIERS = new Set(Object.keys(AVATAR_RANK_LABELS).map(Number));
+const MIGRATIONS_DIR = path.resolve(process.cwd(), "supabase/migrations");
 
 describe("avatar rank data stays in lockstep with the catalog", () => {
   it("every rank value in every map is a labeled tier", () => {
@@ -77,5 +84,42 @@ describe("avatar rank data stays in lockstep with the catalog", () => {
       if (resolved !== slugRank) offenders.push(`${id}: slug=${slugRank} but getAvatarRank=${resolved}`);
     }
     expect(offenders, `slug rank is overridden by a higher-priority source — remove the dead entry or fix the authoritative one: ${offenders.join("; ")}`).toEqual([]);
+  });
+
+  it("documents every temporary canonical override with a matching DB migration", () => {
+    const catalogIds = new Set(DEFAULT_AVATAR_CATALOG.map((item) => item.id));
+    const offenders: string[] = [];
+
+    for (const [id, override] of Object.entries(CANONICAL_OVERRIDES_BY_ID)) {
+      if (typeof override.rank_tier !== "number" || !LABELED_TIERS.has(override.rank_tier)) {
+        offenders.push(`${id}: override rank ${override.rank_tier ?? "missing"} is not labeled`);
+      }
+
+      if (SLUG_AVATAR_RANKS[id] !== undefined && override.rank_tier !== SLUG_AVATAR_RANKS[id]) {
+        offenders.push(`${id}: override rank ${override.rank_tier} does not match SLUG_AVATAR_RANKS ${SLUG_AVATAR_RANKS[id]}`);
+      }
+
+      const migrationFile = CANONICAL_OVERRIDE_MIGRATIONS_BY_ID[id];
+      if (!migrationFile) {
+        offenders.push(`${id}: missing CANONICAL_OVERRIDE_MIGRATIONS_BY_ID entry`);
+        continue;
+      }
+
+      const migrationPath = path.join(MIGRATIONS_DIR, migrationFile);
+      if (!existsSync(migrationPath)) {
+        offenders.push(`${id}: documented migration does not exist (${migrationFile})`);
+        continue;
+      }
+
+      const migrationSql = readFileSync(migrationPath, "utf8");
+      if (!catalogIds.has(id) && !migrationSql.includes(id)) {
+        offenders.push(`${id}: not in DEFAULT_AVATAR_CATALOG and not present in ${migrationFile}`);
+      }
+      if (!migrationSql.includes(id)) {
+        offenders.push(`${id}: documented migration ${migrationFile} does not mention the override id`);
+      }
+    }
+
+    expect(offenders, `canonical override drift: ${offenders.join("; ")}`).toEqual([]);
   });
 });

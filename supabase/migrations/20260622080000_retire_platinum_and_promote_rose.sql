@@ -11,15 +11,24 @@ update public.avatar_catalog
 set is_active = false
 where id in ('spin-35', 'signup-29', 'signup-21', 'signup-25', 'signup-33');
 
--- 2. Promote id 21 ("Rose Warden") into the spin pool at rank 7.
-insert into public.avatar_catalog (id, level, name, price, image_src, bg, figure, ring, glow, is_active, rarity, frame_color, rank_tier)
+-- 2. Promote id 21 ("Rose Warden") into the spin pool at rank 8.
+insert into public.avatar_catalog (id, level, name, price, image_src, bg, figure, ring, glow, is_active, rarity, drop_weight, frame_color, rank_tier)
 values
-  ('spin-21', 110, 'Spin 21', '0', '/avatars/21.png', '#111827', '#cbd5e1', '#cbd5e1', '#cbd5e180', true, 'common', 'rose', 7)
+  ('spin-21', 110, 'Spin 21', '0', '/avatars/21.png', '#111827', '#cbd5e1', '#cbd5e1', '#cbd5e180', true, 'common', 100, 'rose', 8)
 on conflict (id) do update set
-  is_active = true,
-  frame_color = 'rose',
-  rank_tier = 7,
-  image_src = excluded.image_src;
+  level = excluded.level,
+  name = excluded.name,
+  price = excluded.price,
+  image_src = excluded.image_src,
+  bg = excluded.bg,
+  figure = excluded.figure,
+  ring = excluded.ring,
+  glow = excluded.glow,
+  is_active = excluded.is_active,
+  rarity = excluded.rarity,
+  drop_weight = excluded.drop_weight,
+  frame_color = excluded.frame_color,
+  rank_tier = excluded.rank_tier;
 
 -- 3. Gold shifts from rank 7 to rank 8 for every catalog row backed by id 7 or 40.
 update public.avatar_catalog

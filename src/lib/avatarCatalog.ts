@@ -228,11 +228,18 @@ const DEFAULT_IMAGE_SRC_BY_ID = new Map(
   DEFAULT_AVATAR_CATALOG.filter((i) => i.imageSrc).map((i) => [i.id, i.imageSrc!])
 );
 
-// Authoritative overrides that win over whatever Supabase has stored.
-// Covers name, frame_color, and rank_tier so a stale DB can't revert them.
+// Supabase avatar_catalog is the source of truth. Keep these overrides as a
+// temporary guard only for users with stale local/Supabase cache data; new
+// avatar corrections should be fixed in migrations first, not added here by
+// default.
 export const CANONICAL_OVERRIDES_BY_ID: Record<string, Partial<Pick<AvatarCatalogItem, "name" | "frame_color" | "rank_tier">>> = {
   "blue-signal": { name: "Gold Specter", frame_color: "gold", rank_tier: 9 },
   "blu-fifer":   { name: "Red Fifer",    frame_color: "red",  rank_tier: 6 },
+};
+
+export const CANONICAL_OVERRIDE_MIGRATIONS_BY_ID: Record<keyof typeof CANONICAL_OVERRIDES_BY_ID, string> = {
+  "blue-signal": "20260630124500_avatar_catalog_authoritative_backfill.sql",
+  "blu-fifer": "20260630124500_avatar_catalog_authoritative_backfill.sql",
 };
 
 async function refreshAvatarCatalogFromSupabase(): Promise<void> {
