@@ -53,6 +53,20 @@ describe("onboarding persistence", () => {
     expect(result.current.onboardingStep).toBe("username");
   });
 
+  it("moves old voucher onboarding progress to avatar", () => {
+    window.localStorage.setItem("raw.onboarding.v1", JSON.stringify({
+      alice: {
+        completed: false,
+        step: "voucher",
+        answeredPollIds: [],
+      },
+    }));
+
+    const { result } = renderHook(() => useOnboarding(true, alice));
+
+    expect(result.current.onboardingStep).toBe("avatar");
+  });
+
   it("does not overwrite restored onboarding state with the initial default step", () => {
     window.localStorage.setItem("raw.onboarding.v1", JSON.stringify({
       alice: {
