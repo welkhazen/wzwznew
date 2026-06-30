@@ -1,7 +1,7 @@
 import type { Poll } from "../types";
 import { supabaseAdmin } from "./supabaseClient";
 
-function randomize<T>(items: T[]): T[] {
+export function randomize<T>(items: T[]): T[] {
   return items
     .map((item) => ({ item, sort: Math.random() }))
     .sort((a, b) => a.sort - b.sort)

@@ -1,5 +1,5 @@
 import { env } from "../config/env";
-import { getUserRepository } from "./userRepository";
+import { userRepository } from "./userRepository";
 
 function getAdminUsernameSet(): Set<string> {
   if (!env.ADMIN_USERNAMES) {
@@ -14,7 +14,7 @@ function getAdminUsernameSet(): Set<string> {
 }
 
 export async function isUserAdmin(userId: string): Promise<boolean> {
-  const user = await getUserRepository().findById(userId);
+  const user = await userRepository.findById(userId);
   if (!user) {
     return false;
   }

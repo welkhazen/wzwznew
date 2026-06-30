@@ -20,13 +20,10 @@ async function getSeedPollsResponse(): Promise<unknown> {
   };
 }
 
-function shouldUseSeedPolls(polls: unknown[]): boolean {
-  if (polls.length === 0) return true;
-  return polls.every((poll) => {
-    if (!poll || typeof poll !== "object" || !("question" in poll)) return true;
-    const question = String((poll as { question: unknown }).question).trim().toLowerCase();
-    return question === "supabase" || question.length <= 5;
-  });
+function isPlaceholderPoll(poll: unknown): boolean {
+  if (!poll || typeof poll !== "object" || !("question" in poll)) return true;
+  const question = String((poll as { question: unknown }).question).trim().toLowerCase();
+  return question === "supabase" || question.length <= 5;
 }
 
 async function getPollsMockResponse(): Promise<unknown> {
@@ -64,7 +61,7 @@ async function getPollsMockResponse(): Promise<unknown> {
             p.options.length >= 2 &&
             !p.locked
         );
-      if (polls.length > 0 && !shouldUseSeedPolls(polls)) {
+      if (polls.length > 0 && !polls.every(isPlaceholderPoll)) {
         return { polls, votedPolls: [] };
       }
     }
@@ -74,7 +71,7 @@ async function getPollsMockResponse(): Promise<unknown> {
   try {
     const raw = localStorage.getItem("raw.admin.polls.v1");
     const polls = raw ? (JSON.parse(raw) as unknown[]) : [];
-    if (polls.length > 0 && !shouldUseSeedPolls(polls)) {
+    if (polls.length > 0 && !polls.every(isPlaceholderPoll)) {
       return { polls, votedPolls: [] };
     }
     return getSeedPollsResponse();
@@ -155,7 +152,7 @@ export async function apiRequest<T>(input: string, init?: RequestInit): Promise<
       ...init,
     });
   } catch (error) {
-    if (typeof window !== "undefined") {
+    if (import.meta.env.DEV && typeof window !== "undefined") {
       return getMockResponse(input, init) as Promise<T>;
     }
     throw error;
@@ -170,7 +167,7 @@ export async function apiRequest<T>(input: string, init?: RequestInit): Promise<
 
   if (!response.ok) {
     // Gateway errors mean the backend is not running — use mock data in dev
-    if ([502, 503, 504].includes(response.status) && typeof window !== "undefined") {
+    if (import.meta.env.DEV && [502, 503, 504].includes(response.status) && typeof window !== "undefined") {
       return getMockResponse(input, init) as Promise<T>;
     }
     const message =
