@@ -96,7 +96,8 @@ export default function WhyDonate() {
       <main className="mx-auto max-w-4xl px-4 py-12 sm:px-6 sm:py-16 lg:px-10">
         <div className="mb-12 space-y-6">
           <h1 className="text-4xl font-bold tracking-tight text-raw-text sm:text-5xl">
-            Why Donate to <BrandName />?
+            Why Donate to{" "}
+            <span className="whitespace-nowrap"><BrandName />?</span>
           </h1>
           <p className="text-lg leading-relaxed text-raw-silver/75">
             Your support helps us build a platform for genuine anonymous conversations.
