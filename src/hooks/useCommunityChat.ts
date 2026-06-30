@@ -320,6 +320,19 @@ export function useCommunityChat(
     }
   }, [activeCommunityId, activeMessages, hasOlderMessages, isLoadingOlderMessages, updateCommunities]);
 
+  const reloadDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastWindowReloadAtRef = useRef(0);
+  const scheduleWindowReload = useCallback(() => {
+    const now = Date.now();
+    if (now - lastWindowReloadAtRef.current < 2000) return;
+    if (reloadDebounceTimerRef.current !== null) clearTimeout(reloadDebounceTimerRef.current);
+    reloadDebounceTimerRef.current = setTimeout(() => {
+      reloadDebounceTimerRef.current = null;
+      lastWindowReloadAtRef.current = Date.now();
+      void reload();
+    }, 150);
+  }, [reload]);
+
   useEffect(() => {
     void loadLatestMessages();
   }, [loadLatestMessages, selectedCommunity?.id]);
@@ -329,16 +342,20 @@ export function useCommunityChat(
 
     const handleStorage = (event: StorageEvent) => {
       if (!event.key || event.key.startsWith("raw.community") || event.key === "raw.chat-reports.v1") {
-        void reload();
+        scheduleWindowReload();
       }
     };
-    window.addEventListener("focus", reload);
+    window.addEventListener("focus", scheduleWindowReload);
     window.addEventListener("storage", handleStorage);
     return () => {
-      window.removeEventListener("focus", reload);
+      if (reloadDebounceTimerRef.current !== null) {
+        clearTimeout(reloadDebounceTimerRef.current);
+        reloadDebounceTimerRef.current = null;
+      }
+      window.removeEventListener("focus", scheduleWindowReload);
       window.removeEventListener("storage", handleStorage);
     };
-  }, [reload]);
+  }, [reload, scheduleWindowReload]);
 
   useCommunityMessagesRealtime(updateCommunities);
 
