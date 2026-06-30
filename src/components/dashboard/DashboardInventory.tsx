@@ -63,7 +63,6 @@ export function AvatarShop({
   avatarCatalog,
   ownedAvatarLevels,
   onUnlockAvatar,
-  avatarPricesByLevel,
   tokenBalance,
   userId,
   userName,
@@ -141,8 +140,7 @@ export function AvatarShop({
       {visibleAvatars.map((avatar) => {
         const owned = ownedAvatarLevels.has(avatar.level);
         const rank = hasAvatarRank(avatar) ? getAvatarRank(avatar) : 1;
-        const rankPrice = RANK_TIER_PRICING[rank]?.price ?? AVATAR_SHOP_PRICE;
-        const price = Number(avatarPricesByLevel[avatar.level]) || rankPrice;
+        const price = RANK_TIER_PRICING[rank]?.price ?? AVATAR_SHOP_PRICE;
         const canBuy = tokenBalance >= price;
         const rarity = avatar.rarity ?? "common";
         const rarityConfig = RARITY_CONFIG[rarity];
