@@ -226,7 +226,7 @@ export function TrendingPollsBox({
         Polls the community is talking about right now. Tap a side to vote — these don't count toward your daily 7.
       </p>
 
-      <div className="mt-5 grid gap-7 md:grid-cols-2">
+      <div className="mt-5 flex gap-4 overflow-x-auto pb-2 md:grid md:grid-cols-2 md:gap-7 md:overflow-visible md:pb-0">
         {loading ? (
           <p className={`text-sm ${isLight ? "text-slate-500" : "text-white/40"}`}>Loading…</p>
         ) : entries.length === 0 ? (
@@ -251,7 +251,7 @@ export function TrendingPollsBox({
             const commentsLoading = Boolean(commentsLoadingByPoll[entry.poll.id]);
 
             return (
-              <div key={entry.poll.id} className="space-y-3">
+              <div key={entry.poll.id} className="w-[18.5rem] shrink-0 space-y-3 sm:w-[20rem] md:w-auto md:shrink">
                 <PremiumPollCard
                   question={entry.poll.question}
                   primaryOption={{
