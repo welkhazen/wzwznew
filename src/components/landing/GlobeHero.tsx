@@ -12,7 +12,8 @@ interface GlobeHeroProps {
   onSignupClick: () => void;
 }
 
-type GlobeSceneComponent = ComponentType<{ globeColor: string }>;
+type GlobeQuality = "mobile" | "desktop";
+type GlobeSceneComponent = ComponentType<{ animate: boolean; globeColor: string; quality: GlobeQuality }>;
 
 const headlineLines = [
   { text: "Your place.", accent: false },
@@ -20,31 +21,12 @@ const headlineLines = [
   { text: "Your self.", accent: true },
 ];
 
-function StaticHeroOrb() {
-  return (
-    <div
-      aria-hidden="true"
-      className="absolute inset-0 rounded-full opacity-85 sm:opacity-70"
-      style={{
-        background: [
-          "radial-gradient(circle at 50% 44%, rgba(245,245,245,0.16) 0%, rgba(241,196,45,0.16) 24%, rgba(241,196,45,0.05) 48%, transparent 72%)",
-          "repeating-radial-gradient(circle at 50% 50%, rgba(245,245,245,0.22) 0 1px, transparent 1px 18px)",
-          "repeating-linear-gradient(78deg, transparent 0 13px, rgba(245,245,245,0.14) 13px 14px, transparent 14px 28px)",
-          "repeating-linear-gradient(102deg, transparent 0 15px, rgba(241,196,45,0.12) 15px 16px, transparent 16px 30px)",
-        ].join(", "),
-        boxShadow: "0 0 48px rgba(241,196,45,0.18)",
-        maskImage: "radial-gradient(circle, black 0 60%, transparent 76%)",
-        WebkitMaskImage: "radial-gradient(circle, black 0 60%, transparent 76%)",
-      }}
-    />
-  );
-}
-
 export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
   const { mode } = useTheme();
   const globeColor = mode === "light" ? "#0A0A0A" : "#F5F5F5";
   const prefersReducedMotion = useReducedMotion();
   const [GlobeScene, setGlobeScene] = useState<GlobeSceneComponent | null>(null);
+  const [globeQuality, setGlobeQuality] = useState<GlobeQuality>("desktop");
 
   const sectionRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
@@ -55,9 +37,8 @@ export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
   const contentOpacity = useTransform(scrollYProgress, [0, 0.75], [1, 0]);
 
   useEffect(() => {
-    if (prefersReducedMotion) return;
-    const isDesktop = window.matchMedia("(min-width: 640px)").matches;
-    if (!isDesktop) return;
+    const isMobile = !window.matchMedia("(min-width: 640px)").matches;
+    setGlobeQuality(isMobile ? "mobile" : "desktop");
 
     let cancelled = false;
     let timeoutId: number | null = null;
@@ -71,7 +52,7 @@ export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
         });
     };
 
-    if ("requestIdleCallback" in window) {
+    if (!isMobile && "requestIdleCallback" in window) {
       const idleId = window.requestIdleCallback(loadOrb, { timeout: 1400 });
       return () => {
         cancelled = true;
@@ -80,7 +61,7 @@ export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
       };
     }
 
-    timeoutId = window.setTimeout(loadOrb, 900);
+    timeoutId = window.setTimeout(loadOrb, isMobile ? 80 : 600);
     return () => {
       cancelled = true;
       if (timeoutId !== null) window.clearTimeout(timeoutId);
@@ -112,11 +93,14 @@ export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
       <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_50%_28%,rgba(241,196,45,0.08),transparent_32%),linear-gradient(180deg,rgba(0,0,0,0.14),rgba(0,0,0,0.62))] sm:hidden" />
       {/* Globe behind text, centered, melted into the dark */}
       <div className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center opacity-100">
-        <div className="relative h-[330px] w-[330px] sm:h-[390px] sm:w-[390px] md:h-[440px] md:w-[440px] lg:h-[560px] lg:w-[560px]">
-          <StaticHeroOrb />
+        <div className="relative h-[300px] w-[300px] sm:h-[390px] sm:w-[390px] md:h-[440px] md:w-[440px] lg:h-[560px] lg:w-[560px]">
           {GlobeScene && (
             <div className="absolute inset-0">
-              <GlobeScene globeColor={globeColor} />
+              <GlobeScene
+                animate={!prefersReducedMotion}
+                globeColor={globeColor}
+                quality={globeQuality}
+              />
             </div>
           )}
         </div>
