@@ -180,7 +180,6 @@ export function useCommunityPolls(
       );
       try {
         await voteOnCommunityPoll(pollId, optionId, userId);
-        await reload();
         window.setTimeout(() => {
           setHiddenAnsweredPollIds((prev) => new Set([...prev, pollId]));
         }, 4500);
@@ -190,7 +189,7 @@ export function useCommunityPolls(
         toast({ title: "Couldn't record vote", description: "Please try again in a moment." });
       }
     },
-    [communityPolls, reload, userId],
+    [communityPolls, userId],
   );
 
   const deletePoll = useCallback(
