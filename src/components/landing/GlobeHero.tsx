@@ -1,22 +1,18 @@
 "use client";
 
-import { Suspense, lazy, useRef } from "react";
+import { type ComponentType, useEffect, useRef, useState } from "react";
 import { BrandName } from "@/components/ui/brand-name";
-import { motion, useScroll, useTransform } from "motion/react";
+import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
 import { ShieldCheck } from "lucide-react";
 import { track } from "@/lib/analytics";
 
 import { useTheme } from "@/providers/useTheme";
 
-// Lazy-load the Three.js scene so the ~500KB three+fiber+drei bundle
-// doesn't block initial paint on mobile.
-const LazyGlobeScene = lazy(() =>
-  import("./GlobeHeroScene").then((m) => ({ default: m.GlobeHeroScene })),
-);
-
 interface GlobeHeroProps {
   onSignupClick: () => void;
 }
+
+type GlobeSceneComponent = ComponentType<{ globeColor: string }>;
 
 const headlineLines = [
   { text: "Your place.", accent: false },
@@ -27,6 +23,8 @@ const headlineLines = [
 export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
   const { mode } = useTheme();
   const globeColor = mode === "light" ? "#0A0A0A" : "#F5F5F5";
+  const prefersReducedMotion = useReducedMotion();
+  const [GlobeScene, setGlobeScene] = useState<GlobeSceneComponent | null>(null);
 
   const sectionRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
@@ -35,6 +33,39 @@ export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
   });
   const contentY = useTransform(scrollYProgress, [0, 1], [0, -56]);
   const contentOpacity = useTransform(scrollYProgress, [0, 0.75], [1, 0]);
+
+  useEffect(() => {
+    if (prefersReducedMotion) return;
+    const isDesktop = window.matchMedia("(min-width: 640px)").matches;
+    if (!isDesktop) return;
+
+    let cancelled = false;
+    let timeoutId: number | null = null;
+    const loadOrb = () => {
+      import("./GlobeHeroScene")
+        .then((module) => {
+          if (!cancelled) setGlobeScene(() => module.GlobeHeroScene);
+        })
+        .catch(() => {
+          if (!cancelled) setGlobeScene(null);
+        });
+    };
+
+    if ("requestIdleCallback" in window) {
+      const idleId = window.requestIdleCallback(loadOrb, { timeout: 1400 });
+      return () => {
+        cancelled = true;
+        window.cancelIdleCallback(idleId);
+        if (timeoutId !== null) window.clearTimeout(timeoutId);
+      };
+    }
+
+    timeoutId = window.setTimeout(loadOrb, 900);
+    return () => {
+      cancelled = true;
+      if (timeoutId !== null) window.clearTimeout(timeoutId);
+    };
+  }, [prefersReducedMotion]);
 
   const handlePrimaryClick = () => {
     track("landing_cta_clicked", {
@@ -60,13 +91,17 @@ export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
     >
       <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_50%_28%,rgba(241,196,45,0.08),transparent_32%),linear-gradient(180deg,rgba(0,0,0,0.14),rgba(0,0,0,0.62))] sm:hidden" />
       {/* Globe behind text, centered, melted into the dark */}
-      <div className="pointer-events-none absolute inset-0 z-0 hidden items-center justify-center opacity-100 sm:flex">
+      <div className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center opacity-100">
         <div className="relative h-[340px] w-[340px] md:h-[440px] md:w-[440px] lg:h-[560px] lg:w-[560px]">
-          <Suspense fallback={null}>
+          <div
+            className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_50%_45%,rgba(241,196,45,0.16),rgba(241,196,45,0.05)_32%,transparent_68%)] opacity-95 blur-[0.2px]"
+            aria-hidden="true"
+          />
+          {GlobeScene && (
             <div className="absolute inset-0">
-              <LazyGlobeScene globeColor={globeColor} />
+              <GlobeScene globeColor={globeColor} />
             </div>
-          </Suspense>
+          )}
         </div>
       </div>
       <div className="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-44 bg-gradient-to-t from-background to-transparent" />
