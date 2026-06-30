@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "@/components/ui/use-toast";
 import {
   createCommunityPoll,
@@ -75,16 +75,28 @@ export function useCommunityPolls(
     void reload();
   }, [reload]);
 
+  const reloadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const debouncedReload = useCallback(() => {
+    if (reloadTimerRef.current !== null) clearTimeout(reloadTimerRef.current);
+    reloadTimerRef.current = setTimeout(() => {
+      reloadTimerRef.current = null;
+      void reload();
+    }, 300);
+  }, [reload]);
+
   useEffect(() => {
     if (!activeCommunityId || !communityPollsAvailable) return;
     const channel = supabase
       .channel(`community-polls:${activeCommunityId}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "community_polls", filter: `community_id=eq.${activeCommunityId}` }, () => { void reload(); })
-      .on("postgres_changes", { event: "*", schema: "public", table: "community_poll_votes" }, () => { void reload(); })
-      .on("postgres_changes", { event: "*", schema: "public", table: "community_poll_options" }, () => { void reload(); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "community_polls", filter: `community_id=eq.${activeCommunityId}` }, debouncedReload)
+      .on("postgres_changes", { event: "*", schema: "public", table: "community_poll_votes" }, debouncedReload)
+      .on("postgres_changes", { event: "*", schema: "public", table: "community_poll_options" }, debouncedReload)
       .subscribe();
-    return () => { void supabase.removeChannel(channel); };
-  }, [activeCommunityId, communityPollsAvailable, reload]);
+    return () => {
+      if (reloadTimerRef.current !== null) { clearTimeout(reloadTimerRef.current); reloadTimerRef.current = null; }
+      void supabase.removeChannel(channel);
+    };
+  }, [activeCommunityId, communityPollsAvailable, debouncedReload]);
 
   const visibleCommunityPolls = useMemo(
     () => communityPolls.filter((poll) => !hiddenAnsweredPollIds.has(poll.id)),

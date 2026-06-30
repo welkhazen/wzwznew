@@ -193,6 +193,7 @@ export function readAvatarCatalogLocal(): AvatarCatalogItem[] {
   }
 }
 
+/** O(1) catalog lookup by avatar id. Pass the result of readAvatarCatalogLocal(). */
 export function buildAvatarIdToLevelMap(catalog: AvatarCatalogItem[]): Map<string, number> {
   const map = new Map<string, number>();
   catalog.forEach((item, index) => map.set(item.id, index + 1));

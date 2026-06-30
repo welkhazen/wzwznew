@@ -29,6 +29,9 @@ export function useCommunityMessagesRealtime(updateCommunities: Updater): void {
         "postgres_changes",
         { event: "*", schema: "public", table: "community_messages" },
         (payload) => {
+          if (import.meta.env.DEV) {
+            console.debug("[realtime] community_messages", payload.eventType, payload.new ?? payload.old);
+          }
           if (payload.eventType === "DELETE") {
             const oldRow = payload.old as { id?: string; community_id?: string } | null;
             if (oldRow?.id && oldRow.community_id) {
