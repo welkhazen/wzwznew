@@ -17,7 +17,7 @@ import {
 } from "@/backend/supabase/controllers/chatController";
 import { supabase } from "@/backend/supabase/client";
 import { getUserTextModerationMessage, moderateUserText } from "@/lib/inputSecurity";
-import { readAvatarCatalogLocal } from "@/lib/avatarCatalog";
+import { readAvatarCatalogLocal, buildAvatarIdToLevelMap } from "@/lib/avatarCatalog";
 import { getPrivateAvatarLevel } from "@/lib/avataridentity";
 import { CHAT_IDENTITY_CHANGED_EVENT, readSelectedChatAlias } from "@/lib/identitySelection";
 import { readCachedCommunities, readCachedMessages, writeCachedCommunities, writeCachedMessages } from "@/lib/communityCache";
@@ -339,17 +339,13 @@ export function useCommunityChat(
     const touchKey = `${selectedCommunity.id}:${userId}`;
     if (lastTouchedCommunityRef.current === touchKey) return;
     lastTouchedCommunityRef.current = touchKey;
-    touchMemberActivity(selectedCommunity.id, userId, username)
-      .then(() => reload())
-      .catch(() => {});
-  }, [isJoined, reload, selectedCommunity, userId, username]);
+    touchMemberActivity(selectedCommunity.id, userId, username).catch(() => {});
+  }, [isJoined, selectedCommunity, userId, username]);
 
   useEffect(() => {
     if (!selectedCommunity || !isJoined || unreadCount === 0) return;
-    markCommunityReadSupabase(selectedCommunity.id, userId)
-      .then(() => reload())
-      .catch(() => {});
-  }, [isJoined, reload, selectedCommunity, unreadCount, userId]);
+    markCommunityReadSupabase(selectedCommunity.id, userId).catch(() => {});
+  }, [isJoined, selectedCommunity, unreadCount, userId]);
 
   useLayoutEffect(() => {
     if (!messagesContainerRef.current || searchQuery.trim()) return;
@@ -371,12 +367,15 @@ export function useCommunityChat(
 
   useEffect(() => {
     const catalog = readAvatarCatalogLocal();
+    const idToLevel = buildAvatarIdToLevelMap(catalog);
     const levelsById: Record<string, number> = { [userId]: avatarLevel };
     for (const senderId of messageSenderIds) {
       try {
         const selectedId = window.localStorage.getItem(`raw.avatar.selected.v1.${senderId}`);
-        const index = selectedId ? catalog.findIndex((item) => item.id === selectedId) : -1;
-        if (index >= 0) levelsById[senderId] = index + 1;
+        if (selectedId) {
+          const level = idToLevel.get(selectedId);
+          if (level !== undefined) levelsById[senderId] = level;
+        }
       } catch {
         // keep default
       }
@@ -395,8 +394,8 @@ export function useCommunityChat(
         setSenderAvatarLevels((prev) => {
           const next = { ...prev, [userId]: avatarLevel };
           data.forEach((row) => {
-            const index = catalog.findIndex((item) => item.id === row.avatar_id);
-            if (index >= 0) next[row.user_id] = index + 1;
+            const level = idToLevel.get(row.avatar_id);
+            if (level !== undefined) next[row.user_id] = level;
           });
           return next;
         });
@@ -509,7 +508,6 @@ export function useCommunityChat(
       const isAddingLike = !likedBy.includes(userId);
       try {
         await likeMessage(message.id, userId);
-        await reload();
         if (isAddingLike && message.senderId !== userId && message.senderName !== username) {
           const recipient = selectedCommunity?.members.find((m) => m.userId === message.senderId);
           if (recipient?.notificationsEnabled) {
@@ -525,7 +523,7 @@ export function useCommunityChat(
         toast({ title: "Failed to update like", description: "Please try again." });
       }
     },
-    [reload, selectedCommunity, userId, username],
+    [selectedCommunity, userId, username],
   );
 
   const blockSender = useCallback(
