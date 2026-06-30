@@ -260,6 +260,7 @@ export function SpiralAnimation({ className = '', color = 'white' }: SpiralAnima
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const animationRef = useRef<AnimationController | null>(null)
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
+  const [isVisible, setIsVisible] = useState(false)
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -276,7 +277,16 @@ export function SpiralAnimation({ className = '', color = 'white' }: SpiralAnima
     const resizeObserver = new ResizeObserver(updateDimensions)
     resizeObserver.observe(parent)
 
-    return () => resizeObserver.disconnect()
+    const intersectionObserver = new IntersectionObserver(
+      ([entry]) => setIsVisible(entry.isIntersecting),
+      { threshold: 0 },
+    )
+    intersectionObserver.observe(parent)
+
+    return () => {
+      resizeObserver.disconnect()
+      intersectionObserver.disconnect()
+    }
   }, [])
 
   useEffect(() => {
@@ -288,15 +298,7 @@ export function SpiralAnimation({ className = '', color = 'white' }: SpiralAnima
 
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
 
-    const dpr = window.devicePixelRatio || 1
-    const size = Math.max(dimensions.width, dimensions.height)
-    canvas.width = size * dpr
-    canvas.height = size * dpr
-    canvas.style.width = `${dimensions.width}px`
-    canvas.style.height = `${dimensions.height}px`
-    ctx.scale(dpr, dpr)
-
-    if (mediaQuery.matches) {
+    if (mediaQuery.matches || !isVisible) {
       animationRef.current?.destroy()
       animationRef.current = null
       return () => {
@@ -305,6 +307,14 @@ export function SpiralAnimation({ className = '', color = 'white' }: SpiralAnima
       }
     }
 
+    const dpr = window.devicePixelRatio || 1
+    const size = Math.max(dimensions.width, dimensions.height)
+    canvas.width = size * dpr
+    canvas.height = size * dpr
+    canvas.style.width = `${dimensions.width}px`
+    canvas.style.height = `${dimensions.height}px`
+    ctx.scale(dpr, dpr)
+
     animationRef.current?.destroy()
     animationRef.current = new AnimationController(ctx, size, color)
 
@@ -312,7 +322,7 @@ export function SpiralAnimation({ className = '', color = 'white' }: SpiralAnima
       animationRef.current?.destroy()
       animationRef.current = null
     }
-  }, [dimensions, color])
+  }, [dimensions, color, isVisible])
 
   return <canvas ref={canvasRef} className={`absolute inset-0 h-full w-full ${className}`} />
 }

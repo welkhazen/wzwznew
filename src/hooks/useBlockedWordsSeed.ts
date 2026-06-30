@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { seedBlockedWordsFromServer } from "@/lib/inputSecurity";
+import { useRawStore } from "@/store/useRawStore";
 
 /**
  * Fetches the current blocked-word list from the server once on mount and
@@ -11,9 +12,11 @@ import { seedBlockedWordsFromServer } from "@/lib/inputSecurity";
  * Server-side enforcement in api/chat/send.ts is the authoritative gate.
  */
 export function useBlockedWordsSeed(): void {
+  const { isLoggedIn } = useRawStore();
   useEffect(() => {
+    if (!isLoggedIn) return;
     seedBlockedWordsFromServer().catch(() => {
       /* non-fatal */
     });
-  }, []);
+  }, [isLoggedIn]);
 }

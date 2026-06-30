@@ -1,9 +1,5 @@
 import { Suspense, lazy, useEffect } from "react";
-import { OnboardingJourney } from "@/components/onboarding/OnboardingJourney";
 import { useHostMode } from "@/hooks/use-host-mode";
-import Dashboard from "@/pages/Dashboard";
-import { SharedPollPage } from "@/components/polls/SharedPollPage";
-import { SignupModal } from "@/components/landing/SignupModal";
 import { POLL_SHARE_PARAM } from "@/lib/pollShare";
 import { useRawStore } from "@/store/useRawStore";
 import { awardXP, XP_REWARDS } from "@/lib/userProgress";
@@ -14,6 +10,16 @@ import { saveOnboardingIdentities } from "@/backend/supabase/controllers/userCon
 import { APP_CANONICAL_HOST, buildCanonicalAppUrl } from "@/lib/canonicalHost";
 
 const LandingShellLazy = lazy(() => import("@/components/landing/LandingShell"));
+const DashboardLazy = lazy(() => import("@/pages/Dashboard"));
+const OnboardingJourneyLazy = lazy(() =>
+  import("@/components/onboarding/OnboardingJourney").then((m) => ({ default: m.OnboardingJourney })),
+);
+const SharedPollPageLazy = lazy(() =>
+  import("@/components/polls/SharedPollPage").then((m) => ({ default: m.SharedPollPage })),
+);
+const SignupModalLazy = lazy(() =>
+  import("@/components/landing/SignupModal").then((m) => ({ default: m.SignupModal })),
+);
 
 const Index = () => {
 
@@ -110,22 +116,22 @@ const Index = () => {
 
   if (!isLoggedIn && sharedPollRef) {
     return (
-      <>
-        <SharedPollPage
+      <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-raw-black"><div className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-raw-border border-t-raw-gold" /></div>}>
+        <SharedPollPageLazy
           polls={polls}
           shareCode={sharedPollRef}
           votedPolls={votedPolls}
           onVote={vote}
           onSignup={() => setShowSignup(true)}
         />
-        <SignupModal
+        <SignupModalLazy
           open={showSignup}
           onClose={() => setShowSignup(false)}
           onSignup={signup}
           onLogin={login}
           source="shared-poll"
         />
-      </>
+      </Suspense>
     );
   }
 
@@ -144,7 +150,8 @@ const Index = () => {
   if (isLoggedIn && user) {
     if (!onboardingCompleted) {
       return (
-        <OnboardingJourney
+        <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-raw-black"><div className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-raw-border border-t-raw-gold" /></div>}>
+        <OnboardingJourneyLazy
           user={user}
           polls={polls}
           avatarIndex={avatarLevel}
@@ -191,11 +198,13 @@ const Index = () => {
           }}
           markAvatarOwnedById={markAvatarOwnedById}
         />
+        </Suspense>
       );
     }
 
     return (
-      <Dashboard
+      <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-raw-black"><div className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-raw-border border-t-raw-gold" /></div>}>
+      <DashboardLazy
         user={user}
         polls={polls}
         votedPolls={votedPolls}
@@ -215,6 +224,7 @@ const Index = () => {
         vote={vote}
         onLogout={logout}
       />
+      </Suspense>
     );
   }
 
