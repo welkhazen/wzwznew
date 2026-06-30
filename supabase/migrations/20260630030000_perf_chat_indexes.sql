@@ -11,6 +11,6 @@ create index if not exists community_messages_community_active_idx
 create index if not exists user_avatar_selection_user_id_idx
   on public.user_avatar_selection (user_id);
 
--- Index for poll votes lookup by poll_id (votes tab in polls)
-create index if not exists community_poll_votes_poll_id_idx
-  on public.community_poll_votes (poll_id);
+-- Index for community poll votes lookup by community_poll_id
+create index if not exists community_poll_votes_community_poll_id_idx
+  on public.community_poll_votes (community_poll_id);
