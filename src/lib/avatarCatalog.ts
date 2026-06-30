@@ -257,6 +257,8 @@ export const CANONICAL_OVERRIDES_BY_ID: Record<string, Partial<Pick<AvatarCatalo
   "avatar-31": { frame_color: "rose", rank_tier: 8 },
   "avatar-54": { frame_color: "rose", rank_tier: 8 },
   "avatar-55": { frame_color: "rose", rank_tier: 8 },
+  "avatar-23": { frame_color: "gold", rank_tier: 9 },
+  "avatar-38": { frame_color: "gold", rank_tier: 9 },
 };
 
 export const CANONICAL_OVERRIDE_MIGRATIONS_BY_ID: Record<keyof typeof CANONICAL_OVERRIDES_BY_ID, string> = {
@@ -284,6 +286,8 @@ export const CANONICAL_OVERRIDE_MIGRATIONS_BY_ID: Record<keyof typeof CANONICAL_
   "avatar-31": "20260630143000_avatar_r8_authoritative_backfill.sql",
   "avatar-54": "20260630143000_avatar_r8_authoritative_backfill.sql",
   "avatar-55": "20260630143000_avatar_r8_authoritative_backfill.sql",
+  "avatar-23": "20260630144500_avatar_r9_authoritative_backfill.sql",
+  "avatar-38": "20260630144500_avatar_r9_authoritative_backfill.sql",
 };
 
 async function refreshAvatarCatalogFromSupabase(): Promise<void> {
