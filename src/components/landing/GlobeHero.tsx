@@ -8,6 +8,26 @@ import { track } from "@/lib/analytics";
 
 import { useTheme } from "@/providers/useTheme";
 
+function InstantGlobeFallback() {
+  return (
+    <div
+      className="h-full w-full rounded-full opacity-90"
+      style={{
+        background: [
+          "radial-gradient(circle at 38% 38%, hsl(var(--primary) / 0.24) 0%, hsl(var(--primary) / 0.08) 36%, transparent 70%)",
+          "repeating-radial-gradient(circle, hsl(var(--foreground) / 0.22) 0 1px, transparent 1px 18px)",
+          "repeating-linear-gradient(90deg, transparent 0 22px, hsl(var(--foreground) / 0.12) 22px 23px, transparent 23px 44px)",
+          "repeating-linear-gradient(0deg, transparent 0 22px, hsl(var(--foreground) / 0.12) 22px 23px, transparent 23px 44px)",
+        ].join(", "),
+        boxShadow: "0 0 80px 20px hsl(var(--primary) / 0.1)",
+        maskImage: "radial-gradient(circle, black 0 64%, transparent 72%)",
+        WebkitMaskImage: "radial-gradient(circle, black 0 64%, transparent 72%)",
+      }}
+      aria-hidden="true"
+    />
+  );
+}
+
 // Lazy-load the Three.js scene so the ~500KB three+fiber+drei bundle
 // doesn't block initial paint on mobile.
 const LazyGlobeScene = lazy(() =>
@@ -60,9 +80,14 @@ export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
     >
       {/* Globe behind text, centered, melted into the dark */}
       <div className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center opacity-100">
-        <div className="h-[340px] w-[340px] md:h-[440px] md:w-[440px] lg:h-[560px] lg:w-[560px]">
+        <div className="relative h-[340px] w-[340px] md:h-[440px] md:w-[440px] lg:h-[560px] lg:w-[560px]">
+          <div className="absolute inset-0">
+            <InstantGlobeFallback />
+          </div>
           <Suspense fallback={null}>
-            <LazyGlobeScene globeColor={globeColor} />
+            <div className="absolute inset-0">
+              <LazyGlobeScene globeColor={globeColor} />
+            </div>
           </Suspense>
         </div>
       </div>
