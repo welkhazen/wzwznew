@@ -78,8 +78,9 @@ export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
       ref={sectionRef}
       className="relative flex min-h-[620px] items-center justify-center overflow-hidden pb-12 pt-10 sm:min-h-[680px] sm:pt-14"
     >
+      <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_50%_28%,rgba(241,196,45,0.08),transparent_32%),linear-gradient(180deg,rgba(0,0,0,0.14),rgba(0,0,0,0.62))] sm:hidden" />
       {/* Globe behind text, centered, melted into the dark */}
-      <div className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center opacity-100">
+      <div className="pointer-events-none absolute inset-0 z-0 hidden items-center justify-center opacity-100 sm:flex">
         <div className="relative h-[340px] w-[340px] md:h-[440px] md:w-[440px] lg:h-[560px] lg:w-[560px]">
           <div className="absolute inset-0">
             <InstantGlobeFallback />
