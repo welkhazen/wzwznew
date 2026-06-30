@@ -7,10 +7,11 @@ import { Globe } from "@/components/ui/globe-hero";
 interface GlobeHeroSceneProps {
   animate: boolean;
   globeColor: string;
+  onReady: () => void;
   quality: "mobile" | "desktop";
 }
 
-export function GlobeHeroScene({ animate, globeColor, quality }: GlobeHeroSceneProps) {
+export function GlobeHeroScene({ animate, globeColor, onReady, quality }: GlobeHeroSceneProps) {
   const isMobile = quality === "mobile";
 
   return (
@@ -18,6 +19,7 @@ export function GlobeHeroScene({ animate, globeColor, quality }: GlobeHeroSceneP
       dpr={isMobile ? [1, 1] : [1, 1.25]}
       frameloop={animate ? "always" : "demand"}
       gl={{ powerPreference: "low-power", antialias: false, alpha: true }}
+      onCreated={onReady}
     >
       <PerspectiveCamera makeDefault position={[0, 0, 3]} fov={75} />
       <Globe

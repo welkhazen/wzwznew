@@ -13,7 +13,12 @@ interface GlobeHeroProps {
 }
 
 type GlobeQuality = "mobile" | "desktop";
-type GlobeSceneComponent = ComponentType<{ animate: boolean; globeColor: string; quality: GlobeQuality }>;
+type GlobeSceneComponent = ComponentType<{
+  animate: boolean;
+  globeColor: string;
+  onReady: () => void;
+  quality: GlobeQuality;
+}>;
 
 const headlineLines = [
   { text: "Your place.", accent: false },
@@ -21,11 +26,31 @@ const headlineLines = [
   { text: "Your self.", accent: true },
 ];
 
+function HeroOrbFallback() {
+  return (
+    <div
+      aria-hidden="true"
+      className="absolute inset-0 rounded-full opacity-80 sm:opacity-65"
+      style={{
+        background: [
+          "radial-gradient(circle at 48% 42%, rgba(245,245,245,0.18), rgba(241,196,45,0.12) 30%, rgba(241,196,45,0.04) 52%, transparent 72%)",
+          "repeating-linear-gradient(78deg, transparent 0 18px, rgba(245,245,245,0.13) 18px 19px, transparent 19px 36px)",
+          "repeating-linear-gradient(102deg, transparent 0 22px, rgba(245,245,245,0.09) 22px 23px, transparent 23px 44px)",
+        ].join(", "),
+        boxShadow: "0 0 54px rgba(241,196,45,0.14)",
+        maskImage: "radial-gradient(circle, black 0 58%, transparent 73%)",
+        WebkitMaskImage: "radial-gradient(circle, black 0 58%, transparent 73%)",
+      }}
+    />
+  );
+}
+
 export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
   const { mode } = useTheme();
   const globeColor = mode === "light" ? "#0A0A0A" : "#F5F5F5";
   const prefersReducedMotion = useReducedMotion();
   const [GlobeScene, setGlobeScene] = useState<GlobeSceneComponent | null>(null);
+  const [realOrbReady, setRealOrbReady] = useState(false);
   const [globeQuality, setGlobeQuality] = useState<GlobeQuality>("desktop");
 
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -39,6 +64,7 @@ export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
   useEffect(() => {
     const isMobile = !window.matchMedia("(min-width: 640px)").matches;
     setGlobeQuality(isMobile ? "mobile" : "desktop");
+    setRealOrbReady(false);
 
     let cancelled = false;
     let timeoutId: number | null = null;
@@ -48,7 +74,10 @@ export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
           if (!cancelled) setGlobeScene(() => module.GlobeHeroScene);
         })
         .catch(() => {
-          if (!cancelled) setGlobeScene(null);
+          if (!cancelled) {
+            setGlobeScene(null);
+            setRealOrbReady(false);
+          }
         });
     };
 
@@ -94,11 +123,13 @@ export function GlobeHero({ onSignupClick }: GlobeHeroProps) {
       {/* Globe behind text, centered, melted into the dark */}
       <div className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center opacity-100">
         <div className="relative h-[300px] w-[300px] sm:h-[390px] sm:w-[390px] md:h-[440px] md:w-[440px] lg:h-[560px] lg:w-[560px]">
+          {!realOrbReady && <HeroOrbFallback />}
           {GlobeScene && (
-            <div className="absolute inset-0">
+            <div className={`absolute inset-0 transition-opacity duration-300 ${realOrbReady ? "opacity-100" : "opacity-0"}`}>
               <GlobeScene
                 animate={!prefersReducedMotion}
                 globeColor={globeColor}
+                onReady={() => setRealOrbReady(true)}
                 quality={globeQuality}
               />
             </div>
