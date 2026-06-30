@@ -161,12 +161,8 @@ function sanitizeCatalog(items: AvatarCatalogItem[]): AvatarCatalogItem[] {
   return ordered.length > 0 ? ordered : cloneCatalog(DEFAULT_AVATAR_CATALOG);
 }
 
-function isBrowser(): boolean {
-  return typeof window !== "undefined";
-}
-
 function dispatchCatalogUpdated(): void {
-  if (!isBrowser()) return;
+  if (typeof window === "undefined") return;
   window.dispatchEvent(new CustomEvent("raw:avatar-catalog-updated"));
 }
 
@@ -175,7 +171,7 @@ export function getDefaultAvatarCatalog(): AvatarCatalogItem[] {
 }
 
 export function readAvatarCatalogLocal(): AvatarCatalogItem[] {
-  if (!isBrowser()) return cloneCatalog(DEFAULT_AVATAR_CATALOG);
+  if (typeof window === "undefined") return cloneCatalog(DEFAULT_AVATAR_CATALOG);
 
   try {
     const raw = window.localStorage.getItem(CATALOG_STORAGE_KEY);
@@ -195,7 +191,7 @@ export function readAvatarCatalogLocal(): AvatarCatalogItem[] {
 
 export function writeAvatarCatalogLocal(items: AvatarCatalogItem[]): AvatarCatalogItem[] {
   const next = sanitizeCatalog(items);
-  if (isBrowser()) {
+  if (typeof window !== "undefined") {
     avatarCatalogLocalWriteFailed = false;
     try {
       window.localStorage.setItem(CATALOG_STORAGE_KEY, JSON.stringify(next));
@@ -311,7 +307,7 @@ export async function loadAvatarCatalogSupabaseOnly(): Promise<AvatarCatalogItem
 }
 
 export function readFullAvatarCatalogLocal(): AvatarCatalogItem[] {
-  if (!isBrowser()) return [];
+  if (typeof window === "undefined") return [];
   try {
     const raw = window.localStorage.getItem(FULL_CATALOG_STORAGE_KEY);
     if (!raw) return [];
@@ -325,7 +321,7 @@ export function readFullAvatarCatalogLocal(): AvatarCatalogItem[] {
 }
 
 function writeFullAvatarCatalogLocal(items: AvatarCatalogItem[]): void {
-  if (!isBrowser()) return;
+  if (typeof window === "undefined") return;
   try { window.localStorage.setItem(FULL_CATALOG_STORAGE_KEY, JSON.stringify(items)); } catch { /* ignore */ }
 }
 
@@ -471,17 +467,17 @@ function dailySpinAvatarClaimKey(userId: string): string {
 }
 
 function readDailySpinAvatarClaimLocal(userId: string): string | null {
-  if (!isBrowser()) return null;
+  if (typeof window === "undefined") return null;
   return window.localStorage.getItem(dailySpinAvatarClaimKey(userId));
 }
 
 function writeDailySpinAvatarClaimLocal(userId: string, avatarId: string): void {
-  if (!isBrowser()) return;
+  if (typeof window === "undefined") return;
   window.localStorage.setItem(dailySpinAvatarClaimKey(userId), avatarId);
 }
 
 function readLandingWheelAvatarIdLocal(catalog: AvatarCatalogItem[]): string | null {
-  if (!isBrowser()) return null;
+  if (typeof window === "undefined") return null;
 
   try {
     const raw = window.localStorage.getItem(LANDING_WHEEL_SPIN_KEY);
@@ -500,7 +496,7 @@ function readLandingWheelAvatarIdLocal(catalog: AvatarCatalogItem[]): string | n
 }
 
 function clearLandingWheelAvatarLocal(): void {
-  if (!isBrowser()) return;
+  if (typeof window === "undefined") return;
   window.localStorage.removeItem(LANDING_WHEEL_SPIN_KEY);
 }
 
@@ -514,7 +510,7 @@ function defaultOwnedIds(catalog: AvatarCatalogItem[]): string[] {
 }
 
 export function readOwnedAvatarIdsLocal(userId: string, catalog: AvatarCatalogItem[]): string[] {
-  if (!isBrowser()) return defaultOwnedIds(catalog);
+  if (typeof window === "undefined") return defaultOwnedIds(catalog);
 
   try {
     const raw = window.localStorage.getItem(inventoryKey(userId));
@@ -529,12 +525,12 @@ export function readOwnedAvatarIdsLocal(userId: string, catalog: AvatarCatalogIt
 }
 
 export function writeOwnedAvatarIdsLocal(userId: string, ownedAvatarIds: string[]): void {
-  if (!isBrowser()) return;
+  if (typeof window === "undefined") return;
   window.localStorage.setItem(inventoryKey(userId), JSON.stringify(Array.from(new Set(ownedAvatarIds))));
 }
 
 export function readSelectedAvatarIdLocal(userId: string, catalog: AvatarCatalogItem[], ownedAvatarIds: string[]): string {
-  if (!isBrowser()) return ownedAvatarIds[0] ?? catalog[0]?.id ?? "avatar-1";
+  if (typeof window === "undefined") return ownedAvatarIds[0] ?? catalog[0]?.id ?? "avatar-1";
 
   const fallback = ownedAvatarIds[0] ?? catalog[0]?.id ?? "avatar-1";
   try {
@@ -548,7 +544,7 @@ export function readSelectedAvatarIdLocal(userId: string, catalog: AvatarCatalog
 }
 
 export function writeSelectedAvatarIdLocal(userId: string, avatarId: string): void {
-  if (!isBrowser()) return;
+  if (typeof window === "undefined") return;
   window.localStorage.setItem(selectedKey(userId), avatarId);
 }
 

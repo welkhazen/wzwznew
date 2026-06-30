@@ -26,13 +26,7 @@ const FOUNDING_INVITE_COUNT = 2;
 
 function createInviteCode(slot: number): string {
   const bytes = new Uint8Array(5);
-  if (typeof crypto !== "undefined" && crypto.getRandomValues) {
-    crypto.getRandomValues(bytes);
-  } else {
-    for (let i = 0; i < bytes.length; i += 1) {
-      bytes[i] = Math.floor(Math.random() * 256);
-    }
-  }
+  crypto.getRandomValues(bytes);
 
   const randomPart = Array.from(bytes, (byte) => byte.toString(36).padStart(2, "0"))
     .join("")

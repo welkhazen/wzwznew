@@ -5,7 +5,7 @@ import rateLimit from "express-rate-limit";
 import { z } from "zod";
 import { env } from "../config/env";
 import { audit } from "../lib/audit";
-import { getUserRepository } from "../lib/userRepository";
+import { userRepository } from "../lib/userRepository";
 import { getAnonymousVotes } from "../lib/store";
 import { hashPassword, verifyPassword } from "../lib/password";
 import { sendTransactionalEmail } from "../lib/email";
@@ -160,7 +160,6 @@ const MAGIC_LINK_GENERIC_RESPONSE = {
 // ---------------------------------------------------------------------------
 
 export const authRouter = Router();
-const userRepository = getUserRepository();
 
 authRouter.post("/signup", signupLimiter, async (req, res) => {
   const parsed = signupSchema.safeParse(req.body);

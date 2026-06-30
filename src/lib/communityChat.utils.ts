@@ -1,4 +1,3 @@
-import { format, formatDistanceToNowStrict, isToday, isYesterday, subMinutes } from "date-fns";
 import type { PersistedCommunityRecord } from "./communityChat.types";
 
 const ONLINE_WINDOW_MINUTES = 15;
@@ -37,8 +36,14 @@ export function ensureBoolean(value: unknown, fallback = false): boolean {
   return typeof value === "boolean" ? value : fallback;
 }
 
+function isSameCalendarDay(a: Date, b: Date): boolean {
+  return a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate();
+}
+
 export function countOnlineMembers(community: PersistedCommunityRecord): number {
-  const threshold = subMinutes(new Date(), ONLINE_WINDOW_MINUTES);
+  const threshold = new Date(Date.now() - ONLINE_WINDOW_MINUTES * 60_000);
   return community.members.filter((member) => new Date(member.lastSeenAt) >= threshold).length;
 }
 
@@ -55,6 +60,36 @@ export function countUnreadMessages(community: PersistedCommunityRecord, userId:
   }).length;
 }
 
+const timeFormatter = new Intl.DateTimeFormat("en-US", {
+  hour: "numeric",
+  minute: "2-digit",
+  hour12: true,
+});
+
+const rtf = new Intl.RelativeTimeFormat("en", { numeric: "always" });
+
+function formatDistanceToNowStrict(date: Date): string {
+  const diffMs = Date.now() - date.getTime();
+  const diffSecs = Math.round(diffMs / 1000);
+  const diffMins = Math.round(diffMs / 60_000);
+  const diffHours = Math.round(diffMs / 3_600_000);
+  const diffDays = Math.round(diffMs / 86_400_000);
+  const diffMonths = Math.round(diffMs / 2_592_000_000);
+  const diffYears = Math.round(diffMs / 31_536_000_000);
+
+  if (diffSecs < 45) return rtf.format(-diffSecs, "second");
+  if (diffSecs < 90) return rtf.format(-1, "minute");
+  if (diffMins < 45) return rtf.format(-diffMins, "minute");
+  if (diffMins < 90) return rtf.format(-1, "hour");
+  if (diffHours < 22) return rtf.format(-diffHours, "hour");
+  if (diffHours < 36) return rtf.format(-1, "day");
+  if (diffDays < 26) return rtf.format(-diffDays, "day");
+  if (diffDays < 46) return rtf.format(-1, "month");
+  if (diffDays < 345) return rtf.format(-diffMonths, "month");
+  if (diffDays < 545) return rtf.format(-1, "year");
+  return rtf.format(-diffYears, "year");
+}
+
 export function formatChatTimestamp(value: string): string {
   const date = new Date(value);
   const minutesAgo = Math.abs(Date.now() - date.getTime()) / 60000;
@@ -67,25 +102,34 @@ export function formatChatTimestamp(value: string): string {
     return `${Math.floor(minutesAgo)}m`;
   }
 
-  if (isToday(date)) {
-    return format(date, "h:mm a");
+  if (isSameCalendarDay(date, new Date())) {
+    return timeFormatter.format(date);
   }
 
-  return formatDistanceToNowStrict(date, { addSuffix: true });
+  return formatDistanceToNowStrict(date);
 }
+
+const dayLabelFormatter = new Intl.DateTimeFormat("en-US", {
+  weekday: "short",
+  month: "short",
+  day: "numeric",
+});
 
 export function formatChatDayLabel(value: string): string {
   const date = new Date(value);
+  const now = new Date();
 
-  if (isToday(date)) {
+  if (isSameCalendarDay(date, now)) {
     return "Today";
   }
 
-  if (isYesterday(date)) {
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  if (isSameCalendarDay(date, yesterday)) {
     return "Yesterday";
   }
 
-  return format(date, "EEE, MMM d");
+  return dayLabelFormatter.format(date);
 }
 
 export function canManageCommunity(community: PersistedCommunityRecord, userId: string, username?: string): boolean {

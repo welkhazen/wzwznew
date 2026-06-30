@@ -4,7 +4,7 @@ import rateLimit from "express-rate-limit";
 import { z } from "zod";
 import { requireAuth } from "../middleware/requireAuth";
 import { audit } from "../lib/audit";
-import { getUserRepository } from "../lib/userRepository";
+import { userRepository } from "../lib/userRepository";
 import { hashPassword, verifyPassword } from "../lib/password";
 import { resolveUserRole } from "../lib/admin";
 import type { AuthSessionData, UserRecord } from "../types";
@@ -67,7 +67,7 @@ async function findAuthenticatedUser(req: Request) {
     return null;
   }
 
-  const user = await getUserRepository().findById(sessionData.userId);
+  const user = await userRepository.findById(sessionData.userId);
   if (!user) {
     sessionData.userId = undefined;
   }
@@ -110,7 +110,7 @@ usersRouter.get("/me/referral-notifications", async (req, res) => {
     return res.status(401).json({ error: "Not authenticated." });
   }
 
-  const activations = await getUserRepository().listReferralActivations(user.id);
+  const activations = await userRepository.listReferralActivations(user.id);
   return res.status(200).json({
     notifications: activations.slice(0, 20).map((activation) => ({
       id: activation.id,
@@ -133,7 +133,7 @@ usersRouter.patch("/me", async (req, res) => {
   }
 
   const updates = parsed.data;
-  const result = await getUserRepository().updateProfile(user.id, {
+  const result = await userRepository.updateProfile(user.id, {
     username: updates.username,
     displayName: updates.displayName,
     bio: updates.bio,
@@ -174,7 +174,7 @@ usersRouter.post("/me/change-password", changePasswordLimiter, async (req, res) 
   }
 
   const newPasswordHash = await hashPassword(parsed.data.newPassword);
-  const updated = await getUserRepository().updatePasswordHash(user.id, newPasswordHash);
+  const updated = await userRepository.updatePasswordHash(user.id, newPasswordHash);
   if (!updated) {
     return res.status(404).json({ error: "User not found." });
   }

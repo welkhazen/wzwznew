@@ -22,20 +22,7 @@ type UpdateProfileResult =
   | { status: "ok"; user: UserRecord }
   | { status: "not_found" | "username_taken" };
 
-export interface UserRepository {
-  findById(userId: string): Promise<UserRecord | null>;
-  findByUsername(username: string): Promise<UserRecord | null>;
-  findByEmail(email: string): Promise<UserRecord | null>;
-  findByReferralCode(referralCode: string): Promise<UserRecord | null>;
-  usernameExists(username: string): Promise<boolean>;
-  create(input: CreateUserInput): Promise<UserRecord>;
-  registerReferralActivation(referralCode: string, referredUserId: string): Promise<void>;
-  listReferralActivations(userId: string): Promise<ReferralActivationRecord[]>;
-  updateProfile(userId: string, updates: UpdateUserProfileInput): Promise<UpdateProfileResult>;
-  updatePasswordHash(userId: string, passwordHash: string): Promise<boolean>;
-}
-
-class MemoryUserRepository implements UserRepository {
+export class MemoryUserRepository {
   async findById(userId: string): Promise<UserRecord | null> {
     return findUserById(userId);
   }
@@ -73,7 +60,6 @@ class MemoryUserRepository implements UserRepository {
     if (result.status !== "ok" || !result.user) {
       return { status: result.status };
     }
-
     return { status: "ok", user: result.user };
   }
 
@@ -82,13 +68,4 @@ class MemoryUserRepository implements UserRepository {
   }
 }
 
-let repository: UserRepository | null = null;
-
-export function getUserRepository(): UserRepository {
-  if (repository) {
-    return repository;
-  }
-
-  repository = new MemoryUserRepository();
-  return repository;
-}
+export const userRepository = new MemoryUserRepository();
