@@ -27,11 +27,13 @@ import {
   getMessageSenderBlockKey,
   markCommunityMessageFailed,
   mergeCommunityMessageList,
+  removeCommunityMessage,
   replaceCommunityMessage,
   setCommunityMessages,
 } from "@/lib/communityChatState";
 import { buildDefaultCommunities } from "@/lib/communityChat.seed";
 import { readBlockedCommunitySenders, writeBlockedCommunitySenders } from "@/lib/blockedCommunitySenders";
+import { getChatSendErrorInfo } from "@/lib/chatSendError";
 import { readCommunityJoinRequests, type ChatReportRecord, type CommunityJoinRequestRecord } from "@/lib/adminData";
 import type { CommunityChatMessageRecord, PersistedCommunityRecord } from "@/lib/communityChat.types";
 import type { CommunityRequestRecord } from "@/lib/adminData";
@@ -460,11 +462,18 @@ export function useCommunityChat(
           body: `${selectedCommunity.title}: ${trimmedMessage}`,
           url: `${window.location.origin}/dashboard/communities/${selectedCommunity.id}`,
         });
-      } catch {
-        updateCommunities((current) =>
-          markCommunityMessageFailed(current, selectedCommunity.id, optimisticMessage.id),
-        );
-        toast({ title: "Failed to send message", description: "Please try again." });
+      } catch (err) {
+        const { title, description, retryable } = getChatSendErrorInfo(err);
+        if (retryable) {
+          updateCommunities((current) =>
+            markCommunityMessageFailed(current, selectedCommunity.id, optimisticMessage.id),
+          );
+        } else {
+          updateCommunities((current) =>
+            removeCommunityMessage(current, selectedCommunity.id, optimisticMessage.id),
+          );
+        }
+        toast({ title, description });
       }
     },
     [avatarLevel, isJoined, selectedChatAlias, selectedCommunity, updateCommunities, userId, username],
