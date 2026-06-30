@@ -83,10 +83,15 @@ const WHEEL_AVATAR_SEGMENT_COLORS: Array<{ segment: string; text: string }> = [
 function buildSpinPrizes(): WheelPrize[] {
   return SPIN_WHEEL_POOL.map((entry, index) => {
     const theme = WHEEL_AVATAR_SEGMENT_COLORS[index % WHEEL_AVATAR_SEGMENT_COLORS.length];
+    const rank = getAvatarRank({
+      id: entry.avatarId,
+      name: entry.name,
+      imageSrc: entry.imageSrc,
+    });
     return {
       id: entry.id,
       label: entry.name,
-      shortLabel: entry.name,
+      shortLabel: `R${rank}`,
       color: theme.segment,
       textColor: theme.text,
       imageSrc: entry.imageSrc,
