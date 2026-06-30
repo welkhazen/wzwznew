@@ -252,6 +252,11 @@ export const CANONICAL_OVERRIDES_BY_ID: Record<string, Partial<Pick<AvatarCatalo
   "avatar-16": { frame_color: "pink", rank_tier: 7 },
   "avatar-47": { frame_color: "pink", rank_tier: 7 },
   "avatar-51": { frame_color: "pink", rank_tier: 7 },
+  "avatar-21": { frame_color: "rose", rank_tier: 8 },
+  "avatar-29": { frame_color: "rose", rank_tier: 8 },
+  "avatar-31": { frame_color: "rose", rank_tier: 8 },
+  "avatar-54": { frame_color: "rose", rank_tier: 8 },
+  "avatar-55": { frame_color: "rose", rank_tier: 8 },
 };
 
 export const CANONICAL_OVERRIDE_MIGRATIONS_BY_ID: Record<keyof typeof CANONICAL_OVERRIDES_BY_ID, string> = {
@@ -274,6 +279,11 @@ export const CANONICAL_OVERRIDE_MIGRATIONS_BY_ID: Record<keyof typeof CANONICAL_
   "avatar-16": "20260630141500_avatar_r7_authoritative_backfill.sql",
   "avatar-47": "20260630141500_avatar_r7_authoritative_backfill.sql",
   "avatar-51": "20260630141500_avatar_r7_authoritative_backfill.sql",
+  "avatar-21": "20260630143000_avatar_r8_authoritative_backfill.sql",
+  "avatar-29": "20260630143000_avatar_r8_authoritative_backfill.sql",
+  "avatar-31": "20260630143000_avatar_r8_authoritative_backfill.sql",
+  "avatar-54": "20260630143000_avatar_r8_authoritative_backfill.sql",
+  "avatar-55": "20260630143000_avatar_r8_authoritative_backfill.sql",
 };
 
 async function refreshAvatarCatalogFromSupabase(): Promise<void> {
