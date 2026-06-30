@@ -17,7 +17,7 @@ import {
 } from "@/backend/supabase/controllers/chatController";
 import { supabase } from "@/backend/supabase/client";
 import { getUserTextModerationMessage, moderateUserText } from "@/lib/inputSecurity";
-import { readAvatarCatalogLocal, buildAvatarIdToLevelMap } from "@/lib/avatarCatalog";
+import { buildAvatarIdToLevelMap, readAvatarCatalogLocal } from "@/lib/avatarCatalog";
 import { getPrivateAvatarLevel } from "@/lib/avataridentity";
 import { CHAT_IDENTITY_CHANGED_EVENT, readSelectedChatAlias } from "@/lib/identitySelection";
 import { readCachedCommunities, readCachedMessages, writeCachedCommunities, writeCachedMessages } from "@/lib/communityCache";
@@ -30,6 +30,7 @@ import {
   removeCommunityMessage,
   replaceCommunityMessage,
   setCommunityMessages,
+  updateMessageLike,
 } from "@/lib/communityChatState";
 import { buildDefaultCommunities } from "@/lib/communityChat.seed";
 import { readBlockedCommunitySenders, writeBlockedCommunitySenders } from "@/lib/blockedCommunitySenders";
@@ -132,6 +133,10 @@ export function useCommunityChat(
   const latestMessagesRequestRef = useRef(0);
   const loadedMessagesCommunityRef = useRef<string | null>(null);
   const preserveScrollAfterOlderLoadRef = useRef<{ previousHeight: number } | null>(null);
+  const isNearBottomRef = useRef(true);
+  const justSentMessageRef = useRef(false);
+  const avatarLevelCacheRef = useRef<Map<string, number>>(new Map());
+  const onCommunitiesChangeRef = useRef(onCommunitiesChange);
 
   const fallbackCommunities = useMemo(() => buildDefaultCommunities(), []);
 
@@ -188,15 +193,18 @@ export function useCommunityChat(
     return groups;
   }, [filteredMessages]);
 
+  // Keep ref in sync so updateCommunities can stay stable (no re-subscription on every render)
+  useEffect(() => { onCommunitiesChangeRef.current = onCommunitiesChange; });
+
   const updateCommunities = useCallback(
     (updater: (c: PersistedCommunityRecord[]) => PersistedCommunityRecord[]) => {
       setCommunities((prev) => {
         const next = updater(prev);
-        onCommunitiesChange?.(next);
+        onCommunitiesChangeRef.current?.(next);
         return next;
       });
     },
-    [onCommunitiesChange],
+    [], // stable — reads onCommunitiesChange via ref
   );
 
   const reload = useCallback(async () => {
@@ -347,15 +355,35 @@ export function useCommunityChat(
     markCommunityReadSupabase(selectedCommunity.id, userId).catch(() => {});
   }, [isJoined, selectedCommunity, unreadCount, userId]);
 
+  // Track whether user is near the bottom of the chat container
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    const onScroll = () => {
+      isNearBottomRef.current = container.scrollTop + container.clientHeight >= container.scrollHeight - 150;
+    };
+    container.addEventListener("scroll", onScroll, { passive: true });
+    return () => container.removeEventListener("scroll", onScroll);
+  }, []); // once on mount — container ref is stable
+
+  // Reset near-bottom flag when switching communities so new room always scrolls
+  useEffect(() => {
+    isNearBottomRef.current = true;
+  }, [activeCommunityId]);
+
   useLayoutEffect(() => {
-    if (!messagesContainerRef.current || searchQuery.trim()) return;
+    const container = messagesContainerRef.current;
+    if (!container || searchQuery.trim()) return;
     if (preserveScrollAfterOlderLoadRef.current) {
       const { previousHeight } = preserveScrollAfterOlderLoadRef.current;
       preserveScrollAfterOlderLoadRef.current = null;
-      messagesContainerRef.current.scrollTop += messagesContainerRef.current.scrollHeight - previousHeight;
+      container.scrollTop += container.scrollHeight - previousHeight;
       return;
     }
-    messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    // Only auto-scroll when near bottom or user just sent a message
+    if (!isNearBottomRef.current && !justSentMessageRef.current) return;
+    justSentMessageRef.current = false;
+    container.scrollTop = container.scrollHeight;
   }, [activeMessages, activeCommunityId, searchQuery]);
 
   // Avatar levels
@@ -368,29 +396,48 @@ export function useCommunityChat(
   useEffect(() => {
     const catalog = readAvatarCatalogLocal();
     const idToLevel = buildAvatarIdToLevelMap(catalog);
-    const levelsById: Record<string, number> = { [userId]: avatarLevel };
+    const cache = avatarLevelCacheRef.current;
+
+    // Always keep own level current
+    cache.set(userId, avatarLevel);
+
+    // Read localStorage only for senders not yet cached
     for (const senderId of messageSenderIds) {
+      if (cache.has(senderId)) continue;
       try {
         const selectedId = window.localStorage.getItem(`raw.avatar.selected.v1.${senderId}`);
         if (selectedId) {
           const level = idToLevel.get(selectedId);
-          if (level !== undefined) levelsById[senderId] = level;
+          if (level !== undefined) cache.set(senderId, level);
         }
       } catch {
         // keep default
       }
     }
+
+    // Snapshot current levels for render
+    const levelsById: Record<string, number> = { [userId]: avatarLevel };
+    for (const id of messageSenderIds) {
+      const level = cache.get(id);
+      if (level !== undefined) levelsById[id] = level;
+    }
     setSenderAvatarLevels(levelsById);
 
-    const lookupIds = messageSenderIds.filter((id) => id !== userId);
-    if (lookupIds.length === 0) return;
+    // Only query Supabase for senders not already in cache
+    const uncachedIds = messageSenderIds.filter((id) => id !== userId && !cache.has(id));
+    if (uncachedIds.length === 0) return;
+
     let cancelled = false;
     void supabase
       .from("user_avatar_selection")
       .select("user_id, avatar_id")
-      .in("user_id", lookupIds)
+      .in("user_id", uncachedIds)
       .then(({ data }) => {
         if (cancelled || !data) return;
+        data.forEach((row) => {
+          const level = idToLevel.get(row.avatar_id);
+          if (level !== undefined) cache.set(row.user_id, level);
+        });
         setSenderAvatarLevels((prev) => {
           const next = { ...prev, [userId]: avatarLevel };
           data.forEach((row) => {
@@ -431,6 +478,7 @@ export function useCommunityChat(
         deliveryStatus: "sending" as const,
         likedBy: [],
       };
+      justSentMessageRef.current = true;
       updateCommunities((current) => appendOptimisticMessage(current, selectedCommunity.id, optimisticMessage));
       try {
         const mentionRecipientIds = selectedCommunity.members
@@ -506,8 +554,18 @@ export function useCommunityChat(
     async (message: CommunityChatMessageRecord) => {
       const likedBy = message.likedBy ?? [];
       const isAddingLike = !likedBy.includes(userId);
+
+      // Optimistic update
+      const nextLikedBy = isAddingLike
+        ? [...likedBy, userId]
+        : likedBy.filter((id) => id !== userId);
+      updateCommunities((current) =>
+        updateMessageLike(current, message.communityId, message.id, nextLikedBy),
+      );
+
       try {
         await likeMessage(message.id, userId);
+        // Realtime UPDATE reconciles final state — no reload needed
         if (isAddingLike && message.senderId !== userId && message.senderName !== username) {
           const recipient = selectedCommunity?.members.find((m) => m.userId === message.senderId);
           if (recipient?.notificationsEnabled) {
@@ -520,10 +578,14 @@ export function useCommunityChat(
           }
         }
       } catch {
+        // Roll back optimistic update
+        updateCommunities((current) =>
+          updateMessageLike(current, message.communityId, message.id, likedBy),
+        );
         toast({ title: "Failed to update like", description: "Please try again." });
       }
     },
-    [selectedCommunity, userId, username],
+    [selectedCommunity, updateCommunities, userId, username],
   );
 
   const blockSender = useCallback(
