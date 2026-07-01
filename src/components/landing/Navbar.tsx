@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { ThemeCustomizer } from "@/components/theme/ThemeCustomizer";
 import { ThemeModeSwitcher } from "@/components/theme/ThemeModeSwitcher";
+import { LaunchCountdown } from "@/components/ui/LaunchCountdown";
 import { track } from "@/lib/analytics";
 
 const RAW_LOGO_SRC = "/raw-logo-96.png";
@@ -83,6 +84,10 @@ export function Navbar({ isLoggedIn, username, onSignupClick, onDonateClick }: N
             <BrandName />
           </span>
         </Link>
+
+        <div className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 sm:block">
+          <LaunchCountdown variant="nav" />
+        </div>
 
         {/* Desktop nav links */}
         <div className="hidden items-center gap-8 md:flex">

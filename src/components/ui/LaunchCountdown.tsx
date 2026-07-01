@@ -37,8 +37,8 @@ function Pad({ value, label, isLight }: { value: number; label: string; isLight:
 
 interface LaunchCountdownProps {
   isLight?: boolean;
-  /** "banner" = compact strip for landing page; "section" = dashboard card style */
-  variant?: "banner" | "section";
+  /** "nav" = centered navbar timer; "banner" = compact strip; "section" = dashboard card style */
+  variant?: "nav" | "banner" | "section";
 }
 
 export function LaunchCountdown({ isLight = false, variant = "section" }: LaunchCountdownProps) {
@@ -50,6 +50,26 @@ export function LaunchCountdown({ isLight = false, variant = "section" }: Launch
   }, []);
 
   if (timeLeft === null) return null;
+
+  if (variant === "nav") {
+    return (
+      <div className="flex items-center justify-center gap-2 rounded-full border border-raw-gold/20 bg-raw-gold/[0.06] px-3 py-1.5 text-center shadow-[0_0_18px_rgba(241,196,45,0.08)] sm:gap-3 sm:px-4">
+        <Rocket className="hidden size-3.5 text-raw-gold sm:block" />
+        <span className="hidden text-[10px] font-semibold uppercase tracking-[0.16em] text-white/60 lg:inline">
+          Launch
+        </span>
+        <div className="flex items-baseline gap-1.5 font-mono text-[11px] font-bold tabular-nums text-raw-gold sm:text-xs">
+          <span>{String(timeLeft.d).padStart(2, "0")}d</span>
+          <span className="text-raw-silver/30">:</span>
+          <span>{String(timeLeft.h).padStart(2, "0")}h</span>
+          <span className="text-raw-silver/30">:</span>
+          <span>{String(timeLeft.m).padStart(2, "0")}m</span>
+          <span className="text-raw-silver/30">:</span>
+          <span>{String(timeLeft.s).padStart(2, "0")}s</span>
+        </div>
+      </div>
+    );
+  }
 
   if (variant === "banner") {
     return (
