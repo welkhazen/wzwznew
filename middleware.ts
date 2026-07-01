@@ -1,12 +1,12 @@
 const BOT_UA = /facebookexternalhit|Twitterbot|WhatsApp|TelegramBot|Slackbot|LinkedInBot|Discordbot|Pinterest|Googlebot|bingbot|Applebot|Signal|SkypeUriPreview|iMessageLinkPreview|Iframely/i;
 
-export default async function middleware(req: Request): Promise<Response> {
+export default async function middleware(req: Request): Promise<Response | undefined> {
   const ua = req.headers.get("user-agent") ?? "";
-  if (!BOT_UA.test(ua)) return new Response(null, { status: 200 });
+  if (!BOT_UA.test(ua)) return undefined;
 
   const url = new URL(req.url);
   const invite = url.searchParams.get("invite");
-  if (!invite) return new Response(null, { status: 200 });
+  if (!invite) return undefined;
 
   const base = "https://www.myraw.app";
   const pageUrl = `${base}/?invite=${invite}`;
