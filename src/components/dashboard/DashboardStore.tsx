@@ -1,6 +1,7 @@
-import { Suspense, lazy, useState } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import { Store, Wand2 } from "lucide-react";
 import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
+import { fetchRankSupplyCounts } from "@/lib/avatarCatalog";
 import { RANK_TIERS, RANK_TIER_PRICING } from "@/lib/avatarRarity";
 import { AVATAR_RANK_LABELS } from "@/lib/avatarRank";
 import { AvatarCustomRequestModal } from "@/components/dashboard/AvatarCustomRequestModal";
@@ -35,6 +36,13 @@ export function DashboardStore({
   userName,
 }: DashboardStoreProps) {
   const [requestModalOpen, setRequestModalOpen] = useState(false);
+  const [supplyCounts, setSupplyCounts] = useState<Record<number, number>>({});
+
+  useEffect(() => {
+    fetchRankSupplyCounts(avatarCatalog)
+      .then(setSupplyCounts)
+      .catch(() => {});
+  }, [avatarCatalog]);
 
   return (
     <div className="space-y-8">
@@ -96,8 +104,22 @@ export function DashboardStore({
                       <img src={TokenImage} alt="" className="h-3 w-3 object-contain" />
                       {pricing.price.toLocaleString()}
                     </span>
-                    <span className="text-right text-[11px] text-raw-silver/50">
-                      {pricing.maxOwners === null ? "∞" : `≤ ${pricing.maxOwners.toLocaleString()}`}
+                    <span className="text-right text-[11px]">
+                      {pricing.maxOwners === null ? (
+                        <span className="text-raw-silver/50">∞</span>
+                      ) : (() => {
+                        const owned = supplyCounts[tier.rank] ?? 0;
+                        const isFull = owned >= pricing.maxOwners;
+                        return isFull ? (
+                          <span className="rounded-full bg-red-500/15 px-2 py-0.5 text-[10px] font-semibold text-red-400">
+                            Sold out
+                          </span>
+                        ) : (
+                          <span className="text-raw-silver/50">
+                            {owned.toLocaleString()} / {pricing.maxOwners.toLocaleString()}
+                          </span>
+                        );
+                      })()}
                     </span>
                   </>
                 )}

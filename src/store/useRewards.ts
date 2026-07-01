@@ -126,7 +126,8 @@ export function useRewards(user: User | null) {
       await purchaseAvatarForUser(user.id, candidate.id);
       setOwnedAvatarIds((previous) => (previous.includes(candidate.id) ? previous : [...previous, candidate.id]));
       return true;
-    } catch {
+    } catch (err) {
+      if (err instanceof Error && err.message.startsWith("SUPPLY_EXHAUSTED")) throw err;
       return false;
     }
   }, [avatarCatalog, inventoryLoaded, ownedAvatarIds, user]);

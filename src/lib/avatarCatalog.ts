@@ -1,5 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import type { AvatarRarity } from "@/lib/avatarRarity";
+import { RANK_TIER_PRICING } from "@/lib/avatarRarity";
+import { getAvatarRank } from "@/lib/avatarRank";
 import { GENERATED_AVATAR_ENTRIES } from "@/lib/generatedAvatarEntries";
 import { avatarDisplayName, avatarIdFromImageSrc } from "@/config/avatarNames";
 
@@ -665,10 +667,55 @@ export async function loadUserAvatarState(
   }
 }
 
+/**
+ * Returns a map of rank → total ownership records in Supabase,
+ * excluding admin avatars so they don't count against supply caps.
+ */
+export async function fetchRankSupplyCounts(catalog: AvatarCatalogItem[]): Promise<Record<number, number>> {
+  const nonAdminIds = catalog.filter((i) => i.showIn !== "admin").map((i) => i.id);
+  if (nonAdminIds.length === 0) return {};
+
+  const { data, error } = await supabase
+    .from("user_avatar_inventory")
+    .select("avatar_id")
+    .in("avatar_id", nonAdminIds);
+
+  if (error || !data) return {};
+
+  const idToRank: Record<string, number> = {};
+  for (const item of catalog) {
+    if (item.showIn !== "admin") idToRank[item.id] = getAvatarRank(item);
+  }
+
+  const counts: Record<number, number> = {};
+  for (const row of data) {
+    const rank = idToRank[row.avatar_id as string];
+    if (rank !== undefined) counts[rank] = (counts[rank] ?? 0) + 1;
+  }
+  return counts;
+}
+
 export async function purchaseAvatarForUser(userId: string, avatarId: string): Promise<void> {
   const catalog = readAvatarCatalogLocal();
-  if (!catalog.some((item) => item.id === avatarId)) {
-    throw new Error(`Unknown avatar id: ${avatarId}`);
+  const avatar = catalog.find((item) => item.id === avatarId);
+  if (!avatar) throw new Error(`Unknown avatar id: ${avatarId}`);
+
+  // Supply cap check — admin avatars are exempt.
+  if (avatar.showIn !== "admin" && !avatarBackendMissingTables) {
+    const rank = getAvatarRank(avatar);
+    const cap = RANK_TIER_PRICING[rank]?.maxOwners;
+    if (cap !== null && cap !== undefined) {
+      const counts = await fetchRankSupplyCounts(catalog);
+      const existing = counts[rank] ?? 0;
+      // The user may already own one in this tier — don't count their existing ownership against the cap.
+      const localInventory = readOwnedAvatarIdsLocal(userId, catalog);
+      const userAlreadyOwnsThisTier = catalog.some(
+        (i) => i.showIn !== "admin" && getAvatarRank(i) === rank && localInventory.includes(i.id)
+      );
+      if (!userAlreadyOwnsThisTier && existing >= cap) {
+        throw new Error(`SUPPLY_EXHAUSTED:${rank}`);
+      }
+    }
   }
 
   const localInventory = readOwnedAvatarIdsLocal(userId, catalog);
