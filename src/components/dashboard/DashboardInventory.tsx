@@ -195,8 +195,10 @@ export function AvatarShop({
                         description: "Your new avatar can be found in the Profile section.",
                       });
                     }
-                  } catch {
-                    // Keep shop state unchanged on payment or unlock failure.
+                  } catch (err) {
+                    if (err instanceof Error && err.message.startsWith("SUPPLY_EXHAUSTED")) {
+                      toast({ title: "Sold out", description: "This rank tier has reached its supply limit. No more copies can be sold." });
+                    }
                   }
                   setUnlocking(null);
                 }}
