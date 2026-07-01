@@ -63,24 +63,7 @@ export function CommunityProfileDialog({
                 </div>
               </div>
 
-              {target.profile.pinnedMessages.length > 0 && (
-                <div className="space-y-2">
-                  <p className="text-[10px] uppercase tracking-[0.16em] text-raw-gold/70">Pinned messages</p>
-                  {target.profile.pinnedMessages.map((pinnedMessage) => (
-                    <div key={pinnedMessage.messageId} className="rounded-2xl border border-raw-gold/25 bg-raw-gold/[0.06] p-3">
-                      <p className="text-sm leading-relaxed text-raw-text/85">
-                        {pinnedMessage.messageText}
-                      </p>
-                      <p className="mt-2 text-[10px] text-raw-silver/45">
-                        {pinnedMessage.communityTitle ?? "Community"}
-                        {pinnedMessage.messageCreatedAt
-                          ? ` · ${formatChatTimestamp(pinnedMessage.messageCreatedAt)}`
-                          : ""}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
+
 
               {target.profile.favoriteCommunityIds.length > 0 && (
                 <div>

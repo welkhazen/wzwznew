@@ -180,7 +180,7 @@ export function DashboardSettings({ userId, isAdmin = false, onLogout, onBackToD
               <div className="flex items-center justify-between gap-3 px-4 py-3.5">
                 <div>
                   <p className="text-sm font-medium text-raw-text">Public chat profile</p>
-                  <p className="mt-1 text-xs text-raw-silver/40">Your username, avatar, role, join date, and pinned message appear when someone taps your message.</p>
+                  <p className="mt-1 text-xs text-raw-silver/40">Your username, avatar, role, and join date appear when someone taps your message.</p>
                 </div>
                 <button
                   type="button"

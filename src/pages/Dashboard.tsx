@@ -5,7 +5,7 @@ import { CHAT_IDENTITY_CHANGED_EVENT, hydrateChatIdentityFromServer, readSelecte
 import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
 import { fetchCommunities } from "@/backend/supabase/controllers/communityController";
 import { readCachedCommunities, writeCachedCommunities } from "@/lib/communityCache";
-import { getUserFavoriteCommunities, getUserPinnedMessages, removeUserPinnedMessage, type PinnedMessageRecord } from "@/backend/supabase/controllers/userExtrasController";
+import { getUserFavoriteCommunities } from "@/backend/supabase/controllers/userExtrasController";
 import { listUserAliases, setChatIdentity, type UserAliasRow } from "@/backend/supabase/controllers/userController";
 import { Home as HomeIcon, MessageCircle, Target, Trophy, Store } from "lucide-react";
 import LNTLogo from "@/assets/LNT.webp";
@@ -141,7 +141,6 @@ export default function Dashboard({
     () => readCachedCommunities()?.data ?? [],
   );
   const [favoriteCommunityIds, setFavoriteCommunityIds] = useState<string[]>([]);
-  const [pinnedMessages, setPinnedMessages] = useState<PinnedMessageRecord[]>([]);
   const [selectedChatAlias, setSelectedChatAlias] = useState<string | null>(() => readSelectedChatAlias(user.id));
   const [privateAliases, setPrivateAliases] = useState<UserAliasRow[]>([]);
   const [isHome, setIsHome] = useState(true);
@@ -265,41 +264,6 @@ export default function Dashboard({
     };
   }, [user.id]);
 
-  useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      try {
-        const messages = await getUserPinnedMessages(user.id);
-        if (!cancelled) setPinnedMessages(messages);
-      } catch {
-        // Pinned profile messages are best-effort; the profile still renders.
-      }
-    })();
-    const onChange = (event: Event) => {
-      const detail = (event as CustomEvent<{ userId?: string; messages?: PinnedMessageRecord[] }>).detail;
-      if (!detail || detail.userId !== user.id) return;
-      setPinnedMessages(detail.messages ?? []);
-    };
-    window.addEventListener("raw:pinned-message-updated", onChange);
-    return () => {
-      cancelled = true;
-      window.removeEventListener("raw:pinned-message-updated", onChange);
-    };
-  }, [user.id]);
-
-  const handleRemovePinnedMessage = async (messageId: string) => {
-    const previous = pinnedMessages;
-    const next = previous.filter((message) => message.messageId !== messageId);
-    setPinnedMessages(next);
-    try {
-      await removeUserPinnedMessage(user.id, messageId);
-      window.dispatchEvent(new CustomEvent("raw:pinned-message-updated", {
-        detail: { userId: user.id, messages: next },
-      }));
-    } catch {
-      setPinnedMessages(previous);
-    }
-  };
 
   const activeIdentityMode = selectedChatAlias ? "private" : "public";
   const activeIdentityName = selectedChatAlias ?? user.username;
@@ -617,8 +581,6 @@ export default function Dashboard({
                 onUnlockAvatar={unlockAvatarLevel}
                 avatarPricesByLevel={avatarPricesByLevel}
                 pollsAnswered={votedPolls.size}
-                pinnedMessages={pinnedMessages}
-                onRemovePinnedMessage={handleRemovePinnedMessage}
                 polls={polls}
                 tokenBalance={tokenBalance}
                 onLogout={onLogout}

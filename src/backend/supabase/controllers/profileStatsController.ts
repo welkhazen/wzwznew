@@ -6,7 +6,6 @@ export interface ProfileStats {
   likesReceived: number;
   hostsMade: number;
   communitiesJoined: number;
-  messagesPinned: number;
 }
 
 export const EMPTY_PROFILE_STATS: ProfileStats = {
@@ -15,7 +14,6 @@ export const EMPTY_PROFILE_STATS: ProfileStats = {
   likesReceived: 0,
   hostsMade: 0,
   communitiesJoined: 0,
-  messagesPinned: 0,
 };
 
 function toNumber(value: unknown): number {
@@ -27,7 +25,7 @@ function toNumber(value: unknown): number {
   return 0;
 }
 
-/** Single RPC call that returns all 6 metrics. ~1 round-trip, no chatty client. */
+/** Single RPC call that returns profile metrics. ~1 round-trip, no chatty client. */
 export async function fetchProfileStats(userId: string): Promise<ProfileStats> {
   const { data, error } = await supabase.rpc("get_profile_stats", { p_user_id: userId });
   if (error) throw new Error(error.message || "Could not load profile stats.");
@@ -38,6 +36,5 @@ export async function fetchProfileStats(userId: string): Promise<ProfileStats> {
     likesReceived: toNumber(row.likes_received),
     hostsMade: toNumber(row.hosts_made),
     communitiesJoined: toNumber(row.communities_joined),
-    messagesPinned: toNumber(row.messages_pinned),
   };
 }

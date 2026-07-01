@@ -1,6 +1,6 @@
 import { memo } from "react";
 import type { RefObject } from "react";
-import { AlertTriangle, Ban, BarChart3, Heart, MoreHorizontal, Pin, Trash2 } from "lucide-react";
+import { AlertTriangle, Ban, BarChart3, Heart, MoreHorizontal, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,9 +31,6 @@ interface CommunityMessageTimelineProps {
   onVotePoll: (pollId: string, optionId: string) => void;
   onRetryMessage: (message: CommunityChatMessageRecord) => void;
   onLikeMessage: (message: CommunityChatMessageRecord) => void;
-  pinnedMessageIds: Set<string>;
-  onPinMessage: (message: CommunityChatMessageRecord) => void;
-  onUnpinMessage: (message: CommunityChatMessageRecord) => void;
   onOpenMessageReport: (message: CommunityChatMessageRecord) => void;
   onBlockMessageSender: (message: CommunityChatMessageRecord) => void;
   onOpenSenderProfile: (message: CommunityChatMessageRecord) => void;
@@ -58,13 +55,10 @@ function MessageSkeleton() {
 interface MessageRowProps {
   message: CommunityChatMessageRecord;
   avatarLevel: number;
-  isPinned: boolean;
   userId: string;
   username: string;
   onRetryMessage: (msg: CommunityChatMessageRecord) => void;
   onLikeMessage: (msg: CommunityChatMessageRecord) => void;
-  onPinMessage: (msg: CommunityChatMessageRecord) => void;
-  onUnpinMessage: (msg: CommunityChatMessageRecord) => void;
   onOpenMessageReport: (msg: CommunityChatMessageRecord) => void;
   onBlockMessageSender: (msg: CommunityChatMessageRecord) => void;
   onOpenSenderProfile: (msg: CommunityChatMessageRecord) => void;
@@ -73,13 +67,10 @@ interface MessageRowProps {
 const MessageRow = memo(function MessageRow({
   message,
   avatarLevel,
-  isPinned,
   userId,
   username,
   onRetryMessage,
   onLikeMessage,
-  onPinMessage,
-  onUnpinMessage,
   onOpenMessageReport,
   onBlockMessageSender,
   onOpenSenderProfile,
@@ -153,7 +144,6 @@ const MessageRow = memo(function MessageRow({
                 <Heart className="inline h-2 w-2 fill-current" />{likeCount}
               </span>
             )}
-            {message.pinned && <span className="ml-1 text-raw-gold/60">Pinned</span>}
             {message.deliveryStatus === "sending" && <span className="ml-1 text-raw-silver/35">Sending…</span>}
             {message.deliveryStatus === "failed" && <span className="ml-1 text-red-300/80">Failed</span>}
           </span>
@@ -184,13 +174,6 @@ const MessageRow = memo(function MessageRow({
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="min-w-32 border-raw-border/30 bg-raw-black/95 text-raw-silver shadow-xl shadow-black/40">
-                  <DropdownMenuItem
-                    className="cursor-pointer gap-2 text-xs focus:bg-raw-surface/80 focus:text-raw-text"
-                    onClick={() => isPinned ? onUnpinMessage(message) : onPinMessage(message)}
-                  >
-                    <Pin className="h-3.5 w-3.5 text-raw-gold/80" />
-                    {isPinned ? "Unpin from profile" : "Pin to profile"}
-                  </DropdownMenuItem>
                   <DropdownMenuItem
                     className="cursor-pointer gap-2 text-xs focus:bg-raw-surface/80 focus:text-raw-text"
                     onClick={() => onOpenMessageReport(message)}
@@ -238,9 +221,6 @@ export const CommunityMessageTimeline = memo(function CommunityMessageTimeline({
   onVotePoll,
   onRetryMessage,
   onLikeMessage,
-  pinnedMessageIds,
-  onPinMessage,
-  onUnpinMessage,
   onOpenMessageReport,
   onBlockMessageSender,
   onOpenSenderProfile,
@@ -258,7 +238,7 @@ export const CommunityMessageTimeline = memo(function CommunityMessageTimeline({
               <div>
                 <p className="text-[10px] uppercase tracking-[0.18em] text-raw-gold/70">
                   <BarChart3 className="mr-1 inline h-3 w-3" />
-                  Poll · Pinned
+                  Poll
                 </p>
                 <p className="mt-1 text-sm font-semibold text-raw-text">{poll.question}</p>
                 <p className="mt-0.5 text-[10px] text-raw-silver/45">
@@ -324,13 +304,10 @@ export const CommunityMessageTimeline = memo(function CommunityMessageTimeline({
               key={message.id}
               message={message}
               avatarLevel={message.senderAvatarLevel ?? senderAvatarLevels[message.senderId] ?? 1}
-              isPinned={pinnedMessageIds.has(message.id)}
               userId={userId}
               username={username}
               onRetryMessage={onRetryMessage}
               onLikeMessage={onLikeMessage}
-              onPinMessage={onPinMessage}
-              onUnpinMessage={onUnpinMessage}
               onOpenMessageReport={onOpenMessageReport}
               onBlockMessageSender={onBlockMessageSender}
               onOpenSenderProfile={onOpenSenderProfile}
