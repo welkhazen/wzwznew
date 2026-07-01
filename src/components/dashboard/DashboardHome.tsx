@@ -10,6 +10,7 @@ import { COMMUNITY_COVER_IMAGES, COMMUNITY_COVER_VIDEOS } from "@/lib/communityC
 import { useTheme } from "@/providers/useTheme";
 import { BrandName } from "@/components/ui/brand-name";
 import { TrendingPollsBox } from "@/components/dashboard/TrendingPollsBox";
+import { LaunchCountdown } from "@/components/ui/LaunchCountdown";
 
 const DashboardDailySpin = lazy(() =>
   import("@/components/dashboard/DashboardDailySpin").then((m) => ({ default: m.DashboardDailySpin }))
@@ -302,6 +303,8 @@ export function DashboardHome({
         </div>
         <div className="absolute -right-12 -top-12 w-64 h-64 bg-raw-gold/5 blur-[80px] rounded-full pointer-events-none" />
       </section>
+
+      <LaunchCountdown isLight={isLight} variant="section" />
 
       {/* ── Your Communities ── */}
       <section className="space-y-5">
