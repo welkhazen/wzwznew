@@ -12,6 +12,7 @@ import { fetchPolls } from "@/lib/api/polls";
 import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
 import { LANDING_WHEEL_SPIN_KEY } from "@/lib/avatarCatalog";
 import { avatarDisplayName } from "@/config/avatarNames";
+import { LANDING_CHOOSER_AVATARS, getLandingUnlockableAvatars } from "@/lib/landingAvatarOrder";
 import { WheelOfFortune, type WheelPrize } from "@/components/wheel/WheelOfFortune";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -58,7 +59,7 @@ interface OnboardingJourneyProps {
 type WheelPoolEntry = { id: string; avatarId: string; name: string; imageSrc: string };
 
 // Ordered spin pool sourced from the shared config.
-import { SPIN_POOL, EARLY_SIGNUP_POOL } from "@/backend/supabase/controllers/avatarRewardsController";
+import { SPIN_POOL } from "@/backend/supabase/controllers/avatarRewardsController";
 
 const SPIN_WHEEL_POOL: readonly WheelPoolEntry[] = SPIN_POOL.map((entry, i) => ({
   id: `wheel-avatar-${i + 1}`,
@@ -147,33 +148,16 @@ const AVATAR_PAGE_SIZE = 8;
 const AGE_GATE_STORAGE_PREFIX = "raw.ageGateVerified";
 
 const LANDING_ONBOARDING_AVATARS: readonly AvatarCatalogItem[] = [
-  { id: "ember", level: 1, name: "Ember", price: "Free", imageSrc: "/avatars/avatar-3.svg", bg: "#1f0a05", figure: "#ff8a1f", ring: "#ff8a1f", glow: "#ff8a1f80", isActive: true, rarity: "common" },
-  { id: "verdant", level: 2, name: "Verdant", price: "Free", imageSrc: "/avatars/avatar-1.svg", bg: "#08160b", figure: "#22c55e", ring: "#22c55e", glow: "#22c55e80", isActive: true, rarity: "common" },
-  { id: "horned", level: 3, name: "Horned", price: "Free", imageSrc: "/avatars/avatar-5.svg", bg: "#1f0808", figure: "#ff2d3d", ring: "#ff2d3d", glow: "#ff2d3d80", isActive: true, rarity: "common" },
-  { id: "pharaoh", level: 4, name: "Pharaoh", price: "Free", imageSrc: "/avatars/avatar-6.svg", bg: "#1f1605", figure: "#f2d21a", ring: "#f2d21a", glow: "#f2d21a80", isActive: true, rarity: "common" },
-  { id: "violet", level: 5, name: "Violet", price: "Free", imageSrc: "/avatars/avatar-2.svg", bg: "#150a22", figure: "#b84dff", ring: "#b84dff", glow: "#b84dff80", isActive: true, rarity: "common" },
-  { id: "rose", level: 6, name: "Rose", price: "Free", imageSrc: "/avatars/avatar-4.svg", bg: "#1f0a14", figure: "#f43f5e", ring: "#f43f5e", glow: "#f43f5e80", isActive: true, rarity: "common" },
-  { id: "black", level: 7, name: "Black", price: "Free", imageSrc: "/avatars/avatar-7.svg", bg: "#0a0a0a", figure: "#cfd3da", ring: "#cfd3da", glow: "#cfd3da80", isActive: true, rarity: "common" },
-  { id: "blue", level: 8, name: "Blue", price: "Free", imageSrc: "/avatars/avatar-10.svg", bg: "#0a1424", figure: "#3b82f6", ring: "#3b82f6", glow: "#3b82f680", isActive: true, rarity: "common" },
-  // Preview-only tier: 8 free-spin avatars + 4 early-signup avatars,
-  // sourced from the shared config so order matches landing + wheel.
-  ...SPIN_POOL.map((entry, i): AvatarCatalogItem => ({
-    id: `preview-spin-${i + 1}`,
-    level: FREE_ONBOARDING_AVATAR_COUNT + 1 + i,
-    name: avatarDisplayName(entry.imageId),
-    price: "50",
-    imageSrc: entry.imageSrc,
-    bg: "#111827", figure: "#cbd5e1", ring: "#cbd5e1", glow: "#cbd5e180",
-    isActive: true, rarity: "common",
+  ...LANDING_CHOOSER_AVATARS.map((avatar, index): AvatarCatalogItem => ({
+    ...avatar,
+    level: index + 1,
+    price: "Free",
   })),
-  ...EARLY_SIGNUP_POOL.map((entry, i): AvatarCatalogItem => ({
-    id: `preview-signup-${i + 1}`,
-    level: FREE_ONBOARDING_AVATAR_COUNT + 1 + SPIN_POOL.length + i,
-    name: avatarDisplayName(entry.imageId),
+  ...getLandingUnlockableAvatars().map((avatar, index): AvatarCatalogItem => ({
+    ...avatar,
+    id: `preview-${avatar.id}`,
+    level: FREE_ONBOARDING_AVATAR_COUNT + 1 + index,
     price: "50",
-    imageSrc: entry.imageSrc,
-    bg: "#111827", figure: "#cbd5e1", ring: "#cbd5e1", glow: "#cbd5e180",
-    isActive: true, rarity: "common",
   })),
 ];
 
