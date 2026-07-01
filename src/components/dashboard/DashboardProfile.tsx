@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Check, Copy, Heart, MessageSquare, Mic2, Pin, Share2, Target, Ticket, Trash2, Users, X } from "lucide-react";
+import { Check, Copy, Facebook, Heart, Instagram, MessageCircle, MessageSquare, Mic2, Pin, Share2, Target, Ticket, Trash2, Users, X } from "lucide-react";
 import { useProfileStats } from "@/hooks/useProfileStats";
 import { registerFoundingInviteCodes, getFoundingInviteRedemptions, type PinnedMessageRecord } from "@/backend/supabase/controllers/userExtrasController";
 import type { Poll } from "@/store/useRawStore";
@@ -8,7 +8,8 @@ import { LEVEL_THEMES, getAvatar, getPrivateAvatarLevel, privateAvatarKey } from
 import { PersonalityInsightsInventory } from "@/components/dashboard/PersonalityInsightsInventory";
 import { addOwnedInsightId, readOwnedInsightIds } from "@/lib/insightsOwnership";
 import { spendTokens } from "@/lib/api/tokens";
-import { buildInviteUrl } from "@/lib/inviteLink";
+import { buildInviteUrl, whatsappShareUrl, facebookShareUrl } from "@/lib/inviteLink";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { CHAT_IDENTITY_CHANGED_EVENT, readSelectedChatAlias, writeSelectedChatAlias } from "@/lib/identitySelection";
 import { toast } from "@/hooks/use-toast";
 import {
@@ -275,17 +276,39 @@ export function DashboardProfile({
     }
   }
 
-  async function handleShareInvite(code: string) {
-    const shareText = buildInviteShareText(code);
-    if (navigator.share) {
-      try {
-        await navigator.share({ text: shareText });
-        return;
-      } catch {
-        // Fall back to copying below if native share is cancelled or unavailable.
-      }
+  async function copyToClipboard(text: string): Promise<boolean> {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      return false;
     }
-    await handleCopyInvite(shareText);
+  }
+
+  async function handleShareInviteTo(code: string, target: "whatsapp" | "instagram" | "facebook" | "copy") {
+    const shareText = buildInviteShareText(code);
+    const link = buildInviteUrl(code);
+    if (target === "whatsapp") {
+      window.open(whatsappShareUrl(shareText), "_blank", "noopener,noreferrer");
+      return;
+    }
+    if (target === "facebook") {
+      window.open(facebookShareUrl(link, shareText), "_blank", "noopener,noreferrer");
+      return;
+    }
+    // Instagram has no web intent to prefill text/links, so copy the message
+    // for the user to paste into a post or DM.
+    if (target === "instagram") {
+      const ok = await copyToClipboard(shareText);
+      toast(ok
+        ? { title: "Invite copied for Instagram", description: "Paste it into your post or DM." }
+        : { title: "Could not copy invite", description: "Select the code and copy it manually." });
+      return;
+    }
+    const ok = await copyToClipboard(shareText);
+    toast(ok
+      ? { title: "Invite copied", description: "Message and link copied to your clipboard." }
+      : { title: "Could not copy invite", description: "Select the code and copy it manually." });
   }
 
   const handlePurchaseInsight = async (insightId: string, tokenPrice: number) => {
@@ -546,16 +569,31 @@ export function DashboardProfile({
                       >
                         <Copy className="h-3.5 w-3.5" /> Copy
                       </button>
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          void handleShareInvite(code);
-                        }}
-                        className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-raw-gold px-3 py-2 text-[11px] font-bold text-raw-ink transition-opacity hover:opacity-90"
-                      >
-                        <Share2 className="h-3.5 w-3.5" /> Share
-                      </button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            type="button"
+                            onClick={(event) => event.stopPropagation()}
+                            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-raw-gold px-3 py-2 text-[11px] font-bold text-raw-ink transition-opacity hover:opacity-90"
+                          >
+                            <Share2 className="h-3.5 w-3.5" /> Share
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" onClick={(event) => event.stopPropagation()}>
+                          <DropdownMenuItem onSelect={() => void handleShareInviteTo(code, "whatsapp")}>
+                            <MessageCircle className="mr-2 h-4 w-4" /> WhatsApp
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => void handleShareInviteTo(code, "instagram")}>
+                            <Instagram className="mr-2 h-4 w-4" /> Instagram
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => void handleShareInviteTo(code, "facebook")}>
+                            <Facebook className="mr-2 h-4 w-4" /> Facebook
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => void handleShareInviteTo(code, "copy")}>
+                            <Copy className="mr-2 h-4 w-4" /> Copy Invite
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
                 )}

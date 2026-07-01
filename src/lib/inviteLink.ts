@@ -12,3 +12,13 @@ export const INVITE_PARAM = "invite";
 export function buildInviteUrl(code: string): string {
   return `https://${APP_CANONICAL_HOST}/?${INVITE_PARAM}=${encodeURIComponent(code)}`;
 }
+
+/** Prefilled WhatsApp share intent carrying the invite message. */
+export function whatsappShareUrl(message: string): string {
+  return `https://wa.me/?text=${encodeURIComponent(message)}`;
+}
+
+/** Facebook share dialog for the invite link (quote carries the message). */
+export function facebookShareUrl(link: string, quote: string): string {
+  return `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(link)}&quote=${encodeURIComponent(quote)}`;
+}
