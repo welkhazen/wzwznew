@@ -36,14 +36,15 @@ export default function WhyDonate() {
     <div className="min-h-screen bg-raw-black">
       <nav className="border-b border-raw-border/50 bg-raw-black/80 backdrop-blur-xl">
         <div className="flex h-16 items-center gap-4 px-4 sm:px-6 lg:px-10">
-          <Link
-            to="/"
+          <button
+            type="button"
+            onClick={() => window.history.back()}
             className="flex items-center gap-2 text-raw-silver/60 transition-colors hover:text-raw-text"
-            aria-label="Back to home"
+            aria-label="Go back"
           >
             <ArrowLeft className="h-4 w-4" />
             <span className="text-sm">Back</span>
-          </Link>
+          </button>
         </div>
       </nav>
 
