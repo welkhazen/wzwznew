@@ -44,7 +44,7 @@ export const LANDING_UNLOCKABLE_FEATURE_ORDER = [
   "Purple Oracle",
   "Red Phantom",
   "Pink Nova",
-  "Rose Warden",
+  "Pearl Siren",
 ] as const;
 
 const HIDDEN_UNLOCKABLE_NAMES = new Set(["Bronze Herald"]);
