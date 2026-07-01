@@ -54,3 +54,6 @@ graphify-deploy/
 # Local Claude/Codex machine-specific state
 .claude/settings.local.json
 .codex/environments/*.local.toml
+
+# Daily repo scan output
+daily-scan-report.md

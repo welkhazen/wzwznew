@@ -29,7 +29,9 @@
     "avatars:process": "node scripts/process-new-avatars.mjs",
     "prepare": "husky",
     "secrets:scan": "./scripts/secret-scan.sh detect",
-    "secrets:staged": "./scripts/secret-scan.sh staged"
+    "secrets:staged": "./scripts/secret-scan.sh staged",
+    "daily:scan": "node scripts/daily-repo-scan.mjs",
+    "daily:scan:checks": "node scripts/daily-repo-scan.mjs --run-checks"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.1",
