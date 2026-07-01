@@ -1,6 +1,7 @@
 import { Suspense, lazy, useMemo, useState } from "react";
 import { Check, ChevronDown, ChevronRight, Copy, Dices, Zap, Flame, Share2, ShieldOff, Ticket, UserRound, Users, BarChart3 } from "lucide-react";
-import { readFoundingInviteCodes, buildInviteShareText } from "@/lib/foundingInvites";
+import { readFoundingInviteCodes, getOrSyncInviteCodes, buildInviteShareText } from "@/lib/foundingInvites";
+import { fetchFoundingInviteCodes, registerFoundingInviteCodes } from "@/backend/supabase/controllers/userExtrasController";
 import { toast } from "@/hooks/use-toast";
 import type { Poll } from "@/store/useRawStore";
 import type { DashboardTab } from "./DashboardNav";
@@ -113,7 +114,14 @@ export function DashboardHome({
   const isLight = mode === "light";
   const [identityMenuOpen, setIdentityMenuOpen] = useState(false);
   const [openInviteIndex, setOpenInviteIndex] = useState<number | null>(null);
-  const inviteCodes = useMemo(() => (userId ? readFoundingInviteCodes(userId) : []), [userId]);
+  const [inviteCodes, setInviteCodes] = useState<string[]>(() => (userId ? readFoundingInviteCodes(userId) : []));
+
+  useEffect(() => {
+    if (!userId) return;
+    getOrSyncInviteCodes(userId, fetchFoundingInviteCodes, registerFoundingInviteCodes)
+      .then((codes) => setInviteCodes(codes))
+      .catch(() => {});
+  }, [userId]);
 
   async function handleCopyInvite(code: string) {
     try {

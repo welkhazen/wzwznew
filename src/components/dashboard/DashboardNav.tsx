@@ -607,7 +607,7 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
                   "absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold",
                   isEffectiveLight
                     ? "bg-indigo-600 text-white"
-                    : "bg-raw-gold text-raw-ink",
+                    : "bg-white text-raw-ink ring-1 ring-raw-black/30",
                 )}>
                   {unseenNotificationCount > 99 ? "99+" : unseenNotificationCount}
                 </div>
