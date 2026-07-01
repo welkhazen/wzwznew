@@ -154,6 +154,7 @@ export function DashboardStore({
             ownedAvatarLevels={ownedAvatarLevels}
             userId={userId}
             onAvatarPurchased={onAvatarPurchased}
+            onUnlockAvatar={onUnlockAvatar}
           />
         </Suspense>
       </section>
