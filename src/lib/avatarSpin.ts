@@ -7,10 +7,14 @@ function avatarImageKey(avatar: AvatarCatalogItem): string {
   return imageId === null ? String(avatar.imageSrc ?? avatar.id) : String(canonicalAvatarImageId(imageId));
 }
 
+function catalogLevelAt(index: number): number {
+  return index + 1;
+}
+
 function ownedAvatarImageKeys(avatarCatalog: AvatarCatalogItem[], ownedAvatarLevels: Set<number>): Set<string> {
   return new Set(
     avatarCatalog
-      .filter((avatar) => ownedAvatarLevels.has(avatar.level))
+      .filter((_, index) => ownedAvatarLevels.has(catalogLevelAt(index)))
       .map(avatarImageKey),
   );
 }
@@ -23,12 +27,12 @@ export function getEligibleSpinAvatars(
   const ownedImageKeys = ownedAvatarImageKeys(avatarCatalog, ownedAvatarLevels);
   const seenPrizeImageKeys = new Set<string>();
 
-  return avatarCatalog.filter((avatar) => {
+  return avatarCatalog.filter((avatar, index) => {
     const imageKey = avatarImageKey(avatar);
     if (
       !hasAvatarRank(avatar) ||
       getAvatarRank(avatar) !== rank ||
-      ownedAvatarLevels.has(avatar.level) ||
+      ownedAvatarLevels.has(catalogLevelAt(index)) ||
       ownedImageKeys.has(imageKey) ||
       seenPrizeImageKeys.has(imageKey)
     ) {

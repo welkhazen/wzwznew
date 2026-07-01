@@ -44,4 +44,71 @@ describe("rank spin avatar pool", () => {
 
     expect(resolveAvatarCatalogLevel(catalog, "won-avatar")).toBe(2);
   });
+
+  it("checks ownership by current catalog position, not stale avatar level", () => {
+    const catalog: AvatarCatalogItem[] = [
+      {
+        id: "owned-base",
+        level: 1,
+        name: "Owned Base",
+        price: "0",
+        imageSrc: "/avatars/avatar-1.svg",
+        bg: "#111827",
+        figure: "#cbd5e1",
+        ring: "#cbd5e1",
+        glow: "#cbd5e180",
+      },
+      {
+        id: "r3-with-stale-level",
+        level: 1,
+        name: "Green Relic",
+        price: "100",
+        imageSrc: "/avatars/53.png",
+        bg: "#111827",
+        figure: "#22c55e",
+        ring: "#22c55e",
+        glow: "#22c55e80",
+        rank_tier: 3,
+      },
+    ];
+
+    expect(getEligibleSpinAvatars(catalog, 3, new Set([1])).map((avatar) => avatar.id)).toEqual(["r3-with-stale-level"]);
+  });
+
+  it("keeps every wheel rank available when avatar levels are stale", () => {
+    const catalog: AvatarCatalogItem[] = [
+      {
+        id: "owned-base",
+        level: 1,
+        name: "Owned Base",
+        price: "0",
+        imageSrc: "/avatars/avatar-1.svg",
+        bg: "#111827",
+        figure: "#cbd5e1",
+        ring: "#cbd5e1",
+        glow: "#cbd5e180",
+      },
+      ...Array.from({ length: 11 }, (_, index) => {
+        const rank = index + 1;
+        return {
+          id: `rank-${rank}-stale-level`,
+          level: 1,
+          name: `Rank ${rank} Test`,
+          price: "100",
+          imageSrc: `/avatars/rank-${rank}.png`,
+          bg: "#111827",
+          figure: "#cbd5e1",
+          ring: "#cbd5e1",
+          glow: "#cbd5e180",
+          rank_tier: rank,
+        };
+      }),
+    ] as AvatarCatalogItem[];
+
+    for (let rank = 1; rank <= 11; rank += 1) {
+      expect(getEligibleSpinAvatars(catalog, rank, new Set([1])).map((avatar) => avatar.id)).toEqual([
+        `rank-${rank}-stale-level`,
+      ]);
+    }
+  });
 });
