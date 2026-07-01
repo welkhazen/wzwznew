@@ -232,7 +232,8 @@ const DEFAULT_IMAGE_SRC_BY_ID = new Map(
 // temporary guard only for users with stale local/Supabase cache data; new
 // avatar corrections should be fixed in migrations first, not added here by
 // default.
-export const CANONICAL_OVERRIDES_BY_ID: Record<string, Partial<Pick<AvatarCatalogItem, "name" | "frame_color" | "rank_tier" | "ring" | "glow">>> = {
+export const CANONICAL_OVERRIDES_BY_ID: Record<string, Partial<Pick<AvatarCatalogItem, "name" | "frame_color" | "rank_tier" | "ring" | "glow" | "showIn">>> = {
+  "s1-custom": { showIn: "admin" },
   "blue-signal": { name: "Gold Specter", frame_color: "gold", rank_tier: 9 },
   "blu-fifer":   { name: "Red Fifer",    frame_color: "red",  rank_tier: 6, ring: "#ef4444", glow: "#ef444480" },
   "crimson-muse": { frame_color: "orange", rank_tier: 4 },
