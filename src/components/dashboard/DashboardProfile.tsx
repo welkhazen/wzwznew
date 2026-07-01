@@ -21,63 +21,13 @@ import {
 const TOKEN_BALANCE_STORAGE_PREFIX = "raw.polls.token-balance";
 const TOKEN_BALANCE_UPDATED_EVENT = "raw:token-balance-updated";
 
-const FOUNDING_INVITES_STORAGE_PREFIX = "raw.founding-invites";
-const FOUNDING_INVITE_COUNT = 2;
-
-function createInviteCode(slot: number): string {
-  const bytes = new Uint8Array(5);
-  crypto.getRandomValues(bytes);
-
-  const randomPart = Array.from(bytes, (byte) => byte.toString(36).padStart(2, "0"))
-    .join("")
-    .slice(0, 8)
-    .toUpperCase();
-  return `RAW-${slot}-${randomPart}`;
-}
-
-function readFoundingInviteCodes(userId: string): string[] {
-  if (typeof window === "undefined") {
-    return Array.from({ length: FOUNDING_INVITE_COUNT }, (_, index) => `RAW-${index + 1}-FOUNDING`);
-  }
-
-  const storageKey = `${FOUNDING_INVITES_STORAGE_PREFIX}.${userId}`;
-  let saved: string | null = null;
-  try {
-    saved = window.localStorage.getItem(storageKey);
-  } catch {
-    saved = null;
-  }
-
-  if (saved) {
-    try {
-      const parsed = JSON.parse(saved) as unknown;
-      if (Array.isArray(parsed) && parsed.every((code) => typeof code === "string")) {
-        const codes = parsed.slice(0, FOUNDING_INVITE_COUNT);
-        while (codes.length < FOUNDING_INVITE_COUNT) {
-          codes.push(createInviteCode(codes.length + 1));
-        }
-        return codes;
-      }
-    } catch {
-      // Regenerate malformed local invite data below.
-    }
-  }
-
-  return Array.from({ length: FOUNDING_INVITE_COUNT }, (_, index) => createInviteCode(index + 1));
-}
-
-function persistFoundingInviteCodes(userId: string, codes: string[]): void {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(`${FOUNDING_INVITES_STORAGE_PREFIX}.${userId}`, JSON.stringify(codes.slice(0, FOUNDING_INVITE_COUNT)));
-  } catch {
-    // Invite tickets remain usable for this session even if storage is blocked.
-  }
-}
-
-function buildInviteShareText(code: string): string {
-  return `Here is an exclusive invitation code to enter raW. Use this during signup: ${code}`;
-}
+import {
+  readFoundingInviteCodes,
+  persistFoundingInviteCodes,
+  buildInviteShareText,
+  FOUNDING_INVITE_COUNT,
+  createInviteCode,
+} from "@/lib/foundingInvites";
 
 function pushTokenBalance(userId: string, balance: number): void {
   if (typeof window === "undefined") return;
