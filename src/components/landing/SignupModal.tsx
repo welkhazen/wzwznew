@@ -37,6 +37,7 @@ export function SignupModal({ open, onClose, onSignup, onLogin, source, initialR
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showTermsPopup, setShowTermsPopup] = useState(false);
   const openedFiredRef = useRef(false);
 
   useEffect(() => {
@@ -55,6 +56,7 @@ export function SignupModal({ open, onClose, onSignup, onLogin, source, initialR
       setIsSubmitting(false);
       setShowPassword(false);
       setShowConfirmPassword(false);
+      setShowTermsPopup(false);
     }
   }, [open, source]);
 
@@ -72,7 +74,7 @@ export function SignupModal({ open, onClose, onSignup, onLogin, source, initialR
 
   if (!open) return null;
 
-  const handleStartSignup = async (event?: React.FormEvent) => {
+  const handleStartSignup = (event?: React.FormEvent) => {
     event?.preventDefault();
     const normalizedUsername = normalizePlainText(sanitizeUsernameInput(username));
     const normalizedPassword = sanitizePasswordInput(password).trim();
@@ -98,8 +100,17 @@ export function SignupModal({ open, onClose, onSignup, onLogin, source, initialR
       return;
     }
 
+    setShowTermsPopup(true);
+  };
+
+  const handleConfirmTerms = async () => {
+    setShowTermsPopup(false);
     setIsSubmitting(true);
     setError("");
+
+    const normalizedUsername = normalizePlainText(sanitizeUsernameInput(username));
+    const normalizedPassword = sanitizePasswordInput(password).trim();
+    const normalizedReferralCode = normalizeInviteCode(referralCode);
 
     track("signup_started", { method: "username_password" });
 
@@ -347,6 +358,41 @@ export function SignupModal({ open, onClose, onSignup, onLogin, source, initialR
         </p>
         </div>
       </div>
+
+      {showTermsPopup && (
+        <div className="absolute inset-0 z-20 flex items-end sm:items-center justify-center rounded-2xl">
+          <div className="absolute inset-0 rounded-2xl bg-raw-black/80 backdrop-blur-sm" />
+          <div className="relative z-10 mx-4 mb-4 sm:mb-0 w-full max-w-sm rounded-2xl border border-raw-border/50 bg-raw-surface p-6 shadow-2xl">
+            <p className="text-center text-sm font-semibold text-raw-text">Before you join</p>
+            <p className="mt-2 text-center text-xs text-raw-silver/55 leading-relaxed">
+              By creating an account you agree to our{" "}
+              <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-raw-gold/80 underline hover:text-raw-gold">
+                Terms of Service
+              </a>{" "}
+              and{" "}
+              <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-raw-gold/80 underline hover:text-raw-gold">
+                Privacy Policy
+              </a>.
+            </p>
+            <div className="mt-5 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowTermsPopup(false)}
+                className="flex-1 rounded-xl border border-raw-border/50 py-2.5 text-sm text-raw-silver/60 transition-colors hover:border-raw-border hover:text-raw-silver"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmTerms}
+                className="flex-1 rounded-xl bg-raw-gold py-2.5 text-sm font-bold text-raw-ink transition-all hover:bg-raw-gold/90"
+              >
+                I Accept
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>,
     document.body
   );
