@@ -181,11 +181,8 @@ export const CommunityRoomList = memo(function CommunityRoomList({
                           disabled={isUnlocking}
                           className="w-full rounded-xl bg-raw-gold px-2 py-2 text-xs text-raw-ink hover:bg-raw-gold/90 disabled:opacity-70"
                         >
-                          {isUnlocking ? "Opening…" : "Open Chat — Free"}
+                          {isUnlocking ? "Opening…" : "Open Chat"}
                         </Button>
-                        <p className="text-center text-[10px] text-raw-silver/40">
-                          {freeCommunitySlotsRemaining} free slot{freeCommunitySlotsRemaining === 1 ? "" : "s"} remaining
-                        </p>
                       </div>
                     );
                   }
