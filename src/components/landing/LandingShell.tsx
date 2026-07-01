@@ -1,4 +1,4 @@
-import { Suspense, lazy, useState } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BrandName } from "@/components/ui/brand-name";
 import { highlightRawWordmark } from "@/components/ui/highlightRawWordmark";
@@ -18,6 +18,7 @@ import { LandingFooter } from "@/components/landing/LandingFooter";
 import { FAQSection } from "@/components/landing/FAQSection";
 import PerforatedBackground from "@/components/ui/perforated-background";
 import type { AuthResult, User } from "@/store/types";
+import { INVITE_PARAM } from "@/lib/inviteLink";
 
 const SignupModalLazy = lazy(() =>
   import("@/components/landing/SignupModal").then((module) => ({ default: module.SignupModal }))
@@ -43,6 +44,16 @@ export default function LandingShell({
   const navigate = useNavigate();
   const [siteReady, setSiteReady] = useState(false);
   const [pendingInviteCode, setPendingInviteCode] = useState("");
+
+  // An invite link (?invite=CODE) pre-fills the code and opens signup.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const code = new URLSearchParams(window.location.search).get(INVITE_PARAM);
+    if (code) {
+      setPendingInviteCode(code.toUpperCase().replace(/\s+/g, ""));
+      setShowSignup(true);
+    }
+  }, [setShowSignup]);
 
   return (
     <div className="landing-page-shell min-h-screen overflow-x-hidden bg-raw-black">
