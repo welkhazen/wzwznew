@@ -65,10 +65,13 @@ export function DashboardStore({
               >
                 <span className="flex items-center gap-1.5">
                   <span
-                    className="h-2 w-2 rounded-full"
+                    className={`h-2 w-2 rounded-full${tier.rank === 10 ? " ring-1 ring-slate-400/60" : ""}`}
                     style={{ backgroundColor: tier.color, boxShadow: `0 0 5px ${tier.color}` }}
                   />
-                  <span className="text-[11px] font-semibold" style={{ color: tier.color }}>
+                  <span
+                    className="text-[11px] font-semibold"
+                    style={{ color: tier.rank === 10 ? "#94a3b8" : tier.color }}
+                  >
                     R{tier.rank}
                   </span>
                 </span>
