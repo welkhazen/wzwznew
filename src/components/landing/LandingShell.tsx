@@ -42,6 +42,7 @@ export default function LandingShell({
 }: LandingShellProps) {
   const navigate = useNavigate();
   const [siteReady, setSiteReady] = useState(false);
+  const [pendingInviteCode, setPendingInviteCode] = useState("");
 
   return (
     <div className="landing-page-shell min-h-screen overflow-x-hidden bg-raw-black">
@@ -119,13 +120,27 @@ export default function LandingShell({
                 <p className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-raw-silver/55 sm:text-base">
                   Join with just a username and password. No email, no phone, no real name — your people are already talking.
                 </p>
-                <button
-                  type="button"
-                  onClick={() => setShowSignup(true)}
-                  className="mt-7 inline-flex min-h-11 items-center justify-center rounded-xl border border-raw-gold/45 bg-raw-gold px-8 py-3.5 text-base font-semibold text-raw-ink transition hover:bg-raw-gold/90 sm:text-lg"
-                >
-                  Join Now
-                </button>
+
+                <div className="mx-auto mt-8 flex w-full max-w-sm flex-col gap-3 sm:flex-row sm:items-center">
+                  <input
+                    type="text"
+                    value={pendingInviteCode}
+                    onChange={(e) => setPendingInviteCode(e.target.value.toUpperCase().replace(/\s+/g, ""))}
+                    placeholder="Invitation code"
+                    maxLength={32}
+                    className="flex-1 rounded-xl border border-raw-border/40 bg-raw-black/60 px-4 py-3 text-sm text-raw-text placeholder-raw-silver/35 outline-none transition focus:border-raw-gold/60 focus:ring-1 focus:ring-raw-gold/30"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowSignup(true)}
+                    className="inline-flex min-h-11 items-center justify-center rounded-xl border border-raw-gold/45 bg-raw-gold px-7 py-3 text-base font-semibold text-raw-ink transition hover:bg-raw-gold/90 sm:whitespace-nowrap"
+                  >
+                    Join Now
+                  </button>
+                </div>
+                <p className="mt-3 text-[11px] text-raw-silver/35">
+                  Have an invitation code? Enter it above — it unlocks your account.
+                </p>
               </div>
             </section>
 
@@ -141,6 +156,7 @@ export default function LandingShell({
           onClose={() => setShowSignup(false)}
           onSignup={signup}
           onLogin={login}
+          initialReferralCode={pendingInviteCode}
         />
       </Suspense>
     </div>
