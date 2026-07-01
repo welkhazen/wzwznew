@@ -1,5 +1,7 @@
 import { Suspense, lazy, useMemo, useState } from "react";
-import { Check, ChevronDown, ChevronRight, Dices, Zap, Flame, ShieldOff, UserRound, Users, BarChart3 } from "lucide-react";
+import { Check, ChevronDown, ChevronRight, Copy, Dices, Zap, Flame, Share2, ShieldOff, Ticket, UserRound, Users, BarChart3 } from "lucide-react";
+import { readFoundingInviteCodes, buildInviteShareText } from "@/lib/foundingInvites";
+import { toast } from "@/hooks/use-toast";
 import type { Poll } from "@/store/useRawStore";
 import type { DashboardTab } from "./DashboardNav";
 import type { PersistedCommunityRecord } from "@/lib/communityChat.types";
@@ -110,6 +112,35 @@ export function DashboardHome({
   const { mode } = useTheme();
   const isLight = mode === "light";
   const [identityMenuOpen, setIdentityMenuOpen] = useState(false);
+  const [openInviteIndex, setOpenInviteIndex] = useState<number | null>(null);
+  const inviteCodes = useMemo(() => (userId ? readFoundingInviteCodes(userId) : []), [userId]);
+
+  async function handleCopyInvite(code: string) {
+    try {
+      await navigator.clipboard.writeText(code);
+      toast({ title: "Invite code copied", description: code });
+    } catch {
+      toast({ title: "Could not copy invite", description: "Select the code and copy it manually." });
+    }
+  }
+
+  async function handleShareInvite(code: string) {
+    const text = buildInviteShareText(code);
+    if (navigator.share) {
+      try {
+        await navigator.share({ text });
+        return;
+      } catch {
+        // fall through to clipboard
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      toast({ title: "Invite text copied", description: "Paste it anywhere to share." });
+    } catch {
+      toast({ title: "Could not share", description: "Copy the code manually." });
+    }
+  }
   const allCommunities = communities;
   const switcherOptions = identityOptions ?? [{ label: username, mode: "public" as const, value: null }];
 
@@ -326,6 +357,85 @@ export function DashboardHome({
           </div>
         </div>
       </section>
+
+      {/* ── Founding Invitations ── */}
+      {inviteCodes.length > 0 && (
+        <section className={`space-y-4 border-t pt-10 ${isLight ? "border-slate-200" : "border-white/5"}`}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Ticket className="size-4 text-raw-gold" />
+              <h2 className={`text-xl font-bold ${isLight ? "text-slate-950" : "text-white"}`}>Founding Invitations</h2>
+            </div>
+            <span className="rounded-full border border-raw-gold/25 bg-raw-gold/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-raw-gold/70">
+              {inviteCodes.length} total
+            </span>
+          </div>
+          <p className={`text-[13px] ${isLight ? "text-slate-500" : "text-white/40"}`}>
+            Reveal and share your exclusive invite codes with friends.
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {inviteCodes.map((code, index) => {
+              const isOpen = openInviteIndex === index;
+              return (
+                <div
+                  key={code}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setOpenInviteIndex(isOpen ? null : index)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpenInviteIndex(isOpen ? null : index); }
+                  }}
+                  className={`group relative overflow-hidden rounded-2xl border border-dashed p-4 text-left transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/45 cursor-pointer ${
+                    isLight
+                      ? "border-amber-300/60 bg-amber-50/60 hover:border-amber-400 hover:bg-amber-50"
+                      : "border-raw-gold/30 bg-raw-black/25 hover:-translate-y-0.5 hover:border-raw-gold/55 hover:bg-raw-gold/10"
+                  }`}
+                  aria-expanded={isOpen}
+                >
+                  <div className="absolute -right-6 -top-6 h-20 w-20 rounded-full bg-raw-gold/10 blur-xl opacity-0 transition-opacity group-hover:opacity-100" />
+                  <div className="relative flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-[0.18em] text-raw-gold/55">Invitation {index + 1}</p>
+                      <p className={`mt-1 text-xs ${isLight ? "text-slate-500" : "text-raw-silver/35"}`}>
+                        Tap to {isOpen ? "hide" : "reveal"}
+                      </p>
+                    </div>
+                    <Ticket className="h-7 w-7 text-raw-gold/50" />
+                  </div>
+
+                  {isOpen && (
+                    <div className={`relative mt-4 space-y-3 rounded-xl border p-3 ${isLight ? "border-slate-200 bg-white" : "border-raw-border/35 bg-raw-black/35"}`}>
+                      <code className={`block select-all break-all font-mono text-sm font-bold tracking-[0.12em] text-raw-gold`}>
+                        {code}
+                      </code>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); void handleCopyInvite(code); }}
+                          className={`inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-[11px] font-semibold transition-colors ${
+                            isLight
+                              ? "border-slate-200 text-slate-600 hover:border-amber-400 hover:text-amber-700"
+                              : "border-raw-border/40 text-raw-silver/65 hover:border-raw-gold/40 hover:text-raw-gold"
+                          }`}
+                        >
+                          <Copy className="h-3.5 w-3.5" /> Copy
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); void handleShareInvite(code); }}
+                          className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-raw-gold px-3 py-2 text-[11px] font-bold text-raw-ink transition-opacity hover:opacity-90"
+                        >
+                          <Share2 className="h-3.5 w-3.5" /> Share
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
     </div>
   );
