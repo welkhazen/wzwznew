@@ -246,9 +246,10 @@ interface LootSpinProps {
   ownedAvatarLevels: Set<number>;
   userId: string;
   onAvatarPurchased: (level: number) => void;
+  onUnlockAvatar: (level: number) => Promise<boolean>;
 }
 
-export function LootSpin({ tokenBalance, avatarCatalog, ownedAvatarLevels, userId, onAvatarPurchased }: LootSpinProps) {
+export function LootSpin({ tokenBalance, avatarCatalog, ownedAvatarLevels, userId, onAvatarPurchased, onUnlockAvatar }: LootSpinProps) {
   const [result, setResult] = useState<SpinResult | null>(null);
   const [isClaiming, setIsClaiming] = useState(false);
   const ownedImageKeys = ownedAvatarImageKeys(avatarCatalog, ownedAvatarLevels);
@@ -271,6 +272,15 @@ export function LootSpin({ tokenBalance, avatarCatalog, ownedAvatarLevels, userI
     return acc;
   }, {});
 
+  const handleSpinStart = async () => {
+    try {
+      const balance = await spendTokens(userId, SPIN_COST);
+      updateTokenBalanceCache(userId, balance);
+    } catch {
+      toast({ title: "Couldn't charge tokens", description: "Check your balance and try again." });
+    }
+  };
+
   const handleSpinEnd = (prize: WheelPrize) => {
     const tier = RANK_TIERS.find((t) => String(t.rank) === prize.id) ?? RANK_TIERS[0];
     const seenPrizeImageKeys = new Set<string>();
@@ -292,7 +302,18 @@ export function LootSpin({ tokenBalance, avatarCatalog, ownedAvatarLevels, userI
     if (!result?.wonAvatar || isClaiming) return;
     setIsClaiming(true);
     try {
-      onAvatarPurchased(result.wonAvatar.level);
+      const ok = await onUnlockAvatar(result.wonAvatar.level);
+      if (ok) {
+        onAvatarPurchased(result.wonAvatar.level);
+        toast({ title: "Avatar claimed!", description: `${avatarName(result.wonAvatar)} is now in your inventory.` });
+        setResult(null);
+      }
+    } catch (err) {
+      if (err instanceof Error && err.message.startsWith("SUPPLY_EXHAUSTED")) {
+        toast({ title: "Sold out", description: "This rank tier just sold out. Your spin stands — try again." });
+      } else {
+        toast({ title: "Claim failed", description: "Something went wrong. Try again." });
+      }
     } finally {
       setIsClaiming(false);
     }
@@ -313,6 +334,7 @@ export function LootSpin({ tokenBalance, avatarCatalog, ownedAvatarLevels, userI
         <WheelOfFortune
           prizes={wheelPrizes}
           prizeWeights={prizeWeights}
+          onSpinStart={handleSpinStart}
           onSpinEnd={handleSpinEnd}
           disabled={!canSpin || !!result}
           radius={145}
