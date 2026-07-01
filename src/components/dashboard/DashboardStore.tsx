@@ -1,8 +1,9 @@
-import { Suspense, lazy } from "react";
-import { Store } from "lucide-react";
+import { Suspense, lazy, useState } from "react";
+import { Store, Wand2 } from "lucide-react";
 import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
 import { RANK_TIERS, RANK_TIER_PRICING } from "@/lib/avatarRarity";
 import { AVATAR_RANK_LABELS } from "@/lib/avatarRank";
+import { AvatarCustomRequestModal } from "@/components/dashboard/AvatarCustomRequestModal";
 import TokenImage from "@/assets/tokens.webp";
 
 const AvatarShop = lazy(() =>
@@ -33,6 +34,8 @@ export function DashboardStore({
   userId,
   userName,
 }: DashboardStoreProps) {
+  const [requestModalOpen, setRequestModalOpen] = useState(false);
+
   return (
     <div className="space-y-8">
       <header>
@@ -58,6 +61,7 @@ export function DashboardStore({
           {RANK_TIERS.map((tier) => {
             const pricing = RANK_TIER_PRICING[tier.rank];
             const label = AVATAR_RANK_LABELS[tier.rank] ?? `R${tier.rank}`;
+            const isC1 = tier.rank === 12;
             return (
               <div
                 key={tier.rank}
@@ -76,13 +80,27 @@ export function DashboardStore({
                   </span>
                 </span>
                 <span className="text-[11px] text-raw-silver/60">{label}</span>
-                <span className="flex items-center justify-center gap-1 text-[11px] font-semibold text-raw-gold">
-                  <img src={TokenImage} alt="" className="h-3 w-3 object-contain" />
-                  {pricing.price.toLocaleString()}
-                </span>
-                <span className="text-right text-[11px] text-raw-silver/50">
-                  {pricing.maxOwners === null ? "∞" : `≤ ${pricing.maxOwners.toLocaleString()}`}
-                </span>
+                {isC1 ? (
+                  <span className="col-span-2 flex justify-end">
+                    <button
+                      onClick={() => setRequestModalOpen(true)}
+                      className="flex items-center gap-1.5 rounded-full border border-raw-gold/35 bg-raw-gold/10 px-3 py-1 text-[10px] text-raw-gold transition hover:bg-raw-gold/20"
+                    >
+                      <Wand2 className="h-3 w-3" />
+                      Request Design
+                    </button>
+                  </span>
+                ) : (
+                  <>
+                    <span className="flex items-center justify-center gap-1 text-[11px] font-semibold text-raw-gold">
+                      <img src={TokenImage} alt="" className="h-3 w-3 object-contain" />
+                      {pricing.price.toLocaleString()}
+                    </span>
+                    <span className="text-right text-[11px] text-raw-silver/50">
+                      {pricing.maxOwners === null ? "∞" : `≤ ${pricing.maxOwners.toLocaleString()}`}
+                    </span>
+                  </>
+                )}
               </div>
             );
           })}
@@ -119,6 +137,13 @@ export function DashboardStore({
       </section>
 
       {/* Personality Insights moved to the Profile tab. */}
+
+      <AvatarCustomRequestModal
+        userId={userId}
+        userName={userName}
+        isOpen={requestModalOpen}
+        onClose={() => setRequestModalOpen(false)}
+      />
     </div>
   );
 }
