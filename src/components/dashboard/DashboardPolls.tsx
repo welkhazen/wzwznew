@@ -251,11 +251,6 @@ export function DashboardPolls({
     [dailyPollDayKey, dailyPollLimit, polls]
   );
 
-  const unseenPolls = useMemo(
-    () => dailyPolls.filter((p) => !answeredTodayIds.has(p.id)),
-    [dailyPolls, answeredTodayIds]
-  );
-
   const answeredPolls = useMemo(
     () => dailyPolls.filter((p) => answeredTodayIds.has(p.id)),
     [dailyPolls, answeredTodayIds]
@@ -283,15 +278,11 @@ export function DashboardPolls({
   const localAnsweredCount = answeredTodayIds.size;
   const showMorePollsPaywall = (isDailyPollLimitReached || localAnsweredCount >= dailyPollLimit) && dailyPollLimit > 0;
 
-  // Once the daily limit is hit (server or local skips), show today's answered polls.
-  // While still under the limit, show unseen polls capped at the daily limit.
-  const displayPolls = showMorePollsPaywall
-    ? answeredPolls
-    : unseenPolls.length > 0
-      ? unseenPolls
-      : answeredPolls.length > 0
-        ? answeredPolls
-        : dailyPolls;
+  // The day's polls are a fixed deck you can move through freely (answered or
+  // not); only once every poll is answered does the paywall/unlock CTA take
+  // over. Filtering to unanswered here made the deck shrink mid-navigation and
+  // stranded users before they could reach 7/7.
+  const displayPolls = showMorePollsPaywall ? answeredPolls : dailyPolls;
 
   useEffect(() => {
     if (currentPollIndex >= displayPolls.length && displayPolls.length > 0) {
@@ -379,9 +370,7 @@ export function DashboardPolls({
   const currentComments = currentPoll ? historyComments[currentPoll.id] ?? [] : [];
   const currentOptions = currentPoll ? resolveYesNoOptions(currentPoll) : null;
   const showVoteHint = currentPollIndex === 0 && !hasVotedCurrent && !hasSeenVoteHint;
-  const progressIndex = showMorePollsPaywall
-    ? Math.min(currentPollIndex, dailyPollLimit - 1)
-    : Math.min(localAnsweredCount + currentPollIndex, dailyPollLimit - 1);
+  const progressIndex = Math.min(currentPollIndex, dailyPollLimit - 1);
 
   const handleVote = (pollId: string, optionId: string) => {
     setHasSeenVoteHint(true);
