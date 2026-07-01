@@ -4,12 +4,13 @@ import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { BrandName } from "@/components/ui/brand-name";
 import { submitDonationInterest } from "@/backend/supabase/controllers/donationInterestController";
 import { moderateUserText, getUserTextModerationMessage } from "@/lib/inputSecurity";
-import { toast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 export default function WhyDonate() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const { toast } = useToast();
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
