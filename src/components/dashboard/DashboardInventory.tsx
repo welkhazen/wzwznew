@@ -3,12 +3,12 @@ import { Archive, Lock, Sparkles, Wand2 } from "lucide-react";
 import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { WheelOfFortune, type WheelPrize } from "@/components/wheel/WheelOfFortune";
 import { RARITY_CONFIG, RANK_TIERS, RANK_TIER_PRICING } from "@/lib/avatarRarity";
-import type { AvatarRarity } from "@/lib/avatarRarity";
 import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
 import { avatarDisplayName, avatarIdFromImageSrc, canonicalAvatarImageId } from "@/config/avatarNames";
 import TokenImage from "@/assets/tokens.webp";
 import { spendTokens } from "@/lib/api/tokens";
 import { getAvatarRank, hasAvatarRank } from "@/lib/avatarRank";
+import { getEligibleSpinAvatars, resolveAvatarCatalogLevel } from "@/lib/avatarSpin";
 import { toast } from "@/hooks/use-toast";
 import { AvatarCustomRequestModal } from "./AvatarCustomRequestModal";
 
@@ -252,7 +252,6 @@ interface LootSpinProps {
 export function LootSpin({ tokenBalance, avatarCatalog, ownedAvatarLevels, userId, onAvatarPurchased, onUnlockAvatar }: LootSpinProps) {
   const [result, setResult] = useState<SpinResult | null>(null);
   const [isClaiming, setIsClaiming] = useState(false);
-  const ownedImageKeys = ownedAvatarImageKeys(avatarCatalog, ownedAvatarLevels);
 
   const canSpin = tokenBalance >= SPIN_COST;
 
@@ -283,28 +282,23 @@ export function LootSpin({ tokenBalance, avatarCatalog, ownedAvatarLevels, userI
 
   const handleSpinEnd = (prize: WheelPrize) => {
     const tier = RANK_TIERS.find((t) => String(t.rank) === prize.id) ?? RANK_TIERS[0];
-    const seenPrizeImageKeys = new Set<string>();
-    const eligible = avatarCatalog.filter(
-      (avatar) => {
-        const imageKey = avatarImageKey(avatar);
-        if ((avatar.rarity as AvatarRarity) !== tier.rarity || ownedAvatarLevels.has(avatar.level) || ownedImageKeys.has(imageKey) || seenPrizeImageKeys.has(imageKey)) {
-          return false;
-        }
-        seenPrizeImageKeys.add(imageKey);
-        return true;
-      },
-    );
+    const eligible = getEligibleSpinAvatars(avatarCatalog, tier.rank, ownedAvatarLevels);
     const won = eligible.length > 0 ? eligible[Math.floor(Math.random() * eligible.length)] : undefined;
     setResult({ ...tier, wonAvatar: won });
   };
 
   const handleClaim = async () => {
     if (!result?.wonAvatar || isClaiming) return;
+    const wonLevel = resolveAvatarCatalogLevel(avatarCatalog, result.wonAvatar.id);
+    if (wonLevel === null) {
+      toast({ title: "Claim failed", description: "This avatar is not in the current catalog. Try again." });
+      return;
+    }
     setIsClaiming(true);
     try {
-      const ok = await onUnlockAvatar(result.wonAvatar.level);
+      const ok = await onUnlockAvatar(wonLevel);
       if (ok) {
-        onAvatarPurchased(result.wonAvatar.level);
+        onAvatarPurchased(wonLevel);
         toast({ title: "Avatar claimed!", description: `${avatarName(result.wonAvatar)} is now in your inventory.` });
         setResult(null);
       }
