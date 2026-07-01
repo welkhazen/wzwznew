@@ -1,3 +1,5 @@
+import { buildInviteUrl } from "@/lib/inviteLink";
+
 export const FOUNDING_INVITES_STORAGE_PREFIX = "raw.founding-invites";
 export const FOUNDING_INVITE_COUNT = 2;
 
@@ -55,7 +57,7 @@ export function persistFoundingInviteCodes(userId: string, codes: string[]): voi
 }
 
 export function buildInviteShareText(code: string): string {
-  return `Here is an exclusive invitation code to enter raW. Use this during signup: ${code}`;
+  return `You've been invited to join raW.\n\nThis invitation is exclusive to you. Click the link below and your invitation code will be applied automatically during sign up.\n\n${buildInviteUrl(code)}`;
 }
 
 /**
