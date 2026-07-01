@@ -1,6 +1,7 @@
 import { supabase } from '../client';
 import type { UserRow, UserRole } from '../models/user';
 import { getUserFavoriteCommunities } from './userExtrasController';
+import type { OnboardingStep } from '@/store/types';
 
 export async function isUsernameTaken(username: string): Promise<boolean> {
   const { data, error } = await supabase
@@ -111,6 +112,34 @@ export async function saveOnboardingIdentities(publicUsername: string, privateUs
     if (result?.error === 'public_username_taken') throw new Error('Public username is already taken.');
     if (result?.error === 'private_username_taken') throw new Error('Private username is already taken.');
     throw new Error('Choose usernames with 3-24 letters, numbers, dots, dashes, or underscores.');
+  }
+}
+
+export interface OnboardingProgress {
+  completed: boolean;
+  step: OnboardingStep;
+  answeredPollIds: string[];
+  selectedCommunityIds: string[];
+}
+
+export async function loadOnboardingProgress(): Promise<OnboardingProgress | null> {
+  const { data, error } = await supabase.rpc('get_onboarding_progress');
+  if (error) throw error;
+  const result = data as { ok?: boolean; progress?: OnboardingProgress; error?: string } | null;
+  if (!result?.ok) return null;
+  return result.progress ?? null;
+}
+
+export async function saveOnboardingProgress(progress: Partial<Omit<OnboardingProgress, 'completed'>>): Promise<void> {
+  const { data, error } = await supabase.rpc('save_onboarding_progress', {
+    p_step: progress.step ?? null,
+    p_answered_poll_ids: progress.answeredPollIds ?? null,
+    p_selected_community_ids: progress.selectedCommunityIds ?? null,
+  });
+  if (error) throw error;
+  const result = data as { ok?: boolean; error?: string } | null;
+  if (!result?.ok && result?.error !== 'auth_migration_required') {
+    throw new Error(result?.error ?? 'Could not save onboarding progress.');
   }
 }
 
