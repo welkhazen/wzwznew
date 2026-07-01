@@ -1,82 +1,40 @@
-import { useState, useEffect } from "react";
-import { createPortal } from "react-dom";
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, X, Lock } from "lucide-react";
+import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { BrandName } from "@/components/ui/brand-name";
-
-const DONATION_AMOUNTS = [5, 10, 25, 50];
-
-function DonationModal({ amount, onClose }: { amount: number; onClose: () => void }) {
-  useEffect(() => {
-    document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = ""; };
-  }, []);
-
-  return createPortal(
-    <div
-      className="fixed inset-0 z-[9999] flex items-end justify-center sm:items-center p-0 sm:p-4"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-    >
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-md rounded-t-3xl sm:rounded-3xl border border-raw-gold/30 bg-raw-black overflow-y-auto max-h-[92dvh] sm:max-h-[90vh]">
-        <div className="p-5 sm:p-6">
-          {/* header */}
-          <div className="mb-5 flex items-center justify-between">
-            <h3 className="font-display text-lg tracking-wide text-raw-text">Donations coming soon</h3>
-            <button
-              onClick={onClose}
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-raw-border/40 text-raw-silver/60 transition hover:border-raw-gold/40 hover:text-raw-text"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-
-          {/* order summary */}
-          <div className="mb-5 rounded-xl border border-raw-gold/25 bg-raw-gold/5 p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-raw-silver/50">Donation</p>
-            <div className="mt-2 flex items-baseline gap-1">
-              <span className="font-display text-3xl font-bold text-raw-gold">${amount}</span>
-              <span className="text-sm text-raw-silver/50">one-time</span>
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-raw-border/40 bg-raw-surface/25 p-4">
-            <div className="flex items-start gap-3">
-              <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-raw-gold/10 text-raw-gold">
-                <Lock className="h-4 w-4" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-raw-text">Donation payments are not available yet.</p>
-                <p className="mt-1 text-xs leading-relaxed text-raw-silver/50">
-                  We are not collecting card details right now. This page will support donations once checkout is ready.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* submit */}
-          <button
-            disabled
-            className="mt-6 w-full cursor-not-allowed rounded-full bg-raw-gold/20 py-3.5 text-base font-semibold text-raw-gold/55"
-          >
-            Coming Soon
-          </button>
-
-          {/* security note */}
-          <p className="mt-3 flex items-center justify-center gap-1.5 text-[11px] text-raw-silver/40">
-            <Lock className="h-3 w-3" />
-            No payment details can be entered
-          </p>
-        </div>
-      </div>
-    </div>,
-    document.body
-  );
-}
+import { createDonationRequest } from "@/lib/adminData";
+import { moderateUserText, getUserTextModerationMessage } from "@/lib/inputSecurity";
+import { toast } from "@/components/ui/use-toast";
 
 export default function WhyDonate() {
-  const [selectedAmount, setSelectedAmount] = useState(10);
-  const [modalOpen, setModalOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const nameMod = moderateUserText(name);
+    const msgMod = moderateUserText(message);
+    if (!nameMod.allowed) {
+      toast({ title: "Name blocked", description: getUserTextModerationMessage(nameMod) });
+      return;
+    }
+    if (!msgMod.allowed) {
+      toast({ title: "Message blocked", description: getUserTextModerationMessage(msgMod) });
+      return;
+    }
+    setSubmitting(true);
+    try {
+      createDonationRequest(nameMod.text, email, msgMod.text);
+      setSubmitted(true);
+    } catch {
+      toast({ title: "Something went wrong", description: "Please try again." });
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-raw-black">
@@ -105,20 +63,18 @@ export default function WhyDonate() {
         </div>
 
         <div className="space-y-12">
-          {/* Mission Section */}
+          {/* Mission */}
           <section>
             <h2 className="mb-4 text-2xl font-semibold text-raw-text">Our Mission</h2>
             <p className="text-raw-silver/70">
-              {/* Add your mission statement and explanation here */}
               Placeholder: Describe the purpose and mission of raW
             </p>
           </section>
 
-          {/* Data/Stats Section */}
+          {/* Stats */}
           <section>
             <h2 className="mb-4 text-2xl font-semibold text-raw-text">Impact by the Numbers</h2>
             <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3">
-              {/* Add your stats/data cards here */}
               <div className="rounded-lg border border-raw-border/30 bg-raw-black/50 p-6">
                 <div className="text-3xl font-bold text-raw-gold">—</div>
                 <p className="mt-2 text-sm text-raw-silver/60">Metric placeholder</p>
@@ -126,70 +82,95 @@ export default function WhyDonate() {
             </div>
           </section>
 
-          {/* How Donations Help */}
+          {/* Benefits */}
           <section>
             <h2 className="mb-4 text-2xl font-semibold text-raw-text">How Your Donation Helps</h2>
             <ul className="space-y-3 text-raw-silver/70">
-              <li className="flex gap-3">
-                <span className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-raw-gold/20 text-xs font-bold text-raw-gold">
-                  •
-                </span>
-                <span>Placeholder: First benefit</span>
-              </li>
-              <li className="flex gap-3">
-                <span className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-raw-gold/20 text-xs font-bold text-raw-gold">
-                  •
-                </span>
-                <span>Placeholder: Second benefit</span>
-              </li>
-              <li className="flex gap-3">
-                <span className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-raw-gold/20 text-xs font-bold text-raw-gold">
-                  •
-                </span>
-                <span>Placeholder: Third benefit</span>
-              </li>
+              {["First benefit", "Second benefit", "Third benefit"].map((b) => (
+                <li key={b} className="flex gap-3">
+                  <span className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-raw-gold/20 text-xs font-bold text-raw-gold">•</span>
+                  <span>Placeholder: {b}</span>
+                </li>
+              ))}
             </ul>
           </section>
 
-          {/* CTA */}
-          <section className="rounded-lg border border-raw-gold/35 bg-gradient-to-b from-raw-gold/[0.08] to-transparent p-8 text-center">
-            <h2 className="mb-4 text-2xl font-semibold text-raw-text">
-              Ready to Support <BrandName />?
+          {/* Donation interest form */}
+          <section className="rounded-lg border border-raw-gold/35 bg-gradient-to-b from-raw-gold/[0.08] to-transparent p-8">
+            <h2 className="mb-2 text-2xl font-semibold text-raw-text">
+              Interested in Supporting <BrandName />?
             </h2>
-            <p className="mb-6 text-raw-silver/70">
-              Your contribution helps us continue building the future of anonymous communication.
+            <p className="mb-8 text-raw-silver/70">
+              Donations aren't open yet. Leave your details and we'll reach out when they are.
             </p>
 
-            {/* amount selector */}
-            <div className="mb-6 flex flex-wrap justify-center gap-3">
-              {DONATION_AMOUNTS.map((amt) => (
-                <button
-                  key={amt}
-                  onClick={() => setSelectedAmount(amt)}
-                  className={`min-w-[72px] rounded-full border px-5 py-2 text-sm font-semibold transition ${
-                    selectedAmount === amt
-                      ? "border-raw-gold bg-raw-gold text-raw-black"
-                      : "border-raw-gold/40 text-raw-gold hover:border-raw-gold hover:bg-raw-gold/10"
-                  }`}
-                >
-                  ${amt}
-                </button>
-              ))}
-            </div>
+            {submitted ? (
+              <div className="flex flex-col items-center gap-3 py-6 text-center">
+                <CheckCircle2 className="h-10 w-10 text-raw-gold" />
+                <p className="text-lg font-semibold text-raw-text">Got it — thank you!</p>
+                <p className="text-sm text-raw-silver/60">We'll be in touch when donations go live.</p>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div>
+                  <label htmlFor="donate-name" className="mb-1.5 block text-sm font-medium text-raw-silver/80">
+                    Name
+                  </label>
+                  <input
+                    id="donate-name"
+                    type="text"
+                    required
+                    maxLength={80}
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Your name"
+                    className="w-full rounded border border-raw-border/40 bg-raw-black/60 px-4 py-2.5 text-sm text-raw-text placeholder-raw-silver/35 outline-none transition focus:border-raw-gold/60 focus:ring-1 focus:ring-raw-gold/30"
+                  />
+                </div>
 
-            <button
-              onClick={() => setModalOpen(true)}
-              className="inline-flex min-h-11 items-center justify-center rounded-full bg-raw-gold px-8 py-3 text-base font-semibold text-raw-black transition hover:bg-raw-gold/90"
-            >
-              Donations Coming Soon
-            </button>
+                <div>
+                  <label htmlFor="donate-email" className="mb-1.5 block text-sm font-medium text-raw-silver/80">
+                    Email
+                  </label>
+                  <input
+                    id="donate-email"
+                    type="email"
+                    required
+                    maxLength={254}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    className="w-full rounded border border-raw-border/40 bg-raw-black/60 px-4 py-2.5 text-sm text-raw-text placeholder-raw-silver/35 outline-none transition focus:border-raw-gold/60 focus:ring-1 focus:ring-raw-gold/30"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="donate-message" className="mb-1.5 block text-sm font-medium text-raw-silver/80">
+                    Message <span className="text-raw-silver/40">(optional)</span>
+                  </label>
+                  <textarea
+                    id="donate-message"
+                    rows={4}
+                    maxLength={500}
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    placeholder="Anything you'd like us to know…"
+                    className="w-full resize-none rounded border border-raw-border/40 bg-raw-black/60 px-4 py-2.5 text-sm text-raw-text placeholder-raw-silver/35 outline-none transition focus:border-raw-gold/60 focus:ring-1 focus:ring-raw-gold/30"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="inline-flex min-h-11 w-full items-center justify-center rounded-full bg-raw-gold px-8 py-3 text-base font-semibold text-raw-black transition hover:bg-raw-gold/90 disabled:opacity-60 sm:w-auto"
+                >
+                  {submitting ? "Sending…" : "Notify me when donations open"}
+                </button>
+              </form>
+            )}
           </section>
         </div>
       </main>
-
-      {modalOpen && (
-        <DonationModal amount={selectedAmount} onClose={() => setModalOpen(false)} />
-      )}
     </div>
   );
 }

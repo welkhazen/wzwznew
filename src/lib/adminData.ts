@@ -95,6 +95,16 @@ export const CHAT_REPORTS_STORAGE_KEY = "raw.chat-reports.v1";
 export const COMMUNITY_JOIN_REQUESTS_STORAGE_KEY = "raw.community-join-requests.v1";
 export const ISSUE_REPORTS_STORAGE_KEY = "raw.issue-reports.v1";
 export const AVATAR_CUSTOM_REQUESTS_STORAGE_KEY = "raw.avatar-custom-requests.v1";
+export const DONATION_REQUESTS_STORAGE_KEY = "raw.donation-requests.v1";
+
+export interface DonationRequestRecord {
+  id: string;
+  name: string;
+  email: string;
+  message: string;
+  submittedAt: string;
+  status: "pending" | "reviewed";
+}
 
 const ADMIN_USERNAMES = new Set(["admin", "rawadmin", "founder", "owner"]);
 
@@ -354,6 +364,27 @@ export function createAvatarCustomRequest(requesterId: string, requesterName: st
   };
   writeAvatarCustomRequests([request, ...readAvatarCustomRequests()]);
   return request;
+}
+
+export function readDonationRequests(): DonationRequestRecord[] {
+  return readJsonArray<DonationRequestRecord>(DONATION_REQUESTS_STORAGE_KEY);
+}
+
+export function writeDonationRequests(requests: DonationRequestRecord[]): void {
+  writeJsonArray(DONATION_REQUESTS_STORAGE_KEY, requests);
+}
+
+export function createDonationRequest(name: string, email: string, message: string): DonationRequestRecord {
+  const record: DonationRequestRecord = {
+    id: crypto.randomUUID(),
+    name: name.trim(),
+    email: email.trim(),
+    message: message.trim(),
+    submittedAt: new Date().toISOString(),
+    status: "pending",
+  };
+  writeDonationRequests([record, ...readDonationRequests()]);
+  return record;
 }
 
 function normalizeBlockedWord(word: string): string {
