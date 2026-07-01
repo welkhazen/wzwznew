@@ -5,10 +5,11 @@
 // One avatar per rank tier (R1 Grey → R11 S1). See src/lib/avatarRank.ts for the full ladder.
 // Id 35 (old "Platinum") was removed — mis-colored artwork.
 // Id 36 (Green Relic, R3) added — fills the Green tier gap.
-// Id 23 (Gold Specter, R9) replaces id 40 (Gold Warden, actually R8 Rose).
 // Id 26 (Rainbow Pulse, R11 S1) restored — previously swapped out for a second Purple slot.
-// Id 37 (Purple Hex) and id 40 (Gold Warden) removed — both were rank-duplicates.
-export const FREE_SPIN_AVATAR_IDS = [43, 52, 36, 42, 41, 13, 47, 21, 23, 20, 26] as const;
+// Id 54 (Pearl Siren, R8) replaces 21 (Rose Warden) — visually distinct R8 artwork.
+// Id 38 (Ember Core, R9) replaces 23 (Gold Specter) — male avatar at R9.
+// Id 28 (Copper Echo, R10) replaces 20 (White Mirage) — different R10 artwork.
+export const FREE_SPIN_AVATAR_IDS = [43, 52, 36, 42, 41, 13, 47, 54, 38, 28, 26] as const;
 
 // Early-signup reward pool. Must NOT overlap with FREE_SPIN_AVATAR_IDS.
 // Emptied: all four ids were retired (21 was promoted into the spin pool above).
@@ -20,7 +21,7 @@ export const EARLY_SIGNUP_AVATAR_IDS = [] as const;
 export const EARLY_SIGNUP_CUTOFF_ISO = "2026-06-07T00:00:00Z";
 
 // Avatars that have a .webp file; all others fall back to .png.
-const WEBP_AVATAR_IDS = new Set([1, 6, 8, 13, 20, 21, 26, 40, 41, 42, 43, 47, 52]);
+const WEBP_AVATAR_IDS = new Set([1, 6, 8, 13, 26, 41, 42, 43, 47, 52]);
 
 /** Helper: full /public/avatars URL for a numeric avatar id. */
 export function avatarImageSrc(id: number): string {
