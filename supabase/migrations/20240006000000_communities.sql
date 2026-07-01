@@ -38,7 +38,6 @@ CREATE TABLE community_messages (
   sender_name text NOT NULL,
   text text NOT NULL,
   created_at timestamptz NOT NULL DEFAULT now(),
-  pinned boolean NOT NULL DEFAULT false,
   reply_to_message_id uuid,
   reply_to_sender_name text,
   reply_to_text text,

@@ -61,8 +61,6 @@ vi.mock("@/backend/supabase/controllers/communityController", () => ({
 
 vi.mock("@/backend/supabase/controllers/userExtrasController", () => ({
   getUserFavoriteCommunities: vi.fn(async () => []),
-  getUserPinnedMessages: vi.fn(async () => []),
-  removeUserPinnedMessage: vi.fn(async () => undefined),
 }));
 
 vi.mock("@/lib/communityChat", () => ({

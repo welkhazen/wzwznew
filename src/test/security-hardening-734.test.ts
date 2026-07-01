@@ -50,7 +50,6 @@ describe("send_community_message RPC — blocked-word enforcement", () => {
         sender_name: "alice",
         text: "hello world",
         created_at: "2026-06-30T10:00:00Z",
-        pinned: false,
         liked_by: [],
         reply_to_message_id: null,
         reply_to_sender_name: null,
@@ -141,41 +140,6 @@ describe("user_favorite_communities — ownership enforced by RLS not by control
   });
 });
 
-describe("user_pinned_message — RLS rejection propagates", () => {
-  beforeEach(() => vi.clearAllMocks());
-
-  it("propagates error when pinning fails due to RLS", async () => {
-    const { addUserPinnedMessage } = await import(
-      "@/backend/supabase/controllers/userExtrasController"
-    );
-
-    // First call: check if already pinned — returns not found
-    const selectChain = {
-      eq: vi.fn().mockReturnThis(),
-      maybeSingle: vi.fn().mockResolvedValueOnce({ data: null, error: null }),
-    };
-    fromMock.mockReturnValueOnce({ select: vi.fn().mockReturnValue(selectChain) });
-
-    // Second call: count — returns 0
-    const countChain = {
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockResolvedValueOnce({ count: 0, error: null }),
-    };
-    fromMock.mockReturnValueOnce({ select: vi.fn().mockReturnValue(countChain) });
-
-    // Third call: upsert — RLS rejects
-    const upsertChain = { upsert: vi.fn().mockResolvedValueOnce({ error: { message: "42501: permission denied", code: "42501" } }) };
-    fromMock.mockReturnValueOnce(upsertChain);
-
-    await expect(
-      addUserPinnedMessage("other-user-id", {
-        messageId: "msg-1",
-        communityId: "community-1",
-        messageText: "hello",
-      }),
-    ).rejects.toThrow();
-  });
-});
 
 // ─── 4. communities — anon cannot insert (mock-level contract) ──────────────
 //

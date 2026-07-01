@@ -17,7 +17,6 @@ export interface CommunityChatMessageRecord {
   senderAvatarLevel?: number;
   text: string;
   createdAt: string;
-  pinned?: boolean;
   replyToMessageId?: string;
   replyToSenderName?: string;
   replyToText?: string;

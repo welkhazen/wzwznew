@@ -36,7 +36,6 @@ describe("community chat Supabase persistence", () => {
         sender_name: "alice",
         text: "hello everyone",
         created_at: "2026-06-02T09:00:00.000Z",
-        pinned: false,
         liked_by: [],
         sender_avatar_level: 3,
       },

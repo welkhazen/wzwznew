@@ -46,7 +46,6 @@ import { CommunityRequestDialog } from "@/components/dashboard/CommunityRequestD
 import { CommunityReportDialog } from "@/components/dashboard/CommunityReportDialog";
 import { CommunityPollComposerDialog } from "@/components/dashboard/CommunityPollComposerDialog";
 import { useCommunityChat } from "@/hooks/useCommunityChat";
-import { usePinnedMessages } from "@/hooks/usePinnedMessages";
 import { useCommunityAccess } from "@/hooks/useCommunityAccess";
 import { useCommunityPolls } from "@/hooks/useCommunityPolls";
 import { MAX_FAVORITE_COMMUNITIES } from "@/backend/supabase/controllers/userExtrasController";
@@ -164,7 +163,6 @@ export function DashboardCommunities({
 
   const access = useCommunityAccess(user.id);
 
-  const pins = usePinnedMessages(user.id, chat.selectedCommunity);
 
   const polls = useCommunityPolls(activeCommunityId ?? null, user.id, canManagePolls);
 
@@ -657,7 +655,7 @@ export function DashboardCommunities({
                     aria-expanded={polls.communityPollsExpanded}
                   >
                     <span className="min-w-0">
-                      <span className="block text-[10px] uppercase tracking-[0.18em] text-raw-gold/75">Polls · Pinned</span>
+                      <span className="block text-[10px] uppercase tracking-[0.18em] text-raw-gold/75">Polls</span>
                       <span className="block truncate text-sm font-semibold text-raw-text">
                         {polls.visibleCommunityPolls.length === 1 ? polls.visibleCommunityPolls[0].question : `${polls.visibleCommunityPolls.length} active polls`}
                       </span>
@@ -741,9 +739,6 @@ export function DashboardCommunities({
                 onVotePoll={polls.votePoll}
                 onRetryMessage={chat.retryMessage}
                 onLikeMessage={chat.likeMessage}
-                pinnedMessageIds={pins.ownPinnedMessageIds}
-                onPinMessage={pins.pinMessage}
-                onUnpinMessage={pins.unpinMessage}
                 onOpenMessageReport={handleOpenMessageReport}
                 onBlockMessageSender={chat.blockSender}
                 onOpenSenderProfile={chat.openSenderProfile}

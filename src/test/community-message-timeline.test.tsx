@@ -70,9 +70,6 @@ function renderTimeline(overrides: Partial<React.ComponentProps<typeof Community
     onOpenSenderProfile: vi.fn(),
     onOpenMessageReport: vi.fn(),
     onBlockMessageSender: vi.fn(),
-    pinnedMessageIds: new Set<string>(),
-    onPinMessage: vi.fn(),
-    onUnpinMessage: vi.fn(),
     ...overrides,
   };
 
@@ -143,7 +140,6 @@ describe("CommunityMessageTimeline", () => {
   it("does not show message actions for own messages", () => {
     renderTimeline({
       groupedMessages: [{ label: "Today", messages: [ownMessage] }],
-      pinnedMessageIds: new Set([ownMessage.id]),
     });
 
     expect(screen.queryByRole("button", { name: "Message actions" })).not.toBeInTheDocument();

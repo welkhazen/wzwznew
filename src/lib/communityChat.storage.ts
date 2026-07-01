@@ -1,5 +1,5 @@
 import type { CommunityChatMemberRecord, CommunityChatMessageRecord, PersistedCommunityRecord } from "./communityChat.types";
-import { ensureString, ensureBoolean } from "./communityChat.utils";
+import { ensureString } from "./communityChat.utils";
 import { toUserId } from "@/lib/adminData";
 
 export function normalizeMessage(rawMessage: unknown, communityId: string): CommunityChatMessageRecord | null {
@@ -17,7 +17,6 @@ export function normalizeMessage(rawMessage: unknown, communityId: string): Comm
     senderName,
     text: typeof candidate.text === "string" ? candidate.text : "",
     createdAt: ensureString(candidate.createdAt, new Date().toISOString()),
-    pinned: ensureBoolean(candidate.pinned),
     replyToMessageId: typeof candidate.replyToMessageId === "string" ? candidate.replyToMessageId : undefined,
     replyToSenderName: typeof candidate.replyToSenderName === "string" ? candidate.replyToSenderName : undefined,
     replyToText: typeof candidate.replyToText === "string" ? candidate.replyToText : undefined,

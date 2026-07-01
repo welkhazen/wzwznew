@@ -107,7 +107,6 @@ CREATE TABLE IF NOT EXISTS public.community_messages (
   sender_name           TEXT NOT NULL,
   text                  TEXT NOT NULL,
   created_at            TIMESTAMPTZ NOT NULL DEFAULT now(),
-  pinned                BOOLEAN NOT NULL DEFAULT false,
   reply_to_message_id   UUID,
   reply_to_sender_name  TEXT,
   reply_to_text         TEXT,

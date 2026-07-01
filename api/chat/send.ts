@@ -154,7 +154,6 @@ export default async function handler(request: Request): Promise<Response> {
       senderName: row.sender_name,
       text: row.text,
       createdAt: row.created_at,
-      pinned: row.pinned,
       replyToMessageId: row.reply_to_message_id ?? undefined,
       replyToSenderName: row.reply_to_sender_name ?? undefined,
       replyToText: row.reply_to_text ?? undefined,
