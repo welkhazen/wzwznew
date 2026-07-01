@@ -164,6 +164,17 @@ export async function getPinNotifications(userId: string): Promise<PinNotificati
   }));
 }
 
+export async function fetchFoundingInviteCodes(userId: string): Promise<string[]> {
+  const { data, error } = await supabase
+    .from('founding_invites')
+    .select('code')
+    .eq('inviter_id', userId)
+    .order('created_at', { ascending: true })
+    .limit(10);
+  if (error) throw error;
+  return (data ?? []).map((row) => row.code as string);
+}
+
 export async function registerFoundingInviteCodes(codes: string[], inviterId: string): Promise<void> {
   if (codes.length === 0) return;
   const { error } = await supabase

@@ -57,3 +57,40 @@ export function persistFoundingInviteCodes(userId: string, codes: string[]): voi
 export function buildInviteShareText(code: string): string {
   return `Here is an exclusive invitation code to enter raW. Use this during signup: ${code}`;
 }
+
+/**
+ * Supabase-first: fetches the user's canonical codes from the server,
+ * syncs them to localStorage, and only generates new codes if none exist yet.
+ * Call this instead of readFoundingInviteCodes for the initial load.
+ */
+export async function getOrSyncInviteCodes(
+  userId: string,
+  fetchFromDb: (userId: string) => Promise<string[]>,
+  registerToDb: (codes: string[], userId: string) => Promise<void>,
+): Promise<string[]> {
+  // 1. Try Supabase first — authoritative source.
+  let serverCodes: string[] = [];
+  try {
+    serverCodes = await fetchFromDb(userId);
+  } catch {
+    // Network failure — fall through to localStorage.
+  }
+
+  if (serverCodes.length > 0) {
+    // Pad to FOUNDING_INVITE_COUNT in case older accounts have fewer rows.
+    while (serverCodes.length < FOUNDING_INVITE_COUNT) {
+      serverCodes.push(createInviteCode(serverCodes.length + 1));
+    }
+    const canonical = serverCodes.slice(0, FOUNDING_INVITE_COUNT);
+    persistFoundingInviteCodes(userId, canonical);
+    // Register any newly padded codes so they're in Supabase too.
+    try { await registerToDb(canonical, userId); } catch { /* best-effort */ }
+    return canonical;
+  }
+
+  // 2. No server codes — generate, persist, register.
+  const local = readFoundingInviteCodes(userId);
+  persistFoundingInviteCodes(userId, local);
+  try { await registerToDb(local, userId); } catch { /* best-effort */ }
+  return local;
+}

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Check, Copy, Heart, MessageSquare, Mic2, Pin, Share2, Target, Ticket, Trash2, Users, X } from "lucide-react";
 import { useProfileStats } from "@/hooks/useProfileStats";
-import { registerFoundingInviteCodes, getFoundingInviteRedemptions, type PinnedMessageRecord } from "@/backend/supabase/controllers/userExtrasController";
+import { fetchFoundingInviteCodes, registerFoundingInviteCodes, getFoundingInviteRedemptions, type PinnedMessageRecord } from "@/backend/supabase/controllers/userExtrasController";
 import type { Poll } from "@/store/useRawStore";
 import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { LEVEL_THEMES, getAvatar, getPrivateAvatarLevel, privateAvatarKey } from "@/lib/avataridentity";
@@ -25,6 +25,7 @@ import {
   readFoundingInviteCodes,
   persistFoundingInviteCodes,
   buildInviteShareText,
+  getOrSyncInviteCodes,
   FOUNDING_INVITE_COUNT,
   createInviteCode,
 } from "@/lib/foundingInvites";
@@ -123,11 +124,12 @@ export function DashboardProfile({
 
   useEffect(() => {
     setOwnedInsightIds(readOwnedInsightIds(userId));
-    const codes = readFoundingInviteCodes(userId);
-    setInviteCodes(codes);
-    persistFoundingInviteCodes(userId, codes);
-    registerFoundingInviteCodes(codes, userId).catch(() => {});
+    // Load from localStorage immediately so UI isn't blank, then sync from Supabase.
+    setInviteCodes(readFoundingInviteCodes(userId));
     setOpenInviteIndex(null);
+    getOrSyncInviteCodes(userId, fetchFoundingInviteCodes, registerFoundingInviteCodes)
+      .then((codes) => setInviteCodes(codes))
+      .catch(() => {});
     getFoundingInviteRedemptions(userId)
       .then((redemptions) => {
         setRedeemedCodes(new Set(redemptions.map((r) => r.referralCode.toUpperCase())));
