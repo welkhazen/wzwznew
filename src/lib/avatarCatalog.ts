@@ -254,7 +254,7 @@ export const CANONICAL_OVERRIDES_BY_ID: Record<string, Partial<Pick<AvatarCatalo
   "avatar-51": { frame_color: "pink", rank_tier: 7 },
   "avatar-21": { frame_color: "rose", rank_tier: 8 },
   "avatar-29": { frame_color: "rose", rank_tier: 8 },
-  "avatar-31": { frame_color: "rose", rank_tier: 8 },
+  "avatar-31": { frame_color: "gold", rank_tier: 9, ring: "#facc15", glow: "#facc1580" },
   "avatar-54": { frame_color: "rose", rank_tier: 8 },
   "avatar-55": { frame_color: "rose", rank_tier: 8 },
   "avatar-23": { frame_color: "gold", rank_tier: 9 },
