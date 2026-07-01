@@ -37,6 +37,7 @@ export function SignupModal({ open, onClose, onSignup, onLogin, source, initialR
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const openedFiredRef = useRef(false);
 
   useEffect(() => {
@@ -55,6 +56,7 @@ export function SignupModal({ open, onClose, onSignup, onLogin, source, initialR
       setIsSubmitting(false);
       setShowPassword(false);
       setShowConfirmPassword(false);
+      setTermsAccepted(false);
     }
   }, [open, source]);
 
@@ -279,9 +281,28 @@ export function SignupModal({ open, onClose, onSignup, onLogin, source, initialR
               </p>
             )}
 
+            <label className="flex items-start gap-2.5 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={termsAccepted}
+                onChange={(e) => setTermsAccepted(e.target.checked)}
+                className="mt-0.5 h-4 w-4 shrink-0 accent-raw-gold cursor-pointer"
+              />
+              <span className="text-xs text-raw-silver/55 leading-relaxed">
+                I agree to the{" "}
+                <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-raw-gold/80 underline hover:text-raw-gold">
+                  Terms of Service
+                </a>{" "}
+                and{" "}
+                <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-raw-gold/80 underline hover:text-raw-gold">
+                  Privacy Policy
+                </a>
+              </span>
+            </label>
+
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || !termsAccepted}
               className="mt-2 w-full rounded-xl bg-raw-gold py-3 text-sm font-bold text-raw-ink transition-all hover:bg-raw-gold/90 hover:shadow-lg hover:shadow-raw-gold/20 disabled:cursor-not-allowed disabled:opacity-70"
             >
               {isSubmitting ? "Creating account..." : "Sign Up"}
