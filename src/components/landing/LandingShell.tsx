@@ -17,7 +17,6 @@ import { LandingPollsSection } from "@/components/landing/LandingPollsSection";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { FAQSection } from "@/components/landing/FAQSection";
 import PerforatedBackground from "@/components/ui/perforated-background";
-import { LaunchCountdown } from "@/components/ui/LaunchCountdown";
 import type { AuthResult, User } from "@/store/types";
 import { INVITE_PARAM } from "@/lib/inviteLink";
 
@@ -72,8 +71,6 @@ export default function LandingShell({
         onSignupClick={() => setShowSignup(true)}
         onDonateClick={() => navigate("/why-donate")}
       />
-      <LaunchCountdown variant="banner" />
-
       <div className="relative min-h-screen overflow-x-hidden">
         {!siteReady && (
           <div className="fixed inset-0 z-0 bg-raw-black">
