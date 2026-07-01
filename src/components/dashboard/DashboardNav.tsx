@@ -760,7 +760,7 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
               </div>
 
               <DropdownMenuItem
-                onClick={onSettingsClick}
+                onClick={() => { setProfileMenuOpen(false); onSettingsClick(); }}
                 className={cn("cursor-pointer rounded-lg px-2 py-1.5 text-xs focus:text-raw-text sm:px-3 sm:py-2.5 sm:text-sm", isEffectiveLight ? "text-slate-700 focus:bg-slate-100" : "text-raw-silver/80 focus:bg-raw-surface/80")}
               >
                 <Settings className="mr-3 h-4 w-4" />
@@ -768,7 +768,7 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
               </DropdownMenuItem>
 
               <DropdownMenuItem
-                onClick={onBillingClick}
+                onClick={() => { setProfileMenuOpen(false); onBillingClick(); }}
                 className={cn("cursor-pointer rounded-lg px-2 py-1.5 text-xs focus:text-raw-text sm:px-3 sm:py-2.5 sm:text-sm", isEffectiveLight ? "text-slate-700 focus:bg-slate-100" : "text-raw-silver/80 focus:bg-raw-surface/80")}
               >
                 <Receipt className="mr-3 h-4 w-4" />
