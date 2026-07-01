@@ -129,12 +129,8 @@ function deliveredNotificationsKey(userId: string) {
   return `${DELIVERED_NOTIFICATIONS_PREFIX}.${userId}`;
 }
 
-function notificationDayKey(date = new Date()): string {
-  return date.toISOString().slice(0, 10);
-}
-
 function seenNotificationsKey(userId: string) {
-  return `${SEEN_NOTIFICATIONS_PREFIX}.${userId}.${notificationDayKey()}`;
+  return `${SEEN_NOTIFICATIONS_PREFIX}.${userId}`;
 }
 
 function readSeenNotificationIds(userId: string): string[] {
@@ -607,9 +603,12 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
                 <div className="max-h-[60vh] overflow-y-auto sm:max-h-80">
                   {notifications.length === 0 ? (
                     <p className={cn("px-4 py-6 text-center text-sm", isEffectiveLight ? "text-slate-500" : "text-raw-silver/35")}>No notifications yet</p>
-                  ) : notifications.map((n, i) => (
-                    <div key={i} className={cn("border-b px-4 py-3 last:border-0", isEffectiveLight ? "border-slate-100" : "border-raw-border/15")}>
+                  ) : notifications.map((n, i) => {
+                    const isRead = seenNotificationIds.includes(n.id);
+                    return (
+                    <div key={i} className={cn("border-b px-4 py-3 last:border-0 transition-opacity", isEffectiveLight ? "border-slate-100" : "border-raw-border/15", isRead && "opacity-45")}>
                       <div className="flex items-center gap-2">
+                        {!isRead && <span className="h-1.5 w-1.5 rounded-full bg-raw-accent flex-shrink-0" />}
                         <span className={`text-[9px] uppercase tracking-wider font-semibold rounded-full px-2 py-0.5 ${n.type === "like" ? "bg-raw-gold/15 text-raw-gold" : "bg-raw-silver/10 text-raw-silver/60"}`}>
                           {n.type === "like" ? `♥ ${n.likeCount} like${(n.likeCount ?? 0) > 1 ? "s" : ""}` : n.type === "community" ? "New community" : n.type === "invite-claimed" ? "Code used" : "@ mention"}
                         </span>
@@ -618,7 +617,8 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
                       {n.type === "mention" && <p className={cn("mt-1 text-xs", isEffectiveLight ? "text-slate-500" : "text-raw-silver/60")}>from @{n.senderName}</p>}
                       <p className={cn("mt-1 text-sm leading-relaxed line-clamp-2", isEffectiveLight ? "text-slate-800" : "text-raw-text/80")}>{n.text}</p>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
