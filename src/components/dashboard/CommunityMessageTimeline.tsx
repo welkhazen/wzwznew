@@ -144,7 +144,7 @@ const MessageRow = memo(function MessageRow({
                 <Heart className="inline h-2 w-2 fill-current" />{likeCount}
               </span>
             )}
-            {message.deliveryStatus === "sending" && <span className="ml-1 text-raw-silver/35">Sending…</span>}
+            {message.deliveryStatus === "sending" && <span className="ml-1 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-raw-silver/35" />}
             {message.deliveryStatus === "failed" && <span className="ml-1 text-red-300/80">Failed</span>}
           </span>
         </div>
