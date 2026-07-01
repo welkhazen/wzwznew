@@ -356,6 +356,7 @@ export function createAvatarCustomRequest(requesterId: string, requesterName: st
   return request;
 }
 
+
 function normalizeBlockedWord(word: string): string {
   return word.trim().toLowerCase();
 }

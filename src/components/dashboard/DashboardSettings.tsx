@@ -10,6 +10,12 @@ import {
   UserCog,
 } from "lucide-react";
 import { AdminBlockedWordsSettings } from "@/components/dashboard/AdminBlockedWordsSettings";
+import {
+  fetchDonationInterests,
+  updateDonationInterestStatus,
+  deleteDonationInterest,
+  type DonationInterestRecord,
+} from "@/backend/supabase/controllers/donationInterestController";
 import { useToast } from "@/hooks/use-toast";
 import { changePassword, deleteAccount } from "@/backend/supabase/controllers/authController";
 import {
@@ -226,7 +232,10 @@ export function DashboardSettings({ userId, isAdmin = false, onLogout, onBackToD
           )}
 
           {section === "admin" && isAdmin && (
-            <AdminBlockedWordsSettings />
+            <div className="space-y-6">
+              <AdminBlockedWordsSettings />
+              <DonationRequestsPanel />
+            </div>
           )}
 
           {section === "security" && (
@@ -310,6 +319,83 @@ function PwField({ placeholder, value, setValue, show, setShow, danger = false }
       >
         {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
       </button>
+    </div>
+  );
+}
+
+function DonationRequestsPanel() {
+  const [requests, setRequests] = useState<DonationInterestRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchDonationInterests()
+      .then(setRequests)
+      .finally(() => setLoading(false));
+  }, []);
+
+  const markReviewed = async (id: string) => {
+    await updateDonationInterestStatus(id, "reviewed");
+    setRequests((prev) => prev.map((r) => r.id === id ? { ...r, status: "reviewed" as const } : r));
+  };
+
+  const remove = async (id: string) => {
+    await deleteDonationInterest(id);
+    setRequests((prev) => prev.filter((r) => r.id !== id));
+  };
+
+  return (
+    <div className="rounded-2xl border border-raw-border/30 bg-raw-surface/30 overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-3.5 border-b border-raw-border/20">
+        <span className="text-sm font-medium text-raw-text">
+          Donation Interest Submissions
+          {requests.length > 0 && (
+            <span className="ml-2 rounded-full bg-raw-gold/20 px-2 py-0.5 text-xs text-raw-gold">
+              {requests.filter((r) => r.status === "pending").length} pending
+            </span>
+          )}
+        </span>
+      </div>
+
+      {loading ? (
+        <p className="px-4 py-6 text-sm text-raw-silver/40">Loading…</p>
+      ) : requests.length === 0 ? (
+        <p className="px-4 py-6 text-sm text-raw-silver/40">No submissions yet.</p>
+      ) : (
+        <ul className="divide-y divide-raw-border/15">
+          {requests.map((r) => (
+            <li key={r.id} className="px-4 py-3.5 space-y-1">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-raw-text">{r.name}</p>
+                  <p className="truncate text-xs text-raw-silver/55">{r.email}</p>
+                  {r.phone && (
+                    <p className="mt-1 text-xs text-raw-silver/70">{r.phone}</p>
+                  )}
+                  <p className="mt-1 text-[10px] text-raw-silver/35">
+                    {new Date(r.submittedAt).toLocaleString()} · {r.status}
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  {r.status === "pending" && (
+                    <button
+                      onClick={() => markReviewed(r.id)}
+                      className="rounded border border-raw-gold/30 px-2.5 py-1 text-[11px] text-raw-gold transition hover:bg-raw-gold/10"
+                    >
+                      Mark reviewed
+                    </button>
+                  )}
+                  <button
+                    onClick={() => remove(r.id)}
+                    className="rounded border border-raw-border/30 px-2.5 py-1 text-[11px] text-raw-silver/50 transition hover:border-red-400/40 hover:text-red-300"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
