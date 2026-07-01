@@ -1,5 +1,5 @@
 import { BrandName } from "@/components/ui/brand-name";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface EnterRawModalProps {
   open: boolean;
@@ -14,6 +14,12 @@ interface EnterRawModalProps {
  * - Press Escape to dismiss.
  */
 export function EnterRawModal({ open, onEnter, onDismiss }: EnterRawModalProps) {
+  const [termsAccepted, setTermsAccepted] = useState(false);
+
+  useEffect(() => {
+    if (!open) setTermsAccepted(false);
+  }, [open]);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (event: KeyboardEvent) => {
@@ -54,10 +60,30 @@ export function EnterRawModal({ open, onEnter, onDismiss }: EnterRawModalProps) 
           Your answers are locked in. Step inside to meet your circles.
         </p>
 
+        <label className="mt-5 flex cursor-pointer items-start justify-center gap-2.5 text-left sm:mt-6">
+          <input
+            type="checkbox"
+            checked={termsAccepted}
+            onChange={(e) => setTermsAccepted(e.target.checked)}
+            className="mt-0.5 h-4 w-4 shrink-0 accent-raw-gold cursor-pointer"
+          />
+          <span className="text-xs leading-relaxed text-raw-silver/55">
+            I agree to the{" "}
+            <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-raw-gold/80 underline hover:text-raw-gold">
+              Terms of Service
+            </a>{" "}
+            and{" "}
+            <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-raw-gold/80 underline hover:text-raw-gold">
+              Privacy Policy
+            </a>
+          </span>
+        </label>
+
         <button
           type="button"
           onClick={onEnter}
-          className="enter-raw-pulse mt-5 inline-flex min-h-[48px] w-full items-center justify-center rounded-xl bg-raw-gold px-5 py-3 text-sm font-semibold uppercase tracking-[0.16em] text-raw-ink transition-transform hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/80 sm:mt-6 sm:w-auto sm:px-8 sm:tracking-[0.18em]"
+          disabled={!termsAccepted}
+          className="enter-raw-pulse mt-4 inline-flex min-h-[48px] w-full items-center justify-center rounded-xl bg-raw-gold px-5 py-3 text-sm font-semibold uppercase tracking-[0.16em] text-raw-ink transition-transform hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/80 disabled:cursor-not-allowed disabled:bg-raw-border/40 disabled:text-raw-silver/40 disabled:shadow-none sm:w-auto sm:px-8 sm:tracking-[0.18em]"
         >
           Enter raW
         </button>
