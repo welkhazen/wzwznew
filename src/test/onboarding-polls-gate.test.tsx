@@ -42,7 +42,7 @@ const polls: Poll[] = [
 ];
 
 function renderOnboardingStep(
-  onboardingStep: "polls" | "communities" | "avatar" | "marketplace",
+  onboardingStep: "polls" | "communities" | "avatar",
   answeredPollIds = new Set<string>(),
   selectedCommunityIds: string[] = [],
 ) {
@@ -124,26 +124,9 @@ describe("onboarding polls gate", () => {
     expect(onSetOnboardingStep).toHaveBeenCalledWith("avatar");
   });
 
-  it("continues from avatar to coming soon after required steps are done", () => {
-    const { onSetOnboardingStep } = renderOnboardingStep(
-      "avatar",
-      new Set(["poll-1", "poll-2", "core-safety", "core-moderation"]),
-      ["lnt"],
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: /continue to coming soon/i }));
-    expect(onSetOnboardingStep).toHaveBeenCalledWith("marketplace");
-  });
-
-  it("blocks completing onboarding on coming soon until required steps are done", () => {
-    renderOnboardingStep("marketplace");
-
-    expect(screen.getByRole("button", { name: /complete onboarding/i })).toBeDisabled();
-  });
-
-  it("blocks continuing past avatar until polls and community are done", () => {
+  it("blocks completing onboarding on avatar until polls and community are done", () => {
     renderOnboardingStep("avatar");
 
-    expect(screen.getByRole("button", { name: /continue to coming soon/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /complete onboarding/i })).toBeDisabled();
   });
 });

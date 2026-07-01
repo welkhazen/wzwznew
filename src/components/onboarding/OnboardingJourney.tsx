@@ -130,7 +130,7 @@ function findOwnedSpinResult(ownedAvatarIds: Set<string>): WheelPoolEntry | null
   return null;
 }
 
-const STEP_ORDER: OnboardingStep[] = ["spin", "username", "polls", "communities", "avatar", "marketplace"];
+const STEP_ORDER: OnboardingStep[] = ["spin", "username", "polls", "communities", "avatar"];
 const STEP_LABELS: Record<OnboardingStep, string> = {
   spin: "spin",
   username: "username",
@@ -140,7 +140,7 @@ const STEP_LABELS: Record<OnboardingStep, string> = {
   polls: "polls",
   profile: "profile",
   communities: "communities",
-  marketplace: "coming soon",
+  marketplace: "insights",
   ready: "ready",
 };
 const FREE_ONBOARDING_AVATAR_COUNT = 8;
@@ -963,11 +963,20 @@ export function OnboardingJourney({
                   const blocked = lockedPreview || !canCompleteOnboarding;
                   return (
                     <button
-                      onClick={goToNextStep}
+                      onClick={() => {
+                        setCommunitySaveError(null);
+                        track("onboarding_completed", {
+                          total_duration_ms: Date.now() - stepStartTimeRef.current,
+                          polls_answered: answeredCount,
+                          communities_selected: selectedCommunityIds.length,
+                          source: "complete_onboarding_button",
+                        });
+                        setEnterRawOpen(true);
+                      }}
                       disabled={blocked}
                       className="rounded-xl bg-raw-gold px-5 py-3 text-sm font-semibold text-raw-ink transition-opacity disabled:cursor-not-allowed disabled:bg-raw-border/40 disabled:text-raw-silver/40 sm:py-2.5"
                     >
-                      Continue to coming soon
+                      Complete onboarding
                     </button>
                   );
                 })()}
@@ -1338,46 +1347,6 @@ export function OnboardingJourney({
                   className="rounded-xl bg-raw-gold px-5 py-3 text-sm font-semibold text-raw-ink transition-opacity disabled:cursor-not-allowed disabled:opacity-40 sm:py-2.5"
                 >
                   Continue to avatar
-                </button>
-              </div>
-            </section>
-          )}
-
-          {onboardingStep === "marketplace" && (
-            <section>
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h2 className="font-display text-lg tracking-wide text-raw-text sm:text-xl">
-                    VI. Coming soon
-                  </h2>
-                  <p className="mt-2 text-xs leading-relaxed text-raw-silver/55 sm:text-sm">
-                    Personality insight is coming soon. Finish onboarding now and you can unlock it later.
-                  </p>
-                </div>
-              </div>
-
-              {communitySaveError ? (
-                <p className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-200">
-                  {communitySaveError}
-                </p>
-              ) : null}
-              <div className="mt-6 flex items-center justify-between gap-3 sm:mt-8">
-                <BackButton onClick={goToPreviousStep} />
-                <button
-                  onClick={() => {
-                    setCommunitySaveError(null);
-                    track("onboarding_completed", {
-                      total_duration_ms: Date.now() - stepStartTimeRef.current,
-                      polls_answered: answeredCount,
-                      communities_selected: selectedCommunityIds.length,
-                      source: "complete_onboarding_button",
-                    });
-                    setEnterRawOpen(true);
-                  }}
-                  disabled={!canCompleteOnboarding}
-                  className="rounded-xl bg-raw-gold px-5 py-3 text-sm font-semibold text-raw-ink transition-opacity disabled:cursor-not-allowed disabled:opacity-40 sm:py-2.5"
-                >
-                  Complete onboarding
                 </button>
               </div>
             </section>
