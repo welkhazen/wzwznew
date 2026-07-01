@@ -171,6 +171,7 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
   const [notifOpen, setNotifOpen] = useState(false);
   const [seenNotificationIds, setSeenNotificationIds] = useState<string[]>(() => readSeenNotificationIds(userId));
   const [appearanceOpen, setAppearanceOpen] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [issueType, setIssueType] = useState(ISSUE_TYPE_OPTIONS[0]);
   const [issueDetails, setIssueDetails] = useState("");
@@ -695,7 +696,7 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
             })}
           </div>
 
-          <DropdownMenu onOpenChange={(open) => { if (!open) setAppearanceOpen(false); }}>
+          <DropdownMenu open={profileMenuOpen} onOpenChange={(open) => { setProfileMenuOpen(open); if (!open) setAppearanceOpen(false); }}>
             <DropdownMenuTrigger asChild>
               <button
                 className="flex items-center transition-opacity hover:opacity-80"
@@ -717,7 +718,7 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
               )}
             >
               <button
-                onClick={onProfileClick}
+                onClick={() => { setProfileMenuOpen(false); onProfileClick?.(); }}
                 className={cn(
                   "mb-1 flex w-full items-center gap-2 rounded-xl border px-2 py-1 text-left transition-colors sm:gap-3 sm:px-3 sm:py-2",
                   isEffectiveLight
