@@ -1,0 +1,50 @@
+name: Daily repo scan
+
+on:
+  schedule:
+    # 21:00 Asia/Beirut while Beirut is on daylight saving time (UTC+3).
+    # GitHub cron is UTC-only; adjust to 19:00 UTC if you want 21:00 during winter (UTC+2).
+    - cron: '0 18 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: daily-repo-scan-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    name: Daily 24h repo scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run daily scan
+        env:
+          DAILY_SCAN_REMOTE: origin
+          DAILY_SCAN_BRANCH: main
+          DAILY_SCAN_WINDOW_HOURS: 24
+          DAILY_SCAN_RUN_CHECKS: '1'
+        run: npm run daily:scan:checks
+
+      - name: Upload scan report
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-repo-scan
+          path: daily-scan-report.md
+          if-no-files-found: error
