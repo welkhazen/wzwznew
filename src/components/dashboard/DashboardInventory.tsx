@@ -4,9 +4,10 @@ import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { WheelOfFortune, type WheelPrize } from "@/components/wheel/WheelOfFortune";
 import { RARITY_CONFIG, RANK_TIERS, RANK_TIER_PRICING } from "@/lib/avatarRarity";
 import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
-import { avatarDisplayName, avatarIdFromImageSrc, canonicalAvatarImageId } from "@/config/avatarNames";
+import { avatarDisplayName, avatarIdFromImageSrc } from "@/config/avatarNames";
 import TokenImage from "@/assets/tokens.webp";
 import { spendTokens } from "@/lib/api/tokens";
+import { avatarImageKey, catalogLevelAt, isCatalogAvatarOwned, ownedAvatarImageKeys } from "@/lib/avatarOwnership";
 import { getAvatarRank, hasAvatarRank } from "@/lib/avatarRank";
 import { getEligibleSpinAvatars, resolveAvatarCatalogLevel } from "@/lib/avatarSpin";
 import { toast } from "@/hooks/use-toast";
@@ -34,22 +35,9 @@ const AVATAR_SHOP_PRICE = 50;
 const TOKEN_BALANCE_STORAGE_PREFIX = "raw.polls.token-balance";
 const TOKEN_BALANCE_UPDATED_EVENT = "raw:token-balance-updated";
 
-function avatarImageKey(avatar: AvatarCatalogItem): string {
-  const imageId = avatarIdFromImageSrc(avatar.imageSrc);
-  return imageId === null ? String(avatar.imageSrc ?? avatar.id) : String(canonicalAvatarImageId(imageId));
-}
-
 function avatarName(avatar: AvatarCatalogItem): string {
   const imageId = avatarIdFromImageSrc(avatar.imageSrc);
   return imageId === null ? avatar.name : avatarDisplayName(imageId);
-}
-
-function ownedAvatarImageKeys(avatarCatalog: AvatarCatalogItem[], ownedAvatarLevels: Set<number>): Set<string> {
-  return new Set(
-    avatarCatalog
-      .filter((avatar) => ownedAvatarLevels.has(avatar.level))
-      .map(avatarImageKey),
-  );
 }
 
 function updateTokenBalanceCache(userId: string, balance: number): void {
@@ -76,10 +64,10 @@ export function AvatarShop({
   const seenShopImageKeys = new Set<string>();
 
   const purchasable = avatarCatalog.filter(
-    (avatar) => {
+    (avatar, index) => {
       const imageKey = avatarImageKey(avatar);
       const isPaid = avatar.price !== "Free" && avatar.price !== "0" && Number(avatar.price) > 0;
-      if (!isPaid || ownedAvatarLevels.has(avatar.level) || ownedImageKeys.has(imageKey) || seenShopImageKeys.has(imageKey)) {
+      if (!isPaid || isCatalogAvatarOwned(index, ownedAvatarLevels) || ownedImageKeys.has(imageKey) || seenShopImageKeys.has(imageKey)) {
         return false;
       }
       seenShopImageKeys.add(imageKey);
@@ -138,7 +126,8 @@ export function AvatarShop({
       )}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
       {visibleAvatars.map((avatar) => {
-        const owned = ownedAvatarLevels.has(avatar.level);
+        const catalogLevel = resolveAvatarCatalogLevel(avatarCatalog, avatar.id) ?? avatar.level;
+        const owned = ownedAvatarLevels.has(catalogLevel);
         const rank = hasAvatarRank(avatar) ? getAvatarRank(avatar) : 1;
         const price = RANK_TIER_PRICING[rank]?.price ?? AVATAR_SHOP_PRICE;
         const canBuy = tokenBalance >= price;
@@ -154,7 +143,7 @@ export function AvatarShop({
             <div className="pointer-events-none absolute inset-0 opacity-30 [background-image:radial-gradient(rgba(255,255,255,0.12)_0.6px,transparent_0.6px)] [background-size:8px_8px]" />
 
             <div className="relative">
-              <AvatarFigure avatarIndex={avatar.level} size="md" selected={owned} rarity={rarity} themeOverride={avatar} />
+              <AvatarFigure avatarIndex={catalogLevel} size="md" selected={owned} rarity={rarity} themeOverride={avatar} />
             </div>
 
             <div className="relative text-center">
@@ -183,13 +172,13 @@ export function AvatarShop({
                     });
                     return;
                   }
-                  setUnlocking(avatar.level);
+                  setUnlocking(catalogLevel);
                   try {
                     const balance = await spendTokens(userId, price);
-                    const ok = await onUnlockAvatar(avatar.level);
+                    const ok = await onUnlockAvatar(catalogLevel);
                     if (ok) {
                       updateTokenBalanceCache(userId, balance);
-                      onAvatarPurchased(avatar.level);
+                      onAvatarPurchased(catalogLevel);
                       toast({
                         title: "Avatar unlocked!",
                         description: "Your new avatar can be found in the Profile section.",
@@ -202,11 +191,11 @@ export function AvatarShop({
                   }
                   setUnlocking(null);
                 }}
-                disabled={unlocking === avatar.level}
+                disabled={unlocking === catalogLevel}
                 className="relative flex items-center gap-1.5 rounded-full border border-raw-gold/35 bg-raw-gold/10 px-3 py-1 text-[10px] text-raw-gold transition hover:bg-raw-gold/20 disabled:opacity-50"
               >
                 <img src={TokenImage} alt="" className="h-3 w-3 object-contain" />
-                {unlocking === avatar.level ? "..." : `${price} tokens`}
+                {unlocking === catalogLevel ? "..." : `${price} tokens`}
               </button>
             )}
           </div>
@@ -390,8 +379,8 @@ export function DashboardInventory({
   avatarCatalog,
 }: DashboardInventoryProps) {
   const seenOwnedImageKeys = new Set<string>();
-  const ownedAvatars = avatarCatalog.filter((avatar) => {
-    if (!ownedAvatarLevels.has(avatar.level)) return false;
+  const ownedAvatars = avatarCatalog.map((avatar, index) => ({ avatar, catalogLevel: catalogLevelAt(index) })).filter(({ avatar, catalogLevel }) => {
+    if (!ownedAvatarLevels.has(catalogLevel)) return false;
     const imageKey = avatarImageKey(avatar);
     if (seenOwnedImageKeys.has(imageKey)) return false;
     seenOwnedImageKeys.add(imageKey);
@@ -418,28 +407,28 @@ export function DashboardInventory({
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {ownedAvatars.map((avatar) => {
+            {ownedAvatars.map(({ avatar, catalogLevel }) => {
               const rarity = avatar.rarity ?? "common";
               const rarityConfig = RARITY_CONFIG[rarity];
               return (
                 <button
                   type="button"
                   key={avatar.id}
-                  onClick={() => onAvatarChange(avatar.level)}
+                  onClick={() => onAvatarChange(catalogLevel)}
                   className="relative flex flex-col items-center gap-2 overflow-hidden rounded-2xl border bg-raw-black/45 p-3 text-center transition hover:-translate-y-0.5 hover:bg-raw-black/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/50"
                   style={{
-                    borderColor: avatar.level === avatarLevel ? rarityConfig.color : `${rarityConfig.color}40`,
-                    boxShadow: avatar.level === avatarLevel ? `0 0 0 1px ${rarityConfig.color}55` : undefined,
+                    borderColor: catalogLevel === avatarLevel ? rarityConfig.color : `${rarityConfig.color}40`,
+                    boxShadow: catalogLevel === avatarLevel ? `0 0 0 1px ${rarityConfig.color}55` : undefined,
                   }}
-                  aria-pressed={avatar.level === avatarLevel}
+                  aria-pressed={catalogLevel === avatarLevel}
                   aria-label={`Use ${avatarName(avatar)} avatar`}
                 >
                   <div className="pointer-events-none absolute inset-0 opacity-30 [background-image:radial-gradient(rgba(255,255,255,0.12)_0.6px,transparent_0.6px)] [background-size:8px_8px]" />
-                  <AvatarFigure avatarIndex={avatar.level} size="md" selected={avatar.level === avatarLevel} rarity={rarity} />
+                  <AvatarFigure avatarIndex={catalogLevel} size="md" selected={catalogLevel === avatarLevel} rarity={rarity} />
                   <div className="relative text-center">
                     <p className="text-xs font-medium text-raw-text line-clamp-1">{avatarName(avatar)}</p>
                     <p className="mt-1 text-[10px] text-raw-silver/45">
-                      {avatar.level === avatarLevel ? "Selected" : "Tap to use"}
+                      {catalogLevel === avatarLevel ? "Selected" : "Tap to use"}
                     </p>
                   </div>
                 </button>

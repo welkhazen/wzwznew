@@ -1,23 +1,6 @@
-import { avatarIdFromImageSrc, canonicalAvatarImageId } from "@/config/avatarNames";
 import type { AvatarCatalogItem } from "@/lib/avatarCatalog";
+import { avatarImageKey, catalogLevelAt, ownedAvatarImageKeys } from "@/lib/avatarOwnership";
 import { getAvatarRank, hasAvatarRank } from "@/lib/avatarRank";
-
-function avatarImageKey(avatar: AvatarCatalogItem): string {
-  const imageId = avatarIdFromImageSrc(avatar.imageSrc);
-  return imageId === null ? String(avatar.imageSrc ?? avatar.id) : String(canonicalAvatarImageId(imageId));
-}
-
-function catalogLevelAt(index: number): number {
-  return index + 1;
-}
-
-function ownedAvatarImageKeys(avatarCatalog: AvatarCatalogItem[], ownedAvatarLevels: Set<number>): Set<string> {
-  return new Set(
-    avatarCatalog
-      .filter((_, index) => ownedAvatarLevels.has(catalogLevelAt(index)))
-      .map(avatarImageKey),
-  );
-}
 
 export function getEligibleSpinAvatars(
   avatarCatalog: AvatarCatalogItem[],
