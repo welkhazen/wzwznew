@@ -200,7 +200,7 @@ export function DashboardChallenges({
           setClaimedChallenges((previous) => new Set(previous).add(claimKey));
           toast({
             title: `${challenge.title} complete`,
-            description: `+${challenge.rewardXP} XP${challenge.rewardTokens ? ` and +${challenge.rewardTokens} tokens` : ""} claimed automatically.`,
+            description: `+${challenge.rewardXP + (challenge.rewardTokens ?? 0)} Tokens claimed automatically.`,
           });
         }
       }).finally(() => {
@@ -215,7 +215,7 @@ export function DashboardChallenges({
         setClaimedChallenges((previous) => new Set(previous).add(claimKey));
         toast({
           title: `${challenge.title} complete`,
-          description: `+${challenge.rewardXP} XP${challenge.rewardTokens ? ` and +${challenge.rewardTokens} tokens` : ""} claimed automatically.`,
+          description: `+${challenge.rewardXP + (challenge.rewardTokens ?? 0)} Tokens claimed automatically.`,
         });
       }).finally(() => {
         autoClaimingRef.current.delete(claimKey);
@@ -294,7 +294,7 @@ export function DashboardChallenges({
                 </div>
                 <div className="relative shrink-0 inline-flex items-center gap-0.5 rounded-full border border-raw-border/45 bg-raw-black/55 px-2 py-0.5 text-xs text-raw-text">
                   <Flame className="h-3 w-3 text-raw-gold/80" />
-                  +{challenge.rewardXP} XP{challenge.rewardTokens ? ` / +${challenge.rewardTokens} tokens` : ""}
+                  +{challenge.rewardXP + (challenge.rewardTokens ?? 0)} Tokens
                 </div>
               </div>
 
