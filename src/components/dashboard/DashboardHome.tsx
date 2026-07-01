@@ -168,7 +168,7 @@ export function DashboardHome({
       {/* ── Hero ── */}
       <section className="relative">
         <div className="relative z-10">
-          <h1 className={`font-display max-w-2xl text-2xl leading-[1.08] sm:text-3xl md:text-4xl md:leading-[1.15] ${isLight ? "text-slate-950" : "text-white"}`}>
+          <h1 className={`font-display max-w-2xl text-xl leading-[1.08] sm:text-2xl md:text-3xl md:leading-[1.15] ${isLight ? "text-slate-950" : "text-white"}`}>
             Feeling <BrandName />,{" "}
             <span className="relative inline-flex align-baseline">
               <button
