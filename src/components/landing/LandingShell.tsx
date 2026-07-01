@@ -5,6 +5,7 @@ import { highlightRawWordmark } from "@/components/ui/highlightRawWordmark";
 import { motion } from "framer-motion";
 import MatrixBackground from "@/components/ui/matrix-background";
 import { Navbar } from "@/components/landing/Navbar";
+import { LaunchCountdown } from "@/components/ui/LaunchCountdown";
 import { ProblemSection } from "@/components/landing/ProblemSection";
 const GlobeHero = lazy(() =>
   import("@/components/landing/GlobeHero").then((m) => ({ default: m.GlobeHero }))
@@ -71,6 +72,9 @@ export default function LandingShell({
         onSignupClick={() => setShowSignup(true)}
         onDonateClick={() => navigate("/why-donate")}
       />
+      <div className="mt-16">
+        <LaunchCountdown variant="banner" />
+      </div>
       <div className="relative min-h-screen overflow-x-hidden">
         {!siteReady && (
           <div className="fixed inset-0 z-0 bg-raw-black">
