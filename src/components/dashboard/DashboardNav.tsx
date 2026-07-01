@@ -596,14 +596,19 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
               className={cn(
                 "relative flex h-10 w-10 items-center justify-center rounded-full transition-colors",
                 isEffectiveLight
-                  ? "text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+                  ? "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                   : "text-raw-silver/60 hover:bg-raw-surface/40 hover:text-raw-silver",
               )}
               aria-label="Notifications"
             >
               <Bell className="h-5 w-5" />
               {unseenNotificationCount > 0 && (
-                <div className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-raw-gold px-1 text-[9px] font-bold text-raw-ink">
+                <div className={cn(
+                  "absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold",
+                  isEffectiveLight
+                    ? "bg-indigo-600 text-white"
+                    : "bg-raw-gold text-raw-ink",
+                )}>
                   {unseenNotificationCount > 99 ? "99+" : unseenNotificationCount}
                 </div>
               )}
