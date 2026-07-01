@@ -64,14 +64,14 @@ function markBackendMissingIfNeeded(error: unknown): void {
 }
 
 export const DEFAULT_AVATAR_CATALOG: readonly AvatarCatalogItem[] = [
-  { id: "ember", level: 1, name: "Ember", price: "50", imageSrc: "/avatars/avatar-3.svg", bg: "#1f0a05", figure: "#cbd5e1", ring: "#cbd5e1", glow: "#cbd5e180", isActive: true, showIn: "both", rarity: "common", frame_color: "grey" },
-  { id: "verdant", level: 2, name: "Verdant", price: "50", imageSrc: "/avatars/avatar-1.svg", bg: "#08160b", figure: "#3b82f6", ring: "#3b82f6", glow: "#3b82f680", isActive: true, showIn: "both", rarity: "common", frame_color: "blue" },
-  { id: "horned", level: 3, name: "Horned", price: "50", imageSrc: "/avatars/avatar-5.svg", bg: "#1f0808", figure: "#d946ef", ring: "#d946ef", glow: "#d946ef80", isActive: true, showIn: "both", rarity: "common", frame_color: "purple" },
-  { id: "pharaoh", level: 4, name: "Pharaoh", price: "50", imageSrc: "/avatars/avatar-6.svg", bg: "#1f1605", figure: "#fb923c", ring: "#fb923c", glow: "#fb923c80", isActive: true, showIn: "both", rarity: "common", frame_color: "orange" },
-  { id: "violet", level: 5, name: "Violet", price: "50", imageSrc: "/avatars/avatar-2.svg", bg: "#150a22", figure: "#ef4444", ring: "#ef4444", glow: "#ef444480", isActive: true, showIn: "both", rarity: "common", frame_color: "red" },
-  { id: "rose", level: 6, name: "Rose", price: "50", imageSrc: "/avatars/avatar-4.svg", bg: "#1f0a14", figure: "#fb7185", ring: "#fb7185", glow: "#fb718580", isActive: true, showIn: "both", rarity: "common", frame_color: "pink" },
-  { id: "black", level: 7, name: "Black", price: "50", imageSrc: "/avatars/avatar-7.svg", bg: "#0a0a0a", figure: "#fbbf24", ring: "#fbbf24", glow: "#fbbf2490", isActive: true, showIn: "both", rarity: "common", frame_color: "rose" },
-  { id: "blue", level: 8, name: "Blue", price: "50", imageSrc: "/avatars/avatar-10.svg", bg: "#0a1424", figure: "#fbbf24", ring: "#fbbf24", glow: "#fbbf2490", isActive: true, showIn: "both", rarity: "common", frame_color: "gold" },
+  { id: "ember", level: 1, name: "Ash Wraith", price: "50", imageSrc: "/avatars/avatar-3.svg", bg: "#1f0a05", figure: "#cbd5e1", ring: "#cbd5e1", glow: "#cbd5e180", isActive: true, showIn: "both", rarity: "common", frame_color: "grey" },
+  { id: "verdant", level: 2, name: "Verdant Echo", price: "50", imageSrc: "/avatars/avatar-1.svg", bg: "#08160b", figure: "#3b82f6", ring: "#3b82f6", glow: "#3b82f680", isActive: true, showIn: "both", rarity: "common", frame_color: "blue" },
+  { id: "horned", level: 3, name: "Horned Specter", price: "50", imageSrc: "/avatars/avatar-5.svg", bg: "#1f0808", figure: "#d946ef", ring: "#d946ef", glow: "#d946ef80", isActive: true, showIn: "both", rarity: "common", frame_color: "purple" },
+  { id: "pharaoh", level: 4, name: "Desert Pharaoh", price: "50", imageSrc: "/avatars/avatar-6.svg", bg: "#1f1605", figure: "#fb923c", ring: "#fb923c", glow: "#fb923c80", isActive: true, showIn: "both", rarity: "common", frame_color: "orange" },
+  { id: "violet", level: 5, name: "Scarlet Wraith", price: "50", imageSrc: "/avatars/avatar-2.svg", bg: "#150a22", figure: "#ef4444", ring: "#ef4444", glow: "#ef444480", isActive: true, showIn: "both", rarity: "common", frame_color: "red" },
+  { id: "rose", level: 6, name: "Rose Phantom", price: "50", imageSrc: "/avatars/avatar-4.svg", bg: "#1f0a14", figure: "#fb7185", ring: "#fb7185", glow: "#fb718580", isActive: true, showIn: "both", rarity: "common", frame_color: "pink" },
+  { id: "black", level: 7, name: "Shadow Herald", price: "50", imageSrc: "/avatars/avatar-7.svg", bg: "#0a0a0a", figure: "#fbbf24", ring: "#fbbf24", glow: "#fbbf2490", isActive: true, showIn: "both", rarity: "common", frame_color: "rose" },
+  { id: "blue", level: 8, name: "Azure Oracle", price: "50", imageSrc: "/avatars/avatar-10.svg", bg: "#0a1424", figure: "#fbbf24", ring: "#fbbf24", glow: "#fbbf2490", isActive: true, showIn: "both", rarity: "common", frame_color: "gold" },
   { id: "silver-void", level: 9, name: avatarDisplayName(1), price: "50", imageSrc: "/avatars/1.webp", bg: "#111827", figure: "#cbd5e1", ring: "#cbd5e1", glow: "#cbd5e180", isActive: true, showIn: "both", rarity: "common" },
   { id: "neon-lynx", level: 10, name: avatarDisplayName(18), price: "50", imageSrc: "/avatars/18.png", bg: "#170f2e", figure: "#a855f7", ring: "#c084fc", glow: "#a855f780", isActive: true, showIn: "both", rarity: "common" },
   { id: "blue-signal", level: 11, name: avatarDisplayName(23), price: "50", imageSrc: "/avatars/23.png", bg: "#16100a", figure: "#facc15", ring: "#facc15", glow: "#facc1590", isActive: true, showIn: "both", rarity: "common", frame_color: "gold", rank_tier: 9 },
@@ -80,7 +80,7 @@ export const DEFAULT_AVATAR_CATALOG: readonly AvatarCatalogItem[] = [
   { id: "crimson-muse", level: 14, name: avatarDisplayName(6), price: "50", imageSrc: "/avatars/6.webp", bg: "#2a0b0b", figure: "#f97316", ring: "#f97316", glow: "#f9731680", isActive: true, showIn: "both", rarity: "common" },
   { id: "solar-flame", level: 15, name: avatarDisplayName(7), price: "50", imageSrc: "/avatars/landing/solar-flame.webp", bg: "#241005", figure: "#facc15", ring: "#facc15", glow: "#facc1590", isActive: true, showIn: "both", rarity: "common" },
   { id: "pink-circuit", level: 16, name: "Pink Circuit", price: "50", imageSrc: "/avatars/landing/pink-circuit.webp", bg: "#2a0b1c", figure: "#fb7185", ring: "#fb7185", glow: "#fb718580", isActive: true, showIn: "both", rarity: "common" },
-  { id: "s1-custom", level: 100, name: "S1 Custom", price: "40000", imageSrc: "/avatars/s1-custom.png", bg: "#0a0a0a", figure: "#ffd700", ring: "#ffd700", glow: "#ffd700cc", isActive: true, showIn: "app", rarity: "legendary", rank_tier: 11, frame_color: "gold" },
+  { id: "s1-custom", level: 100, name: "S1 Custom", price: "40000", imageSrc: "/avatars/s1-custom.png", bg: "#0a0a0a", figure: "#ffd700", ring: "#ffd700", glow: "#ffd700cc", isActive: true, showIn: "admin", rarity: "legendary", rank_tier: 11, frame_color: "gold" },
   ...Array.from({ length: 18 }, (_, index): AvatarCatalogItem | null => {
     const level = index + 17;
     // Skip image ids already represented by a semantic alias above
