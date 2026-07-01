@@ -1,6 +1,7 @@
 import { Suspense, lazy, useEffect } from "react";
 import { useHostMode } from "@/hooks/use-host-mode";
 import { POLL_SHARE_PARAM } from "@/lib/pollShare";
+import { INVITE_PARAM } from "@/lib/inviteLink";
 import { useRawStore } from "@/store/useRawStore";
 import { awardXP, XP_REWARDS } from "@/lib/userProgress";
 import { claimPendingLandingWheelAvatarForUser } from "@/lib/avatarCatalog";
@@ -69,6 +70,9 @@ const Index = () => {
   const sharedPollRef = typeof window !== "undefined"
     ? new URLSearchParams(window.location.search).get(POLL_SHARE_PARAM)
     : null;
+  const inviteCode = typeof window !== "undefined"
+    ? new URLSearchParams(window.location.search).get(INVITE_PARAM)
+    : null;
 
   const joinOnboardingCommunities = async () => {
     if (!user) return;
@@ -92,6 +96,11 @@ const Index = () => {
       window.location.replace(targetUrl);
     }
   }, [hostname, isLoggedIn, isTheRawMe, user]);
+
+  // An invite link (?invite=CODE) opens the signup modal with the code prefilled.
+  useEffect(() => {
+    if (inviteCode && !isLoggedIn) setShowSignup(true);
+  }, [inviteCode, isLoggedIn, setShowSignup]);
 
   // Don't flash the landing page (and its poll popup) while auth is still
   // resolving on refresh. Wait for the session to load first.
@@ -126,6 +135,7 @@ const Index = () => {
         />
         <SignupModalLazy
           open={showSignup}
+          initialReferralCode={inviteCode ?? undefined}
           onClose={() => setShowSignup(false)}
           onSignup={signup}
           onLogin={login}
@@ -241,6 +251,7 @@ const Index = () => {
         isLoggedIn={isLoggedIn}
         showSignup={showSignup}
         setShowSignup={setShowSignup}
+        initialReferralCode={inviteCode ?? undefined}
         signup={signup}
         login={login}
       />

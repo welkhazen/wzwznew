@@ -17,6 +17,8 @@ interface SignupModalProps {
   onSignup: (username: string, password: string, referralCode: string) => Promise<AuthResult>;
   onLogin: (username: string, password: string) => Promise<AuthResult>;
   source?: string;
+  /** Invitation code to pre-fill (e.g. from an invite link's ?invite= param). */
+  initialReferralCode?: string;
 }
 
 type AuthMode = "signup" | "login";
@@ -25,7 +27,7 @@ function normalizeInviteCode(code: string): string {
   return normalizePlainText(code).trim().toUpperCase().replace(/\s+/g, "");
 }
 
-export function SignupModal({ open, onClose, onSignup, onLogin, source }: SignupModalProps) {
+export function SignupModal({ open, onClose, onSignup, onLogin, source, initialReferralCode }: SignupModalProps) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -42,6 +44,10 @@ export function SignupModal({ open, onClose, onSignup, onLogin, source }: Signup
     if (open && !openedFiredRef.current) {
       openedFiredRef.current = true;
       track("signup_modal_opened", { source: source ?? "unknown" });
+      if (initialReferralCode) {
+        setMode("signup");
+        setReferralCode(normalizeInviteCode(initialReferralCode));
+      }
     }
     if (!open) {
       openedFiredRef.current = false;
@@ -54,7 +60,7 @@ export function SignupModal({ open, onClose, onSignup, onLogin, source }: Signup
       setShowPassword(false);
       setShowConfirmPassword(false);
     }
-  }, [open, source]);
+  }, [open, source, initialReferralCode]);
 
   useEffect(() => {
     if (cooldown <= 0) {

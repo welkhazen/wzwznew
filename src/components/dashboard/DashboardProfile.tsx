@@ -8,6 +8,7 @@ import { LEVEL_THEMES, getAvatar, getPrivateAvatarLevel, privateAvatarKey } from
 import { PersonalityInsightsInventory } from "@/components/dashboard/PersonalityInsightsInventory";
 import { addOwnedInsightId, readOwnedInsightIds } from "@/lib/insightsOwnership";
 import { spendTokens } from "@/lib/api/tokens";
+import { buildInviteUrl } from "@/lib/inviteLink";
 import { CHAT_IDENTITY_CHANGED_EVENT, readSelectedChatAlias, writeSelectedChatAlias } from "@/lib/identitySelection";
 import { toast } from "@/hooks/use-toast";
 import {
@@ -76,7 +77,7 @@ function persistFoundingInviteCodes(userId: string, codes: string[]): void {
 }
 
 function buildInviteShareText(code: string): string {
-  return `Here is an exclusive invitation code to enter raW. Use this during signup: ${code}`;
+  return `You've been invited to join raW.\n\nThis invitation is exclusive to you. Click the link below and your invitation code will be applied automatically during sign up.\n\n${buildInviteUrl(code)}`;
 }
 
 function pushTokenBalance(userId: string, balance: number): void {

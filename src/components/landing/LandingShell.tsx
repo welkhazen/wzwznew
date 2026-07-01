@@ -28,6 +28,7 @@ export interface LandingShellProps {
   isLoggedIn: boolean;
   showSignup: boolean;
   setShowSignup: (open: boolean) => void;
+  initialReferralCode?: string;
   signup: (username: string, password: string, referralCode: string) => Promise<AuthResult>;
   login: (username: string, password: string) => Promise<AuthResult>;
 }
@@ -37,6 +38,7 @@ export default function LandingShell({
   isLoggedIn,
   showSignup,
   setShowSignup,
+  initialReferralCode,
   signup,
   login,
 }: LandingShellProps) {
@@ -138,6 +140,7 @@ export default function LandingShell({
       <Suspense fallback={null}>
         <SignupModalLazy
           open={showSignup}
+          initialReferralCode={initialReferralCode}
           onClose={() => setShowSignup(false)}
           onSignup={signup}
           onLogin={login}
