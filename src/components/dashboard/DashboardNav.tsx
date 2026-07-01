@@ -129,8 +129,12 @@ function deliveredNotificationsKey(userId: string) {
   return `${DELIVERED_NOTIFICATIONS_PREFIX}.${userId}`;
 }
 
+function notificationDayKey(date = new Date()): string {
+  return date.toISOString().slice(0, 10);
+}
+
 function seenNotificationsKey(userId: string) {
-  return `${SEEN_NOTIFICATIONS_PREFIX}.${userId}`;
+  return `${SEEN_NOTIFICATIONS_PREFIX}.${userId}.${notificationDayKey()}`;
 }
 
 function readSeenNotificationIds(userId: string): string[] {
