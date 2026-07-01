@@ -604,10 +604,10 @@ export function DashboardNav({ userId, username, avatarLevel, onProfileClick, on
               <Bell className="h-5 w-5" />
               {unseenNotificationCount > 0 && (
                 <div className={cn(
-                  "absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold",
+                  "absolute -right-1 -top-1 z-10 flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-bold leading-none",
                   isEffectiveLight
-                    ? "bg-indigo-600 text-white"
-                    : "bg-white text-raw-ink ring-1 ring-raw-black/30",
+                    ? "bg-red-500 text-white"
+                    : "bg-red-500 text-white",
                 )}>
                   {unseenNotificationCount > 99 ? "99+" : unseenNotificationCount}
                 </div>
