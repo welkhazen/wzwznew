@@ -31,8 +31,11 @@ export function readFoundingInviteCodes(userId: string): string[] {
       const parsed = JSON.parse(saved) as unknown;
       if (Array.isArray(parsed) && parsed.every((code) => typeof code === "string")) {
         const codes = parsed.slice(0, FOUNDING_INVITE_COUNT);
-        while (codes.length < FOUNDING_INVITE_COUNT) {
-          codes.push(createInviteCode(codes.length + 1));
+        if (codes.length < FOUNDING_INVITE_COUNT) {
+          while (codes.length < FOUNDING_INVITE_COUNT) {
+            codes.push(createInviteCode(codes.length + 1));
+          }
+          persistFoundingInviteCodes(userId, codes);
         }
         return codes;
       }
@@ -41,7 +44,11 @@ export function readFoundingInviteCodes(userId: string): string[] {
     }
   }
 
-  return Array.from({ length: FOUNDING_INVITE_COUNT }, (_, index) => createInviteCode(index + 1));
+  // Generate once and persist so every surface (Home, Profile) reads the same
+  // codes instead of each generating its own random set before the sync lands.
+  const generated = Array.from({ length: FOUNDING_INVITE_COUNT }, (_, index) => createInviteCode(index + 1));
+  persistFoundingInviteCodes(userId, generated);
+  return generated;
 }
 
 export function persistFoundingInviteCodes(userId: string, codes: string[]): void {
