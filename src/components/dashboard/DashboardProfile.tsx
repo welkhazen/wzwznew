@@ -76,7 +76,7 @@ function persistFoundingInviteCodes(userId: string, codes: string[]): void {
 }
 
 function buildInviteShareText(code: string): string {
-  return `I saved you a founding invite for RAW. Use code ${code} when you join.`;
+  return `Here is an exclusive invitation code to enter raW. Use this during signup: ${code}`;
 }
 
 function pushTokenBalance(userId: string, balance: number): void {
