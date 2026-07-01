@@ -114,6 +114,7 @@ export function DashboardHome({
   const isLight = mode === "light";
   const [identityMenuOpen, setIdentityMenuOpen] = useState(false);
   const [openInviteIndex, setOpenInviteIndex] = useState<number | null>(null);
+  const [heroInviteOpen, setHeroInviteOpen] = useState(false);
   const [inviteCodes, setInviteCodes] = useState<string[]>(() => (userId ? readFoundingInviteCodes(userId) : []));
   const [redeemedCodes, setRedeemedCodes] = useState<Set<string>>(new Set());
 
@@ -245,7 +246,59 @@ export function DashboardHome({
               <Users className={`size-3.5 ${isLight ? "text-slate-500" : "text-white/60"}`} />
               <span className={`text-xs font-medium tracking-wide ${isLight ? "text-slate-600" : "text-white/60"}`}>{allCommunities.length} communities</span>
             </div>
+            {inviteCodes.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setHeroInviteOpen((o) => !o)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-colors ${
+                  heroInviteOpen
+                    ? "border-raw-gold/50 bg-raw-gold/10 text-raw-gold"
+                    : isLight
+                      ? "border-slate-200 bg-white/85 text-slate-600 hover:border-amber-400"
+                      : "border-white/10 bg-white/5 text-white/60 hover:border-raw-gold/40 hover:text-raw-gold"
+                }`}
+              >
+                <Ticket className="size-3.5" />
+                <span className="text-xs font-medium tracking-wide">{inviteCodes.length} invites</span>
+              </button>
+            )}
           </div>
+
+          {heroInviteOpen && inviteCodes.length > 0 && (
+            <div className={`mt-4 rounded-2xl border p-4 space-y-3 ${isLight ? "border-amber-200/70 bg-amber-50/60" : "border-raw-gold/20 bg-raw-gold/5"}`}>
+              <p className={`text-[11px] uppercase tracking-[0.15em] font-semibold ${isLight ? "text-amber-700/70" : "text-raw-gold/60"}`}>
+                Founding Invitations
+              </p>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {inviteCodes.map((code, index) => (
+                  <div key={code} className={`rounded-xl border p-3 space-y-2 ${isLight ? "border-slate-200 bg-white" : "border-raw-border/30 bg-raw-black/30"}`}>
+                    <p className={`text-[10px] uppercase tracking-[0.15em] ${isLight ? "text-slate-400" : "text-raw-silver/40"}`}>Invitation {index + 1}</p>
+                    <code className="block select-all break-all font-mono text-xs font-bold tracking-[0.1em] text-raw-gold">{code}</code>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => void handleCopyInvite(code)}
+                        className={`inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border px-2 py-1.5 text-[10px] font-semibold transition-colors ${
+                          isLight
+                            ? "border-slate-200 text-slate-600 hover:border-amber-400 hover:text-amber-700"
+                            : "border-raw-border/40 text-raw-silver/65 hover:border-raw-gold/40 hover:text-raw-gold"
+                        }`}
+                      >
+                        <Copy className="h-3 w-3" /> Copy
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void handleShareInvite(code)}
+                        className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-raw-gold px-2 py-1.5 text-[10px] font-bold text-raw-ink transition-opacity hover:opacity-90"
+                      >
+                        <Share2 className="h-3 w-3" /> Share
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
         <div className="absolute -right-12 -top-12 w-64 h-64 bg-raw-gold/5 blur-[80px] rounded-full pointer-events-none" />
       </section>
