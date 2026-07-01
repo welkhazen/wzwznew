@@ -1,7 +1,7 @@
 import { Suspense, lazy, useEffect, useMemo, useState } from "react";
 import { Check, ChevronDown, ChevronRight, Copy, Dices, Zap, Flame, Share2, ShieldOff, Ticket, UserRound, Users, BarChart3 } from "lucide-react";
-import { readFoundingInviteCodes, getOrSyncInviteCodes, buildInviteShareText } from "@/lib/foundingInvites";
-import { fetchFoundingInviteCodes, registerFoundingInviteCodes, getFoundingInviteRedemptions } from "@/backend/supabase/controllers/userExtrasController";
+import { buildInviteShareText } from "@/lib/foundingInvites";
+import { useFoundingInvites } from "@/hooks/useFoundingInvites";
 import { toast } from "@/hooks/use-toast";
 import type { Poll } from "@/store/useRawStore";
 import type { DashboardTab } from "./DashboardNav";
@@ -116,18 +116,7 @@ export function DashboardHome({
   const [identityMenuOpen, setIdentityMenuOpen] = useState(false);
   const [openInviteIndex, setOpenInviteIndex] = useState<number | null>(null);
   const [heroInviteOpen, setHeroInviteOpen] = useState(false);
-  const [inviteCodes, setInviteCodes] = useState<string[]>(() => (userId ? readFoundingInviteCodes(userId) : []));
-  const [redeemedCodes, setRedeemedCodes] = useState<Set<string>>(new Set());
-
-  useEffect(() => {
-    if (!userId) return;
-    getOrSyncInviteCodes(userId, fetchFoundingInviteCodes, registerFoundingInviteCodes)
-      .then((codes) => setInviteCodes(codes))
-      .catch(() => {});
-    getFoundingInviteRedemptions(userId)
-      .then((redemptions) => setRedeemedCodes(new Set(redemptions.map((r) => r.referralCode.toUpperCase()))))
-      .catch(() => {});
-  }, [userId]);
+  const { codes: inviteCodes, redeemedCodes } = useFoundingInvites(userId);
 
   async function handleCopyInvite(code: string) {
     try {
@@ -271,10 +260,17 @@ export function DashboardHome({
                 Founding Invitations
               </p>
               <div className="grid gap-2 sm:grid-cols-2">
-                {inviteCodes.map((code, index) => (
-                  <div key={code} className={`rounded-xl border p-3 space-y-2 ${isLight ? "border-slate-200 bg-white" : "border-raw-border/30 bg-raw-black/30"}`}>
+                {inviteCodes.map((code, index) => {
+                  const used = redeemedCodes.has(code.toUpperCase());
+                  return (
+                  <div key={code} className={`rounded-xl border p-3 space-y-2 ${used ? "opacity-60" : ""} ${isLight ? "border-slate-200 bg-white" : "border-raw-border/30 bg-raw-black/30"}`}>
                     <p className={`text-[10px] uppercase tracking-[0.15em] ${isLight ? "text-slate-400" : "text-raw-silver/40"}`}>Invitation {index + 1}</p>
                     <code className="block select-all break-all font-mono text-xs font-bold tracking-[0.1em] text-raw-gold">{code}</code>
+                    {used ? (
+                      <p className="flex items-center gap-1 text-[10px] font-semibold text-raw-gold/70">
+                        <Check className="h-3 w-3" /> Code has been used
+                      </p>
+                    ) : (
                     <div className="flex gap-2">
                       <button
                         type="button"
@@ -295,8 +291,10 @@ export function DashboardHome({
                         <Share2 className="h-3 w-3" /> Share
                       </button>
                     </div>
+                    )}
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
