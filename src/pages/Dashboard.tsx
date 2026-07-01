@@ -585,7 +585,7 @@ export default function Dashboard({
             <DashboardSectionShell>
               <DashboardStore
                 userName={user.username}
-                avatarCatalog={avatarCatalog}
+                avatarCatalog={user.role === "admin" || user.role === "moderator" ? avatarCatalog : avatarCatalog.filter((a) => a.showIn !== "admin")}
                 ownedAvatarLevels={ownedAvatarLevels}
                 onUnlockAvatar={unlockAvatarLevel}
                 onAvatarPurchased={markAvatarOwned}
