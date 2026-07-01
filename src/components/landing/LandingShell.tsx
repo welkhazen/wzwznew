@@ -20,6 +20,7 @@ import { FAQSection } from "@/components/landing/FAQSection";
 import PerforatedBackground from "@/components/ui/perforated-background";
 import type { AuthResult, User } from "@/store/types";
 import { INVITE_PARAM } from "@/lib/inviteLink";
+import { TermsConsentBanner } from "@/components/ui/TermsConsentBanner";
 
 const SignupModalLazy = lazy(() =>
   import("@/components/landing/SignupModal").then((module) => ({ default: module.SignupModal }))
@@ -163,6 +164,8 @@ export default function LandingShell({
           </motion.div>
         )}
       </div>
+
+      <TermsConsentBanner />
 
       <Suspense fallback={null}>
         <SignupModalLazy
