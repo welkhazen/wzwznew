@@ -44,7 +44,7 @@ export function readFoundingInviteCodes(userId: string): string[] {
     }
   }
 
-  // Generate once and persist so every surface (Home, Profile) reads the same
+  // Generate once and persist so every surface / hook instance reads the same
   // codes instead of each generating its own random set before the sync lands.
   const generated = Array.from({ length: FOUNDING_INVITE_COUNT }, (_, index) => createInviteCode(index + 1));
   persistFoundingInviteCodes(userId, generated);

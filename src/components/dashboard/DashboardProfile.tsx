@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Check, Copy, Heart, MessageSquare, Mic2, Share2, Target, Ticket, Users, X } from "lucide-react";
 import { useProfileStats } from "@/hooks/useProfileStats";
-import { fetchFoundingInviteCodes, registerFoundingInviteCodes, getFoundingInviteRedemptions } from "@/backend/supabase/controllers/userExtrasController";
+import { useFoundingInvites } from "@/hooks/useFoundingInvites";
 import type { Poll } from "@/store/useRawStore";
 import { AvatarFigure } from "@/components/ui/avatar-figure";
 import { LEVEL_THEMES, getAvatar, getPrivateAvatarLevel, privateAvatarKey } from "@/lib/avataridentity";
@@ -21,14 +21,7 @@ import {
 const TOKEN_BALANCE_STORAGE_PREFIX = "raw.polls.token-balance";
 const TOKEN_BALANCE_UPDATED_EVENT = "raw:token-balance-updated";
 
-import {
-  readFoundingInviteCodes,
-  persistFoundingInviteCodes,
-  buildInviteShareText,
-  getOrSyncInviteCodes,
-  FOUNDING_INVITE_COUNT,
-  createInviteCode,
-} from "@/lib/foundingInvites";
+import { buildInviteShareText } from "@/lib/foundingInvites";
 
 function pushTokenBalance(userId: string, balance: number): void {
   if (typeof window === "undefined") return;
@@ -105,9 +98,8 @@ export function DashboardProfile({
   const [hoveredAvatarLevel, setHoveredAvatarLevel] = useState<number | null>(null);
   const [activeIdentity, setActiveIdentity] = useState<"public" | "private">("public");
   const [ownedInsightIds, setOwnedInsightIds] = useState<Set<string>>(() => readOwnedInsightIds(userId));
-  const [inviteCodes, setInviteCodes] = useState<string[]>(() => readFoundingInviteCodes(userId));
+  const { codes: inviteCodes, redeemedCodes } = useFoundingInvites(userId);
   const [openInviteIndex, setOpenInviteIndex] = useState<number | null>(null);
-  const [redeemedCodes, setRedeemedCodes] = useState<Set<string>>(new Set());
 
   // Private identity
   const [privateAlias, setPrivateAlias] = useState<UserAliasRow | null>(null);
@@ -119,17 +111,7 @@ export function DashboardProfile({
 
   useEffect(() => {
     setOwnedInsightIds(readOwnedInsightIds(userId));
-    // Load from localStorage immediately so UI isn't blank, then sync from Supabase.
-    setInviteCodes(readFoundingInviteCodes(userId));
     setOpenInviteIndex(null);
-    getOrSyncInviteCodes(userId, fetchFoundingInviteCodes, registerFoundingInviteCodes)
-      .then((codes) => setInviteCodes(codes))
-      .catch(() => {});
-    getFoundingInviteRedemptions(userId)
-      .then((redemptions) => {
-        setRedeemedCodes(new Set(redemptions.map((r) => r.referralCode.toUpperCase())));
-      })
-      .catch(() => {});
   }, [userId]);
 
 
