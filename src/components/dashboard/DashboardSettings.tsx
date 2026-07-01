@@ -10,7 +10,12 @@ import {
   UserCog,
 } from "lucide-react";
 import { AdminBlockedWordsSettings } from "@/components/dashboard/AdminBlockedWordsSettings";
-import { readDonationRequests, writeDonationRequests, type DonationRequestRecord } from "@/lib/adminData";
+import {
+  fetchDonationInterests,
+  updateDonationInterestStatus,
+  deleteDonationInterest,
+  type DonationInterestRecord,
+} from "@/backend/supabase/controllers/donationInterestController";
 import { useToast } from "@/hooks/use-toast";
 import { changePassword, deleteAccount } from "@/backend/supabase/controllers/authController";
 import {
@@ -319,18 +324,23 @@ function PwField({ placeholder, value, setValue, show, setShow, danger = false }
 }
 
 function DonationRequestsPanel() {
-  const [requests, setRequests] = useState<DonationRequestRecord[]>(() => readDonationRequests());
+  const [requests, setRequests] = useState<DonationInterestRecord[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const markReviewed = (id: string) => {
-    const updated = requests.map((r) => r.id === id ? { ...r, status: "reviewed" as const } : r);
-    writeDonationRequests(updated);
-    setRequests(updated);
+  useEffect(() => {
+    fetchDonationInterests()
+      .then(setRequests)
+      .finally(() => setLoading(false));
+  }, []);
+
+  const markReviewed = async (id: string) => {
+    await updateDonationInterestStatus(id, "reviewed");
+    setRequests((prev) => prev.map((r) => r.id === id ? { ...r, status: "reviewed" as const } : r));
   };
 
-  const remove = (id: string) => {
-    const updated = requests.filter((r) => r.id !== id);
-    writeDonationRequests(updated);
-    setRequests(updated);
+  const remove = async (id: string) => {
+    await deleteDonationInterest(id);
+    setRequests((prev) => prev.filter((r) => r.id !== id));
   };
 
   return (
@@ -346,7 +356,9 @@ function DonationRequestsPanel() {
         </span>
       </div>
 
-      {requests.length === 0 ? (
+      {loading ? (
+        <p className="px-4 py-6 text-sm text-raw-silver/40">Loading…</p>
+      ) : requests.length === 0 ? (
         <p className="px-4 py-6 text-sm text-raw-silver/40">No submissions yet.</p>
       ) : (
         <ul className="divide-y divide-raw-border/15">
@@ -356,8 +368,8 @@ function DonationRequestsPanel() {
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-raw-text">{r.name}</p>
                   <p className="truncate text-xs text-raw-silver/55">{r.email}</p>
-                  {r.message && (
-                    <p className="mt-1 text-xs text-raw-silver/70 line-clamp-2">{r.message}</p>
+                  {r.phone && (
+                    <p className="mt-1 text-xs text-raw-silver/70">{r.phone}</p>
                   )}
                   <p className="mt-1 text-[10px] text-raw-silver/35">
                     {new Date(r.submittedAt).toLocaleString()} · {r.status}

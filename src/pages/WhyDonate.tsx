@@ -2,32 +2,27 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { BrandName } from "@/components/ui/brand-name";
-import { createDonationRequest } from "@/lib/adminData";
+import { submitDonationInterest } from "@/backend/supabase/controllers/donationInterestController";
 import { moderateUserText, getUserTextModerationMessage } from "@/lib/inputSecurity";
 import { toast } from "@/components/ui/use-toast";
 
 export default function WhyDonate() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
+  const [phone, setPhone] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const nameMod = moderateUserText(name);
-    const msgMod = moderateUserText(message);
     if (!nameMod.allowed) {
       toast({ title: "Name blocked", description: getUserTextModerationMessage(nameMod) });
       return;
     }
-    if (!msgMod.allowed) {
-      toast({ title: "Message blocked", description: getUserTextModerationMessage(msgMod) });
-      return;
-    }
     setSubmitting(true);
     try {
-      createDonationRequest(nameMod.text, email, msgMod.text);
+      await submitDonationInterest(nameMod.text, email, phone);
       setSubmitted(true);
     } catch {
       toast({ title: "Something went wrong", description: "Please try again." });
@@ -145,17 +140,17 @@ export default function WhyDonate() {
                 </div>
 
                 <div>
-                  <label htmlFor="donate-message" className="mb-1.5 block text-sm font-medium text-raw-silver/80">
-                    Message <span className="text-raw-silver/40">(optional)</span>
+                  <label htmlFor="donate-phone" className="mb-1.5 block text-sm font-medium text-raw-silver/80">
+                    Phone <span className="text-raw-silver/40">(optional)</span>
                   </label>
-                  <textarea
-                    id="donate-message"
-                    rows={4}
-                    maxLength={500}
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Anything you'd like us to know…"
-                    className="w-full resize-none rounded border border-raw-border/40 bg-raw-black/60 px-4 py-2.5 text-sm text-raw-text placeholder-raw-silver/35 outline-none transition focus:border-raw-gold/60 focus:ring-1 focus:ring-raw-gold/30"
+                  <input
+                    id="donate-phone"
+                    type="tel"
+                    maxLength={30}
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="+1 (555) 000-0000"
+                    className="w-full rounded border border-raw-border/40 bg-raw-black/60 px-4 py-2.5 text-sm text-raw-text placeholder-raw-silver/35 outline-none transition focus:border-raw-gold/60 focus:ring-1 focus:ring-raw-gold/30"
                   />
                 </div>
 
