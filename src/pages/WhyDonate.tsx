@@ -94,17 +94,17 @@ export default function WhyDonate() {
           {/* Donation interest form */}
           <section className="rounded-lg border border-raw-gold/35 bg-gradient-to-b from-raw-gold/[0.08] to-transparent p-8">
             <h2 className="mb-2 text-2xl font-semibold text-raw-text">
-              Interested in Supporting <BrandName />?
+              Get in Touch About Funding
             </h2>
             <p className="mb-8 text-raw-silver/70">
-              Donations aren't open yet. Leave your details and we'll reach out when they are.
+              Want to discuss supporting <BrandName />? Send us your details and we'll reach out to talk.
             </p>
 
             {submitted ? (
               <div className="flex flex-col items-center gap-3 py-6 text-center">
                 <CheckCircle2 className="h-10 w-10 text-raw-gold" />
-                <p className="text-lg font-semibold text-raw-text">Got it — thank you!</p>
-                <p className="text-sm text-raw-silver/60">We'll be in touch when donations go live.</p>
+                <p className="text-lg font-semibold text-raw-text">Message received — thank you!</p>
+                <p className="text-sm text-raw-silver/60">We'll be in touch shortly.</p>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-5">
@@ -160,7 +160,7 @@ export default function WhyDonate() {
                   disabled={submitting}
                   className="inline-flex min-h-11 w-full items-center justify-center rounded-full bg-raw-gold px-8 py-3 text-base font-semibold text-raw-black transition hover:bg-raw-gold/90 disabled:opacity-60 sm:w-auto"
                 >
-                  {submitting ? "Sending…" : "Notify me when donations open"}
+                  {submitting ? "Sending…" : "Send Contact Request"}
                 </button>
               </form>
             )}
