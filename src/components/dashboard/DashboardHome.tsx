@@ -1,7 +1,7 @@
 import { Suspense, lazy, useEffect, useMemo, useState } from "react";
 import { Check, ChevronDown, ChevronRight, Copy, Dices, Zap, Flame, Share2, ShieldOff, Ticket, UserRound, Users, BarChart3 } from "lucide-react";
 import { readFoundingInviteCodes, getOrSyncInviteCodes, buildInviteShareText } from "@/lib/foundingInvites";
-import { fetchFoundingInviteCodes, registerFoundingInviteCodes } from "@/backend/supabase/controllers/userExtrasController";
+import { fetchFoundingInviteCodes, registerFoundingInviteCodes, getFoundingInviteRedemptions } from "@/backend/supabase/controllers/userExtrasController";
 import { toast } from "@/hooks/use-toast";
 import type { Poll } from "@/store/useRawStore";
 import type { DashboardTab } from "./DashboardNav";
@@ -115,11 +115,15 @@ export function DashboardHome({
   const [identityMenuOpen, setIdentityMenuOpen] = useState(false);
   const [openInviteIndex, setOpenInviteIndex] = useState<number | null>(null);
   const [inviteCodes, setInviteCodes] = useState<string[]>(() => (userId ? readFoundingInviteCodes(userId) : []));
+  const [redeemedCodes, setRedeemedCodes] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!userId) return;
     getOrSyncInviteCodes(userId, fetchFoundingInviteCodes, registerFoundingInviteCodes)
       .then((codes) => setInviteCodes(codes))
+      .catch(() => {});
+    getFoundingInviteRedemptions(userId)
+      .then((redemptions) => setRedeemedCodes(new Set(redemptions.map((r) => r.referralCode.toUpperCase()))))
       .catch(() => {});
   }, [userId]);
 
@@ -384,19 +388,22 @@ export function DashboardHome({
           <div className="grid gap-3 sm:grid-cols-2">
             {inviteCodes.map((code, index) => {
               const isOpen = openInviteIndex === index;
+              const isUsed = redeemedCodes.has(code.toUpperCase());
               return (
                 <div
                   key={code}
                   role="button"
                   tabIndex={0}
-                  onClick={() => setOpenInviteIndex(isOpen ? null : index)}
+                  onClick={() => !isUsed && setOpenInviteIndex(isOpen ? null : index)}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpenInviteIndex(isOpen ? null : index); }
+                    if (!isUsed && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); setOpenInviteIndex(isOpen ? null : index); }
                   }}
-                  className={`group relative overflow-hidden rounded-2xl border border-dashed p-4 text-left transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/45 cursor-pointer ${
-                    isLight
-                      ? "border-amber-300/60 bg-amber-50/60 hover:border-amber-400 hover:bg-amber-50"
-                      : "border-raw-gold/30 bg-raw-black/25 hover:-translate-y-0.5 hover:border-raw-gold/55 hover:bg-raw-gold/10"
+                  className={`group relative overflow-hidden rounded-2xl border border-dashed p-4 text-left transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-raw-gold/45 ${
+                    isUsed
+                      ? `cursor-default opacity-60 ${isLight ? "border-slate-200 bg-slate-50" : "border-raw-border/20 bg-raw-black/15"}`
+                      : `cursor-pointer ${isLight
+                          ? "border-amber-300/60 bg-amber-50/60 hover:border-amber-400 hover:bg-amber-50"
+                          : "border-raw-gold/30 bg-raw-black/25 hover:-translate-y-0.5 hover:border-raw-gold/55 hover:bg-raw-gold/10"}`
                   }`}
                   aria-expanded={isOpen}
                 >
@@ -405,13 +412,19 @@ export function DashboardHome({
                     <div>
                       <p className="text-[10px] uppercase tracking-[0.18em] text-raw-gold/55">Invitation {index + 1}</p>
                       <p className={`mt-1 text-xs ${isLight ? "text-slate-500" : "text-raw-silver/35"}`}>
-                        Tap to {isOpen ? "hide" : "reveal"}
+                        {isUsed ? "Code has been used" : `Tap to ${isOpen ? "hide" : "reveal"}`}
                       </p>
                     </div>
-                    <Ticket className="h-7 w-7 text-raw-gold/50" />
+                    {isUsed ? (
+                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-raw-gold/15">
+                        <Check className="h-4 w-4 text-raw-gold" />
+                      </span>
+                    ) : (
+                      <Ticket className="h-7 w-7 text-raw-gold/50" />
+                    )}
                   </div>
 
-                  {isOpen && (
+                  {isOpen && !isUsed && (
                     <div className={`relative mt-4 space-y-3 rounded-xl border p-3 ${isLight ? "border-slate-200 bg-white" : "border-raw-border/35 bg-raw-black/35"}`}>
                       <code className={`block select-all break-all font-mono text-sm font-bold tracking-[0.12em] text-raw-gold`}>
                         {code}
