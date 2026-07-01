@@ -130,7 +130,7 @@ function findOwnedSpinResult(ownedAvatarIds: Set<string>): WheelPoolEntry | null
   return null;
 }
 
-const STEP_ORDER: OnboardingStep[] = ["spin", "username", "avatar", "polls", "communities"];
+const STEP_ORDER: OnboardingStep[] = ["spin", "username", "polls", "communities", "avatar"];
 const STEP_LABELS: Record<OnboardingStep, string> = {
   spin: "spin",
   username: "username",
@@ -285,12 +285,13 @@ function BackButton({ onClick }: { onClick: () => void }) {
   );
 }
 
-function StepPill({ label, active, complete, onClick }: { label: string; active: boolean; complete: boolean; onClick?: () => void }) {
+function StepPill({ label, active, complete, disabled, onClick }: { label: string; active: boolean; complete: boolean; disabled?: boolean; onClick?: () => void }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.18em] transition-all hover:border-raw-gold/60 hover:text-raw-gold ${
+      disabled={disabled}
+      className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.18em] transition-all hover:border-raw-gold/60 hover:text-raw-gold disabled:cursor-not-allowed disabled:hover:border-raw-border/40 disabled:hover:text-raw-silver/35 ${
         active
           ? "border-raw-gold/60 bg-raw-gold/15 text-raw-gold"
           : complete
@@ -401,7 +402,8 @@ export function OnboardingJourney({
   }, [onboardingStep]);
 
   const canContinueFromAvatar = avatarIndex >= 1 && (avatarIndex <= FREE_ONBOARDING_AVATAR_COUNT || ownedAvatarLevels.has(avatarIndex));
-  const canContinueFromPolls = true;
+  const requiredPollCount = onboardingPolls.length;
+  const canContinueFromPolls = requiredPollCount > 0 && answeredCount >= requiredPollCount;
   const canContinueFromProfile = profilePublic !== null;
   const canContinueFromCommunities = selectedCommunityIds.length >= 1;
   const canCompleteOnboarding = canContinueFromAvatar && canContinueFromPolls && canContinueFromCommunities;
@@ -483,9 +485,50 @@ export function OnboardingJourney({
     setPollStats(stats);
   }, [onboardingPolls]);
 
+  const canLeaveStep = (step: OnboardingStep): boolean => {
+    switch (step) {
+      case "username":
+        return canContinueFromUsername;
+      case "avatar":
+        return canContinueFromAvatar;
+      case "polls":
+        return canContinueFromPolls;
+      case "profile":
+        return canContinueFromProfile;
+      case "communities":
+        return canContinueFromCommunities;
+      case "spin":
+      case "voucher":
+      case "early-signup-reward":
+      case "marketplace":
+      case "ready":
+      default:
+        return true;
+    }
+  };
+
+  const canNavigateToStep = (target: OnboardingStep): boolean => {
+    const targetIndex = STEP_ORDER.indexOf(target);
+    const currentIndex = STEP_ORDER.indexOf(onboardingStep);
+    if (targetIndex === -1) return false;
+    if (currentIndex === -1 || targetIndex <= currentIndex) return true;
+
+    for (let index = 0; index < targetIndex; index += 1) {
+      if (!canLeaveStep(STEP_ORDER[index])) return false;
+    }
+    return true;
+  };
+
+  const navigateToStep = (target: OnboardingStep): void => {
+    if (canNavigateToStep(target)) {
+      onSetOnboardingStep(target);
+    }
+  };
+
   const goToNextStep = async () => {
+    if (!canLeaveStep(onboardingStep)) return;
+
     if (onboardingStep === "username") {
-      if (!canContinueFromUsername) return;
       setIsSavingUsernames(true);
       setUsernameSaveError("");
       try {
@@ -507,7 +550,7 @@ export function OnboardingJourney({
       step: onboardingStep as "spin" | "username" | "avatar" | "polls" | "communities" | "ready",
       duration_ms: Date.now() - stepStartTimeRef.current,
     });
-    onSetOnboardingStep(getNextStep(onboardingStep));
+    navigateToStep(getNextStep(onboardingStep));
   };
 
   const goToPreviousStep = () => {
@@ -573,7 +616,8 @@ export function OnboardingJourney({
               label={STEP_LABELS[step]}
               active={step === onboardingStep}
               complete={index < currentStepIndex}
-              onClick={() => onSetOnboardingStep(step)}
+              disabled={!canNavigateToStep(step)}
+              onClick={() => navigateToStep(step)}
             />
           ))}
         </div>
@@ -647,7 +691,7 @@ export function OnboardingJourney({
                 <div className="flex w-full max-w-md items-center justify-between gap-3">
                   <button
                     type="button"
-                    onClick={() => onSetOnboardingStep("username")}
+                    onClick={() => navigateToStep("username")}
                     className="rounded-full border border-raw-border/50 px-5 py-2 font-display text-[10px] uppercase tracking-[0.2em] text-raw-silver/70 transition hover:border-raw-gold/40 hover:text-raw-gold"
                   >
                     Skip
@@ -655,7 +699,7 @@ export function OnboardingJourney({
                   <button
                     type="button"
                     disabled={isClaimingSpin}
-                    onClick={() => onSetOnboardingStep("username")}
+                    onClick={() => navigateToStep("username")}
                     className={`rounded-full px-6 py-2 font-display text-xs uppercase tracking-[0.2em] transition ${
                       isClaimingSpin
                         ? "cursor-not-allowed border border-raw-border/40 bg-raw-surface/40 text-raw-silver/35"
@@ -916,14 +960,23 @@ export function OnboardingJourney({
                 <BackButton onClick={goToPreviousStep} />
                 {(() => {
                   const lockedPreview = previewAvatarIndex !== avatarIndex && !canSelectPreviewAvatar;
-                  const blocked = lockedPreview || !canContinueFromAvatar;
+                  const blocked = lockedPreview || !canCompleteOnboarding;
                   return (
                     <button
-                      onClick={goToNextStep}
+                      onClick={() => {
+                        setCommunitySaveError(null);
+                        track("onboarding_completed", {
+                          total_duration_ms: Date.now() - stepStartTimeRef.current,
+                          polls_answered: answeredCount,
+                          communities_selected: selectedCommunityIds.length,
+                          source: "complete_onboarding_button",
+                        });
+                        setEnterRawOpen(true);
+                      }}
                       disabled={blocked}
                       className="rounded-xl bg-raw-gold px-5 py-3 text-sm font-semibold text-raw-ink transition-opacity disabled:cursor-not-allowed disabled:bg-raw-border/40 disabled:text-raw-silver/40 sm:py-2.5"
                     >
-                      Next: Polls
+                      Complete onboarding
                     </button>
                   );
                 })()}
@@ -1289,20 +1342,11 @@ export function OnboardingJourney({
               <div className="mt-6 flex items-center justify-between gap-3 sm:mt-8">
                 <BackButton onClick={goToPreviousStep} />
                 <button
-                  onClick={() => {
-                    setCommunitySaveError(null);
-                    track("onboarding_completed", {
-                      total_duration_ms: Date.now() - stepStartTimeRef.current,
-                      polls_answered: answeredCount,
-                      communities_selected: selectedCommunityIds.length,
-                      source: "complete_onboarding_button",
-                    });
-                    setEnterRawOpen(true);
-                  }}
-                  disabled={!canCompleteOnboarding}
+                  onClick={goToNextStep}
+                  disabled={!canContinueFromCommunities}
                   className="rounded-xl bg-raw-gold px-5 py-3 text-sm font-semibold text-raw-ink transition-opacity disabled:cursor-not-allowed disabled:opacity-40 sm:py-2.5"
                 >
-                  Complete onboarding
+                  Continue to avatar
                 </button>
               </div>
             </section>
