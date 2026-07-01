@@ -15,7 +15,7 @@ export type AvatarCatalogItem = {
   glow: string;
   isActive?: boolean;
   isNew?: boolean;
-  showIn?: "landing" | "app" | "both";
+  showIn?: "landing" | "app" | "both" | "admin";
   rarity?: AvatarRarity;
   dropWeight?: number;
   /** Optional explicit frame color tier, e.g. "grey" / "platinum" / "rainbow". */
