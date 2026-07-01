@@ -174,9 +174,16 @@ export function AvatarShop({
                   }
                   setUnlocking(catalogLevel);
                   try {
-                    const balance = await spendTokens(userId, price);
+                    // Grant first: purchaseAvatarForUser runs its supply-cap check
+                    // before any mutation, so a sold-out/failed grant throws or
+                    // returns false and the user is never charged. Charging first
+                    // (the old order) lost tokens whenever the grant failed.
+                    // ponytail: not atomic — a charge failure after a successful
+                    // grant leaves a free avatar; upgrade path is a server-side
+                    // spend+grant RPC.
                     const ok = await onUnlockAvatar(catalogLevel);
                     if (ok) {
+                      const balance = await spendTokens(userId, price);
                       updateTokenBalanceCache(userId, balance);
                       onAvatarPurchased(catalogLevel);
                       toast({
@@ -188,8 +195,9 @@ export function AvatarShop({
                     if (err instanceof Error && err.message.startsWith("SUPPLY_EXHAUSTED")) {
                       toast({ title: "Sold out", description: "This rank tier has reached its supply limit. No more copies can be sold." });
                     }
+                  } finally {
+                    setUnlocking(null);
                   }
-                  setUnlocking(null);
                 }}
                 disabled={unlocking === catalogLevel}
                 className="relative flex items-center gap-1.5 rounded-full border border-raw-gold/35 bg-raw-gold/10 px-3 py-1 text-[10px] text-raw-gold transition hover:bg-raw-gold/20 disabled:opacity-50"
