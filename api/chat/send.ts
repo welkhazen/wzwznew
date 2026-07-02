@@ -45,8 +45,11 @@ export default async function handler(request: Request): Promise<Response> {
 
   if (typeof communityId !== "string" || communityId.length === 0 || communityId.length > 100)
     return json({ error: "Invalid input.", details: "communityId" }, 400);
+  // "invalid_text_length" matches the send_community_message RPC's error code
+  // (supabase/migrations/20260630000000_harden_chat_blocked_words.sql) so the
+  // frontend's getChatSendErrorInfo() classifies it the same way either path.
   if (typeof text !== "string" || text.trim().length === 0 || text.length > 2000)
-    return json({ error: "Invalid input.", details: "text" }, 400);
+    return json({ error: "invalid_text_length" }, 400);
   if (identityAlias !== undefined && identityAlias !== null && (typeof identityAlias !== "string" || identityAlias.length > 50))
     return json({ error: "Invalid input.", details: "identityAlias" }, 400);
   if (avatarLevel !== undefined && avatarLevel !== null && (typeof avatarLevel !== "number" || !Number.isInteger(avatarLevel) || avatarLevel < 1 || avatarLevel > 100))
@@ -64,18 +67,19 @@ export default async function handler(request: Request): Promise<Response> {
   ];
   const moderation = checkServerText(trimmedText, blockedTerms);
   if (!moderation.allowed) {
-    return json({ error: "Message contains blocked content.", code: moderation.violation }, 422);
+    return json({ error: "blocked_word", violation: moderation.violation }, 422);
   }
 
   const { data: user, error: userError } = await supabaseServerClient
     .from("users")
-    .select("id, username, avatar_level")
+    .select("id, username, avatar_level, status")
     .eq("id", userId)
     .single();
 
-  if (userError || !user) return json({ error: "User not found." }, 401);
+  if (userError || !user) return json({ error: "unauthorized" }, 401);
 
-  const userRow = user as { id: string; username: string; avatar_level?: number };
+  const userRow = user as { id: string; username: string; avatar_level?: number; status: string };
+  if (userRow.status === "banned") return json({ error: "not_allowed" }, 403);
 
   const { data: member } = await supabaseServerClient
     .from("community_members")
@@ -85,7 +89,7 @@ export default async function handler(request: Request): Promise<Response> {
     .maybeSingle();
 
   if (!member && !isAdminUsername(userRow.username)) {
-    return json({ error: "You are not a member of this community." }, 403);
+    return json({ error: "not_a_member" }, 403);
   }
 
   let senderName: string = userRow.username;

@@ -57,3 +57,6 @@ graphify-deploy/
 
 # Daily repo scan output
 daily-scan-report.md
+
+# tsc -b incremental build cache
+*.tsbuildinfo
