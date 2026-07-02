@@ -78,6 +78,10 @@ The app is configured for Vercel:
 
 Production deployment requires the Vercel project environment variables to match `.env.example`, including Supabase client/server keys, auth secrets, analytics keys, Sentry/PostHog settings, notification credentials, and any cron or AI assistant secrets used by the backend.
 
+**The production backend is `api/`, not `server/`.** Vercel auto-detects every file under the top-level `api/` directory as a Serverless/Edge Function (`export const config = { runtime: "edge" }`), independent of `buildCommand`/`framework`. `vercel.json`'s SPA rewrite already excludes `api/**`, so those functions are reachable at `/api/...` in production. Auth in particular is served by `api/auth/{signup,login,me,logout}.ts` (Supabase RPC + JWT session cookie), which is what the frontend (`src/backend/supabase/controllers/authController.ts`) actually calls.
+
+`server/index.ts` (Express, `npm run dev:server`) is a **separate, local-only auth implementation** (session cookies + bcrypt) that is never started in production and is not reachable from the deployed site — see `docs/architecture-review.md` §2.3/§3.1 (A1) for the known split-brain and the plan to remove it. Required env vars for `api/auth/*` and their failure modes if missing are documented in `docs/SECURITY_NOTES.md`.
+
 ## Mobile Builds
 
 Capacitor is configured for native builds. After frontend changes that affect the mobile shell, run:
