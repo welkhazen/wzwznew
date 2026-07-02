@@ -21,56 +21,70 @@ vi.mock("@/backend/supabase/client", () => ({
 }));
 
 // ─── 1. Chat blocked-word enforcement ───────────────────────────────────────
+//
+// sendMessage() calls POST /api/chat/send (server-authoritative, identity from
+// the session cookie) rather than the send_community_message RPC directly —
+// supabase-js's rpc()/from() calls cannot carry the app's minted access token
+// from the browser (see docs/architecture-review.md A2). api/chat/send.ts
+// mirrors the RPC's exact error codes (blocked_word, not_a_member, ...) so
+// getChatSendErrorInfo() classifies them identically either way.
 
-describe("send_community_message RPC — blocked-word enforcement", () => {
+function mockFetchResponse(body: unknown, ok: boolean, status = ok ? 200 : 400) {
+  return { ok, status, json: () => Promise.resolve(body) } as Response;
+}
+
+describe("POST /api/chat/send — blocked-word enforcement", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("throws when the RPC returns a blocked_word error", async () => {
-    rpcMock.mockResolvedValueOnce({
-      data: null,
-      error: { message: "blocked_word", code: "P0001" },
-    });
+  it("throws when the endpoint returns a blocked_word error", async () => {
+    const fetchMock = vi.spyOn(global, "fetch").mockResolvedValueOnce(
+      mockFetchResponse({ error: "blocked_word" }, false, 422),
+    );
 
     await expect(
       sendMessage("community-1", { text: "some blocked content" }),
     ).rejects.toThrow("blocked_word");
 
-    expect(rpcMock).toHaveBeenCalledWith("send_community_message", expect.objectContaining({
-      p_community_id: "community-1",
-      p_text: "some blocked content",
-    }));
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/chat/send",
+      expect.objectContaining({ method: "POST" }),
+    );
+    const [, init] = fetchMock.mock.calls[0];
+    expect(JSON.parse(init!.body as string)).toMatchObject({
+      communityId: "community-1",
+      text: "some blocked content",
+    });
   });
 
-  it("succeeds when the RPC returns a valid message", async () => {
-    rpcMock.mockResolvedValueOnce({
-      data: {
-        id: "msg-ok",
-        community_id: "community-1",
-        sender_id: "user-1",
-        sender_name: "alice",
-        text: "hello world",
-        created_at: "2026-06-30T10:00:00Z",
-        liked_by: [],
-        reply_to_message_id: null,
-        reply_to_sender_name: null,
-        reply_to_text: null,
-        deleted_at: null,
-        deleted_by_user_id: null,
-        sender_avatar_level: 2,
-      },
-      error: null,
-    });
+  it("succeeds when the endpoint returns a valid message", async () => {
+    vi.spyOn(global, "fetch").mockResolvedValueOnce(
+      mockFetchResponse(
+        {
+          ok: true,
+          message: {
+            id: "msg-ok",
+            communityId: "community-1",
+            senderId: "user-1",
+            senderName: "alice",
+            text: "hello world",
+            createdAt: "2026-06-30T10:00:00Z",
+            likedBy: [],
+            senderAvatarLevel: 2,
+          },
+        },
+        true,
+      ),
+    );
 
     const msg = await sendMessage("community-1", { text: "hello world" });
     expect(msg.text).toBe("hello world");
     expect(msg.id).toBe("msg-ok");
   });
 
-  it("throws for other RPC errors (non-blocked)", async () => {
-    rpcMock.mockResolvedValueOnce({
-      data: null,
-      error: { message: "not_a_member", code: "42501" },
-    });
+  it("throws for other endpoint errors (non-blocked)", async () => {
+    vi.spyOn(global, "fetch").mockResolvedValueOnce(
+      mockFetchResponse({ error: "not_a_member" }, false, 403),
+    );
 
     await expect(
       sendMessage("community-1", { text: "hello" }),

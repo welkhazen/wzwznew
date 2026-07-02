@@ -1,5 +1,5 @@
 import type { CommunityChatMemberRecord, CommunityChatMessageRecord, PersistedCommunityRecord } from "./communityChat.types";
-import { ensureString } from "./communityChat.utils";
+import { ensureBoolean, ensureString } from "./communityChat.utils";
 import { toUserId } from "@/lib/adminData";
 
 export function normalizeMessage(rawMessage: unknown, communityId: string): CommunityChatMessageRecord | null {

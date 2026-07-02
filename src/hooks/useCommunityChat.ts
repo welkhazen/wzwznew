@@ -16,7 +16,7 @@ import {
   sendMessage as sendMessageSupabase,
 } from "@/backend/supabase/controllers/chatController";
 import { supabase } from "@/backend/supabase/client";
-import { getUserTextModerationMessage, moderateUserText } from "@/lib/inputSecurity";
+import { escapeRegExp, getUserTextModerationMessage, moderateUserText } from "@/lib/inputSecurity";
 import { buildAvatarIdToLevelMap, readAvatarCatalogLocal } from "@/lib/avatarCatalog";
 import { getPrivateAvatarLevel } from "@/lib/avataridentity";
 import { CHAT_IDENTITY_CHANGED_EVENT, readSelectedChatAlias } from "@/lib/identitySelection";
@@ -503,7 +503,7 @@ export function useCommunityChat(
             (m) =>
               m.userId !== userId &&
               m.notificationsEnabled &&
-              new RegExp(`(^|\\s)@${m.username}\\b`, "i").test(trimmedMessage),
+              new RegExp(`(^|\\s)@${escapeRegExp(m.username)}\\b`, "i").test(trimmedMessage),
           )
           .map((m) => m.userId);
         if (!isJoined) {

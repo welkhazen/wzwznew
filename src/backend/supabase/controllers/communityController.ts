@@ -4,6 +4,7 @@ import type { CommunityRequestRecord } from '@/lib/adminData';
 import { buildCommunityAbbr } from '@/lib/communityChat.utils';
 import { mapCommunityMessage, type DbCommunityMessage } from './chatController';
 import { assertUserTextAllowed } from '@/lib/inputSecurity';
+import { apiRequest } from '@/lib/api/client';
 
 type DbMessage = DbCommunityMessage;
 
@@ -103,8 +104,13 @@ export async function fetchCommunityMessages(
 
 export async function joinCommunity(communityId: string, _userId: string, _username: string): Promise<void> {
   void _userId; void _username;
-  const { error } = await supabase.rpc('join_community', { p_community_id: communityId });
-  if (error) throw error;
+  // Server-authoritative — see sendMessage() in chatController.ts for why
+  // this can't be a browser-side current_user_id()-gated RPC call. Also,
+  // no `join_community` RPC exists in supabase/migrations at all.
+  await apiRequest('/api/communities/join', {
+    method: 'POST',
+    body: JSON.stringify({ communityId }),
+  });
 }
 
 export async function leaveCommunity(communityId: string, _userId: string): Promise<void> {
