@@ -79,7 +79,7 @@ export default async function handler(request: Request): Promise<Response> {
   if (userError || !user) return json({ error: "unauthorized" }, 401);
 
   const userRow = user as { id: string; username: string; avatar_level?: number; status: string };
-  if (userRow.status === "banned") return json({ error: "not_allowed" }, 403);
+  if (userRow.status === "banned" || userRow.status === "deleted") return json({ error: "not_allowed" }, 403);
 
   const { data: member } = await supabaseServerClient
     .from("community_members")
